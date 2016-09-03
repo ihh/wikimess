@@ -1,13 +1,25 @@
 {
-    "name": "node-api",
-    "main": "server.js",
-    "dependencies": {
-        "express": "~4.0.0",
-        "mongoose": "~3.6.13",
-        "body-parser": "~1.0.1",
-        "faye": "~1.2.2",
-        "node-getopt": "~0.2.3",
-        "mersennetwister": "~0.2.3",
-        "mongodb": "~2.2.9"
-    }
+  "name": "bighouse",
+  "private": true,
+  "version": "0.0.0",
+  "description": "a Sails application",
+  "keywords": [],
+  "dependencies": {
+      "include-all": "~0.1.6",
+      "rc": "1.0.1",
+      "sails": "~0.12.4",
+      "sails-disk": "~0.10.9",
+      "grunt": "~1.0.1"
+  },
+  "scripts": {
+    "debug": "node debug app.js",
+    "start": "node app.js"
+  },
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/yam/bighouse.git"
+  },
+  "author": "yam",
+  "license": ""
 }

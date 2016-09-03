@@ -1,9 +1,7 @@
 # bighouse
 
-    brew install node mongodb
+a [Sails](http://sailsjs.org) application
+
     npm install
-
-    mkdir -p data/db
-    mongod --dbpath data/db
-
-    node server.js
+    sails lift
+    
