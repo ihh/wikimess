@@ -9,21 +9,26 @@ module.exports = {
 
   attributes: {
       id: {
-          type: 'string',
+          type: 'integer',
+          autoIncrement: true,
           unique: true,
           primaryKey: true
       },
 
-      choices: {
-          collection: 'choice',
-          via: 'outcomes'
+      choice: {
+          model: 'choice'
       },
 
-      move12: {
+      move1: {
           type: 'string',
-          enum: ['cc', 'cd', 'dc', 'dd']
+          enum: ['c', 'd']
       },
-      
+
+      move2: {
+          type: 'string',
+          enum: ['c', 'd']
+      },
+
       weight: {
           type: 'float',
           defaultsTo: 1
@@ -44,7 +49,7 @@ module.exports = {
 
       next: {
           type: 'array',
-          defaultsTo: []
+          defaultsTo: []  // names of queued-up choices (the RHS of the CFG rule)
       }
   }
 };

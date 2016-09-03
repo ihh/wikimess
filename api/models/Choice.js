@@ -9,12 +9,24 @@ module.exports = {
 
   attributes: {
       id: {
-          type: 'string',
+          type: 'integer',
+          autoIncrement: true,
           unique: true,
           primaryKey: true
       },
 
+      name: {
+          type: 'string',
+          unique: true
+      },
+
+      root: {
+          type: 'boolean',
+          defaultsTo: false
+      },
+
       intro: { type: 'string' },
+
       verb: {
           type: 'string',
           defaultsTo: 'choose'
@@ -30,12 +42,25 @@ module.exports = {
           defaultsTo: 'Defect'
       },
 
-      outcomes: {
+      allOutcomes: {
           collection: 'outcome',
-          via: 'choices',
+          via: 'choice',
           dominant: true
       }
       
-  }
+  },
+
+    moveOutcomes: function (opts, cb) {
+        Choice
+            .find ({ choice: opts.choice,
+                     move1: opts.move1,
+                     move2: opts.move2 })
+            .exec (function (err, choices) {
+                if (err)
+                    cb (err)
+                else
+                    cb (null, choices)
+            })
+    }
 };
 

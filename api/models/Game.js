@@ -41,12 +41,12 @@ module.exports = {
       // player choices
       move1: {
           type: 'string',
-          enum: ['c', 'd', 'none']
+          enum: ['c', 'd']
       },
 
       move2: {
           type: 'string',
-          enum: ['c', 'd', 'none']
+          enum: ['c', 'd']
       },
 
       // player state specific to this game

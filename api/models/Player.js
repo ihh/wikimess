@@ -17,7 +17,8 @@ module.exports = {
 
       name: {
           type: 'string',
-          unique: true
+          unique: true,
+          required: true
       },
 
       // global stats for this player
@@ -41,8 +42,7 @@ module.exports = {
       waiting: {  // true if waiting to join a game
           type: 'boolean',
           defaultsTo: false
-      },
-      waitingSince: { type: 'datetime' }  // time they started waiting
+      }
   },
 
 };

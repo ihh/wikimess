@@ -46,7 +46,9 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-    'GET /player/:player/games': 'PlayerController.games',
-    'GET /player/:player/stats': 'PlayerController.stats',
+    'GET /player/:player/games':  'PlayerController.games',
+    'GET /player/:player/stats':  'PlayerController.stats',
+    'GET /player/:player/join':   'PlayerController.join',
+    'GET /player/:player/cancel': 'PlayerController.cancelJoin',
 
 };
