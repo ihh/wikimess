@@ -92,9 +92,17 @@ module.exports = {
                                                                                       cb (err)
                                                                                   else {
                                                                                       // return game info
-                                                                                      cb (null, { player: player.id,
-                                                                                                  game: game.id,
-                                                                                                  waiting: false })
+                                                                                      var playerMsg = { player: player.id,
+                                                                                                        game: game.id,
+                                                                                                        waiting: false }
+                                                                                      var opponentMsg = { player: opponent.id,
+                                                                                                          game: game.id,
+                                                                                                          waiting: false }
+                                                                                      if (req.isSocket)
+                                                                                          Player.subscribe (req, [player.id])
+                                                                                      Player.message (opponent.id, opponentMsg)
+                                                                                      Player.message (player.id, playerMsg)
+                                                                                      cb (null, playerMsg)
                                                                                   }
                                                                               } )
                                                           }
@@ -107,9 +115,12 @@ module.exports = {
                             Player.update ( { id: player.id }, { waiting: true }, function (err, updated) {
                                 if (err)
                                     cb (err)
-                                else
+                                else {
+                                    if (req.isSocket)
+                                        Player.subscribe (req, [player.id])
                                     cb (null, { player: player.id,
                                                 waiting: true })
+                                }
                             })
                         }
                     }
@@ -123,9 +134,13 @@ module.exports = {
             Player.update ( { id: player.id }, { waiting: false }, function (err, updated) {
                 if (err)
                     cb (err)
-                else
+                else {
+                    Player.message (player.id, { player: player.id,
+                                                 waiting: false,
+                                                 canceled: true })
                     cb (null, { player: player.id,
                                 waiting: false })
+                }
             })
         })
     },
