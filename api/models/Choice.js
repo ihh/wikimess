@@ -25,29 +25,32 @@ module.exports = {
           defaultsTo: false
       },
 
-      intro: { type: 'string' },
+      intro: { type: 'string', required: true },
+      intro2: { type: 'string' },
 
       verb: {
           type: 'string',
           defaultsTo: 'choose'
       },
-
+      verb2: { type: 'string' },
+      
       hintc: {
           type: 'string',
           defaultsTo: 'Co-operate'
       },
+      hintc2: { type: 'string' },
 
       hintd: {
           type: 'string',
           defaultsTo: 'Defect'
       },
+      hintd2: { type: 'string' },
 
       allOutcomes: {
           collection: 'outcome',
           via: 'choice',
           dominant: true
       }
-      
   },
 
     moveOutcomes: function (opts, cb) {

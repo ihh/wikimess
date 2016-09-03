@@ -61,6 +61,41 @@ module.exports = {
           enum: ['happy', 'sad', 'angry', 'surprised'],
           defaultsTo: 'happy'
       }
-  }
+  },
+
+    roleFilter: function (game, role) {
+        var intro, verb, hintc, hintd, self, other, selfMood, otherMood
+        var current = game.current
+        if (role == 1) {
+            intro = current.intro
+            verb = current.verb
+            hintc = current.hintc
+            hintd = current.hintd
+            self = game.player1
+            other = game.player2
+            selfMood = game.mood1
+            otherMood = game.mood2
+        } else {  // role == 2
+            intro = current.intro2 || current.intro
+            verb = current.verb2 || current.verb
+            hintc = current.hintc2 || current.hintc
+            hintd = current.hintd2 || current.hintd
+            self = game.player2
+            other = game.player1
+            selfMood = game.mood2
+            otherMood = game.mood1
+        }
+        intro.replace(/\$player1/g,game.player1.name)
+        intro.replace(/\$player2/g,game.player2.name)
+        intro.replace(/\$self/g,self.name)
+        intro.replace(/\$other/g,other.name)
+        return { intro: intro,
+                 verb: verb,
+                 hintc: hintc,
+                 hintd: hintd,
+                 self: { mood: selfMood },
+                 other: { name: other.name, mood: otherMood },
+                 move: game.moves + 1 }
+    },
 };
 
