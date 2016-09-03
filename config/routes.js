@@ -32,9 +32,9 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  '/': {
-    view: 'homepage'
-  }
+//  '/': {
+//    view: 'homepage'
+//  },
 
   /***************************************************************************
   *                                                                          *
@@ -45,5 +45,8 @@ module.exports.routes = {
   * for configuration options and examples.                                  *
   *                                                                          *
   ***************************************************************************/
+
+    'GET /player/:player/games': 'PlayerController.games',
+    'GET /player/:player/stats': 'PlayerController.stats',
 
 };
