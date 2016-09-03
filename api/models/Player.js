@@ -14,7 +14,11 @@ module.exports = {
           unique: true,
           primaryKey: true
       },
-      name: { type: 'string' },
+
+      name: {
+          type: 'string',
+          unique: true
+      },
 
       // global stats for this player
       cash: {
