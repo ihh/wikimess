@@ -5,6 +5,9 @@
         "express": "~4.0.0",
         "mongoose": "~3.6.13",
         "body-parser": "~1.0.1",
-        "faye": "~1.2.2"
+        "faye": "~1.2.2",
+        "node-getopt": "~0.2.3",
+        "mersennetwister": "~0.2.3",
+        "mongodb": "~2.2.9"
     }
 }
