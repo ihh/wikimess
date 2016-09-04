@@ -161,46 +161,73 @@ module.exports = {
             var opponent = info.opponent
             var game = info.game
             var role = info.role
-            Game.makeMove ({ game: game,
-                             role: role,
-                             moveNumber: moveNumber,
-                             move: move },
-                           function (outcome, updatedGame, updatedPlayer, updatedOpponent) {
-                               // both players moved; return outcome
-                               var playerMsg = { verb: "move",
-                                                 game: game.id,
-                                                 step: moveNumber,
-                                                 finished: updatedGame.finished ? true : false,
-                                                 move: { self: move,
-                                                         other: role == 1 ? outcome.move2 : outcome.move1 },
-                                                 waiting: false,
-                                                 outcome: Outcome.forRole (game, outcome, role),
-                                                 cash: updatedPlayer.cash }
-                               var opponentMsg = { verb: "move",
+            Game.recordMove ({ game: game,
+                               role: role,
+                               moveNumber: moveNumber,
+                               move: move },
+                             function (outcome, updatedGame, updatedPlayer, updatedOpponent) {
+                                 // both players moved; return outcome
+                                 var playerMsg = { message: "move",
                                                    game: game.id,
-                                                   step: moveNumber,
                                                    finished: updatedGame.finished ? true : false,
-                                                   move: { self: role == 1 ? outcome.move2 : outcome.move1,
-                                                           other: move },
+                                                   move: moveNumber,
+                                                   choice: { self: move,
+                                                             other: role == 1 ? outcome.move2 : outcome.move1 },
                                                    waiting: false,
-                                                   outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
-                                                   cash: updatedOpponent.cash }
-                               if (req.isSocket)
-                                   Player.subscribe (req, [player.id])
-                               Player.message (opponent.id, opponentMsg)
-                               Player.message (player.id, playerMsg)
-                               rs (null, playerMsg)
-                           },
-                           function() {
-                               // waiting for opponent to move
-                               if (req.isSocket)
-                                   Player.subscribe (req, [player.id])
-                               rs (null, { game: game.id,
-                                           step: moveNumber,
-                                           move: { self: move },
-                                           waiting: true })
-                           },
-                           rs)
+                                                   outcome: Outcome.forRole (game, outcome, role),
+                                                   cash: updatedPlayer.cash }
+                                 var opponentMsg = { message: "move",
+                                                     game: game.id,
+                                                     finished: updatedGame.finished ? true : false,
+                                                     move: moveNumber,
+                                                     choice: { self: role == 1 ? outcome.move2 : outcome.move1,
+                                                               other: move },
+                                                     waiting: false,
+                                                     outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
+                                                     cash: updatedOpponent.cash }
+                                 if (req.isSocket)
+                                     Player.subscribe (req, [player.id])
+                                 Player.message (opponent.id, opponentMsg)
+                                 Player.message (player.id, playerMsg)
+                                 rs (null, playerMsg)
+                             },
+                             function() {
+                                 // waiting for opponent to move
+                                 if (req.isSocket)
+                                     Player.subscribe (req, [player.id])
+                                 rs (null, { game: game.id,
+                                             move: moveNumber,
+                                             choice: { self: move },
+                                             waiting: true })
+                             },
+                             rs)
+        })
+    },
+
+    changeMood: function (req, res) {
+        var moveNumber = req.params.moveNumber
+        var newMood = req.params.mood
+        this.findGame (req, res, function (info, rs) {
+            var player = info.player
+            var opponent = info.opponent
+            var game = info.game
+            var role = info.role
+            Game.updateMood ( { game: game,
+                                role: role,
+                                moveNumber: moveNumber,
+                                mood: newMood },
+                              function (updated) {
+                                  Player.message (opponent.id,
+                                                  { message: "mood",
+                                                    game: game.id,
+                                                    move: moveNumber,
+                                                    other: { mood: newMood },
+                                                  })
+                                  rs (null, { game: game.id,
+                                              move: moveNumber,
+                                              self: { mood: newMood } })
+                              },
+                              rs)
         })
     },
 

@@ -57,5 +57,6 @@ module.exports.routes = {
 
     'GET /player/:player/game/:game': 'PlayerController.gameInfo',
 
-    'GET /player/:player/game/:game/step/:moveNumber/move/:move': 'PlayerController.makeMove',
+    'GET /player/:player/game/:game/move/:moveNumber/choice/:move': 'PlayerController.makeMove',
+    'GET /player/:player/game/:game/move/:moveNumber/mood/:mood':   'PlayerController.changeMood',
 };

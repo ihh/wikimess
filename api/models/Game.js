@@ -125,12 +125,12 @@ module.exports = {
                  verb: verb,
                  hintc: hintc,
                  hintd: hintd,
-                 self: { mood: selfMood },
+                 self: { mood: selfMood, cash: self.cash },
                  other: { name: other.name, mood: otherMood },
-                 step: game.moves + 1 }
+                 move: game.moves + 1 }
     },
 
-    makeMove: function (info, gotOutcome, playerWaiting, error) {
+    recordMove: function (info, gotOutcome, playerWaiting, error) {
         var game = info.game
         var role = info.role
         var moveNumber = info.moveNumber
@@ -229,5 +229,30 @@ module.exports = {
             }
         }
     },
+
+    updateMood: function (info, success, error) {
+        var game = info.game
+        var role = info.role
+        var moveNumber = info.moveNumber
+        var newMood = info.mood
+        var moodAttr = "mood" + role
+        var oldMood = game[moodAttr]
+        if (game.finished)
+            error (new Error ("Can't change mood for move " + moveNumber + " in game " + game.id + " since game is finished"))
+        else if (game.moves + 1 != moveNumber)
+            error (new Error ("Can't change mood for move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
+        else if (oldMood == newMood)
+            success (null)
+        else {
+            var update = {}
+            update[moodAttr] = newMood
+            Game.update ( { id: game.id }, update, function (err, updated) {
+                if (err)
+                    error (err)
+                else
+                    success (updated)
+            })
+        }
+    }
 };
 
