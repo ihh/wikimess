@@ -46,6 +46,8 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
+    'GET /player/id/:name':           'PlayerController.byName',
+
     'GET /player/:player/stats':      'PlayerController.stats',
 
     'GET /player/:player/join':       'PlayerController.join',

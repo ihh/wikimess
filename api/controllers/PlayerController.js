@@ -7,6 +7,7 @@
 
 module.exports = {
 
+    // helpers
     responseSender: function (res) {
         return function (err, json) {
             if (err) {
@@ -64,6 +65,20 @@ module.exports = {
         })
     },
 
+    // actions
+    byName: function (req, res) {
+        var name = req.params.name
+        Player.findOneByName (name)
+            .exec (function (err, player) {
+                if (err)
+                    res.status(500).send (err)
+                else if (player)
+                    res.json ({ id: player.id })
+                else
+                    res.status(404).send (new Error ("Player " + name + " not found"))
+            })
+    },
+
     games: function (req, res) {
         this.findPlayer (req, res, function (player, rs) {
             var g1 = player.player1games.map (function (game) {
@@ -93,11 +108,11 @@ module.exports = {
             Player.joinGame (player,
                              function (opponent, game) {
                                  // game started; return game info
-                                 var playerMsg = { verb: "join",
+                                 var playerMsg = { message: "join",
                                                    player: player.id,
                                                    game: game.id,
                                                    waiting: false }
-                                 var opponentMsg = { verb: "join",
+                                 var opponentMsg = { message: "join",
                                                      player: opponent.id,
                                                      game: game.id,
                                                      waiting: false }
@@ -125,9 +140,6 @@ module.exports = {
                 if (err)
                     rs (err)
                 else {
-                    Player.message (player.id, { player: player.id,
-                                                 waiting: false,
-                                                 canceled: true })
                     rs (null, { player: player.id,
                                 waiting: false })
                 }
