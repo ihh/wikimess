@@ -53,17 +53,40 @@ module.exports = {
       }
   },
 
-    moveOutcomes: function (opts, cb) {
-        Choice
-            .find ({ choice: opts.choice,
-                     move1: opts.move1,
-                     move2: opts.move2 })
-            .exec (function (err, choices) {
+    moveOutcomes: function (info, cb) {
+        Outcome
+            .find ({ choice: info.choice,
+                     move1: info.move1,
+                     move2: info.move2 })
+            .exec (function (err, outcomes) {
                 if (err)
                     cb (err)
                 else
-                    cb (null, choices)
+                    cb (null, outcomes)
             })
+    },
+
+    randomOutcome: function (info, cb) {
+        this.moveOutcomes (info, function (err, outcomes) {
+            if (err) {
+                cb (err)
+                return
+            }
+            var totalWeight = outcomes.reduce (function (total, outcome) {
+                return total + outcome.weight
+            }, 0)
+            if (totalWeight) {
+                var w = totalWeight * Math.random()
+                for (var i = 0; i < outcomes.length; ++i)
+                    if ((w -= outcomes[i].weight) <= 0) {
+                        cb (null, outcomes[i])
+                        return
+                    }
+            }
+            cb (null, null)
+            return
+        })
     }
+
 };
 

@@ -37,9 +37,9 @@ module.exports = {
         var rs = this.responseSender (res)
         this.findPlayer (req, res, function (player, cb) {
             Game.findById (req.params.game)
-                .populate('current')
-                .populate('player1')
-                .populate('player2')
+                .populate ('player1')
+                .populate ('player2')
+                .populate ('current')
                 .exec (function (err, games) {
                     if (err)
                         rs(err)
@@ -50,11 +50,14 @@ module.exports = {
                         var role = game.player1.id == player.id ? 1 : (game.player2.id == player.id ? 2 : null)
                         if (!role)
                             res.status(401).send("Player " + player.id + " has no role in game " + game.id)
-                        else
+                        else {
+                            var opponent = role == 1 ? game.player2 : game.player1
                             makeJson ( { player: player,
+                                         opponent: opponent,
                                          game: game,
                                          role: role },
                                        rs )
+                        }
                     }
                 })
         })
@@ -79,87 +82,31 @@ module.exports = {
 
     join: function (req, res) {
         this.findPlayer (req, res, function (player, rs) {
-            Player
-                .find ( { waiting: true,
-                          id: { '!': player.id } } )
-                .exec (function (err, eligibleOpponents) {
-                    if (err)
-                        rs (err)
-                    else {
-                        if (eligibleOpponents.length) {
-                            // pick a random opponent
-                            var nOpp = Math.floor (Math.random (eligibleOpponents.length))
-                            var opponent = eligibleOpponents[nOpp]
-                            // pick a random choice
-                            Choice
-                                .find ( { root: true })
-                                .exec (function (err, eligibleChoices) {
-                                    if (err)
-                                        rs (err)
-                                    else if (eligibleChoices.length == 0) {
-                                        // for now, just bail if no eligible choice nodes are found
-                                        // longer term, should remove opponent from eligibleOpponents list and retry
-                                        rs (new Error ("No available root choices"))
-                                    } else {
-                                        var choice = eligibleChoices[0]
-                                        // randomly assign player 1 & player 2
-                                        var player1id, player2id
-                                        if (Math.random() < .5) {
-                                            player1id = player.id
-                                            player2id = opponent.id
-                                        } else {
-                                            player1id = opponent.id
-                                            player2id = player.id
-                                        }
-                                        // create the game
-                                        Game.create ( { player1: player1id,
-                                                        player2: player2id,
-                                                        current: choice },
-                                                      function (err, game) {
-                                                          if (err)
-                                                              rs (err)
-                                                          else {
-                                                              // update the 'waiting' fields
-                                                              Player.update ( { where: { or: [ { id: player1id }, { id: player2id } ] } },
-                                                                              { waiting: false },
-                                                                              function (err, updated) {
-                                                                                  if (err)
-                                                                                      rs (err)
-                                                                                  else {
-                                                                                      // return game info
-                                                                                      var playerMsg = { player: player.id,
-                                                                                                        game: game.id,
-                                                                                                        waiting: false }
-                                                                                      var opponentMsg = { player: opponent.id,
-                                                                                                          game: game.id,
-                                                                                                          waiting: false }
-                                                                                      if (req.isSocket)
-                                                                                          Player.subscribe (req, [player.id])
-                                                                                      Player.message (opponent.id, opponentMsg)
-                                                                                      Player.message (player.id, playerMsg)
-                                                                                      rs (null, playerMsg)
-                                                                                  }
-                                                                              } )
-                                                          }
-                                                      })
-                                    }
-                                })
-
-                        } else {  // no eligible opponents
-                            // update the 'waiting' field
-                            Player.update ( { id: player.id }, { waiting: true }, function (err, updated) {
-                                if (err)
-                                    rs (err)
-                                else {
-                                    if (req.isSocket)
-                                        Player.subscribe (req, [player.id])
-                                    rs (null, { player: player.id,
-                                                waiting: true })
-                                }
-                            })
-                        }
-                    }
-                })
+            Player.joinGame (player,
+                             function (opponent, game) {
+                                 // game started; return game info
+                                 var playerMsg = { verb: "join",
+                                                   player: player.id,
+                                                   game: game.id,
+                                                   waiting: false }
+                                 var opponentMsg = { verb: "join",
+                                                     player: opponent.id,
+                                                     game: game.id,
+                                                     waiting: false }
+                                 if (req.isSocket)
+                                     Player.subscribe (req, [player.id])
+                                 Player.message (opponent.id, opponentMsg)
+                                 Player.message (player.id, playerMsg)
+                                 rs (null, playerMsg)
+                             },
+                             function() {
+                                 // player is waiting
+                                 if (req.isSocket)
+                                     Player.subscribe (req, [player.id])
+                                 rs (null, { player: player.id,
+                                             waiting: true })
+                             },
+                             rs)
         })
     },
 
@@ -182,7 +129,56 @@ module.exports = {
 
     gameInfo: function (req, res) {
         this.findGame (req, res, function (info, rs) {
-            rs (null, Game.roleFilter (info.game, info.role))
+            rs (null, Game.forRole (info.game, info.role))
+        })
+    },
+
+    makeMove: function (req, res) {
+        var moveNumber = req.params.moveNumber
+        var move = req.params.move
+        this.findGame (req, res, function (info, rs) {
+            var player = info.player
+            var opponent = info.opponent
+            var game = info.game
+            var role = info.role
+            Game.makeMove ({ game: game,
+                             role: role,
+                             moveNumber: moveNumber,
+                             move: move },
+                           function (outcome, updatedGame, updatedPlayer, updatedOpponent) {
+                               // both players moved; return outcome
+                               var playerMsg = { verb: "move",
+                                                 game: game.id,
+                                                 step: moveNumber,
+                                                 move: { self: move,
+                                                         other: role == 1 ? outcome.move2 : outcome.move1 },
+                                                 waiting: false,
+                                                 outcome: Outcome.forRole (game, outcome, role),
+                                                 cash: updatedPlayer.cash }
+                               var opponentMsg = { verb: "move",
+                                                   game: game.id,
+                                                   step: moveNumber,
+                                                   move: { self: role == 1 ? outcome.move2 : outcome.move1,
+                                                           other: move },
+                                                   waiting: false,
+                                                   outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
+                                                   cash: updatedOpponent.cash }
+                               if (req.isSocket)
+                                   Player.subscribe (req, [player.id])
+                               Player.message (opponent.id, opponentMsg)
+                               Player.message (player.id, playerMsg)
+                               rs (null, playerMsg)
+                           },
+                           function() {
+                               // waiting for opponent to move
+                               if (req.isSocket)
+                                   Player.subscribe (req, [player.id])
+                               rs (null, { game: game.id,
+                                           step: moveNumber,
+                                           move: { self: move },
+                                           waiting: true })
+                           },
+                           rs)
         })
     },
 
