@@ -83,15 +83,15 @@ module.exports = {
     forRole: function (game, outcome, role) {
         var outro, cash, self, other, selfMood, otherMood
         if (role == 1) {
-            outro = current.outro
-            cash = current.cash1
+            outro = outcome.outro
+            cash = outcome.cash1
             self = game.player1
             other = game.player2
             selfMood = this.mood1(outcome)
             otherMood = this.mood2(outcome)
         } else {  // role == 2
-            outro = current.outro2 || current.outro
-            cash = current.cash2
+            outro = outcome.outro2 || outcome.outro
+            cash = outcome.cash2
             self = game.player2
             other = game.player1
             selfMood = this.mood2(outcome)

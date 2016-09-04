@@ -46,7 +46,7 @@ module.exports = {
       },
       hintd2: { type: 'string' },
 
-      allOutcomes: {
+      outcomes: {
           collection: 'outcome',
           via: 'choice',
           dominant: true

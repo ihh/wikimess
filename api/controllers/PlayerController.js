@@ -9,9 +9,10 @@ module.exports = {
 
     responseSender: function (res) {
         return function (err, json) {
-            if (err)
-                res.status(500).send(err)
-            else
+            if (err) {
+                console.log (err)
+                res.send (500, err)
+            } else
                 res.json (json)
         }
     },
@@ -65,10 +66,17 @@ module.exports = {
 
     games: function (req, res) {
         this.findPlayer (req, res, function (player, rs) {
-            var games = player.player1games.concat (player.player2games)
-            rs (null, games.map (function (game) {
-                return { game: game.id }
-            }))
+            var g1 = player.player1games.map (function (game) {
+                return { game: game.id,
+                         finished: game.finished,
+                         waiting: game.move1 ? true : false }
+            })
+            var g2 = player.player2games.map (function (game) {
+                return { game: game.id,
+                         finished: game.finished,
+                         waiting: game.move2 ? true : false }
+            })
+            rs (null, g1.concat(g2))
         }, ['player1games', 'player2games'])
     },
 
@@ -150,6 +158,7 @@ module.exports = {
                                var playerMsg = { verb: "move",
                                                  game: game.id,
                                                  step: moveNumber,
+                                                 finished: updatedGame.finished ? true : false,
                                                  move: { self: move,
                                                          other: role == 1 ? outcome.move2 : outcome.move1 },
                                                  waiting: false,
@@ -158,6 +167,7 @@ module.exports = {
                                var opponentMsg = { verb: "move",
                                                    game: game.id,
                                                    step: moveNumber,
+                                                   finished: updatedGame.finished ? true : false,
                                                    move: { self: role == 1 ? outcome.move2 : outcome.move1,
                                                            other: move },
                                                    waiting: false,

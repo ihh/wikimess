@@ -36,15 +36,19 @@ module.exports = {
                     if (!moveOutcomes && outcomeContainer[antiMove])
                         moveOutcomes = outcomeContainer[antiMove].map (function (outcome) {
                             var outro = Game.swapTextRoles (outcome.outro)
-                            var outro2 = outcome.outro2 ? Game.swapTextRoles (outcome.outro2) : undefined
-                            var antiOutcome =  { weight: outcome.weight,
-                                                 outro: outro2 || outro,
-                                                 outro2: outro2,
-                                                 cash: outcome.cash,
-                                                 cash1: outcome.cash2,
-                                                 cash2: outcome.cash1,
-                                                 next: outcome.next,
-                                                 flush: outcome.flush }
+                            var outro2 = outcome.outro2 ? Game.swapTextRoles (outcome.outro2) : null
+                            var antiOutcome =  { outro: outro2 || outro }
+                            var identicalKeys = ['weight', 'next', 'flush', 'cash']
+                            identicalKeys.forEach (function (key) {
+                                if (outcome.hasOwnProperty(key))
+                                    antiOutcome[key] = outcome[key]
+                            })
+                            if (outcome.hasOwnProperty('cash1'))
+                                antiOutcome.cash2 = outcome.cash1
+                            if (outcome.hasOwnProperty('cash2'))
+                                antiOutcome.cash1 = outcome.cash2
+                            if (outro2)
+                                antiOutcome.outro2 = outro
                             return antiOutcome
                         })
 
@@ -79,14 +83,17 @@ module.exports = {
                 else {
                     var choice = choices[0]
                     outcomes.forEach (function (outcome) {
-                        outcome.choice = choice
+                        outcome.choice = choice.id
                     })
-                    Outcome.create(outcomes).exec (function (err, outcomes) {
+                    Outcome.create(outcomes).exec (function (err, createdOutcomes) {
                         if (err)
                             res.status(500).send (err)
                         else {
-                            choice.outcomes = outcomes
-                            res.json (choice)
+                            // go through some contortions to outwit name collision with virtual attribute for 'outcomes'...
+                            var choiceCopy = {}
+                            Object.keys(choice).forEach (function (key) { choiceCopy[key] = choice[key] })
+                            choiceCopy.outcomes = createdOutcomes
+                            res.json (choiceCopy)
                         }
                     })
                 }

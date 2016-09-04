@@ -90,49 +90,62 @@ module.exports = {
     },
     
     forRole: function (game, role) {
-        var intro, verb, hintc, hintd, self, other, selfMood, otherMood
+        var intro, verb, hintc, hintd, self, other, selfMood, otherMood, waiting
         var current = game.current
         if (role == 1) {
-            intro = current.intro
-            verb = current.verb
-            hintc = current.hintc
-            hintd = current.hintd
+            if (current) {
+                intro = current.intro
+                verb = current.verb
+                hintc = current.hintc
+                hintd = current.hintd
+            }
             self = game.player1
             other = game.player2
             selfMood = game.mood1
             otherMood = game.mood2
+            waiting = game.move1 ? true : false
         } else {  // role == 2
-            intro = current.intro2 || current.intro
-            verb = current.verb2 || current.verb
-            hintc = current.hintc2 || current.hintc
-            hintd = current.hintd2 || current.hintd
+            if (current) {
+                intro = current.intro2 || current.intro
+                verb = current.verb2 || current.verb
+                hintc = current.hintc2 || current.hintc
+                hintd = current.hintd2 || current.hintd
+            }
             self = game.player2
             other = game.player1
             selfMood = game.mood2
             otherMood = game.mood1
+            waiting = game.move1 ? true : false
         }
-        intro = this.expandText (intro, [game.player1.name, game.player2.name], role)
-        return { intro: intro,
+        if (intro)
+            intro = this.expandText (intro, [game.player1.name, game.player2.name], role)
+        return { finished: game.finished,
+                 waiting: waiting,
+                 intro: intro,
                  verb: verb,
                  hintc: hintc,
                  hintd: hintd,
                  self: { mood: selfMood },
                  other: { name: other.name, mood: otherMood },
-                 move: game.moves + 1 }
+                 step: game.moves + 1 }
     },
 
     makeMove: function (info, gotOutcome, playerWaiting, error) {
-        var game = moveInfo.game
-        var role = moveInfo.role
-        var moveNumber = moveInfo.moveNumber
-        var move = moveInfo.move
-        if (game.moves + 1 != moveNumber)
+        var game = info.game
+        var role = info.role
+        var moveNumber = info.moveNumber
+        var move = info.move
+        var player = role == 1 ? game.player1 : game.player2
+        var opponent = role == 1 ? game.player2 : game.player1
+        if (game.finished)
+            error (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
+        else if (game.moves + 1 != moveNumber)
             error (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
         else {
-            var oldSelfMove = role == 1 ? game.move1 : game.move2
-            var otherMove = role == 1 ? game.move2 : game.move1
-            if (oldSelfMove && oldSelfMove != move)
-                error (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldSelfMove + "'"))
+            var oldPlayerMove = role == 1 ? game.move1 : game.move2
+            var opponentMove = role == 1 ? game.move2 : game.move1
+            if (oldPlayerMove && oldPlayerMove != move)
+                error (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
             else {
                 var update = {}
                 update["move" + role] = move
@@ -140,13 +153,15 @@ module.exports = {
                     if (err)
                         error (err)
                     else {
-                        if (otherMove)
-                            Choice.randomOutcome ({ choice: game.current,
-                                                    move1: game.move1,
-                                                    move2: game.move2 },
+                        if (opponentMove)
+                            Choice.randomOutcome ({ choice: game.current.id,
+                                                    move1: role == 1 ? move : opponentMove,
+                                                    move2: role == 1 ? opponentMove : move },
                                                   function (err, outcome) {
                                                       if (err)
                                                           error (err)
+                                                      else if (!outcome)
+                                                          error (new Error ("No outcome found"))
                                                       else {
                                                           var future = outcome.next
                                                           if (!outcome.flush)
@@ -162,27 +177,33 @@ module.exports = {
                                                                               mood2: Outcome.mood2 (outcome),
                                                                               current: currentChoiceID,
                                                                               future: futureChoiceNames,
-                                                                              finished: !currentChoiceID
+                                                                              finished: currentChoiceID ? false : true
                                                                             },
-                                                                        function (err, updatedGame) {
+                                                                        function (err, updatedGames) {
                                                                             if (err)
                                                                                 error (err)
+                                                                            else if (updatedGames.length != 1)
+                                                                                error ("Couldn't update Game")
                                                                             else {
                                                                                 // update player
                                                                                 Player.update ( { id: player.id },
                                                                                                 { cash: player.cash + (role == 1 ? outcome.cash1 : outcome.cash2) },
-                                                                                                function (err, updatedPlayer) {
+                                                                                                function (err, updatedPlayers) {
                                                                                                     if (err)
                                                                                                         error (err)
+                                                                                                    else if (updatedPlayers.length != 1)
+                                                                                                        error ("Couldn't update player")
                                                                                                     else {
                                                                                                         // update opponent
                                                                                                         Player.update ( { id: opponent.id },
                                                                                                                         { cash: opponent.cash + (role == 1 ? outcome.cash2 : outcome.cash1) },
-                                                                                                                        function (err, updatedOpponent) {
+                                                                                                                        function (err, updatedOpponents) {
                                                                                                                             if (err)
                                                                                                                                 error (err)
+                                                                                                                            else if (updatedOpponents.length != 1)
+                                                                                                                                error ("Couldn't update opponent")
                                                                                                                             else
-                                                                                                                                gotOutcome (outcome, updatedGame, updatedPlayer, updatedOpponent)
+                                                                                                                                gotOutcome (outcome, updatedGames[0], updatedPlayers[0], updatedOpponents[0])
                                                                                                                         })
                                                                                                     }
                                                                                                 })
