@@ -68,6 +68,27 @@ module.exports = {
       }
   },
 
+    expandText: function (text, playerNames, role) {
+        var self, other
+        if (role == 1) {
+            self = playerNames[0]
+            other = playerNames[1]
+        } else {
+            self = playerNames[1]
+            other = playerNames[0]
+        }
+        return text.replace(/\$player1/g,playerNames[0])
+            .replace(/\$player2/g,playerNames[1])
+            .replace(/\$self/g,self)
+            .replace(/\$other/g,other)
+    },
+
+    swapTextRoles: function (text) {
+        return text.replace(/\$player1/g,"$TMP_PLAYER1")  // placeholder
+            .replace(/\$player2/g,"$player1")
+            .replace(/\$TMP_PLAYER1/g,"$player2")
+    },
+    
     forRole: function (game, role) {
         var intro, verb, hintc, hintd, self, other, selfMood, otherMood
         var current = game.current
@@ -90,10 +111,7 @@ module.exports = {
             selfMood = game.mood2
             otherMood = game.mood1
         }
-        intro.replace(/\$player1/g,game.player1.name)
-        intro.replace(/\$player2/g,game.player2.name)
-        intro.replace(/\$self/g,self.name)
-        intro.replace(/\$other/g,other.name)
+        intro = this.expandText (intro, [game.player1.name, game.player2.name], role)
         return { intro: intro,
                  verb: verb,
                  hintc: hintc,
@@ -137,8 +155,8 @@ module.exports = {
                                                           var updateGame = function (currentChoiceID, futureChoiceNames) {
                                                               // update game state
                                                               Game.update ( { id: game.id },
-                                                                            { move1: null,
-                                                                              move2: null,
+                                                                            { move1: undefined,
+                                                                              move2: undefined,
                                                                               moves: moveNumber,
                                                                               mood1: Outcome.mood1 (outcome),
                                                                               mood2: Outcome.mood2 (outcome),

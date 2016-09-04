@@ -97,10 +97,7 @@ module.exports = {
             selfMood = this.mood2(outcome)
             otherMood = this.mood1(outcome)
         }
-        outro.replace(/\$player1/g,game.player1.name)
-        outro.replace(/\$player2/g,game.player2.name)
-        outro.replace(/\$self/g,self.name)
-        outro.replace(/\$other/g,other.name)
+        outro = Game.expandText (outro, [game.player1.name, game.player2.name], role)
         return { outro: outro,
                  self: { mood: selfMood, reward: cash },
                  other: { name: other.name, mood: otherMood } }
