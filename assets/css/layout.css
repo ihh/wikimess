@@ -1,0 +1,75 @@
+body {
+    margin:0;font: normal 16px/32px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
+}
+
+.container {
+    background-color:gray;display:flex;flex-direction:column;width:100%;height:100%;
+}
+
+.topbar {
+    background-color:red;width:100vw;height:24vw;
+}
+
+.leftface {
+    background-color:pink;height:24vw;width:24vw;position:absolute;left:0vw;top:0vw;
+}
+
+.status1 {
+    background-color:brown;width:50vw;height:8vw;position:absolute;left:24vw;top:0vw;display:flex;align-items:flex-start;justify-content:flex-start;
+}
+
+.status2 {
+    background-color:crimson;width:50vw;height:8vw;position:absolute;left:25vw;top:8vw;display:flex;align-items:center;justify-content:center;
+}
+
+.status3 {
+    background-color:darkred;width:50vw;height:8vw;position:absolute;left:26vw;top:16vw;display:flex;align-items:flex-end;justify-content:flex-end;
+}
+
+.rightface {
+    background-color:purple;height:24vw;width:24vw;position:absolute;left:76vw;top:0vw;
+}
+
+.stackbar {
+    background-color:green;width:100vw;flex-grow:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+
+.table {
+    background-color:darkgreen;width:90vw;flex-grow:1;margin:5vw;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+
+.card {
+    background-color:white;width:80vw;flex-grow:1;margin:5vw;
+}
+
+.choicebar {
+    background-color:lightgreen;width:100vw;height:10vw;
+}
+
+.choice1 {
+    background-color:darkseagreen;width:50vw;height:10vw;float:left;display:flex;align-items:flex-end;justify-content:flex-start;
+}
+
+.choice2 {
+    background-color:darkolivegreen;width:50vw;height:10vw;float:right;display:flex;align-items:flex-end;justify-content:flex-end;
+}
+
+.lowerbar {
+    background-color:darkorange;width:100vw;height:21vw;
+}
+
+.mood1 {
+    background-color:yellow;height:21vw;width:21vw;position:absolute;left:2vw;bottom:0vw;
+}
+
+.mood2 {
+    background-color:orange;width:21vw;height:21vw;position:absolute;left:27vw;bottom:0vw;
+}
+
+.mood3 {
+    background-color:lemonchiffon;height:21vw;width:21vw;position:absolute;left:52vw;bottom:0vw;
+}
+
+.mood4 {
+    background-color:gold;height:21vw;width:21vw;position:absolute;left:77vw;bottom:0vw;
+}
