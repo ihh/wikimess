@@ -9,6 +9,12 @@ li {
 body {
     font: normal 16px/32px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
     overflow: hidden;
+
+    -webkit-user-select: none; /* Chrome/Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+    -o-user-select: none;
+    user-select: none;
 }
 
 /* Game view */
@@ -162,7 +168,7 @@ body {
     height: 10vw;
     float: left;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: flex-start;
 }
 
@@ -172,7 +178,7 @@ body {
     height: 10vw;
     float: right;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: flex-end;
 }
 

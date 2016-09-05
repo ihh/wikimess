@@ -251,7 +251,7 @@ var BigHouse = (function() {
                 }
                 this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
                                                   isThrowOut: isThrowOut })
-                this.createCardListItem (this.waitSpan = $('<span>').text ("Waiting for other player"), 'waitcard')
+                this.waitCard = this.createCardListItem (this.waitSpan = $('<span>').text ("Waiting for other player"), 'waitcard')
             }
 
             this.revealChoice()
@@ -262,18 +262,17 @@ var BigHouse = (function() {
             this.choice1Div.empty()
             this.choice2Div.empty()
             if (this.gameOver)
-                this.showGameOver (this.waitSpan)
+                this.showGameOver (this.waitSpan, this.waitCard)
             else {
                 var loadingSpan = $('<span>').text ("Loading")
                 var loadingCard = this.createCardListItem (loadingSpan, 'waitcard')
-                if (bh.outcomeCardListItem)
-                    bh.moveCardToTop (bh.outcomeCardListItem)
+                bh.moveOutcomeCardsToTop()
                 
                 this.socket_getPlayerGame (this.playerID, this.gameID)
                     .done (function (data) {
                         if (data.finished) {
                             // game over should be caught before here, but just in case it isn't, use the loading card as the game-over card to avoid appearance of changing the deck
-                            bh.showGameOver (loadingSpan)
+                            bh.showGameOver (loadingSpan, loadingCard)
                         } else {
                             bh.moveNumber = data.move
                             bh.playerCash = data.self.cash
@@ -289,8 +288,7 @@ var BigHouse = (function() {
                             loadingCard.remove()
                             var cardListItem = bh.createCardListItem ($('<span>').html (data.intro), 'verb-' + data.verb)
                             var card = bh.addCard (cardListItem, makeMoveC, makeMoveD)
-                            if (bh.outcomeCardListItem)
-                                bh.moveCardToTop (bh.outcomeCardListItem)
+                            bh.moveOutcomeCardsToTop()
 
                             bh.choice1Div.append (bh.makeLink (data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
                             bh.choice2Div.append (bh.makeLink (data.hintc, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
@@ -307,8 +305,8 @@ var BigHouse = (function() {
         },
         
         addCard: function (listItem, rightCallback, leftCallback) {
-            leftCallback = leftCallback || function() { }
-            rightCallback = rightCallback || leftCallback
+            rightCallback = rightCallback || function() { }
+            leftCallback = leftCallback || rightCallback
             var bh = this
             var card = this.stack.createCard (listItem[0])
             card.on ('throwoutright', function () {
@@ -331,9 +329,16 @@ var BigHouse = (function() {
             this.stackList.append (listItem)
         },
 
-        showGameOver: function (span) {
+        moveOutcomeCardsToTop: function() {
+            if (this.outcomeCardListItem)
+                this.moveCardToTop (this.outcomeCardListItem)
+        },
+        
+        showGameOver: function (span, card) {
             this.quitLink.text ("Back to menu")
             span.text ("Game Over")
+            this.addCard (card, this.showPlayPage)
+            this.moveOutcomeCardsToTop()
         },
         
         updatePlayerCash: function (cash) {
