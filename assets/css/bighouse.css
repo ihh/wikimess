@@ -1,0 +1,60 @@
+html,
+body,
+ul,
+li {
+    margin: 0; padding: 0;
+}
+
+body {
+    font: normal 16px/24px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
+}
+
+#viewport {
+    width: 500px; height: 500px; background: #C7433E; border: 10px solid #ED5D52; margin: 100px auto 0; position: relative;
+}
+
+#viewport .stack {
+    width: 240px; height: 360px; background: #ED5D52; position: absolute; top: 80px; left: 50%; margin-left: -120px; border-radius: 10px;
+}
+
+#viewport li {
+    width: 240px;
+    height: 360px;
+    list-style: none;
+    background: #fff;
+    border-radius: 5px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
+    text-align: center;
+    font-size: 24px;
+    border: 10px solid #ECECEC;
+    box-sizing: border-box;
+    cursor: default;
+
+    display: table;
+}
+
+#viewport li>div {
+    display: table-cell;
+    vertical-align: middle;
+
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+}
+
+#viewport li.in-deck:nth-child(3) {
+    top: 2px; transform: translate(2px, 2px) rotate(0.4deg);
+}
+
+#viewport li.in-deck:nth-child(2) {
+    top: 4px; transform: translate(-4px, -2px) rotate(-1deg);
+}
+
+.waitcard {
+    font-style: italic;
+}
