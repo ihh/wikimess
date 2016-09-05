@@ -208,22 +208,38 @@ var BigHouse = (function() {
                 // page is already initialized
             } else {
                 this.page = 'game'
+                this.moodDiv = []
                 this.container
                     .empty()
-                    .append ($('<div>')
-                             .append ($('<div>')
-                                      .text ("Player: " + this.playerName))
-                             .append (this.playerCashDiv = $('<div>'))
-                             .append ($('<div>')
-                                      .append (this.playerMoodDiv = $('<div>'))
-                                      .append (this.playerChangeMoodList = $('<ul>'))))
-                    .append ($('<div>')
-                             .append (this.opponentNameDiv = $('<div>'))
-                             .append (this.opponentMoodDiv = $('<div>')))
-                    .append ($('<div>')
-                             .append ($('<div id="viewport">')
-                                      .append (this.stackList = $('<ul class="stack">')))
-                             .append (this.rewardDiv = $('<div>'))
+                    .append ($('<div class="gameview">')
+                             .append ($('<div class="statusbar">')
+                                      .append (this.playerMoodDiv = $('<div class="leftmood">'))
+                                      .append ($('<div class="leftstatus">')
+                                               .append ($('<span>')
+                                                        .text ("Player: " + this.playerName)))
+                                      .append ($('<div class="midstatus">')
+                                               .append (this.playerCashDiv = $('<span>')))
+                                      .append ($('<div class="rightstatus">')
+                                               .append (this.opponentNameDiv = $('<span>')))
+                                      .append (this.opponentMoodDiv = $('<div class="rightmood">'))
+                                      .append ($('<div class="quit">')
+                                               .append ($('<span>')
+                                                        .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage)))))
+                             .append ($('<div class="cardbar">')
+                                      .append ($('<div class="cardtable">')
+                                               .append (this.stackList = $('<ul class="stack">'))))
+                             .append ($('<div class="choicebar">')
+                                      .append (this.choiceDiv = $('<div>')
+                                               .append (this.choice1Div = $('<div class="choice1">'))
+                                               .append (this.choice2Div = $('<div class="choice2">')))
+                                      .append (this.nextDiv = $('<div>')
+                                               .append (this.next1Div = $('<div class="choice1">'))
+                                               .append (this.next2Div = $('<div class="choice2">'))))
+                             .append (this.moodBar = $('<div class="moodbar">')
+                                      .append (this.moodDiv[0] = $('<div class="mood1">'))
+                                      .append (this.moodDiv[1] = $('<div class="mood2">'))
+                                      .append (this.moodDiv[2] = $('<div class="mood3">'))
+                                      .append (this.moodDiv[3] = $('<div class="mood4">')))
                              .append (this.choiceList = $('<ul>'))
                              .append (this.nextList = $('<ul>')))
                     .append ($('<div>')
@@ -238,7 +254,8 @@ var BigHouse = (function() {
         },
 
         loadGameCard: function() {
-            this.choiceList.empty()
+            this.choice1Div.empty()
+            this.choice2Div.empty()
             if (this.gameOver)
                 this.showGameOver (this.waitSpan)
             else {
@@ -269,10 +286,9 @@ var BigHouse = (function() {
                             var card = bh.addCard (cardListItem, makeMoveC, makeMoveD)
                             if (bh.outcomeCardListItem)
                                 bh.moveCardToTop (bh.outcomeCardListItem)
-                            
-                            bh.choiceList
-                                .append (bh.makeListLink (data.hintc, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
-                                .append (bh.makeListLink (data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
+
+                            bh.choice1Div.append (bh.makeLink (data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
+                            bh.choice2Div.append (bh.makeLink (data.hintc, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
                         }
                     })
             }
@@ -319,12 +335,11 @@ var BigHouse = (function() {
         updatePlayerMood: function (mood) {
             var bh = this
             this.playerMoodDiv.text ("Player mood: " + mood)
-            this.playerChangeMoodList.empty()
-                .append (this.moods
-                         .filter (function (newMood) { return newMood != mood })
-                         .map (function (newMood) {
-                             return bh.makeListLink ("I'm " + newMood, bh.changeMoodFunction (bh.moveNumber, newMood))
-                         }))
+            for (var m = 0; m < this.moods.length; ++m) {
+                var newMood = this.moods[m]
+                var text = "I'm " + newMood
+                this.moodDiv[m].html (newMood == mood ? text : bh.makeLink (text, bh.changeMoodFunction (bh.moveNumber, newMood)))
+            }
         },
 
         updateOpponentMood: function (mood) {
@@ -336,10 +351,10 @@ var BigHouse = (function() {
             return function() {
                 bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
                     .done (function (data) {
-                        if (data.waiting)
-                            bh.choiceList.empty()
-                            .append ($('<div>')
-                                     .text ("Waiting for other player"))
+                        if (data.waiting) {
+                            bh.choice1Div.empty()
+                            bh.choice2Div.empty()
+                        }
                     })
             }
         },
@@ -347,9 +362,10 @@ var BigHouse = (function() {
         changeMoodFunction: function (moveNumber, mood) {
             var bh = this
             return function() {
-                this.playerChangeMoodList.find('li').prop('disabled',true)
+                this.moodBar.prop('disabled',true)
                 this.REST_getPlayerGameMoveMood (this.playerID, this.gameID, moveNumber, mood)
                     .done (function (data) {
+                        bh.moodBar.prop('disabled',false)
                         bh.updatePlayerMood (mood)
                     })
             }
@@ -361,16 +377,17 @@ var BigHouse = (function() {
             this.updateOpponentMood (this.outcome.other.mood)
             this.outcomeCardListItem = this.createCardListItem (this.outcome.outro)
             var card = this.addCard (this.outcomeCardListItem, this.revealChoice)
-            this.choiceList.hide()
-            this.nextList.empty()
-                .append (this.makeListLink ("Next", this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
-                .show()
+            this.choiceDiv.hide()
+            this.nextDiv.show()
+            var nextLink = this.makeLink ("Next", this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT))
+            this.next1Div.html (nextLink)
+            this.next2Div.html (nextLink)
             this.loadGameCard()
         },
 
         revealChoice: function() {
-            this.choiceList.show()
-            this.nextList.hide()
+            this.choiceDiv.show()
+            this.nextDiv.hide()
             delete this.outcomeCardListItem
         },
         
