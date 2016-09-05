@@ -242,10 +242,15 @@ var BigHouse = (function() {
                                       .append (this.moodDiv[3] = $('<div class="mood4">')))
                              .append (this.choiceList = $('<ul>'))
                              .append (this.nextList = $('<ul>')))
-                    .append ($('<div>')
-                             .append (this.quitLink = this.makeLink ('Quit game', this.showPlayPage)))
 
-                this.stack = gajus.Swing.Stack()
+                var throwOutConfidence = function (offset, element) {
+                    return Math.min(Math.abs(offset) / element.offsetWidth, 1)
+                }
+                var isThrowOut = function (offset, element, throwOutConfidence) {
+                    return throwOutConfidence > .25
+                }
+                this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
+                                                  isThrowOut: isThrowOut })
                 this.createCardListItem (this.waitSpan = $('<span>').text ("Waiting for other player"), 'waitcard')
             }
 
@@ -308,17 +313,20 @@ var BigHouse = (function() {
             var card = this.stack.createCard (listItem[0])
             card.on ('throwoutright', function () {
                 rightCallback.call (bh)
-                listItem.prop('disabled',true)
-                listItem.fadeOut (500, function() { listItem.remove() })
+                bh.fadeCard (listItem)
             })
             card.on ('throwoutleft', function () {
                 leftCallback.call (bh)
-                listItem.prop('disabled',true)
-                listItem.fadeOut (500, function() { listItem.remove() })
+                bh.fadeCard (listItem)
             })
             return card
         },
 
+        fadeCard: function (listItem) {
+            listItem.prop('disabled',true)
+            listItem.fadeOut (500, function() { listItem.remove() })
+        },
+        
         moveCardToTop: function (listItem) {
             this.stackList.append (listItem)
         },
@@ -372,16 +380,21 @@ var BigHouse = (function() {
         },
 
         showOutcome: function() {
+            var bh = this
             this.updatePlayerCash (this.playerCash + this.outcome.self.reward)
             this.updatePlayerMood (this.outcome.self.mood)
             this.updateOpponentMood (this.outcome.other.mood)
-            this.outcomeCardListItem = this.createCardListItem (this.outcome.outro)
+            var outcomeCardListItem = this.outcomeCardListItem = this.createCardListItem (this.outcome.outro)
             var card = this.addCard (this.outcomeCardListItem, this.revealChoice)
+            card.on ('throwout', function () {
+                bh.revealChoice()
+                bh.fadeCard (outcomeCardListItem)
+            })
             this.choiceDiv.hide()
             this.nextDiv.show()
-            var nextLink = this.makeLink ("Next", this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT))
-            this.next1Div.html (nextLink)
-            this.next2Div.html (nextLink)
+            var nextFunc = this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)
+            this.next1Div.html (this.makeLink ("Next", nextFunc))
+            this.next2Div.html (this.makeLink ("Next", nextFunc))
             this.loadGameCard()
         },
 
