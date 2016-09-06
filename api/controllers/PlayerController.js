@@ -105,31 +105,32 @@ module.exports = {
 
     join: function (req, res) {
         this.findPlayer (req, res, function (player, rs) {
-            Player.joinGame (player,
-                             function (opponent, game) {
-                                 // game started; return game info
-                                 var playerMsg = { message: "join",
-                                                   player: player.id,
+            PlayerMatchService
+		.joinGame (player,
+			   function (opponent, game) {
+                               // game started; return game info
+                               var playerMsg = { message: "join",
+                                                 player: player.id,
+                                                 game: game.id,
+                                                 waiting: false }
+                               var opponentMsg = { message: "join",
+                                                   player: opponent.id,
                                                    game: game.id,
                                                    waiting: false }
-                                 var opponentMsg = { message: "join",
-                                                     player: opponent.id,
-                                                     game: game.id,
-                                                     waiting: false }
-                                 if (req.isSocket)
-                                     Player.subscribe (req, [player.id])
-                                 Player.message (opponent.id, opponentMsg)
-                                 Player.message (player.id, playerMsg)
-                                 rs (null, playerMsg)
-                             },
-                             function() {
-                                 // player is waiting
-                                 if (req.isSocket)
-                                     Player.subscribe (req, [player.id])
-                                 rs (null, { player: player.id,
-                                             waiting: true })
-                             },
-                             rs)
+                               if (req.isSocket)
+                                   Player.subscribe (req, [player.id])
+                               Player.message (opponent.id, opponentMsg)
+                               Player.message (player.id, playerMsg)
+                               rs (null, playerMsg)
+                           },
+                           function() {
+                               // player is waiting
+                               if (req.isSocket)
+                                   Player.subscribe (req, [player.id])
+                               rs (null, { player: player.id,
+                                           waiting: true })
+                           },
+                           rs)
         })
     },
 
