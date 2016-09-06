@@ -10,6 +10,9 @@ body {
     font: normal 16px/32px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
     overflow: hidden;
 
+    background-color: black;
+    color: white;
+    
     -webkit-user-select: none; /* Chrome/Safari */        
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* IE10+ */
@@ -17,23 +20,24 @@ body {
     user-select: none;
 }
 
-/* Game view */
-.gameview {
-    background-color: gray;
+/* bighouse container */
+.bighouse {
+/*    background-color: gray; */
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
 }
 
-.gameview .statusbar {
-    background-color: red;
+/* Game view */
+.bighouse .statusbar {
+/*    background-color: red; */
     width: 100vw;
     height: 24vw;
 }
 
-.gameview .statusbar .leftmood {
-    background-color: pink;
+.bighouse .statusbar .leftmood {
+/*    background-color: pink; */
     height: 24vw;
     width: 24vw;
     position: absolute;
@@ -41,8 +45,8 @@ body {
     top: 0vw;
 }
 
-.gameview .statusbar .leftstatus {
-    background-color: brown;
+.bighouse .statusbar .leftstatus {
+/*    background-color: brown; */
     width: 16vw;
     height: 8vw;
     position: absolute;
@@ -53,8 +57,8 @@ body {
     justify-content: flex-start;
 }
 
-.gameview .statusbar .midstatus {
-    background-color: crimson;
+.bighouse .statusbar .midstatus {
+/*    background-color: crimson; */
     width: 50vw;
     height: 8vw;
     position: absolute;
@@ -65,8 +69,8 @@ body {
     justify-content: center;
 }
 
-.gameview .statusbar .rightstatus {
-    background-color: darkred;
+.bighouse .statusbar .rightstatus {
+/*    background-color: darkred; */
     width: 16vw;
     height: 8vw;
     position: absolute;
@@ -77,8 +81,8 @@ body {
     justify-content: flex-end;
 }
 
-.gameview .statusbar .quit {
-    background-color: maroon;
+.bighouse .statusbar .quit {
+/*    background-color: maroon; */
     width: 20vw;
     height: 8vw;
     position: absolute;
@@ -89,8 +93,8 @@ body {
     justify-content: center;
 }
 
-.gameview .statusbar .rightmood {
-    background-color: purple;
+.bighouse .statusbar .rightmood {
+/*    background-color: purple; */
     height: 24vw;
     width: 24vw;
     position: absolute;
@@ -98,8 +102,8 @@ body {
     top: 0vw;
 }
 
-.gameview .cardbar {
-    background-color: green;
+.bighouse .cardbar {
+/*    background-color: green; */
     width: 100vw;
     flex-grow: 1;
 
@@ -109,35 +113,37 @@ body {
     justify-content: center;
 }
 
-.gameview .cardbar .cardtable {
+.bighouse .cardbar .cardtable {
     background-color: darkgreen;
     width: 90vw;
     flex-grow: 1;
     margin: 5%;
-
+    box-shadow: 2px 2px 1px 1px #003200;
+    
     position: relative;
 }
 
-.gameview .cardbar .cardtable ul {
+.bighouse .cardbar .cardtable ul {
     padding: 0;
 }
     
-.gameview .cardbar .cardtable li {
-    background-color: white;
-    width: 80vw;
-    height: 85%;
-    margin: 5%;
+.bighouse .cardbar .cardtable li {
+/*    background-color: white; */
+    width: 70%;
+    height: 90%;
+    margin: 5% 15% 5% 15%;
     
     list-style: none;
-    background: #fff;
+    background-color: #fff;
     border-radius: 5px;
     position: absolute;
     top: 0;
     left: 0;
     box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
     text-align: center;
+    color: black;
     font-size: 24px;
-    border: 10px solid #ECECEC;
+    border: 10px solid rgba(1,1,1,.1);
     box-sizing: border-box;
     cursor: default;
 
@@ -146,24 +152,36 @@ body {
     align-items: center;
 }
 
-.gameview .cardbar .cardtable div, .gameview .cardbar .cardtable span {
+.bighouse .cardbar .cardtable li.in-deck:nth-child(4) {
+    top: 2px; transform: translate(4px, 3px) rotate(-2deg);
+}
+
+.bighouse .cardbar .cardtable li.in-deck:nth-child(3) {
+    top: 2px; transform: translate(2px, 2px) rotate(0.4deg);
+}
+
+.bighouse .cardbar .cardtable li.in-deck:nth-child(2) {
+    top: 4px; transform: translate(-4px, -2px) rotate(-1deg);
+}
+
+.bighouse .cardbar .cardtable div, .bighouse .cardbar .cardtable span {
     flex-grow: 1;
     display: flex;
     align-items: center;
 }
 
-.gameview .cardbar .cardtable img {
+.bighouse .cardbar .cardtable img {
     width: 24vw;
 }
 
-.gameview .choicebar {
-    background-color: lightgreen;
+.bighouse .choicebar {
+/*    background-color: lightgreen; */
     width: 100vw;
     height: 10vw;
 }
 
-.gameview .choicebar .choice1 {
-    background-color: darkseagreen;
+.bighouse .choicebar .choice1 {
+/*    background-color: darkseagreen; */
     width: 50vw;
     height: 10vw;
     float: left;
@@ -172,8 +190,8 @@ body {
     justify-content: flex-start;
 }
 
-.gameview .choicebar .choice2 {
-    background-color: darkolivegreen;
+.bighouse .choicebar .choice2 {
+/*    background-color: darkolivegreen; */
     width: 50vw;
     height: 10vw;
     float: right;
@@ -182,14 +200,14 @@ body {
     justify-content: flex-end;
 }
 
-.gameview .moodbar {
-    background-color: darkorange;
+.bighouse .moodbar {
+/*    background-color: darkorange; */
     width: 100vw;
     height: 21vw;
 }
 
-.gameview .moodbar .mood1 {
-    background-color: yellow;
+.bighouse .moodbar .mood1 {
+/*    background-color: yellow; */
     height: 21vw;
     width: 21vw;
     position: absolute;
@@ -197,8 +215,8 @@ body {
     bottom: 0vw;
 }
 
-.gameview .moodbar .mood2 {
-    background-color: orange;
+.bighouse .moodbar .mood2 {
+/*    background-color: orange; */
     width: 21vw;
     height: 21vw;
     position: absolute;
@@ -206,8 +224,8 @@ body {
     bottom: 0vw;
 }
 
-.gameview .moodbar .mood3 {
-    background-color: lemonchiffon;
+.bighouse .moodbar .mood3 {
+/*    background-color: lemonchiffon; */
     height: 21vw;
     width: 21vw;
     position: absolute;
@@ -215,8 +233,8 @@ body {
     bottom: 0vw;
 }
 
-.gameview .moodbar .mood4 {
-    background-color: gold;
+.bighouse .moodbar .mood4 {
+/*    background-color: gold; */
     height: 21vw;
     width: 21vw;
     position: absolute;
@@ -224,13 +242,55 @@ body {
     bottom: 0vw;
 }
 
-.waitcard {
+.bighouse .cardbar .cardtable .waitcard {
     font-style: italic;
+    background-color: antiquewhite;
+}
+
+.bighouse .cardbar .cardtable .outcome-default {
+    font-style: italic;
+    background-color: lightcyan;
+}
+
+.bighouse .cardbar .cardtable .gameover {
+    font-style: italic;
+    background-color: antiquewhite;
+    color: brown;
 }
 
 /* Menu view */
-.gameview .menubar {
-    background-color: moccasin;
+.bighouse .inputbar {
+    width: 100vw;
+    height: 24vw;
+
+    display: flex;
+    justify-content: center;
+}
+
+.bighouse .inputbar form {
+    width: 60vw;
+}
+
+.bighouse .inputbar input[type=text] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    display: block;
+
+    margin: 0;
+    height: 40px;
+    line-height: 40px;
+    font-size: 18px;
+
+    border: 1px solid #444;
+
+    background-color: #333;
+    color: white;
+
+    width: 100%;
+}
+
+.bighouse .menubar {
+/*    background-color: moccasin; */
     width: 100vw;
     flex-grow: 1;
 
@@ -240,23 +300,24 @@ body {
     justify-content: center;
 }
 
-.gameview .menubar li {
+.bighouse .menubar li {
     list-style: none;
-    background: #fff;
-    border-radius: 5px;
 
+    background: white;
+    color: black;
+    
     box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
     text-align: center;
     font-size: 24px;
-    border: 10px solid #ECECEC;
+
+    border-radius: 5px;
+    border: 10px solid rgba(1,1,1,.1);
     box-sizing: border-box;
+
     cursor: default;
+
+    width: 60vw;
 
     margin: 4vh;
     padding: 4vh;
-}
-
-.gameview .menubar a {
-    text-decoration: none;
-    color: black;
 }

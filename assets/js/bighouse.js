@@ -3,6 +3,7 @@ var BigHouse = (function() {
         config = config || {}
         $.extend (this, config)
         this.container = $('#'+this.containerID)
+            .addClass("bighouse")
         this.playerName = localStorage.getItem (this.playerNameStorageKey)
         this.socket_onPlayer ($.proxy (this.handlePlayerMessage, this))
         this.showLoginPage()
@@ -80,8 +81,13 @@ var BigHouse = (function() {
         },
 
         makeListLink: function (text, callback) {
+            var cb = $.proxy (callback, this)
             return $('<li>')
-                .append(this.makeLink (text, callback))
+                .append ($('<span>')
+                         .text(text))
+                .on('click', function (evt) {
+                    cb(evt)
+                })
         },
 
         // login menu
@@ -89,13 +95,16 @@ var BigHouse = (function() {
             this.page = 'login'
             this.container
                 .empty()
-                .append ($('<form>')
-                         .append ($('<label for="player">')
-                                  .text('Player name'))
-                         .append (this.nameInput = $('<input name="player" type="text">')))
-                .append ($('<ul>')
-                         .append (this.makeListLink ('Log in', this.doLogin))
-                         .append (this.makeListLink ('Create player', this.createPlayer)))
+                .append ($('<div class="inputbar">')
+                         .append ($('<form>')
+                                  .append ($('<label for="player">')
+                                           .text('Player name'))
+                                  .append (this.nameInput = $('<input name="player" type="text">'))))
+                .append ($('<div class="menubar">')
+                         .append ($('<div>')
+                                  .append ($('<ul>')
+                                           .append (this.makeListLink ('Log in', this.doLogin))
+                                           .append (this.makeListLink ('Create player', this.createPlayer)))))
             if (this.playerName)
                 this.nameInput.val (this.playerName)
         },
@@ -159,16 +168,21 @@ var BigHouse = (function() {
             this.page = 'play'
             this.container
                 .empty()
-                .append ($('<div>')
-                         .text ("Player: " + this.playerName))
-                .append (cashDiv = $('<div>'))
-                .append ($('<ul>')
-                         .append (this.makeListLink ('Play game', this.joinGame))
-                         .append (this.makeListLink ('Log out', this.showLoginPage)))
+                .append ($('<div class="statusbar">')
+                         .append (this.playerMoodDiv = $('<div class="leftmood">'))
+                         .append ($('<div class="leftstatus">')
+                                  .append ($('<span>')
+                                           .text (this.playerName)))
+                         .append ($('<div class="midstatus">')
+                                  .append (this.playerCashDiv = $('<span>'))))
+                .append (this.menuDiv = $('<div class="menubar">')
+                         .append ($('<ul>')
+                                  .append (this.makeListLink ('Play game', this.joinGame))
+                                  .append (this.makeListLink ('Log out', this.showLoginPage))))
             
             this.REST_getPlayerStats (this.playerID)
                 .done (function (data) {
-                    cashDiv.text ("Score: $" + data.cash)
+                    bh.playerCashDiv.text ("Score: $" + data.cash)
                 })
         },
 
@@ -185,7 +199,7 @@ var BigHouse = (function() {
         showWaitingToJoinPage: function() {
             var bh = this
             this.page = 'waitingToJoin'
-            this.container
+            this.menuDiv
                 .empty()
                 .append ($('<span>')
                          .text ("Waiting for another player"))
@@ -211,37 +225,36 @@ var BigHouse = (function() {
                 this.moodDiv = []
                 this.container
                     .empty()
-                    .append ($('<div class="gameview">')
-                             .append ($('<div class="statusbar">')
-                                      .append (this.playerMoodDiv = $('<div class="leftmood">'))
-                                      .append ($('<div class="leftstatus">')
-                                               .append ($('<span>')
-                                                        .text ("Player: " + this.playerName)))
-                                      .append ($('<div class="midstatus">')
-                                               .append (this.playerCashDiv = $('<span>')))
-                                      .append ($('<div class="rightstatus">')
-                                               .append (this.opponentNameDiv = $('<span>')))
-                                      .append (this.opponentMoodDiv = $('<div class="rightmood">'))
-                                      .append ($('<div class="quit">')
-                                               .append ($('<span>')
-                                                        .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage)))))
-                             .append ($('<div class="cardbar">')
-                                      .append ($('<div class="cardtable">')
-                                               .append (this.stackList = $('<ul class="stack">'))))
-                             .append ($('<div class="choicebar">')
-                                      .append (this.choiceDiv = $('<div>')
-                                               .append (this.choice1Div = $('<div class="choice1">'))
-                                               .append (this.choice2Div = $('<div class="choice2">')))
-                                      .append (this.nextDiv = $('<div>')
-                                               .append (this.next1Div = $('<div class="choice1">'))
-                                               .append (this.next2Div = $('<div class="choice2">'))))
-                             .append (this.moodBar = $('<div class="moodbar">')
-                                      .append (this.moodDiv[0] = $('<div class="mood1">'))
-                                      .append (this.moodDiv[1] = $('<div class="mood2">'))
-                                      .append (this.moodDiv[2] = $('<div class="mood3">'))
-                                      .append (this.moodDiv[3] = $('<div class="mood4">')))
-                             .append (this.choiceList = $('<ul>'))
-                             .append (this.nextList = $('<ul>')))
+                    .append ($('<div class="statusbar">')
+                             .append (this.playerMoodDiv = $('<div class="leftmood">'))
+                             .append ($('<div class="leftstatus">')
+                                      .append ($('<span>')
+                                               .text (this.playerName)))
+                             .append ($('<div class="midstatus">')
+                                      .append (this.playerCashDiv = $('<span>')))
+                             .append ($('<div class="rightstatus">')
+                                      .append (this.opponentNameDiv = $('<span>')))
+                             .append (this.opponentMoodDiv = $('<div class="rightmood">'))
+                             .append ($('<div class="quit">')
+                                      .append ($('<span>')
+                                               .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage)))))
+                    .append ($('<div class="cardbar">')
+                             .append ($('<div class="cardtable">')
+                                      .append (this.stackList = $('<ul class="stack">'))))
+                    .append ($('<div class="choicebar">')
+                             .append (this.choiceDiv = $('<div>')
+                                      .append (this.choice1Div = $('<div class="choice1">'))
+                                      .append (this.choice2Div = $('<div class="choice2">')))
+                             .append (this.nextDiv = $('<div>')
+                                      .append (this.next1Div = $('<div class="choice1">'))
+                                      .append (this.next2Div = $('<div class="choice2">'))))
+                    .append (this.moodBar = $('<div class="moodbar">')
+                             .append (this.moodDiv[0] = $('<div class="mood1">'))
+                             .append (this.moodDiv[1] = $('<div class="mood2">'))
+                             .append (this.moodDiv[2] = $('<div class="mood3">'))
+                             .append (this.moodDiv[3] = $('<div class="mood4">')))
+                    .append (this.choiceList = $('<ul>'))
+                    .append (this.nextList = $('<ul>'))
 
                 var throwOutConfidence = function (offset, element) {
                     return Math.min(Math.abs(offset) / element.offsetWidth, 1)
@@ -251,47 +264,49 @@ var BigHouse = (function() {
                 }
                 this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
                                                   isThrowOut: isThrowOut })
-                this.waitCard = this.createCardListItem (this.waitSpan = $('<span>').text ("Waiting for other player"), 'waitcard')
+
+                var gameOverCardListItem = bh.createCardListItem ($('<span>').text ("Game Over"), 'gameover')
+                this.dealCard (gameOverCardListItem, this.showPlayPage)
             }
 
             this.revealChoice()
             this.loadGameCard()
         },
 
-        loadGameCard: function() {
+        loadGameCard: function (gameCardDealtCallback) {
+            gameCardDealtCallback = gameCardDealtCallback || function(){}
             this.choice1Div.empty()
             this.choice2Div.empty()
             if (this.gameOver)
-                this.showGameOver (this.waitSpan, this.waitCard)
+                gameCardDealtCallback()
             else {
-                var loadingSpan = $('<span>').text ("Loading")
-                var loadingCard = this.createCardListItem (loadingSpan, 'waitcard')
-                bh.moveOutcomeCardsToTop()
+                var loadingCardListItem = this.createCardListItem ($('<span>').text ("Loading"), 'waitcard')
                 
                 this.socket_getPlayerGame (this.playerID, this.gameID)
                     .done (function (data) {
-                        if (data.finished) {
-                            // game over should be caught before here, but just in case it isn't, use the loading card as the game-over card to avoid appearance of changing the deck
-                            bh.showGameOver (loadingSpan, loadingCard)
-                        } else {
+                        bh.throwDummyCard (loadingCardListItem)
+                        if (!data.finished) {
                             bh.moveNumber = data.move
                             bh.playerCash = data.self.cash
 
                             bh.updatePlayerCash (data.self.cash)
                             bh.updatePlayerMood (data.self.mood)
-                            bh.opponentNameDiv.text ("Other player: " + data.other.name)
+                            bh.opponentNameDiv.text (data.other.name)
                             bh.updateOpponentMood (data.other.mood)
 
                             var makeMoveC = bh.makeMoveFunction (data.move, 'c')
                             var makeMoveD = bh.makeMoveFunction (data.move, 'd')
 
-                            loadingCard.remove()
+                            bh.nextOutcomeCardListItem = bh.createCardListItem ('', 'outcome-default')
+                            bh.waitCardListItem = bh.createCardListItem ($('<span>').text ("Waiting for other player"), 'waitcard')
+                            
                             var cardListItem = bh.createCardListItem ($('<span>').html (data.intro), 'verb-' + data.verb)
-                            var card = bh.addCard (cardListItem, makeMoveC, makeMoveD)
-                            bh.moveOutcomeCardsToTop()
+                            var card = bh.dealCard (cardListItem, makeMoveC, makeMoveD)
 
                             bh.choice1Div.append (bh.makeLink (data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
                             bh.choice2Div.append (bh.makeLink (data.hintc, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
+
+                            gameCardDealtCallback()
                         }
                     })
             }
@@ -299,7 +314,7 @@ var BigHouse = (function() {
 
         createCardListItem: function (cardContent, cardClass) {
             var listItem = $('<li class="in-deck ' + (cardClass || "") + '">')
-            listItem.append ($('<div>').append (cardContent))
+            listItem.html (cardContent)
             this.stackList.append (listItem)
             return listItem
         },
@@ -320,6 +335,12 @@ var BigHouse = (function() {
             return card
         },
 
+        dealCard: function (listItem, rightCallback, leftCallback) {
+            var card = this.addCard (listItem, rightCallback, leftCallback)
+            card.throwIn (-600, -100)
+            return card
+        },
+        
         fadeCard: function (listItem) {
             listItem.prop('disabled',true)
             listItem.fadeOut (500, function() { listItem.remove() })
@@ -329,20 +350,12 @@ var BigHouse = (function() {
             this.stackList.append (listItem)
         },
 
-        moveOutcomeCardsToTop: function() {
-            if (this.outcomeCardListItem)
-                this.moveCardToTop (this.outcomeCardListItem)
-        },
-        
-        showGameOver: function (span, card) {
-            this.quitLink.text ("Back to menu")
-            span.text ("Game Over")
-            this.addCard (card, this.showPlayPage)
-            this.moveOutcomeCardsToTop()
+        throwDummyCard: function (listItem) {
+            this.addCard(listItem).throwOut()
         },
         
         updatePlayerCash: function (cash) {
-            this.playerCashDiv.text ("Player score: $" + cash)
+            this.playerCashDiv.text ("Score: $" + cash)
         },
 
         updatePlayerMood: function (mood) {
@@ -389,24 +402,31 @@ var BigHouse = (function() {
             this.updatePlayerCash (this.playerCash + this.outcome.self.reward)
             this.updatePlayerMood (this.outcome.self.mood)
             this.updateOpponentMood (this.outcome.other.mood)
-            var outcomeCardListItem = this.outcomeCardListItem = this.createCardListItem (this.outcome.outro)
-            var card = this.addCard (this.outcomeCardListItem, this.revealChoice)
-            card.on ('throwout', function () {
-                bh.revealChoice()
-                bh.fadeCard (outcomeCardListItem)
-            })
+
+            var outcomeCardListItem = this.nextOutcomeCardListItem
+            delete this.nextOutcomeCardListItem
+            outcomeCardListItem
+                .removeClass()
+                .addClass('outcome-default')
+                .html($('<span>').html (this.outcome.outro))
+
             this.choiceDiv.hide()
             this.nextDiv.show()
-            var nextFunc = this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)
-            this.next1Div.html (this.makeLink ("Next", nextFunc))
-            this.next2Div.html (this.makeLink ("Next", nextFunc))
-            this.loadGameCard()
+
+            this.throwDummyCard (this.waitCardListItem)
+
+            this.loadGameCard (function () {
+                var card = bh.dealCard (outcomeCardListItem, bh.revealChoice)
+
+                var nextFunc = bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)
+                bh.next1Div.html (bh.makeLink ("Next", nextFunc))
+                bh.next2Div.html (bh.makeLink ("Next", nextFunc))
+            })
         },
 
         revealChoice: function() {
             this.choiceDiv.show()
             this.nextDiv.hide()
-            delete this.outcomeCardListItem
         },
         
         cardThrowFunction: function (card, direction) {
@@ -421,6 +441,10 @@ var BigHouse = (function() {
             switch (msg.data.message) {
             case "join":
                 if (this.page == 'play' || this.page == 'waitingToJoin') {
+                    // known bug: if logged in from multiple devices, they will all join the game here
+                    // even if they are just on the play page, not waitingToJoin
+                    // (we allow play->game transitions because the 2nd player to join gets an immediate message,
+                    // before the waitingToJoin page is shown)
                     this.gameID = msg.data.game
                     this.gameOver = false
                     this.showGamePage()
