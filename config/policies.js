@@ -31,6 +31,7 @@ module.exports.policies = {
     // non-permissive policy for player controller
     'PlayerController': {
 	'create': true,
+	'getMoodAvatar': true,
 	'*': 'isAuthenticated'
     },
 

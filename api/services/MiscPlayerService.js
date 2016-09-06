@@ -1,4 +1,5 @@
 // api/services/MiscPlayerService.js
+
 module.exports = {
 
     // helpers
@@ -58,4 +59,9 @@ module.exports = {
                 })
         })
     },
+
+    isValidMood: function (mood) {
+	return mood == 'happy' || mood == 'sad' || mood == 'angry' || mood == 'surprised'
+    },
+
 }

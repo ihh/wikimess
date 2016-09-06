@@ -126,7 +126,7 @@ module.exports = {
                  hintc: hintc,
                  hintd: hintd,
                  self: { mood: selfMood, cash: self.cash },
-                 other: { name: other.name, mood: otherMood },
+                 other: { id: other.id, name: other.name, mood: otherMood },
                  move: game.moves + 1 }
     },
 

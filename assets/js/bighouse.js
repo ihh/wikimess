@@ -51,6 +51,22 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/mood/' + mood)
         },
 
+        REST_urlPlayerAvatar: function (playerID, mood) {
+            return '/player/' + playerID + '/avatar/' + mood
+        },
+
+        REST_postPlayerAvatar: function (playerID, mood, blob) {
+            var url = '/player/' + playerID + '/avatar/' + mood
+	    var formData = new FormData()
+	    formData.append ('avatar', blob)
+	    return $.ajax ({ url: url,
+			     type: 'POST',
+			     cache: false,
+			     contentType: false,
+			     processData: false,
+			     data: formData })
+        },
+
         // WebSockets interface
         socket_onPlayer: function (callback) {
             io.socket.on ('player', callback)
@@ -195,6 +211,7 @@ var BigHouse = (function() {
                 .append (this.menuDiv = $('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Play game', this.joinGame))
+                                  .append (this.makeListLink ('Settings', this.showSettingsPage))
                                   .append (this.makeListLink ('Log out', this.doLogout))))
             
             this.REST_getPlayerStats (this.playerID)
@@ -209,6 +226,85 @@ var BigHouse = (function() {
             this.REST_getLogout()
 	    this.showLoginPage()
         },
+
+        // settings menu
+        showSettingsPage: function() {
+            var bh = this
+
+            this.page = 'settings'
+            this.container
+                .empty()
+                .append ($('<div class="inputbar">'))
+                .append ($('<div class="menubar">')
+                         .append ($('<ul>')
+                                  .append (this.makeListLink ('Upload photos', this.showUploadPage))
+                                  .append (this.makeListLink ('Back', this.showPlayPage))))
+        },
+
+        // avatar upload page
+        showUploadPage: function() {
+            var bh = this
+
+            this.page = 'upload'
+            this.moodDiv = []
+            this.container
+                .empty()
+                .append ($('<div class="statusbar">')
+			 .append($('<div class="midstatus">')
+				 .append($('<span>')
+					 .append($('<big>')
+						 .text ("Upload photos")))))
+                .append (this.menuDiv = $('<div class="menubar">')
+			 .append ($('<span>')
+				  .text("Select one of the images below to upload a photo"))
+                         .append ($('<ul>')
+                                  .append (this.makeListLink ('Back', this.showSettingsPage))))
+                .append (this.moodBar = $('<div class="moodbar">'))
+		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
+
+	    this.moods.forEach (function (mood, m) {
+		var moodClass = "mood" + (m+1)
+		var img = bh.makeMoodImage (bh.playerID, mood)
+		var div = $('<div>')
+		    .addClass(moodClass)
+		    .html (img)
+		    .on ('click', bh.uploadMoodPhotoFunction (mood))
+		bh.moodBar.append (div)
+                bh.moodDiv.push (div)
+            })
+        },
+
+	makeMoodImage: function (id, mood) {
+	    return $('<img>')
+		.attr ('width', '100%')
+		.attr ('height', '100%')
+		.attr ('src', bh.REST_urlPlayerAvatar (id, mood))
+	},
+
+	uploadMoodPhotoFunction: function (mood) {
+	    var bh = this
+	    return function (clickEvt) {
+		bh.moodFileInput.on ('change', function (fileSelectEvt) {
+		    bh.moodFileInput.off()
+		    var file = this.files[0]
+		    var reader = new FileReader()
+		    reader.onload = function (fileLoadEvt) {
+			var arrayBuffer = reader.result
+			var blob = new Blob ([arrayBuffer], {type:file.type})
+			bh.REST_postPlayerAvatar (bh.playerID, mood, blob)
+			    .then (function (data) {
+				console.log ("Success")
+			    })
+			    .fail (function (err) {
+				bh.showModalWebError (err)
+			    })
+		    }
+		    reader.readAsArrayBuffer (file)
+		})
+		bh.moodFileInput.click()
+		return false
+	    }
+	},
 
         // join game
         joinGame: function() {
@@ -247,6 +343,7 @@ var BigHouse = (function() {
             } else {
                 this.page = 'game'
                 this.moodDiv = []
+                this.moodImg = []
                 this.container
                     .empty()
                     .append ($('<div class="statusbar">')
@@ -272,13 +369,18 @@ var BigHouse = (function() {
                              .append (this.nextDiv = $('<div>')
                                       .append (this.next1Div = $('<div class="choice1">'))
                                       .append (this.next2Div = $('<div class="choice2">'))))
-                    .append (this.moodBar = $('<div class="moodbar">')
-                             .append (this.moodDiv[0] = $('<div class="mood1">'))
-                             .append (this.moodDiv[1] = $('<div class="mood2">'))
-                             .append (this.moodDiv[2] = $('<div class="mood3">'))
-                             .append (this.moodDiv[3] = $('<div class="mood4">')))
-                    .append (this.choiceList = $('<ul>'))
-                    .append (this.nextList = $('<ul>'))
+                    .append (this.moodBar = $('<div class="moodbar">'))
+
+		this.moods.forEach (function (mood, m) {
+		    var moodClass = "mood" + (m+1)
+		    var img = bh.makeMoodImage (bh.playerID, mood)
+		    var div = $('<div>')
+			.addClass(moodClass)
+			.html (img)
+		    bh.moodBar.append (div)
+                    bh.moodDiv.push (div)
+                    bh.moodImg.push (img)
+		})
 
                 var throwOutConfidence = function (offset, element) {
                     return Math.min(Math.abs(offset) / element.offsetWidth, 1)
@@ -316,7 +418,7 @@ var BigHouse = (function() {
                             bh.updatePlayerCash (data.self.cash)
                             bh.updatePlayerMood (data.self.mood)
                             bh.opponentNameDiv.text (data.other.name)
-                            bh.updateOpponentMood (data.other.mood)
+                            bh.updateOpponentMood (data.other.id, data.other.mood)
 
                             var makeMoveC = bh.makeMoveFunction (data.move, 'c')
                             var makeMoveD = bh.makeMoveFunction (data.move, 'd')
@@ -384,16 +486,26 @@ var BigHouse = (function() {
 
         updatePlayerMood: function (mood) {
             var bh = this
-            this.playerMoodDiv.text ("Player mood: " + mood)
+            this.playerMoodDiv
+		.html (this.makeMoodImage (this.playerID, mood))
             for (var m = 0; m < this.moods.length; ++m) {
                 var newMood = this.moods[m]
-                var text = "I'm " + newMood
-                this.moodDiv[m].html (newMood == mood ? text : bh.makeLink (text, bh.changeMoodFunction (bh.moveNumber, newMood)))
+                this.moodDiv[m].off()
+		if (newMood == mood)
+		    this.moodImg[m].fadeTo(100,1)
+		else {
+		    this.moodImg[m].fadeTo(200,.5)
+                    this.moodDiv[m]
+			.on('click', 
+			    bh.changeMoodFunction (bh.moveNumber, newMood))
+		}
             }
         },
 
-        updateOpponentMood: function (mood) {
-            this.opponentMoodDiv.text ("Other player mood: " + mood)
+        updateOpponentMood: function (id, mood) {
+            this.opponentMoodDiv
+		.empty()
+		.append (this.makeMoodImage (id, mood))
         },
 
         makeMoveFunction: function (moveNumber, choice) {
@@ -412,8 +524,8 @@ var BigHouse = (function() {
         changeMoodFunction: function (moveNumber, mood) {
             var bh = this
             return function() {
-                this.moodBar.prop('disabled',true)
-                this.REST_getPlayerGameMoveMood (this.playerID, this.gameID, moveNumber, mood)
+                bh.moodBar.prop('disabled',true)
+                bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
                         bh.moodBar.prop('disabled',false)
                         bh.updatePlayerMood (mood)
@@ -425,7 +537,7 @@ var BigHouse = (function() {
             var bh = this
             this.updatePlayerCash (this.playerCash + this.outcome.self.reward)
             this.updatePlayerMood (this.outcome.self.mood)
-            this.updateOpponentMood (this.outcome.other.mood)
+            this.updateOpponentMood (this.outcome.other.id, this.outcome.other.mood)
 
             var outcomeCardListItem = this.nextOutcomeCardListItem
             delete this.nextOutcomeCardListItem
@@ -484,7 +596,7 @@ var BigHouse = (function() {
                 break
             case "mood":
                 if (this.page == 'game' && this.gameID == msg.data.game) {
-                    this.updateOpponentMood (msg.data.other.mood)
+                    this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
                 }
                 break
             default:

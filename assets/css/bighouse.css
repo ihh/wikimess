@@ -55,6 +55,7 @@ body {
     display: flex;
     align-items: flex-end;
     justify-content: flex-start;
+    padding-left: 4px;
 }
 
 .bighouse .statusbar .midstatus {
@@ -79,6 +80,7 @@ body {
     display: flex;
     align-items: flex-end;
     justify-content: flex-end;
+    padding-right: 4px;
 }
 
 .bighouse .statusbar .quit {
