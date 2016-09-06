@@ -46,6 +46,9 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
+    'POST /login': 'AuthController.login',
+    '/logout':     'AuthController.logout',
+
     'GET /player/id/:name':           'PlayerController.byName',
 
     'GET /player/:player/stats':      'PlayerController.stats',

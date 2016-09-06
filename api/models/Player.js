@@ -5,6 +5,8 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+var bcrypt = require('bcrypt');
+
 module.exports = {
 
   attributes: {
@@ -20,6 +22,12 @@ module.exports = {
           unique: true,
           required: true
       },
+
+      password: {
+            type: 'string',
+//            minLength: 6,
+            required: true
+        },
 
       // global stats for this player
       cash: {
@@ -44,4 +52,18 @@ module.exports = {
           defaultsTo: false
       }
   },
+
+    beforeCreate: function(player, cb) {
+        bcrypt.genSalt(10, function(err, salt) {
+            bcrypt.hash(player.password, salt, function(err, hash) {
+                if (err) {
+                    console.log(err);
+                    cb(err);
+                } else {
+                    player.password = hash;
+                    cb();
+                }
+            });
+        });
+    }
 };

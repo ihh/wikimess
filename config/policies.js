@@ -26,7 +26,14 @@ module.exports.policies = {
   *                                                                          *
   ***************************************************************************/
 
-  // '*': true,
+    '*': true,
+
+    // non-permissive policy for player controller
+    'PlayerController': {
+	'create': true,
+	'*': 'isAuthenticated'
+    },
+
 
   /***************************************************************************
   *                                                                          *
@@ -48,4 +55,5 @@ module.exports.policies = {
 		// before letting any users feed our rabbits
 		// feed : ['isNiceToAnimals', 'hasRabbitFood']
 	// }
+
 };

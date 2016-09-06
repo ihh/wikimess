@@ -4,7 +4,14 @@ var BigHouse = (function() {
         $.extend (this, config)
         this.container = $('#'+this.containerID)
             .addClass("bighouse")
-        this.playerName = localStorage.getItem (this.playerNameStorageKey)
+	var ls
+	try {
+	    ls = JSON.parse (localStorage.getItem (this.localStorageKey))
+	} catch (err) {
+	    ls = null
+	}
+	if (ls)
+            this.playerName = ls.name
         this.socket_onPlayer ($.proxy (this.handlePlayerMessage, this))
         this.showLoginPage()
     }
@@ -12,16 +19,20 @@ var BigHouse = (function() {
     $.extend (proto.prototype, {
         // default params/data
         containerID: 'bighouse',
-        playerNameStorageKey: 'bighousePlayerName',
+        localStorageKey: 'bighouse',
         moods: ['happy', 'surprised', 'angry', 'sad'],
         
         // REST interface
-        REST_getPlayerId: function (playerName) {
-            return $.get('/player/id/' + playerName)
+        REST_postPlayer: function (playerName, playerPassword) {
+            return $.post('/player', { name: playerName, password: playerPassword })
         },
 
-        REST_postPlayer: function (playerName) {
-            return $.post('/player/', { name: playerName })
+        REST_postLogin: function (playerName, playerPassword) {
+            return $.post('/login', { name: playerName, password: playerPassword })
+        },
+
+        REST_getLogout: function() {
+            return $.post('/logout')
         },
 
         REST_getPlayerCancel: function (playerID) {
@@ -99,7 +110,10 @@ var BigHouse = (function() {
                          .append ($('<form>')
                                   .append ($('<label for="player">')
                                            .text('Player name'))
-                                  .append (this.nameInput = $('<input name="player" type="text">'))))
+                                  .append (this.nameInput = $('<input name="player" type="text">'))
+                                  .append ($('<label for="player">')
+                                           .text('Password'))
+                                  .append (this.passwordInput = $('<input name="password" type="password">'))))
                 .append ($('<div class="menubar">')
                          .append ($('<div>')
                                   .append ($('<ul>')
@@ -111,44 +125,47 @@ var BigHouse = (function() {
 
         validatePlayerName: function() {
             this.playerName = this.nameInput.val()
-            if (!this.playerName.length) {
+            this.playerPassword = this.passwordInput.val()
+            this.playerName = this.playerName.replace(/^\s*/,'').replace(/\s*$/,'')
+            if (!/\S/.test(this.playerName)) {
                 this.showModalMessage ("Please enter a player name")
                 return false
             }
-            localStorage.setItem (this.playerNameStorageKey, this.playerName)
+            if (!/\S/.test(this.playerPassword)) {
+                this.showModalMessage ("Please enter a password")
+                return false
+            }
+            localStorage.setItem (this.localStorageKey,
+				  JSON.stringify ({ name: this.playerName }))
             return true
         },
         
-        doLogin: function (evt) {
+        doLogin: function() {
             var bh = this
             if (this.validatePlayerName())
-                this.REST_getPlayerId (this.playerName)
+                this.REST_postLogin (this.playerName, this.playerPassword)
                 .done (function (data) {
-                    bh.playerID = data.id
-                    bh.showPlayPage()
+		    if (!data.player)
+                        bh.showModalMessage (data.message)
+		    else {
+			bh.playerID = data.player.id
+			bh.showPlayPage()
+		    }
                 })
                 .fail (function (err) {
-                    if (err.status == 404)
-                        bh.showModalMessage ("Player '" + bh.playerName + "' not found")
-                    else
-                        bh.showModalWebError (err)
+                    bh.showModalWebError (err)
                 })
         },
 
-        createPlayer: function (evt) {
+        createPlayer: function() {
             var bh = this
             if (this.validatePlayerName())
-                this.REST_postPlayer (this.playerName)
+                this.REST_postPlayer (this.playerName, this.playerPassword)
                 .done (function (data) {
-                    console.log (data)
-                    bh.playerID = data.id
-                    bh.showPlayPage()
+		    bh.doLogin()
                 })
                 .fail (function (err) {
-                    if (err.status == 400)
-                        bh.showModalMessage ("Player '" + bh.playerName + "' already exists")
-                    else
-                        bh.showModalWebError (err)
+                    bh.showModalWebError (err)
                 })
         },
 
@@ -178,12 +195,19 @@ var BigHouse = (function() {
                 .append (this.menuDiv = $('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Play game', this.joinGame))
-                                  .append (this.makeListLink ('Log out', this.showLoginPage))))
+                                  .append (this.makeListLink ('Log out', this.doLogout))))
             
             this.REST_getPlayerStats (this.playerID)
                 .done (function (data) {
                     bh.playerCashDiv.text ("Score: $" + data.cash)
                 })
+        },
+
+	// log out
+        doLogout: function() {
+            var bh = this
+            this.REST_getLogout()
+	    this.showLoginPage()
         },
 
         // join game
