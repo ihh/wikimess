@@ -366,7 +366,7 @@ var BigHouse = (function() {
 		    : null);
 	},
 
-	// This function should blank all images that have a matching src, by changing their src property to /assets/images/1x1blank.png.
+	// This function should blank all images that have a matching src, by changing their src property to /images/1x1blank.png.
 	// ##### You should code the actual contents of this function according to your page design, and what images there are on them!!! #####
 	// Optionally it may return an array (or other collection or data structure) of those images affected.
 	// This can be used by imgReloadRestore() to restore them later, if that's an efficient way of doing it (otherwise, you don't need to return anything).
@@ -380,7 +380,7 @@ var BigHouse = (function() {
 	{
 	    // ##### Everything here is provisional on the way the pages are designed, and what images they contain; what follows is for example purposes only!
 	    // ##### For really simple pages containing just a single image that's always the one being refreshed, this function could be as simple as just the one line:
-	    // ##### document.getElementById("myImage").src = "/assets/images/1x1blank.png";
+	    // ##### document.getElementById("myImage").src = "/images/1x1blank.png";
 
 	    var blankList = [],
 	    fullSrc = window.location.href + src.substr(1) /* Fully qualified (absolute) src - i.e. prepend protocol, server/domain, and path if not present in src */,
@@ -390,13 +390,13 @@ var BigHouse = (function() {
 	    imgs = window.document.body.getElementsByTagName("img");
 	    for (i = imgs.length; i--;) if ((img = imgs[i]).src===fullSrc)  // could instead use body.querySelectorAll(), to check both tag name and src attribute, which would probably be more efficient, where supported
 	    {
-		img.src = "/assets/images/1x1blank.png";  // blank them
+		img.src = "/images/1x1blank.png";  // blank them
 		blankList.push(img);            // optionally, save list of blanked images to make restoring easy later on
 	    }
 
 	    // for each (/* img DOM node held only by javascript, for example in any image-caching script */) if (img.src===fullSrc)
 //	    {
-//		img.src = "/assets/images/1x1blank.png";   // do the same as for on-page images!
+//		img.src = "/images/1x1blank.png";   // do the same as for on-page images!
 //		blankList.push(img);
 //	    }
 
