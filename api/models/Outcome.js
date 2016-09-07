@@ -81,7 +81,7 @@ module.exports = {
     },
 
     forRole: function (game, outcome, role) {
-        var outro, cash, self, other, selfMood, otherMood
+        var outro, cash, self, other, selfMood, otherMood, verb, type
         if (role == 1) {
             outro = outcome.outro
             cash = outcome.cash1
@@ -89,6 +89,8 @@ module.exports = {
             other = game.player2
             selfMood = this.mood1(outcome)
             otherMood = this.mood2(outcome)
+            verb = outcome.verb
+            type = game.move1 + game.move2
         } else {  // role == 2
             outro = outcome.outro2 || outcome.outro
             cash = outcome.cash2
@@ -96,9 +98,21 @@ module.exports = {
             other = game.player1
             selfMood = this.mood2(outcome)
             otherMood = this.mood1(outcome)
+            verb = outcome.verb2
+            type = game.move2 + game.move1
+        }
+        if (!verb) {
+            switch (type) {
+            case 'cc': verb = 'reward'; break;
+            case 'cd': verb = 'sucker'; break;
+            case 'dc': verb = 'cheat'; break;
+            case 'dd': verb = 'punish'; break;
+            default: verb = undefined; break;
+            }
         }
         outro = Game.expandText (outro, [game.player1.name, game.player2.name], role)
         return { outro: outro,
+                 verb: verb,
                  self: { mood: selfMood, reward: cash },
                  other: { id: other.id, name: other.name, mood: otherMood } }
     },
