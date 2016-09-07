@@ -156,11 +156,11 @@ module.exports = {
                     else {
                         if (opponentMove)
 			    Game.applyRandomOutcome (game,
-						     function (outcome, updatedGames, updatedPlayer1, updatedPlayer2) {
+						     function (outcome, game) {
 							 if (role == 1)
-							     gotOutcome (outcome, updatedGames, updatedPlayer1, updatedPlayer2)
+							     gotOutcome (outcome, game, game.player1, game.player2)
 							 else
-							     gotOutcome (outcome, updatedGames, updatedPlayer2, updatedPlayer1)
+							     gotOutcome (outcome, game, game.player2, game.player1)
 						     },
 						     error)
                         else
@@ -228,13 +228,7 @@ module.exports = {
                                                else if (updatedPlayer2s.length != 1)
                                                    error ("Couldn't update player 2")
                                                else {
-						   if (!autoExpandCurrentChoice)
-                                                       gotOutcome (outcome,
-								   updatedGames[0],
-								   updatedPlayer1s[0],
-								   updatedPlayer2s[0])
-						   else  // auto-expand: refresh game and recurse
-						       Game.find ({ id: game.id })
+						   Game.find ({ id: game.id })
 						       .populate ('player1')
 						       .populate ('player2')
 						       .populate ('current')
@@ -243,14 +237,18 @@ module.exports = {
 							       error(err)
 							   else if (refreshedGames.length != 1)
 							       error(new Error("Couldn't reload game"))
-							   else
-							       Game.applyRandomOutcome (refreshedGames[0],
-											function (dummyOutcome, games, player, opp) {
-											    gotOutcome (outcome, games, player, opp)  // discard the dummy outcome text of this auto-expansion
-											},
-											error)
+							   else {
+							       if (!autoExpandCurrentChoice)
+								   gotOutcome (outcome, refreshedGames[0])
+							       else
+								   Game.applyRandomOutcome (refreshedGames[0],
+											    function (dummyOutcome, game) {
+												gotOutcome (outcome, game)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
+											    },
+											    error)
+							   }
 						       })
-						   }
+					       }
                                            })
                                      }
                                  })

@@ -113,7 +113,7 @@ module.exports = {
         outro = Game.expandText (outro, [game.player1.name, game.player2.name], role)
         return { outro: outro,
                  verb: verb,
-                 self: { mood: selfMood, reward: cash },
+                 self: { mood: selfMood },
                  other: { id: other.id, name: other.name, mood: otherMood } }
     },
 };

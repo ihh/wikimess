@@ -849,7 +849,7 @@ var BigHouse = (function() {
 
         showOutcome: function() {
             var bh = this
-            this.updatePlayerCash (this.playerCash + this.outcome.self.reward)
+            this.updatePlayerCash (this.playerCash)
             this.updatePlayerMood (this.outcome.self.mood)
             this.updateOpponentMood (this.outcome.other.id, this.outcome.other.mood)
 
@@ -888,6 +888,7 @@ var BigHouse = (function() {
             case "move":
                 if (this.page == 'game' && this.gameID == msg.data.game) {
                     this.outcome = msg.data.outcome
+		    this.playerCash = msg.data.self.cash
                     this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
                     this.gameOver = msg.data.finished
                     this.showOutcome()

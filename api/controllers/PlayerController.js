@@ -129,7 +129,7 @@ module.exports = {
                                                              other: role == 1 ? outcome.move2 : outcome.move1 },
                                                    waiting: false,
                                                    outcome: Outcome.forRole (game, outcome, role),
-                                                   cash: updatedPlayer.cash }
+                                                   self: { cash: updatedPlayer.cash } }
                                  var opponentMsg = { message: "move",
                                                      game: game.id,
                                                      finished: updatedGame.finished ? true : false,
@@ -138,7 +138,7 @@ module.exports = {
                                                                other: move },
                                                      waiting: false,
                                                      outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
-                                                     cash: updatedOpponent.cash }
+                                                     self: { cash: updatedOpponent.cash } }
                                  if (req.isSocket)
                                      Player.subscribe (req, [player.id])
                                  Player.message (opponent.id, opponentMsg)
