@@ -822,10 +822,10 @@ var BigHouse = (function() {
             else {
                 this.musicType = type
                 if (this.music) {
-                    this.music.on ('fade', function() {
+                    this.music.once ('fade', function() {
                         bh.startMusic (type, volume)
                     })
-                    this.music.fade (this.currentMusicVolume, 0, 500)
+                    this.music.fade (this.currentMusicVolume, 0, 5000)
                 } else
                     this.startMusic (type, volume)
             }
