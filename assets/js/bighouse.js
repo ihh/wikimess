@@ -215,27 +215,22 @@ var BigHouse = (function() {
                 this.lastMood = 'happy'
             this.container
                 .empty()
-                .append ($('<div class="statusbar">')
-                         .append (this.playerMoodDiv = $('<div class="leftmood">'))
-                         .append ($('<div class="leftstatus">')
-                                  .append ($('<span>')
-                                           .text (this.playerName)))
-                         .append ($('<div class="midstatus">')
-                                  .append (this.playerCashDiv = $('<span>'))))
+                .append (this.makePageTitle ("Hi " + this.playerName))
                 .append (this.menuDiv = $('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Play game', this.joinGame))
                                   .append (this.makeListLink ('Settings', this.showSettingsPage))
                                   .append (this.makeListLink ('Log out', this.doLogout))))
-            
-            this.REST_getPlayerStats (this.playerID)
-                .done (function (data) {
-                    bh.playerMoodDiv
-		        .html (bh.makeMoodImage (bh.playerID, bh.lastMood))
-                    bh.playerCashDiv.text ("Score: $" + data.cash)
-                })
         },
 
+        makePageTitle: function (text) {
+            return $('<div class="statusbar">')
+                .append ($('<div class="midstatus">')
+                         .append ($('<span>')
+                                  .html ($('<big>')
+                                         .text (text))))
+        },
+        
 	// log out
         doLogout: function() {
             var bh = this
@@ -250,7 +245,7 @@ var BigHouse = (function() {
             this.page = 'settings'
             this.container
                 .empty()
-                .append ($('<div class="inputbar">'))
+                .append (this.makePageTitle ("Settings"))
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Upload photos', this.showUploadPage))
@@ -266,11 +261,7 @@ var BigHouse = (function() {
             var soundInput, musicInput
             this.container
                 .empty()
-                .append ($('<div class="statusbar">')
-			 .append($('<div class="midstatus">')
-				 .append($('<span>')
-					 .append($('<big>')
-						 .text ("Audio settings")))))
+                .append (this.makePageTitle ("Audio settings"))
                 .append ($('<div class="menubar">')
                          .append ($('<div class="card">')
                                   .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
@@ -303,11 +294,7 @@ var BigHouse = (function() {
             this.moodDiv = []
             this.container
                 .empty()
-                .append ($('<div class="statusbar">')
-			 .append($('<div class="midstatus">')
-				 .append($('<span>')
-					 .append($('<big>')
-						 .text ("Upload photos")))))
+                .append (this.makePageTitle ("Upload photos"))
                 .append ($('<div class="menubar">')
 			 .append ($('<span>')
 				  .text("Select one of the images below to upload a photo"))
