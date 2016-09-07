@@ -594,13 +594,8 @@ var BigHouse = (function() {
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
                                       .append (this.stackList = $('<ul class="stack">'))
-                                      .append ($('<div class="choicebar">')
-                                               .append (this.choiceDiv = $('<div>')
-                                                        .append (this.choice1Div = $('<div class="choice1">'))
-                                                        .append (this.choice2Div = $('<div class="choice2">')))
-                                               .append (this.nextDiv = $('<div>')
-                                                        .append (this.next1Div = $('<div class="choice1">'))
-                                                        .append (this.next2Div = $('<div class="choice2">'))))))
+                                      .append (this.choiceBar = $('<div class="choicebar">')
+                                               .append (this.choiceDiv = $('<div>')))))
                     .append (this.moodBar = $('<div class="moodbar">'))
 
 		this.moods.forEach (function (mood, m) {
@@ -624,20 +619,19 @@ var BigHouse = (function() {
                                                   isThrowOut: isThrowOut })
 
                 var gameOverCardListItem = bh.createCardListItem ($('<span>').text ("Game Over"), 'gameover')
-                this.dealCard (gameOverCardListItem, function() {
-                    bh.playSound ('gameover')
-                    bh.showPlayPage()
-                }, undefined, true)
+                this.dealCard ({ listItem: gameOverCardListItem,
+				 swipe: function() {
+				     bh.playSound ('gameover')
+				     bh.showPlayPage()
+				 },
+				 silent: true })
             }
 
-            this.revealChoice()
             this.loadGameCard()
         },
 
         loadGameCard: function (gameCardDealtCallback) {
             gameCardDealtCallback = gameCardDealtCallback || function(){}
-            this.choice1Div.empty()
-            this.choice2Div.empty()
             if (this.gameOver)
                 gameCardDealtCallback()
             else {
@@ -662,10 +656,11 @@ var BigHouse = (function() {
                             bh.waitCardListItem = bh.createCardListItem ($('<span>').text ("Waiting for other player"), 'waitcard')
                             
                             var cardListItem = bh.createCardListItem ($('<span>').html (data.intro), 'verb-' + data.verb)
-                            var card = bh.dealCard (cardListItem, makeMoveC, makeMoveD)
-
-                            bh.choice1Div.append (bh.makeLink ("← " + data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
-                            bh.choice2Div.append (bh.makeLink (data.hintc + " →", bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
+                            var card = bh.dealCard ({ listItem: cardListItem,
+						      swipeRight: makeMoveC,
+						      swipeLeft: makeMoveD,
+						      rightHint: data.hintc, 
+						      leftHint: data.hintd })
 
                             gameCardDealtCallback()
                         }
@@ -680,9 +675,11 @@ var BigHouse = (function() {
             return listItem
         },
         
-        addCard: function (listItem, rightCallback, leftCallback, silent) {
-            rightCallback = rightCallback || function() { }
-            leftCallback = leftCallback || rightCallback
+        addCard: function (config) {
+	    var listItem = config.listItem
+            var rightCallback = config.swipeRight || function() { }
+            var leftCallback = config.swipeLeft || function() { }
+	    var silent = config.silent
             var bh = this
             var card = this.stack.createCard (listItem[0])
             card.on ('throwoutright', function () {
@@ -700,8 +697,34 @@ var BigHouse = (function() {
             return card
         },
 
-        dealCard: function (listItem, rightCallback, leftCallback, silent) {
-            var card = this.addCard (listItem, rightCallback, leftCallback, silent)
+        dealCard: function (config) {
+	    var newChoiceDiv, oldChoiceDiv = this.choiceDiv
+	    oldChoiceDiv.hide()
+	    this.choiceBar
+                .append (newChoiceDiv = $('<div>'))
+	    this.choiceDiv = newChoiceDiv
+	    var wrapSwipeCallback = function (callback) {
+		return function() {
+		    newChoiceDiv.remove()
+		    oldChoiceDiv.show()
+		    this.choiceDiv = oldChoiceDiv
+		    callback.call (this)
+		}
+	    }
+            config.swipeRight = wrapSwipeCallback (config.swipeRight || config.swipe)
+            config.swipeLeft = wrapSwipeCallback (config.swipeLeft || config.swipe || config.swipeRight)
+            var card = this.addCard (config)
+	    var rightHint = config.rightHint || config.hint
+	    var leftHint = config.leftHint || config.hint || config.rightHint
+	    if (rightHint)
+                newChoiceDiv
+		.append ($('<div class="choice1">')
+			 .append (this.makeLink ("← " + leftHint,
+						 this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT))))
+                .append ($('<div class="choice2">')
+			 .append (this.makeLink (rightHint + " →",
+						 this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT))))
+
             card.throwIn (-600, -100)
             return card
         },
@@ -710,13 +733,9 @@ var BigHouse = (function() {
             listItem.prop('disabled',true)
             listItem.fadeOut (500, function() { listItem.remove() })
         },
-        
-        moveCardToTop: function (listItem) {
-            this.stackList.append (listItem)
-        },
 
         throwDummyCard: function (listItem) {
-            this.addCard(listItem,undefined,undefined,true).throwOut()
+            this.addCard ({ listItem: listItem, silent: true }).throwOut()
         },
         
         updatePlayerCash: function (cash) {
@@ -758,12 +777,6 @@ var BigHouse = (function() {
             var bh = this
             return function() {
                 bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
-                    .done (function (data) {
-                        if (data.waiting) {
-                            bh.choice1Div.empty()
-                            bh.choice2Div.empty()
-                        }
-                    })
             }
         },
         
@@ -793,28 +806,17 @@ var BigHouse = (function() {
                 .addClass('outcome-default')
                 .html($('<span>').html (this.outcome.outro))
 
-            this.choiceDiv.hide()
-            this.nextDiv.show()
-
             this.throwDummyCard (this.waitCardListItem)
 
             this.loadGameCard (function () {
                 if (bh.outcome.verb)
                     bh.playSound (bh.outcome.verb)
                 
-                var card = bh.dealCard (outcomeCardListItem, bh.revealChoice)
-
-                var nextFunc = bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)
-                bh.next1Div.html (bh.makeLink ("← Next", nextFunc))
-                bh.next2Div.html (bh.makeLink ("Next →", nextFunc))
+                var card = bh.dealCard ({ listItem: outcomeCardListItem,
+					  hint: "Next" })
             })
         },
 
-        revealChoice: function() {
-            this.choiceDiv.show()
-            this.nextDiv.hide()
-        },
-        
         cardThrowFunction: function (card, direction) {
             var bh = this
             return function() {
