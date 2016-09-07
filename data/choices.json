@@ -1,10 +1,10 @@
 [
     {
 	"name": "root",
-	"intro":"Some intro text for the root choice",
+	"intro":"Some intro text for the root choice // This is the choice",
 	"root": true,
-	"cc": {"outro":"Both win","cash":10},
-	"cd": {"outro":"$player1 is the sucker","cash2":20},
-	"dd": {"outro":"Both lose","next":"root"}
+	"cc": {"outro":"Both win // yay!!! // Co-operation is great","cash":10},
+	"cd": {"outro":"$player1 is the sucker // Sorry","cash2":20},
+	"dd": {"outro":"Both lose // Too bad!","next":"root"}
     }
 ]

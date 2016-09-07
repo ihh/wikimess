@@ -34,7 +34,7 @@ module.exports = {
           defaultsTo: 1
       },
 
-      outro: { type: 'string', required: true },
+      outro: { type: 'string' },
       outro2: { type: 'string' },
 
       // game state updates
