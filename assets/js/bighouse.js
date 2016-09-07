@@ -145,7 +145,7 @@ var BigHouse = (function() {
                 .append ($('<div class="menubar">')
                          .append ($('<div>')
                                   .append ($('<ul>')
-                                           .append (this.makeListLink ('Log in', this.doLogin))
+                                           .append (this.makeListLink ('Log in', this.doReturnLogin))
                                            .append (this.makeListLink ('Create player', this.createPlayer)))))
             if (this.playerName)
                 this.nameInput.val (this.playerName)
@@ -172,8 +172,16 @@ var BigHouse = (function() {
             localStorage.setItem (this.localStorageKey,
 				  JSON.stringify (this.localStorage))
         },
-        
-        doLogin: function() {
+
+        doReturnLogin: function() {
+            return this.doLogin (this.showPlayPage)
+        },
+
+        doInitialLogin: function() {
+            return this.doLogin (this.showInitialUploadPage)
+        },
+
+        doLogin: function (showNextPage) {
             var bh = this
             if (this.validatePlayerName())
                 this.REST_postLogin (this.playerName, this.playerPassword)
@@ -184,7 +192,7 @@ var BigHouse = (function() {
                         bh.selectSound.stop()
                         bh.playSound ('login')
 			bh.playerID = data.player.id
-			bh.showPlayPage()
+                        showNextPage.call(bh)
 		    }
                 })
                 .fail (function (err) {
@@ -199,7 +207,7 @@ var BigHouse = (function() {
                 .done (function (data) {
                     bh.selectSound.stop()
                     bh.playSound ('login')
-		    bh.doLogin()
+		    bh.doInitialLogin()
                 })
                 .fail (function (err) {
                     bh.showModalWebError (err)
@@ -264,7 +272,7 @@ var BigHouse = (function() {
                 .append (this.makePageTitle ("Settings"))
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
-                                  .append (this.makeListLink ('Upload photos', this.showUploadPage))
+                                  .append (this.makeListLink ('Upload photos', this.showSettingsUploadPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Back', this.showPlayPage))))
         },
@@ -304,7 +312,16 @@ var BigHouse = (function() {
         },
         
         // avatar upload page
-        showUploadPage: function() {
+        showSettingsUploadPage: function() {
+            this.showUploadPage ("Select one of the images below to upload a new photo", "Back", this.showSettingsPage, false)
+        },
+
+        showInitialUploadPage: function() {
+            this.showUploadPage ("Take a selfie for each of the four moods shown below, so other players can see how you feel.",
+                                 "No, I'm too shy", this.showPlayPage, true)
+        },
+
+        showUploadPage: function (uploadText, nextPageText, showNextPage, transitionWhenUploaded) {
             var bh = this
 
             this.page = 'upload'
@@ -314,19 +331,33 @@ var BigHouse = (function() {
                 .append (this.makePageTitle ("Upload photos"))
                 .append ($('<div class="menubar">')
 			 .append ($('<span>')
-				  .text("Select one of the images below to upload a photo"))
+				  .text(uploadText))
                          .append ($('<ul>')
-                                  .append (this.makeListLink ('Back', this.showSettingsPage))))
+                                  .append (this.makeListLink (nextPageText, showNextPage))))
+                .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="moodbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
 
+            var nUploads = 0, moodUploaded = {}
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
+		var moodSlugClass = "moodslug" + (m+1)
 		var img = bh.makeMoodImage (bh.playerID, mood)
 		var div = $('<div>')
 		    .addClass(moodClass)
 		    .html (img)
-		div.on ('click', bh.uploadMoodPhotoFunction (mood, div))
+                var uploadFunc = bh.uploadMoodPhotoFunction (mood, div, function() {
+                    if (!moodUploaded[mood]) {
+                        moodUploaded[mood] = true
+                        if (++nUploads == bh.moods.length && transitionWhenUploaded)
+                            showNextPage.call(bh)
+                    }
+                })
+		div.on ('click', uploadFunc)
+                bh.moodSlugBar.append ($('<div>')
+                                       .addClass(moodSlugClass)
+                                       .text(mood)
+                                       .on('click', uploadFunc))
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
             })
@@ -341,7 +372,7 @@ var BigHouse = (function() {
 	    this.forceImgReload (this.REST_urlPlayerAvatar (id, mood))
 	},
 
-	uploadMoodPhotoFunction: function (mood, div) {
+	uploadMoodPhotoFunction: function (mood, div, uploadedCallback) {
 	    var bh = this
 	    return function (clickEvt) {
                 bh.playSound (mood)
@@ -360,6 +391,7 @@ var BigHouse = (function() {
 				div.html (bh.makeMoodImage (bh.playerID, mood))
 				// this, however, should do it
 				bh.reloadMoodImage (bh.playerID, mood)
+                                uploadedCallback()
 			    })
 			    .fail (function (err) {
 				bh.showModalWebError (err)
@@ -558,14 +590,14 @@ var BigHouse = (function() {
                                                .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage, 'gameover')))))
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
-                                      .append (this.stackList = $('<ul class="stack">'))))
-                    .append ($('<div class="choicebar">')
-                             .append (this.choiceDiv = $('<div>')
-                                      .append (this.choice1Div = $('<div class="choice1">'))
-                                      .append (this.choice2Div = $('<div class="choice2">')))
-                             .append (this.nextDiv = $('<div>')
-                                      .append (this.next1Div = $('<div class="choice1">'))
-                                      .append (this.next2Div = $('<div class="choice2">'))))
+                                      .append (this.stackList = $('<ul class="stack">'))
+                                      .append ($('<div class="choicebar">')
+                                               .append (this.choiceDiv = $('<div>')
+                                                        .append (this.choice1Div = $('<div class="choice1">'))
+                                                        .append (this.choice2Div = $('<div class="choice2">')))
+                                               .append (this.nextDiv = $('<div>')
+                                                        .append (this.next1Div = $('<div class="choice1">'))
+                                                        .append (this.next2Div = $('<div class="choice2">'))))))
                     .append (this.moodBar = $('<div class="moodbar">'))
 
 		this.moods.forEach (function (mood, m) {
