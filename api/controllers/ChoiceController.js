@@ -66,8 +66,7 @@ module.exports = {
                                 outcome.next = [outcome.next]
                             outcomes.push (outcome)
                         })
-                    } else
-                        err = new Error ("Choice does not have any outcomes for (" + move1 + "," + move2 + ")")
+                    }
                 }
             })
         })

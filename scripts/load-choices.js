@@ -27,7 +27,12 @@ var urlPrefix = opt.options.root || defaultUrlPrefix
 var choiceFilename = opt.options.choices || defaultChoiceFilename
 var choiceJson = readJsonFileSync (choiceFilename)
 
-choiceJson.forEach (function (choice) {
+function postChoice (n) {
+    if (n >= choiceJson.length)
+	return
+
+    var choice = choiceJson[n]
+    console.log (choice.name)
 
     var post_data = JSON.stringify (choice)
 
@@ -47,14 +52,16 @@ choiceJson.forEach (function (choice) {
 	res.setEncoding('utf8');
 	res.on('data', function (chunk) {
             console.log('Response: ' + chunk);
+	    postChoice (n+1)
 	});
     });
 
     // post the data
     post_req.write(post_data);
     post_req.end();
-    
-})
+}
+
+postChoice(0)
 
 
 function readJsonFileSync (filename, alternateParser) {

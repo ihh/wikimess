@@ -34,7 +34,7 @@ module.exports = {
           defaultsTo: 1
       },
 
-      outro: { type: 'string' },
+      outro: { type: 'string' },  // if empty, will be skipped by client
       outro2: { type: 'string' },
 
       // game state updates

@@ -5,6 +5,10 @@
 	"root": true,
 	"cc": {"outro":"Both win // yay!!! // Co-operation is great","cash":10},
 	"cd": {"outro":"$player1 is the sucker // Sorry","cash2":20},
-	"dd": {"outro":"Both lose // Too bad!","next":"root"}
+	"dd": {"outro":"Both lose // Too bad!","next":"auto"}
+    },
+    {
+	"name": "auto",
+	"cc": {"next":["root","root"]}
     }
 ]

@@ -148,86 +148,127 @@ module.exports = {
                 error (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
             else {
                 var update = {}
-                update["move" + role] = move
+		var moveAttr = "move" + role
+                update[moveAttr] = game[moveAttr] = move
                 Game.update ( { id: game.id }, update, function (err, updated) {
                     if (err)
                         error (err)
                     else {
                         if (opponentMove)
-                            Choice.randomOutcome ({ choice: game.current.id,
-                                                    move1: role == 1 ? move : opponentMove,
-                                                    move2: role == 1 ? opponentMove : move },
-                                                  function (err, outcome) {
-                                                      if (err)
-                                                          error (err)
-                                                      else if (!outcome)
-                                                          error (new Error ("No outcome found"))
-                                                      else {
-                                                          var future = outcome.next
-                                                          if (!outcome.flush)
-                                                              future = future.concat (game.future)
-                                                          // prepare a function to update the state of everything
-                                                          var updateGame = function (currentChoiceID, futureChoiceNames) {
-                                                              // update game state
-                                                              Game.update ( { id: game.id },
-                                                                            { move1: undefined,
-                                                                              move2: undefined,
-                                                                              moves: moveNumber,
-                                                                              mood1: Outcome.mood1 (outcome),
-                                                                              mood2: Outcome.mood2 (outcome),
-                                                                              current: currentChoiceID,
-                                                                              future: futureChoiceNames,
-                                                                              finished: currentChoiceID ? false : true
-                                                                            },
-                                                                        function (err, updatedGames) {
-                                                                            if (err)
-                                                                                error (err)
-                                                                            else if (updatedGames.length != 1)
-                                                                                error ("Couldn't update Game")
-                                                                            else {
-                                                                                // update player
-                                                                                Player.update ( { id: player.id },
-                                                                                                { cash: player.cash + (role == 1 ? outcome.cash1 : outcome.cash2) },
-                                                                                                function (err, updatedPlayers) {
-                                                                                                    if (err)
-                                                                                                        error (err)
-                                                                                                    else if (updatedPlayers.length != 1)
-                                                                                                        error ("Couldn't update player")
-                                                                                                    else {
-                                                                                                        // update opponent
-                                                                                                        Player.update ( { id: opponent.id },
-                                                                                                                        { cash: opponent.cash + (role == 1 ? outcome.cash2 : outcome.cash1) },
-                                                                                                                        function (err, updatedOpponents) {
-                                                                                                                            if (err)
-                                                                                                                                error (err)
-                                                                                                                            else if (updatedOpponents.length != 1)
-                                                                                                                                error ("Couldn't update opponent")
-                                                                                                                            else
-                                                                                                                                gotOutcome (outcome, updatedGames[0], updatedPlayers[0], updatedOpponents[0])
-                                                                                                                        })
-                                                                                                    }
-                                                                                                })
-                                                                            }
-                                                                        })
-                                                          }
-                                                          // find the ID of the next scene, if there is one
-                                                          if (future.length)
-                                                              Choice.findOne ({ name:future[0] }).exec (function (err, choice) {
-                                                                  if (err)
-                                                                      error (err)
-                                                                  else
-                                                                      updateGame (choice.id, future.slice(1))
-                                                              })
-                                                          else
-                                                              updateGame (null, [])
-                                                      }
-                                                  })
+			    Game.applyRandomOutcome (game,
+						     function (outcome, updatedGames, updatedPlayer1, updatedPlayer2) {
+							 if (role == 1)
+							     gotOutcome (outcome, updatedGames, updatedPlayer1, updatedPlayer2)
+							 else
+							     gotOutcome (outcome, updatedGames, updatedPlayer2, updatedPlayer1)
+						     },
+						     error)
                         else
                             playerWaiting()
                     }
                 })
             }
         }
+    },
+
+    applyRandomOutcome: function (game, gotOutcome, error) {
+        Choice.randomOutcome
+	({ choice: game.current.id,
+           move1: game.move1,
+           move2: game.move2 },
+         function (err, outcome) {
+             if (err)
+                 error (err)
+             else if (!outcome)
+                 error (new Error ("No outcome found"))
+             else {
+                 var future = outcome.next
+                 if (!outcome.flush)
+                     future = future.concat (game.future)
+                 // prepare a function to update the state of everything
+                 var updateGame = function (currentChoice, futureChoiceNames) {
+		     var currentChoiceID = currentChoice ? currentChoice.id : null
+		     var currentChoiceIntro = currentChoice ? currentChoice.intro : null
+		     var autoExpandCurrentChoice = (currentChoiceID && !(currentChoiceIntro && /\S/.test(currentChoiceIntro)))
+                     // update game state
+                     Game.update
+		     ( { id: game.id },
+                       { move1: undefined,
+                         move2: undefined,
+                         moves: game.moves + 1,
+                         mood1: Outcome.mood1 (outcome),
+                         mood2: Outcome.mood2 (outcome),
+                         current: currentChoiceID,
+                         future: futureChoiceNames,
+                         finished: currentChoiceID ? false : true
+                       },
+                       function (err, updatedGames) {
+                           if (err)
+                               error (err)
+                           else if (updatedGames.length != 1)
+                               error ("Couldn't update Game")
+                           else {
+                               // update player1
+                               Player.update
+			       ( { id: game.player1.id },
+                                 { cash: game.player1.cash + outcome.cash1 },
+                                 function (err, updatedPlayer1s) {
+                                     if (err)
+                                         error (err)
+                                     else if (updatedPlayer1s.length != 1)
+                                         error ("Couldn't update player 1")
+                                     else {
+                                         // update player2
+                                         Player.update
+					 ( { id: game.player2.id },
+                                           { cash: game.player2.cash + outcome.cash2 },
+                                           function (err, updatedPlayer2s) {
+                                               if (err)
+                                                   error (err)
+                                               else if (updatedPlayer2s.length != 1)
+                                                   error ("Couldn't update player 2")
+                                               else {
+						   if (!autoExpandCurrentChoice)
+                                                       gotOutcome (outcome,
+								   updatedGames[0],
+								   updatedPlayer1s[0],
+								   updatedPlayer2s[0])
+						   else  // auto-expand: refresh game and recurse
+						       Game.find ({ id: game.id })
+						       .populate ('player1')
+						       .populate ('player2')
+						       .populate ('current')
+						       .exec (function (err, refreshedGames) {
+							   if (err)
+							       error(err)
+							   else if (refreshedGames.length != 1)
+							       error(new Error("Couldn't reload game"))
+							   else
+							       Game.applyRandomOutcome (refreshedGames[0],
+											function (dummyOutcome, games, player, opp) {
+											    gotOutcome (outcome, games, player, opp)  // discard the dummy outcome text of this auto-expansion
+											},
+											error)
+						       })
+						   }
+                                           })
+                                     }
+                                 })
+                           }
+                       })
+                 }
+                 // find the ID of the next scene, if there is one
+                 if (future.length)
+                     Choice.findOne ({ name:future[0] }).exec (function (err, choice) {
+                         if (err)
+                             error (err)
+                         else
+                             updateGame (choice, future.slice(1))
+                     })
+                 else
+                     updateGame (null, [])
+             }
+         })
     },
 
     updateMood: function (info, success, error) {

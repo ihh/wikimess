@@ -25,7 +25,7 @@ module.exports = {
           defaultsTo: false
       },
 
-      intro: { type: 'string', required: true },
+      intro: { type: 'string' },
       intro2: { type: 'string' },
 
       verb: {
@@ -54,11 +54,12 @@ module.exports = {
   },
 
     moveOutcomes: function (info, cb) {
-        Outcome
-            .find ({ choice: info.choice,
-                     move1: info.move1,
-                     move2: info.move2 })
-            .exec (function (err, outcomes) {
+        var query = Outcome.find ({ choice: info.choice })
+	if (info.move1)
+	    query.where ({ move1: info.move1 })
+	if (info.move2)
+	    query.where ({ move2: info.move2 })
+        query.exec (function (err, outcomes) {
                 if (err)
                     cb (err)
                 else
