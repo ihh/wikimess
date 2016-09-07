@@ -388,7 +388,10 @@ var BigHouse = (function() {
 			    .then (function (data) {
 				// refresh image
 				// this probably won't work unless cache is disabled
-				div.html (bh.makeMoodImage (bh.playerID, mood))
+                                var newMoodImg = bh.makeMoodImage (bh.playerID, mood)
+                                newMoodImg.on ('load', function() {
+				    div.html (newMoodImg)
+                                })
 				// this, however, should do it
 				bh.reloadMoodImage (bh.playerID, mood)
                                 uploadedCallback()
@@ -723,8 +726,11 @@ var BigHouse = (function() {
         updatePlayerMood: function (mood) {
             var bh = this
             this.lastMood = mood
-            this.playerMoodDiv
-		.html (this.makeMoodImage (this.playerID, mood))
+            var newMoodImg = this.makeMoodImage (this.playerID, mood)
+            newMoodImg.on ('load', function() {
+                bh.playerMoodDiv
+		    .html (newMoodImg)
+            })
             for (var m = 0; m < this.moods.length; ++m) {
                 var newMood = this.moods[m]
                 this.moodDiv[m].off()
@@ -740,9 +746,12 @@ var BigHouse = (function() {
         },
 
         updateOpponentMood: function (id, mood) {
-            this.opponentMoodDiv
-		.empty()
-		.append (this.makeMoodImage (id, mood))
+            var bh = this
+            var newMoodImg = this.makeMoodImage (id, mood)
+            newMoodImg.on ('load', function() {
+                bh.opponentMoodDiv
+		    .html (newMoodImg)
+            })
         },
 
         makeMoveFunction: function (moveNumber, choice) {
