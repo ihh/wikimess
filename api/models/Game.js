@@ -237,9 +237,7 @@ module.exports = {
         var newMood = info.mood
         var moodAttr = "mood" + role
         var oldMood = game[moodAttr]
-        if (game.finished)
-            error (new Error ("Can't change mood for move " + moveNumber + " in game " + game.id + " since game is finished"))
-        else if (game.moves + 1 != moveNumber)
+        if (game.moves + 1 != moveNumber)
             error (new Error ("Can't change mood for move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
         else if (oldMood == newMood)
             success (null)

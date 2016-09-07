@@ -20,7 +20,7 @@ var BigHouse = (function() {
         // default params/data
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
-        moods: ['happy', 'surprised', 'angry', 'sad'],
+        moods: ['happy', 'surprised', 'sad', 'angry'],
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -199,6 +199,8 @@ var BigHouse = (function() {
             var cashDiv
 
             this.page = 'play'
+            if (!this.lastMood)
+                this.lastMood = 'happy'
             this.container
                 .empty()
                 .append ($('<div class="statusbar">')
@@ -216,6 +218,8 @@ var BigHouse = (function() {
             
             this.REST_getPlayerStats (this.playerID)
                 .done (function (data) {
+                    bh.playerMoodDiv
+		        .html (bh.makeMoodImage (bh.playerID, bh.lastMood))
                     bh.playerCashDiv.text ("Score: $" + data.cash)
                 })
         },
@@ -288,6 +292,7 @@ var BigHouse = (function() {
 	uploadMoodPhotoFunction: function (mood, div) {
 	    var bh = this
 	    return function (clickEvt) {
+                bh.lastMood = mood
 		bh.moodFileInput.on ('change', function (fileSelectEvt) {
 		    bh.moodFileInput.off()
 		    var file = this.files[0]
@@ -623,6 +628,7 @@ var BigHouse = (function() {
 
         updatePlayerMood: function (mood) {
             var bh = this
+            this.lastMood = mood
             this.playerMoodDiv
 		.html (this.makeMoodImage (this.playerID, mood))
             for (var m = 0; m < this.moods.length; ++m) {
