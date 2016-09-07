@@ -4,15 +4,20 @@ var BigHouse = (function() {
         $.extend (this, config)
         this.container = $('#'+this.containerID)
             .addClass("bighouse")
-	var ls
+
+	this.localStorage = { playerName: undefined,
+                              musicVolume: .5,
+                              soundVolume: .5 }
 	try {
-	    ls = JSON.parse (localStorage.getItem (this.localStorageKey))
+	    var ls = JSON.parse (localStorage.getItem (this.localStorageKey))
+            $.extend (this.localStorage, ls)
 	} catch (err) {
-	    ls = null
+            // do nothing
 	}
-	if (ls)
-            this.playerName = ls.name
+        $.extend (this, this.localStorage)
+
         this.socket_onPlayer ($.proxy (this.handlePlayerMessage, this))
+        this.changeMusic('menu')
         this.showLoginPage()
     }
 
@@ -151,9 +156,14 @@ var BigHouse = (function() {
                 this.showModalMessage ("Please enter a password")
                 return false
             }
-            localStorage.setItem (this.localStorageKey,
-				  JSON.stringify ({ name: this.playerName }))
+            this.writeLocalStorage ('playerName')
             return true
+        },
+
+        writeLocalStorage: function (key) {
+            this.localStorage[key] = this[key]
+            localStorage.setItem (this.localStorageKey,
+				  JSON.stringify (this.localStorage))
         },
         
         doLogin: function() {
@@ -198,6 +208,8 @@ var BigHouse = (function() {
             var bh = this
             var cashDiv
 
+            this.changeMusic('menu')
+            
             this.page = 'play'
             if (!this.lastMood)
                 this.lastMood = 'happy'
@@ -242,9 +254,47 @@ var BigHouse = (function() {
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Upload photos', this.showUploadPage))
+                                  .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Back', this.showPlayPage))))
         },
 
+        // settings
+        showAudioPage: function() {
+            var bh = this
+
+            this.page = 'audio'
+            var soundInput, musicInput
+            this.container
+                .empty()
+                .append ($('<div class="statusbar">')
+			 .append($('<div class="midstatus">')
+				 .append($('<span>')
+					 .append($('<big>')
+						 .text ("Audio settings")))))
+                .append ($('<div class="menubar">')
+                         .append ($('<div class="card">')
+                                  .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
+                                  .append ($('<span>').text("Sound FX volume")))
+                         .append ($('<div class="card">')
+                                  .append (musicInput = $('<input type="range" value="50" min="0" max="100">'))
+                                  .append ($('<span>').text("Music volume")))
+                         .append ($('<ul>')
+                                  .append (this.makeListLink ('Back', this.showSettingsPage))))
+
+            soundInput.val (this.soundVolume * 100)
+            soundInput.on ('input', function() {
+                bh.soundVolume = soundInput.val() / 100
+                bh.writeLocalStorage ('soundVolume')
+            })
+
+            musicInput.val (this.musicVolume * 100)
+            musicInput.on ('input', function() {
+                bh.musicVolume = musicInput.val() / 100
+                bh.changeMusic (undefined, 1)
+                bh.writeLocalStorage ('musicVolume')
+            })
+        },
+        
         // avatar upload page
         showUploadPage: function() {
             var bh = this
@@ -258,7 +308,7 @@ var BigHouse = (function() {
 				 .append($('<span>')
 					 .append($('<big>')
 						 .text ("Upload photos")))))
-                .append (this.menuDiv = $('<div class="menubar">')
+                .append ($('<div class="menubar">')
 			 .append ($('<span>')
 				  .text("Select one of the images below to upload a photo"))
                          .append ($('<ul>')
@@ -479,6 +529,8 @@ var BigHouse = (function() {
         // game pages
         showGamePage: function() {
             var bh = this
+
+            this.changeMusic('game')
 
             if (this.page == 'game') {
                 // page is already initialized
@@ -748,8 +800,40 @@ var BigHouse = (function() {
                 break
             }
         },
+
+        // music
+        startMusic: function (type, volume) {
+            this.currentMusicVolume = volume
+            this.music = new Howl({
+                src: ['/sounds/' + type + '-music.mp3'],
+                autoplay: true,
+                loop: true,
+                volume: this.currentMusicVolume
+            });
+            this.music.play()
+        },
+
+        changeMusic: function (type, volume) {
+            type = type || this.musicType
+            volume = (volume || 1) * this.musicVolume
+            var bh = this
+            if (this.musicType == type)
+                this.music.volume (this.currentMusicVolume = volume)
+            else {
+                this.musicType = type
+                if (this.music) {
+                    this.music.on ('fade', function() {
+                        bh.startMusic (type, volume)
+                    })
+                    this.music.fade (this.currentMusicVolume, 0, 500)
+                } else
+                    this.startMusic (type, volume)
+            }
+        },
+
     })
-    
+
+    // end of module
     return proto
 }) ()
 

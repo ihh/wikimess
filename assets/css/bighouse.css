@@ -303,7 +303,12 @@ body {
     justify-content: center;
 }
 
-.bighouse .menubar li {
+.bighouse .menubar input {
+    width: 100%;
+}
+
+.bighouse .menubar li,
+.bighouse .menubar .card {
     list-style: none;
 
     background: white;
