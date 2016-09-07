@@ -33,7 +33,7 @@ body {
 .bighouse .statusbar {
 /*    background-color: red; */
     width: 100vw;
-    height: 24vw;
+    height: 28vw;
 }
 
 .bighouse .statusbar .leftmood {
@@ -47,21 +47,21 @@ body {
 
 .bighouse .statusbar .leftstatus {
 /*    background-color: brown; */
-    width: 16vw;
-    height: 8vw;
+    width: 24vw;
+    height: 4vw;
     position: absolute;
-    left: 24vw;
-    top: 16vw;
+    left: 0vw;
+    top: 24vw;
     display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    padding-left: 4px;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4px;
 }
 
 .bighouse .statusbar .midstatus {
 /*    background-color: crimson; */
     width: 50vw;
-    height: 8vw;
+    height: 16vw;
     position: absolute;
     left: 25vw;
     top: 8vw;
@@ -72,15 +72,15 @@ body {
 
 .bighouse .statusbar .rightstatus {
 /*    background-color: darkred; */
-    width: 16vw;
-    height: 8vw;
+    width: 24vw;
+    height: 4vw;
     position: absolute;
-    left: 60vw;
-    top: 16vw;
+    left: 76vw;
+    top: 24vw;
     display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-    padding-right: 4px;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4px;
 }
 
 .bighouse .statusbar .quit {
@@ -89,9 +89,9 @@ body {
     height: 8vw;
     position: absolute;
     left: 40vw;
-    top: 0vw;
+    top: 2vw;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
 }
 
@@ -202,6 +202,17 @@ body {
     justify-content: center;
 }
 
+.bighouse .choicebar a,
+.bighouse .statusbar a {
+    text-decoration: none;
+    color: white;
+    background: #214521;
+    padding: 4px 8px 4px 8px;
+    border-radius: 4px;
+    box-shadow: 2px 2px 1px 1px #2b3b2b;
+    border: 1px solid rgba(1,1,1,.1);
+}
+
 .bighouse .moodbar {
 /*    background-color: darkorange; */
     width: 100vw;
@@ -242,6 +253,12 @@ body {
     position: absolute;
     left: 77vw;
     bottom: 0vw;
+}
+
+.bighouse img.mood {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
 }
 
 .bighouse .cardbar .cardtable .waitcard {

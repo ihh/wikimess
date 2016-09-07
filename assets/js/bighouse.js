@@ -26,6 +26,7 @@ var BigHouse = (function() {
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
         moods: ['happy', 'surprised', 'sad', 'angry'],
+        musicFadeDelay: 800,
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -102,22 +103,28 @@ var BigHouse = (function() {
         },
 
         // helpers
-        makeLink: function (text, callback) {
+        makeLink: function (text, callback, sfx) {
             var cb = $.proxy (callback, this)
             return $('<a href="#">')
                 .text (text)
                 .on ('click', function (evt) {
+                    if (sfx)
+                        bh.playSound (sfx)
                     evt.preventDefault()
                     cb(evt)
                 })
         },
 
-        makeListLink: function (text, callback) {
+        makeListLink: function (text, callback, sfx) {
+            sfx = sfx || 'select'
+            var bh = this
             var cb = $.proxy (callback, this)
             return $('<li>')
                 .append ($('<span>')
                          .text(text))
                 .on('click', function (evt) {
+                    if (sfx.length)
+                        bh.selectSound = bh.playSound (sfx)
                     cb(evt)
                 })
         },
@@ -174,6 +181,8 @@ var BigHouse = (function() {
 		    if (!data.player)
                         bh.showModalMessage (data.message)
 		    else {
+                        bh.selectSound.stop()
+                        bh.playSound ('login')
 			bh.playerID = data.player.id
 			bh.showPlayPage()
 		    }
@@ -188,6 +197,8 @@ var BigHouse = (function() {
             if (this.validatePlayerName())
                 this.REST_postPlayer (this.playerName, this.playerPassword)
                 .done (function (data) {
+                    bh.selectSound.stop()
+                    bh.playSound ('login')
 		    bh.doLogin()
                 })
                 .fail (function (err) {
@@ -195,12 +206,17 @@ var BigHouse = (function() {
                 })
         },
 
-        showModalMessage: function (msg) {
-            alert (msg)
+        showModalMessage: function (msg, sfx) {
+            sfx = sfx || 'error'
+            if (this.selectSound)
+                this.selectSound.stop()
+            this.playSound(sfx).once ('end', function() {
+                alert (msg)
+            })
         },
 
-        showModalWebError: function (err) {
-            this.showModalMessage (err.status + " " + err.statusText)
+        showModalWebError: function (err, sfx) {
+            this.showModalMessage (err.status + " " + err.statusText, sfx)
         },
         
         // play menu
@@ -218,9 +234,9 @@ var BigHouse = (function() {
                 .append (this.makePageTitle ("Hi " + this.playerName))
                 .append (this.menuDiv = $('<div class="menubar">')
                          .append ($('<ul>')
-                                  .append (this.makeListLink ('Play game', this.joinGame))
+                                  .append (this.makeListLink ('Play game', this.joinGame, 'waiting'))
                                   .append (this.makeListLink ('Settings', this.showSettingsPage))
-                                  .append (this.makeListLink ('Log out', this.doLogout))))
+                                  .append (this.makeListLink ('Log out', this.doLogout, 'logout'))))
         },
 
         makePageTitle: function (text) {
@@ -273,8 +289,9 @@ var BigHouse = (function() {
                                   .append (this.makeListLink ('Back', this.showSettingsPage))))
 
             soundInput.val (this.soundVolume * 100)
-            soundInput.on ('input', function() {
+            soundInput.on ('change', function() {
                 bh.soundVolume = soundInput.val() / 100
+                bh.playSound ('select')
                 bh.writeLocalStorage ('soundVolume')
             })
 
@@ -316,9 +333,7 @@ var BigHouse = (function() {
         },
 
 	makeMoodImage: function (id, mood) {
-	    return $('<img>')
-		.attr ('width', '100%')
-		.attr ('height', '100%')
+	    return $('<img class="mood">')
 		.attr ('src', this.REST_urlPlayerAvatar (id, mood))
 	},
 
@@ -329,6 +344,7 @@ var BigHouse = (function() {
 	uploadMoodPhotoFunction: function (mood, div) {
 	    var bh = this
 	    return function (clickEvt) {
+                bh.playSound (mood)
                 bh.lastMood = mood
 		bh.moodFileInput.on ('change', function (fileSelectEvt) {
 		    bh.moodFileInput.off()
@@ -539,7 +555,7 @@ var BigHouse = (function() {
                              .append (this.opponentMoodDiv = $('<div class="rightmood">'))
                              .append ($('<div class="quit">')
                                       .append ($('<span>')
-                                               .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage)))))
+                                               .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage, 'gameover')))))
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
                                       .append (this.stackList = $('<ul class="stack">'))))
@@ -573,7 +589,10 @@ var BigHouse = (function() {
                                                   isThrowOut: isThrowOut })
 
                 var gameOverCardListItem = bh.createCardListItem ($('<span>').text ("Game Over"), 'gameover')
-                this.dealCard (gameOverCardListItem, this.showPlayPage)
+                this.dealCard (gameOverCardListItem, function() {
+                    bh.playSound ('gameover')
+                    bh.showPlayPage()
+                }, undefined, true)
             }
 
             this.revealChoice()
@@ -610,8 +629,8 @@ var BigHouse = (function() {
                             var cardListItem = bh.createCardListItem ($('<span>').html (data.intro), 'verb-' + data.verb)
                             var card = bh.dealCard (cardListItem, makeMoveC, makeMoveD)
 
-                            bh.choice1Div.append (bh.makeLink (data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
-                            bh.choice2Div.append (bh.makeLink (data.hintc, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
+                            bh.choice1Div.append (bh.makeLink ("← " + data.hintd, bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))
+                            bh.choice2Div.append (bh.makeLink (data.hintc + " →", bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))
 
                             gameCardDealtCallback()
                         }
@@ -626,24 +645,28 @@ var BigHouse = (function() {
             return listItem
         },
         
-        addCard: function (listItem, rightCallback, leftCallback) {
+        addCard: function (listItem, rightCallback, leftCallback, silent) {
             rightCallback = rightCallback || function() { }
             leftCallback = leftCallback || rightCallback
             var bh = this
             var card = this.stack.createCard (listItem[0])
             card.on ('throwoutright', function () {
+                if (!silent)
+                    bh.playSound ('swiperight')
                 rightCallback.call (bh)
                 bh.fadeCard (listItem)
             })
             card.on ('throwoutleft', function () {
+                if (!silent)
+                    bh.playSound ('swipeleft')
                 leftCallback.call (bh)
                 bh.fadeCard (listItem)
             })
             return card
         },
 
-        dealCard: function (listItem, rightCallback, leftCallback) {
-            var card = this.addCard (listItem, rightCallback, leftCallback)
+        dealCard: function (listItem, rightCallback, leftCallback, silent) {
+            var card = this.addCard (listItem, rightCallback, leftCallback, silent)
             card.throwIn (-600, -100)
             return card
         },
@@ -658,7 +681,7 @@ var BigHouse = (function() {
         },
 
         throwDummyCard: function (listItem) {
-            this.addCard(listItem).throwOut()
+            this.addCard(listItem,undefined,undefined,true).throwOut()
         },
         
         updatePlayerCash: function (cash) {
@@ -709,6 +732,7 @@ var BigHouse = (function() {
                 bh.moodBar.prop('disabled',true)
                 bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
+                        bh.playSound (mood)
                         bh.moodBar.prop('disabled',false)
                         bh.updatePlayerMood (mood)
                     })
@@ -734,11 +758,14 @@ var BigHouse = (function() {
             this.throwDummyCard (this.waitCardListItem)
 
             this.loadGameCard (function () {
+                if (bh.outcome.verb)
+                    bh.playSound (bh.outcome.verb)
+                
                 var card = bh.dealCard (outcomeCardListItem, bh.revealChoice)
 
                 var nextFunc = bh.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)
-                bh.next1Div.html (bh.makeLink ("Next", nextFunc))
-                bh.next2Div.html (bh.makeLink ("Next", nextFunc))
+                bh.next1Div.html (bh.makeLink ("← Next", nextFunc))
+                bh.next2Div.html (bh.makeLink ("Next →", nextFunc))
             })
         },
 
@@ -763,6 +790,8 @@ var BigHouse = (function() {
                     // even if they are just on the play page, not waitingToJoin
                     // (we allow play->game transitions because the 2nd player to join gets an immediate message,
                     // before the waitingToJoin page is shown)
+                    this.selectSound.stop()
+                    this.playSound ('gamestart')
                     this.gameID = msg.data.game
                     this.gameOver = false
                     this.showGamePage()
@@ -778,6 +807,7 @@ var BigHouse = (function() {
                 break
             case "mood":
                 if (this.page == 'game' && this.gameID == msg.data.game) {
+                    this.playSound (msg.data.other.mood, .5)
                     this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
                 }
                 break
@@ -788,12 +818,11 @@ var BigHouse = (function() {
             }
         },
 
-        // music
+        // audio
         startMusic: function (type, volume) {
             this.currentMusicVolume = volume
             this.music = new Howl({
                 src: ['/sounds/' + type + '-music.mp3'],
-                autoplay: true,
                 loop: true,
                 volume: this.currentMusicVolume
             });
@@ -809,15 +838,26 @@ var BigHouse = (function() {
             else {
                 this.musicType = type
                 if (this.music) {
+                    this.music.fade (this.currentMusicVolume, 0, this.musicFadeDelay)
                     this.music.once ('fade', function() {
                         bh.startMusic (type, volume)
                     })
-                    this.music.fade (this.currentMusicVolume, 0, 5000)
                 } else
                     this.startMusic (type, volume)
             }
         },
 
+        playSound: function (type, volume) {
+            volume = volume || 1
+            var sound = new Howl ({
+                src: ['/sounds/' + type + '.wav'],
+                autoplay: true,
+                volume: volume * this.soundVolume
+            })
+            sound.play()
+            return sound
+        },
+        
     })
 
     // end of module

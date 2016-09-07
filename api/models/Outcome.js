@@ -64,8 +64,8 @@ module.exports = {
         var move12 = move1 + move2
         switch (move12) {
         case 'cc': return 'happy'
-        case 'cd': return 'surprised'
-        case 'dc': return 'angry'
+        case 'cd': return 'angry'
+        case 'dc': return 'surprised'
         case 'dd': return 'sad'
         default: break
         }
@@ -90,7 +90,7 @@ module.exports = {
             selfMood = this.mood1(outcome)
             otherMood = this.mood2(outcome)
             verb = outcome.verb
-            type = game.move1 + game.move2
+            type = outcome.move1 + outcome.move2
         } else {  // role == 2
             outro = outcome.outro2 || outcome.outro
             cash = outcome.cash2
@@ -99,7 +99,7 @@ module.exports = {
             selfMood = this.mood2(outcome)
             otherMood = this.mood1(outcome)
             verb = outcome.verb2
-            type = game.move2 + game.move1
+            type = outcome.move2 + outcome.move1
         }
         if (!verb) {
             switch (type) {
