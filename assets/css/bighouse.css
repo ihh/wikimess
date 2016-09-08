@@ -22,7 +22,6 @@ body {
 
 /* bighouse container */
 .bighouse {
-/*    background-color: gray; */
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -31,13 +30,11 @@ body {
 
 /* Game view */
 .bighouse .statusbar {
-/*    background-color: red; */
     width: 100vw;
-    height: 28vw;
+    height: 24vw;
 }
 
 .bighouse .statusbar .leftmood {
-/*    background-color: pink; */
     height: 24vw;
     width: 24vw;
     position: absolute;
@@ -46,57 +43,41 @@ body {
 }
 
 .bighouse .statusbar .leftstatus {
-/*    background-color: brown; */
     width: 24vw;
-    height: 4vw;
+    height: 8vw;
     position: absolute;
-    left: 0vw;
-    top: 24vw;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 1px;
-}
-
-.bighouse .statusbar .midstatus {
-/*    background-color: crimson; */
-    width: 50vw;
-    height: 16vw;
-    position: absolute;
-    left: 25vw;
-    top: 8vw;
+    left: 24vw;
+    top: 16vw;
     display: flex;
     align-items: flex-end;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-left: 4px;
 }
 
 .bighouse .statusbar .rightstatus {
-/*    background-color: darkred; */
     width: 24vw;
-    height: 4vw;
+    height: 8vw;
     position: absolute;
-    left: 76vw;
-    top: 24vw;
+    left: 52vw;
+    top: 0vw;
     display: flex;
     align-items: flex-start;
-    justify-content: center;
-    padding-top: 4px;
+    justify-content: flex-end;
+    padding-right: 4px;
 }
 
-.bighouse .statusbar .quit {
-/*    background-color: maroon; */
+.bighouse .statusbar .statuslink {
     width: 20vw;
     height: 8vw;
     position: absolute;
     left: 40vw;
-    top: 2vw;
+    top: 8vw;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .bighouse .statusbar .rightmood {
-/*    background-color: purple; */
     height: 24vw;
     width: 24vw;
     position: absolute;
@@ -105,7 +86,6 @@ body {
 }
 
 .bighouse .cardbar {
-/*    background-color: green; */
     width: 100vw;
     flex-grow: 1;
 
@@ -131,7 +111,6 @@ body {
 }
     
 .bighouse .cardbar .cardtable li {
-/*    background-color: white; */
     width: 70%;
     height: 85%;
     margin: 5% 15% 5% 15%;
@@ -179,14 +158,12 @@ body {
 }
 
 .bighouse .choicebar {
-/*    background-color: lightgreen; */
     width: 100%;
     position: absolute;
     bottom: 0;
 }
 
 .bighouse .choicebar .choice1 {
-/*    background-color: darkseagreen; */
     width: 45vw;
     float: left;
     display: flex;
@@ -198,7 +175,6 @@ body {
 }
 
 .bighouse .choicebar .choice2 {
-/*    background-color: darkolivegreen; */
     width: 45vw;
     float: right;
     display: flex;
@@ -223,13 +199,11 @@ body {
 }
 
 .bighouse .moodbar {
-/*    background-color: darkorange; */
     width: 100vw;
     height: 21vw;
 }
 
 .bighouse .moodbar .mood1 {
-/*    background-color: yellow; */
     height: 21vw;
     width: 21vw;
     position: absolute;
@@ -247,7 +221,6 @@ body {
 }
 
 .bighouse .moodbar .mood3 {
-/*    background-color: lemonchiffon; */
     height: 21vw;
     width: 21vw;
     position: absolute;
@@ -256,7 +229,6 @@ body {
 }
 
 .bighouse .moodbar .mood4 {
-/*    background-color: gold; */
     height: 21vw;
     width: 21vw;
     position: absolute;
@@ -319,7 +291,6 @@ body {
 }
 
 .bighouse .titlebar {
-/*    background-color: red; */
     width: 100vw;
     height: 12vw;
 
@@ -329,7 +300,6 @@ body {
 }
 
 .bighouse .menubar {
-/*    background-color: moccasin; */
     width: 100vw;
     flex-grow: 1;
 
@@ -372,14 +342,12 @@ body {
 }
 
 .bighouse .moodslugbar {
-/*    background-color: lightgreen; */
     width: 100vw;
     height: 6vh;
     position: relative;
 }
 
 .bighouse .moodslugbar .moodslug1 {
-/*    background-color: yellow; */
     width: 21vw;
     position: absolute;
     left: 2vw;
@@ -388,7 +356,6 @@ body {
 }
 
 .bighouse .moodslugbar .moodslug2 {
-/*    background-color: orange; */
     width: 21vw;
     position: absolute;
     left: 27vw;
@@ -397,7 +364,6 @@ body {
 }
 
 .bighouse .moodslugbar .moodslug3 {
-/*    background-color: lemonchiffon; */
     width: 21vw;
     position: absolute;
     left: 52vw;
@@ -406,7 +372,6 @@ body {
 }
 
 .bighouse .moodslugbar .moodslug4 {
-/*    background-color: gold; */
     width: 21vw;
     position: absolute;
     left: 77vw;

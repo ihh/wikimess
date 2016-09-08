@@ -744,12 +744,10 @@ var BigHouse = (function() {
                              .append ($('<div class="leftstatus">')
                                       .append ($('<span>')
                                                .text (this.playerName)))
-                             .append ($('<div class="midstatus">')
-                                      .append (this.playerCashDiv = $('<span>')))
                              .append ($('<div class="rightstatus">')
                                       .append (this.opponentNameDiv = $('<span>')))
                              .append (this.opponentMoodDiv = $('<div class="rightmood">'))
-                             .append ($('<div class="quit">')
+                             .append ($('<div class="statuslink">')
                                       .append ($('<span>')
                                                .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage, 'gameover')))))
                     .append ($('<div class="cardbar">')
@@ -827,7 +825,6 @@ var BigHouse = (function() {
                             bh.moveNumber = data.move
                             bh.playerCash = data.self.cash
 
-                            bh.updatePlayerCash (data.self.cash)
                             bh.updatePlayerMood (data.self.mood)
                             bh.opponentNameDiv.text (data.other.name)
                             bh.updateOpponentMood (data.other.id, data.other.mood)
@@ -953,10 +950,6 @@ var BigHouse = (function() {
 		.throwOut()
         },
         
-        updatePlayerCash: function (cash) {
-            this.playerCashDiv.text ("Score: $" + cash)
-        },
-
         updatePlayerMood: function (mood) {
             var bh = this
             this.lastMood = mood
@@ -1011,7 +1004,6 @@ var BigHouse = (function() {
 
         showOutcome: function() {
             var bh = this
-            this.updatePlayerCash (this.playerCash)
             this.updatePlayerMood (this.outcome.self.mood)
             this.updateOpponentMood (this.outcome.other.id, this.outcome.other.mood)
 
