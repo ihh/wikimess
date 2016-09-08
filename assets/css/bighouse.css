@@ -1,3 +1,4 @@
+/* Orientation-independent (colors, universal layout, etc) */
 html,
 body,
 ul,
@@ -20,7 +21,125 @@ body {
     user-select: none;
 }
 
-/* bighouse container */
+.bighouse .cardbar .cardtable {
+    background: darkgreen;  /* old browsers */
+    background: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
+    box-shadow: 2px 2px 1px 1px #003200;
+}
+
+.bighouse .cardbar .cardtable li {
+    list-style: none;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
+    text-align: center;
+    color: black;
+    font-size: 24px;
+    border: 10px solid rgba(1,1,1,.1);
+    box-sizing: border-box;
+    cursor: default;
+}
+
+.bighouse .cardbar .cardtable li.in-deck:nth-child(4) {
+    top: 2px; transform: translate(4px, 3px) rotate(-2deg);
+}
+
+.bighouse .cardbar .cardtable li.in-deck:nth-child(3) {
+    top: 2px; transform: translate(2px, 2px) rotate(0.4deg);
+}
+
+.bighouse .cardbar .cardtable li.in-deck:nth-child(2) {
+    top: 4px; transform: translate(-4px, -2px) rotate(-1deg);
+}
+
+.bighouse .choicebar a {
+    text-decoration: none;
+    color: #ccc;
+}
+
+.bighouse .statusbar a,
+.bighouse .upload-exit a {
+    text-decoration: none;
+    color: #888;
+    border: 1px solid #888;
+}
+
+.bighouse img.mood {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+}
+
+.bighouse .cardbar .cardtable .waitcard {
+    font-style: italic;
+    background-color: antiquewhite;
+}
+
+.bighouse .cardbar .cardtable .outcome {
+    font-style: italic;
+    background-color: lightcyan;
+}
+
+.bighouse .cardbar .cardtable .gameover {
+    font-style: italic;
+    background-color: antiquewhite;
+    color: brown;
+}
+
+.bighouse .inputbar input[type=text],
+.bighouse .inputbar input[type=password] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    display: block;
+
+    margin: 0;
+    height: 40px;
+    line-height: 40px;
+    font-size: 18px;
+
+    border: 1px solid #444;
+
+    background-color: #333;
+    color: white;
+
+    width: 100%;
+}
+
+.bighouse .menubar input {
+    width: 100%;
+}
+
+.bighouse .menubar li,
+.bighouse .menubar .card {
+    list-style: none;
+
+    background: white;
+    color: black;
+    
+    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
+    text-align: center;
+    font-size: 24px;
+
+    border-radius: 5px;
+    border: 10px solid rgba(1,1,1,.1);
+    box-sizing: border-box;
+
+    cursor: default;
+}
+
+.bighouse .menubar .rubric {
+    text-align: center;
+}
+
+.bighouse .moodbar .unclickable,
+.bighouse .moodslugbar .unclickable,
+.bighouse .upload-exit .unclickable,
+a.unclickable {
+    opacity: .5;
+}
+
+/* Orientation-specific (i.e. layout) */
+/* Game view */
 .bighouse {
     display: flex;
     flex-direction: column;
@@ -28,7 +147,6 @@ body {
     height: 100%;
 }
 
-/* Game view */
 .bighouse .statusbar {
     width: 100vw;
     height: 24vw;
@@ -96,12 +214,9 @@ body {
 }
 
 .bighouse .cardbar .cardtable {
-    background: darkgreen;  /* old browsers */
-    background: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
     width: 90vw;
     flex-grow: 1;
     margin: 5%;
-    box-shadow: 2px 2px 1px 1px #003200;
     
     position: relative;
 }
@@ -115,35 +230,13 @@ body {
     height: 85%;
     margin: 5% 15% 5% 15%;
     
-    list-style: none;
-    background-color: #fff;
-    border-radius: 5px;
     position: absolute;
     top: 0;
     left: 0;
-    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
-    text-align: center;
-    color: black;
-    font-size: 24px;
-    border: 10px solid rgba(1,1,1,.1);
-    box-sizing: border-box;
-    cursor: default;
 
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.bighouse .cardbar .cardtable li.in-deck:nth-child(4) {
-    top: 2px; transform: translate(4px, 3px) rotate(-2deg);
-}
-
-.bighouse .cardbar .cardtable li.in-deck:nth-child(3) {
-    top: 2px; transform: translate(2px, 2px) rotate(0.4deg);
-}
-
-.bighouse .cardbar .cardtable li.in-deck:nth-child(2) {
-    top: 4px; transform: translate(-4px, -2px) rotate(-1deg);
 }
 
 .bighouse .cardbar .cardtable li div,
@@ -185,17 +278,9 @@ body {
     right: 4px;
 }
 
-.bighouse .choicebar a {
-    text-decoration: none;
-    color: #ccc;
-}
-
 .bighouse .statusbar a,
 .bighouse .upload-exit a {
-    text-decoration: none;
-    color: #888;
     padding: 4px 8px 4px 8px;
-    border: 1px solid #888;
 }
 
 .bighouse .moodbar {
@@ -212,7 +297,6 @@ body {
 }
 
 .bighouse .moodbar .mood2 {
-/*    background-color: orange; */
     width: 21vw;
     height: 21vw;
     position: absolute;
@@ -236,29 +320,7 @@ body {
     bottom: 0vw;
 }
 
-.bighouse img.mood {
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-}
-
-.bighouse .cardbar .cardtable .waitcard {
-    font-style: italic;
-    background-color: antiquewhite;
-}
-
-.bighouse .cardbar .cardtable .outcome {
-    font-style: italic;
-    background-color: lightcyan;
-}
-
-.bighouse .cardbar .cardtable .gameover {
-    font-style: italic;
-    background-color: antiquewhite;
-    color: brown;
-}
-
-/* Menu view */
+/* Menu views */
 .bighouse .inputbar {
     width: 100vw;
     height: 33vh;
@@ -269,25 +331,6 @@ body {
 
 .bighouse .inputbar form {
     width: 60vw;
-}
-
-.bighouse .inputbar input[type=text],
-.bighouse .inputbar input[type=password] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    display: block;
-
-    margin: 0;
-    height: 40px;
-    line-height: 40px;
-    font-size: 18px;
-
-    border: 1px solid #444;
-
-    background-color: #333;
-    color: white;
-
-    width: 100%;
 }
 
 .bighouse .titlebar {
@@ -309,36 +352,15 @@ body {
     justify-content: center;
 }
 
-.bighouse .menubar input {
-    width: 100%;
-}
-
 .bighouse .menubar li,
 .bighouse .menubar .card {
-    list-style: none;
-
-    background: white;
-    color: black;
-    
-    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
-    text-align: center;
-    font-size: 24px;
-
-    border-radius: 5px;
-    border: 10px solid rgba(1,1,1,.1);
-    box-sizing: border-box;
-
-    cursor: default;
-
     width: 60vw;
-
     margin: 4vh;
     padding: 4vh;
 }
 
 .bighouse .menubar .rubric {
     width: 80vw;
-    text-align: center;
 }
 
 .bighouse .moodslugbar {
@@ -377,13 +399,6 @@ body {
     left: 77vw;
     bottom: 0;
     text-align: center;
-}
-
-.bighouse .moodbar .unclickable,
-.bighouse .moodslugbar .unclickable,
-.bighouse .upload-exit .unclickable,
-a.unclickable {
-    opacity: .5;
 }
 
 .bighouse .upload-exit {
