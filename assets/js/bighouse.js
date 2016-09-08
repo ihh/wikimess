@@ -432,7 +432,7 @@ var BigHouse = (function() {
             this.page = 'confirm'
             this.container
                 .empty()
-                .append (this.makePageTitle ("Confirm upload"))
+                .append (this.makePageTitle ("Rotate & scale"))
 
 	    var postBlob = function (finalBlob) {
 		bh.container
