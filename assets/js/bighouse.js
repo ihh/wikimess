@@ -17,6 +17,12 @@ var BigHouse = (function() {
         $.extend (this, this.localStorage)
 
         this.socket_onPlayer ($.proxy (this.handlePlayerMessage, this))
+
+        // prevent scrolling/viewport bump on iOS Safari
+        $(document).on('touchmove',function(e){
+            e.preventDefault()
+        })
+        
         this.changeMusic('menu')
         this.showLoginPage()
     }
@@ -313,6 +319,10 @@ var BigHouse = (function() {
                 bh.changeMusic (undefined, 1)
                 bh.writeLocalStorage ('musicVolume')
             })
+
+            // restore disabled scrolling for these controls
+            soundInput.on('touchmove',function(e){e.stopPropagation()})
+            musicInput.on('touchmove',function(e){e.stopPropagation()})
         },
         
         // avatar upload page
@@ -344,7 +354,7 @@ var BigHouse = (function() {
             this.container
                 .empty()
                 .append (this.makePageTitle ("Upload photos"))
-                .append ($('<div class="menubar">')
+                .append (this.menuBar = $('<div class="menubar">')
 			 .append ($('<span class="rubric">')
 				  .text(uploadText))
 			 .append ($('<ul>')
@@ -398,6 +408,9 @@ var BigHouse = (function() {
 		bh.moodFileInput.on ('change', function (fileSelectEvt) {
 		    var file = this.files[0]
 		    if (file) {
+		        bh.menuBar
+		            .empty()
+		            .append ($('<span>').text ("Processing..."))
 			bh.moodFileInput.off()
 			bh.moodBar.find('*').addClass('unclickable')
 			bh.moodSlugBar.find('*').addClass('unclickable')

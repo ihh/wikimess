@@ -116,7 +116,8 @@ body {
 }
 
 .bighouse .cardbar .cardtable {
-    background-color: darkgreen;
+    background: darkgreen;  /* old browsers */
+    background: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
     width: 90vw;
     flex-grow: 1;
     margin: 5%;
