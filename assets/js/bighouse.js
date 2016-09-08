@@ -262,11 +262,14 @@ var BigHouse = (function() {
                                   .append (this.makeListLink ('Log out', this.doLogout, 'logout'))))
         },
 
-        makePageTitle: function (text) {
-            return $('<div class="titlebar">')
+        makePageTitle: function (text, titleBarClass) {
+            var titleBar = $('<div class="titlebar">')
                 .append ($('<span>')
                          .html ($('<big>')
                                 .text (text)))
+	    if (titleBarClass)
+		titleBar.addClass (titleBarClass)
+	    return titleBar
         },
         
 	// log out
@@ -409,6 +412,7 @@ var BigHouse = (function() {
 	    return function (clickEvt) {
                 bh.playSound (mood)
                 bh.lastMood = mood
+		var inPortrait = bh.inPortraitMode()  // camera will change this, so preserve it now
 		bh.moodFileInput.on ('change', function (fileSelectEvt) {
 		    var file = this.files[0]
 		    if (file) {
@@ -428,7 +432,7 @@ var BigHouse = (function() {
                                                bh.showConfirmUploadPage (mood, div, blob, uploadedCallback, null)
                                            })
                                    },
-                                   { orientation: bh.inPortraitMode() ? 6 : 1,
+                                   { orientation: inPortrait ? 6 : 3,
                                      canvas: true })
 		    }
 		})
@@ -441,7 +445,6 @@ var BigHouse = (function() {
 	    return window.URL || window.webkitURL
 	},
 
-        
 	showConfirmUploadPage: function (mood, div, blob, uploadedCallback, imageCrop) {
 	    var bh = this
 	    bh.imageCrop = imageCrop
@@ -449,7 +452,7 @@ var BigHouse = (function() {
             this.page = 'confirm'
             this.container
                 .empty()
-                .append (this.makePageTitle ("Rotate & scale"))
+                .append (this.makePageTitle ("Rotate & scale", "confirmtitle"))
 
 	    var postBlob = function (finalBlob) {
 		bh.container
