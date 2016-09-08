@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <title>test</title>
+    <link rel="stylesheet" href="/css/bighouse.css"></link>
+    <style>
+@media all and (orientation:portrait) {
+  .fullsize { width: 100vw; height: 100vw; }
+}
+@media all and (orientation:landscape) {
+  .fullsize { width: 100vh; height: 100vh; }
+}
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div id="bighouse" class="bighouse">
+      <div class="titlebar confirmtitle">
+	<span><big>Rotate &amp; scale</big></span>
+      </div>
+      <img src="/images/avatars/generic/happy.png" class="fullsize"></img>
+      <div class="upload-exit">
+	<span><a href="#">↺</a></span>
+	<span><a href="#">Cancel</a></span>
+	<span><a href="#">OK</a></span>
+	<span><a href="#">↻</a></span>
+      </div>
+    </div>
+  </body>
+</html>
