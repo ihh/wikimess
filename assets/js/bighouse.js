@@ -433,6 +433,7 @@ var BigHouse = (function() {
 	    }
 
 	    if (this.isTouchDevice()) {
+		// for now, just bypass all the fancy stuff since final image rendering doesn't f**king work on iPhone Safari
 		this.uploadMenu.hide()
 		postBlob (blob)
 		return
