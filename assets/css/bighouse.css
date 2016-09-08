@@ -34,7 +34,7 @@ body {
     box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
     text-align: center;
     color: black;
-    font-size: 24px;
+    font-size: 12px;
     border: 10px solid rgba(1,1,1,.1);
     box-sizing: border-box;
     cursor: default;
@@ -139,278 +139,575 @@ a.unclickable {
 }
 
 /* Orientation-specific (i.e. layout) */
-/* Game view */
-.bighouse {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-}
 
-.bighouse .statusbar {
-    width: 100vw;
-    height: 24vw;
-}
+/* Portrait view */
+@media all and (orientation:portrait) {
+    /* Game view */
+    .bighouse {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+    }
 
-.bighouse .statusbar .leftmood {
-    height: 24vw;
-    width: 24vw;
-    position: absolute;
-    left: 0vw;
-    top: 0vw;
-}
+    .bighouse .statusbar {
+	width: 100vw;
+	height: 24vw;
+    }
 
-.bighouse .statusbar .leftstatus {
-    width: 24vw;
-    height: 8vw;
-    position: absolute;
-    left: 24vw;
-    top: 16vw;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    padding-left: 4px;
-}
+    .bighouse .statusbar .leftmood {
+	height: 24vw;
+	width: 24vw;
+	position: absolute;
+	left: 0vw;
+	top: 0vw;
+    }
 
-.bighouse .statusbar .rightstatus {
-    width: 24vw;
-    height: 8vw;
-    position: absolute;
-    left: 52vw;
-    top: 0vw;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding-right: 4px;
-}
+    .bighouse .statusbar .leftstatus {
+	width: 24vw;
+	height: 8vw;
+	position: absolute;
+	left: 24vw;
+	top: 16vw;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-start;
+	padding-left: 4px;
+    }
 
-.bighouse .statusbar .statuslink {
-    width: 20vw;
-    height: 8vw;
-    position: absolute;
-    left: 40vw;
-    top: 8vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    .bighouse .statusbar .rightstatus {
+	width: 24vw;
+	height: 8vw;
+	position: absolute;
+	left: 52vw;
+	top: 0vw;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	padding-right: 4px;
+    }
 
-.bighouse .statusbar .rightmood {
-    height: 24vw;
-    width: 24vw;
-    position: absolute;
-    left: 76vw;
-    top: 0vw;
-}
+    .bighouse .statusbar .statuslink {
+	width: 20vw;
+	height: 8vw;
+	position: absolute;
+	left: 40vw;
+	top: 8vw;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    }
 
-.bighouse .cardbar {
-    width: 100vw;
-    flex-grow: 1;
+    .bighouse .statusbar .rightmood {
+	height: 24vw;
+	width: 24vw;
+	position: absolute;
+	left: 76vw;
+	top: 0vw;
+    }
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+    .bighouse .cardbar {
+	width: 100vw;
+	flex-grow: 1;
 
-.bighouse .cardbar .cardtable {
-    width: 90vw;
-    flex-grow: 1;
-    margin: 5%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .cardbar .cardtable {
+	width: 90vw;
+	flex-grow: 1;
+	margin: 5%;
+	
+	position: relative;
+    }
+
+    .bighouse .cardbar .cardtable ul {
+	padding: 0;
+    }
     
-    position: relative;
+    .bighouse .cardbar .cardtable li {
+	width: 70%;
+	height: 85%;
+	margin: 5% 15% 5% 15%;
+	
+	position: absolute;
+	top: 0;
+	left: 0;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+    }
+
+    .bighouse .cardbar .cardtable li div,
+    .bighouse .cardbar .cardtable li span {
+	flex-grow: 1;
+	display: flex;
+	align-items: center;
+    }
+
+    .bighouse .cardbar .cardtable img {
+	height: 16vw;
+    }
+
+    .bighouse .choicebar {
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+    }
+
+    .bighouse .choicebar .choice1 {
+	width: 45vw;
+	float: left;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-start;
+	position: absolute;
+	bottom: 0;
+	left: 4px;
+    }
+
+    .bighouse .choicebar .choice2 {
+	width: 45vw;
+	float: right;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	position: absolute;
+	bottom: 0;
+	right: 4px;
+    }
+
+    .bighouse .statusbar a,
+    .bighouse .upload-exit a {
+	padding: 4px 8px 4px 8px;
+    }
+
+    .bighouse .moodbar {
+	width: 100vw;
+	height: 21vw;
+    }
+
+    .bighouse .moodbar .mood1 {
+	height: 21vw;
+	width: 21vw;
+	position: absolute;
+	left: 2vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .moodbar .mood2 {
+	width: 21vw;
+	height: 21vw;
+	position: absolute;
+	left: 27vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .moodbar .mood3 {
+	height: 21vw;
+	width: 21vw;
+	position: absolute;
+	left: 52vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .moodbar .mood4 {
+	height: 21vw;
+	width: 21vw;
+	position: absolute;
+	left: 77vw;
+	bottom: 0vw;
+    }
+
+    /* Menu views */
+    .bighouse .inputbar {
+	width: 100vw;
+	height: 33vh;
+
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .inputbar form {
+	width: 60vw;
+    }
+
+    .bighouse .titlebar {
+	width: 100vw;
+	height: 12vw;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .menucontainer {
+	display: flex;
+	flex-direction: column;
+    }
+
+    .bighouse .menubar {
+	width: 100vw;
+	flex-grow: 1;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .menubar li,
+    .bighouse .menubar .card {
+	width: 60vw;
+	margin: 4vh;
+	padding: 4vh;
+    }
+
+    .bighouse .menubar .rubric {
+	width: 80vw;
+    }
+
+    .bighouse .moodslugbar {
+	width: 100vw;
+	height: 6vh;
+	position: relative;
+    }
+
+    .bighouse .moodslugbar .moodslug1 {
+	width: 21vw;
+	position: absolute;
+	left: 2vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .moodslugbar .moodslug2 {
+	width: 21vw;
+	position: absolute;
+	left: 27vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .moodslugbar .moodslug3 {
+	width: 21vw;
+	position: absolute;
+	left: 52vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .moodslugbar .moodslug4 {
+	width: 21vw;
+	position: absolute;
+	left: 77vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .upload-exit {
+	width: 100vw;
+	height: 20vw;
+	position: absolute;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .upload-exit span {
+	padding-left: 5vw;
+	padding-right: 5vw;
+    }
+
 }
 
-.bighouse .cardbar .cardtable ul {
-    padding: 0;
-}
+/* Landscape view */
+@media all and (orientation:landscape) {
+    /* Game view */
+    .bighouse {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+    }
+
+    .bighouse .statusbar {
+	width: 100vw;
+	height: 24vh;
+    }
+
+    .bighouse .statusbar .leftmood {
+	height: 24vh;
+	width: 24vh;
+	position: absolute;
+	left: 0vh;
+	top: 0vh;
+    }
+
+    .bighouse .statusbar .leftstatus {
+	width: 24vh;
+	height: 8vh;
+	position: absolute;
+	left: 24vh;
+	top: 16vh;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-start;
+	padding-left: 4px;
+    }
+
+    .bighouse .statusbar .rightstatus {
+	width: 24vh;
+	height: 8vh;
+	position: absolute;
+	right: 0vw;
+	top: 0vw;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	margin-right: 24vh;
+	padding-right: 4px;
+    }
+
+    .bighouse .statusbar .statuslink {
+	width: 20vw;
+	height: 8vh;
+	position: absolute;
+	left: 40vw;
+	top: 8vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .statusbar .rightmood {
+	height: 24vh;
+	width: 24vh;
+	position: absolute;
+	right: 0vw;
+	top: 0vh;
+    }
+
+    .bighouse .cardbar {
+	width: 100vw;
+	flex-grow: 1;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .cardbar .cardtable {
+	width: 90vw;
+	flex-grow: 1;
+	margin: 1%;
+	
+	position: relative;
+    }
+
+    .bighouse .cardbar .cardtable ul {
+	padding: 0;
+    }
     
-.bighouse .cardbar .cardtable li {
-    width: 70%;
-    height: 85%;
-    margin: 5% 15% 5% 15%;
-    
-    position: absolute;
-    top: 0;
-    left: 0;
+    .bighouse .cardbar .cardtable li {
+	width: 70%;
+	height: 85%;
+	margin: 1% 15% 1% 15%;
+	
+	position: absolute;
+	top: 0;
+	left: 0;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+    }
 
-.bighouse .cardbar .cardtable li div,
-.bighouse .cardbar .cardtable li span {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-}
+    .bighouse .cardbar .cardtable li div,
+    .bighouse .cardbar .cardtable li span {
+	flex-grow: 1;
+	display: flex;
+	align-items: center;
+    }
 
-.bighouse .cardbar .cardtable img {
-    width: 24vw;
-}
+    .bighouse .cardbar .cardtable img {
+	height: 16vh;
+    }
 
-.bighouse .choicebar {
-    width: 100%;
-    position: absolute;
-    bottom: 0;
-}
+    .bighouse .choicebar {
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+    }
 
-.bighouse .choicebar .choice1 {
-    width: 45vw;
-    float: left;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    position: absolute;
-    bottom: 0;
-    left: 4px;
-}
+    .bighouse .choicebar .choice1 {
+	width: 45vw;
+	float: left;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-start;
+	position: absolute;
+	bottom: 0;
+	left: 4px;
+    }
 
-.bighouse .choicebar .choice2 {
-    width: 45vw;
-    float: right;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    position: absolute;
-    bottom: 0;
-    right: 4px;
-}
+    .bighouse .choicebar .choice2 {
+	width: 45vw;
+	float: right;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	position: absolute;
+	bottom: 0;
+	right: 4px;
+    }
 
-.bighouse .statusbar a,
-.bighouse .upload-exit a {
-    padding: 4px 8px 4px 8px;
-}
+    .bighouse .statusbar a,
+    .bighouse .upload-exit a {
+	padding: 4px 8px 4px 8px;
+    }
 
-.bighouse .moodbar {
-    width: 100vw;
-    height: 21vw;
-}
+    .bighouse .moodbar {
+	width: 100vw;
+	height: 21vh;
+    }
 
-.bighouse .moodbar .mood1 {
-    height: 21vw;
-    width: 21vw;
-    position: absolute;
-    left: 2vw;
-    bottom: 0vw;
-}
+    .bighouse .moodbar .mood1 {
+	height: 21vh;
+	width: 21vh;
+	position: absolute;
+	left: 2vw;
+	bottom: 0vw;
+    }
 
-.bighouse .moodbar .mood2 {
-    width: 21vw;
-    height: 21vw;
-    position: absolute;
-    left: 27vw;
-    bottom: 0vw;
-}
+    .bighouse .moodbar .mood2 {
+	width: 21vh;
+	height: 21vh;
+	position: absolute;
+	left: 27vw;
+	bottom: 0vw;
+    }
 
-.bighouse .moodbar .mood3 {
-    height: 21vw;
-    width: 21vw;
-    position: absolute;
-    left: 52vw;
-    bottom: 0vw;
-}
+    .bighouse .moodbar .mood3 {
+	height: 21vh;
+	width: 21vh;
+	position: absolute;
+	left: 52vw;
+	bottom: 0vw;
+    }
 
-.bighouse .moodbar .mood4 {
-    height: 21vw;
-    width: 21vw;
-    position: absolute;
-    left: 77vw;
-    bottom: 0vw;
-}
+    .bighouse .moodbar .mood4 {
+	height: 21vh;
+	width: 21vh;
+	position: absolute;
+	left: 77vw;
+	bottom: 0vw;
+    }
 
-/* Menu views */
-.bighouse .inputbar {
-    width: 100vw;
-    height: 33vh;
+    /* Menu views */
+    .bighouse .inputbar {
+	width: 100vw;
+	height: 33vh;
 
-    display: flex;
-    justify-content: center;
-}
+	display: flex;
+	justify-content: center;
+    }
 
-.bighouse .inputbar form {
-    width: 60vw;
-}
+    .bighouse .inputbar form {
+	width: 60vw;
+    }
 
-.bighouse .titlebar {
-    width: 100vw;
-    height: 12vw;
+    .bighouse .titlebar {
+	width: 100vw;
+	height: 12vw;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    }
 
-.bighouse .menubar {
-    width: 100vw;
-    flex-grow: 1;
+    .bighouse .menucontainer {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+    }
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+    .bighouse .menubar {
+	width: 100vw;
+	flex-grow: 1;
 
-.bighouse .menubar li,
-.bighouse .menubar .card {
-    width: 60vw;
-    margin: 4vh;
-    padding: 4vh;
-}
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+    }
 
-.bighouse .menubar .rubric {
-    width: 80vw;
-}
+    .bighouse .menubar li,
+    .bighouse .menubar .card {
+	width: 60vw;
+	margin: 4vh;
+	padding: 4vh;
+    }
 
-.bighouse .moodslugbar {
-    width: 100vw;
-    height: 6vh;
-    position: relative;
-}
+    .bighouse .menubar .rubric {
+	width: 80vw;
+    }
 
-.bighouse .moodslugbar .moodslug1 {
-    width: 21vw;
-    position: absolute;
-    left: 2vw;
-    bottom: 0;
-    text-align: center;
-}
+    .bighouse .moodslugbar {
+	width: 100vw;
+	height: 6vh;
+	position: relative;
+    }
 
-.bighouse .moodslugbar .moodslug2 {
-    width: 21vw;
-    position: absolute;
-    left: 27vw;
-    bottom: 0;
-    text-align: center;
-}
+    .bighouse .moodslugbar .moodslug1 {
+	width: 21vh;
+	position: absolute;
+	left: 2vw;
+	bottom: 0;
+	text-align: center;
+    }
 
-.bighouse .moodslugbar .moodslug3 {
-    width: 21vw;
-    position: absolute;
-    left: 52vw;
-    bottom: 0;
-    text-align: center;
-}
+    .bighouse .moodslugbar .moodslug2 {
+	width: 21vh;
+	position: absolute;
+	left: 27vw;
+	bottom: 0;
+	text-align: center;
+    }
 
-.bighouse .moodslugbar .moodslug4 {
-    width: 21vw;
-    position: absolute;
-    left: 77vw;
-    bottom: 0;
-    text-align: center;
-}
+    .bighouse .moodslugbar .moodslug3 {
+	width: 21vh;
+	position: absolute;
+	left: 52vw;
+	bottom: 0;
+	text-align: center;
+    }
 
-.bighouse .upload-exit {
-    width: 100vw;
-    height: 20vw;
-    position: absolute;
-    bottom: 0;
-    display: flex;
-    justify-content: center;
-}
+    .bighouse .moodslugbar .moodslug4 {
+	width: 21vh;
+	position: absolute;
+	left: 77vw;
+	bottom: 0;
+	text-align: center;
+    }
 
-.bighouse .upload-exit span {
-    padding-left: 5vw;
-    padding-right: 5vw;
+    .bighouse .upload-exit {
+	width: 100vw;
+	height: 20vh;
+	position: absolute;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .upload-exit span {
+	padding-left: 5vw;
+	padding-right: 5vw;
+    }
 }
