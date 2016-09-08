@@ -103,6 +103,10 @@ var BigHouse = (function() {
         },
 
         // helpers
+	isTouchDevice: function() {
+	    return 'ontouchstart' in document.documentElement
+	},
+
         makeLink: function (text, callback, sfx) {
             var cb = $.proxy (callback, this)
             return $('<a href="#">')
@@ -248,11 +252,10 @@ var BigHouse = (function() {
         },
 
         makePageTitle: function (text) {
-            return $('<div class="statusbar">')
-                .append ($('<div class="midstatus">')
-                         .append ($('<span>')
-                                  .html ($('<big>')
-                                         .text (text))))
+            return $('<div class="titlebar">')
+                .append ($('<span>')
+                         .html ($('<big>')
+                                .text (text)))
         },
         
 	// log out
@@ -329,11 +332,12 @@ var BigHouse = (function() {
             this.container
                 .empty()
                 .append (this.makePageTitle ("Upload photos"))
-                .append ($('<div class="menubar">')
-			 .append ($('<span>')
+                .append (this.uploadMenu = $('<div class="menubar">')
+			 .append ($('<span class="rubric">')
 				  .text(uploadText))
-                         .append ($('<ul>')
-                                  .append (this.makeListLink (nextPageText, showNextPage))))
+			 .append ($('<ul>')
+				  .append (this.makeListLink (nextPageText, showNextPage))))
+                .append (this.confirmUpload = $('<div class="menubar">'))
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="moodbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
@@ -353,7 +357,7 @@ var BigHouse = (function() {
                             showNextPage.call(bh)
                     }
                 })
-		div.on ('click', uploadFunc)
+		div.on ('click', ':not(.unclickable)', uploadFunc)
                 bh.moodSlugBar.append ($('<div>')
                                        .addClass(moodSlugClass)
                                        .text(mood)
@@ -378,33 +382,188 @@ var BigHouse = (function() {
                 bh.playSound (mood)
                 bh.lastMood = mood
 		bh.moodFileInput.on ('change', function (fileSelectEvt) {
-		    bh.moodFileInput.off()
 		    var file = this.files[0]
-		    var reader = new FileReader()
-		    reader.onload = function (fileLoadEvt) {
-			var arrayBuffer = reader.result
-			var blob = new Blob ([arrayBuffer], {type:file.type})
-			bh.REST_postPlayerAvatar (bh.playerID, mood, blob)
-			    .then (function (data) {
-				// refresh image
-				// this probably won't work unless cache is disabled
-                                var newMoodImg = bh.makeMoodImage (bh.playerID, mood)
-                                newMoodImg.on ('load', function() {
-				    div.html (newMoodImg)
-                                })
-				// this, however, should do it
-				bh.reloadMoodImage (bh.playerID, mood)
-                                uploadedCallback()
-			    })
-			    .fail (function (err) {
-				bh.showModalWebError (err)
-			    })
+		    if (file) {
+			bh.moodFileInput.off()
+			bh.moodBar.find('*').addClass('unclickable')
+			bh.moodSlugBar.find('*').addClass('unclickable')
+			var reader = new FileReader()
+			reader.onload = function (fileLoadEvt) {
+			    var arrayBuffer = reader.result
+			    var blob = new Blob ([arrayBuffer], {type:file.type})
+			    bh.showConfirmUploadPage (mood, div, blob, uploadedCallback, null)
+			}
+			reader.readAsArrayBuffer (file)
 		    }
-		    reader.readAsArrayBuffer (file)
 		})
 		bh.moodFileInput.click()
 		return false
 	    }
+	},
+
+	urlCreator: function() {
+	    return window.URL || window.webkitURL
+	},
+
+	showConfirmUploadPage: function (mood, div, blob, uploadedCallback, imageCrop) {
+	    var bh = this
+	    bh.imageCrop = imageCrop
+
+	    var postBlob = function (finalBlob) {
+		bh.confirmUpload
+		    .empty()
+		    .append ($('<span>').text ("Uploading " + mood + " face..."))
+		bh.REST_postPlayerAvatar (bh.playerID, mood, finalBlob)
+		    .then (function (data) {
+			// refresh image
+			// this probably won't work unless cache is disabled
+			var newMoodImg = bh.makeMoodImage (bh.playerID, mood)
+			newMoodImg.on ('load', function() {
+			    div.html (newMoodImg)
+			})
+			// this, however, should do it
+			bh.reloadMoodImage (bh.playerID, mood)
+			// exit
+			bh.exitConfirmUpload()
+			uploadedCallback()
+		    })
+		    .fail (function (err) {
+			bh.showModalWebError (err)
+		    })
+	    }
+
+	    if (this.isTouchDevice()) {
+		this.uploadMenu.hide()
+		postBlob (blob)
+		return
+	    }
+
+	    this.imageUrl = this.urlCreator().createObjectURL( blob )
+
+	    var fullSizeLoaded = $.Deferred()
+	    var imgLoaded = $.Deferred()
+	    var cropImgLoaded = $.Deferred()
+
+	    this.fullSizeImage = $('<img>')
+		.attr ('display', 'none')
+	    $('body').append (this.fullSizeImage)
+	    this.fullSizeImage.on ('load', function() { fullSizeLoaded.resolve() })
+		.attr ('src', this.imageUrl)
+
+	    var img = $('<img>')
+		.on ('load', function() { imgLoaded.resolve() })
+		.attr ('src', this.imageUrl)
+
+	    var cropImg = $('<img>')
+		.on ('load', function() { cropImgLoaded.resolve() })
+		.attr ('src', this.imageUrl)
+
+	    imgLoaded.done (function() {
+		var uploadEdit, uploadExit
+		bh.uploadMenu.hide()
+		bh.confirmUpload
+		    .empty()
+		    .append (uploadEdit = $('<div class="upload-edit">'))
+		    .append (uploadExit = $('<div class="upload-exit">'))
+		uploadEdit.html (img)
+		var sw = img.width(), sh = img.height(), offset = img.offset()
+
+		fullSizeLoaded.done (function() {
+		    var w = bh.fullSizeImage.width(), h = bh.fullSizeImage.height()
+		    bh.fullSizeImage.remove()
+		    if (!bh.imageCrop)
+			bh.imageCrop = { cropX: 0, cropY: 0, cropW: w, cropH: h }
+
+		    cropImgLoaded.done (function() {
+			img.remove()
+			bh.container.prepend (bh.cropDiv = $('<div>')
+					      .attr('style', 'position:absolute;top:'+offset.top+';left:'+offset.left+';')
+					      .html(cropImg))
+
+			var config = { width: sw, height: sh, result: bh.imageCrop }
+			if (bh.isTouchDevice())
+			    config.showControls = 'never'
+			cropImg
+			    .cropbox (config)
+			    .on ('cropbox', function (e, result) {
+				bh.imageCrop.cropX = result.cropX
+				bh.imageCrop.cropY = result.cropY
+				bh.imageCrop.cropW = result.cropW
+				bh.imageCrop.cropH = result.cropH
+			    })
+		    })
+
+		    // when user hits rotate, we want to
+		    //  1) redraw the full-size image, rotated
+		    //  2) recompute the crop box co-ordinates under the rotation
+		    var rotateFunc = function (sign) {
+			return function() {
+			    uploadExit.find('*').off('click').addClass('unclickable')
+			    var canvas = $('<canvas>')
+			    var ctx = canvas[0].getContext('2d')
+			    canvas.attr('width',h).attr('height',w)
+			    ctx.rotate (sign * Math.PI / 2)
+			    ctx.drawImage (bh.fullSizeImage[0], sign>0 ? 0 : -w, sign>0 ? -h : 0)
+			    var newImageCrop = { cropX: sign > 0
+						 ? (h - bh.imageCrop.cropY - bh.imageCrop.cropW)
+						 : bh.imageCrop.cropY,
+						 cropY: sign > 0
+						 ? bh.imageCrop.cropX
+						 : (w - bh.imageCrop.cropX - bh.imageCrop.cropW),
+						 cropW: bh.imageCrop.cropH,
+						 cropH: bh.imageCrop.cropW }
+			    canvas[0].toBlob (function (newBlob) {
+				bh.removeImages()
+				bh.showConfirmUploadPage (mood, div, newBlob, uploadedCallback, newImageCrop)
+			    })
+			}
+		    }
+
+		    var okFunc = function() {
+			bh.confirmUpload.find('*').addClass('unclickable')
+
+			var canvas = $('<canvas>')
+			var ctx = canvas[0].getContext('2d')
+			var ic = bh.imageCrop
+			canvas.attr('width',ic.cropW).attr('height',ic.cropH)
+			ctx.drawImage (bh.fullSizeImage[0], -ic.cropX, -ic.cropY)
+
+			canvas[0].toBlob (postBlob)
+		    }
+
+		    uploadExit
+			.append ($('<span>')
+				 .html (bh.makeLink ("↺", rotateFunc(-1))))
+			.append ($('<span>')
+				 .html (bh.makeLink ("Cancel", bh.exitConfirmUpload)))
+			.append ($('<span>')
+				 .html (bh.makeLink ("OK", okFunc)))
+			.append ($('<span>')
+				 .html (bh.makeLink ("↻", rotateFunc(+1))))
+		    
+		})
+	    })
+	},
+
+	removeImages: function() {
+	    // clean up URLs, etc
+	    if (this.cropDiv) {
+		this.cropDiv.remove()
+		delete this.cropDiv
+	    }
+	    if (this.fullSizeImage) {
+		this.fullSizeImage.remove()
+		delete this.fullSizeImage
+	    }
+	    this.urlCreator().revokeObjectURL (this.imageUrl)
+	},
+
+	exitConfirmUpload: function() {
+	    this.removeImages()
+	    this.uploadMenu.show()
+	    this.confirmUpload.empty()
+	    this.moodBar.find('*').removeClass('unclickable')
+	    this.moodSlugBar.find('*').removeClass('unclickable')
 	},
 
 	// force image reload
@@ -551,7 +710,7 @@ var BigHouse = (function() {
             this.page = 'waitingToJoin'
             this.menuDiv
                 .empty()
-                .append ($('<span>')
+                .append ($('<span class="rubric">')
                          .text ("Waiting for another player"))
                 .append ($('<ul>')
                          .append (this.makeListLink ('Cancel', this.cancelJoin)))
@@ -781,7 +940,7 @@ var BigHouse = (function() {
         },
         
         fadeCard: function (listItem) {
-            listItem.prop('disabled',true)
+            listItem.find('*').off()
             listItem.fadeOut (500, function() { listItem.remove() })
         },
 
@@ -812,7 +971,8 @@ var BigHouse = (function() {
 		else {
 		    this.moodImg[m].fadeTo(200,.5)
                     this.moodDiv[m]
-			.on('click', 
+			.on('click',
+			    ':not(.unclickable)',
 			    bh.changeMoodFunction (bh.moveNumber, newMood))
 		}
             }
@@ -837,11 +997,11 @@ var BigHouse = (function() {
         changeMoodFunction: function (moveNumber, mood) {
             var bh = this
             return function() {
-                bh.moodBar.prop('disabled',true)
+                bh.moodBar.find('*').addClass('unclickable')
                 bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
                         bh.playSound (mood)
-                        bh.moodBar.prop('disabled',false)
+                        bh.moodBar.find('*').removeClass('unclickable')
                         bh.updatePlayerMood (mood)
                     })
             }

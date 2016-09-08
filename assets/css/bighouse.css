@@ -211,23 +211,14 @@ body {
 .bighouse .choicebar a {
     text-decoration: none;
     color: white;
-/*
-    background: #214521;
-    padding: 0px 8px 0px 8px;
-    border-radius: 4px;
-    box-shadow: 2px 2px 1px 1px #2b3b2b;
-    border: 1px solid rgba(1,1,1,.1);
-*/
 }
 
-.bighouse .statusbar a {
+.bighouse .statusbar a,
+.bighouse .menubar .upload-exit a {
     text-decoration: none;
-    color: white;
-    background: #214521;
+    color: #888;
     padding: 4px 8px 4px 8px;
-    border-radius: 4px;
-    box-shadow: 2px 2px 1px 1px #2b3b2b;
-    border: 1px solid rgba(1,1,1,.1);
+    border: 1px solid #888;
 }
 
 .bighouse .moodbar {
@@ -326,6 +317,16 @@ body {
     width: 100%;
 }
 
+.bighouse .titlebar {
+/*    background-color: red; */
+    width: 100vw;
+    height: 12vw;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .bighouse .menubar {
 /*    background-color: moccasin; */
     width: 100vw;
@@ -364,7 +365,7 @@ body {
     padding: 4vh;
 }
 
-.bighouse .menubar span {
+.bighouse .menubar .rubric {
     width: 80vw;
     text-align: center;
 }
@@ -410,4 +411,39 @@ body {
     left: 77vw;
     bottom: 0;
     text-align: center;
+}
+
+.bighouse .menubar .upload-edit {
+    width: 100vw;
+    height: 100vw;
+
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.bighouse .menubar .upload-edit img {
+    width: 80vw;
+    height: 80vw;
+}
+
+.bighouse .menubar .upload-exit {
+    width: 100vw;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.bighouse .menubar .upload-exit span {
+    padding-left: 5vw;
+    padding-right: 5vw;
+}
+
+.bighouse .moodbar .unclickable,
+.bighouse .moodslugbar .unclickable,
+a.unclickable {
+    opacity: .5;
 }
