@@ -401,35 +401,18 @@ var BigHouse = (function() {
 			bh.moodFileInput.off()
 			bh.moodBar.find('*').addClass('unclickable')
 			bh.moodSlugBar.find('*').addClass('unclickable')
-                        bh.getOrientation (file, function (orientation) {  // collect the orientation though we don't currently use it
-			    var reader = new FileReader()
-			    reader.onload = function (fileLoadEvt) {
-			        var arrayBuffer = reader.result
-			        var blob = new Blob ([arrayBuffer], {type:file.type})
 
-	                        var url = bh.urlCreator().createObjectURL( blob )
-
-	                        var tmpImg = $('<img>')
-		                    .on ('load', function() {
-
-                                        var canvas = $('<canvas>')
-		                        var ctx = canvas[0].getContext('2d')
-		                        canvas.attr('width',tmpImg[0].naturalWidth).attr('height',tmpImg[0].naturalHeight)
-                                        // we could auto-correct for camera orientation here, but life's too short right now
-		                        ctx.drawImage (tmpImg[0], 0, 0)
-
-	                                bh.urlCreator().revokeObjectURL (url)
-
-                                        canvas[0].toBlob (function (blob) {
-                                            bh.showConfirmUploadPage (mood, div, blob, uploadedCallback, null)
-                                        })
-
-                                    })
-		                    .attr ('src', url)
-                                
-			    }
-			    reader.readAsArrayBuffer (file)
-                        })
+                        loadImage (file,
+                                   function (canvas) {
+                                       if (canvas.type === "error")
+                                           console.log("Error loading image")
+                                       else
+                                           canvas.toBlob (function (blob) {
+                                               bh.showConfirmUploadPage (mood, div, blob, uploadedCallback, null)
+                                           })
+                                   },
+                                   { orientation: 6,
+                                     canvas: true })
 		    }
 		})
 		bh.moodFileInput.click()
@@ -440,34 +423,6 @@ var BigHouse = (function() {
 	urlCreator: function() {
 	    return window.URL || window.webkitURL
 	},
-
-getOrientation: function (file, callback) {
-  var reader = new FileReader();
-  reader.onload = function(e) {
-
-    var view = new DataView(e.target.result);
-    if (view.getUint16(0, false) != 0xFFD8) return callback(-2);
-    var length = view.byteLength, offset = 2;
-    while (offset < length) {
-      var marker = view.getUint16(offset, false);
-      offset += 2;
-      if (marker == 0xFFE1) {
-        if (view.getUint32(offset += 2, false) != 0x45786966) return callback(-1);
-        var little = view.getUint16(offset += 6, false) == 0x4949;
-        offset += view.getUint32(offset + 4, little);
-        var tags = view.getUint16(offset, little);
-        offset += 2;
-        for (var i = 0; i < tags; i++)
-          if (view.getUint16(offset + (i * 12), little) == 0x0112)
-            return callback(view.getUint16(offset + (i * 12) + 8, little));
-      }
-      else if ((marker & 0xFF00) != 0xFF00) break;
-      else offset += view.getUint16(offset, false);
-    }
-    return callback(-1);
-  };
-  reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
-},
 
         
 	showConfirmUploadPage: function (mood, div, blob, uploadedCallback, imageCrop) {
