@@ -752,9 +752,9 @@ var BigHouse = (function() {
                                                .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage, 'gameover')))))
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
-                                      .append (this.stackList = $('<ul class="stack">'))
                                       .append (this.choiceBar = $('<div class="choicebar">')
-                                               .append (this.choiceDiv = $('<div>')))))
+                                               .append (this.choiceDiv = $('<div>')))
+				      .append (this.stackList = $('<ul class="stack">'))))
                     .append (this.moodBar = $('<div class="moodbar">'))
 
 		this.moods.forEach (function (mood, m) {

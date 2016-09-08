@@ -255,6 +255,7 @@ a.unclickable {
 
     .bighouse .choicebar {
 	width: 100%;
+	height: 10%;
 	position: absolute;
 	bottom: 0;
     }
@@ -516,7 +517,7 @@ a.unclickable {
     
     .bighouse .cardbar .cardtable li {
 	width: 70%;
-	height: 85%;
+	height: 95%;
 	margin: 1% 15% 1% 15%;
 	
 	position: absolute;
@@ -541,15 +542,16 @@ a.unclickable {
 
     .bighouse .choicebar {
 	width: 100%;
+	height: 100%;
 	position: absolute;
 	bottom: 0;
     }
 
     .bighouse .choicebar .choice1 {
-	width: 45vw;
+	width: 12%;
 	float: left;
 	display: flex;
-	align-items: flex-start;
+	align-items: flex-end;
 	justify-content: flex-start;
 	position: absolute;
 	bottom: 0;
@@ -557,10 +559,10 @@ a.unclickable {
     }
 
     .bighouse .choicebar .choice2 {
-	width: 45vw;
+	width: 12%;
 	float: right;
 	display: flex;
-	align-items: flex-start;
+	align-items: flex-end;
 	justify-content: flex-end;
 	position: absolute;
 	bottom: 0;
