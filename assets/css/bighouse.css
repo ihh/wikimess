@@ -580,35 +580,48 @@ a.unclickable {
     }
 
     .bighouse .moodbar .mood1 {
+	width: 25vw;
 	height: 21vh;
-	width: 21vh;
 	position: absolute;
-	left: 2vw;
+	left: 0vw;
 	bottom: 0vw;
+	display: flex;
+	justify-content: center;
     }
 
     .bighouse .moodbar .mood2 {
-	width: 21vh;
+	width: 25vw;
 	height: 21vh;
 	position: absolute;
-	left: 27vw;
+	left: 25vw;
 	bottom: 0vw;
+	display: flex;
+	justify-content: center;
     }
 
     .bighouse .moodbar .mood3 {
+	width: 25vw;
 	height: 21vh;
-	width: 21vh;
 	position: absolute;
-	left: 52vw;
+	left: 50vw;
 	bottom: 0vw;
+	display: flex;
+	justify-content: center;
     }
 
     .bighouse .moodbar .mood4 {
+	width: 25vw;
 	height: 21vh;
-	width: 21vh;
 	position: absolute;
-	left: 77vw;
+	left: 75vw;
 	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .moodbar img.mood {
+	width: 21vh;
+	height: 21vh;
     }
 
     /* Menu views */
@@ -668,33 +681,33 @@ a.unclickable {
     }
 
     .bighouse .moodslugbar .moodslug1 {
-	width: 21vh;
+	width: 25vw;
 	position: absolute;
-	left: 2vw;
+	left: 0vw;
 	bottom: 0;
 	text-align: center;
     }
 
     .bighouse .moodslugbar .moodslug2 {
-	width: 21vh;
+	width: 25vw;
 	position: absolute;
-	left: 27vw;
+	left: 25vw;
 	bottom: 0;
 	text-align: center;
     }
 
     .bighouse .moodslugbar .moodslug3 {
-	width: 21vh;
+	width: 25vw;
 	position: absolute;
-	left: 52vw;
+	left: 50vw;
 	bottom: 0;
 	text-align: center;
     }
 
     .bighouse .moodslugbar .moodslug4 {
-	width: 21vh;
+	width: 25vw;
 	position: absolute;
-	left: 77vw;
+	left: 75vw;
 	bottom: 0;
 	text-align: center;
     }

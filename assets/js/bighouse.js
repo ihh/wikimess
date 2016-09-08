@@ -114,6 +114,10 @@ var BigHouse = (function() {
 	    return 'ontouchstart' in document.documentElement
 	},
 
+	inPortraitMode: function() {
+	    return window.innerHeight > window.innerWidth
+	},
+
         makeLink: function (text, callback, sfx) {
             var cb = $.proxy (callback, this)
             return $('<a href="#">')
@@ -424,7 +428,7 @@ var BigHouse = (function() {
                                                bh.showConfirmUploadPage (mood, div, blob, uploadedCallback, null)
                                            })
                                    },
-                                   { orientation: 6,
+                                   { orientation: bh.inPortraitMode() ? 6 : 1,
                                      canvas: true })
 		    }
 		})
