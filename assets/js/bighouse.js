@@ -27,6 +27,7 @@ var BigHouse = (function() {
         localStorageKey: 'bighouse',
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
+        avatarSize: 298,
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -316,32 +317,42 @@ var BigHouse = (function() {
         
         // avatar upload page
         showSettingsUploadPage: function() {
-            this.showUploadPage ("Select one of the images below to upload a new photo", "Back", this.showSettingsPage, false)
+            this.showUploadPage ({ uploadText: "Select one of the images below to upload a new photo",
+                                   nextPageText: "Back",
+                                   showNextPage: this.showSettingsPage,
+                                   transitionWhenUploaded: false })
         },
 
         showInitialUploadPage: function() {
-            this.showUploadPage ("Take a selfie for each of the four moods shown below, so other players can see how you feel.",
-                                 "No, I'm too shy", this.showPlayPage, true)
+            this.showUploadPage ({ uploadText: "Take a selfie for each of the four moods shown below, so other players can see how you feel.",
+                                   nextPageText: "No, I'm too shy",
+                                   showNextPage: this.showPlayPage,
+                                   transitionWhenUploaded: true })
         },
 
-        showUploadPage: function (uploadText, nextPageText, showNextPage, transitionWhenUploaded) {
+        showUploadPage: function (config) {
             var bh = this
 
+            this.lastUploadConfig = config
+            var uploadText = config.uploadText
+            var nextPageText = config.nextPageText
+            var showNextPage = config.showNextPage
+            var transitionWhenUploaded = config.transitionWhenUploaded
+            
             this.page = 'upload'
             this.moodDiv = []
             this.container
                 .empty()
                 .append (this.makePageTitle ("Upload photos"))
-                .append (this.uploadMenu = $('<div class="menubar">')
+                .append ($('<div class="menubar">')
 			 .append ($('<span class="rubric">')
 				  .text(uploadText))
 			 .append ($('<ul>')
 				  .append (this.makeListLink (nextPageText, showNextPage))))
-                .append (this.confirmUpload = $('<div class="menubar">'))
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="moodbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
-
+                
             var nUploads = 0, moodUploaded = {}
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
@@ -365,6 +376,9 @@ var BigHouse = (function() {
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
             })
+            
+            if (config.reloadMood)
+                this.reloadMoodImage (this.playerID, config.reloadMood)
         },
 
 	makeMoodImage: function (id, mood) {
@@ -409,162 +423,138 @@ var BigHouse = (function() {
 	    var bh = this
 	    bh.imageCrop = imageCrop
 
+            this.page = 'confirm'
+            this.container
+                .empty()
+                .append (this.makePageTitle ("Confirm upload"))
+
 	    var postBlob = function (finalBlob) {
-		bh.confirmUpload
+		bh.container
 		    .empty()
-		    .append ($('<span>').text ("Uploading " + mood + " face..."))
+                    .append (bh.makePageTitle ("Uploading"))
+                    .append ($('<div class="menubar">')
+		             .append ($('<span>').text ("Uploading " + mood + " face...")))
 		bh.REST_postPlayerAvatar (bh.playerID, mood, finalBlob)
 		    .then (function (data) {
-			// refresh image
-			// this probably won't work unless cache is disabled
-			var newMoodImg = bh.makeMoodImage (bh.playerID, mood)
-			newMoodImg.on ('load', function() {
-			    div.html (newMoodImg)
-			})
-			// this, however, should do it
-			bh.reloadMoodImage (bh.playerID, mood)
-			// exit
-			bh.exitConfirmUpload()
+			bh.exitConfirmUpload (mood)
 			uploadedCallback()
 		    })
 		    .fail (function (err) {
 			bh.showModalWebError (err)
+			bh.exitConfirmUpload()
 		    })
 	    }
 
-	    if (this.isTouchDevice()) {
-		// for now, just bypass all the fancy stuff since final image rendering doesn't f**king work on iPhone Safari
-		this.uploadMenu.hide()
-		postBlob (blob)
-		return
-	    }
+	    this.uploadImageUrl = this.urlCreator().createObjectURL( blob )
 
-	    this.imageUrl = this.urlCreator().createObjectURL( blob )
-
-	    var fullSizeLoaded = $.Deferred()
 	    var imgLoaded = $.Deferred()
-	    var cropImgLoaded = $.Deferred()
-
-	    this.fullSizeImage = $('<img>')
-		.attr ('display', 'none')
-	    $('body').append (this.fullSizeImage)
-	    this.fullSizeImage.on ('load', function() { fullSizeLoaded.resolve() })
-		.attr ('src', this.imageUrl)
-
 	    var img = $('<img>')
+		.hide()
 		.on ('load', function() { imgLoaded.resolve() })
-		.attr ('src', this.imageUrl)
+		.attr ('src', this.uploadImageUrl)
 
-	    var cropImg = $('<img>')
-		.on ('load', function() { cropImgLoaded.resolve() })
-		.attr ('src', this.imageUrl)
-
+            bh.container.append (img)
+            bh.uploadImage = img
+            
 	    imgLoaded.done (function() {
-		var uploadEdit, uploadExit
-		bh.uploadMenu.hide()
-		bh.confirmUpload
-		    .empty()
-		    .append (uploadEdit = $('<div class="upload-edit">'))
-		    .append (uploadExit = $('<div class="upload-exit">'))
-		uploadEdit.html (img)
-		var sw = img.width(), sh = img.height(), offset = img.offset()
+		var w = img.width(), h = img.height()
+                var s = Math.min (w, h)
+		if (!bh.imageCrop)
+		    bh.imageCrop = { cropX: 0, cropY: 0, cropW: s, cropH: s }
 
-		fullSizeLoaded.done (function() {
-		    var w = bh.fullSizeImage.width(), h = bh.fullSizeImage.height()
-		    bh.fullSizeImage.remove()
-		    if (!bh.imageCrop)
-			bh.imageCrop = { cropX: 0, cropY: 0, cropW: w, cropH: h }
-
-		    cropImgLoaded.done (function() {
-			img.remove()
-			bh.container.prepend (bh.cropDiv = $('<div>')
-					      .attr('style', 'position:absolute;top:'+offset.top+';left:'+offset.left+';')
-					      .html(cropImg))
-
-			var config = { width: sw, height: sh, result: bh.imageCrop }
-			if (bh.isTouchDevice())
-			    config.showControls = 'never'
-			cropImg
-			    .cropbox (config)
-			    .on ('cropbox', function (e, result) {
-				bh.imageCrop.cropX = result.cropX
-				bh.imageCrop.cropY = result.cropY
-				bh.imageCrop.cropW = result.cropW
-				bh.imageCrop.cropH = result.cropH
-			    })
+                var cw = document.documentElement.clientWidth, ch = document.documentElement.clientHeight
+                var cs = Math.min (cw, ch)
+		var config = { width: cs,
+                               height: cs,
+                               result: bh.imageCrop }
+		if (bh.isTouchDevice())
+		    config.showControls = 'never'
+		img
+                    .show()
+		    .cropbox (config)
+		    .on ('cropbox', function (e, result) {
+			bh.imageCrop.cropX = result.cropX
+			bh.imageCrop.cropY = result.cropY
+			bh.imageCrop.cropW = result.cropW
+			bh.imageCrop.cropH = result.cropH
 		    })
 
-		    // when user hits rotate, we want to
-		    //  1) redraw the full-size image, rotated
-		    //  2) recompute the crop box co-ordinates under the rotation
-		    var rotateFunc = function (sign) {
-			return function() {
-			    uploadExit.find('*').off('click').addClass('unclickable')
-			    var canvas = $('<canvas>')
-			    var ctx = canvas[0].getContext('2d')
-			    canvas.attr('width',h).attr('height',w)
-			    ctx.rotate (sign * Math.PI / 2)
-			    ctx.drawImage (bh.fullSizeImage[0], sign>0 ? 0 : -w, sign>0 ? -h : 0)
-			    var newImageCrop = { cropX: sign > 0
-						 ? (h - bh.imageCrop.cropY - bh.imageCrop.cropW)
-						 : bh.imageCrop.cropY,
-						 cropY: sign > 0
-						 ? bh.imageCrop.cropX
-						 : (w - bh.imageCrop.cropX - bh.imageCrop.cropW),
-						 cropW: bh.imageCrop.cropH,
-						 cropH: bh.imageCrop.cropW }
-			    canvas[0].toBlob (function (newBlob) {
-				bh.removeImages()
-				bh.showConfirmUploadPage (mood, div, newBlob, uploadedCallback, newImageCrop)
-			    })
-			}
-		    }
+	        var uploadExit
+                bh.container
+		    .append (uploadExit = $('<div class="upload-exit">'))
 
-		    var okFunc = function() {
-			bh.confirmUpload.find('*').addClass('unclickable')
-
-			var canvas = $('<canvas>')
+                var makeImageFullSize = function() {
+                    img.remove().hide()
+                    $('body').append(img)
+                }
+                
+		// when user hits rotate, we want to
+		//  1) redraw the full-size image, rotated
+		//  2) recompute the crop box co-ordinates under the rotation
+		var rotateFunc = function (sign) {
+		    return function() {
+			uploadExit.find('*').off('click').addClass('unclickable')
+                        makeImageFullSize()
+                        
+                        var canvas = $('<canvas>')
 			var ctx = canvas[0].getContext('2d')
-			var ic = bh.imageCrop
-			canvas.attr('width',ic.cropW).attr('height',ic.cropH)
-			ctx.drawImage (bh.fullSizeImage[0], -ic.cropX, -ic.cropY)
-
-			canvas[0].toBlob (postBlob)
+			canvas.attr('width',h).attr('height',w)
+			ctx.rotate (sign * Math.PI / 2)
+			ctx.drawImage (img[0], sign>0 ? 0 : -w, sign>0 ? -h : 0)
+			var newImageCrop = { cropX: sign > 0
+					     ? (h - bh.imageCrop.cropY - bh.imageCrop.cropW)
+					     : bh.imageCrop.cropY,
+					     cropY: sign > 0
+					     ? bh.imageCrop.cropX
+					     : (w - bh.imageCrop.cropX - bh.imageCrop.cropW),
+					     cropW: bh.imageCrop.cropH,
+					     cropH: bh.imageCrop.cropW }
+			canvas[0].toBlob (function (newBlob) {
+			    bh.removeImages()
+			    bh.showConfirmUploadPage (mood, div, newBlob, uploadedCallback, newImageCrop)
+			})
 		    }
+		}
 
-		    uploadExit
-			.append ($('<span>')
-				 .html (bh.makeLink ("↺", rotateFunc(-1))))
-			.append ($('<span>')
-				 .html (bh.makeLink ("Cancel", bh.exitConfirmUpload)))
-			.append ($('<span>')
-				 .html (bh.makeLink ("OK", okFunc)))
-			.append ($('<span>')
-				 .html (bh.makeLink ("↻", rotateFunc(+1))))
-		    
-		})
+		var okFunc = function() {
+                    makeImageFullSize()
+		    var canvas = $('<canvas>')
+		    var ctx = canvas[0].getContext('2d')
+		    var ic = bh.imageCrop
+		    canvas.attr('width',bh.avatarSize).attr('height',bh.avatarSize)
+		    ctx.drawImage (img[0], ic.cropX, ic.cropY, ic.cropW, ic.cropH, 0, 0, bh.avatarSize, bh.avatarSize)
+                    
+		    canvas[0].toBlob (postBlob)
+		}
+
+		uploadExit
+		    .append ($('<span>')
+			     .html (bh.makeLink ("↺", rotateFunc(-1))))
+		    .append ($('<span>')
+			     .html (bh.makeLink ("Cancel", bh.exitConfirmUpload)))
+		    .append ($('<span>')
+			     .html (bh.makeLink ("OK", okFunc)))
+		    .append ($('<span>')
+			     .html (bh.makeLink ("↻", rotateFunc(+1))))
 	    })
 	},
 
 	removeImages: function() {
 	    // clean up URLs, etc
-	    if (this.cropDiv) {
-		this.cropDiv.remove()
-		delete this.cropDiv
+	    if (this.uploadImage) {
+		this.uploadImage.remove()
+		delete this.uploadImage
 	    }
-	    if (this.fullSizeImage) {
-		this.fullSizeImage.remove()
-		delete this.fullSizeImage
-	    }
-	    this.urlCreator().revokeObjectURL (this.imageUrl)
+	    this.urlCreator().revokeObjectURL (this.uploadImageUrl)
 	},
 
-	exitConfirmUpload: function() {
+	exitConfirmUpload: function (mood) {
 	    this.removeImages()
-	    this.uploadMenu.show()
-	    this.confirmUpload.empty()
-	    this.moodBar.find('*').removeClass('unclickable')
-	    this.moodSlugBar.find('*').removeClass('unclickable')
+            var config = {}
+            $.extend (config, this.lastUploadConfig)
+            if (mood)
+                config.reloadMood = mood
+            this.showUploadPage (config)
 	},
 
 	// force image reload
