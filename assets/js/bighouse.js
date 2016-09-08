@@ -449,15 +449,13 @@ var BigHouse = (function() {
 
 	    var imgLoaded = $.Deferred()
 	    var img = $('<img>')
-		.hide()
 		.on ('load', function() { imgLoaded.resolve() })
 		.attr ('src', this.uploadImageUrl)
-
-            bh.container.append (img)
             bh.uploadImage = img
-            
+
 	    imgLoaded.done (function() {
-		var w = img.width(), h = img.height()
+                bh.container.append (img)
+		var w = img[0].naturalWidth, h = img[0].naturalHeight
                 var s = Math.min (w, h)
 		if (!bh.imageCrop)
 		    bh.imageCrop = { cropX: 0, cropY: 0, cropW: s, cropH: s }
@@ -469,9 +467,8 @@ var BigHouse = (function() {
                                result: bh.imageCrop }
 		if (bh.isTouchDevice())
 		    config.showControls = 'never'
-		img
-                    .show()
-		    .cropbox (config)
+
+                img.cropbox (config)
 		    .on ('cropbox', function (e, result) {
 			bh.imageCrop.cropX = result.cropX
 			bh.imageCrop.cropY = result.cropY
@@ -482,11 +479,6 @@ var BigHouse = (function() {
 	        var uploadExit
                 bh.container
 		    .append (uploadExit = $('<div class="upload-exit">'))
-
-                var makeImageFullSize = function() {
-                    img.remove().hide()
-                    $('body').append(img)
-                }
                 
 		// when user hits rotate, we want to
 		//  1) redraw the full-size image, rotated
@@ -494,7 +486,7 @@ var BigHouse = (function() {
 		var rotateFunc = function (sign) {
 		    return function() {
 			uploadExit.find('*').off('click').addClass('unclickable')
-                        makeImageFullSize()
+                        img.remove()
                         
                         var canvas = $('<canvas>')
 			var ctx = canvas[0].getContext('2d')
@@ -517,7 +509,7 @@ var BigHouse = (function() {
 		}
 
 		var okFunc = function() {
-                    makeImageFullSize()
+                    img.remove()
 		    var canvas = $('<canvas>')
 		    var ctx = canvas[0].getContext('2d')
 		    var ic = bh.imageCrop
