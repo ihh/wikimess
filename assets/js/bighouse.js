@@ -736,9 +736,25 @@ var BigHouse = (function() {
 			 .append ($('<span>')
 				  .html (this.makeLink ('Exit', this.showPlayPage))))
 
-	    // allow scrolling for tbody
-	    // TODO: prevent bounce that occurs at end...
-            tbody.on ('touchmove', function(e) { e.stopPropagation() })
+	    // allow scrolling for tbody, while preventing bounce at ends
+            // http://stackoverflow.com/a/5828342/726581
+            // http://stackoverflow.com/a/13278230/726581
+            var lastY
+            tbody.on ('touchmove', function(e) {
+                var currentY = e.originalEvent.touches[0].clientY
+                var t = parseInt(tbody.scrollTop()),
+                    h = parseInt(tbody[0].scrollHeight),
+                    o = parseInt(tbody.outerHeight())
+                // TODO: make this work in landscape mode. Need to track lastX too? What if flipped the other way?
+                if (currentY > lastY) {  // going down
+                    if (t != 0)
+                        e.stopPropagation()
+                } else {  // going up
+                    if (h - t != o)
+                        e.stopPropagation()
+                }
+                lastY = currentY
+            })
 
 	    this.REST_getPlayerGames (this.playerID)
 		.done (function (data) {
