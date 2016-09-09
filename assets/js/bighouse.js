@@ -737,24 +737,23 @@ var BigHouse = (function() {
 				  .html (this.makeLink ('Exit', this.showPlayPage))))
 
 	    // allow scrolling for tbody, while preventing bounce at ends
-            // http://stackoverflow.com/a/5828342/726581
-            // http://stackoverflow.com/a/13278230/726581
-            var lastY
-            tbody.on ('touchmove', function(e) {
-                var currentY = e.originalEvent.touches[0].clientY
-                var t = parseInt(tbody.scrollTop()),
-                    h = parseInt(tbody[0].scrollHeight),
-                    o = parseInt(tbody.outerHeight())
-                // TODO: make this work in landscape mode. Need to track lastX too? What if flipped the other way?
-                if (currentY > lastY) {  // going down
-                    if (t != 0)
-                        e.stopPropagation()
-                } else {  // going up
-                    if (h - t != o)
-                        e.stopPropagation()
+            // http://stackoverflow.com/a/20477023/726581
+            tbody.on('touchstart', function(event) {
+                this.allowUp = (this.scrollTop > 0);
+                this.allowDown = (this.scrollTop < this.scrollHeight - this.clientHeight);
+                this.slideBeginY = event.pageY;
+            });
+            tbody.on('touchmove', function(event) {
+                var up = (event.pageY > this.slideBeginY);
+                var down = (event.pageY < this.slideBeginY);
+                this.slideBeginY = event.pageY;
+                if ((up && this.allowUp) || (down && this.allowDown)) {
+                    event.stopPropagation();
                 }
-                lastY = currentY
-            })
+                else {
+                    event.preventDefault();
+                }
+            });
 
 	    this.REST_getPlayerGames (this.playerID)
 		.done (function (data) {
@@ -970,8 +969,9 @@ var BigHouse = (function() {
 	},
 
         createCardListItem: function (cardContent, cardClass) {
-            var listItem = $('<li class="in-deck ' + (cardClass || "") + '">')
-            listItem.html (cardContent)
+            var listItem = $('<li>').html(cardContent)
+            if (cardClass)
+                listItem.addClass (cardClass)
             this.stackList.append (listItem)
             return listItem
         },
@@ -1028,11 +1028,13 @@ var BigHouse = (function() {
 	    if (rightHint)
                 choiceRevealer.newChoiceDiv
 		.append ($('<div class="choice1">')
-			 .append (this.makeLink ("← " + leftHint,
-						 this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT))))
+                         .append ($('<div class="hint">')
+			          .append (this.makeLink ("← " + leftHint,
+						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))))
                 .append ($('<div class="choice2">')
-			 .append (this.makeLink (rightHint + " →",
-						 this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT))))
+                         .append ($('<div class="hint">')
+			          .append (this.makeLink (rightHint + " →",
+						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))))
 
 	    if (config.dealt)
 		card.on ('throwinend', config.dealt)

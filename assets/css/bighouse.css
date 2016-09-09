@@ -8,7 +8,7 @@ li {
 }
 
 body {
-    font: normal 16px/32px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
+    font: normal 16px/20px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
     overflow: hidden;
 
     background-color: black;
@@ -40,16 +40,24 @@ body {
     cursor: default;
 }
 
-.bighouse .cardbar .cardtable li.in-deck:nth-child(4) {
+.bighouse .cardbar .cardtable li:nth-child(4) {
     top: 2px; transform: translate(4px, 3px) rotate(-2deg);
 }
 
-.bighouse .cardbar .cardtable li.in-deck:nth-child(3) {
+.bighouse .cardbar .cardtable li:nth-child(3) {
     top: 2px; transform: translate(2px, 2px) rotate(0.4deg);
 }
 
-.bighouse .cardbar .cardtable li.in-deck:nth-child(2) {
+.bighouse .cardbar .cardtable li:nth-child(2) {
     top: 4px; transform: translate(-4px, -2px) rotate(-1deg);
+}
+
+.bighouse .choicebar .choice1 .hint {
+    padding-left: 4px;
+}
+
+.bighouse .choicebar .choice2 .hint {
+    padding-right: 4px;
 }
 
 .bighouse .choicebar a {
@@ -85,6 +93,12 @@ body {
     font-style: italic;
     background-color: antiquewhite;
     color: brown;
+}
+
+.bighouse .inputbar,
+.bighouse .titlebar,
+.bighouse .menubar {
+    line-height: 32px;
 }
 
 .bighouse .inputbar input[type=text],
@@ -194,32 +208,32 @@ a.unclickable {
 
 .bighouse .gametable tbody td:nth-child(1),
 .bighouse .gametable thead th:nth-child(1) {
-    width: 31vw;
-    justify-content: flex-start;
+    width: 25vw;
+    text-align: left;
 }
 
 .bighouse .gametable tbody td:nth-child(2),
 .bighouse .gametable thead th:nth-child(2) {
     width: 19vw;
-    justify-content: flex-end;
+    text-align: right;
 }
 
 .bighouse .gametable tbody td:nth-child(3),
 .bighouse .gametable thead th:nth-child(3) {
     width: 19vw;
-    justify-content: flex-end;
+    text-align: right;
 }
 
 .bighouse .gametable tbody td:nth-child(4),
 .bighouse .gametable thead th:nth-child(4) {
     width: 16vw;
-    justify-content: center;
+    text-align: center;
 }
 
 .bighouse .gametable tbody td:nth-child(5),
 .bighouse .gametable thead th:nth-child(5) {
     width: 11vw;
-    justify-content: center;
+    text-align: center;
 }
 
 .bighouse .gametable tbody td:nth-child(5) span {
@@ -269,11 +283,12 @@ a.unclickable {
 	width: 24vw;
 	height: 8vw;
 	position: absolute;
-	left: 52vw;
-	top: 0vw;
+	right: 0;
+	top: 0;
 	display: flex;
 	align-items: flex-start;
 	justify-content: flex-end;
+	margin-right: 24vw;
 	padding-right: 4px;
     }
 
@@ -351,25 +366,29 @@ a.unclickable {
     }
 
     .bighouse .choicebar .choice1 {
-	width: 45vw;
+	width: 50%;
 	float: left;
 	display: flex;
 	align-items: flex-start;
 	justify-content: flex-start;
+	text-align: left;
 	position: absolute;
 	bottom: 0;
-	left: 4px;
+	left: 0;
+	padding-left: 4px;
     }
 
     .bighouse .choicebar .choice2 {
-	width: 45vw;
+	width: 50%;
 	float: right;
 	display: flex;
 	align-items: flex-start;
 	justify-content: flex-end;
+	text-align: right;
 	position: absolute;
 	bottom: 0;
-	right: 4px;
+	right: 0;
+	padding-right: 4px;
     }
 
     .bighouse .statusbar a,
@@ -514,12 +533,7 @@ a.unclickable {
 	padding-right: 5vw;
     }
 
-
-    .bighouse .gametable thead th {
-	text-align: left;
-	height: 2em;
-    }
-
+    .bighouse .gametable thead th,
     .bighouse .gametable tbody td {
 	height: 2em;
     }
@@ -569,8 +583,8 @@ a.unclickable {
 	width: 24vh;
 	height: 8vh;
 	position: absolute;
-	right: 0vw;
-	top: 0vw;
+	right: 0;
+	top: 0;
 	display: flex;
 	align-items: flex-start;
 	justify-content: flex-end;
@@ -657,6 +671,7 @@ a.unclickable {
 	display: flex;
 	align-items: flex-end;
 	justify-content: flex-start;
+	text-align: left;
 	position: absolute;
 	bottom: 0;
 	left: 4px;
@@ -668,6 +683,7 @@ a.unclickable {
 	display: flex;
 	align-items: flex-end;
 	justify-content: flex-end;
+	text-align: right;
 	position: absolute;
 	bottom: 0;
 	right: 4px;
