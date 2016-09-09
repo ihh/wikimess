@@ -22,7 +22,8 @@ var BigHouse = (function() {
         $(document).on('touchmove',function(e){
             e.preventDefault()
         })
-        
+
+        this.pushedViews = []
         this.changeMusic('menu')
         this.showLoginPage()
     }
@@ -127,11 +128,12 @@ var BigHouse = (function() {
 	},
 
         makeLink: function (text, callback, sfx) {
+            sfx = sfx || 'select'
             var cb = $.proxy (callback, this)
             return $('<a href="#">')
                 .text (text)
                 .on ('click', function (evt) {
-                    if (sfx)
+                    if (sfx.length)
                         bh.playSound (sfx)
                     evt.preventDefault()
                     cb(evt)
@@ -166,10 +168,9 @@ var BigHouse = (function() {
                                            .text('Password'))
                                   .append (this.passwordInput = $('<input name="password" type="password">'))))
                 .append ($('<div class="menubar">')
-                         .append ($('<div>')
-                                  .append ($('<ul>')
-                                           .append (this.makeListLink ('Log in', this.doReturnLogin))
-                                           .append (this.makeListLink ('Create player', this.createPlayer)))))
+                         .append ($('<ul>')
+                                  .append (this.makeListLink ('Log in', this.doReturnLogin))
+                                  .append (this.makeListLink ('Create player', this.createPlayer))))
             if (this.playerName)
                 this.nameInput.val (this.playerName)
         },
@@ -307,10 +308,9 @@ var BigHouse = (function() {
         showAudioPage: function() {
             var bh = this
 
-            this.page = 'audio'
+            this.pushView ('audio')
             var soundInput, musicInput
             this.container
-                .empty()
                 .append (this.makePageTitle ("Audio settings"))
                 .append ($('<div class="menubar">')
                          .append ($('<div class="card">')
@@ -320,7 +320,7 @@ var BigHouse = (function() {
                                   .append (musicInput = $('<input type="range" value="50" min="0" max="100">'))
                                   .append ($('<span>').text("Music volume")))
                          .append ($('<ul>')
-                                  .append (this.makeListLink ('Back', this.showSettingsPage))))
+                                  .append (this.makeListLink ('Back', this.popView))))
 
             soundInput.val (this.soundVolume * 100)
             soundInput.on ('change', function() {
@@ -340,7 +340,23 @@ var BigHouse = (function() {
             soundInput.on('touchmove',function(e){e.stopPropagation()})
             musicInput.on('touchmove',function(e){e.stopPropagation()})
         },
-        
+
+        pushView: function (newPage) {
+            var elements = this.container.find(':not(.pushed)')
+            var page = this.page
+            this.pushedViews.push ({ elements: elements, page: page })
+            elements.addClass('pushed')
+            this.page = newPage
+        },
+
+        popView: function() {
+            var poppedView = this.pushedViews.pop()
+            this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
+            this.container.find(':not(.pushed)').remove()
+            poppedView.elements.find('*').addBack().removeClass('pushed')
+            this.page = poppedView.page
+        },
+
         // avatar upload page
         showSettingsUploadPage: function() {
             this.showUploadPage ({ uploadText: "Select one of the images below to upload a new photo",
@@ -734,7 +750,7 @@ var BigHouse = (function() {
 				  .append (tbody = $('<tbody>'))))
 		.append ($('<div class="menubar">')
 			 .append ($('<span>')
-				  .html (this.makeLink ('Exit', this.showPlayPage))))
+				  .html (this.makeLink ('Back', this.showPlayPage))))
 
 	    // allow scrolling for tbody, while preventing bounce at ends
             // http://stackoverflow.com/a/20477023/726581
@@ -809,6 +825,20 @@ var BigHouse = (function() {
                 .fail ($.proxy (this.showModalWebError, this))
         },
 
+        // in-game menu
+        showGameMenuPage: function() {
+            var bh = this
+
+            this.pushView ('gamemenu')
+            this.container
+                .append (this.makePageTitle ("Game menu"))
+                .append ($('<div class="menubar">')
+                         .append ($('<ul>')
+                                  .append (this.makeListLink ('Resume game', this.popView))
+                                  .append (this.makeListLink ('Audio settings', this.showAudioPage))
+                                  .append (this.makeListLink ('Exit to menu', this.showPlayPage))))
+        },
+
         // game pages
         showGamePage: function() {
             var bh = this
@@ -833,7 +863,7 @@ var BigHouse = (function() {
                              .append (this.opponentMoodDiv = $('<div class="rightmood">'))
                              .append ($('<div class="statuslink">')
                                       .append ($('<span>')
-                                               .html (this.quitLink = this.makeLink ('Exit', this.showPlayPage, 'gameover')))))
+                                               .html (this.makeLink ('Menu', this.showGameMenuPage)))))
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
                                       .append (this.choiceBar = $('<div class="choicebar">')
@@ -1030,11 +1060,13 @@ var BigHouse = (function() {
 		.append ($('<div class="choice1">')
                          .append ($('<div class="hint">')
 			          .append (this.makeLink ("← " + leftHint,
-						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT)))))
+						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT),
+                                                          ''))))
                 .append ($('<div class="choice2">')
                          .append ($('<div class="hint">')
 			          .append (this.makeLink (rightHint + " →",
-						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT)))))
+						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT),
+                                                          ''))))
 
 	    if (config.dealt)
 		card.on ('throwinend', config.dealt)
