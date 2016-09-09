@@ -149,20 +149,31 @@ body {
     width: 100%;
 }
 
+.bighouse .menubar li {
+    list-style: none;
+    color: #888;
+}
+
+.bighouse .menubar li {
+    padding: 8px;
+}
+
+.bighouse .menubar .card {
+    padding: 16px;
+}
+
 .bighouse .menubar li,
 .bighouse .menubar .card {
-    list-style: none;
-
-    color: #888;
+    margin: 4vh;
     border: 1px solid #888;
     box-sizing: border-box;
-
     text-align: center;
 }
 
 .bighouse .menubar .card {
     cursor: default;
     width: 80vw;
+    color: #888;
     background: #444;
 }
 
@@ -508,14 +519,6 @@ a.unclickable {
 
     .bighouse .menubar li,
     .bighouse .menubar .card {
-/*
-	border-radius: 5px;
-	border-width: 10px;
-	width: 60vw;
-	padding: 4vh;
-*/
-	padding: 4px 8px 4px 8px;
-	margin: 4vh;
 	font-size: 18px;
     }
 
@@ -825,14 +828,6 @@ a.unclickable {
 
     .bighouse .menubar li,
     .bighouse .menubar .card {
-/*
-	border-radius: 5px;
-	border-width: 5px;
-	width: 40vw;
-	padding: 0vh 2vh;
-*/
-	padding: 4px 8px 4px 8px;
-	margin: 4vh;
 	font-size: 16px;
     }
 

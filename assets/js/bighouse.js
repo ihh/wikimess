@@ -24,6 +24,8 @@ var BigHouse = (function() {
         })
 
         this.pushedViews = []
+	this.postponedCallbacks = {}
+
         this.changeMusic('menu')
         this.showLoginPage()
     }
@@ -346,16 +348,29 @@ var BigHouse = (function() {
             var page = this.page
             this.pushedViews.push ({ elements: elements, page: page })
             elements.addClass('pushed')
+	    this.postponedCallbacks[page] = []
             this.page = newPage
         },
 
         popView: function() {
+	    var bh = this
             var poppedView = this.pushedViews.pop()
             this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
             this.container.find(':not(.pushed)').remove()
             poppedView.elements.find('*').addBack().removeClass('pushed')
             this.page = poppedView.page
+	    if (this.postponedCallbacks.hasOwnProperty (this.page)) {
+		this.postponedCallbacks[this.page].forEach (function (f) { f.call (bh) })
+		delete this.postponedCallbacks[this.page]
+	    }
         },
+
+	callOrPostpone: function (page, callback) {
+	    if (this.page == page)
+		callback.call (this)
+	    else if (this.postponedCallbacks.hasOwnProperty (page))
+		this.postponedCallbacks[page].push (callback)
+	},
 
         // avatar upload page
         showSettingsUploadPage: function() {
@@ -1167,17 +1182,19 @@ var BigHouse = (function() {
                 }
                 break
             case "move":
-                if (this.page == 'game' && this.gameID == msg.data.game) {
-                    this.outcome = msg.data.outcome
-                    this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
-                    this.showOutcome()
-                }
+                if (this.gameID == msg.data.game)
+		    this.callOrPostpone ('game', function() {
+			this.outcome = msg.data.outcome
+			this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
+			this.showOutcome()
+		    })
                 break
             case "mood":
-                if (this.page == 'game' && this.gameID == msg.data.game) {
-                    this.playSound (msg.data.other.mood, .5)
-                    this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
-                }
+                if (this.gameID == msg.data.game)
+		    this.callOrPostpone ('game', function() {
+			this.playSound (msg.data.other.mood, .5)
+			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
+                    })
                 break
             default:
                 console.log ("Unknown message")
