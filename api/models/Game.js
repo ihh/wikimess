@@ -221,8 +221,8 @@ module.exports = {
 					 moves: game.moves + 1,
 					 mood1: Outcome.mood1 (outcome),
 					 mood2: Outcome.mood2 (outcome),
-                                         local1: Game.evalUpdatedState (game, outcome, 1, false),
-                                         local2: Game.evalUpdatedState (game, outcome, 2, false),
+                                         local1: Game.evalUpdatedState (game, outcome, 1, true),
+                                         local2: Game.evalUpdatedState (game, outcome, 2, true),
 					 current: currentChoiceID,
 					 future: futureChoiceNames,
 					 finished: currentChoiceID ? false : true
@@ -337,10 +337,20 @@ module.exports = {
             var expr = newStateExpr[key]
             var $ = info.self[context].state[key] || 0,
                 $o = info.other[context].state[key] || 0,
-                $1 = info.p1[context].state[key] || 0,
-                $2 = info.p2[context].state[key] || 0
+                $1 = p1[context].state[key] || 0,
+                $2 = p2[context].state[key] || 0
             updatedState[key] = eval(expr)
         })
+
+/*
+	console.log ("In evalUpdatedState: role="+role+" local="+local)
+	console.log (game)
+	console.log (outcome)
+	console.log ($s)
+	console.log (newStateExpr)
+	console.log (updatedState)
+*/
+
         return updatedState
     },
     

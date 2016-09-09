@@ -10,6 +10,7 @@ module.exports = {
     // override blueprint for create, to allow inline specification of (CC,CD,DC,DD) outcomes
     create: function (req, res) {
         var body = req.body
+
         var outcomeContainer = {}
         var moves = ['c', 'd']
         moves.forEach (function (move1) {
