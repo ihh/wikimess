@@ -38,14 +38,24 @@ module.exports = {
       outro2: { type: 'string' },
 
       // game state updates
-      cash1: {
-          type: 'integer',
-          defaultsTo: 0
+      local1: {
+          type: 'json',
+          defaultsTo: {}
       },
 
-      cash2: {
-          type: 'integer',
-          defaultsTo: 0
+      local2: {
+          type: 'json',
+          defaultsTo: {}
+      },
+
+      global1: {
+          type: 'json',
+          defaultsTo: {}
+      },
+
+      global2: {
+          type: 'json',
+          defaultsTo: {}
       },
 
       // the RHS of the CFG rule
@@ -81,10 +91,9 @@ module.exports = {
     },
 
     forRole: function (game, outcome, role) {
-        var outro, cash, self, other, selfMood, otherMood, verb, type
+        var outro, self, other, selfMood, otherMood, verb, type
         if (role == 1) {
             outro = outcome.outro
-            cash = outcome.cash1
             self = game.player1
             other = game.player2
             selfMood = this.mood1(outcome)
@@ -93,7 +102,6 @@ module.exports = {
             type = outcome.move1 + outcome.move2
         } else {  // role == 2
             outro = outcome.outro2 || outcome.outro
-            cash = outcome.cash2
             self = game.player2
             other = game.player1
             selfMood = this.mood2(outcome)

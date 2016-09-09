@@ -254,7 +254,6 @@ var BigHouse = (function() {
         // play menu
         showPlayPage: function() {
             var bh = this
-            var cashDiv
 
             this.changeMusic('menu')
             
@@ -933,7 +932,6 @@ var BigHouse = (function() {
 			bh.throwDummyCard (loadingCardListItem)
 
                     bh.moveNumber = data.move
-		    bh.playerCash = data.self.cash
 
 		    bh.updatePlayerMood (data.self.mood)
 		    bh.opponentNameDiv.text (data.other.name)
@@ -1170,7 +1168,6 @@ var BigHouse = (function() {
             case "move":
                 if (this.page == 'game' && this.gameID == msg.data.game) {
                     this.outcome = msg.data.outcome
-		    this.playerCash = msg.data.self.cash
                     this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
                     this.showOutcome()
                 }

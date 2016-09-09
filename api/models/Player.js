@@ -30,9 +30,9 @@ module.exports = {
         },
 
       // global stats for this player
-      cash: {
-          type: 'integer',
-          defaultsTo: 0
+      global: {
+          type: 'json',
+          defaultsTo: {}
       },
       
       // references to games

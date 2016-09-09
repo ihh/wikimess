@@ -5,6 +5,8 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+var extend = require('extend')
+
 module.exports = {
 
   attributes: {
@@ -69,8 +71,18 @@ module.exports = {
           type: 'string',
           enum: ['happy', 'sad', 'angry', 'surprised'],
           defaultsTo: 'happy'
-      }
-  },
+      },
+
+      local1: {
+          type: 'json',
+          defaultsTo: {}
+      },
+
+      local2: {
+          type: 'json',
+          defaultsTo: {}
+      },
+},
 
     expandText: function (text, playerNames, role) {
         var self, other
@@ -131,7 +143,7 @@ module.exports = {
                      verb: verb,
                      hintc: hintc,
                      hintd: hintd,
-                     self: { mood: selfMood, cash: self.cash },
+                     self: { mood: selfMood },
                      other: { id: other.id, name: other.name, mood: otherMood },
                      move: game.moves + 1 }
 	if (game.lastOutcome)
@@ -209,6 +221,8 @@ module.exports = {
 					 moves: game.moves + 1,
 					 mood1: Outcome.mood1 (outcome),
 					 mood2: Outcome.mood2 (outcome),
+                                         local1: Game.evalUpdatedState (game, outcome, 1, false),
+                                         local2: Game.evalUpdatedState (game, outcome, 2, false),
 					 current: currentChoiceID,
 					 future: futureChoiceNames,
 					 finished: currentChoiceID ? false : true
@@ -227,7 +241,7 @@ module.exports = {
                                // update player1
                                Player.update
 			       ( { id: game.player1.id },
-                                 { cash: game.player1.cash + outcome.cash1 },
+                                 { global: Game.evalUpdatedState (game, outcome, 1, false) },
                                  function (err, updatedPlayer1s) {
                                      if (err)
                                          error (err)
@@ -237,7 +251,7 @@ module.exports = {
                                          // update player2
                                          Player.update
 					 ( { id: game.player2.id },
-                                           { cash: game.player2.cash + outcome.cash2 },
+                                           { global: Game.evalUpdatedState (game, outcome, 2, false) },
                                            function (err, updatedPlayer2s) {
                                                if (err)
                                                    error (err)
@@ -286,6 +300,50 @@ module.exports = {
          })
     },
 
+    evalUpdatedState: function (game, outcome, role, local) {
+        var p1 = { name: game.player1.name,
+                   local: { state: game.local1, expr: outcome.local1 },
+                   global: { state: game.player1.global, expr: outcome.global1 } }
+        var p2 = { name: game.player2.name,
+                   local: { state: game.local2, expr: outcome.local2 },
+                   global: { state: game.player2.global, expr: outcome.global2 } }
+        var info, context = local ? 'local' : 'global'
+        if (role == 1)
+            info = { self: p1, other: p2 }
+        else
+            info = { self: p2, other: p1 }
+
+        var $s = info.self[context].state,
+            $g = info.self.global.state,
+            $l = info.self.local.state,
+            $n = info.self.name,
+            $so = info.other[context].state,
+            $go = info.other.global,
+            $lo = info.other.local,
+            $no = info.other.name,
+            $s1 = p1[context].state,
+            $g1 = p1.global.state,
+            $l1 = p1.local.state,
+            $n1 = p1.name,
+            $s2 = p2[context].state,
+            $g2 = p2.global.state,
+            $l2 = p2.local.state,
+            $n2 = p2.name
+            
+        var updatedState = {}
+        extend (true, updatedState, info.self[context].state)
+        var newStateExpr = info.self[context].expr || {}
+        Object.keys(newStateExpr).forEach (function (key) {
+            var expr = newStateExpr[key]
+            var $ = info.self[context].state[key] || 0,
+                $o = info.other[context].state[key] || 0,
+                $1 = info.p1[context].state[key] || 0,
+                $2 = info.p2[context].state[key] || 0
+            updatedState[key] = eval(expr)
+        })
+        return updatedState
+    },
+    
     updateMood: function (info, success, error) {
         var game = info.game
         var role = info.role
