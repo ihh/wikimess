@@ -28,19 +28,25 @@ module.exports = {
 
     // get a player's games
     games: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
-            var g1 = player.player1games.map (function (game) {
-                return { game: game.id,
-                         finished: game.finished,
-                         waiting: game.move1 ? true : false }
-            })
-            var g2 = player.player2games.map (function (game) {
-                return { game: game.id,
-                         finished: game.finished,
-                         waiting: game.move2 ? true : false }
-            })
-            rs (null, g1.concat(g2))
-        }, ['player1games', 'player2games'])
+	var playerID = req.params.player
+	Game.find ({ where: { or: [ { player1: playerID }, { player2: playerID } ] } })
+	    .populate ('player1')
+	    .populate ('player2')
+	    .exec (function (err, games) {
+                if (err)
+                    res.status(500).send (err)
+		else
+		    res.json (games.map (function (game) {
+			var role = game.player1.id == playerID ? 1 : 2
+			var now = new Date(), created = new Date(game.createdAt), updated = new Date(game.updatedAt)
+			return { game: game.id,
+				 finished: game.finished,
+				 running: parseInt ((now - created) / 1000),
+				 dormant: parseInt ((now - updated) / 1000),
+				 other: { name: (role == 1 ? game.player2 : game.player1).name },
+				 waiting: Game.isWaitingForMove (game, role) }
+		    }))
+	    })
     },
 
     // get player stats
@@ -155,6 +161,23 @@ module.exports = {
                                              waiting: true })
                              },
                              rs)
+        })
+    },
+
+    // subscribe to socket for next move update
+    listenForMove: function (req, res) {
+        var moveNumber = req.params.moveNumber
+        var move = req.params.move
+        MiscPlayerService.findGame (req, res, function (info, rs) {
+            var player = info.player
+            var game = info.game
+            // waiting for opponent to move
+            if (req.isSocket)
+                Player.subscribe (req, [player.id])
+            rs (null, { game: game.id,
+                        move: moveNumber,
+                        choice: { self: move },
+                        waiting: true })
         })
     },
 

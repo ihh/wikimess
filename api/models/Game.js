@@ -54,6 +54,10 @@ module.exports = {
           enum: ['c', 'd']
       },
 
+      lastOutcome: {
+	  model: 'outcome',
+      },
+
       // player state specific to this game
       mood1: {
           type: 'string',
@@ -88,6 +92,10 @@ module.exports = {
             .replace(/\$player2/g,"$player1")
             .replace(/\$TMP_PLAYER1/g,"$player2")
     },
+
+    isWaitingForMove: function (game, role) {
+	return role == 1 ? (game.move2 || !game.move1) : (game.move1 || !game.move2)
+    },
     
     forRole: function (game, role) {
         var intro, verb, hintc, hintd, self, other, selfMood, otherMood, waiting
@@ -103,7 +111,6 @@ module.exports = {
             other = game.player2
             selfMood = game.mood1
             otherMood = game.mood2
-            waiting = game.move1 ? true : false
         } else {  // role == 2
             if (current) {
                 intro = current.intro2 || current.intro
@@ -115,19 +122,21 @@ module.exports = {
             other = game.player1
             selfMood = game.mood2
             otherMood = game.mood1
-            waiting = game.move1 ? true : false
         }
         if (intro)
             intro = this.expandText (intro, [game.player1.name, game.player2.name], role)
-        return { finished: game.finished,
-                 waiting: waiting,
-                 intro: intro,
-                 verb: verb,
-                 hintc: hintc,
-                 hintd: hintd,
-                 self: { mood: selfMood, cash: self.cash },
-                 other: { id: other.id, name: other.name, mood: otherMood },
-                 move: game.moves + 1 }
+        var json = { finished: game.finished,
+                     waiting: Game.isWaitingForMove (game, role),
+                     intro: intro,
+                     verb: verb,
+                     hintc: hintc,
+                     hintd: hintd,
+                     self: { mood: selfMood, cash: self.cash },
+                     other: { id: other.id, name: other.name, mood: otherMood },
+                     move: game.moves + 1 }
+	if (game.lastOutcome)
+	    json.lastOutcome = Outcome.forRole (game, game.lastOutcome, role)
+	return json
     },
 
     recordMove: function (info, gotOutcome, playerWaiting, error) {
@@ -155,13 +164,14 @@ module.exports = {
                         error (err)
                     else {
                         if (opponentMove)
-			    Game.applyRandomOutcome (game,
-						     function (outcome, game) {
-							 if (role == 1)
-							     gotOutcome (outcome, game, game.player1, game.player2)
-							 else
-							     gotOutcome (outcome, game, game.player2, game.player1)
-						     },
+			    Game.applyRandomOutcome ({ game: game,
+						       gotOutcome: function (outcome, game) {
+							   if (role == 1)
+							       gotOutcome (outcome, game, game.player1, game.player2)
+							   else
+							       gotOutcome (outcome, game, game.player2, game.player1)
+						       },
+						       storeOutcome: true },
 						     error)
                         else
                             playerWaiting()
@@ -171,7 +181,10 @@ module.exports = {
         }
     },
 
-    applyRandomOutcome: function (game, gotOutcome, error) {
+    applyRandomOutcome: function (info, error) {
+	var game = info.game
+	var gotOutcome = info.gotOutcome
+	var storeOutcome = info.storeOutcome
         Choice.randomOutcome
 	({ choice: game.current.id,
            move1: game.move1,
@@ -191,17 +204,20 @@ module.exports = {
 		     var currentChoiceIntro = currentChoice ? currentChoice.intro : null
 		     var autoExpandCurrentChoice = (currentChoiceID && !(currentChoiceIntro && /\S/.test(currentChoiceIntro)))
                      // update game state
+		     var updateAttrs = { move1: undefined,
+					 move2: undefined,
+					 moves: game.moves + 1,
+					 mood1: Outcome.mood1 (outcome),
+					 mood2: Outcome.mood2 (outcome),
+					 current: currentChoiceID,
+					 future: futureChoiceNames,
+					 finished: currentChoiceID ? false : true
+				       }
+		     if (storeOutcome)
+			 updateAttrs.lastOutcome = outcome
                      Game.update
 		     ( { id: game.id },
-                       { move1: undefined,
-                         move2: undefined,
-                         moves: game.moves + 1,
-                         mood1: Outcome.mood1 (outcome),
-                         mood2: Outcome.mood2 (outcome),
-                         current: currentChoiceID,
-                         future: futureChoiceNames,
-                         finished: currentChoiceID ? false : true
-                       },
+                       updateAttrs,
                        function (err, updatedGames) {
                            if (err)
                                error (err)
@@ -241,10 +257,11 @@ module.exports = {
 							       if (!autoExpandCurrentChoice)
 								   gotOutcome (outcome, refreshedGames[0])
 							       else
-								   Game.applyRandomOutcome (refreshedGames[0],
-											    function (dummyOutcome, game) {
-												gotOutcome (outcome, game)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
-											    },
+								   Game.applyRandomOutcome ({ game: refreshedGames[0],
+											      gotOutcome: function (dummyOutcome, game) {
+												  gotOutcome (outcome, game)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
+											      },
+											      storeOutcome: false },
 											    error)
 							   }
 						       })

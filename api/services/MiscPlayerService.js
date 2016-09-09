@@ -37,6 +37,7 @@ module.exports = {
                 .populate ('player1')
                 .populate ('player2')
                 .populate ('current')
+                .populate ('lastOutcome')
                 .exec (function (err, games) {
                     if (err)
                         rs(err)

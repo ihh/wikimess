@@ -56,6 +56,10 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/stats')
         },
 
+        REST_getPlayerGames: function (playerID) {
+            return $.get ('/player/' + playerID + '/game')
+        },
+
         REST_getPlayerStats: function (playerID) {
             return $.get ('/player/' + playerID + '/stats')
         },
@@ -91,6 +95,10 @@ var BigHouse = (function() {
 
         socket_getPlayerGame: function (playerID, gameID) {
             return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID)
+        },
+
+        socket_getPlayerGameMove: function (playerID, gameID, move) {
+            return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID + '/move/' + move)
         },
 
         socket_getPlayerGameMoveChoice: function (playerID, gameID, move, choice) {
@@ -257,7 +265,8 @@ var BigHouse = (function() {
                 .append (this.makePageTitle ("Hi " + this.playerName))
                 .append (this.menuDiv = $('<div class="menubar">')
                          .append ($('<ul>')
-                                  .append (this.makeListLink ('Play game', this.joinGame, 'waiting'))
+                                  .append (this.makeListLink ('New game', this.joinGame, 'waiting'))
+                                  .append (this.makeListLink ('Active games', this.showActiveGamesPage))
                                   .append (this.makeListLink ('Settings', this.showSettingsPage))
                                   .append (this.makeListLink ('Log out', this.doLogout, 'logout'))))
         },
@@ -342,7 +351,7 @@ var BigHouse = (function() {
 
         showInitialUploadPage: function() {
             this.showUploadPage ({ uploadText: "Take a selfie for each of the four moods shown below, so other players can see how you feel.",
-                                   nextPageText: "No, I'm too shy",
+                                   nextPageText: "Later",
                                    showNextPage: this.showPlayPage,
                                    transitionWhenUploaded: true })
         },
@@ -704,7 +713,60 @@ var BigHouse = (function() {
 	    }
 	},
 
-        // join game
+        // active games
+	showActiveGamesPage: function() {
+            var bh = this
+
+	    this.page = 'activeGames'
+	    var tbody
+	    this.container
+		.empty()
+                .append (this.makePageTitle ("Active games"))
+		.append ($('<div>')
+			 .append ($('<table class="gametable">')
+				  .append ($('<thead>')
+					   .append ($('<tr>')
+						    .append ($('<th>').text("Player"))
+						    .append ($('<th>').text("Started"))
+						    .append ($('<th>').text("Updated"))
+						    .append ($('<th>').text("State"))
+						    .append ($('<th>'))))
+				  .append (tbody = $('<tbody>'))))
+		.append ($('<div class="menubar">')
+			 .append ($('<span>')
+				  .html (this.makeLink ('Exit', this.showPlayPage))))
+
+	    // allow scrolling for tbody
+	    // TODO: prevent bounce that occurs at end...
+            tbody.on ('touchmove', function(e) { e.stopPropagation() })
+
+	    this.REST_getPlayerGames (this.playerID)
+		.done (function (data) {
+		    tbody.append (data.map (function (info) {
+			var state = info.finished ? "Over" : (info.waiting ? "Ready" : "Waiting")
+			return $('<tr>')
+			    .append ($('<td>').text(info.other.name))
+			    .append ($('<td>').text(bh.hoursMinutes (info.running)))
+			    .append ($('<td>').text(bh.hoursMinutes (info.dormant)))
+			    .append ($('<td>').addClass(state.toLowerCase()).text(state))
+			    .append ($('<td>')
+				     .append ($('<span>')
+					      .text("Join")
+					      .on ('click', function() {
+						  bh.startGame (info.game)
+					      })))
+		    }))
+		})
+	},
+
+	hoursMinutes: function (seconds) {
+	    var m = parseInt(seconds / 60)
+	    var h = parseInt(m / 60)
+	    m = m % 60
+	    return h + ":" + (m < 10 ? "0" : "") + m
+	},
+
+        // start/join new game
         joinGame: function() {
             var bh = this
             this.socket_getPlayerJoin (this.playerID)
@@ -796,67 +858,85 @@ var BigHouse = (function() {
             this.loadGameCard()
         },
 
-        loadGameCard: function (gameCardsLoadedCallback) {
-            gameCardsLoadedCallback = gameCardsLoadedCallback || function(){}
-            if (this.gameOver) {
-		if (this.nextOutcomeCardListItem) {
-		    this.nextOutcomeCardListItem.remove()  // silently remove the placeholder outcome card
-		    this.nextOutcomeCardSwipe()
-		}
-		if (this.waitCardListItem) {
-		    this.throwDummyCard (this.waitCardListItem, this.waitCardSwipe)  // visibly throw the 'waiting for player' card
-		}
-                gameCardsLoadedCallback()
+        loadGameCard: function() {
+	    var bh = this
+            var loadingCardListItem, loadingCardSwipe, loadingCardTimer
+	    var loadingSpan = $('<span>').text ("Loading")
+	    if (this.nextOutcomeCardListItem) {
+		// not the first move; repurpose the previously-added placeholder outcome card as a 'Loading' card
+                loadingCardListItem = this.nextOutcomeCardListItem
+		    .html (loadingSpan)
+		    .removeClass()
+		    .addClass('waitcard')
+		loadingCardSwipe = this.nextOutcomeCardSwipe
 	    } else {
-                var loadingCardListItem, loadingCardSwipe, loadingSpan = $('<span>').text ("Loading")
-		if (this.nextOutcomeCardListItem) {
-		    // repurpose the placeholder outcome card as a 'Loading' card
-                    loadingCardListItem = this.nextOutcomeCardListItem
-			.html (loadingSpan)
-			.removeClass()
-			.addClass('waitcard')
-		    loadingCardSwipe = this.nextOutcomeCardSwipe
-		} else {
-		    // first move, so add a 'Loading' card
-		    loadingCardListItem = this.createCardListItem (loadingSpan, 'waitcard')
-		    loadingCardSwipe = this.pushChoiceRevealer().wrapCallback()
-		}
-		if (this.waitCardListItem) {
-		    this.throwDummyCard (this.waitCardListItem, this.waitCardSwipe)  // visibly throw the 'waiting for player' card
-		}
+		// first move, so add a 'Loading' card, with a short time delay in case server response is quick
+		loadingCardTimer = window.setTimeout (function() {
+		    loadingCardListItem = bh.createCardListItem (loadingSpan, 'waitcard')
+		    loadingCardSwipe = bh.pushChoiceRevealer().wrapCallback()
+		    loadingCardTimer = null
+		}, 100)
+	    }
+	    if (this.waitCardListItem)
+		this.throwDummyCard (this.waitCardListItem, this.waitCardSwipe)  // visibly throw the 'waiting for player' card
 
-                this.socket_getPlayerGame (this.playerID, this.gameID)
-                    .done (function (data) {
-                        bh.throwDummyCard (loadingCardListItem)
-                        if (!data.finished) {
-                            bh.moveNumber = data.move
-                            bh.playerCash = data.self.cash
+            this.socket_getPlayerGame (this.playerID, this.gameID)
+                .done (function (data) {
+		    if (loadingCardTimer)
+			window.clearTimeout (loadingCardTimer)
+		    if (loadingCardListItem)
+			bh.throwDummyCard (loadingCardListItem)
 
-                            bh.updatePlayerMood (data.self.mood)
-                            bh.opponentNameDiv.text (data.other.name)
-                            bh.updateOpponentMood (data.other.id, data.other.mood)
+                    bh.moveNumber = data.move
+		    bh.playerCash = data.self.cash
 
-                            bh.nextOutcomeCardListItem = bh.createCardListItem ('', 'outcome')  // placeholder, for appearances
-			    bh.nextOutcomeCardSwipe = bh.pushChoiceRevealer().wrapCallback()
+		    bh.updatePlayerMood (data.self.mood)
+		    bh.opponentNameDiv.text (data.other.name)
+		    bh.updateOpponentMood (data.other.id, data.other.mood)
 
-                            bh.waitCardListItem = bh.createCardListItem ('', 'waitcard')
-			    bh.waitCardSwipe = bh.pushChoiceRevealer().wrapCallback()
-
-                            bh.createAndDealCards ({ text: data.intro,
+                    if (data.finished)
+			bh.showLastOutcome (data.lastOutcome)
+		    else {
+			bh.createPlaceholderCards()
+			if (data.waiting) {
+			    bh.createAndDealCards ({ text: data.intro,
 						     cardClass: 'verb-' + data.verb,
 						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
 						     swipeLeft: bh.makeMoveFunction (data.move, 'd'),
 						     rightHint: data.hintc, 
 						     leftHint: data.hintd,
-						     dealt: function() {
-							 bh.waitCardListItem.html ($('<span>').text ("Waiting for other player"))
-						     }})
+						     dealt: $.proxy (bh.showWaitingForOther, bh) })
+			    bh.showLastOutcome (data.lastOutcome)
+			} else {
+			    bh.createPlaceholderCards()
+			    bh.showWaitingForOther()
+			    bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
+			}
+		    }
+                })
+	},
 
-			    gameCardsLoadedCallback()
-                        }
-                    })
-            }
-        },
+	createPlaceholderCards: function() {
+            this.nextOutcomeCardListItem = this.createCardListItem ('', 'outcome')  // placeholder, for appearances
+	    this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
+
+            this.waitCardListItem = this.createCardListItem ('', 'waitcard')
+	    this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
+	},
+
+	showWaitingForOther: function() {
+	    this.waitCardListItem.html ($('<span>').text ("Waiting for other player"))
+	},
+
+	showLastOutcome: function (outcome) {
+	    if (outcome) {
+		if (outcome.verb)
+		    this.playSound (outcome.verb)
+		if (outcome.outro && /\S/.test (outcome.outro))
+		    this.createAndDealCards ({ text: outcome.outro,
+					       cardClass: 'outcome' })
+	    }
+	},
 
 	createAndDealCards: function (config) {
 	    var bh = this
@@ -1014,13 +1094,7 @@ var BigHouse = (function() {
             this.updatePlayerMood (this.outcome.self.mood)
             this.updateOpponentMood (this.outcome.other.id, this.outcome.other.mood)
 
-            this.loadGameCard (function() {
-		if (bh.outcome.verb)
-		    bh.playSound (bh.outcome.verb)
-		if (bh.outcome.outro && /\S/.test (bh.outcome.outro))
-                    bh.createAndDealCards ({ text: bh.outcome.outro,
-					     cardClass: 'outcome' })
-            })
+            this.loadGameCard()
         },
 
         cardThrowFunction: function (card, direction) {
@@ -1040,10 +1114,7 @@ var BigHouse = (function() {
                     // (we allow play->game transitions because the 2nd player to join gets an immediate message,
                     // before the waitingToJoin page is shown)
                     this.selectSound.stop()
-                    this.playSound ('gamestart')
-                    this.gameID = msg.data.game
-		    this.initGame()
-                    this.showGamePage()
+                    this.startGame (msg.data.game)
                 }
                 break
             case "move":
@@ -1051,7 +1122,6 @@ var BigHouse = (function() {
                     this.outcome = msg.data.outcome
 		    this.playerCash = msg.data.self.cash
                     this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
-                    this.gameOver = msg.data.finished
                     this.showOutcome()
                 }
                 break
@@ -1068,12 +1138,14 @@ var BigHouse = (function() {
             }
         },
 
-	initGame: function() {
-            this.gameOver = false
+	startGame: function (gameID) {
+            this.playSound ('gamestart')
+            this.gameID = gameID
 	    delete this.nextOutcomeCardListItem
 	    delete this.nextOutcomeCardSwipe
 	    delete this.waitCardListItem
 	    delete this.waitCardSwipe
+            this.showGamePage()
 	},
 
         // audio

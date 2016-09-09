@@ -110,7 +110,8 @@ module.exports = {
             default: verb = undefined; break;
             }
         }
-        outro = Game.expandText (outro, [game.player1.name, game.player2.name], role)
+	if (outro)
+            outro = Game.expandText (outro, [game.player1.name, game.player2.name], role)
         return { outro: outro,
                  verb: verb,
                  self: { mood: selfMood },

@@ -58,6 +58,7 @@ body {
 }
 
 .bighouse .statusbar a,
+.bighouse .menubar a,
 .bighouse .upload-exit a {
     text-decoration: none;
     color: #888;
@@ -120,8 +121,8 @@ body {
     text-align: center;
     font-size: 24px;
 
-    border-radius: 5px;
-    border: 10px solid rgba(1,1,1,.1);
+    border-style: solid;
+    border-color: rgba(1,1,1,.1);
     box-sizing: border-box;
 
     cursor: default;
@@ -136,6 +137,95 @@ body {
 .bighouse .upload-exit .unclickable,
 a.unclickable {
     opacity: .5;
+}
+
+
+.bighouse table.gametable {
+    width: 100%;
+    font-size: 12px;
+    cursor: default;
+}
+
+.bighouse .gametable thead,
+.bighouse .gametable tbody,
+.bighouse .gametable tr {
+    display: block;
+}
+
+.bighouse .gametable td,
+.bighouse .gametable th {
+    display: flex;
+    align-items: center;
+}
+
+.bighouse .gametable thead tr:nth-child(odd) {
+    background-color: #666;
+}
+
+.bighouse .gametable tbody tr:nth-child(even) {
+    background-color: #444;
+}
+
+.bighouse .gametable tr:after {
+    content: ' ';
+    display: block;
+    visibility: hidden;
+    clear: both;
+}
+
+.bighouse .gametable tbody td,
+.bighouse .gametable thead th {
+    float: left;
+    overflow: hidden;
+    padding: 0;
+}
+
+.bighouse .gametable tbody td.ready {
+    color: green;
+}
+
+.bighouse .gametable tbody td.over {
+    color: red;
+}
+
+.bighouse .gametable tbody td.waiting {
+    color: orange;
+}
+
+.bighouse .gametable tbody td:nth-child(1),
+.bighouse .gametable thead th:nth-child(1) {
+    width: 31vw;
+    justify-content: flex-start;
+}
+
+.bighouse .gametable tbody td:nth-child(2),
+.bighouse .gametable thead th:nth-child(2) {
+    width: 19vw;
+    justify-content: flex-end;
+}
+
+.bighouse .gametable tbody td:nth-child(3),
+.bighouse .gametable thead th:nth-child(3) {
+    width: 19vw;
+    justify-content: flex-end;
+}
+
+.bighouse .gametable tbody td:nth-child(4),
+.bighouse .gametable thead th:nth-child(4) {
+    width: 16vw;
+    justify-content: center;
+}
+
+.bighouse .gametable tbody td:nth-child(5),
+.bighouse .gametable thead th:nth-child(5) {
+    width: 11vw;
+    justify-content: center;
+}
+
+.bighouse .gametable tbody td:nth-child(5) span {
+    color: #888;
+    border: 1px solid #888;
+    padding: 1px;
 }
 
 /* Orientation-specific (i.e. layout) */
@@ -283,6 +373,7 @@ a.unclickable {
     }
 
     .bighouse .statusbar a,
+    .bighouse .menubar a,
     .bighouse .upload-exit a {
 	padding: 4px 8px 4px 8px;
     }
@@ -339,11 +430,8 @@ a.unclickable {
 
     .bighouse .titlebar {
 	width: 100vw;
-	height: 12vw;
-
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	height: 6vh;
+	text-align: center;
     }
 
     .bighouse .menucontainer {
@@ -363,6 +451,8 @@ a.unclickable {
 
     .bighouse .menubar li,
     .bighouse .menubar .card {
+	border-radius: 5px;
+	border-width: 10px;
 	width: 60vw;
 	margin: 4vh;
 	padding: 4vh;
@@ -424,6 +514,20 @@ a.unclickable {
 	padding-right: 5vw;
     }
 
+
+    .bighouse .gametable thead th {
+	text-align: left;
+	height: 2em;
+    }
+
+    .bighouse .gametable tbody td {
+	height: 2em;
+    }
+
+    .bighouse .gametable tbody {
+	overflow-y: auto;
+	height: 73vh;
+    }
 }
 
 /* Landscape view */
@@ -570,6 +674,7 @@ a.unclickable {
     }
 
     .bighouse .statusbar a,
+    .bighouse .menubar a,
     .bighouse .upload-exit a {
 	padding: 4px 8px 4px 8px;
     }
@@ -639,11 +744,8 @@ a.unclickable {
 
     .bighouse .titlebar {
 	width: 100vw;
-	height: 12vw;
-
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	height: 12vh;
+	text-align: center;
     }
 
     .bighouse .menucontainer {
@@ -665,9 +767,12 @@ a.unclickable {
 
     .bighouse .menubar li,
     .bighouse .menubar .card {
-	width: 60vw;
+	border-radius: 5px;
+	border-width: 5px;
+	width: 40vw;
 	margin: 4vh;
-	padding: 4vh;
+	padding: 0vh 2vh;
+	font-size: medium;
     }
 
     .bighouse .menubar .rubric {
@@ -736,5 +841,19 @@ a.unclickable {
 	padding-top: 5vh;
 	padding-bottom: 5vh;
 	text-align: center;
+    }
+
+    .bighouse .gametable thead th {
+	text-align: left;
+	height: 2em;
+    }
+
+    .bighouse .gametable tbody td {
+	height: 2em;
+    }
+
+    .bighouse .gametable tbody {
+	overflow-y: auto;
+	height: 70vh;
     }
 }
