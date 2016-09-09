@@ -43,7 +43,7 @@ body {
     font-size: 12px;
     border: 10px solid rgba(1,1,1,.1);
     box-sizing: border-box;
-    cursor: default;
+    cursor: pointer;
 }
 
 .bighouse .cardbar .cardtable li:nth-child(4) {
@@ -71,12 +71,22 @@ body {
     color: #ccc;
 }
 
+.bighouse .statusbar,
+.bighouse .menubar {
+    color: #ccc;
+}
+
+.bighouse .statusbar span {
+    cursor: default;
+}
+
 .bighouse .statusbar a,
 .bighouse .menubar a,
 .bighouse .upload-exit a {
-    text-decoration: none;
     color: #888;
+    text-decoration: none;
     border: 1px solid #888;
+    cursor: pointer;
 }
 
 .bighouse img.mood {
@@ -101,10 +111,18 @@ body {
     color: brown;
 }
 
-.bighouse .inputbar,
-.bighouse .titlebar,
-.bighouse .menubar {
+.bighouse .inputbar {
     line-height: 32px;
+}
+
+.bighouse .titlebar,
+.bighouse .menubar,
+.bighouse .moodslugbar {
+    color: #ccc;
+}
+
+.bighouse .inputbar {
+    color: #aaa;
 }
 
 .bighouse .inputbar input[type=text],
@@ -134,22 +152,32 @@ body {
 .bighouse .menubar .card {
     list-style: none;
 
-    background: white;
-    color: black;
-    
-    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
-    text-align: center;
-    font-size: 24px;
-
-    border-style: solid;
-    border-color: rgba(1,1,1,.1);
+    color: #888;
+    border: 1px solid #888;
     box-sizing: border-box;
 
+    text-align: center;
+}
+
+.bighouse .menubar .card {
     cursor: default;
+    width: 80vw;
+    background: #444;
+}
+
+.bighouse .menubar li,
+.bighouse .menubar .card input {
+    cursor: pointer;
 }
 
 .bighouse .menubar .rubric {
     text-align: center;
+}
+
+.bighouse .moodslugbar div,
+.bighouse .moodbar div img,
+.bighouse .upload-exit span {
+    cursor: pointer;
 }
 
 .bighouse .moodbar .unclickable,
@@ -164,6 +192,14 @@ a.unclickable {
     width: 100%;
     font-size: 12px;
     cursor: default;
+}
+
+.bighouse .gametable thead {
+    color: black;
+}
+
+.bighouse .gametable tbody {
+    color: #aaa;
 }
 
 .bighouse .gametable thead,
@@ -236,9 +272,11 @@ a.unclickable {
 }
 
 .bighouse .gametable tbody td:nth-child(5) span {
-    color: #888;
+    color: #ccc;
+    background-color: black;
     border: 1px solid #888;
     padding: 1px;
+    cursor: pointer;
 }
 
 /* Orientation-specific (i.e. layout) */
@@ -469,11 +507,15 @@ a.unclickable {
 
     .bighouse .menubar li,
     .bighouse .menubar .card {
+/*
 	border-radius: 5px;
 	border-width: 10px;
 	width: 60vw;
-	margin: 4vh;
 	padding: 4vh;
+*/
+	padding: 4px 8px 4px 8px;
+	margin: 4vh;
+	font-size: 18px;
     }
 
     .bighouse .menubar .rubric {
@@ -782,12 +824,15 @@ a.unclickable {
 
     .bighouse .menubar li,
     .bighouse .menubar .card {
+/*
 	border-radius: 5px;
 	border-width: 5px;
 	width: 40vw;
-	margin: 4vh;
 	padding: 0vh 2vh;
-	font-size: medium;
+*/
+	padding: 4px 8px 4px 8px;
+	margin: 4vh;
+	font-size: 16px;
     }
 
     .bighouse .menubar .rubric {

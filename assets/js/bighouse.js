@@ -132,6 +132,7 @@ var BigHouse = (function() {
             var cb = $.proxy (callback, this)
             return $('<a href="#">')
                 .text (text)
+                .attr ('title', text)
                 .on ('click', function (evt) {
                     if (sfx.length)
                         bh.playSound (sfx)
