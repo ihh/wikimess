@@ -166,12 +166,6 @@ a.unclickable {
     display: block;
 }
 
-.bighouse .gametable td,
-.bighouse .gametable th {
-    display: flex;
-    align-items: center;
-}
-
 .bighouse .gametable thead tr:nth-child(odd) {
     background-color: #666;
 }
@@ -189,7 +183,6 @@ a.unclickable {
 
 .bighouse .gametable tbody td,
 .bighouse .gametable thead th {
-    float: left;
     overflow: hidden;
     padding: 0;
 }
