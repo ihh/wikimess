@@ -863,27 +863,26 @@ var BigHouse = (function() {
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Resume game', this.popView))
-                                  .append (this.makeListLink ('Your status', this.showPlayerStatusPage))
-                                  .append (this.makeListLink ('Their status', this.showOpponentStatusPage))
+                                  .append (this.makeListLink ('Status', this.showPlayerStatusPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Exit to menu', this.showPlayPage))))
         },
 
 	// game status
         showPlayerStatusPage: function() {
-            this.showGameStatusPage (this.REST_getPlayerGameStatusSelf)
+            this.showGameStatusPage (this.playerName, this.REST_getPlayerGameStatusSelf)
         },
         
         showOpponentStatusPage: function() {
-            this.showGameStatusPage (this.REST_getPlayerGameStatusOther)
+            this.showGameStatusPage (this.opponentName, this.REST_getPlayerGameStatusOther)
         },
 
-        showGameStatusPage: function (getMethod) {
+        showGameStatusPage: function (name, getMethod) {
             var bh = this
             this.pushView ('status')
 	    var detail
             this.container
-                .append (this.makePageTitle ("Status"))
+                .append (this.makePageTitle (name))
 		.append (detail = $('<div class="detailbar">'))
 		.append ($('<div class="menubar">')
 			 .append ($('<span>')
@@ -995,7 +994,7 @@ var BigHouse = (function() {
                     bh.moveNumber = data.move
 
 		    bh.updatePlayerMood (data.self.mood)
-		    bh.opponentNameDiv.text (data.other.name)
+		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood)
 
                     if (data.finished)

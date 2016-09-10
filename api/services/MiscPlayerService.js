@@ -1,5 +1,6 @@
 // api/services/MiscPlayerService.js
 
+var fs = require('fs');
 var extend = require('extend');
 
 module.exports = {
@@ -73,9 +74,17 @@ module.exports = {
 	extend (state, local)
 
 	var iconPrefix = '/images/icons/'
-        var icon = function(name,text) {
+        var iconPath = process.cwd() + '/assets' + iconPrefix
+        var iconSuffix = '.svg'
+
+        var icon = function(name,text,color,bgColor) {
+            var svg = fs.readFileSync (iconPath + name + iconSuffix, 'utf8')
+            if (color)
+                svg = svg.replace(/"#fff"/g, color)
+            if (bgColor)
+                svg = svg.replace(/"#000"/g, bgColor)
             return '<p>'
-                + '<img src="' + iconPrefix + name + '.svg" class="icon"></img>'
+                + '<span class="icon">' + svg + '</span>'
                 + '<span class="text">' + text + '</span>'
         }
 
