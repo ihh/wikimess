@@ -6,7 +6,7 @@
 	"cc": {"outro":"Both win // yay!!! // Co-operation is great","local1":{"c":"$+1"},"local2":{"c":"$+1"},
                "next": {"intro": "Want to have an ice cream together?",
                         "hint": ["No","Yes"],
-                        "cc": "I love ice cream.",
+                        "cc": "I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.",
                         "diff": "Unfortunately, not everybody loves ice cream.",
                         "dd": "Right: ice cream sucks."}},
 	"cd2": {"outro":"$player1 is the sucker // Sorry","local1":{"c":"$+1"},"local2":{"d":"$+1"}},

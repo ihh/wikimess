@@ -1048,7 +1048,11 @@ var BigHouse = (function() {
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
 		var cardClass = isFirst ? config.cardClass : undefined
-                var cardListItem = bh.createCardListItem ($('<span>').html (text), cardClass)
+                // misc text expansions go here...
+                var content = text.split(/\n/).map (function (para) {
+                    return $('<span>').html(para)
+                })
+                var cardListItem = bh.createCardListItem (content, cardClass)
 		var cardConfig = { listItem: cardListItem }
 		if (isFinal)
 		    $.extend (cardConfig, config)
@@ -1057,7 +1061,7 @@ var BigHouse = (function() {
 	},
 
         createCardListItem: function (cardContent, cardClass) {
-            var listItem = $('<li>').html(cardContent)
+            var listItem = $('<li>').append(cardContent)
             if (cardClass)
                 listItem.addClass (cardClass)
             this.stackList.append (listItem)

@@ -45,6 +45,7 @@ body {
     border: 10px solid rgba(1,1,1,.1);
     box-sizing: border-box;
     cursor: pointer;
+    padding: 4px;
 }
 
 .bighouse .cardbar .cardtable li:nth-child(4) {
