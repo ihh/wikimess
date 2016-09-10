@@ -203,11 +203,13 @@ body {
 
 .bighouse .moodslugbar div,
 .bighouse .moodbar div img,
+.bighouse .mooduploadbar div img,
 .bighouse .upload-exit span {
     cursor: pointer;
 }
 
 .bighouse .moodbar .unclickable,
+.bighouse .mooduploadbar .unclickable,
 .bighouse .moodslugbar .unclickable,
 .bighouse .upload-exit .unclickable,
 a.unclickable {
@@ -498,6 +500,43 @@ a.unclickable {
     }
 
     .bighouse .moodbar .mood4 {
+	height: 21vw;
+	width: 21vw;
+	position: absolute;
+	left: 77vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .mooduploadbar {
+	width: 100vw;
+	height: 21vw;
+    }
+
+    .bighouse .mooduploadbar .mood1 {
+	height: 21vw;
+	width: 21vw;
+	position: absolute;
+	left: 2vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .mooduploadbar .mood2 {
+	width: 21vw;
+	height: 21vw;
+	position: absolute;
+	left: 27vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .mooduploadbar .mood3 {
+	height: 21vw;
+	width: 21vw;
+	position: absolute;
+	left: 52vw;
+	bottom: 0vw;
+    }
+
+    .bighouse .mooduploadbar .mood4 {
 	height: 21vw;
 	width: 21vw;
 	position: absolute;
@@ -812,6 +851,56 @@ a.unclickable {
     }
 
     .bighouse .moodbar img.mood {
+	width: 21vh;
+	height: 21vh;
+    }
+
+    .bighouse .mooduploadbar {
+	width: 100vw;
+	height: 21vh;
+    }
+
+    .bighouse .mooduploadbar .mood1 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 0vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar .mood2 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 25vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar .mood3 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 50vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar .mood4 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 75vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar img.mood {
 	width: 21vh;
 	height: 21vh;
     }

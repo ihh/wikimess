@@ -411,7 +411,7 @@ var BigHouse = (function() {
 			 .append ($('<ul>')
 				  .append (this.makeListLink (nextPageText, showNextPage))))
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
-                .append (this.moodBar = $('<div class="moodbar">'))
+                .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
                 
             var nUploads = 0, moodUploaded = {}
