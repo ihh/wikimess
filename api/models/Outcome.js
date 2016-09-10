@@ -133,7 +133,7 @@ module.exports = {
             }
         }
 	if (outro)
-            outro = GameService.expandText (outro, [game.player1.name, game.player2.name], role)
+            outro = GameService.expandText (outro, game, outcome, role)
         return { outro: outro,
                  verb: verb,
                  self: { mood: selfMood },

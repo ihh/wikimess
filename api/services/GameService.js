@@ -4,17 +4,59 @@ var extend = require('extend')
 
 module.exports = {
 
-    expandText: function (text, playerNames, role) {
+    expandText: function (text, game, outcome, role) {
         var self, other
         if (role == 1) {
-            self = playerNames[0]
-            other = playerNames[1]
+            self = game.player1.name
+            other = game.player2.name
         } else {
-            self = playerNames[1]
-            other = playerNames[0]
+            self = game.player2.name
+            other = game.player1.name
         }
-        return text.replace(/\$player1/g,playerNames[0])
-            .replace(/\$player2/g,playerNames[1])
+
+        var $g1 = game.player1.global,
+            $l1 = game.local1,
+            $n1 = game.player1.name,
+            $g2 = game.player2.global,
+            $l2 = game.local2,
+            $n2 = game.player2.name,
+            
+            $global1 = $g1,
+            $global2 = $g2,
+            $local1 = $l1,
+            $local2 = $l2,
+            $name1 = $n1,
+            $name2 = $n2,
+
+            $g = role == 1 ? $g1 : $g2,
+            $l = role == 1 ? $l1 : $l2,
+            $n = role == 1 ? $n1 : $n2,
+            
+            $go = role == 1 ? $g2 : $g1,
+            $lo = role == 1 ? $l2 : $l1,
+            $no = role == 1 ? $n2 : $n1
+
+        var $current, $src, $next, $dest
+        if (outcome) {
+            $src = outcome.choice.name
+            $next = outcome.next
+            $dest = outcome.next.length == 1 ? outcome.next[0] : undefined
+        } else {
+            $current = game.current.name
+        }
+
+        return text
+            .replace (/\{\{(.*?)\}\}/g, function (match, expr) {
+                var val
+                try {
+                    val = eval(expr)
+                } catch (e) {
+                    // do nothing, ignore undefined values and other errors in eval()
+                }
+                return val && typeof(val) === 'string' ? val : ''
+            })
+            .replace(/\$player1/g,game.player1.name)
+            .replace(/\$player2/g,game.player2.name)
             .replace(/\$self/g,self)
             .replace(/\$other/g,other)
     },

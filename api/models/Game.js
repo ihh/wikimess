@@ -115,7 +115,7 @@ module.exports = {
             otherMood = game.mood1
         }
         if (intro)
-            intro = GameService.expandText (intro, [game.player1.name, game.player2.name], role)
+            intro = GameService.expandText (intro, game, null, role)
         var json = { finished: game.finished,
                      waiting: Game.isWaitingForMove (game, role),
                      intro: intro,
