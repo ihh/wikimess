@@ -406,6 +406,9 @@ a.unclickable {
 	height: 85%;
 	margin: 5% 15% 5% 15%;
 	
+	font-size: 12px;
+	line-height: 16px;
+	
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -705,7 +708,7 @@ a.unclickable {
 	width: 70%;
 	height: 92%;
 	margin: 1% 15% 1% 15%;
-	
+
 	position: absolute;
 	top: 0;
 	left: 0;
