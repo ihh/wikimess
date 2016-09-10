@@ -60,8 +60,12 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/game')
         },
 
-        REST_getPlayerGameStatus: function (playerID, gameID) {
-            return $.get ('/player/' + playerID + '/game/' + gameID + '/status')
+        REST_getPlayerGameStatusSelf: function (playerID, gameID) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/status/self')
+        },
+
+        REST_getPlayerGameStatusOther: function (playerID, gameID) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/status/other')
         },
 
         REST_getPlayerGameMoveMood: function (playerID, gameID, move, mood) {
@@ -234,7 +238,10 @@ var BigHouse = (function() {
 		    bh.doInitialLogin()
                 })
                 .fail (function (err) {
-                    bh.showModalWebError (err)
+                    if (err.status == 400)
+                        bh.showModalMessage ("A player with that name already exists")
+                    else
+                        bh.showModalWebError (err)
                 })
         },
 
@@ -856,13 +863,22 @@ var BigHouse = (function() {
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Resume game', this.popView))
-                                  .append (this.makeListLink ('Status', this.showGameStatusPage))
+                                  .append (this.makeListLink ('Your status', this.showPlayerStatusPage))
+                                  .append (this.makeListLink ('Their status', this.showOpponentStatusPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Exit to menu', this.showPlayPage))))
         },
 
 	// game status
-        showGameStatusPage: function() {
+        showPlayerStatusPage: function() {
+            this.showGameStatusPage (this.REST_getPlayerGameStatusSelf)
+        },
+        
+        showOpponentStatusPage: function() {
+            this.showGameStatusPage (this.REST_getPlayerGameStatusOther)
+        },
+
+        showGameStatusPage: function (getMethod) {
             var bh = this
             this.pushView ('status')
 	    var detail
@@ -875,7 +891,7 @@ var BigHouse = (function() {
 
 	    this.restoreScrolling (detail)
 
-            this.REST_getPlayerGameStatus (this.playerID, this.gameID)
+            getMethod.call (this, this.playerID, this.gameID)
 		.done (function (data) {
 		    detail.html (data)
 		})
@@ -899,9 +915,11 @@ var BigHouse = (function() {
                              .append (this.playerMoodDiv = $('<div class="leftmood">'))
                              .append ($('<div class="leftstatus">')
                                       .append ($('<span>')
-                                               .text (this.playerName)))
+                                               .text (this.playerName)
+                                               .on ('click', $.proxy (bh.showPlayerStatusPage, bh))))
                              .append ($('<div class="rightstatus">')
-                                      .append (this.opponentNameDiv = $('<span>')))
+                                      .append (this.opponentNameDiv = $('<span>')
+                                               .on ('click', $.proxy (bh.showOpponentStatusPage, bh))))
                              .append (this.opponentMoodDiv = $('<div class="rightmood">'))
                              .append ($('<div class="statuslink">')
                                       .append ($('<span>')
@@ -1135,6 +1153,8 @@ var BigHouse = (function() {
             newMoodImg.on ('load', function() {
                 bh.playerMoodDiv
 		    .html (newMoodImg)
+                    .off ('click')
+                    .on ('click', $.proxy (bh.showPlayerStatusPage, bh))
             })
             for (var m = 0; m < this.moods.length; ++m) {
                 var newMood = this.moods[m]
@@ -1157,6 +1177,8 @@ var BigHouse = (function() {
             newMoodImg.on ('load', function() {
                 bh.opponentMoodDiv
 		    .html (newMoodImg)
+                    .off ('click')
+                    .on ('click', $.proxy (bh.showOpponentStatusPage, bh))
             })
         },
 

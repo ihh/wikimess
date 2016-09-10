@@ -59,8 +59,10 @@ module.exports.routes = {
 
     'GET /player/:player/game':          'PlayerController.games',
 
-    'GET /player/:player/game/:game':        'PlayerController.gameInfo',
-    'GET /player/:player/game/:game/status': 'PlayerController.gameStatus',
+    'GET /player/:player/game/:game':              'PlayerController.gameInfo',
+    'GET /player/:player/game/:game/status':       'PlayerController.selfGameStatus',
+    'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
+    'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',
 
     'GET /player/:player/game/:game/move/:moveNumber':              'PlayerController.listenForMove',
     'GET /player/:player/game/:game/move/:moveNumber/choice/:move': 'PlayerController.makeMove',

@@ -51,18 +51,22 @@ module.exports = {
     },
 
     // get player game status
-    gameStatus: function (req, res) {
+    selfGameStatus: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info) {
-	    var local = info.role == 1 ? info.game.local1 : info.game.local2
-	    var state = {}
-	    extend (state, info.player.global)
-	    extend (state, local)
-	    var iconPrefix = '/images/icons/'
-	    res.view ('status', { name: info.player.name,
-				  state: state,
-				  global: info.player.global,
-				  local: local,
-				  icons: iconPrefix })
+            MiscPlayerService.makeStatus (res,
+                                          info.player,
+                                          info.role == 1 ? info.game.local1 : info.game.local2,
+                                          'self')
+        })
+    },
+
+    // get opponent game status
+    otherGameStatus: function (req, res) {
+        MiscPlayerService.findGame (req, res, function (info) {
+            MiscPlayerService.makeStatus (res,
+                                          info.opponent,
+                                          info.role == 1 ? info.game.local2 : info.game.local1,
+                                          'other')
         })
     },
 

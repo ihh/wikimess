@@ -1,5 +1,7 @@
 // api/services/MiscPlayerService.js
 
+var extend = require('extend');
+
 module.exports = {
 
     // helpers
@@ -65,4 +67,31 @@ module.exports = {
 	return mood == 'happy' || mood == 'sad' || mood == 'angry' || mood == 'surprised'
     },
 
+    makeStatus: function (res, player, local, view) {
+	var state = {}
+	extend (state, player.global)
+	extend (state, local)
+
+	var iconPrefix = '/images/icons/'
+        var icon = function(name,text) {
+            return '<p>'
+                + '<img src="' + iconPrefix + name + '.svg" class="icon"></img>'
+                + '<span class="text">' + text + '</span>'
+        }
+
+        var plural = function(n,singular,plural) {
+            plural = plural || (singular + 's')
+            n = typeof(n) === 'undefined' ? 0 : n
+            return n + ' ' + (n == 1 ? singular : plural)
+        }
+        
+        res.view ('status/' + view,
+                  { name: player.name,
+		    state: state,
+		    global: player.global,
+		    local: local,
+		    icon: icon,
+                    plural: plural,
+                    layout: 'status/layout' })
+    },
 }

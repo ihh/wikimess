@@ -82,6 +82,13 @@ body {
     cursor: default;
 }
 
+.bighouse .statusbar .leftstatus span,
+.bighouse .statusbar .leftmood img,
+.bighouse .statusbar .rightstatus span,
+.bighouse .statusbar .rightmood img {
+    cursor: pointer;
+}
+
 .bighouse .statusbar a,
 .bighouse .menubar a,
 .bighouse .upload-exit a {
