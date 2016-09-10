@@ -682,7 +682,6 @@ a.unclickable {
 
     .bighouse .statusbar .statuslink {
 	width: 20vw;
-	height: 18vh;
 	position: absolute;
 	left: 40vw;
 	top: 0vh;
@@ -1011,5 +1010,18 @@ a.unclickable {
     .bighouse .gametable tbody {
 	overflow-y: auto;
 	height: 70vh;
+    }
+}
+
+/* Specific aspect ratios... */
+@media screen and (orientation:landscape) and (min-aspect-ratio: 7/5) {
+    .bighouse .statusbar .statuslink {
+	height: 18vh;
+    }
+}
+
+@media screen and (orientation:landscape) and (max-aspect-ratio: 7/5) {
+    .bighouse .statusbar .statuslink {
+	height: 15vh;
     }
 }
