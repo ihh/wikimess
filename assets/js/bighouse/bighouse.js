@@ -586,7 +586,7 @@ var BigHouse = (function() {
 		    .append ($('<span>')
 			     .html (bh.makeLink ("↺", rotateFunc(-1))))
 		    .append ($('<span>')
-			     .html (bh.makeLink ("Cancel", bh.exitConfirmUpload)))
+			     .html (bh.makeLink ("Cancel", bh.cancelConfirmUpload)))
 		    .append ($('<span>')
 			     .html (bh.makeLink ("OK", okFunc)))
 		    .append ($('<span>')
@@ -602,6 +602,10 @@ var BigHouse = (function() {
 	    }
 	    this.urlCreator().revokeObjectURL (this.uploadImageUrl)
 	},
+
+        cancelConfirmUpload: function() {
+	    this.exitConfirmUpload()
+        },
 
 	exitConfirmUpload: function (mood) {
 	    this.removeImages()
