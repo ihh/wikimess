@@ -1,0 +1,10 @@
+.bighouse .detailbar .icon {
+    width: 10vw;
+    height: 10vw;
+}
+
+.bighouse .detailbar .text {
+    position: relative;
+    left: 10vw;
+    padding-left: 4px;
+}

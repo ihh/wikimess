@@ -117,6 +117,12 @@ body {
     line-height: 32px;
 }
 
+.bighouse .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .bighouse .titlebar,
 .bighouse .menubar,
 .bighouse .moodslugbar {
@@ -294,11 +300,6 @@ a.unclickable {
 
 .bighouse .detailbar {
     overflow-y: auto;
-}
-
-.bighouse .detailbar .icon {
-    width: 10vw;
-    height: 10vw;
 }
 
 /* Orientation-specific (i.e. layout) */
