@@ -83,7 +83,6 @@ body {
     cursor: default;
 }
 
-.bighouse .statusbar .leftstatus span,
 .bighouse .statusbar .leftmood img,
 .bighouse .statusbar .rightstatus span,
 .bighouse .statusbar .rightmood img {
@@ -208,7 +207,6 @@ body {
     cursor: pointer;
 }
 
-.bighouse .moodbar .unclickable,
 .bighouse .mooduploadbar .unclickable,
 .bighouse .moodslugbar .unclickable,
 .bighouse .upload-exit .unclickable,
@@ -326,58 +324,46 @@ a.unclickable {
 
     .bighouse .statusbar {
 	width: 100vw;
-	height: 24vw;
+	height: 18vw;
     }
 
     .bighouse .statusbar .leftmood {
-	height: 24vw;
-	width: 24vw;
+	height: 18vw;
+	width: 18vw;
 	position: absolute;
 	left: 0vw;
 	top: 0vw;
     }
 
-    .bighouse .statusbar .leftstatus {
-	width: 24vw;
-	height: 8vw;
+    .bighouse .statusbar .rightstatus {
+	width: 22vw;
+	height: 18vw;
 	position: absolute;
-	left: 24vw;
-	top: 16vw;
+	right: 0vw;
+	top: 0vw;
 	display: flex;
 	align-items: flex-end;
-	justify-content: flex-start;
-	padding-left: 4px;
-    }
-
-    .bighouse .statusbar .rightstatus {
-	width: 24vw;
-	height: 8vw;
-	position: absolute;
-	right: 0;
-	top: 0;
-	display: flex;
-	align-items: flex-start;
 	justify-content: flex-end;
-	margin-right: 24vw;
+	margin-right: 18vw;
 	padding-right: 4px;
     }
 
     .bighouse .statusbar .statuslink {
-	width: 20vw;
-	height: 8vw;
+	width: 38vw;
+	height: 18vw;
 	position: absolute;
-	left: 40vw;
-	top: 8vw;
+	left: 42vw;
+	top: 0vw;
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-start;
     }
 
     .bighouse .statusbar .rightmood {
-	height: 24vw;
-	width: 24vw;
+	height: 18vw;
+	width: 18vw;
 	position: absolute;
-	left: 76vw;
+	left: 82vw;
 	top: 0vw;
     }
 
@@ -392,9 +378,10 @@ a.unclickable {
     }
 
     .bighouse .cardbar .cardtable {
-	width: 90vw;
+	width: 98vw;
 	flex-grow: 1;
-	margin: 5%;
+	margin-top: 3vw;
+	margin-bottom: 1vw;
 	
 	position: relative;
     }
@@ -404,9 +391,9 @@ a.unclickable {
     }
     
     .bighouse .cardbar .cardtable li {
-	width: 70%;
+	width: 80%;
 	height: 85%;
-	margin: 5% 15% 5% 15%;
+	margin: 5% 10% 5% 10%;
 	
 	font-size: 12px;
 	line-height: 16px;
@@ -471,40 +458,43 @@ a.unclickable {
     }
 
     .bighouse .moodbar {
-	width: 100vw;
-	height: 21vw;
+	width: 22vw;
+	height: 18vw;
+	position: absolute;
+	left: 18vw;
+	top: 0vw;
     }
 
     .bighouse .moodbar .mood1 {
-	height: 21vw;
-	width: 21vw;
+	height: 8vw;
+	width: 8vw;
 	position: absolute;
 	left: 2vw;
-	bottom: 0vw;
+	top: 0vw;
     }
 
     .bighouse .moodbar .mood2 {
-	width: 21vw;
-	height: 21vw;
+	width: 8vw;
+	height: 8vw;
 	position: absolute;
-	left: 27vw;
-	bottom: 0vw;
+	left: 12vw;
+	top: 0vw;
     }
 
     .bighouse .moodbar .mood3 {
-	height: 21vw;
-	width: 21vw;
+	height: 8vw;
+	width: 8vw;
 	position: absolute;
-	left: 52vw;
-	bottom: 0vw;
+	left: 2vw;
+	top: 10vw;
     }
 
     .bighouse .moodbar .mood4 {
-	height: 21vw;
-	width: 21vw;
+	height: 8vw;
+	width: 8vw;
 	position: absolute;
-	left: 77vw;
-	bottom: 0vw;
+	left: 12vw;
+	top: 10vw;
     }
 
     .bighouse .mooduploadbar {
@@ -666,56 +656,44 @@ a.unclickable {
 
     .bighouse .statusbar {
 	width: 100vw;
-	height: 24vh;
+	height: 18vh;
     }
 
     .bighouse .statusbar .leftmood {
-	height: 24vh;
-	width: 24vh;
+	height: 18vh;
+	width: 18vh;
 	position: absolute;
 	left: 0vh;
 	top: 0vh;
     }
 
-    .bighouse .statusbar .leftstatus {
-	width: 24vh;
-	height: 8vh;
-	position: absolute;
-	left: 24vh;
-	top: 16vh;
-	display: flex;
-	align-items: flex-end;
-	justify-content: flex-start;
-	padding-left: 4px;
-    }
-
     .bighouse .statusbar .rightstatus {
-	width: 24vh;
-	height: 8vh;
+	width: 25vw;
+	height: 18vh;
 	position: absolute;
 	right: 0;
 	top: 0;
 	display: flex;
-	align-items: flex-start;
+	align-items: flex-end;
 	justify-content: flex-end;
-	margin-right: 24vh;
+	margin-right: 18vh;
 	padding-right: 4px;
     }
 
     .bighouse .statusbar .statuslink {
 	width: 20vw;
-	height: 8vh;
+	height: 18vh;
 	position: absolute;
 	left: 40vw;
-	top: 8vh;
+	top: 0vh;
 	display: flex;
 	align-items: center;
 	justify-content: center;
     }
 
     .bighouse .statusbar .rightmood {
-	height: 24vh;
-	width: 24vh;
+	height: 18vh;
+	width: 18vh;
 	position: absolute;
 	right: 0vw;
 	top: 0vh;
@@ -806,53 +784,56 @@ a.unclickable {
     }
 
     .bighouse .moodbar {
-	width: 100vw;
-	height: 21vh;
+	width: 42vh;
+	height: 8vh;
+	position: absolute;
+	left: 18vh;
+	top: 10vh;
     }
 
     .bighouse .moodbar .mood1 {
-	width: 25vw;
-	height: 21vh;
+	width: 8vh;
+	height: 8vh;
 	position: absolute;
-	left: 0vw;
-	bottom: 0vw;
+	left: 2vh;
+	top: 0vh;
 	display: flex;
 	justify-content: center;
     }
 
     .bighouse .moodbar .mood2 {
-	width: 25vw;
-	height: 21vh;
+	width: 8vh;
+	height: 8vh;
 	position: absolute;
-	left: 25vw;
-	bottom: 0vw;
+	left: 12vh;
+	top: 0vh;
 	display: flex;
 	justify-content: center;
     }
 
     .bighouse .moodbar .mood3 {
-	width: 25vw;
-	height: 21vh;
+	width: 8vh;
+	height: 8vh;
 	position: absolute;
-	left: 50vw;
-	bottom: 0vw;
+	left: 22vh;
+	top: 0vh;
 	display: flex;
 	justify-content: center;
     }
 
     .bighouse .moodbar .mood4 {
-	width: 25vw;
-	height: 21vh;
+	width: 8vh;
+	height: 8vh;
 	position: absolute;
-	left: 75vw;
-	bottom: 0vw;
+	left: 32vh;
+	top: 0vh;
 	display: flex;
 	justify-content: center;
     }
 
     .bighouse .moodbar img.mood {
-	width: 21vh;
-	height: 21vh;
+	width: 8vh;
+	height: 8vh;
     }
 
     .bighouse .mooduploadbar {

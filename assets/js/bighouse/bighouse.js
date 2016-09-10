@@ -130,32 +130,31 @@ var BigHouse = (function() {
 	    return window.innerHeight > window.innerWidth
 	},
 
+        callWithSoundEffect: function (callback, sfx) {
+            sfx = sfx || 'select'
+            var bh = this
+            return function (evt) {
+                if (sfx.length)
+                    bh.selectSound = bh.playSound (sfx)
+                evt.preventDefault()
+                callback.call (bh, evt)
+            }
+        },
+
         makeLink: function (text, callback, sfx) {
             sfx = sfx || 'select'
-            var cb = $.proxy (callback, this)
             return $('<a href="#">')
                 .text (text)
                 .attr ('title', text)
-                .on ('click', function (evt) {
-                    if (sfx.length)
-                        bh.playSound (sfx)
-                    evt.preventDefault()
-                    cb(evt)
-                })
+                .on ('click', this.callWithSoundEffect (callback, sfx))
         },
 
         makeListLink: function (text, callback, sfx) {
             sfx = sfx || 'select'
-            var bh = this
-            var cb = $.proxy (callback, this)
             return $('<li>')
                 .append ($('<span>')
                          .text(text))
-                .on('click', function (evt) {
-                    if (sfx.length)
-                        bh.selectSound = bh.playSound (sfx)
-                    cb(evt)
-                })
+                .on('click', this.callWithSoundEffect (callback, sfx))
         },
 
         // login menu
@@ -912,13 +911,15 @@ var BigHouse = (function() {
                     .empty()
                     .append ($('<div class="statusbar">')
                              .append (this.playerMoodDiv = $('<div class="leftmood">'))
+/*
                              .append ($('<div class="leftstatus">')
                                       .append ($('<span>')
                                                .text (this.playerName)
                                                .on ('click', $.proxy (bh.showPlayerStatusPage, bh))))
+*/
                              .append ($('<div class="rightstatus">')
                                       .append (this.opponentNameDiv = $('<span>')
-                                               .on ('click', $.proxy (bh.showOpponentStatusPage, bh))))
+                                               .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
                              .append (this.opponentMoodDiv = $('<div class="rightmood">'))
                              .append ($('<div class="statuslink">')
                                       .append ($('<span>')
@@ -1157,7 +1158,7 @@ var BigHouse = (function() {
                 bh.playerMoodDiv
 		    .html (newMoodImg)
                     .off ('click')
-                    .on ('click', $.proxy (bh.showPlayerStatusPage, bh))
+                    .on ('click', bh.callWithSoundEffect (bh.showPlayerStatusPage))
             })
             for (var m = 0; m < this.moods.length; ++m) {
                 var newMood = this.moods[m]
@@ -1181,7 +1182,7 @@ var BigHouse = (function() {
                 bh.opponentMoodDiv
 		    .html (newMoodImg)
                     .off ('click')
-                    .on ('click', $.proxy (bh.showOpponentStatusPage, bh))
+                    .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))
             })
         },
 
