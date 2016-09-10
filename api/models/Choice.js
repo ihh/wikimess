@@ -20,6 +20,10 @@ module.exports = {
           unique: true
       },
 
+      parent: {
+          type: 'string'  // for anonymously-declared Choices, the parent creator Choice
+      },
+
       root: {
           type: 'boolean',
           defaultsTo: false
