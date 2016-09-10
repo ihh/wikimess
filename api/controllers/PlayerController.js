@@ -8,6 +8,7 @@
 var fs = require('fs');
 var SkipperDisk = require('skipper-disk');
 var imagemagick = require('imagemagick-native');
+var extend = require('extend');
 
 module.exports = {
 
@@ -49,12 +50,19 @@ module.exports = {
 	    })
     },
 
-    // get player stats
-    stats: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
-            rs (null, { player: player.id,
-                        name: player.name,
-                        cash: player.cash })
+    // get player game status
+    gameStatus: function (req, res) {
+        MiscPlayerService.findGame (req, res, function (info) {
+	    var local = info.role == 1 ? info.game.local1 : info.game.local2
+	    var state = {}
+	    extend (state, info.player.global)
+	    extend (state, local)
+	    var iconPrefix = '/images/icons/'
+	    res.view ('status', { name: info.player.name,
+				  state: state,
+				  global: info.player.global,
+				  local: local,
+				  icons: iconPrefix })
         })
     },
 

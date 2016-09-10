@@ -34,6 +34,7 @@ var BigHouse = (function() {
         // default params/data
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
+	blankImageUrl: '/images/1x1blank.png',
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
         avatarSize: 298,
@@ -55,16 +56,12 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/cancel')
         },
 
-        REST_getPlayerStats: function (playerID) {
-            return $.get ('/player/' + playerID + '/stats')
-        },
-
         REST_getPlayerGames: function (playerID) {
             return $.get ('/player/' + playerID + '/game')
         },
 
-        REST_getPlayerStats: function (playerID) {
-            return $.get ('/player/' + playerID + '/stats')
+        REST_getPlayerGameStatus: function (playerID, gameID) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/status')
         },
 
         REST_getPlayerGameMoveMood: function (playerID, gameID, move, mood) {
@@ -338,7 +335,7 @@ var BigHouse = (function() {
                 bh.writeLocalStorage ('musicVolume')
             })
 
-            // restore disabled scrolling for these controls
+            // restore disabled slide events for these controls
             soundInput.on('touchmove',function(e){e.stopPropagation()})
             musicInput.on('touchmove',function(e){e.stopPropagation()})
         },
@@ -691,7 +688,7 @@ var BigHouse = (function() {
 	    imgs = window.document.body.getElementsByTagName("img");
 	    for (i = imgs.length; i--;) if ((img = imgs[i]).src===fullSrc)  // could instead use body.querySelectorAll(), to check both tag name and src attribute, which would probably be more efficient, where supported
 	    {
-		img.src = "/images/1x1blank.png";  // blank them
+		img.src = this.blankImageUrl;  // blank them
 		blankList.push(img);            // optionally, save list of blanked images to make restoring easy later on
 	    }
 
@@ -768,23 +765,7 @@ var BigHouse = (function() {
 				  .html (this.makeLink ('Back', this.showPlayPage))))
 
 	    // allow scrolling for tbody, while preventing bounce at ends
-            // http://stackoverflow.com/a/20477023/726581
-            tbody.on('touchstart', function(event) {
-                this.allowUp = (this.scrollTop > 0);
-                this.allowDown = (this.scrollTop < this.scrollHeight - this.clientHeight);
-                this.slideBeginY = event.pageY;
-            });
-            tbody.on('touchmove', function(event) {
-                var up = (event.pageY > this.slideBeginY);
-                var down = (event.pageY < this.slideBeginY);
-                this.slideBeginY = event.pageY;
-                if ((up && this.allowUp) || (down && this.allowDown)) {
-                    event.stopPropagation();
-                }
-                else {
-                    event.preventDefault();
-                }
-            });
+	    this.restoreScrolling (tbody)
 
 	    this.REST_getPlayerGames (this.playerID)
 		.done (function (data) {
@@ -810,6 +791,27 @@ var BigHouse = (function() {
 	    var h = parseInt(m / 60)
 	    m = m % 60
 	    return h + ":" + (m < 10 ? "0" : "") + m
+	},
+
+	restoreScrolling: function (elem) {
+	    // allow scrolling for elem, while preventing bounce at ends
+            // http://stackoverflow.com/a/20477023/726581
+            elem.on('touchstart', function(event) {
+                this.allowUp = (this.scrollTop > 0);
+                this.allowDown = (this.scrollTop < this.scrollHeight - this.clientHeight);
+                this.slideBeginY = event.pageY;
+            });
+            elem.on('touchmove', function(event) {
+                var up = (event.pageY > this.slideBeginY);
+                var down = (event.pageY < this.slideBeginY);
+                this.slideBeginY = event.pageY;
+                if ((up && this.allowUp) || (down && this.allowDown)) {
+                    event.stopPropagation();
+                }
+                else {
+                    event.preventDefault();
+                }
+            });
 	},
 
         // start/join new game
@@ -850,9 +852,30 @@ var BigHouse = (function() {
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Resume game', this.popView))
+                                  .append (this.makeListLink ('Status', this.showGameStatusPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Exit to menu', this.showPlayPage))))
         },
+
+	// game status
+        showGameStatusPage: function() {
+            var bh = this
+            this.pushView ('status')
+	    var detail
+            this.container
+                .append (this.makePageTitle ("Status"))
+		.append (detail = $('<div class="detailbar">'))
+		.append ($('<div class="menubar">')
+			 .append ($('<span>')
+				  .html (this.makeLink ('Back', this.popView))))
+
+	    this.restoreScrolling (detail)
+
+            this.REST_getPlayerGameStatus (this.playerID, this.gameID)
+		.done (function (data) {
+		    detail.html (data)
+		})
+	},
 
         // game pages
         showGamePage: function() {
@@ -915,10 +938,10 @@ var BigHouse = (function() {
 				 silent: true })
             }
 
-            this.loadGameCard()
+            this.loadGameCards()
         },
 
-        loadGameCard: function() {
+        loadGameCards: function() {
 	    var bh = this
             var loadingCardListItem, loadingCardSwipe, loadingCardTimer
 	    var loadingSpan = $('<span>').text ("Loading")
@@ -1158,7 +1181,7 @@ var BigHouse = (function() {
             this.updatePlayerMood (this.outcome.self.mood)
             this.updateOpponentMood (this.outcome.other.id, this.outcome.other.mood)
 
-            this.loadGameCard()
+            this.loadGameCards()
         },
 
         cardThrowFunction: function (card, direction) {

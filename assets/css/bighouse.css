@@ -72,6 +72,7 @@ body {
     color: #ccc;
 }
 
+.bighouse .detailbar,
 .bighouse .statusbar,
 .bighouse .menubar {
     color: #ccc;
@@ -289,6 +290,15 @@ a.unclickable {
     border: 1px solid #888;
     padding: 1px;
     cursor: pointer;
+}
+
+.bighouse .detailbar {
+    overflow-y: auto;
+}
+
+.bighouse .detailbar .icon {
+    width: 10vw;
+    height: 10vw;
 }
 
 /* Orientation-specific (i.e. layout) */
@@ -586,6 +596,10 @@ a.unclickable {
     .bighouse .gametable tbody {
 	overflow-y: auto;
 	height: 73vh;
+    }
+
+    .bighouse .detailbar {
+	height: 85vh;
     }
 }
 
@@ -906,6 +920,10 @@ a.unclickable {
 
     .bighouse .gametable tbody td {
 	height: 2em;
+    }
+
+    .bighouse .detailbar {
+	height: 65vh;
     }
 
     .bighouse .gametable tbody {

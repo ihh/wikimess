@@ -54,14 +54,13 @@ module.exports.routes = {
     'GET /player/:player/avatar/:mood':  'PlayerController.getMoodAvatar',
     'POST /player/:player/avatar/:mood': 'PlayerController.uploadMoodAvatar',
 
-    'GET /player/:player/stats':         'PlayerController.stats',
-
     'GET /player/:player/join':          'PlayerController.join',
     'GET /player/:player/cancel':        'PlayerController.cancelJoin',
 
     'GET /player/:player/game':          'PlayerController.games',
 
-    'GET /player/:player/game/:game':    'PlayerController.gameInfo',
+    'GET /player/:player/game/:game':        'PlayerController.gameInfo',
+    'GET /player/:player/game/:game/status': 'PlayerController.gameStatus',
 
     'GET /player/:player/game/:game/move/:moveNumber':              'PlayerController.listenForMove',
     'GET /player/:player/game/:game/move/:moveNumber/choice/:move': 'PlayerController.makeMove',
