@@ -56,42 +56,5 @@ module.exports = {
           dominant: true
       }
   },
-
-    moveOutcomes: function (info, cb) {
-        var query = Outcome.find ({ choice: info.choice })
-	if (info.move1)
-	    query.where ({ move1: info.move1 })
-	if (info.move2)
-	    query.where ({ move2: info.move2 })
-        query.exec (function (err, outcomes) {
-                if (err)
-                    cb (err)
-                else
-                    cb (null, outcomes)
-            })
-    },
-
-    randomOutcome: function (info, cb) {
-        this.moveOutcomes (info, function (err, outcomes) {
-            if (err) {
-                cb (err)
-                return
-            }
-            var totalWeight = outcomes.reduce (function (total, outcome) {
-                return total + outcome.weight
-            }, 0)
-            if (totalWeight) {
-                var w = totalWeight * Math.random()
-                for (var i = 0; i < outcomes.length; ++i)
-                    if ((w -= outcomes[i].weight) <= 0) {
-                        cb (null, outcomes[i])
-                        return
-                    }
-            }
-            cb (null, null)
-            return
-        })
-    }
-
 };
 

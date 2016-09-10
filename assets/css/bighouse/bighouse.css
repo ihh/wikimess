@@ -53,7 +53,7 @@ body {
 }
 
 .bighouse .cardbar .cardtable li:nth-child(3) {
-    top: 2px; transform: translate(2px, 2px) rotate(0.4deg);
+    top: 3px; transform: translate(2px, 2px) rotate(0.4deg);
 }
 
 .bighouse .cardbar .cardtable li:nth-child(2) {

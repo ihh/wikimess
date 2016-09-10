@@ -30,8 +30,8 @@ module.exports = {
       },
 
       weight: {
-          type: 'float',
-          defaultsTo: 1
+          type: 'string',
+          defaultsTo: '1'
       },
 
       outro: { type: 'string' },  // if empty, will be skipped by client
@@ -133,7 +133,7 @@ module.exports = {
             }
         }
 	if (outro)
-            outro = Game.expandText (outro, [game.player1.name, game.player2.name], role)
+            outro = GameService.expandText (outro, [game.player1.name, game.player2.name], role)
         return { outro: outro,
                  verb: verb,
                  self: { mood: selfMood },

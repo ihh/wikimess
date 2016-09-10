@@ -10,6 +10,15 @@ module.exports = {
 
         var symKeys = ['weight', 'next', 'flush', 'cash']
         var asymKeys = ['local', 'global', 'mood']
+        var aliasKeys = { 'l': 'local',
+                          'g': 'global',
+                          'm': 'mood',
+                          'l1': 'local1',
+                          'l2': 'local2',
+                          'g1': 'global1',
+                          'g2': 'global2',
+                          'm1': 'mood1',
+                          'm2': 'mood2' }
         
         var outcomes = [], nestedChoices = []
         var addOutcome = function (move1, move2, json) {
@@ -28,6 +37,12 @@ module.exports = {
                 outs.forEach (function (out) {
                     if (typeof(out) == 'string')
                         out = { outro: out }
+                    Object.keys(aliasKeys).forEach (function (key) {
+                        if (out.hasOwnProperty(key)) {
+                            out[aliasKeys[key]] = out[key]
+                            delete out[key]
+                        }
+                    })
                     asymKeys.forEach (function (key) {
                         if (out.hasOwnProperty(key)) {
                             // various ways of specifying asymmetric things
@@ -66,8 +81,8 @@ module.exports = {
 
         var flip_cd = function (outcome) {
             var flipped = {}
-            var outro = outcome.outro ? Game.swapTextRoles (outcome.outro) : null
-            var outro2 = outcome.outro2 ? Game.swapTextRoles (outcome.outro2) : null
+            var outro = outcome.outro ? GameService.swapTextRoles (outcome.outro) : null
+            var outro2 = outcome.outro2 ? GameService.swapTextRoles (outcome.outro2) : null
             if (outro2) {
                 flipped.outro2 = outro
                 flipped.outro = outro2

@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var extend = require('extend');
+var merge = require('deepmerge');
 
 module.exports = {
 
@@ -71,7 +72,7 @@ module.exports = {
     makeStatus: function (res, player, local, view) {
 	var state = {}
 	extend (state, player.global)
-	extend (state, local)
+	state = merge (state, local)
 
 	var iconPrefix = '/images/icons/'
         var iconPath = process.cwd() + '/assets' + iconPrefix

@@ -133,7 +133,8 @@ module.exports = {
             var opponent = info.opponent
             var game = info.game
             var role = info.role
-            Game.recordMove ({ game: game,
+            GameService
+                .recordMove ({ game: game,
                                role: role,
                                moveNumber: moveNumber,
                                move: move },
@@ -202,7 +203,8 @@ module.exports = {
             var opponent = info.opponent
             var game = info.game
             var role = info.role
-            Game.updateMood ( { game: game,
+            GameService
+                .updateMood ( { game: game,
                                 role: role,
                                 moveNumber: moveNumber,
                                 mood: newMood },
@@ -248,7 +250,7 @@ module.exports = {
 	      if (uploadedFiles.length === 0){
 		  return res.badRequest('No file was uploaded');
 	      }
- 
+              
 	      // get ready to move some files around
               var filename = uploadedFiles[0].fd.substring(uploadedFiles[0].fd.lastIndexOf('/')+1);
               var uploadLocation = playerImageDir + '/' + filename;
@@ -268,7 +270,7 @@ module.exports = {
 
               // Copy the file to the temp folder so that it becomes available immediately
               fs.createReadStream(targetLocation).pipe(fs.createWriteStream(tempLocation));
- 
+              
               //Redirect or do something
               res.json ({'url': imagePath + '/' + mood + '.png' });
           });
