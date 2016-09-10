@@ -58,6 +58,16 @@ module.exports = {
           defaultsTo: {}
       },
 
+      mood1: {
+          type: 'string',
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged']
+      },
+
+      mood2: {
+          type: 'string',
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged']
+      },
+      
       // the RHS of the CFG rule
       next: {
           type: 'array',
@@ -70,7 +80,11 @@ module.exports = {
       }
   },
 
-    mood: function (move1, move2) {
+    mood: function (oldMood, newMood, move1, move2) {
+        if (newMood == 'unchanged')
+            return oldMood
+        else if (newMood)
+            return newMood
         var move12 = move1 + move2
         switch (move12) {
         case 'cc': return 'happy'
@@ -82,12 +96,12 @@ module.exports = {
         return null
     },
 
-    mood1: function (outcome) {
-        return this.mood (outcome.move1, outcome.move2)
+    mood1: function (game, outcome) {
+        return Outcome.mood (game.mood1, outcome.mood1, outcome.move1, outcome.move2)
     },
 
-    mood2: function (outcome) {
-        return this.mood (outcome.move2, outcome.move1)
+    mood2: function (game, outcome) {
+        return Outcome.mood (game.mood2, outcome.mood2, outcome.move2, outcome.move1)
     },
 
     forRole: function (game, outcome, role) {
@@ -96,16 +110,16 @@ module.exports = {
             outro = outcome.outro
             self = game.player1
             other = game.player2
-            selfMood = this.mood1(outcome)
-            otherMood = this.mood2(outcome)
+            selfMood = Outcome.mood1(game,outcome)
+            otherMood = Outcome.mood2(game,outcome)
             verb = outcome.verb
             type = outcome.move1 + outcome.move2
         } else {  // role == 2
             outro = outcome.outro2 || outcome.outro
             self = game.player2
             other = game.player1
-            selfMood = this.mood2(outcome)
-            otherMood = this.mood1(outcome)
+            selfMood = Outcome.mood2(game,outcome)
+            otherMood = Outcome.mood1(game,outcome)
             verb = outcome.verb2
             type = outcome.move2 + outcome.move1
         }

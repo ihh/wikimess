@@ -3,9 +3,13 @@
 	"name": "root",
 	"intro":"Some intro text for the root choice // This is the choice",
 	"root": true,
-	"cc": {"outro":"Both win // yay!!! // Co-operation is great","local1":{"c":"$+1"},"local2":{"c":"$+1"}},
-	"cd": {"outro":"$player1 is the sucker // Sorry","local1":{"c":"$+1"},"local2":{"d":"$+1"}},
-	"dc": {"outro":"$player2 is the sucker // Sorry","local2":{"c":"$+1"},"local1":{"d":"$+1"}},
+	"cc": {"outro":"Both win // yay!!! // Co-operation is great","local1":{"c":"$+1"},"local2":{"c":"$+1"},
+               "next": {"intro": "Want to have an ice cream together?",
+                        "hint": ["No","Yes"],
+                        "cc": "I love ice cream.",
+                        "diff": "Unfortunately, not everybody loves ice cream.",
+                        "dd": "Right: ice cream sucks."}},
+	"cd2": {"outro":"$player1 is the sucker // Sorry","local1":{"c":"$+1"},"local2":{"d":"$+1"}},
 	"dd": {"outro":"Both lose // Too bad!","local1":{"d":"$+1"},"local2":{"d":"$+1"},"next":"auto"}
     },
     {
