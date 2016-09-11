@@ -1,6 +1,7 @@
 // api/services/GameService.js
 
 var extend = require('extend')
+var merge = require('deepmerge');
 
 module.exports = {
 
@@ -14,13 +15,15 @@ module.exports = {
             other = game.player1.name
         }
 
-        var $g1 = game.player1.global,
+        var $c = game.common,
+            $g1 = game.player1.global,
             $l1 = game.local1,
             $n1 = game.player1.name,
             $g2 = game.player2.global,
             $l2 = game.local2,
             $n2 = game.player2.name,
-            
+
+            $common = $c,
             $global1 = $g1,
             $global2 = $g2,
             $local1 = $l1,
@@ -135,6 +138,7 @@ module.exports = {
 					 moves: game.moves + 1,
 					 mood1: Outcome.mood1 (game, outcome),
 					 mood2: Outcome.mood2 (game, outcome),
+                                         common: GameService.evalUpdatedState (game, outcome, 0, true),
                                          local1: GameService.evalUpdatedState (game, outcome, 1, true),
                                          local2: GameService.evalUpdatedState (game, outcome, 2, true),
 					 current: currentChoiceID,
@@ -227,14 +231,7 @@ module.exports = {
         else
             info = { self: p2, other: p1 }
 
-        var $s = info.self[context].state,
-            $g = info.self.global.state,
-            $l = info.self.local.state,
-            $n = info.self.name,
-            $so = info.other[context].state,
-            $go = info.other.global,
-            $lo = info.other.local,
-            $no = info.other.name,
+        var $c = game.common,
             $s1 = p1[context].state,
             $g1 = p1.global.state,
             $l1 = p1.local.state,
@@ -248,30 +245,53 @@ module.exports = {
             $next = outcome.next,
             $dest = outcome.next.length == 1 ? outcome.next[0] : undefined,
 
+            $common = $c,
             $global1 = $g1,
             $global2 = $g2,
             $local1 = $l1,
             $local2 = $l2,
             $name1 = $n1,
             $name2 = $n2
-            
+
+        var $s, $g, $l, $n, $so, $go, $lo, $no
+        if (role) {
+            $s = info.self[context].state
+            $g = info.self.global.state
+            $l = info.self.local.state
+            $n = info.self.name
+            $so = info.other[context].state
+            $go = info.other.global
+            $lo = info.other.local
+            $no = info.other.name
+        }
 
         var updatedState = {}
-        extend (true, updatedState, info.self[context].state)
-        var newStateExpr = info.self[context].expr || {}
-        var recurse = function (newExpr, newState, selfState, otherState, p1State, p2State) {
+        extend (true, updatedState, role ? $s : $c)
+        var newStateExpr = (role ? info.self[context].expr : outcome.common) || {}
+        var recurse = function (newExpr, newState, commonState, selfState, otherState, p1State, p2State) {
             Object.keys(newExpr).forEach (function (key) {
                 var expr = newExpr[key]
                 if (typeof(expr) == 'object') {
                     if (!newState.hasOwnProperty(key))
                         newState[key] = {}
-                    recurse (expr, newState[key], selfState[key] || {}, otherState[key] || {}, p1State[key] || {}, p2State[key] || {})
+                    recurse (expr,
+                             newState[key],
+                             commonState[key] || {},
+                             selfState[key] || {},
+                             otherState[key] || {},
+                             p1State[key] || {},
+                             p2State[key] || {})
                 } else {
-                    var $ = selfState[key] || 0,
-                        $o = otherState[key] || 0,
-                        $1 = p1State[key] || 0,
+                    var $$ = commonState[key]
+                    var $, $o, $1, $2
+                    if (role) {
+                        $ = selfState[key] || 0
+                        $o = otherState[key] || 0
+                        $1 = p1State[key] || 0
                         $2 = p2State[key] || 0
-
+                    } else
+                        $ = $$
+                    
                     var val
                     try {
                         val = eval(expr)
@@ -283,7 +303,7 @@ module.exports = {
                 }
             })
         }
-        recurse (newStateExpr, updatedState, $s, $so, $s1, $s2)
+        recurse (newStateExpr, updatedState, $c, $s, $so, $s1, $s2)
 
 /*
 	console.log ("In evalUpdatedState: role="+role+" local="+local)
@@ -298,7 +318,8 @@ module.exports = {
     },
 
     evalOutcomeWeight: function (game, outcome) {
-        var $g1 = game.player1.global,
+        var $c = game.common,
+            $g1 = game.player1.global,
             $l1 = game.local1,
             $n1 = game.player1.name,
             $g2 = game.player2.global,
@@ -308,7 +329,8 @@ module.exports = {
             $src = game.current.name,
             $next = outcome.next,
             $dest = outcome.next.length == 1 ? outcome.next[0] : undefined,
-            
+
+            $common = $c,
             $global1 = $g1,
             $global2 = $g2,
             $local1 = $l1,
@@ -317,10 +339,10 @@ module.exports = {
             $name2 = $n2
 
         var $s1 = {}, $s2 = {}
-        extend ($s1, $g1)
-        extend ($s1, $l1)
-        extend ($s2, $g2)
-        extend ($s2, $l2)
+        extend (true, $s1, $g1)
+        merge ($s1, $l1)
+        extend (true, $s2, $g2)
+        merge ($s2, $l2)
 
         // handle negation as a special case; if anything is undefined in the negation return true
         var negRegex = /^\s*\!\s*\((.*)\)\s*$/;

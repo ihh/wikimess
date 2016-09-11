@@ -82,6 +82,12 @@ module.exports = {
           type: 'json',
           defaultsTo: {}
       },
+
+      // state specific to this game, common to both players
+      common: {
+          type: 'json',
+          defaultsTo: {}
+      },
 },
 
     isWaitingForMove: function (game, role) {

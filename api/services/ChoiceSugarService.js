@@ -8,7 +8,7 @@ module.exports = {
 //        console.log ('createChoice')
 //        console.log (config)
 
-        var symKeys = ['weight', 'next', 'flush', 'cash']
+        var symKeys = ['weight', 'next', 'flush', 'common']
         var asymKeys = ['local', 'global', 'mood']
         var aliasKeys = { 'l': 'local',
                           'g': 'global',
