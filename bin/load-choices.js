@@ -25,7 +25,7 @@ var port = opt.options.port || defaultPort
 var urlPrefix = opt.options.root || defaultUrlPrefix
 
 var choiceFilename = opt.options.choices || defaultChoiceFilename
-var choiceJson = readJsonFileSync (choiceFilename)
+var choiceJson = readJsonFileSync (choiceFilename, eval)
 
 function postChoice (n) {
     if (n >= choiceJson.length)

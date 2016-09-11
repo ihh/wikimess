@@ -1,22 +1,22 @@
 [
     {
-	"name": "root",
-	"intro":"Some intro text for the root choice ;; This is the choice{{$l.iceCream && ' (remember the ice cream)'}}",
-	"root": true,
-	"cc": [{"weight":"$l1.iceCream || $l2.iceCream","outro":"Both win ;; yay!!! ;; Co-operation is great","g1":{"count":{"c":"$+1"}},"global2":{"count":{"c":"$+1"}}},
-               {"weight":"!($l1.iceCream || $l2.iceCream)","outro":"Both win ;; yay!!! ;; Co-operation is great","global1":{"count":{"c":"$+1"}},"g2":{"count":{"c":"$+1"}},
-                "next": {"intro": "Want to have an ice cream together?",
-                         "hint": ["No","Yes"],
-                         "cc": {"outro":"I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.",
-                                "local1":{"iceCream":true},"local2":{"iceCream":true}},
-                         "diff": "Unfortunately, not everybody loves ice cream.",
-                         "dd": "Right: ice cream sucks."}}],
-	"cd2": {"outro":"$player1 is the sucker ;; Sorry","global1":{"count":{"c":"$+1"}},"local2":{"count":{"d":"$+1"}}},
-	"dd": [{"weight":"!($l1.count.d && $l2.count.d)","outro":"You and {{$no}} both lose ;; Too bad!","local1":{"count":{"d":"$+1"}},"l2":{"count":{"d":"$+1"}},"next":"auto"},
-               {"weight":"$l1.count.d && $l2.count.d","outro":"Both lose - AGAIN ;; This keeps happening!","l1":{"count":{"d":"$+1"}},"local2":{"count":{"d":"$+1"}},"next":"auto"}]
+	name: "root",
+	intro: "Some intro text for the root choice ;; This is the choice{{$l.iceCream && ' (remember the ice cream)'}}",
+	root: true,
+	cc: [{weight:"$l1.iceCream || $l2.iceCream",outro:"Both win ;; yay!!! ;; Co-operation is great",g1:{count:{c:"$+1"}},global2:{count:{c:"$+1"}}},
+               {weight:"!($l1.iceCream || $l2.iceCream)",outro:"Both win ;; yay!!! ;; Co-operation is great",global1:{count:{c:"$+1"}},g2:{count:{c:"$+1"}},
+                next: {intro: "Want to have an ice cream together?",
+                         hint: ["No","Yes"],
+                         cc: {outro:"I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.",
+                                local1:{iceCream:true},local2:{iceCream:true}},
+                         diff: "Unfortunately, not everybody loves ice cream.",
+                         dd: "Right: ice cream sucks."}}],
+	cd2: {outro:"$player1 is the sucker ;; Sorry",global1:{count:{c:"$+1"}},local2:{count:{d:"$+1"}}},
+	dd: [{weight:"!($l1.count.d && $l2.count.d)",outro:"You and {{$no}} both lose ;; Too bad!",local1:{count:{d:"$+1"}},l2:{count:{d:"$+1"}},next:"auto"},
+               {weight:"$l1.count.d && $l2.count.d",outro:"Both lose - AGAIN ;; This keeps happening!",l1:{count:{d:"$+1"}},local2:{count:{d:"$+1"}},next:"auto"}]
     },
     {
-	"name": "auto",
-	"cc": {"next":["root","root"]}
+	name: "auto",
+	cc: {next:["root","root"]}
     }
 ]
