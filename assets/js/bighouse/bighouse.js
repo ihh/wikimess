@@ -1005,7 +1005,7 @@ var BigHouse = (function() {
 			bh.createPlaceholderCards()
 			if (data.waiting) {
 			    bh.createAndDealCards ({ text: data.intro,
-						     cardClass: 'verb-' + data.verb,
+						     finalCardClass: 'verb-' + data.verb,
 						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
 						     swipeLeft: bh.makeMoveFunction (data.move, 'd'),
 						     rightHint: data.hintc, 
@@ -1039,7 +1039,7 @@ var BigHouse = (function() {
 		    this.playSound (outcome.verb)
 		if (outcome.outro && /\S/.test (outcome.outro))
 		    this.createAndDealCards ({ text: outcome.outro,
-					       cardClass: 'outcome' })
+					       firstCardClass: 'outcome' })
 	    }
 	},
 
@@ -1049,7 +1049,7 @@ var BigHouse = (function() {
 	    texts.reverse().forEach (function (text, n) {
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
-		var cardClass = isFirst ? config.cardClass : undefined
+		var cardClass = isFirst ? config.firstCardClass : (isFinal ? config.finalCardClass : undefined)
                 // misc text expansions go here...
                 var content = text.split(/\n/).map (function (para) {
                     return $('<span>').html(para)

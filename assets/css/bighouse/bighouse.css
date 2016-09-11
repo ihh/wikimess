@@ -120,6 +120,11 @@ body {
     color: brown;
 }
 
+.bighouse .cardbar .cardtable .verb-choose {
+    background-color: #fffcff;
+    color: #204;
+}
+
 .bighouse .inputbar {
     line-height: 32px;
 }
