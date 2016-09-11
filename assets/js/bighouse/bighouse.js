@@ -31,13 +31,14 @@ var BigHouse = (function() {
     }
 
     $.extend (proto.prototype, {
-        // default params/data
+        // default constants
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
 	blankImageUrl: '/images/1x1blank.png',
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
         avatarSize: 298,
+        cardDelimiter: ';;',
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -1044,7 +1045,7 @@ var BigHouse = (function() {
 
 	createAndDealCards: function (config) {
 	    var bh = this
-	    var texts = config.text.split('//')
+	    var texts = config.text.split (this.cardDelimiter)
 	    texts.reverse().forEach (function (text, n) {
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
