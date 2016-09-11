@@ -50,6 +50,10 @@ module.exports = {
       },
       hintd2: { type: 'string' },
 
+      timeout: {
+          type: 'integer'
+      },
+      
       outcomes: {
           collection: 'outcome',
           via: 'choice',

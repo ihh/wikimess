@@ -72,16 +72,16 @@ module.exports = {
 
     moveOutcomes: function (game, cb) {
         var query = Outcome.find ({ choice: game.current.id })
-	if (game.move1)
+	if (game.move1 != 'none')
 	    query.where ({ move1: game.move1 })
-	if (game.move2)
+	if (game.move2 != 'none')
 	    query.where ({ move2: game.move2 })
         query.exec (function (err, outcomes) {
-                if (err)
-                    cb (err)
-                else
-                    cb (null, outcomes)
-            })
+            if (err)
+                cb (err)
+            else
+                cb (null, outcomes)
+        })
     },
 
     randomOutcome: function (game, cb) {
@@ -133,8 +133,8 @@ module.exports = {
                      var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
                      var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
                      // update game state
-		     var updateAttrs = { move1: undefined,
-					 move2: undefined,
+		     var updateAttrs = { move1: 'none',
+					 move2: 'none',
 					 moves: game.moves + 1,
 					 mood1: Outcome.mood1 (game, outcome),
 					 mood2: Outcome.mood2 (game, outcome),
@@ -142,13 +142,17 @@ module.exports = {
                                          local1: GameService.evalUpdatedState (game, outcome, 1, true),
                                          local2: GameService.evalUpdatedState (game, outcome, 2, true),
 					 current: currentChoiceID,
+                                         currentStartTime: new Date(),
 					 future: futureChoiceNames,
 					 finished: currentChoiceID ? false : true
 				       }
 		     if (storeOutcome)
 			 updateAttrs.lastOutcome = outcome
                      Game.update
-		     ( { id: game.id },
+		     ( { id: game.id,
+                         // add some extra criteria to guard against race conditions
+                         moves: game.moves
+                       },
                        updateAttrs,
                        function (err, updatedGames) {
                            if (err)
@@ -383,31 +387,40 @@ module.exports = {
         else {
             var oldPlayerMove = role == 1 ? game.move1 : game.move2
             var opponentMove = role == 1 ? game.move2 : game.move1
-            if (oldPlayerMove && oldPlayerMove != move)
+            if (oldPlayerMove != 'none' && oldPlayerMove != move)
                 error (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
             else {
                 var update = {}
 		var moveAttr = "move" + role
-                update[moveAttr] = game[moveAttr] = move
-                Game.update ( { id: game.id }, update, function (err, updated) {
-                    if (err)
-                        error (err)
-                    else {
-                        if (opponentMove)
-			    GameService
-                            .applyRandomOutcome ({ game: game,
-						   gotOutcome: function (outcome, game) {
-						       if (role == 1)
-							   gotOutcome (outcome, game, game.player1, game.player2)
-						       else
-							   gotOutcome (outcome, game, game.player2, game.player1)
-						   },
-						   storeOutcome: true },
-						 error)
-                        else
-                            playerWaiting()
-                    }
-                })
+                update[moveAttr] = move
+                Game.update ({ id: game.id,
+                               // add some extra criteria to guard against race conditions
+                               moves: game.moves,
+                               move1: game.move1,
+                               move2: game.move2,
+                               quit1: game.quit1,
+                               quit2: game.quit2 },
+                             update,
+                             function (err, updated) {
+                                 if (err)
+                                     error (err)
+                                 else {
+                                     game[moveAttr] = move  // so that Game.applyRandomOutcome gets to see the move
+                                     if (opponentMove != 'none')
+			                 GameService
+                                         .applyRandomOutcome ({ game: game,
+						                gotOutcome: function (outcome, game) {
+						                    if (role == 1)
+							                gotOutcome (outcome, game, game.player1, game.player2)
+						                    else
+							                gotOutcome (outcome, game, game.player2, game.player1)
+						                },
+						                storeOutcome: true },
+						              error)
+                                     else
+                                         playerWaiting()
+                                 }
+                             })
             }
         }
     },

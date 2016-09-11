@@ -45,19 +45,36 @@ module.exports = {
           defaultsTo: 0
       },
 
+      lastOutcome: {
+	  model: 'outcome',
+      },
+
+      currentStartTime: {
+          type: 'date',
+          defaultsTo: function() { return new Date() }
+      },
+
+      quit1: {
+          type: 'boolean',
+          defaultsTo: false,
+      },
+
+      quit2: {
+          type: 'boolean',
+          defaultsTo: false,
+      },
+      
       // player choices
       move1: {
           type: 'string',
-          enum: ['c', 'd']
+          enum: ['c', 'd', 'none'],
+          defaultsTo: 'none'
       },
 
       move2: {
           type: 'string',
-          enum: ['c', 'd']
-      },
-
-      lastOutcome: {
-	  model: 'outcome',
+          enum: ['c', 'd', 'none'],
+          defaultsTo: 'none'
       },
 
       // player state specific to this game
@@ -91,7 +108,13 @@ module.exports = {
 },
 
     isWaitingForMove: function (game, role) {
-	return role == 1 ? (game.move2 || !game.move1) : (game.move1 || !game.move2)
+	return role == 1
+            ? (game.move2 != 'none' || game.move1 == 'none')
+            : (game.move1 != 'none' || game.move2 == 'none')
+    },
+
+    timedOut: function (game) {
+        return game.current.timeout && ((Date.now() - game.currentStartTime) / 1000) >= game.current.timeout
     },
     
     forRole: function (game, role) {
