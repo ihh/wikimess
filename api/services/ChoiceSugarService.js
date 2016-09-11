@@ -30,6 +30,10 @@ module.exports = {
         }
 
         var addOutcomes = function (tag, adders) {
+            if (Object.prototype.toString.call(tag) === '[object Array]') {
+                tag.forEach (function(t) { addOutcomes(t,adders) })
+                return
+            }
             if (config.hasOwnProperty(tag)) {
                 var outs = config[tag]
                 if (Object.prototype.toString.call(outs) !== '[object Array]')
@@ -113,21 +117,21 @@ module.exports = {
         addOutcomes ('dc', [add_dc])
         addOutcomes ('dd', [add_dd])
 
-        addOutcomes ('c*', [add_cc, add_cd])
-        addOutcomes ('d*', [add_dc, add_dd])
-        addOutcomes ('*c', [add_cc, add_dc])
-        addOutcomes ('*d', [add_cd, add_dd])
+        addOutcomes (['c*','cx'], [add_cc, add_cd])
+        addOutcomes (['d*','dx'], [add_dc, add_dd])
+        addOutcomes (['*c','xc'], [add_cc, add_dc])
+        addOutcomes (['*d','xd'], [add_cd, add_dd])
 
-        addOutcomes ('!cc', [add_cd, add_dc, add_dd])
-        addOutcomes ('!cd', [add_cc, add_dc, add_dd])
-        addOutcomes ('!dc', [add_cc, add_cd, add_dd])
-        addOutcomes ('!dd', [add_cc, add_cd, add_dc])
+        addOutcomes (['!cc','notcc'], [add_cd, add_dc, add_dd])
+        addOutcomes (['!cd','notcd'], [add_cc, add_dc, add_dd])
+        addOutcomes (['!dc','notdc'], [add_cc, add_cd, add_dd])
+        addOutcomes (['!dd','notdd'], [add_cc, add_cd, add_dc])
 
-        addOutcomes ('*', [add_cc, add_cd, add_dc, add_dd])
+        addOutcomes (['*','any'], [add_cc, add_cd, add_dc, add_dd])
 
         addOutcomes ('same', [add_cc, add_dd])
         addOutcomes ('diff', [add_cd, add_dc])
-        addOutcomes ('cd2', [add_cd, add_flipped])
+        addOutcomes (['cd2','symdiff'], [add_cd, add_flipped])
 
         if (config.hint) {
             // various ways of specifying asymmetric things
