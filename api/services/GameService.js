@@ -185,6 +185,8 @@ module.exports = {
 						       .populate ('player2')
 						       .populate ('current')
 						       .exec (function (err, refreshedGames) {
+							   var up1 = updatedPlayer1s[0]
+							   var up2 = updatedPlayer2s[0]
 							   if (err)
 							       error(err)
 							   else if (refreshedGames.length != 1)
@@ -195,12 +197,14 @@ module.exports = {
 								       .playBotMoves (refreshedGames[0],
 										      function() {
 											  gotOutcome (outcome,
-												      refreshedGames[0])},
+												      refreshedGames[0],
+												      up1,
+												      up2)},
 										      error)
 							       } else
 								   GameService.applyRandomOutcome ({ game: refreshedGames[0],
-											             gotOutcome: function (dummyOutcome, game) {
-												         gotOutcome (outcome, game)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
+											             gotOutcome: function (dummyOutcome, game, p1, p2) {
+												         gotOutcome (outcome, game, p1, p2)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
 											             },
 											             storeOutcome: false },
 											           error)
@@ -378,58 +382,41 @@ module.exports = {
         return w ? (typeof(w) === 'string' ? parseFloat(w) : w) : 0
     },
 
+    gotBothMoves: function (game) {
+	return game.move1 != 'none' && game.move2 != 'none'
+    },
+
     recordMove: function (info, gotOutcome, playerWaiting, error) {
         var game = info.game
-        var role = info.role
         var moveNumber = info.moveNumber
-        var move = info.move
-        var player = role == 1 ? game.player1 : game.player2
-        var opponent = role == 1 ? game.player2 : game.player1
-	console.log('recordMove')
-        if (game.finished)
-            error (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
-        else if (game.moves + 1 != moveNumber)
-            error (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
-        else {
-            var oldPlayerMove = role == 1 ? game.move1 : game.move2
-            var opponentMove = role == 1 ? game.move2 : game.move1
-            if (oldPlayerMove != 'none' && oldPlayerMove != move)
-                error (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
-            else {
-                var update = {}
-		var moveAttr = "move" + role
-                update[moveAttr] = move
-		console.log(update)
-                Game.update ({ id: game.id,
-                               // add some extra criteria to guard against race conditions
-                               moves: game.moves,
-                               move1: game.move1,
-                               move2: game.move2 },
-                             update,
-                             function (err, updated) {
-				 console.log(err)
-				 console.log(updated)
-                                 if (err)
-                                     error (err)
-                                 else {
-                                     game[moveAttr] = move  // so that Game.applyRandomOutcome gets to see the move
-                                     if (opponentMove != 'none')
-			                 GameService
-                                         .applyRandomOutcome ({ game: game,
-						                gotOutcome: function (outcome, game) {
-						                    if (role == 1)
-							                gotOutcome (outcome, game, game.player1, game.player2)
-						                    else
-							                gotOutcome (outcome, game, game.player2, game.player1)
-						                },
-						                storeOutcome: true },
-						              error)
-                                     else
-                                         playerWaiting()
-                                 }
-                             })
-            }
-        }
+	var update = info.update
+	console.log ('recordMove')
+	console.log (info)
+        Game.update ({ id: game.id,
+                       // add some extra criteria to guard against race conditions
+                       moves: game.moves,
+                       move1: game.move1,
+                       move2: game.move2 },
+                     update,
+                     function (err, updated) {
+                         if (err)
+                             error (err)
+			 else if (updated.length == 0)
+			     error (new Error ("No Games updated"))
+                         else {
+			     // ensure Game.applyRandomOutcome gets to see the move
+                             game.move1 = update.move1 || game.move1
+                             game.move2 = update.move2 || game.move2
+                             if (GameService.gotBothMoves (game))
+			         GameService
+                                 .applyRandomOutcome ({ game: game,
+						        gotOutcome,
+						        storeOutcome: true },
+						      error)
+                             else
+                                 playerWaiting()
+                         }
+                     })
     },
     
     updateMood: function (info, success, error) {
@@ -463,9 +450,9 @@ module.exports = {
 		success()
 	}
 	if (!game.player1.human)
-	    Game.update({id:game.id},{move1:Player.randomMove(game.player1,game)},cb)
+	    Game.update({id:game.id},{move1:MiscPlayerService.randomMove(game.player1,game)},cb)
 	else if (!game.player2.human)
-	    Game.update({id:game.id},{move2:Player.randomMove(game.player2,game)},cb)
+	    Game.update({id:game.id},{move2:MiscPlayerService.randomMove(game.player2,game)},cb)
 	else
 	    success()
     },

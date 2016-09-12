@@ -144,22 +144,42 @@ module.exports = {
     gameInfo: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info, rs) {
 	    rs (null, Game.forRole (info.game, info.role))
-	    var timedOutRole = Game.timedOutRole (info.game)
-	    if (timedOutRole) {
-		var timedOutPlayer = Game.getRoleAttr(info.game,timedOutRole,'player')
-		var punctualPlayer = Game.getOtherRoleAttr(info.game,timedOutRole,'player')
-		var timedOutMoveInfo = { game: info.game,
-					 player: timedOutPlayer,
-					 opponent: punctualPlayer,
-					 role: timedOutRole,
-					 moveNumber: info.game.moves + 1,
-					 move: MiscPlayerService.randomMove (timedOutPlayer, info.game),
-					 playerMessage: "timeout",
-					 opponentMessage: "move" }
-		MiscPlayerService.makeMove (req,
-					    function() {},
-					    timedOutMoveInfo)
-	    }
+        })
+    },
+
+    // kick timed-out player
+    kickTimedOutPlayers: function (req, res) {
+        MiscPlayerService.findGame (req, res, function (info, rs) {
+	    var timedOutRoles = Game.timedOutRoles (info.game)
+	    console.log("timedOutRoles")
+	    console.log(timedOutRoles)
+	    var update = {}
+	    timedOutRoles.forEach (function (timedOutRole) {
+		var timedOutPlayer = Game.getRoleAttr (info.game, timedOutRole, 'player')
+		update[Game.roleAttr(timedOutRole,'move')]
+		    = MiscPlayerService.randomMove (timedOutPlayer, info.game)
+	    })
+	    var moveNumber = info.game.moves + 1
+	    GameService.recordMove ({ game: info.game,
+				      moveNumber: moveNumber,
+				      update: update },
+				    function (outcome, updatedGame, updatedPlayer1, updatedPlayer2) {
+					MiscPlayerService
+					    .sendMoveMessages ({ message: "timeout",
+								 game: updatedGame,
+								 move: moveNumber,
+								 outcome: outcome })
+					rs (null, { game: info.game.id,
+						    move: info.game.moves + 1,
+						    kicked: timedOutRoles.map (function (role) {
+							return Game.getRoleAttr(info.game,role,'player').id
+						    }) })
+				    },
+				    function() {
+					// player waiting callback
+					rs (new Error ("Player kick failed"))
+				    },
+				    rs)
         })
     },
 
@@ -170,7 +190,6 @@ module.exports = {
         MiscPlayerService.findGame (req, res, function (info, rs) {
 	    info.moveNumber = moveNumber
 	    info.move = move
-	    info.playerMessage = info.opponentMessage = "move"
 	    MiscPlayerService.makeMove (req, rs, info)
 	})
     },

@@ -40,6 +40,7 @@ var BigHouse = (function() {
         avatarSize: 298,
         cardDelimiter: ';;',
 	maxJoinWaitTime: 5,
+	kickDelay: 2,
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -63,7 +64,11 @@ var BigHouse = (function() {
         },
 
         REST_getPlayerGames: function (playerID) {
-            return $.get ('/player/' + playerID + '/game')
+            return $.get ('/player/' + playerID + '/games')
+        },
+
+        REST_getPlayerGameKick: function (playerID, gameID) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/kick')
         },
 
         REST_getPlayerGameStatusSelf: function (playerID, gameID) {
@@ -882,8 +887,16 @@ var BigHouse = (function() {
                                   .append (this.makeListLink ('Resume game', this.popView))
                                   .append (this.makeListLink ('Status', this.showPlayerStatusPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
-                                  .append (this.makeListLink ('Exit to menu', this.showPlayPage))))
+                                  .append (this.makeListLink ('Exit to menu', this.exitGame))))
         },
+
+	exitGame: function() {
+	    if (this.moveTimer) {
+		window.clearInterval (this.moveTimer)
+		delete this.moveTimer
+	    }
+	    this.showPlayPage()
+	},
 
 	// game status
         showPlayerStatusPage: function() {
@@ -1024,6 +1037,7 @@ var BigHouse = (function() {
 			bh.showLastOutcome (data.lastOutcome)
 		    else {
 			bh.createPlaceholderCards()
+			bh.waitingForOther = data.waiting
 			if (data.waiting) {
 			    bh.createAndDealCards ({ text: data.intro,
 						     finalCardClass: 'verb-' + data.verb,
@@ -1041,12 +1055,19 @@ var BigHouse = (function() {
 			    bh.dealTime = new Date()
 			    bh.deadline = new Date(data.deadline)
 			    bh.updateTimer (1)
+			    var kickDelay = (bh.waitingForOther ? 0 : bh.kickDelay) + Math.random()
 			    bh.moveTimer = window.setInterval (function() {
 				var now = new Date()
 				bh.updateTimer (Math.max (0, (bh.deadline - now) / (bh.deadline - bh.dealTime)))
-				if (now > bh.deadline) {
+				if (now.getTime() > bh.deadline.getTime() + 1000*kickDelay) {
 				    window.clearInterval (bh.moveTimer)
 				    delete bh.moveTimer
+				    bh.REST_getPlayerGameKick (bh.playerID, bh.gameID)
+					.done (function (data) {
+					    console.log(data)
+					}).fail (function (err) {
+					    console.log(err)
+					})
 				}
 			    }, 10)
 			}
@@ -1231,6 +1252,9 @@ var BigHouse = (function() {
             return function() {
 		if (this.moveNumber == moveNumber)  // avoid sending requests after a timeout message
                     bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+		    .done (function() {
+			bh.waitingForOther = true
+		    })
             }
         },
         
@@ -1288,9 +1312,7 @@ var BigHouse = (function() {
                 if (this.gameID == msg.data.game)
 		    this.callOrPostpone ('game', function() {
 			this.currentChoiceCards.forEach (function (card) { card.throwOut() })
-			this.outcome = msg.data.outcome
-			this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
-			this.showOutcome()
+			this.loadGameCards()
 		    })
                 break
             case "mood":

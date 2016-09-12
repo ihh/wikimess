@@ -58,9 +58,10 @@ module.exports.routes = {
     'GET /player/:player/join/cancel':   'PlayerController.cancelJoin',
     'GET /player/:player/join/bot':      'PlayerController.joinBot',
 
-    'GET /player/:player/game':          'PlayerController.games',
+    'GET /player/:player/games':         'PlayerController.games',
 
     'GET /player/:player/game/:game':              'PlayerController.gameInfo',
+    'GET /player/:player/game/:game/kick':         'PlayerController.kickTimedOutPlayers',
     'GET /player/:player/game/:game/status':       'PlayerController.selfGameStatus',
     'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
     'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',

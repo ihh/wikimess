@@ -127,50 +127,79 @@ module.exports = {
         var role = info.role
 	console.log('makeMove')
 	console.log(info)
-        GameService
-            .recordMove ({ game: game,
-                           role: role,
-                           moveNumber: moveNumber,
-                           move: move },
-                         function (outcome, updatedGame, updatedPlayer, updatedOpponent) {
-			     console.log('recordMove callback')
-			     console.log(updatedGame)
-			     console.log(updatedPlayer)
-			     console.log(updatedOpponent)
-                             // both players moved; return outcome
-                             var playerMsg = { message: info.playerMessage,
-                                               game: game.id,
-                                               finished: updatedGame.finished ? true : false,
-                                               move: moveNumber,
-                                               choice: { self: move,
-                                                         other: role == 1 ? outcome.move2 : outcome.move1 },
-                                               waiting: false,
-                                               outcome: Outcome.forRole (game, outcome, role),
-                                               self: { cash: updatedPlayer.cash } }
-                             var opponentMsg = { message: info.opponentMessage,
-                                                 game: game.id,
-                                                 finished: updatedGame.finished ? true : false,
-                                                 move: moveNumber,
-                                                 choice: { self: role == 1 ? outcome.move2 : outcome.move1,
-                                                           other: move },
-                                                 waiting: false,
-                                                 outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
-                                                 self: { cash: updatedOpponent.cash } }
-                             if (req.isSocket)
-                                 Player.subscribe (req, [player.id])
-                             Player.message (opponent.id, opponentMsg)
-                             Player.message (player.id, playerMsg)
-                             rs (null, playerMsg)
-                         },
-                         function() {
-                             // waiting for opponent to move
-                             if (req.isSocket)
-                                 Player.subscribe (req, [player.id])
-                             rs (null, { game: game.id,
-                                         move: moveNumber,
-                                         choice: { self: move },
-                                         waiting: true })
-                         },
-                         rs)
+
+        if (game.finished)
+            rs (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
+        else if (game.moves + 1 != moveNumber)
+            rs (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
+        else {
+            var oldPlayerMove = role == 1 ? game.move1 : game.move2
+            var opponentMove = role == 1 ? game.move2 : game.move1
+            if (oldPlayerMove != 'none' && oldPlayerMove != move)
+                rs (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
+            else {
+
+                var update = {}
+		var moveAttr = "move" + role
+                update[moveAttr] = move
+
+		GameService
+		    .recordMove ({ game: game,
+				   moveNumber: moveNumber,
+				   update: update },
+				 function (outcome, updatedGame, updatedPlayer1, updatedPlayer2) {
+				     var updatedPlayer, updatedOpponent
+				     if (role == 1) {
+					 updatedPlayer = updatedPlayer1
+					 updatedOpponent = updatedPlayer2
+				     } else {
+					 updatedPlayer = updatedPlayer2
+					 updatedOpponent = updatedPlayer1
+				     }
+				     console.log('recordMove callback')
+				     console.log(outcome)
+				     console.log(updatedGame)
+				     console.log(updatedPlayer)
+				     console.log(updatedOpponent)
+				     // both players moved; return outcome
+				     if (req.isSocket)
+					 Player.subscribe (req, [player.id])
+				     MiscPlayerService
+					 .sendMoveMessages ({ message: "move",
+							      game: game,
+							      move: moveNumber,
+							      outcome: outcome })
+				     rs (null, { game: game.id,
+						 move: moveNumber,
+						 choice: { self: move },
+						 waiting: false })
+				 },
+				 function() {
+				     // waiting for opponent to move
+				     if (req.isSocket)
+					 Player.subscribe (req, [player.id])
+				     rs (null, { game: game.id,
+						 move: moveNumber,
+						 choice: { self: move },
+						 waiting: true })
+				 },
+				 rs)
+	    }
+	}
+    },
+
+    sendMoveMessages: function (info) {
+	var game = info.game
+	var moveNumber = info.moveNumber
+	var message = info.message
+	var outcome = info.outcome
+	var roles = [1,2]
+	roles.forEach (function (role) {
+	    var msg = { message: message,
+			game: game.id,
+			move: moveNumber,
+			outcome: Outcome.forRole (game, outcome, role) }
+	    Player.message (Game.getRoleAttr(game,role,'player').id, msg)
+	})
     },
 }

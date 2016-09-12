@@ -109,11 +109,11 @@ module.exports = {
 	    && ((Date.now() - game.currentStartTime) / 1000) >= game.current.timeout
     },
 
-    timedOutRole: function (game) {
+    timedOutRoles: function (game) {
 	var w1 = game.move1 == 'none', w2 = game.move2 == 'none'
-	return (Game.isTimedOut (game) && (w1 || w2) && !(w1 && w2))
-	    ? (w1 ? 1 : 2)
-	: 0
+	return Game.isTimedOut(game)
+	    ? (w1 ? (w2 ? [1,2] : [1]) : (w2 ? [2] : []))
+	: []
     },
     
     forRole: function (game, role) {
