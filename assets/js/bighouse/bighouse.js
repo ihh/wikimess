@@ -1316,6 +1316,7 @@ var BigHouse = (function() {
                 if (this.gameID == msg.data.game)
 		    this.clearMoveTimer()
 		    this.callOrPostpone ('game', function() {
+			this.clearMoveTimer()  // guard against multiple timeouts during pause
 			this.currentChoiceCards.forEach (function (card) { card.throwOut() })
 			this.loadGameCards()
 		    })
