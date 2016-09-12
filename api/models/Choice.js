@@ -24,6 +24,10 @@ module.exports = {
           type: 'string'  // for anonymously-declared Choices, the parent creator Choice
       },
 
+      scene: {
+          type: 'string'
+      },
+      
       root: {
           type: 'boolean',
           defaultsTo: false

@@ -74,7 +74,8 @@ module.exports = {
     join: function (req, res) {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
             PlayerMatchService
-		.joinGame (player,
+		.joinGame ({ player: player,
+                             wantHuman: true },
 			   function (opponent, game) {
                                // game started; return game info
                                var playerMsg = { message: "join",

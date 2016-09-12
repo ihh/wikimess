@@ -8,6 +8,7 @@ module.exports = {
 //        console.log ('createChoice')
 //        console.log (config)
 
+        // keys for Outcomes
         var symKeys = ['weight', 'next', 'flush', 'common']
         var asymKeys = ['local', 'global', 'mood']
         var aliasKeys = { 'l': 'local',

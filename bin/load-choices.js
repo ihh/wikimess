@@ -5,7 +5,8 @@ var fs = require('fs'),
     getopt = require('node-getopt'),
     assert = require('assert'),
     http = require('http'),
-    colors = require('colors')
+    colors = require('colors'),
+    extend = require('extend')
 
 var defaultHost = "localhost"
 var defaultPort = "1337"
@@ -47,28 +48,43 @@ var matchRegex = new RegExp (opt.options.match || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultChoiceFilename]
 
 choiceFilenames.forEach (function (choiceFilename) {
-    process (choiceFilename, true)
+    process ({ filename: choiceFilename,
+               path: '/choice',
+               handler: choiceHandler,
+               first: true })
 })
 
-function process (filename, first) {
+function process (info) {
+    var filename = info.filename,
+        path = info.path,
+        handler = info.handler,
+        first = info.first
     log (1, 'Processing ' + filename)
     var stats = fs.statSync (filename)
     if (stats.isDirectory())
-        processDir (filename)
+        processDir (info)
     else if (matchRegex.test(filename) || first)
-        processFile (filename)
+        processFile (info)
 }
 
-function processDir (dir) {
+function processDir (info) {
+    var dir = info.filename
     fs.readdirSync(dir).forEach (function (filename) {
-        process (dir + '/' + filename)
+        process ({ filename: dir + '/' + filename,
+                   path: info.path,
+                   handler: info.handler })
     })
 }
         
-function processFile (filename) {
+function processFile (info) {
+    var filename = info.filename
     var json = readJsonFileSync (filename, eval)
     if (json)
-        postChoice (0, json, filename)
+        post ({ index: 0,
+                array: json,
+                filename: filename,
+                path: info.path,
+                handler: info.handler })
 }
 
 function readJsonFileSync (filename, alternateParser) {
@@ -94,19 +110,25 @@ function readJsonFileSync (filename, alternateParser) {
     return result
 }
 
-function postChoice (n, choiceJson, filename) {
-    if (n >= choiceJson.length)
+function post (info) {
+    var n = info.index,
+        array = info.array,
+        handler = info.handler,
+        path = info.path,
+        filename = info.filename
+
+    if (n >= array.length)
 	return
 
-    var choice = choiceJson[n]
-    log (2, 'POSTing ' + choice.name + ' (entry #' + (n+1) + ' in ' + filename + ')')
+    var elem = array[n]
+    log (2, 'POSTing ' + elem.name + ' (entry #' + (n+1) + ' in ' + filename + ')')
 
-    var post_data = JSON.stringify (choice)
+    var post_data = JSON.stringify (elem)
 
     var post_options = {
 	host: host,
 	port: port,
-	path: '/choice',
+	path: path,
 	method: 'POST',
 	headers: {
             'Content-Type': 'application/json',
@@ -127,25 +149,13 @@ function postChoice (n, choiceJson, filename) {
             log (5, data)
             log (4, 'Response length: ' + data.length + ' bytes')
 
-            var choices = []
-            try {
-                var json = JSON.parse (data)
-                choices = json.filter (function (c) {
-                    // check to see if this looks like a Choice
-                    return typeof(c.name) === 'string' && typeof(c.id) === 'number'
-                })
-            } catch (err) {
-                log ("Warning: couldn't parse response as JSON list")
-            }
-            if (choices.length)
-                log (3, choices.map (function (c) {
-                    return ' ' + c.name + '\t(id=' + c.id + ', '
-                        + plural (c.outcomes && c.outcomes.length, 'outcome')
-                        + ')'
-                }).join("\n"))
-            else
-                log ("Warning: zero Choices created")
-	    postChoice (n+1, choiceJson, filename)
+            handler (data)
+
+	    post ({ index: n+1,
+                    array: array,
+                    handler: handler,
+                    path: path,
+                    filename: filename })
 	})
     })
 
@@ -163,4 +173,25 @@ function plural (n, singular, plural) {
     plural = plural || (singular + 's')
     n = typeof(n) === 'undefined' ? 0 : n
     return n + ' ' + (n == 1 ? singular : plural)
+}
+
+function choiceHandler (data) {
+    var choices = []
+    try {
+        var json = JSON.parse (data)
+        choices = json.filter (function (c) {
+            // check to see if this looks like a Choice
+            return typeof(c.name) === 'string' && typeof(c.id) === 'number'
+        })
+    } catch (err) {
+        log ("Warning: couldn't parse response as JSON list")
+    }
+    if (choices.length)
+        log (3, choices.map (function (c) {
+            return ' ' + c.name + '\t(id=' + c.id + ', '
+                + plural (c.outcomes && c.outcomes.length, 'outcome')
+                + ')'
+        }).join("\n"))
+    else
+        log ("Warning: zero Choices created")
 }

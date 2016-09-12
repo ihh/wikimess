@@ -2,7 +2,7 @@
     {
 	name: "root",
 	intro: "Some intro text for the root choice ;; This is the choice{{$c.iceCream && ' (remember the ice cream)'}}",
-	root: true,
+	scene: 'init',
 	cc: [{weight:"$c.iceCream || $c.iceCream",outro:"Both win ;; yay!!! ;; Co-operation is great",g1:{count:{c:"$+1"}},global2:{count:{c:"$+1"}}},
                {weight:"!($c.iceCream || $c.iceCream)",outro:"Both win ;; yay!!! ;; Co-operation is great",global1:{count:{c:"$+1"}},g2:{count:{c:"$+1"}},
                 next: {intro: "Want to have an ice cream together?",
