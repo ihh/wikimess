@@ -105,19 +105,6 @@ module.exports = {
                     layout: 'status/layout' })
     },
 
-    randomMove: function (player, game) {
-	var role = Game.getRole (game, player.id)
-	var mood = Game.getRoleAttr (game, role, 'mood')
-	switch (player.botmind.strategy) {
-	case 'mood':
-	    return Math.random() < player.botmind.probc[mood] ? 'c' : 'd'
-	    break;
-	default:
-	    break;
-	}
-	return 'd'
-    },
-
     makeMove: function (req, rs, info) {
         var moveNumber = info.moveNumber
         var move = info.move

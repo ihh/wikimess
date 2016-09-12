@@ -156,8 +156,7 @@ module.exports = {
 	    var update = {}
 	    timedOutRoles.forEach (function (timedOutRole) {
 		var timedOutPlayer = Game.getRoleAttr (info.game, timedOutRole, 'player')
-		update[Game.roleAttr(timedOutRole,'move')]
-		    = MiscPlayerService.randomMove (timedOutPlayer, info.game)
+		update[Game.roleAttr(timedOutRole,'move')] = Game.getRoleAttr(info.game,timedOutRole,'defaultMove')
 	    })
 	    var moveNumber = info.game.moves + 1
 	    GameService.recordMove ({ game: info.game,

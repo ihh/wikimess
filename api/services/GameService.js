@@ -195,6 +195,8 @@ module.exports = {
 							       if (!autoExpandCurrentChoice) {
 								   GameService
 								       .playBotMoves (refreshedGames[0],
+										      up1,
+										      up2,
 										      function() {
 											  gotOutcome (outcome,
 												      refreshedGames[0],
@@ -442,19 +444,21 @@ module.exports = {
         }
     },
 
-    playBotMoves: function (game, success, error) {
-	var cb = function(err) {
-	    if (err)
-		error(err)
-	    else
-		success()
-	}
-	if (!game.player1.human)
-	    Game.update({id:game.id},{move1:MiscPlayerService.randomMove(game.player1,game)},cb)
-	else if (!game.player2.human)
-	    Game.update({id:game.id},{move2:MiscPlayerService.randomMove(game.player2,game)},cb)
-	else
-	    success()
+    playBotMoves: function (game, player1, player2, success, error) {
+	var update = { defaultMove1: BotService.randomMove (player1, game),
+		       defaultMove2: BotService.randomMove (player2, game) }
+	if (!player1.human)
+	    update.move1 = update.defaultMove1
+	else if (!player2.human)
+	    update.move2 = update.defaultMove2
+	Game.update ({ id: game.id },
+		     update,
+		     function (err, updated) {
+			 if (err)
+			     error(err)
+			 else
+			     success()
+		     })
     },
 
 };

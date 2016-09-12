@@ -67,6 +67,16 @@ module.exports = {
           defaultsTo: 'none'
       },
 
+      defaultMove1: {
+          type: 'string',
+          enum: ['c', 'd'],
+      },
+
+      defaultMove2: {
+          type: 'string',
+          enum: ['c', 'd'],
+      },
+
       // player state specific to this game
       mood1: {
           type: 'string',
@@ -150,6 +160,7 @@ module.exports = {
                      verb: verb,
                      hintc: hintc,
                      hintd: hintd,
+		     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
                      self: { mood: selfMood },
                      other: { id: other.id, name: other.name, mood: otherMood },
                      move: game.moves + 1 }
