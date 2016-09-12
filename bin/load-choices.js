@@ -11,7 +11,8 @@ var fs = require('fs'),
 var defaultHost = "localhost"
 var defaultPort = "1337"
 var defaultUrlPrefix = ""
-var defaultChoiceFilename = "data"
+var defaultChoiceFilename = "data/choices"
+var defaultPlayerFilename = "data/players"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json)$'
 
@@ -20,6 +21,7 @@ var opt = getopt.create([
     ['p' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
     ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
     ['c' , 'choices=PATH+'    , 'path to JSON choices file(s) or directories (default=' + defaultChoiceFilename + ')'],
+    ['p' , 'players=PATH+'    , 'path to JSON player file(s) or directories (default=' + defaultPlayerFilename + ')'],
     ['m' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
     ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
     ['h' , 'help'             , 'display this help message']
@@ -46,45 +48,69 @@ var urlPrefix = opt.options.root || defaultUrlPrefix
 
 var matchRegex = new RegExp (opt.options.match || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultChoiceFilename]
+var playerFilenames = opt.options.players || [defaultPlayerFilename]
+
+var callback = function() { }
+
+playerFilenames.forEach (function (playerFilename) {
+    callback = process ({ filename: playerFilename,
+                          path: '/player',
+                          handler: playerHandler,
+                          callback: callback,
+                          first: true })
+})
 
 choiceFilenames.forEach (function (choiceFilename) {
-    process ({ filename: choiceFilename,
-               path: '/choice',
-               handler: choiceHandler,
-               first: true })
+    callback = process ({ filename: choiceFilename,
+                          path: '/choice',
+                          handler: choiceHandler,
+                          callback: callback,
+                          first: true })
 })
+
+callback()
 
 function process (info) {
     var filename = info.filename,
-        path = info.path,
-        handler = info.handler,
-        first = info.first
-    log (1, 'Processing ' + filename)
+        first = info.first,
+        callback = info.callback
     var stats = fs.statSync (filename)
     if (stats.isDirectory())
-        processDir (info)
+        return processDir (info)
     else if (matchRegex.test(filename) || first)
-        processFile (info)
+        return processFile (info)
+    return callback
 }
 
 function processDir (info) {
-    var dir = info.filename
+    var dir = info.filename,
+        callback = info.callback
+    log (1, 'Processing ' + dir)
     fs.readdirSync(dir).forEach (function (filename) {
-        process ({ filename: dir + '/' + filename,
-                   path: info.path,
-                   handler: info.handler })
+        callback = process ({ filename: dir + '/' + filename,
+                              path: info.path,
+                              handler: info.handler,
+                              callback: callback })
     })
+    return callback
 }
         
 function processFile (info) {
-    var filename = info.filename
+    var filename = info.filename,
+        callback = info.callback
+    log (1, 'Processing ' + filename)
     var json = readJsonFileSync (filename, eval)
     if (json)
-        post ({ index: 0,
-                array: json,
-                filename: filename,
-                path: info.path,
-                handler: info.handler })
+        return function() {
+            post ({ index: 0,
+                    array: json,
+                    filename: filename,
+                    path: info.path,
+                    handler: info.handler,
+                    callback: info.callback })
+        }
+    else
+        return callback
 }
 
 function readJsonFileSync (filename, alternateParser) {
@@ -115,10 +141,13 @@ function post (info) {
         array = info.array,
         handler = info.handler,
         path = info.path,
-        filename = info.filename
+        filename = info.filename,
+        callback = info.callback
 
-    if (n >= array.length)
-	return
+    if (n >= array.length) {
+        callback()
+        return
+    }
 
     var elem = array[n]
     log (2, 'POSTing ' + elem.name + ' (entry #' + (n+1) + ' in ' + filename + ')')
@@ -136,6 +165,15 @@ function post (info) {
 	}
     }
 
+    var post_next = function() {
+	post ({ index: n+1,
+                array: array,
+                handler: handler,
+                path: path,
+                filename: filename,
+                callback: callback })
+    }
+    
     // Set up the request
     var req = http.request(post_options, function(res) {
 	res.setEncoding('utf8')
@@ -149,19 +187,14 @@ function post (info) {
             log (5, data)
             log (4, 'Response length: ' + data.length + ' bytes')
 
-            handler (data)
-
-	    post ({ index: n+1,
-                    array: array,
-                    handler: handler,
-                    path: path,
-                    filename: filename })
+            handler (null, data)
+            post_next()
 	})
     })
 
     req.on('error', function(err) {
-        log ("Error POSTing " + choice)
-        log (err)
+        handler(err)
+        post_next()
     })
 
     // post the data
@@ -175,23 +208,54 @@ function plural (n, singular, plural) {
     return n + ' ' + (n == 1 ? singular : plural)
 }
 
-function choiceHandler (data) {
-    var choices = []
-    try {
-        var json = JSON.parse (data)
-        choices = json.filter (function (c) {
-            // check to see if this looks like a Choice
-            return typeof(c.name) === 'string' && typeof(c.id) === 'number'
-        })
-    } catch (err) {
-        log ("Warning: couldn't parse response as JSON list")
+function choiceHandler (err, data) {
+    if (err)
+        log (err)
+    else {
+        var choices = []
+        try {
+            var json = JSON.parse (data)
+            choices = json.filter (function (c) {
+                // check to see if this looks like a Choice
+                return typeof(c.name) === 'string' && typeof(c.id) === 'number'
+            })
+        } catch (err) {
+            log ("Warning: couldn't parse choice response as JSON list")
+        }
+        if (choices.length)
+            log (3, choices.map (function (c) {
+                return ' ' + c.name + '\t(id=' + c.id + ', '
+                    + plural (c.outcomes && c.outcomes.length, 'outcome')
+                    + ')'
+            }).join("\n"))
+        else
+            log ("Warning: zero Choices created")
     }
-    if (choices.length)
-        log (3, choices.map (function (c) {
-            return ' ' + c.name + '\t(id=' + c.id + ', '
-                + plural (c.outcomes && c.outcomes.length, 'outcome')
-                + ')'
-        }).join("\n"))
-    else
-        log ("Warning: zero Choices created")
+}
+
+function playerHandler (err, data) {
+    if (err)
+        log(err)
+    else {
+        var obj
+        try {
+            obj = JSON.parse (data)
+        } catch (err) {
+            log ("Warning: couldn't parse player response as JSON list")
+        }
+        if (obj.status == 400
+            && obj.code == "E_VALIDATION"
+            && obj.invalidAttributes.name
+            && obj.invalidAttributes.name[0].rule == "unique")
+            log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
+        else {
+            if (typeof(obj) !== 'undefined') {
+                if (!( typeof(obj.name) === 'string' && typeof(obj.id) === 'number' ))
+                    log ("This doesn't look like a Player")
+                else
+                    log (3, ' ' + obj.name + '\t(id=' + obj.id + ')')
+            } else
+                log ("Warning: Player not created")
+        }
+    }
 }
