@@ -104,6 +104,18 @@ body {
     border-radius: 4px;
 }
 
+.bighouse .timebar {
+    width: 100%;
+    height: 1px;
+    margin: 1px 0 1px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.bighouse .timebar .timer {
+    background-color: green;
+}
+
 .bighouse .cardbar .cardtable .waitcard {
     font-style: italic;
     background-color: antiquewhite;

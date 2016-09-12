@@ -942,6 +942,9 @@ var BigHouse = (function() {
                              .append ($('<div class="statuslink">')
                                       .append ($('<span>')
                                                .html (this.makeLink ('Menu', this.showGameMenuPage)))))
+                    .append ($('<div class="timebar">')
+			     .append (bh.timerDiv = $('<div class="timer">')
+				      .width("100%")))
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
                                       .append (this.choiceBar = $('<div class="choicebar">')
@@ -1034,9 +1037,26 @@ var BigHouse = (function() {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
 			}
+			if (data.deadline) {
+			    bh.dealTime = new Date()
+			    bh.deadline = new Date(data.deadline)
+			    bh.updateTimer (1)
+			    bh.moveTimer = window.setInterval (function() {
+				var now = new Date()
+				bh.updateTimer (Math.max (0, (bh.deadline - now) / (bh.deadline - bh.dealTime)))
+				if (now > bh.deadline) {
+				    window.clearInterval (bh.moveTimer)
+				    delete bh.moveTimer
+				}
+			    }, 10)
+			}
 			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
 		    }
                 })
+	},
+
+	updateTimer: function (frac) {
+	    this.timerDiv.width(Math.round(frac*100)+"%")
 	},
 
 	createPlaceholderCards: function() {
