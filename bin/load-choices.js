@@ -50,25 +50,33 @@ var matchRegex = new RegExp (opt.options.match || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultChoiceFilename]
 var playerFilenames = opt.options.players || [defaultPlayerFilename]
 
-var callback = function() { }
+var callback = function() {}
 
-playerFilenames.forEach (function (playerFilename) {
-    callback = process ({ filename: playerFilename,
-                          path: '/player',
-                          handler: playerHandler,
-                          callback: callback,
-                          first: true })
-})
+callback = processFilenameList ({ path: '/player',
+                                  handler: playerHandler,
+                                  callback: callback,
+                                  list: playerFilenames.reverse() })
 
-choiceFilenames.forEach (function (choiceFilename) {
-    callback = process ({ filename: choiceFilename,
-                          path: '/choice',
-                          handler: choiceHandler,
-                          callback: callback,
-                          first: true })
-})
+callback = processFilenameList ({ path: '/choice',
+                                  handler: choiceHandler,
+                                  callback: callback,
+                                  list: choiceFilenames.reverse() })
 
 callback()
+
+function processFilenameList (info) {
+    return function() {
+        var callback = info.callback
+        info.list.forEach (function (filename) {
+            callback = process ({ filename: filename,
+                                  path: info.path,
+                                  handler: info.handler,
+                                  first: true,
+                                  callback: callback })
+        })
+        callback()
+    }
+}
 
 function process (info) {
     var filename = info.filename,
