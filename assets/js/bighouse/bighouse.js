@@ -41,6 +41,7 @@ var BigHouse = (function() {
         cardDelimiter: ';;',
 	maxJoinWaitTime: 500,  // 5
 	kickDelay: 2,
+	timeoutCardTossWait: 500,
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -362,7 +363,6 @@ var BigHouse = (function() {
             var page = this.page
             this.pushedViews.push ({ elements: elements, page: page })
             elements.addClass('pushed')
-	    this.postponedCallbacks[page] = []
             this.page = newPage
         },
 
@@ -373,17 +373,25 @@ var BigHouse = (function() {
             this.container.find(':not(.pushed)').remove()
             poppedView.elements.find('*').addBack().removeClass('pushed')
             this.page = poppedView.page
-	    if (this.postponedCallbacks.hasOwnProperty (this.page)) {
-		this.postponedCallbacks[this.page].forEach (function (f) { f.call (bh) })
-		delete this.postponedCallbacks[this.page]
-	    }
+	    this.callPostponed()
         },
 
-	callOrPostpone: function (page, callback) {
-	    if (this.page == page)
+	callPostponed: function() {
+	    if (this.page == 'game') {
+		if (this.postponedCallbacks[this.moveNumber]) {
+		    this.postponedCallbacks[moveNumber].forEach (function (f) { f.call (bh) })
+		    delete this.postponedCallbacks[moveNumber]
+		}
+	    }
+	},
+
+	callOrPostpone: function (moveNumber, callback) {
+	    if (this.page == 'game' && this.moveNumber == moveNumber)
 		callback.call (this)
-	    else if (this.postponedCallbacks.hasOwnProperty (page))
-		this.postponedCallbacks[page].push (callback)
+	    else {
+		this.postponedCallbacks[moveNumber] = this.postponedCallbacks[moveNumber] || []
+		this.postponedCallbacks[moveNumber].push (callback)
+	    }
 	},
 
         // avatar upload page
@@ -1076,6 +1084,7 @@ var BigHouse = (function() {
 			    }, 10)
 			}
 			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
+			bh.callPostponed()
 		    }
                 })
 	},
@@ -1254,8 +1263,7 @@ var BigHouse = (function() {
         makeMoveFunction: function (moveNumber, choice) {
             var bh = this
             return function() {
-		if (this.moveNumber == moveNumber)  // avoid sending requests after a timeout message
-                    bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+                bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
 		    .done (function() {
 			bh.waitingForOther = true
 		    })
@@ -1315,15 +1323,14 @@ var BigHouse = (function() {
             case "timeout":
                 if (this.gameID == msg.data.game)
 		    this.clearMoveTimer()
-		    this.callOrPostpone ('game', function() {
+		    this.callOrPostpone (msg.data.move, function() {
 			this.clearMoveTimer()  // guard against multiple timeouts during pause
-			this.currentChoiceCards.forEach (function (card) { card.throwOut() })
-			this.loadGameCards()
+			this.throwCurrentChoice()
 		    })
                 break
             case "mood":
                 if (this.gameID == msg.data.game)
-		    this.callOrPostpone ('game', function() {
+		    this.callOrPostpone (msg.data.move, function() {
 			this.playSound (msg.data.other.mood, .5)
 			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
                     })
@@ -1343,6 +1350,16 @@ var BigHouse = (function() {
 	    delete this.waitCardListItem
 	    delete this.waitCardSwipe
             this.showGamePage()
+	},
+
+	throwCurrentChoice: function() {
+	    if (this.currentChoiceCards.length) {
+		var card = this.currentChoiceCards.pop()
+		card.throwOut()
+		window.setTimeout ($.proxy (this.throwCurrentChoice, this),
+				   this.timeoutCardTossWait)
+	    } else
+		this.loadGameCards()
 	},
 
         // audio
