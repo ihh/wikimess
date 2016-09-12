@@ -890,11 +890,15 @@ var BigHouse = (function() {
                                   .append (this.makeListLink ('Exit to menu', this.exitGame))))
         },
 
-	exitGame: function() {
+	clearMoveTimer: function() {
 	    if (this.moveTimer) {
 		window.clearInterval (this.moveTimer)
 		delete this.moveTimer
 	    }
+	},
+
+	exitGame: function() {
+	    this.clearMoveTimer()
 	    this.showPlayPage()
 	},
 
@@ -999,6 +1003,7 @@ var BigHouse = (function() {
 
         loadGameCards: function() {
 	    var bh = this
+	    this.clearMoveTimer()
             var loadingCardListItem, loadingCardSwipe, loadingCardTimer
 	    var loadingSpan = $('<span>').text ("Loading")
 	    if (this.nextOutcomeCardListItem) {
@@ -1060,11 +1065,10 @@ var BigHouse = (function() {
 				var now = new Date()
 				bh.updateTimer (Math.max (0, (bh.deadline - now) / (bh.deadline - bh.dealTime)))
 				if (now.getTime() > bh.deadline.getTime() + 1000*kickDelay) {
-				    window.clearInterval (bh.moveTimer)
-				    delete bh.moveTimer
+				    bh.clearMoveTimer()
 				    bh.REST_getPlayerGameKick (bh.playerID, bh.gameID)
 					.done (function (data) {
-					    console.log(data)
+//					    console.log(data)
 					}).fail (function (err) {
 					    console.log(err)
 					})
@@ -1310,6 +1314,7 @@ var BigHouse = (function() {
                 break
             case "timeout":
                 if (this.gameID == msg.data.game)
+		    this.clearMoveTimer()
 		    this.callOrPostpone ('game', function() {
 			this.currentChoiceCards.forEach (function (card) { card.throwOut() })
 			this.loadGameCards()

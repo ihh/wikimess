@@ -151,8 +151,8 @@ module.exports = {
     kickTimedOutPlayers: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info, rs) {
 	    var timedOutRoles = Game.timedOutRoles (info.game)
-	    console.log("timedOutRoles")
-	    console.log(timedOutRoles)
+//	    console.log("timedOutRoles")
+//    	    console.log(timedOutRoles)
 	    var update = {}
 	    timedOutRoles.forEach (function (timedOutRole) {
 		var timedOutPlayer = Game.getRoleAttr (info.game, timedOutRole, 'player')

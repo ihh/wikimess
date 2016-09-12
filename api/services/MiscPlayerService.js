@@ -125,8 +125,8 @@ module.exports = {
         var opponent = info.opponent
         var game = info.game
         var role = info.role
-	console.log('makeMove')
-	console.log(info)
+//	console.log('makeMove')
+//	console.log(info)
 
         if (game.finished)
             rs (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
@@ -156,11 +156,13 @@ module.exports = {
 					 updatedPlayer = updatedPlayer2
 					 updatedOpponent = updatedPlayer1
 				     }
+/*
 				     console.log('recordMove callback')
 				     console.log(outcome)
 				     console.log(updatedGame)
 				     console.log(updatedPlayer)
 				     console.log(updatedOpponent)
+*/
 				     // both players moved; return outcome
 				     if (req.isSocket)
 					 Player.subscribe (req, [player.id])

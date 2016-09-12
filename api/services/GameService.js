@@ -390,8 +390,8 @@ module.exports = {
         var game = info.game
         var moveNumber = info.moveNumber
 	var update = info.update
-	console.log ('recordMove')
-	console.log (info)
+//	console.log ('recordMove')
+//	console.log (info)
         Game.update ({ id: game.id,
                        // add some extra criteria to guard against race conditions
                        moves: game.moves,
