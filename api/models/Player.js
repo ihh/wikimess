@@ -29,9 +29,21 @@ module.exports = {
             required: true
         },
 
+      // bot players
       human: {
           type: 'boolean',
           defaultsTo: true
+      },
+
+      botmind: {
+	  type: 'json',
+	  defaultsTo: {
+	      strategy: 'mood',
+	      probc: { happy: .5,
+		       sad: .5,
+		       angry: .5,
+		       surprised: .5 }
+	  }
       },
       
       // global stats for this player

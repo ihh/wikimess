@@ -55,7 +55,8 @@ module.exports = {
       hintd2: { type: 'string' },
 
       timeout: {
-          type: 'integer'
+          type: 'integer',
+	  defaultsTo: 10
       },
       
       outcomes: {

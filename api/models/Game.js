@@ -54,16 +54,6 @@ module.exports = {
           defaultsTo: function() { return new Date() }
       },
 
-      quit1: {
-          type: 'boolean',
-          defaultsTo: false,
-      },
-
-      quit2: {
-          type: 'boolean',
-          defaultsTo: false,
-      },
-      
       // player choices
       move1: {
           type: 'string',
@@ -113,8 +103,17 @@ module.exports = {
             : (game.move1 != 'none' || game.move2 == 'none')
     },
 
-    timedOut: function (game) {
-        return game.current.timeout && ((Date.now() - game.currentStartTime) / 1000) >= game.current.timeout
+    isTimedOut: function (game) {
+        return game.current
+	    && game.current.timeout
+	    && ((Date.now() - game.currentStartTime) / 1000) >= game.current.timeout
+    },
+
+    timedOutRole: function (game) {
+	var w1 = game.move1 == 'none', w2 = game.move2 == 'none'
+	return (Game.isTimedOut (game) && (w1 || w2) && !(w1 && w2))
+	    ? (w1 ? 1 : 2)
+	: 0
     },
     
     forRole: function (game, role) {
@@ -159,5 +158,28 @@ module.exports = {
 	return json
     },
 
+    getRole: function (game, playerID) {
+	return playerID == game.player1.id ? 1 : (playerID == game.player2.id ? 2 : null)
+    },
+
+    otherRole: function(role) {
+	return role == 1 ? 2 : 1
+    },
+
+    roleAttr: function (role, key) {
+	return key + role
+    },
+
+    otherRoleAttr: function (role, key) {
+	return key + Game.otherRole(role)
+    },
+
+    getRoleAttr: function (obj, role, key) {
+	return obj[key + role]
+    },
+
+    getOtherRoleAttr: function (obj, role, key) {
+	return obj[key + Game.otherRole(role)]
+    },
 };
 

@@ -49,7 +49,7 @@ module.exports = {
                         res.status(404).send("Game " + req.params.game + " not found")
                     else {
                         var game = games[0]
-                        var role = game.player1.id == player.id ? 1 : (game.player2.id == player.id ? 2 : null)
+                        var role = Game.getRole (game, player.id)
                         if (!role)
                             res.status(401).send("Player " + player.id + " has no role in game " + game.id)
                         else {
@@ -103,5 +103,74 @@ module.exports = {
 		    icon: icon,
                     plural: plural,
                     layout: 'status/layout' })
+    },
+
+    randomMove: function (player, game) {
+	var role = Game.getRole (game, player.id)
+	var mood = Game.getRoleAttr (game, role, 'mood')
+	switch (player.botmind.strategy) {
+	case 'mood':
+	    return Math.random() < player.botmind.probc[mood] ? 'c' : 'd'
+	    break;
+	default:
+	    break;
+	}
+	return 'd'
+    },
+
+    makeMove: function (req, rs, info) {
+        var moveNumber = info.moveNumber
+        var move = info.move
+        var player = info.player
+        var opponent = info.opponent
+        var game = info.game
+        var role = info.role
+	console.log('makeMove')
+	console.log(info)
+        GameService
+            .recordMove ({ game: game,
+                           role: role,
+                           moveNumber: moveNumber,
+                           move: move },
+                         function (outcome, updatedGame, updatedPlayer, updatedOpponent) {
+			     console.log('recordMove callback')
+			     console.log(updatedGame)
+			     console.log(updatedPlayer)
+			     console.log(updatedOpponent)
+                             // both players moved; return outcome
+                             var playerMsg = { message: info.playerMessage,
+                                               game: game.id,
+                                               finished: updatedGame.finished ? true : false,
+                                               move: moveNumber,
+                                               choice: { self: move,
+                                                         other: role == 1 ? outcome.move2 : outcome.move1 },
+                                               waiting: false,
+                                               outcome: Outcome.forRole (game, outcome, role),
+                                               self: { cash: updatedPlayer.cash } }
+                             var opponentMsg = { message: info.opponentMessage,
+                                                 game: game.id,
+                                                 finished: updatedGame.finished ? true : false,
+                                                 move: moveNumber,
+                                                 choice: { self: role == 1 ? outcome.move2 : outcome.move1,
+                                                           other: move },
+                                                 waiting: false,
+                                                 outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
+                                                 self: { cash: updatedOpponent.cash } }
+                             if (req.isSocket)
+                                 Player.subscribe (req, [player.id])
+                             Player.message (opponent.id, opponentMsg)
+                             Player.message (player.id, playerMsg)
+                             rs (null, playerMsg)
+                         },
+                         function() {
+                             // waiting for opponent to move
+                             if (req.isSocket)
+                                 Player.subscribe (req, [player.id])
+                             rs (null, { game: game.id,
+                                         move: moveNumber,
+                                         choice: { self: move },
+                                         waiting: true })
+                         },
+                         rs)
     },
 }

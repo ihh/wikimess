@@ -38,7 +38,7 @@ module.exports = {
                     res.status(500).send (err)
 		else
 		    res.json (games.map (function (game) {
-			var role = game.player1.id == playerID ? 1 : 2
+			var role = Game.getRole (game, playerID)
 			var now = new Date(), created = new Date(game.createdAt), updated = new Date(game.updatedAt)
 			return { game: game.id,
 				 finished: game.finished,
@@ -118,10 +118,48 @@ module.exports = {
         })
     },
 
+    // start a game with a bot
+    joinBot: function (req, res) {
+        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+            PlayerMatchService
+		.joinGame ({ player: player,
+                             wantHuman: false },
+			   function (opponent, game) {
+                               // game started; return game info
+                               var playerMsg = { message: "join",
+                                                 player: player.id,
+                                                 game: game.id,
+                                                 waiting: false }
+                               if (req.isSocket)
+                                   Player.subscribe (req, [player.id])
+                               Player.message (player.id, playerMsg)
+                               rs (null, playerMsg)
+                           },
+                           function() { },
+                           rs)
+        })
+    },
+
     // current state of game, filtered for player
     gameInfo: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info, rs) {
-            rs (null, Game.forRole (info.game, info.role))
+	    rs (null, Game.forRole (info.game, info.role))
+	    var timedOutRole = Game.timedOutRole (info.game)
+	    if (timedOutRole) {
+		var timedOutPlayer = Game.getRoleAttr(info.game,timedOutRole,'player')
+		var punctualPlayer = Game.getOtherRoleAttr(info.game,timedOutRole,'player')
+		var timedOutMoveInfo = { game: info.game,
+					 player: timedOutPlayer,
+					 opponent: punctualPlayer,
+					 role: timedOutRole,
+					 moveNumber: info.game.moves + 1,
+					 move: MiscPlayerService.randomMove (timedOutPlayer, info.game),
+					 playerMessage: "timeout",
+					 opponentMessage: "move" }
+		MiscPlayerService.makeMove (req,
+					    function() {},
+					    timedOutMoveInfo)
+	    }
         })
     },
 
@@ -130,52 +168,11 @@ module.exports = {
         var moveNumber = req.params.moveNumber
         var move = req.params.move
         MiscPlayerService.findGame (req, res, function (info, rs) {
-            var player = info.player
-            var opponent = info.opponent
-            var game = info.game
-            var role = info.role
-            GameService
-                .recordMove ({ game: game,
-                               role: role,
-                               moveNumber: moveNumber,
-                               move: move },
-                             function (outcome, updatedGame, updatedPlayer, updatedOpponent) {
-                                 // both players moved; return outcome
-                                 var playerMsg = { message: "move",
-                                                   game: game.id,
-                                                   finished: updatedGame.finished ? true : false,
-                                                   move: moveNumber,
-                                                   choice: { self: move,
-                                                             other: role == 1 ? outcome.move2 : outcome.move1 },
-                                                   waiting: false,
-                                                   outcome: Outcome.forRole (game, outcome, role),
-                                                   self: { cash: updatedPlayer.cash } }
-                                 var opponentMsg = { message: "move",
-                                                     game: game.id,
-                                                     finished: updatedGame.finished ? true : false,
-                                                     move: moveNumber,
-                                                     choice: { self: role == 1 ? outcome.move2 : outcome.move1,
-                                                               other: move },
-                                                     waiting: false,
-                                                     outcome: Outcome.forRole (game, outcome, role == 1 ? 2 : 1),
-                                                     self: { cash: updatedOpponent.cash } }
-                                 if (req.isSocket)
-                                     Player.subscribe (req, [player.id])
-                                 Player.message (opponent.id, opponentMsg)
-                                 Player.message (player.id, playerMsg)
-                                 rs (null, playerMsg)
-                             },
-                             function() {
-                                 // waiting for opponent to move
-                                 if (req.isSocket)
-                                     Player.subscribe (req, [player.id])
-                                 rs (null, { game: game.id,
-                                             move: moveNumber,
-                                             choice: { self: move },
-                                             waiting: true })
-                             },
-                             rs)
-        })
+	    info.moveNumber = moveNumber
+	    info.move = move
+	    info.playerMessage = info.opponentMessage = "move"
+	    MiscPlayerService.makeMove (req, rs, info)
+	})
     },
 
     // subscribe to socket for next move update

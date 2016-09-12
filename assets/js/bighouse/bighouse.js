@@ -39,6 +39,7 @@ var BigHouse = (function() {
         musicFadeDelay: 800,
         avatarSize: 298,
         cardDelimiter: ';;',
+	maxJoinWaitTime: 5,
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -53,8 +54,12 @@ var BigHouse = (function() {
             return $.post('/logout')
         },
 
-        REST_getPlayerCancel: function (playerID) {
-            return $.get ('/player/' + playerID + '/cancel')
+        REST_getPlayerJoinBot: function (playerID) {
+            return $.get ('/player/' + playerID + '/join/bot')
+        },
+
+        REST_getPlayerJoinCancel: function (playerID) {
+            return $.get ('/player/' + playerID + '/join/cancel')
         },
 
         REST_getPlayerGames: function (playerID) {
@@ -844,14 +849,26 @@ var BigHouse = (function() {
                          .text ("Waiting for another player"))
                 .append ($('<ul>')
                          .append (this.makeListLink ('Cancel', this.cancelJoin)))
+	    this.joinWaitTimer = window.setTimeout (function() {
+		bh.REST_getPlayerJoinBot (bh.playerID)
+		delete bh.joinWaitTimer
+	    }, this.maxJoinWaitTime * 1000)
         },
 
         cancelJoin: function() {
             var bh = this
-            this.REST_getPlayerCancel (this.playerID)
+	    this.cancelJoinBot()
+            this.REST_getPlayerJoinCancel (this.playerID)
                 .done ($.proxy (this.showPlayPage, this))
                 .fail ($.proxy (this.showModalWebError, this))
         },
+
+	cancelJoinBot: function() {
+	    if (this.joinWaitTimer) {
+		window.clearTimeout (this.joinWaitTimer)
+		delete this.joinWaitTimer
+	    }
+	},
 
         // in-game menu
         showGameMenuPage: function() {
@@ -999,6 +1016,7 @@ var BigHouse = (function() {
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood)
 
+		    bh.currentChoiceCards = []
                     if (data.finished)
 			bh.showLastOutcome (data.lastOutcome)
 		    else {
@@ -1015,8 +1033,8 @@ var BigHouse = (function() {
 			} else {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
-			    bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
 			}
+			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
 		    }
                 })
 	},
@@ -1059,6 +1077,7 @@ var BigHouse = (function() {
 		if (isFinal)
 		    $.extend (cardConfig, config)
                 var card = bh.dealCard (cardConfig)
+		bh.currentChoiceCards.push (card)
 	    })
 	},
 
@@ -1190,7 +1209,8 @@ var BigHouse = (function() {
         makeMoveFunction: function (moveNumber, choice) {
             var bh = this
             return function() {
-                bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+		if (this.moveNumber == moveNumber)  // avoid sending requests after a timeout message
+                    bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
             }
         },
         
@@ -1227,6 +1247,7 @@ var BigHouse = (function() {
             switch (msg.data.message) {
             case "join":
                 if (this.page == 'play' || this.page == 'waitingToJoin') {
+		    this.cancelJoinBot()
                     // known bug: if logged in from multiple devices, they will all join the game here
                     // even if they are just on the play page, not waitingToJoin
                     // (we allow play->game transitions because the 2nd player to join gets an immediate message,
@@ -1238,6 +1259,15 @@ var BigHouse = (function() {
             case "move":
                 if (this.gameID == msg.data.game)
 		    this.callOrPostpone ('game', function() {
+			this.outcome = msg.data.outcome
+			this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
+			this.showOutcome()
+		    })
+                break
+            case "timeout":
+                if (this.gameID == msg.data.game)
+		    this.callOrPostpone ('game', function() {
+			this.currentChoiceCards.forEach (function (card) { card.throwOut() })
 			this.outcome = msg.data.outcome
 			this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
 			this.showOutcome()

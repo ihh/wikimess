@@ -1027,6 +1027,6 @@ a.unclickable {
 
 @media screen and (orientation:landscape) and (max-aspect-ratio: 7/5) {
     .bighouse .statusbar .statuslink {
-	height: 15vh;
+	height: 12vh;
     }
 }

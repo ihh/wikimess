@@ -55,7 +55,8 @@ module.exports.routes = {
     'POST /player/:player/avatar/:mood': 'PlayerController.uploadMoodAvatar',
 
     'GET /player/:player/join':          'PlayerController.join',
-    'GET /player/:player/cancel':        'PlayerController.cancelJoin',
+    'GET /player/:player/join/cancel':   'PlayerController.cancelJoin',
+    'GET /player/:player/join/bot':      'PlayerController.joinBot',
 
     'GET /player/:player/game':          'PlayerController.games',
 

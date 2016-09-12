@@ -190,9 +190,14 @@ module.exports = {
 							   else if (refreshedGames.length != 1)
 							       error(new Error("Couldn't reload game"))
 							   else {
-							       if (!autoExpandCurrentChoice)
-								   gotOutcome (outcome, refreshedGames[0])
-							       else
+							       if (!autoExpandCurrentChoice) {
+								   GameService
+								       .playBotMoves (refreshedGames[0],
+										      function() {
+											  gotOutcome (outcome,
+												      refreshedGames[0])},
+										      error)
+							       } else
 								   GameService.applyRandomOutcome ({ game: refreshedGames[0],
 											             gotOutcome: function (dummyOutcome, game) {
 												         gotOutcome (outcome, game)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
@@ -380,6 +385,7 @@ module.exports = {
         var move = info.move
         var player = role == 1 ? game.player1 : game.player2
         var opponent = role == 1 ? game.player2 : game.player1
+	console.log('recordMove')
         if (game.finished)
             error (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
         else if (game.moves + 1 != moveNumber)
@@ -393,15 +399,16 @@ module.exports = {
                 var update = {}
 		var moveAttr = "move" + role
                 update[moveAttr] = move
+		console.log(update)
                 Game.update ({ id: game.id,
                                // add some extra criteria to guard against race conditions
                                moves: game.moves,
                                move1: game.move1,
-                               move2: game.move2,
-                               quit1: game.quit1,
-                               quit2: game.quit2 },
+                               move2: game.move2 },
                              update,
                              function (err, updated) {
+				 console.log(err)
+				 console.log(updated)
                                  if (err)
                                      error (err)
                                  else {
@@ -446,6 +453,21 @@ module.exports = {
                     success (updated)
             })
         }
+    },
+
+    playBotMoves: function (game, success, error) {
+	var cb = function(err) {
+	    if (err)
+		error(err)
+	    else
+		success()
+	}
+	if (!game.player1.human)
+	    Game.update({id:game.id},{move1:Player.randomMove(game.player1,game)},cb)
+	else if (!game.player2.human)
+	    Game.update({id:game.id},{move2:Player.randomMove(game.player2,game)},cb)
+	else
+	    success()
     },
 
 };

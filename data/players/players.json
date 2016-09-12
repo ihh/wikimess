@@ -8,8 +8,17 @@
     "password": "test"
   },
   {
-    "name": "bot",
+    "name": "titfortat",
     "password": "test",
-    "human": false
+    "human": false,
+    "botmind": {
+	"strategy": "mood",
+	"probc": {
+	    "happy": 1,
+	    "angry": 1,
+	    "surprised": 0,
+	    "sad": 0
+	},
+    },
   }
 ]
