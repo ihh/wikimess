@@ -62,7 +62,6 @@ module.exports.routes = {
 
     'GET /player/:player/game/:game':              'PlayerController.gameInfo',
     'GET /player/:player/game/:game/kick':         'PlayerController.kickTimedOutPlayers',
-    'GET /player/:player/game/:game/status':       'PlayerController.selfGameStatus',
     'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
     'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',
 

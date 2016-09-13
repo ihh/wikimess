@@ -16,7 +16,7 @@ var BigHouse = (function() {
 	}
         $.extend (this, this.localStorage)
 
-        this.socket_onPlayer ($.proxy (this.handlePlayerMessage, this))
+        this.socket_onPlayer (this.handlePlayerMessage.bind (this))
 
         // prevent scrolling/viewport bump on iOS Safari
         $(document).on('touchmove',function(e){
@@ -24,7 +24,7 @@ var BigHouse = (function() {
         })
 
         this.pushedViews = []
-	this.postponedCallbacks = []
+	this.postponedMessages = []
 
         this.changeMusic('menu')
         this.showLoginPage()
@@ -41,8 +41,10 @@ var BigHouse = (function() {
         avatarSize: 298,
         cardDelimiter: ';;',
 	maxJoinWaitTime: 10,
-	kickDelay: 2,
-	timeoutCardTossWait: 500,
+	kickDelay: 1000,  // actual delay will be between 1* and 2* this
+	timeoutAnimationWaitPerCard: 500,
+
+	verbose: true,
         
         // REST interface
         REST_postPlayer: function (playerName, playerPassword) {
@@ -363,6 +365,8 @@ var BigHouse = (function() {
         pushView: function (newPage) {
             var elements = this.container.find(':not(.pushed)')
             var page = this.page
+	    if (this.verbose)
+		console.log ("Changing view from " + page + " to " + newPage)
             this.pushedViews.push ({ elements: elements, page: page })
             elements.addClass('pushed')
             this.page = newPage
@@ -371,25 +375,40 @@ var BigHouse = (function() {
         popView: function() {
 	    var bh = this
             var poppedView = this.pushedViews.pop()
+	    if (this.verbose)
+		console.log ("Changing view from " + this.page + " to " + poppedView.page)
             this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
             this.container.find(':not(.pushed)').remove()
             poppedView.elements.find('*').addBack().removeClass('pushed')
             this.page = poppedView.page
-	    this.callPostponed()
+	    this.handlePostponedMessages()
         },
 
-	callPostponed: function() {
-	    if (this.page == 'game') {
-		this.postponedCallbacks.forEach (function (f) { f.call (bh) })
-		this.postponedCallbacks = []
+	inMessageAcceptingState: function() {
+	    // states in which mood updates & moves can be received
+	    return this.page == 'game' && (this.gameState == 'ready' || this.gameState == 'waitingForOther' || this.gameState == 'kicking')
+	},
+
+	handlePostponedMessages: function() {
+	    while (this.inMessageAcceptingState() && this.postponedMessages.length) {
+		var msg = this.postponedMessages[0]
+		this.postponedMessages = this.postponedMessages.slice(1)
+		if (this.verbose)
+		    console.log ("Dealing with postponed '" + msg.data.message + "' message")
+		this.handlePlayerMessage (msg)
 	    }
 	},
 
-	callOrPostpone: function (callback) {
-	    if (this.page == 'game')
+	callOrPostpone: function (callback, msg) {
+	    if (this.inMessageAcceptingState()) {
+		if (this.verbose)
+		    console.log ("Processing '" + msg.data.message + "' message immediately")
 		callback.call (this)
-	    else
-		this.postponedCallbacks.push (callback)
+	    } else {
+		if (this.verbose)
+		    console.log ("Postponing '" + msg.data.message + "' message")
+		this.postponedMessages.push (msg)
+	    }
 	},
 
         // avatar upload page
@@ -429,7 +448,7 @@ var BigHouse = (function() {
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
-                
+            
             var nUploads = 0, moodUploaded = {}
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
@@ -720,10 +739,10 @@ var BigHouse = (function() {
 	    }
 
 	    // for each (/* img DOM node held only by javascript, for example in any image-caching script */) if (img.src===fullSrc)
-//	    {
-//		img.src = "/images/1x1blank.png";   // do the same as for on-page images!
-//		blankList.push(img);
-//	    }
+	    //	    {
+	    //		img.src = "/images/1x1blank.png";   // do the same as for on-page images!
+	    //		blankList.push(img);
+	    //	    }
 
 	    // ##### If necessary, do something here that tells all accessible windows not to create any *new* images with src===fullSrc, until further notice,
 	    // ##### (or perhaps to create them initially blank instead and add them to blankList).
@@ -864,10 +883,10 @@ var BigHouse = (function() {
             this.container
                 .append ($('<div class="timebar">')
 			 .append (this.timerDiv = $('<div class="timer">')))
-              
+            
             var totalTime = this.maxJoinWaitTime * 1000,
-                joinStartline = new Date(),
-                joinDeadline = new Date (joinStartline.getTime() + totalTime)
+            joinStartline = new Date(),
+            joinDeadline = new Date (joinStartline.getTime() + totalTime)
 
 	    this.joinWaitTimer = window.setInterval (function() {
                 var now = new Date()
@@ -886,8 +905,8 @@ var BigHouse = (function() {
             var bh = this
 	    this.cancelJoinBot()
             this.REST_getPlayerJoinCancel (this.playerID)
-                .done ($.proxy (this.showPlayPage, this))
-                .fail ($.proxy (this.showModalWebError, this))
+                .done (this.showPlayPage.bind (this))
+                .fail (this.showModalWebError.bind (this))
         },
 
 	cancelJoinBot: function() {
@@ -914,7 +933,7 @@ var BigHouse = (function() {
 
 	clearMoveTimer: function() {
 	    if (this.moveTimer) {
-		window.clearInterval (this.moveTimer)
+		window.clearTimeout (this.moveTimer)
 		delete this.moveTimer
 	    }
 	},
@@ -958,72 +977,77 @@ var BigHouse = (function() {
 
             this.changeMusic('game')
 
-            if (this.page == 'game') {
-                // page is already initialized
-            } else {
-                this.page = 'game'
-                this.moodDiv = []
-                this.moodImg = []
-                this.currentChoiceCards = []
-                this.container
-                    .empty()
-                    .append ($('<div class="statusbar">')
-                             .append (this.playerMoodDiv = $('<div class="leftmood">'))
-                             .append ($('<div class="rightstatus">')
-                                      .append (this.opponentNameDiv = $('<span>')
-                                               .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
-                             .append (this.opponentMoodDiv = $('<div class="rightmood">'))
-                             .append ($('<div class="statuslink">')
-                                      .append ($('<span>')
-                                               .html (this.makeLink ('Menu', this.showGameMenuPage)))))
-                    .append ($('<div class="cardbar">')
-                             .append ($('<div class="cardtable">')
-                                      .append (this.choiceBar = $('<div class="choicebar">')
-                                               .append (this.choiceDiv = $('<div>')))
-				      .append (this.stackList = $('<ul class="stack">'))))
-                    .append (this.moodBar = $('<div class="moodbar">'))
-                    .append ($('<div class="timebar">')
-			     .append (bh.timerDiv = $('<div class="timer">')
-				      .width("100%"))
-                             .append (this.cardCountDiv = $('<div class="cardcount">')
-                                      .append (this.cardCountSpan = $('<span>'))))
+            this.page = 'game'
+            this.moodDiv = []
+            this.moodImg = []
+	    this.postponedMessages = []
+            this.container
+                .empty()
+                .append ($('<div class="statusbar">')
+                         .append (this.playerMoodDiv = $('<div class="leftmood">'))
+                         .append ($('<div class="rightstatus">')
+                                  .append (this.opponentNameDiv = $('<span>')
+                                           .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
+                         .append (this.opponentMoodDiv = $('<div class="rightmood">'))
+                         .append ($('<div class="statuslink">')
+                                  .append ($('<span>')
+                                           .html (this.makeLink ('Menu', this.showGameMenuPage)))))
+                .append ($('<div class="cardbar">')
+                         .append ($('<div class="cardtable">')
+                                  .append (this.choiceBar = $('<div class="choicebar">')
+                                           .append (this.choiceDiv = $('<div>')))
+				  .append (this.stackList = $('<ul class="stack">'))))
+                .append (this.moodBar = $('<div class="moodbar">'))
+                .append ($('<div class="timebar">')
+			 .append (bh.timerDiv = $('<div class="timer">')
+				  .width("100%"))
+                         .append (this.cardCountDiv = $('<div class="cardcount">')
+                                  .append (this.cardCountSpan = $('<span>'))))
 
-		this.moods.forEach (function (mood, m) {
-		    var moodClass = "mood" + (m+1)
-		    var img = bh.makeMoodImage (bh.playerID, mood)
-		    var div = $('<div>')
-			.addClass(moodClass)
-			.html (img)
-		    bh.moodBar.append (div)
-                    bh.moodDiv.push (div)
-                    bh.moodImg.push (img)
-		})
+	    this.moods.forEach (function (mood, m) {
+		var moodClass = "mood" + (m+1)
+		var img = bh.makeMoodImage (bh.playerID, mood)
+		var div = $('<div>')
+		    .addClass(moodClass)
+		    .html (img)
+		bh.moodBar.append (div)
+                bh.moodDiv.push (div)
+                bh.moodImg.push (img)
+	    })
 
-                var throwOutConfidence = function (offset, element) {
-                    return Math.min(Math.abs(offset) / element.offsetWidth, 1)
-                }
-                var isThrowOut = function (offset, element, throwOutConfidence) {
-                    return throwOutConfidence > .25
-                }
-                this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
-                                                  isThrowOut: isThrowOut })
-                
-                var gameOverCardListItem = bh.createCardListItem ($('<span>').text ("Game Over"), 'gameover')
-                this.dealCard ({ listItem: gameOverCardListItem,
-				 swipe: function() {
-				     bh.playSound ('gameover')
-				     bh.showPlayPage()
-				 },
-				 silent: true })
+            var throwOutConfidence = function (offset, element) {
+                return Math.min(Math.abs(offset) / element.offsetWidth, 1)
             }
+            var isThrowOut = function (offset, element, throwOutConfidence) {
+                return throwOutConfidence > .25
+            }
+            this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
+                                              isThrowOut: isThrowOut })
+            
+            var gameOverCardListItem = bh.createCardListItem ($('<span>').text ("Game Over"), 'gameover')
+            this.dealCard ({ listItem: gameOverCardListItem,
+			     swipe: function() {
+				 bh.playSound ('gameover')
+				 bh.showPlayPage()
+			     },
+			     silent: true })
 
             this.loadGameCards()
         },
 
+	setGameState: function (state) {
+	    if (this.gameState != state) {
+		if (this.verbose)
+		    console.log ("Changing state from " + this.gameState + " to " + state)
+		this.gameState = state
+		this.handlePostponedMessages()
+	    }
+	},
+
         loadGameCards: function() {
 	    var bh = this
 	    this.clearMoveTimer()
-	    this.currentChoiceCards = []
+	    this.setGameState('loading')
             var loadingCardListItem, loadingCardSwipe, loadingCardTimer
 	    var loadingSpan = $('<span>').text ("Loading")
 	    if (this.nextOutcomeCardListItem) {
@@ -1060,67 +1084,156 @@ var BigHouse = (function() {
                     if (data.finished) {
 			bh.showLastOutcome (data.lastOutcome)
                         bh.hideTimer()
+			bh.setGameState('gameOver')
 		    } else {
 			bh.createPlaceholderCards()
-			bh.waitingForOther = !data.waiting
 			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
 			    bh.createAndDealCards ({ text: data.intro,
 						     finalCardClass: 'verb-' + data.verb,
+						     finalCardIsChoice: true,
 						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
 						     swipeLeft: bh.makeMoveFunction (data.move, 'd'),
 						     rightHint: data.hintc, 
 						     leftHint: data.hintd,
-						     dealt: $.proxy (bh.showWaitingForOther, bh) })
+						     dealt: function() {
+							 bh.showWaitingForOther()
+							 bh.setGameState('ready')
+						     }})
 			    bh.showLastOutcome (data.lastOutcome)
 			} else {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
+			    bh.setGameState('waitingForOther')
 			}
 
-			bh.missedTimeouts = 0
 			if (data.deadline) {
                             bh.cardCountDiv.css ('opacity', 1)
 			    bh.startline = new Date(data.startline)
 			    bh.deadline = new Date(data.deadline)
-			    var totalTime = bh.deadline - bh.startline
-			    bh.updateTimer (totalTime, totalTime)
-			    var kickDelay = (bh.waitingForOther ? 0 : bh.kickDelay) + Math.random()
-			    bh.moveTimer = window.setInterval (function() {
-				var now = new Date()
-				bh.updateTimer (Math.max (0, bh.deadline - now), totalTime)
-				if (now.getTime() > bh.deadline.getTime() + 1000*kickDelay) {
-				    bh.clearMoveTimer()
-				    bh.REST_getPlayerGameKick (bh.playerID, bh.gameID)
-					.done (function (data) {
-//					    console.log(data)
-					}).fail (function (err) {
-					    console.log(err)
-					})
-				}
-			    }, 10)
+			    bh.timerCallback()
 			} else {
                             bh.hideTimer()
                         }
 
 			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
-			bh.callPostponed()
 		    }
                 })
 	},
 
         showCardCount: function() {
-            var n = this.currentChoiceCards.length - 1
-            if (n <= 0)
+	    var bh = this
+	    var n = 0, foundChoice = false
+	    this.stackList.children().each (function (idx, elem) {
+		if ($(elem).hasClass('choicecard')) {
+		    n = 0
+		    foundChoice = true
+		} else
+		    ++n
+	    });
+	    if (n <= 0 || !foundChoice)
                 this.cardCountSpan.text('')
             else
                 this.cardCountSpan.text(n+' card'+(n>1?'s':'')+' before next choice')
             this.cardCountDiv.css ('opacity', 1)
         },
+
+	setMoveTimer: function (callback, delay) {
+	    this.moveTimer = window.setTimeout (callback.bind(this), delay)
+	},
         
+	timerCallback: function() {
+	    this.clearMoveTimer()
+	    var now = new Date()
+	    this.updateTimer (Math.max (0, this.deadline - now), this.deadline - this.startline)
+	    if (now.getTime() > this.deadline.getTime()) {
+		this.clearMoveTimer()
+		switch (this.gameState) {
+		case 'ready':
+		    this.makeDefaultMove()
+		    break
+		case 'waitingForOther':
+		    this.setKickTimer()
+		    break
+		default:
+		    console.log ("should never get here: move timer expired with gameState=" + this.gameState)
+		    break
+		}
+	    } else
+		this.setMoveTimer (this.timerCallback, 10)
+	},
+
+	runFastTimeoutAnimation: function() {
+	    this.clearMoveTimer()
+	    this.setGameState('fastTimeoutAnimation')
+	    if (this.page == 'game') {
+		this.stackList.children().each (function (idx, elem) {
+		    if (!$(elem).hasClass ('gameover')) {
+			var card = bh.stack.getCard (elem)
+			if (card)
+			    bh.throwCard (card)
+		    }
+		});
+		this.loadGameCards()
+	    } else
+		this.setMoveTimer (this.runFastTimeoutAnimation, 10)
+	},
+
+	runTimerTimeoutAnimation: function() {
+	    this.setGameState('timerTimeoutAnimation')
+	    this.runTimeoutAnimation()
+	},
+
+	runMessageTimeoutAnimation: function() {
+	    this.setGameState('messageTimeoutAnimation')
+	    this.runTimeoutAnimation()
+	},
+
+	runTimeoutAnimation: function() {
+	    var bh = this
+	    this.clearMoveTimer()
+
+	    var cardToThrow
+	    this.stackList.children().each (function (idx, elem) {
+		if (!$(elem).hasClass ('gameover')) {
+		    var card = bh.stack.getCard (elem)
+		    if (card)
+			cardToThrow = card
+		}
+	    });
+		
+	    if (cardToThrow) {
+		this.throwCard (cardToThrow)
+		this.setMoveTimer (this.runTimeoutAnimation,
+				   this.timeoutAnimationWaitPerCard)
+	    } else
+		switch (this.gameState) {
+		case 'timerTimeoutAnimation':
+		    this.setKickTimer()
+		    break
+		case 'messageTimeoutAnimation':
+		default:
+		    this.loadGameCards()
+		    break
+		}
+	},
+
+	setKickTimer: function() {
+	    this.setMoveTimer (this.kickCallback, this.kickDelay * (1 + Math.random()))
+	    this.setGameState ('kicking')
+	},
+
+	kickCallback: function() {
+	    this.clearMoveTimer()
+	    if (this.verbose)
+		console.log("Sending kick request")
+	    this.REST_getPlayerGameKick (this.playerID, this.gameID)
+		.fail (this.setKickTimer.bind (this))
+	},
+
 	updateTimer: function (timeLeft, totalTime) {
 	    this.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
-            if (!this.waitingForOther) {
+            if (this.gameState == 'ready') {
 	        if (timeLeft <= 5000) {
 		    var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
                     var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
@@ -1173,8 +1286,11 @@ var BigHouse = (function() {
                 })
                 var cardListItem = bh.createCardListItem (content, cardClass)
 		var cardConfig = { listItem: cardListItem }
-		if (isFinal)
+		if (isFinal) {
+		    if (config.finalCardIsChoice)
+			cardListItem.addClass('choicecard')  // flag this for showCardCount
 		    $.extend (cardConfig, config)
+		}
                 var card = bh.dealCard (cardConfig)
 	    })
 	},
@@ -1264,7 +1380,6 @@ var BigHouse = (function() {
 		card.on ('throwinend', config.dealt)
             card.throwIn (-600, -100)
 
-            this.currentChoiceCards.push (card)
             this.showCardCount()
 
             return card
@@ -1321,14 +1436,33 @@ var BigHouse = (function() {
         makeMoveFunction: function (moveNumber, choice) {
             var bh = this
             return function() {
-		if (bh.moveNumber == moveNumber)
-                    bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
-		    .done (function() {
-			bh.waitingForOther = true
-		    })
+		if (bh.moveNumber == moveNumber && bh.gameState == 'ready') {
+		    if (this.verbose)
+			console.log ("Making move #" + moveNumber + ": " + choice)
+		    bh.setGameState ('sendingMove')
+		    bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+			.done (function() { bh.setGameState ('waitingForOther') })
+			.fail (function() {
+			    console.log("Failed to make move; rebuilding page")
+			    bh.showGamePage()
+			})
+		}
             }
         },
         
+	makeDefaultMove: function() {
+	    var bh = this
+	    this.setGameState ('sendingDefaultMove')
+	    if (this.verbose)
+		console.log ("Making move #" + this.moveNumber + ": " + this.defaultMove)
+	    this.socket_getPlayerGameMoveChoice (this.playerID, this.gameID, this.moveNumber, this.defaultMove)
+		.done (bh.runTimerTimeoutAnimation.bind(bh))
+		.fail (function() {
+		    console.log("Failed to make default move; rebuilding page")
+		    bh.showGamePage()
+		})
+	},
+
         changeMoodFunction: function (moveNumber, mood) {
             var bh = this
             return function() {
@@ -1342,12 +1476,11 @@ var BigHouse = (function() {
             }
         },
 
-        showOutcome: function() {
+        showOutcome: function (outcome) {
             var bh = this
-            this.updatePlayerMood (this.outcome.self.mood)
-            this.updateOpponentMood (this.outcome.other.id, this.outcome.other.mood)
-
-            this.loadGameCards()
+            this.updatePlayerMood (outcome.self.mood)
+            this.updateOpponentMood (outcome.other.id, outcome.other.mood)
+	    this.loadGameCards()
         },
 
         cardThrowFunction: function (card, direction) {
@@ -1377,28 +1510,25 @@ var BigHouse = (function() {
                 }
                 break
             case "move":
-                if (this.gameID == msg.data.game && this.moveNumber == msg.data.move)
-		    this.callOrPostpone (function() {
-			this.outcome = msg.data.outcome
-			this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
-			this.showOutcome()
-		    })
-                break
             case "timeout":
-                if (this.gameID == msg.data.game) {
-		    if (this.moveNumber == msg.data.move) {
-			this.clearMoveTimer()
-			this.callOrPostpone (this.throwCurrentChoice)
-		    } else if (msg.data.move > this.moveNumber)
-			++this.missedTimeouts
+                if (msg.data.game == this.gameID && msg.data.move >= this.moveNumber) {
+		    if (this.verbose)
+			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + " while at move #" + this.moveNumber)
+		    if (msg.data.move > this.moveNumber)
+			this.runFastTimeoutAnimation()
+		    else if (this.gameState == 'ready')
+			this.runTimeoutAnimation()
+		    this.callOrPostpone (this.showOutcome.bind (this, msg.data.outcome), msg)
 		}
                 break
             case "mood":
-                if (this.gameID == msg.data.game)
+                if (this.gameID == msg.data.game && msg.data.move >= this.moveNumber)
+		    if (this.verbose)
+			console.log ("Received 'mood' message")
 		    this.callOrPostpone (function() {
 			this.playSound (msg.data.other.mood, .5)
 			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
-                    })
+                    }, msg)
                 break
             default:
                 console.log ("Unknown message")
@@ -1415,24 +1545,6 @@ var BigHouse = (function() {
 	    delete this.waitCardListItem
 	    delete this.waitCardSwipe
             this.showGamePage()
-	},
-
-	throwCurrentChoice: function() {
-	    delete this.moveNumber  // prevent card throwout callbacks from trying to send move to server
-	    if (this.currentChoiceCards.length) {
-		if (this.missedTimeouts > 0) {
-		    this.currentChoiceCards.forEach (function (card) {
-			bh.throwCard (card)
-		    })
-		    this.loadGameCards()
-		} else {
-		    var card = this.currentChoiceCards.pop()
-		    this.throwCard (card)
-		    window.setTimeout ($.proxy (this.throwCurrentChoice, this),
-				       this.timeoutCardTossWait)
-		}
-	    } else
-		this.loadGameCards()
 	},
 
         // audio

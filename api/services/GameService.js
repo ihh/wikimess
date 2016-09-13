@@ -93,6 +93,7 @@ module.exports = {
             var outcomeWeight = outcomes.map (function (outcome) {
                 return GameService.evalOutcomeWeight (game, outcome)
             })
+//	    console.log ("Outcome weights: " + JSON.stringify(outcomeWeight))
             var totalWeight = outcomeWeight.reduce (function (total, w) {
                 return total + w
             }, 0)
@@ -148,6 +149,7 @@ module.exports = {
 				       }
 		     if (storeOutcome)
 			 updateAttrs.lastOutcome = outcome
+		     sails.log.debug ("Updating game #" + game.id + " from " + game.current.name + " (move #" + (game.moves+1) + ") to " + (currentChoice ? currentChoice.name : 'null') + " (move #" + (game.moves+2) + ")")
                      Game.update
 		     ( { id: game.id,
                          // add some extra criteria to guard against race conditions
@@ -392,6 +394,7 @@ module.exports = {
         var game = info.game
         var moveNumber = info.moveNumber
 	var update = info.update
+	sails.log.debug ("Recording " + JSON.stringify(update) + " for game #" + game.id + " move #" + moveNumber)
 //	console.log ('recordMove')
 //	console.log (info)
         Game.update ({ id: game.id,
@@ -406,17 +409,36 @@ module.exports = {
 			 else if (updated.length == 0)
 			     error (new Error ("No Games updated"))
                          else {
-			     // ensure Game.applyRandomOutcome gets to see the move
-                             game.move1 = update.move1 || game.move1
-                             game.move2 = update.move2 || game.move2
-                             if (GameService.gotBothMoves (game))
-			         GameService
-                                 .applyRandomOutcome ({ game: game,
-						        gotOutcome,
-						        storeOutcome: true },
-						      error)
-                             else
-                                 playerWaiting()
+			     // after this point, if we get any errors,
+			     // just assume the Game was updated in parallel
+			     // and fall through to playerWaiting()
+			     Game.find ({ id: game.id,
+					  moves: game.moves })
+				 .populate('player1')
+				 .populate('player2')
+				 .populate('current')
+				 .exec (function (err, refreshedGames) {
+				     if (err) {
+					 console.log(err)
+					 playerWaiting()
+				     } else if (refreshedGames.length != 1) {
+					 console.log(err)
+					 playerWaiting()
+				     } else {
+					 var refreshedGame = refreshedGames[0]
+					 if (GameService.gotBothMoves (refreshedGame))
+					     GameService
+					     .applyRandomOutcome ({ game: refreshedGame,
+								    gotOutcome,
+								    storeOutcome: true },
+								  function (err) {
+								      console.log (err)
+								      playerWaiting()
+								  })
+					 else
+					     playerWaiting()
+				     }
+				 })
                          }
                      })
     },
