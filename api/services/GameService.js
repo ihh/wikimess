@@ -395,12 +395,12 @@ module.exports = {
 //	console.log ('recordMove')
 //	console.log (info)
         Game.update ({ id: game.id,
-                       // add some extra criteria to guard against race conditions
-                       moves: game.moves,
-                       move1: game.move1,
-                       move2: game.move2 },
+                       moves: game.moves },
                      update,
                      function (err, updated) {
+//			 console.log('recordMove Game.update callback')
+//			 console.log(err)
+//			 console.log(updated)
                          if (err)
                              error (err)
 			 else if (updated.length == 0)

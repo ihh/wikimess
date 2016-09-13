@@ -156,7 +156,7 @@ module.exports = {
 				     MiscPlayerService
 					 .sendMoveMessages ({ message: "move",
 							      game: game,
-							      move: moveNumber,
+							      moveNumber: moveNumber,
 							      outcome: outcome })
 				     rs (null, { game: game.id,
 						 move: moveNumber,

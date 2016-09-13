@@ -24,7 +24,7 @@ var BigHouse = (function() {
         })
 
         this.pushedViews = []
-	this.postponedCallbacks = {}
+	this.postponedCallbacks = []
 
         this.changeMusic('menu')
         this.showLoginPage()
@@ -378,20 +378,16 @@ var BigHouse = (function() {
 
 	callPostponed: function() {
 	    if (this.page == 'game') {
-		if (this.postponedCallbacks[this.moveNumber]) {
-		    this.postponedCallbacks[moveNumber].forEach (function (f) { f.call (bh) })
-		    delete this.postponedCallbacks[moveNumber]
-		}
+		this.postponedCallbacks.forEach (function (f) { f.call (bh) })
+		this.postponedCallbacks = []
 	    }
 	},
 
-	callOrPostpone: function (moveNumber, callback) {
-	    if (this.page == 'game' && this.moveNumber == moveNumber)
+	callOrPostpone: function (callback) {
+	    if (this.page == 'game')
 		callback.call (this)
-	    else {
-		this.postponedCallbacks[moveNumber] = this.postponedCallbacks[moveNumber] || []
-		this.postponedCallbacks[moveNumber].push (callback)
-	    }
+	    else
+		this.postponedCallbacks.push (callback)
 	},
 
         // avatar upload page
@@ -954,12 +950,6 @@ var BigHouse = (function() {
                     .empty()
                     .append ($('<div class="statusbar">')
                              .append (this.playerMoodDiv = $('<div class="leftmood">'))
-/*
-                             .append ($('<div class="leftstatus">')
-                                      .append ($('<span>')
-                                               .text (this.playerName)
-                                               .on ('click', $.proxy (bh.showPlayerStatusPage, bh))))
-*/
                              .append ($('<div class="rightstatus">')
                                       .append (this.opponentNameDiv = $('<span>')
                                                .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
@@ -1051,6 +1041,7 @@ var BigHouse = (function() {
 		    else {
 			bh.createPlaceholderCards()
 			bh.waitingForOther = data.waiting
+			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
 			    bh.createAndDealCards ({ text: data.intro,
 						     finalCardClass: 'verb-' + data.verb,
@@ -1064,14 +1055,17 @@ var BigHouse = (function() {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
 			}
+
+			bh.missedTimeouts = 0
 			if (data.deadline) {
 			    bh.dealTime = new Date()
 			    bh.deadline = new Date(data.deadline)
-			    bh.updateTimer (1)
+			    var totalTime = bh.deadline - bh.dealTime
+			    bh.updateTimer (totalTime, totalTime)
 			    var kickDelay = (bh.waitingForOther ? 0 : bh.kickDelay) + Math.random()
 			    bh.moveTimer = window.setInterval (function() {
 				var now = new Date()
-				bh.updateTimer (Math.max (0, (bh.deadline - now) / (bh.deadline - bh.dealTime)))
+				bh.updateTimer (Math.max (0, bh.deadline - now), totalTime)
 				if (now.getTime() > bh.deadline.getTime() + 1000*kickDelay) {
 				    bh.clearMoveTimer()
 				    bh.REST_getPlayerGameKick (bh.playerID, bh.gameID)
@@ -1089,8 +1083,12 @@ var BigHouse = (function() {
                 })
 	},
 
-	updateTimer: function (frac) {
-	    this.timerDiv.width(Math.round(frac*100)+"%")
+	updateTimer: function (timeLeft, totalTime) {
+	    this.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
+	    if (timeLeft <= 5000) {
+		var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
+		$('.'+choiceClass).find(':visible').css ('opacity', Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1)))
+	    }
 	},
 
 	createPlaceholderCards: function() {
@@ -1263,7 +1261,8 @@ var BigHouse = (function() {
         makeMoveFunction: function (moveNumber, choice) {
             var bh = this
             return function() {
-                bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+		if (bh.moveNumber == moveNumber)
+                    bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
 		    .done (function() {
 			bh.waitingForOther = true
 		    })
@@ -1297,6 +1296,11 @@ var BigHouse = (function() {
                 card.throwOut (300*direction, 600*(Math.random() - .5))
             }
         },
+
+	throwCard: function (card) {
+	    var dir = this.defaultMove == 'd' ? gajus.Swing.Card.DIRECTION_LEFT	: gajus.Swing.Card.DIRECTION_RIGHT;
+	    (this.cardThrowFunction (card, dir)) ()
+	},
         
         // socket message handler
         handlePlayerMessage: function (msg) {
@@ -1313,24 +1317,25 @@ var BigHouse = (function() {
                 }
                 break
             case "move":
-                if (this.gameID == msg.data.game)
-		    this.callOrPostpone ('game', function() {
+                if (this.gameID == msg.data.game && this.moveNumber == msg.data.move)
+		    this.callOrPostpone (function() {
 			this.outcome = msg.data.outcome
 			this.moveNumber = parseInt(msg.data.move) + 1  // this is required so that we can change move from the outcome page
 			this.showOutcome()
 		    })
                 break
             case "timeout":
-                if (this.gameID == msg.data.game)
-		    this.clearMoveTimer()
-		    this.callOrPostpone (msg.data.move, function() {
-			this.clearMoveTimer()  // guard against multiple timeouts during pause
-			this.throwCurrentChoice()
-		    })
+                if (this.gameID == msg.data.game) {
+		    if (this.moveNumber == msg.data.move) {
+			this.clearMoveTimer()
+			this.callOrPostpone (this.throwCurrentChoice)
+		    } else if (msg.data.move > this.moveNumber)
+			++this.missedTimeouts
+		}
                 break
             case "mood":
                 if (this.gameID == msg.data.game)
-		    this.callOrPostpone (msg.data.move, function() {
+		    this.callOrPostpone (function() {
 			this.playSound (msg.data.other.mood, .5)
 			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
                     })
@@ -1353,11 +1358,19 @@ var BigHouse = (function() {
 	},
 
 	throwCurrentChoice: function() {
+	    delete this.moveNumber  // prevent card throwout callbacks from trying to send move to server
 	    if (this.currentChoiceCards.length) {
-		var card = this.currentChoiceCards.pop()
-		card.throwOut()
-		window.setTimeout ($.proxy (this.throwCurrentChoice, this),
-				   this.timeoutCardTossWait)
+		if (this.missedTimeouts > 0) {
+		    this.currentChoiceCards.forEach (function (card) {
+			bh.throwCard (card)
+		    })
+		    this.loadGameCards()
+		} else {
+		    var card = this.currentChoiceCards.pop()
+		    this.throwCard (card)
+		    window.setTimeout ($.proxy (this.throwCurrentChoice, this),
+				       this.timeoutCardTossWait)
+		}
 	    } else
 		this.loadGameCards()
 	},
