@@ -108,9 +108,7 @@ module.exports = {
 },
 
     isWaitingForMove: function (game, role) {
-	return role == 1
-            ? (game.move2 != 'none' || game.move1 == 'none')
-            : (game.move1 != 'none' || game.move2 == 'none')
+	return (role == 1 ? game.move1 : game.move2) == 'none'
     },
 
     isTimedOut: function (game) {

@@ -35,6 +35,7 @@ var BigHouse = (function() {
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
 	blankImageUrl: '/images/1x1blank.png',
+        maxNameLength: 16,
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
         avatarSize: 298,
@@ -178,7 +179,8 @@ var BigHouse = (function() {
                          .append ($('<form>')
                                   .append ($('<label for="player">')
                                            .text('Player name'))
-                                  .append (this.nameInput = $('<input name="player" type="text">'))
+                                  .append (this.nameInput = $('<input name="player" type="text">')
+                                           .attr('maxlength', this.maxNameLength))
                                   .append ($('<label for="player">')
                                            .text('Password'))
                                   .append (this.passwordInput = $('<input name="password" type="password">'))))
@@ -1057,10 +1059,10 @@ var BigHouse = (function() {
 
                     if (data.finished) {
 			bh.showLastOutcome (data.lastOutcome)
-                        bh.cardCountDiv.css ('opacity', 0)
+                        bh.hideTimer()
 		    } else {
 			bh.createPlaceholderCards()
-			bh.waitingForOther = data.waiting
+			bh.waitingForOther = !data.waiting
 			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
 			    bh.createAndDealCards ({ text: data.intro,
@@ -1098,8 +1100,7 @@ var BigHouse = (function() {
 				}
 			    }, 10)
 			} else {
-                            bh.timerDiv.width(0)
-                            bh.cardCountDiv.css ('opacity', 0)
+                            bh.hideTimer()
                         }
 
 			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
@@ -1119,17 +1120,24 @@ var BigHouse = (function() {
         
 	updateTimer: function (timeLeft, totalTime) {
 	    this.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
-	    if (timeLeft <= 5000) {
-		var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
-                var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
-		$('.'+choiceClass).find(':visible').css ('opacity', opacity)
-                this.cardCountDiv.css ('opacity', opacity)
-                if (timeLeft <= this.lastChime - 1000)
-                    this.playSound ('timewarning')
-	    }
-            this.lastChime = Math.ceil (timeLeft / 1000) * 1000
+            if (!this.waitingForOther) {
+	        if (timeLeft <= 5000) {
+		    var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
+                    var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
+		    $('.'+choiceClass).find(':visible').css ('opacity', opacity)
+                    this.cardCountDiv.css ('opacity', opacity)
+                    if (timeLeft <= this.lastChime - 1000)
+                        this.playSound ('timewarning')
+	        }
+                this.lastChime = Math.ceil (timeLeft / 1000) * 1000
+            }
 	},
 
+        hideTimer: function() {
+            this.timerDiv.width(0)
+            this.cardCountDiv.css ('opacity', 0)
+        },
+        
 	createPlaceholderCards: function() {
             this.nextOutcomeCardListItem = this.createCardListItem ('', 'outcome')  // placeholder, for appearances
 	    this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()

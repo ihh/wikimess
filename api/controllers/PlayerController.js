@@ -176,6 +176,9 @@ module.exports = {
 				    },
 				    function() {
 					// player waiting callback
+                                        // this is reached when kick requests from both clients collide.
+                                        // it would be better for the client to first send their defaultMove,
+                                        // then wait, then send the kick request...
 					rs (new Error ("Player kick failed"))
 				    },
 				    rs)

@@ -89,6 +89,14 @@ body {
     cursor: pointer;
 }
 
+.bighouse .statusbar .rightstatus span {
+    word-wrap: break-word;  /* moz */
+    overflow-wrap: break-word;  /* webkit */
+    width: 100%;
+    max-height: 100%;
+    text-align: right;
+}
+
 .bighouse .statusbar a,
 .bighouse .menubar a,
 .bighouse .upload-exit a {
