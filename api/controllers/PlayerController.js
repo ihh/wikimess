@@ -176,8 +176,11 @@ module.exports = {
 				    },
 				    function() {
 					// player waiting callback
-                                        // this is reached when kick requests from both clients collide.
-                                        // it would be better for the client to first send their defaultMove,
+                                        // this should never be reached after a kick, since both players should have moved.
+                                        // best guess: it is probably reached when both clients send kick requests at the same time,
+                                        // which sometimes happens (despite a random delay) when both clients time out.
+                                        // the second kick request then fails because its moveNumber is out of date.
+                                        // it would be better for each client to first send its own defaultMove,
                                         // then wait, then send the kick request...
 					rs (new Error ("Player kick failed"))
 				    },
