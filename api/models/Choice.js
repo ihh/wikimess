@@ -56,7 +56,7 @@ module.exports = {
 
       timeout: {
           type: 'integer',
-	  defaultsTo: 10
+	  defaultsTo: 60
       },
       
       outcomes: {
