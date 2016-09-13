@@ -38,11 +38,12 @@ var BigHouse = (function() {
         maxNameLength: 16,
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
+	cardFadeTime: 500,
         avatarSize: 298,
         cardDelimiter: ';;',
 	maxJoinWaitTime: 10,
 	kickDelay: 1000,  // actual delay will be between 1* and 2* this
-	timeoutAnimationWaitPerCard: 500,
+	nTimeoutChimes: 3,
 
 	verbose: true,
         
@@ -1109,7 +1110,7 @@ var BigHouse = (function() {
 
 			if (data.deadline) {
                             bh.cardCountDiv.css ('opacity', 1)
-			    bh.startline = new Date(data.startline)
+			    bh.startline = bh.cardStartline = new Date(data.startline)
 			    bh.deadline = new Date(data.deadline)
 			    bh.timerCallback()
 			} else {
@@ -1121,17 +1122,21 @@ var BigHouse = (function() {
                 })
 	},
 
-        showCardCount: function() {
-	    var bh = this
-	    var n = 0, foundChoice = false
+	getCardCount: function() {
+	    var n
 	    this.stackList.children().each (function (idx, elem) {
-		if ($(elem).hasClass('choicecard')) {
+		if ($(elem).hasClass('choicecard'))
 		    n = 0
-		    foundChoice = true
-		} else
+		else if (typeof(n) !== 'undefined')
 		    ++n
 	    });
-	    if (n <= 0 || !foundChoice)
+	    return n
+	},
+
+        showCardCount: function() {
+	    var bh = this
+	    var n = this.getCardCount()
+	    if (!n)
                 this.cardCountSpan.text('')
             else
                 this.cardCountSpan.text(n+' card'+(n>1?'s':'')+' before next choice')
@@ -1143,9 +1148,13 @@ var BigHouse = (function() {
 	},
         
 	timerCallback: function() {
+	    var bh = this
 	    this.clearMoveTimer()
 	    var now = new Date()
-	    this.updateTimer (Math.max (0, this.deadline - now), this.deadline - this.startline)
+	    var cardCount = (this.getCardCount() || 0) + 1
+	    var timeForThisCard = (this.deadline - this.cardStartline) / cardCount
+	    var thisCardDeadline = new Date (this.cardStartline.getTime() + timeForThisCard)
+	    this.updateTimerDiv (this.cardStartline, thisCardDeadline, now)
 	    if (now.getTime() > this.deadline.getTime()) {
 		this.clearMoveTimer()
 		switch (this.gameState) {
@@ -1159,8 +1168,16 @@ var BigHouse = (function() {
 		    console.log ("should never get here: move timer expired with gameState=" + this.gameState)
 		    break
 		}
-	    } else
-		this.setMoveTimer (this.timerCallback, 10)
+	    } else {
+		if (now.getTime() > thisCardDeadline.getTime()) {
+		    delete this.lastChime
+		    this.cardStartline = now
+		    var card = this.getTopCard()
+		    card.fadeCallback = bh.timerCallback.bind(this)
+		    this.throwCard (card)
+		} else
+		    this.setMoveTimer (this.timerCallback, 10)
+	    }
 	},
 
 	runFastTimeoutAnimation: function() {
@@ -1193,19 +1210,11 @@ var BigHouse = (function() {
 	    var bh = this
 	    this.clearMoveTimer()
 
-	    var cardToThrow
-	    this.stackList.children().each (function (idx, elem) {
-		if (!$(elem).hasClass ('gameover')) {
-		    var card = bh.stack.getCard (elem)
-		    if (card)
-			cardToThrow = card
-		}
-	    });
-		
+	    var cardToThrow = this.getTopCard()
 	    if (cardToThrow) {
+		cardToThrow.fadeCallback
+		    = this.runTimeoutAnimation.bind (this)
 		this.throwCard (cardToThrow)
-		this.setMoveTimer (this.runTimeoutAnimation,
-				   this.timeoutAnimationWaitPerCard)
 	    } else
 		switch (this.gameState) {
 		case 'timerTimeoutAnimation':
@@ -1216,6 +1225,18 @@ var BigHouse = (function() {
 		    this.loadGameCards()
 		    break
 		}
+	},
+
+	getTopCard: function() {
+	    var topCard
+	    this.stackList.children().each (function (idx, elem) {
+		if (!$(elem).hasClass ('gameover')) {
+		    var card = bh.stack.getCard (elem)
+		    if (card)
+			topCard = card
+		}
+	    });
+	    return topCard
 	},
 
 	setKickTimer: function() {
@@ -1231,18 +1252,19 @@ var BigHouse = (function() {
 		.fail (this.setKickTimer.bind (this))
 	},
 
-	updateTimer: function (timeLeft, totalTime) {
+	updateTimerDiv: function (start, end, now) {
+	    var timeLeft = end - now, totalTime = end - start
 	    this.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
             if (this.gameState == 'ready') {
-	        if (timeLeft <= 5000) {
+	        if (timeLeft > 0 && timeLeft <= this.nTimeoutChimes*1000) {
 		    var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
                     var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
 		    $('.'+choiceClass).find(':visible').css ('opacity', opacity)
                     this.cardCountDiv.css ('opacity', opacity)
-                    if (timeLeft <= this.lastChime - 1000)
+                    if (this.lastChime && now.getTime() >= this.lastChime + 1000)
                         this.playSound ('timewarning')
 	        }
-                this.lastChime = Math.ceil (timeLeft / 1000) * 1000
+                this.lastChime = 1000 * Math.floor (now.getTime() / 1000)
             }
 	},
 
@@ -1314,13 +1336,13 @@ var BigHouse = (function() {
                 if (!silent)
                     bh.playSound ('swiperight')
                 rightCallback.call (bh)
-                bh.fadeCard (listItem)
+                bh.fadeCard (listItem, card)
             })
             card.on ('throwoutleft', function () {
                 if (!silent)
                     bh.playSound ('swipeleft')
                 leftCallback.call (bh)
-                bh.fadeCard (listItem)
+                bh.fadeCard (listItem, card)
             })
             return card
         },
@@ -1385,9 +1407,13 @@ var BigHouse = (function() {
             return card
         },
         
-        fadeCard: function (listItem) {
+        fadeCard: function (listItem, card) {
             listItem.find('*').off()
-            listItem.fadeOut (500, function() { listItem.remove() })
+            listItem.fadeOut (this.cardFadeTime, function() {
+		listItem.remove()
+		if (card.fadeCallback)
+		    card.fadeCallback()
+	    })
         },
 
         throwDummyCard: function (listItem, swipe) {
