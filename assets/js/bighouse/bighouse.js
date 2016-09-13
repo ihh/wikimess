@@ -39,7 +39,7 @@ var BigHouse = (function() {
         musicFadeDelay: 800,
         avatarSize: 298,
         cardDelimiter: ';;',
-	maxJoinWaitTime: 500,  // 5
+	maxJoinWaitTime: 30,
 	kickDelay: 2,
 	timeoutCardTossWait: 500,
         
