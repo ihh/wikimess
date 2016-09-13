@@ -166,8 +166,10 @@ module.exports = {
                      move: game.moves + 1 }
 	if (game.lastOutcome)
 	    json.lastOutcome = Outcome.forRole (game, game.lastOutcome, role)
-	if (game.current && game.current.timeout)
+	if (game.current && game.current.timeout) {
+	    json.startline = game.currentStartTime
 	    json.deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
+        }
 	return json
     },
 

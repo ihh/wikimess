@@ -858,10 +858,26 @@ var BigHouse = (function() {
                          .text ("Waiting for another player"))
                 .append ($('<ul>')
                          .append (this.makeListLink ('Cancel', this.cancelJoin)))
-	    this.joinWaitTimer = window.setTimeout (function() {
-		bh.REST_getPlayerJoinBot (bh.playerID)
-		delete bh.joinWaitTimer
-	    }, this.maxJoinWaitTime * 1000)
+
+            this.container
+                .append ($('<div class="timebar">')
+			 .append (this.timerDiv = $('<div class="timer">')))
+              
+            var totalTime = this.maxJoinWaitTime * 1000,
+                joinStartline = new Date(),
+                joinDeadline = new Date (joinStartline.getTime() + totalTime)
+
+	    this.joinWaitTimer = window.setInterval (function() {
+                var now = new Date()
+                var timeLeft = Math.max (0, joinDeadline - now)
+	        bh.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
+                if (timeLeft == 0) {
+                    window.clearInterval (bh.joinWaitTimer)
+		    delete bh.joinWaitTimer
+		    bh.REST_getPlayerJoinBot (bh.playerID)
+                }
+	    }, 10)
+            
         },
 
         cancelJoin: function() {
@@ -874,7 +890,7 @@ var BigHouse = (function() {
 
 	cancelJoinBot: function() {
 	    if (this.joinWaitTimer) {
-		window.clearTimeout (this.joinWaitTimer)
+		window.clearInterval (this.joinWaitTimer)
 		delete this.joinWaitTimer
 	    }
 	},
@@ -946,6 +962,7 @@ var BigHouse = (function() {
                 this.page = 'game'
                 this.moodDiv = []
                 this.moodImg = []
+                this.currentChoiceCards = []
                 this.container
                     .empty()
                     .append ($('<div class="statusbar">')
@@ -957,15 +974,17 @@ var BigHouse = (function() {
                              .append ($('<div class="statuslink">')
                                       .append ($('<span>')
                                                .html (this.makeLink ('Menu', this.showGameMenuPage)))))
-                    .append ($('<div class="timebar">')
-			     .append (bh.timerDiv = $('<div class="timer">')
-				      .width("100%")))
                     .append ($('<div class="cardbar">')
                              .append ($('<div class="cardtable">')
                                       .append (this.choiceBar = $('<div class="choicebar">')
                                                .append (this.choiceDiv = $('<div>')))
 				      .append (this.stackList = $('<ul class="stack">'))))
                     .append (this.moodBar = $('<div class="moodbar">'))
+                    .append ($('<div class="timebar">')
+			     .append (bh.timerDiv = $('<div class="timer">')
+				      .width("100%"))
+                             .append (this.cardCountDiv = $('<div class="cardcount">')
+                                      .append (this.cardCountSpan = $('<span>'))))
 
 		this.moods.forEach (function (mood, m) {
 		    var moodClass = "mood" + (m+1)
@@ -986,7 +1005,7 @@ var BigHouse = (function() {
                 }
                 this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
                                                   isThrowOut: isThrowOut })
-
+                
                 var gameOverCardListItem = bh.createCardListItem ($('<span>').text ("Game Over"), 'gameover')
                 this.dealCard ({ listItem: gameOverCardListItem,
 				 swipe: function() {
@@ -1002,6 +1021,7 @@ var BigHouse = (function() {
         loadGameCards: function() {
 	    var bh = this
 	    this.clearMoveTimer()
+	    this.currentChoiceCards = []
             var loadingCardListItem, loadingCardSwipe, loadingCardTimer
 	    var loadingSpan = $('<span>').text ("Loading")
 	    if (this.nextOutcomeCardListItem) {
@@ -1035,10 +1055,10 @@ var BigHouse = (function() {
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood)
 
-		    bh.currentChoiceCards = []
-                    if (data.finished)
+                    if (data.finished) {
 			bh.showLastOutcome (data.lastOutcome)
-		    else {
+                        bh.cardCountDiv.css ('opacity', 0)
+		    } else {
 			bh.createPlaceholderCards()
 			bh.waitingForOther = data.waiting
 			bh.defaultMove = data.defaultMove
@@ -1058,9 +1078,10 @@ var BigHouse = (function() {
 
 			bh.missedTimeouts = 0
 			if (data.deadline) {
-			    bh.dealTime = new Date()
+                            bh.cardCountDiv.css ('opacity', 1)
+			    bh.startline = new Date(data.startline)
 			    bh.deadline = new Date(data.deadline)
-			    var totalTime = bh.deadline - bh.dealTime
+			    var totalTime = bh.deadline - bh.startline
 			    bh.updateTimer (totalTime, totalTime)
 			    var kickDelay = (bh.waitingForOther ? 0 : bh.kickDelay) + Math.random()
 			    bh.moveTimer = window.setInterval (function() {
@@ -1076,19 +1097,37 @@ var BigHouse = (function() {
 					})
 				}
 			    }, 10)
-			}
+			} else {
+                            bh.timerDiv.width(0)
+                            bh.cardCountDiv.css ('opacity', 0)
+                        }
+
 			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
 			bh.callPostponed()
 		    }
                 })
 	},
 
+        showCardCount: function() {
+            var n = this.currentChoiceCards.length - 1
+            if (n <= 0)
+                this.cardCountSpan.text('')
+            else
+                this.cardCountSpan.text(n+' card'+(n>1?'s':'')+' before next choice')
+            this.cardCountDiv.css ('opacity', 1)
+        },
+        
 	updateTimer: function (timeLeft, totalTime) {
 	    this.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
 	    if (timeLeft <= 5000) {
 		var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
-		$('.'+choiceClass).find(':visible').css ('opacity', Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1)))
+                var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
+		$('.'+choiceClass).find(':visible').css ('opacity', opacity)
+                this.cardCountDiv.css ('opacity', opacity)
+                if (timeLeft <= this.lastChime - 1000)
+                    this.playSound ('timewarning')
 	    }
+            this.lastChime = Math.ceil (timeLeft / 1000) * 1000
 	},
 
 	createPlaceholderCards: function() {
@@ -1129,7 +1168,6 @@ var BigHouse = (function() {
 		if (isFinal)
 		    $.extend (cardConfig, config)
                 var card = bh.dealCard (cardConfig)
-		bh.currentChoiceCards.push (card)
 	    })
 	},
 
@@ -1166,16 +1204,26 @@ var BigHouse = (function() {
 	pushChoiceRevealer: function() {
 	    var bh = this
 	    var newChoiceDiv, oldChoiceDiv = this.choiceDiv
+            var newCardCountSpan, oldCardCountSpan = this.cardCountSpan
 	    oldChoiceDiv.hide()
+            oldCardCountSpan.hide()
 	    this.choiceBar
                 .append (newChoiceDiv = $('<div>'))
+            this.cardCountDiv.append (newCardCountSpan = $('<span>'))
 	    this.choiceDiv = newChoiceDiv
+	    this.cardCountSpan = newCardCountSpan
 	    return { newChoiceDiv: newChoiceDiv,
+                     newCardCountSpan: newCardCountSpan,
 		     wrapCallback: function (callback) {
 			 return function() {
 			     newChoiceDiv.remove()
 			     oldChoiceDiv.show()
 			     bh.choiceDiv = oldChoiceDiv
+
+                             newCardCountSpan.remove()
+			     oldCardCountSpan.show()
+			     bh.cardCountSpan = oldCardCountSpan
+
 			     if (callback)
 				 callback.call (bh)
 			 }
@@ -1184,6 +1232,7 @@ var BigHouse = (function() {
 	},
 
         dealCard: function (config) {
+            var bh = this
 	    var choiceRevealer = this.pushChoiceRevealer()
             config.swipeRight = choiceRevealer.wrapCallback (config.swipeRight || config.swipe)
             config.swipeLeft = choiceRevealer.wrapCallback (config.swipeLeft || config.swipe || config.swipeRight)
@@ -1206,6 +1255,9 @@ var BigHouse = (function() {
 	    if (config.dealt)
 		card.on ('throwinend', config.dealt)
             card.throwIn (-600, -100)
+
+            this.currentChoiceCards.push (card)
+            this.showCardCount()
 
             return card
         },
