@@ -172,7 +172,9 @@ module.exports = {
     },
 
     getRole: function (game, playerID) {
-	return playerID == game.player1.id ? 1 : (playerID == game.player2.id ? 2 : null)
+	var player1id = typeof(game.player1) == 'object' ? game.player1.id : game.player1
+	var player2id = typeof(game.player2) == 'object' ? game.player2.id : game.player2
+	return playerID == player1id ? 1 : (playerID == player2id ? 2 : null)
     },
 
     otherRole: function(role) {
