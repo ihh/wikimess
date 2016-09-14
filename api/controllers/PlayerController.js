@@ -143,10 +143,7 @@ module.exports = {
     // current state of game, filtered for player
     gameInfo: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info, rs) {
-            if (GameService.choiceAutoExpandable (info.game.choice))
-                res.status(408).json({ game: info.game.id, inTransition: true })  // Game is auto-expanding a Choice; return timeout code
-            else
-	        rs (null, Game.forRole (info.game, info.role))
+	    rs (null, Game.forRole (info.game, info.role))
         })
     },
 
