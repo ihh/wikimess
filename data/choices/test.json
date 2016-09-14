@@ -8,7 +8,7 @@
              {weight:"!($c.iceCream || $c.iceCream)",outro:"Cool, let's skip class together! ;; Party times, by the beach... ;; Co-operation is great!",global1:{count:{c:"$+1"}},g2:{count:{c:"$+1"},common:{day:"++"}},
               next: {intro: "Want to have an ice cream together?",
                      hint: ["No","Yes"],
-                     cc: {outro:"I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.",
+                     cc: {outro:"I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.;;",
                           common:{iceCream:true}},
                      diff: "Unfortunately, not everybody loves ice cream.",
                      dd: "Right: ice cream sucks."}}],

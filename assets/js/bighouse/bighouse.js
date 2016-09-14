@@ -396,7 +396,7 @@ var BigHouse = (function() {
 		var msg = this.postponedMessages[0]
 		this.postponedMessages = this.postponedMessages.slice(1)
 		if (this.verbose)
-		    console.log ("Dealing with postponed '" + msg.data.message + "' message (" + this.postponedMessages + " messages remaining on queue)")
+		    console.log ("Dealing with postponed '" + msg.data.message + "' message (" + this.postponedMessages.length + " messages remaining on queue)")
 		this.handlePlayerMessage (msg)
 	    }
 	},
