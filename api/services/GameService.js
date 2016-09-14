@@ -56,7 +56,7 @@ module.exports = {
                 } catch (e) {
                     // do nothing, ignore undefined values and other errors in eval()
                 }
-                return val && typeof(val) === 'string' ? val : ''
+                return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
             })
             .replace(/\$player1/g,game.player1.name)
             .replace(/\$player2/g,game.player2.name)
@@ -110,6 +110,10 @@ module.exports = {
         })
     },
 
+    choiceAutoExpandable: function (choice) {
+        return choice && !(choice.intro && /\S/.test(choice.intro))
+    },
+
     applyRandomOutcome: function (info, error) {
 	var game = info.game
 	var gotOutcome = info.gotOutcome
@@ -128,8 +132,7 @@ module.exports = {
                  // prepare a function to update the state of everything
                  var updateGame = function (currentChoice, futureChoiceNames) {
 		     var currentChoiceID = currentChoice ? currentChoice.id : null
-		     var currentChoiceIntro = currentChoice ? currentChoice.intro : null
-		     var autoExpandCurrentChoice = (currentChoiceID && !(currentChoiceIntro && /\S/.test(currentChoiceIntro)))
+		     var autoExpandCurrentChoice = GameService.choiceAutoExpandable (currentChoice)
                      // evaluate updated player globals before updating game, so we get the correct $src
                      var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
                      var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
@@ -308,7 +311,12 @@ module.exports = {
                         $2 = p2State[key] || 0
                     } else
                         $ = $$
-                    
+
+                    // common shorthands
+                    if (expr == '++') expr = '($||0)+1'
+                    if (expr == '--') expr = '($||0)-1'
+
+                    // do the eval
                     var val
                     try {
                         val = eval(expr)
