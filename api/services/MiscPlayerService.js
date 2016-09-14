@@ -79,13 +79,16 @@ module.exports = {
         var iconSuffix = '.svg'
 
         var icon = function(name,text,color,bgColor) {
-            var svg = fs.readFileSync (iconPath + name + iconSuffix, 'utf8')
-            if (color)
-                svg = svg.replace(/"#fff"/g, color)
-            if (bgColor)
-                svg = svg.replace(/"#000"/g, bgColor)
+	    var path = '/icon/' + name
+	    if (bgColor && !color)
+		color = 'white'
+            if (color) {
+		path = path + '/' + color
+		if (bgColor)
+                    path = path + '/' + bgColor
+	    }
             return '<p>'
-                + '<span class="icon">' + svg + '</span>'
+                + '<span class="icon"><img src="' + path + '"></img></span>'
                 + '<span class="text">' + text + '</span>'
         }
 

@@ -8,11 +8,11 @@
              {weight:"!($c.iceCream || $c.iceCream)",outro:"Cool, let's skip class together! ;; Party times, by the beach... ;; Co-operation is great!",global1:{count:{c:"$+1"}},g2:{count:{c:"$+1"},common:{day:"++"}},
               next: {intro: "Want to have an ice cream together?",
                      hint: ["No","Yes"],
-                     cc: {outro:"I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.;;",
+                     cc: {outro:"I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.\n<icon:ice-cream-cone>;;",
                           common:{iceCream:true}},
                      diff: "Unfortunately, not everybody loves ice cream.",
                      dd: "Right: ice cream sucks."}}],
-	cd2: {outro:"Well, it was a good plan; but $player2 ratted $player1 out.\nTruancy doesn't pay, if you can't trust your friends.;; Sorry, $player2...",global1:{count:{c:"$+1"}},local2:{count:{d:"$+1"}},common:{day:"++"}},
+	cd2: {outro:"Well, it was a good plan; but $player2 ratted $player1 out.\nTruancy doesn't pay, if you can't trust your friends.;; <sfx:surprised><class:outcome>Sorry, $player2...",global1:{count:{c:"$+1"}},local2:{count:{d:"$+1"}},common:{day:"++"}},
 	dd: [{weight:"!($l1.count.d && $l2.count.d)",outro:"You and {{$no}} are a couple of goody two-shoes ;; Too bad!",local1:{count:{d:"$+1"}},l2:{count:{d:"$+1"}},next:"auto",common:{day:"++"}},
              {weight:"$l1.count.d && $l2.count.d",outro:"You both chicken out - AGAIN ;; This keeps happening!",l1:{count:{d:"$+1"}},local2:{count:{d:"$+1"}},next:"auto",common:{day:"++"}}]
     },

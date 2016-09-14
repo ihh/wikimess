@@ -34,6 +34,8 @@ var BigHouse = (function() {
         // default constants
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
+	iconPrefix: '/icon/',
+	iconSuffix: '.svg',
 	blankImageUrl: '/images/1x1blank.png',
         maxNameLength: 16,
         moods: ['happy', 'surprised', 'sad', 'angry'],
@@ -1089,12 +1091,12 @@ var BigHouse = (function() {
 		    var outcome = data.lastOutcome
 		    var separateOutcomeCard = outcome && outcome.outro && outcome.outro.indexOf(bh.cardDelimiter) >= 0
 		    var firstCardClass = separateOutcomeCard ? 'outcome' : undefined
-		    if (outcome && outcome.verb)
-			bh.playSound (outcome.verb)
+		    var firstCardSfx = outcome && outcome.verb
 
                     if (data.finished) {
 			if (outcome)
 			    bh.createAndDealCards ({ text: outcome.outro,
+						     firstCardSfx: firstCardSfx,
 						     firstCardClass: firstCardClass })
                         bh.hideTimer()
 			bh.setGameState('gameOver')
@@ -1106,6 +1108,7 @@ var BigHouse = (function() {
 			    var outro = (outcome && outcome.outro) || ''
 			    bh.createAndDealCards ({ text: outro + ' ' + intro,
 						     firstCardClass: firstCardClass,
+						     firstCardSfx: firstCardSfx,
 						     finalCardClass: 'verb-' + data.verb,
 						     finalCardIsChoice: true,
 						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
@@ -1297,28 +1300,33 @@ var BigHouse = (function() {
 	    this.waitCardListItem.html ($('<span>').text ("Waiting for other player"))
 	},
 
-	showLastOutcome: function (outcome) {
-	    if (outcome) {
-		if (outcome.verb)
-		    this.playSound (outcome.verb)
-		if (outcome.outro && /\S/.test (outcome.outro))
-		    this.createAndDealCards ({ text: outcome.outro,
-					       firstCardClass: 'outcome' })
-	    }
-	},
-
 	createAndDealCards: function (config) {
 	    var bh = this
 	    var texts = config.text.split (this.cardDelimiter)
 		.filter (function (text) { return /\S/.test(text) })
+	    var prevReveal = function() {}
 	    texts.reverse().forEach (function (text, n) {
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
+		var sfx = isFirst ? config.firstCardSfx : undefined
 		var cardClass = isFirst ? config.firstCardClass : (isFinal ? config.finalCardClass : undefined)
+		// text can override default cardClass & sfx
+		text = text.replace (/<class:([^> ]+)>/g, function (match, className) {
+		    cardClass = className
+		    return ""
+		})
+		text = text.replace (/<sfx:([^> ]+)>/g, function (match, sfxName) {
+		    sfx = sfxName
+		    return ""
+		})
                 // misc text expansions go here...
+		text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
+		    return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
+		})
                 var content = text.split(/\n/).map (function (para) {
                     return $('<span>').html(para)
                 })
+		// create the <li>
                 var cardListItem = bh.createCardListItem (content, cardClass)
 		var cardConfig = { listItem: cardListItem }
 		if (isFinal) {
@@ -1327,7 +1335,15 @@ var BigHouse = (function() {
 		    $.extend (cardConfig, config)
 		}
                 var card = bh.dealCard (cardConfig)
+		card.fadeCallback = prevReveal
+		// create the reveal callback
+		var reveal = function() {
+		    if (sfx)
+			bh.playSound (sfx)
+		}
+		prevReveal = reveal
 	    })
+	    prevReveal()
 	},
 
         createCardListItem: function (cardContent, cardClass) {
@@ -1399,7 +1415,7 @@ var BigHouse = (function() {
 
         dealCard: function (config) {
             var bh = this
-	    var choiceRevealer = this.pushChoiceRevealer()
+	    var choiceRevealer = this.pushChoiceRevealer (config.reveal)
             config.swipeRight = choiceRevealer.wrapCallback (config.swipeRight || config.swipe)
             config.swipeLeft = choiceRevealer.wrapCallback (config.swipeLeft || config.swipe || config.swipeRight)
             var card = this.addCard (config)

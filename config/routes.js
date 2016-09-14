@@ -49,6 +49,14 @@ module.exports.routes = {
     'POST /login': 'AuthController.login',
     '/logout':     'AuthController.logout',
 
+    'GET /icon/:icon.svg':                    'IconController.getIcon',
+    'GET /icon/:icon/:color.svg':             'IconController.getIcon',
+    'GET /icon/:icon/:color/:background.svg': 'IconController.getIcon',
+
+    'GET /icon/:icon':                    'IconController.getIcon',
+    'GET /icon/:icon/:color':             'IconController.getIcon',
+    'GET /icon/:icon/:color/:background': 'IconController.getIcon',
+
     'GET /player/id/:name':              'PlayerController.byName',
 
     'GET /player/:player/avatar/:mood':  'PlayerController.getMoodAvatar',
