@@ -1440,7 +1440,6 @@ var BigHouse = (function() {
             var bh = this
             this.lastMood = mood
             var date = new Date (time)
-            console.log ("Called updatePlayerMood for move #" + this.moveNumber + " at time " + time + "; last update was at time " + this.lastPlayerMoodTime)
             if (!this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
                 if (this.verbose)
                     console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
@@ -1569,8 +1568,6 @@ var BigHouse = (function() {
                 break
             case "mood":
                 if (this.gameID == msg.data.game && msg.data.move >= this.moveNumber && new Date(msg.data.time) > this.lastOpponentMoodTime)
-		    if (this.verbose)
-			console.log ("Received 'mood' message")
 		    this.callOrPostpone (function() {
 			this.playSound (msg.data.other.mood, .5)
 			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood, msg.data.time)
