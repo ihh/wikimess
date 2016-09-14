@@ -141,6 +141,7 @@ module.exports = {
             outro = GameService.expandText (outro, game, outcome, role)
         return { outro: outro,
                  verb: verb,
+                 time: new Date(),
                  self: { mood: selfMood },
                  other: { id: other.id, name: other.name, mood: otherMood } }
     },

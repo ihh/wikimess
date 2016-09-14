@@ -237,15 +237,18 @@ module.exports = {
                                 moveNumber: moveNumber,
                                 mood: newMood },
                               function (updated) {
+                                  var time = new Date()
                                   Player.message (opponent.id,
                                                   { message: "mood",
                                                     game: game.id,
                                                     move: moveNumber,
+                                                    time: time,
                                                     other: { id: player.id,
 							     mood: newMood },
                                                   })
                                   rs (null, { game: game.id,
                                               move: moveNumber,
+                                              time: time,
                                               self: { mood: newMood } })
                               },
                               rs)

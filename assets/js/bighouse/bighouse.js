@@ -1078,9 +1078,9 @@ var BigHouse = (function() {
 
                     bh.moveNumber = data.move
 
-		    bh.updatePlayerMood (data.self.mood)
+		    bh.updatePlayerMood (data.self.mood, data.startline)
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
-		    bh.updateOpponentMood (data.other.id, data.other.mood)
+		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
                     if (data.finished) {
 			bh.showLastOutcome (data.lastOutcome)
@@ -1436,40 +1436,51 @@ var BigHouse = (function() {
 		.throwOut()
         },
         
-        updatePlayerMood: function (mood) {
+        updatePlayerMood: function (mood, time) {
             var bh = this
             this.lastMood = mood
-            var newMoodImg = this.makeMoodImage (this.playerID, mood)
-            newMoodImg.on ('load', function() {
-                bh.playerMoodDiv
-		    .html (newMoodImg)
-                    .off ('click')
-                    .on ('click', bh.callWithSoundEffect (bh.showPlayerStatusPage))
-            })
-            for (var m = 0; m < this.moods.length; ++m) {
-                var newMood = this.moods[m]
-                this.moodDiv[m].off()
-		if (newMood == mood)
-		    this.moodImg[m].fadeTo(100,1)
-		else {
-		    this.moodImg[m].fadeTo(200,.5)
-                    this.moodDiv[m]
-			.on('click',
-			    ':not(.unclickable)',
-			    bh.changeMoodFunction (bh.moveNumber, newMood))
-		}
+            var date = new Date (time)
+            console.log ("Called updatePlayerMood for move #" + this.moveNumber + " at time " + time + "; last update was at time " + this.lastPlayerMoodTime)
+            if (!this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
+                if (this.verbose)
+                    console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
+                this.lastPlayerMoodTime = date
+                var newMoodImg = this.makeMoodImage (this.playerID, mood)
+                newMoodImg.on ('load', function() {
+                    bh.playerMoodDiv
+		        .html (newMoodImg)
+                        .off ('click')
+                        .on ('click', bh.callWithSoundEffect (bh.showPlayerStatusPage))
+                })
+                for (var m = 0; m < this.moods.length; ++m) {
+                    var newMood = this.moods[m]
+                    this.moodDiv[m].off()
+		    if (newMood == mood)
+		        this.moodImg[m].fadeTo(100,1)
+		    else {
+		        this.moodImg[m].fadeTo(200,.5)
+                        this.moodDiv[m]
+			    .on('click',
+			        ':not(.unclickable)',
+			        bh.changeMoodFunction (bh.moveNumber, newMood))
+		    }
+                }
             }
         },
 
-        updateOpponentMood: function (id, mood) {
+        updateOpponentMood: function (id, mood, time) {
             var bh = this
-            var newMoodImg = this.makeMoodImage (id, mood)
-            newMoodImg.on ('load', function() {
-                bh.opponentMoodDiv
-		    .html (newMoodImg)
-                    .off ('click')
+            var date = new Date (time)
+            if (!this.lastOpponentMoodTime || date > this.lastOpponentMoodTime) {
+                this.lastOpponentMoodTime = date
+                var newMoodImg = this.makeMoodImage (id, mood)
+                newMoodImg.on ('load', function() {
+                    bh.opponentMoodDiv
+		        .html (newMoodImg)
+                        .off ('click')
                     .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))
-            })
+                })
+            }
         },
 
         makeMoveFunction: function (moveNumber, choice) {
@@ -1506,20 +1517,16 @@ var BigHouse = (function() {
             var bh = this
             return function() {
                 bh.moodBar.find('*').addClass('unclickable')
+                console.log ("changeMoodFunction: move=#" + moveNumber + " mood=" + mood)
                 bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
                         bh.playSound (mood)
                         bh.moodBar.find('*').removeClass('unclickable')
-                        bh.updatePlayerMood (mood)
+                        bh.updatePlayerMood (mood, data.time)
+                    }).fail (function () {
+                        bh.moodBar.find('*').removeClass('unclickable')
                     })
             }
-        },
-
-        showOutcome: function (outcome) {
-            var bh = this
-            this.updatePlayerMood (outcome.self.mood)
-            this.updateOpponentMood (outcome.other.id, outcome.other.mood)
-	    this.loadGameCards()
         },
 
         cardThrowFunction: function (card, direction) {
@@ -1557,16 +1564,16 @@ var BigHouse = (function() {
 			this.runFastTimeoutAnimation()
 		    else if (this.gameState == 'ready')
 			this.runTimeoutAnimation()
-		    this.callOrPostpone (this.showOutcome.bind (this, msg.data.outcome), msg)
+		    this.callOrPostpone (this.loadGameCards.bind (this), msg)
 		}
                 break
             case "mood":
-                if (this.gameID == msg.data.game && msg.data.move >= this.moveNumber)
+                if (this.gameID == msg.data.game && msg.data.move >= this.moveNumber && new Date(msg.data.time) > this.lastOpponentMoodTime)
 		    if (this.verbose)
 			console.log ("Received 'mood' message")
 		    this.callOrPostpone (function() {
 			this.playSound (msg.data.other.mood, .5)
-			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood)
+			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood, msg.data.time)
                     }, msg)
                 break
             default:
