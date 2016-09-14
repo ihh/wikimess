@@ -893,7 +893,7 @@ var BigHouse = (function() {
 	    this.joinWaitTimer = window.setInterval (function() {
                 var now = new Date()
                 var timeLeft = Math.max (0, joinDeadline - now)
-	        bh.timerDiv.width(Math.round(100*timeLeft/totalTime)+"%")
+	        bh.timerDiv.width((100*timeLeft/totalTime)+"%")
                 if (timeLeft == 0) {
                     window.clearInterval (bh.joinWaitTimer)
 		    delete bh.joinWaitTimer
