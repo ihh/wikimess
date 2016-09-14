@@ -278,8 +278,9 @@ var BigHouse = (function() {
         showPlayPage: function() {
             var bh = this
 
+            this.clearMoveTimer()
             this.changeMusic('menu')
-            
+
             this.page = 'play'
             if (!this.lastMood)
                 this.lastMood = 'happy'
@@ -401,7 +402,7 @@ var BigHouse = (function() {
 	},
 
 	callOrPostpone: function (callback, msg) {
-	    if (this.inMessageAcceptingState()) {
+	    if (this.inMessageAcceptingState() && this.postponedMessages.length == 0) {
 		if (this.verbose)
 		    console.log ("Processing '" + msg.data.message + "' message immediately")
 		callback.call (this)
@@ -976,6 +977,7 @@ var BigHouse = (function() {
         showGamePage: function() {
             var bh = this
 
+            this.clearMoveTimer()
             this.changeMusic('game')
 
             this.page = 'game'
@@ -1168,15 +1170,18 @@ var BigHouse = (function() {
 		    break
 		}
 	    } else {
-		if (now.getTime() > thisCardDeadline.getTime()) {
-		    delete this.lastChime
-		    var card = this.getTopCard()
-		    card.fadeCallback = this.timerCallback.bind (this)
-		    this.throwCard (card)
-		} else
-		    this.setMoveTimer (this.timerCallback, 10)
+		if (now.getTime() > thisCardDeadline.getTime() && this.page == 'game' && this.gameState == 'ready')
+                    this.throwSingleCard()
+		this.setMoveTimer (this.timerCallback, 10)
 	    }
 	},
+
+        throwSingleCard: function() {
+            var card = this.getTopCard()
+            card.fadeCallback = this.setGameState.bind (this, this.gameState)
+            this.setGameState('throwSingleCardAnimation')
+	    this.throwCard (card)
+        },
 
 	runFastTimeoutAnimation: function() {
 	    this.clearMoveTimer()
@@ -1254,9 +1259,9 @@ var BigHouse = (function() {
 	    var timeLeft = end - now, totalTime = end - start
 	    var timeLeftFrac = timeLeft / totalTime
 	    this.timerDiv
-		.width ((100 * timeLeftFrac) + "%")
+		.width (Math.max (0, 100 * timeLeftFrac) + "%")
 	    var redTimeFrac = .5
-	    var redness = timeLeftFrac > redTimeFrac ? 0 : (1 - timeLeftFrac / redTimeFrac)
+	    var redness = Math.max (0, Math.min (1, 1 - timeLeftFrac / redTimeFrac))
 	    this.timerDiv
 		.css ("background-color", "rgb(" + Math.round(63+192*redness) + "," + Math.round(64-64*redness) + "," + Math.round(64-64*redness) + ")")
             if (this.gameState == 'ready') {
