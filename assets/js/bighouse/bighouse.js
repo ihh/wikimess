@@ -1087,7 +1087,7 @@ var BigHouse = (function() {
 		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
 		    var outcome = data.lastOutcome
-		    var separateOutcomeCard = outcome && outcome.outro && /;;/.test (outcome.outro)
+		    var separateOutcomeCard = outcome && outcome.outro && outcome.outro.indexOf(bh.cardDelimiter) >= 0
 		    var firstCardClass = separateOutcomeCard ? 'outcome' : undefined
 		    if (outcome && outcome.verb)
 			bh.playSound (outcome.verb)
@@ -1310,6 +1310,7 @@ var BigHouse = (function() {
 	createAndDealCards: function (config) {
 	    var bh = this
 	    var texts = config.text.split (this.cardDelimiter)
+		.filter (function (text) { return /\S/.test(text) })
 	    texts.reverse().forEach (function (text, n) {
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
