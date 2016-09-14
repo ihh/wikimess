@@ -95,7 +95,9 @@ module.exports = {
                             // create the game
 			    var game = { player1: player1,
                                          player2: player2,
-                                         current: choice }
+                                         current: choice,
+					 mood1: 'happy',
+					 mood2: 'happy' }
 			    GameService.playBotMoves (game)
                             Game.create (game,
                                          function (err, g) {

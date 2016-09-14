@@ -41,7 +41,7 @@ var BigHouse = (function() {
 	cardFadeTime: 500,
         avatarSize: 298,
         cardDelimiter: ';;',
-	maxJoinWaitTime: 10,
+	maxJoinWaitTime: 1, // 10,
 	kickDelay: 1000,  // actual delay will be between 1* and 2* this
 	nTimeoutChimes: 3,
 

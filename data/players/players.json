@@ -15,8 +15,8 @@
 	"strategy": "mood",
 	"probc": {
 	    "happy": 1,
-	    "angry": 1,
-	    "surprised": 0,
+	    "angry": 0,
+	    "surprised": 1,
 	    "sad": 0
 	},
     },
