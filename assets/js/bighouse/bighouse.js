@@ -387,7 +387,7 @@ var BigHouse = (function() {
 
 	inMessageAcceptingState: function() {
 	    // states in which mood updates & moves can be received
-	    return this.page == 'game' && (this.gameState == 'ready' || this.gameState == 'waitingForOther' || this.gameState == 'kicking')
+	    return this.page == 'game' && (this.gameState == 'ready' || this.gameState == 'waitingForOther' || this.gameState == 'kicking' || this.gameState == 'gameOver')
 	},
 
 	handlePostponedMessages: function() {
@@ -1556,9 +1556,9 @@ var BigHouse = (function() {
                 break
             case "move":
             case "timeout":
+		if (this.verbose)
+		    console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
                 if (msg.data.game == this.gameID && msg.data.move >= this.moveNumber) {
-		    if (this.verbose)
-			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + " while at move #" + this.moveNumber)
 		    if (msg.data.move > this.moveNumber)
 			this.runFastTimeoutAnimation()
 		    else if (this.gameState == 'ready')
@@ -1567,6 +1567,8 @@ var BigHouse = (function() {
 		}
                 break
             case "mood":
+                if (this.verbose)
+		    console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + " time " + msg.data.time + "; last update at move #" + this.moveNumber + " time " + this.lastOpponentMoodTime)
                 if (this.gameID == msg.data.game && msg.data.move >= this.moveNumber && new Date(msg.data.time) > this.lastOpponentMoodTime)
 		    this.callOrPostpone (function() {
 			this.playSound (msg.data.other.mood, .5)
