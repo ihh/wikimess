@@ -41,7 +41,7 @@ var BigHouse = (function() {
 	cardFadeTime: 500,
         avatarSize: 298,
         cardDelimiter: ';;',
-	maxJoinWaitTime: 1, // 10,
+	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
 	kickDelay: 1000,  // actual delay will be between 1* and 2* this
 	nTimeoutChimes: 3,
 
@@ -886,7 +886,7 @@ var BigHouse = (function() {
                 .append ($('<div class="timebar">')
 			 .append (this.timerDiv = $('<div class="timer">')))
             
-            var totalTime = this.maxJoinWaitTime * 1000,
+            var totalTime = this.botWaitTime * 1000,
             joinStartline = new Date(),
             joinDeadline = new Date (joinStartline.getTime() + totalTime)
 
@@ -1086,15 +1086,26 @@ var BigHouse = (function() {
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
+		    var outcome = data.lastOutcome
+		    var separateOutcomeCard = outcome && outcome.outro && /;;/.test (outcome.outro)
+		    var firstCardClass = separateOutcomeCard ? 'outcome' : undefined
+		    if (outcome && outcome.verb)
+			bh.playSound (outcome.verb)
+
                     if (data.finished) {
-			bh.showLastOutcome (data.lastOutcome)
+			if (outcome)
+			    bh.createAndDealCards ({ text: outcome.outro,
+						     firstCardClass: firstCardClass })
                         bh.hideTimer()
 			bh.setGameState('gameOver')
 		    } else {
 			bh.createPlaceholderCards()
 			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
-			    bh.createAndDealCards ({ text: data.intro,
+			    var intro = data.intro || ''
+			    var outro = (outcome && outcome.outro) || ''
+			    bh.createAndDealCards ({ text: outro + ' ' + intro,
+						     firstCardClass: firstCardClass,
 						     finalCardClass: 'verb-' + data.verb,
 						     finalCardIsChoice: true,
 						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
@@ -1105,7 +1116,6 @@ var BigHouse = (function() {
 							 bh.showWaitingForOther()
 							 bh.setGameState('ready')
 						     }})
-			    bh.showLastOutcome (data.lastOutcome)
 			} else {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
