@@ -93,31 +93,27 @@ module.exports = {
                                 player2 = player
                             }
                             // create the game
-                            Game.create ( { player1: player1,
-                                            player2: player2,
-                                            current: choice },
-                                          function (err, game) {
-                                              if (err)
-                                                  error (err)
-                                              else {
-                                                  // update the 'waiting' fields
-                                                  Player.update ( { id: [player1.id, player2.id] },
-                                                                  { waiting: false },
-                                                                  function (err, updated) {
-                                                                      if (err)
-                                                                          error (err)
+			    var game = { player1: player1,
+                                         player2: player2,
+                                         current: choice }
+			    GameService.playBotMoves (game)
+                            Game.create (game,
+                                         function (err, g) {
+                                             if (err)
+                                                 error (err)
+                                             else {
+						 game.id = g.id
+                                                 // update the 'waiting' fields
+                                                 Player.update ( { id: [player1.id, player2.id] },
+                                                                 { waiting: false },
+                                                                 function (err, updated) {
+                                                                     if (err)
+                                                                         error (err)
                                                                       else
-									  GameService
-									  .playBotMoves (game,
-											 player1,
-											 player2,
-											 function() {
-											     gameStarted (opponent, game)
-											 },
-											 error)
+									  gameStarted (opponent, game)
                                                                   })
-                                              }
-                                          })
+                                             }
+                                         })
                         }
                     }
                 })

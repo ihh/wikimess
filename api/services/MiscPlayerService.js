@@ -187,7 +187,7 @@ module.exports = {
 	    var msg = { message: message,
 			game: game.id,
 			move: moveNumber,
-			outcome: Outcome.forRole (game, outcome, role) }
+			outcome: outcome ? Outcome.forRole (game, outcome, role) : {} }
 	    var playerID = Game.getRoleAttr(game,role,'player').id
 	    Player.message (playerID, msg)
 	    sails.log.debug ("Sending message " + JSON.stringify(msg) + " to player #" + playerID)

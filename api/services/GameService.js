@@ -71,6 +71,8 @@ module.exports = {
     },
 
     moveOutcomes: function (game, cb) {
+//	console.log('moveOutcomes')
+//	console.log(game)
         var query = Outcome.find ({ choice: game.current.id })
 	if (game.move1 != 'none')
 	    query.where ({ move1: game.move1 })
@@ -93,7 +95,7 @@ module.exports = {
             var outcomeWeight = outcomes.map (function (outcome) {
                 return GameService.evalOutcomeWeight (game, outcome)
             })
-//	    console.log ("Outcome weights: " + JSON.stringify(outcomeWeight))
+//	    console.log ("randomOutcome weights: " + JSON.stringify(outcomeWeight))
             var totalWeight = outcomeWeight.reduce (function (total, w) {
                 return total + w
             }, 0)
@@ -114,128 +116,167 @@ module.exports = {
         return choice && !(choice.intro && /\S/.test(choice.intro))
     },
 
-    applyRandomOutcome: function (info, error) {
+    updateGameAndPlayers: function (game, callback) {
+	callback = callback || function() {}
+
+//	console.log(game)
+	GameService.playBotMoves (game)
+
+	var updateAttrs = { defaultMove1: game.defaultMove1,
+			    defaultMove2: game.defaultMove2,
+			    move1: game.move1,
+			    move2: game.move2,
+			    moves: game.moves + 1,
+			    mood1: game.mood1,
+			    mood2: game.mood2,
+                            common: game.common,
+                            local1: game.local1,
+                            local2: game.local2,
+			    current: game.current ? game.current.id : null,
+			    lastOutcome: game.lastOutcome ? game.lastOutcome.id : null,
+                            currentStartTime: new Date(),
+			    future: game.future,
+			    finished: game.current ? false : true
+			  }
+        Game.update
+	( { id: game.id,
+            // add some extra criteria to guard against race conditions
+            moves: game.moves
+          },
+          updateAttrs,
+          function (err, updatedGames) {
+              if (err)
+                  callback (err)
+              else if (updatedGames.length != 1)
+                  callback (new Error ("Couldn't update Game"))
+              else {
+                  // update player1
+                  Player.update
+		  ( { id: game.player1.id },
+                    { global: game.player1.global },
+                    function (err, updatedPlayer1s) {
+                        if (err)
+                            callback (err)
+                        else if (updatedPlayer1s.length != 1)
+                            callback (new Error ("Couldn't update player 1"))
+                        else {
+                            // update player2
+                            Player.update
+			    ( { id: game.player2.id },
+                              { global: game.player2.global },
+                              function (err, updatedPlayer2s) {
+                                  if (err)
+                                      callback (err)
+                                  else if (updatedPlayer2s.length != 1)
+                                      callback (new Error ("Couldn't update player 2"))
+                                  else
+				      callback (null)
+			      })
+			}
+		    })
+	      }
+	  })
+    },
+
+    applyRandomOutcome: function (info, gotOutcome, error) {
 	var game = info.game
-	var gotOutcome = info.gotOutcome
-	var storeOutcome = info.storeOutcome
+	var firstIteration = info.firstIteration
+	// prepare some callbacks
+	var success = function() {
+	    gotOutcome (game.lastOutcome, game, game.player1, game.player2)
+	}
+	var bindError = function (firstErr) {
+	    return function (laterErr) {
+		error (firstErr)
+		if (laterErr)
+		    sails.debug.log (laterErr)
+	    }
+	}
+	var updateWithError = function (err) {
+	    GameService.updateGameAndPlayers (game, bindError(err))
+	}
+	var updateWithSuccess = function() {
+	    GameService.updateGameAndPlayers (game, success)
+	}
+
+	// initialize with null outcome
+	if (firstIteration)
+	    game.lastOutcome = null
+
+	// find a random outcome
         GameService.randomOutcome
 	(game,
          function (err, outcome) {
-             if (err)
-                 error (err)
-             else if (!outcome)
-                 error (new Error ("No outcome found"))
-             else {
+             if (err) {
+		 game.current = null
+		 updateWithError(err)
+	     } else if (!outcome) {
+		 game.current = null
+		 updateWithSuccess()
+	     } else {
+//		 console.log (outcome)
+
+		 if (firstIteration)
+		     game.lastOutcome = outcome
+
                  var future = outcome.next
                  if (!outcome.flush)
                      future = future.concat (game.future)
-                 // prepare a function to update the state of everything
-                 var updateGame = function (currentChoice, futureChoiceNames) {
-		     var currentChoiceID = currentChoice ? currentChoice.id : null
-		     var autoExpandCurrentChoice = GameService.choiceAutoExpandable (currentChoice)
-                     // evaluate updated player globals before updating game, so we get the correct $src
-                     var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
-                     var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
-                     // update game state
-		     var updateAttrs = { move1: 'none',
-					 move2: 'none',
-					 moves: game.moves + 1,
-					 mood1: Outcome.mood1 (game, outcome),
-					 mood2: Outcome.mood2 (game, outcome),
-                                         common: GameService.evalUpdatedState (game, outcome, 0, true),
-                                         local1: GameService.evalUpdatedState (game, outcome, 1, true),
-                                         local2: GameService.evalUpdatedState (game, outcome, 2, true),
-					 current: currentChoiceID,
-                                         currentStartTime: new Date(),
-					 future: futureChoiceNames,
-					 finished: currentChoiceID ? false : true
-				       }
-		     if (storeOutcome)
-			 updateAttrs.lastOutcome = outcome
-		     sails.log.debug ("Updating game #" + game.id + " from " + game.current.name + " (move #" + (game.moves+1) + ") to " + (currentChoice ? currentChoice.name : 'null') + " (move #" + (game.moves+2) + ")")
-                     Game.update
-		     ( { id: game.id,
-                         // add some extra criteria to guard against race conditions
-                         moves: game.moves
-                       },
-                       updateAttrs,
-                       function (err, updatedGames) {
-                           if (err)
-                               error (err)
-                           else if (updatedGames.length != 1)
-                               error ("Couldn't update Game")
-                           else {
-                               // update player1
-                               Player.update
-			       ( { id: game.player1.id },
-                                 { global: p1global },
-                                 function (err, updatedPlayer1s) {
-                                     if (err)
-                                         error (err)
-                                     else if (updatedPlayer1s.length != 1)
-                                         error ("Couldn't update player 1")
-                                     else {
-                                         // update player2
-                                         Player.update
-					 ( { id: game.player2.id },
-                                           { global: p2global },
-                                           function (err, updatedPlayer2s) {
-                                               if (err)
-                                                   error (err)
-                                               else if (updatedPlayer2s.length != 1)
-                                                   error ("Couldn't update player 2")
-                                               else {
-						   Game.find ({ id: game.id })
-						       .populate ('player1')
-						       .populate ('player2')
-						       .populate ('current')
-						       .exec (function (err, refreshedGames) {
-							   var up1 = updatedPlayer1s[0]
-							   var up2 = updatedPlayer2s[0]
-							   if (err)
-							       error(err)
-							   else if (refreshedGames.length != 1)
-							       error(new Error("Couldn't reload game"))
-							   else {
-							       if (!autoExpandCurrentChoice) {
-								   GameService
-								       .playBotMoves (refreshedGames[0],
-										      up1,
-										      up2,
-										      function() {
-											  gotOutcome (outcome,
-												      refreshedGames[0],
-												      up1,
-												      up2)},
-										      error)
-							       } else
-								   GameService.applyRandomOutcome ({ game: refreshedGames[0],
-											             gotOutcome: function (dummyOutcome, game, p1, p2) {
-												         gotOutcome (outcome, game, p1, p2)  // do not show the client the dummy outcome text of this auto-expansion; only the first outcome that led us here
-											             },
-											             storeOutcome: false },
-											           error)
-							   }
-						       })
-					       }
-                                           })
-                                     }
-                                 })
-                           }
-                       })
-                 }
-                 // find the ID of the next scene, if there is one
-                 if (future.length)
-                     Choice.findOne ({ name:future[0] }).exec (function (err, choice) {
-                         if (err)
-                             error (err)
-                         else
-                             updateGame (choice, future.slice(1))
-                     })
-                 else
-                     updateGame (null, [])
-             }
-         })
+		 game.future = future
+
+		 // evaluate updated vars before updating game, so we get the correct $src
+		 var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
+		 var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
+		 var common = GameService.evalUpdatedState (game, outcome, 0, true)
+		 var p1local = GameService.evalUpdatedState (game, outcome, 1, true)
+		 var p2local = GameService.evalUpdatedState (game, outcome, 2, true)
+		 // update game state
+		 game.move1 = game.move2 = 'none'
+		 game.mood1 = Outcome.mood1 (game, outcome)
+		 game.mood2 = Outcome.mood2 (game, outcome)
+		 game.common = common
+		 game.local1 = p1local
+		 game.local2 = p2local
+		 game.player1.global = p1global
+		 game.player2.global = p2global
+
+		 var resolveChoice = function() {
+		     // find the ID of the next scene, if there is one
+		     if (game.future.length) {
+			 var nextChoiceName = game.future[0]
+			 game.future = game.future.slice(1)
+//			 console.log ("Attempting to resolve "+nextChoiceName)
+			 Choice.findOne ({ name: nextChoiceName }).exec (function (err, choice) {
+			     if (err) {
+				 game.current = null
+				 updateWithError(err)
+			     } else if (!choice)
+				 resolveChoice()
+			     else {
+				 game.current = choice
+
+				 sails.log.debug ("Updating game #" + game.id + " from " + game.current.name + " (move #" + (game.moves+1) + ") to " + (choice ? choice.name : 'null') + " (move #" + (game.moves+2) + ")")
+
+				 // auto-expand or update
+				 if (GameService.choiceAutoExpandable (choice))
+				     GameService
+					 .applyRandomOutcome ({ game: game,
+								firstIteration: false },
+							      firstIteration ? updateWithSuccess : success,
+							      updateWithError)
+				 else
+				     updateWithSuccess()
+			     }
+			 })
+		     } else {
+			 // no future for England's dreaming
+			 game.current = null
+			 updateWithSuccess()
+		     }
+		 }
+		 resolveChoice()
+	     }
+	 })
     },
 
     evalUpdatedState: function (game, outcome, role, local) {
@@ -260,7 +301,7 @@ module.exports = {
             $g2 = p2.global.state,
             $l2 = p2.local.state,
             $n2 = p2.name,
-
+	
             $src = game.current.name,
             $next = outcome.next,
             $dest = outcome.next.length == 1 ? outcome.next[0] : undefined,
@@ -437,8 +478,8 @@ module.exports = {
 					 if (GameService.gotBothMoves (refreshedGame))
 					     GameService
 					     .applyRandomOutcome ({ game: refreshedGame,
-								    gotOutcome,
-								    storeOutcome: true },
+								    firstIteration: true },
+								  gotOutcome,
 								  function (err) {
 								      console.log (err)
 								      playerWaiting()
@@ -474,21 +515,13 @@ module.exports = {
         }
     },
 
-    playBotMoves: function (game, player1, player2, success, error) {
-	var update = { defaultMove1: BotService.randomMove (player1, game),
-		       defaultMove2: BotService.randomMove (player2, game) }
-	if (!player1.human)
-	    update.move1 = update.defaultMove1
-	else if (!player2.human)
-	    update.move2 = update.defaultMove2
-	Game.update ({ id: game.id },
-		     update,
-		     function (err, updated) {
-			 if (err)
-			     error(err)
-			 else
-			     success()
-		     })
+    playBotMoves: function (game) {
+	game.defaultMove1 = BotService.randomMove (game.player1, game)
+	game.defaultMove2 = BotService.randomMove (game.player2, game)
+	if (!game.player1.human)
+	    game.move1 = game.defaultMove1
+	else if (!game.player2.human)
+	    game.move2 = game.defaultMove2
     },
 
 };

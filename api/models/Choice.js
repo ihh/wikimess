@@ -28,11 +28,6 @@ module.exports = {
           type: 'string'
       },
       
-      root: {
-          type: 'boolean',
-          defaultsTo: false
-      },
-
       intro: { type: 'string' },
       intro2: { type: 'string' },
 
