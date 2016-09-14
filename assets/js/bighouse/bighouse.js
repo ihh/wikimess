@@ -1306,17 +1306,30 @@ var BigHouse = (function() {
 		.filter (function (text) { return /\S/.test(text) })
 	    var prevReveal = function() {}
 	    texts.reverse().forEach (function (text, n) {
+		var cardConfig = {}
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
 		var sfx = isFirst ? config.firstCardSfx : undefined
 		var cardClass = isFirst ? config.firstCardClass : (isFinal ? config.finalCardClass : undefined)
-		// text can override default cardClass & sfx
+		// text can override default cardClass, sfx, hints
 		text = text.replace (/<class:([^> ]+)>/g, function (match, className) {
 		    cardClass = className
 		    return ""
 		})
 		text = text.replace (/<sfx:([^> ]+)>/g, function (match, sfxName) {
 		    sfx = sfxName
+		    return ""
+		})
+		text = text.replace (/<hint:([^>]+)>/g, function (match, hint) {
+		    cardConfig.leftHint = cardConfig.rightHint = hint
+		    return ""
+		})
+		text = text.replace (/<hintc:([^>]+)>/g, function (match, hint) {
+		    cardConfig.rightHint = hint
+		    return ""
+		})
+		text = text.replace (/<hintd:([^>]+)>/g, function (match, hint) {
+		    cardConfig.leftHint = hint
 		    return ""
 		})
                 // misc text expansions go here...
@@ -1328,12 +1341,13 @@ var BigHouse = (function() {
                 })
 		// create the <li>
                 var cardListItem = bh.createCardListItem (content, cardClass)
-		var cardConfig = { listItem: cardListItem }
+		cardConfig.listItem = cardListItem
 		if (isFinal) {
 		    if (config.finalCardIsChoice)
 			cardListItem.addClass('choicecard')  // flag this for showCardCount
 		    $.extend (cardConfig, config)
 		}
+		// create & deal the card
                 var card = bh.dealCard (cardConfig)
 		card.fadeCallback = prevReveal
 		// create the reveal callback
