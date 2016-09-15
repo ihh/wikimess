@@ -261,7 +261,7 @@ module.exports = {
 	var imagePath = '/images/avatars/' + playerID
 	var playerImageDir = process.cwd() + '/assets' + imagePath
 	var tmpPlayerImageDir = process.cwd() + '/.tmp/public' + imagePath
-	var targetFilename = mood + '.png'
+	var targetFilename = mood + '.jpg'
 
 	if (!fs.existsSync(playerImageDir))
 	    fs.mkdirSync(playerImageDir)
@@ -290,9 +290,10 @@ module.exports = {
 	      // convert the file to the appropriate size using ImageMagick
 	      fs.writeFileSync (targetLocation, imagemagick.convert({
 		  srcData: fs.readFileSync (uploadLocation),
-		  format: 'PNG',
-		  width: 298,
-		  height: 298
+		  format: 'JPEG',
+		  quality: 75,
+		  width: 128,
+		  height: 128
 	      }));
 
 	      // remove the uploaded file
@@ -322,9 +323,10 @@ module.exports = {
                 else if (!player)
                     res.status(404).send (new Error ("Player " + name + " not found"))
                 else {
+		    // at the moment, generic avatars are PNGs and uploaded avatars are JPEGs...
 		    var path = process.cwd() + '/assets' + genericImageDir + '/' + mood + '.png'
 		    try {
-			var testPath = process.cwd() + '/assets' + imageDir + '/' + mood + '.png'
+			var testPath = process.cwd() + '/assets' + imageDir + '/' + mood + '.jpg'
 			var stats = fs.lstatSync (testPath);
 			if (stats.isFile())
 			    path = testPath

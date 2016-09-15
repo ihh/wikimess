@@ -41,7 +41,7 @@ var BigHouse = (function() {
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
 	cardFadeTime: 500,
-        avatarSize: 298,
+        avatarSize: 128,
         cardDelimiter: ';;',
 	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
 	kickDelay: 1000,  // actual delay will be between 1* and 2* this
