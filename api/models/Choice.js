@@ -39,13 +39,13 @@ module.exports = {
       
       hintc: {
           type: 'string',
-          defaultsTo: 'Co-operate'
+          defaultsTo: 'OK'  // Co-operate
       },
       hintc2: { type: 'string' },
 
       hintd: {
           type: 'string',
-          defaultsTo: 'Defect'
+          defaultsTo: 'Nope'  // Defect
       },
       hintd2: { type: 'string' },
 
