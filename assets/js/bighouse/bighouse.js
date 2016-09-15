@@ -1476,10 +1476,11 @@ var BigHouse = (function() {
             var bh = this
             this.lastMood = mood
             var date = new Date (time)
-            if (!this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
+            if (!time || !this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
                 if (this.verbose)
                     console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
-                this.lastPlayerMoodTime = date
+		if (time)
+                    this.lastPlayerMoodTime = date
                 var newMoodImg = this.makeMoodImage (this.playerID, mood)
                 newMoodImg.on ('load', function() {
                     bh.playerMoodDiv
@@ -1572,13 +1573,14 @@ var BigHouse = (function() {
         changeMoodFunction: function (moveNumber, mood) {
             var bh = this
             return function() {
+                bh.playSound (mood)
+                bh.updatePlayerMood (mood)  // call to update image, don't provide a timestamp
                 bh.moodBar.find('*').addClass('unclickable')
 //                console.log ("changeMoodFunction: move=#" + moveNumber + " mood=" + mood)
                 bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
-                        bh.playSound (mood)
                         bh.moodBar.find('*').removeClass('unclickable')
-                        bh.updatePlayerMood (mood, data.time)
+                        bh.updatePlayerMood (mood, data.time)  // call again to update timestamp
                     }).fail (function () {
                         bh.moodBar.find('*').removeClass('unclickable')
                     })
