@@ -1548,7 +1548,8 @@ var BigHouse = (function() {
 		    bh.makeMoveOrRetry (moveNumber, choice)
 			.done (function() { bh.setGameState ('waitingForOther') })
 			.fail (function() {
-			    console.log("Failed to make move; rebuilding page")
+			    if (this.verbose)
+				console.log("Failed to make move; rebuilding page")
 			    bh.showGamePage()
 			})
 		}
@@ -1572,7 +1573,7 @@ var BigHouse = (function() {
             var bh = this
             return function() {
                 bh.moodBar.find('*').addClass('unclickable')
-                console.log ("changeMoodFunction: move=#" + moveNumber + " mood=" + mood)
+//                console.log ("changeMoodFunction: move=#" + moveNumber + " mood=" + mood)
                 bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
                         bh.playSound (mood)
