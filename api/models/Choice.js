@@ -27,9 +27,20 @@ module.exports = {
       scene: {
           type: 'string'
       },
+
+      common: { type: 'json' },
+      local1: { type: 'json' },
+      local2: { type: 'json' },
+      global1: { type: 'json' },
+      global2: { type: 'json' },
       
       intro: { type: 'string' },
       intro2: { type: 'string' },
+
+      autoexpand: {
+	  type: 'boolean',
+	  defaultsTo: false
+      },
 
       verb: {
           type: 'string',

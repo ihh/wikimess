@@ -38,30 +38,11 @@ module.exports = {
       outro2: { type: 'string' },
 
       // game & player state updates
-      common: {
-          type: 'json',
-          defaultsTo: {}
-      },
-
-      local1: {
-          type: 'json',
-          defaultsTo: {}
-      },
-
-      local2: {
-          type: 'json',
-          defaultsTo: {}
-      },
-
-      global1: {
-          type: 'json',
-          defaultsTo: {}
-      },
-
-      global2: {
-          type: 'json',
-          defaultsTo: {}
-      },
+      common: { type: 'json' },
+      local1: { type: 'json' },
+      local2: { type: 'json' },
+      global1: { type: 'json' },
+      global2: { type: 'json' },
 
       mood1: {
           type: 'string',
@@ -90,15 +71,17 @@ module.exports = {
             return oldMood
         else if (newMood)
             return newMood
-        var move12 = move1 + move2
-        switch (move12) {
-        case 'cc': return 'happy'
-        case 'cd': return 'angry'
-        case 'dc': return 'surprised'
-        case 'dd': return 'sad'
-        default: break
-        }
-        return null
+	else if (move1 && move2) {
+            var move12 = move1 + move2
+            switch (move12) {
+            case 'cc': return 'happy'
+            case 'cd': return 'angry'
+            case 'dc': return 'surprised'
+            case 'dd': return 'sad'
+            default: break
+            }
+	}
+        return undefined
     },
 
     mood1: function (game, outcome) {
@@ -109,26 +92,14 @@ module.exports = {
         return Outcome.mood (game.mood2, outcome.mood2, outcome.move2, outcome.move1)
     },
 
-    forRole: function (game, outcome, role) {
-        var outro, self, other, selfMood, otherMood, verb, type
-        if (role == 1) {
-            outro = outcome.outro
-            self = game.player1
-            other = game.player2
-            selfMood = Outcome.mood1(game,outcome)
-            otherMood = Outcome.mood2(game,outcome)
-            verb = outcome.verb
-            type = outcome.move1 + outcome.move2
-        } else {  // role == 2
-            outro = outcome.outro2 || outcome.outro
-            self = game.player2
-            other = game.player1
-            selfMood = Outcome.mood2(game,outcome)
-            otherMood = Outcome.mood1(game,outcome)
-            verb = outcome.verb2
-            type = outcome.move2 + outcome.move1
-        }
-        if (!verb) {
+    outcomeVerb: function (outcome, role) {
+	var verb = outcome.verb
+	if (!verb) {
+	    var type
+            if (role == 1)
+		type = outcome.move1 + outcome.move2
+	    else
+		type = outcome.move2 + outcome.move1
             switch (type) {
             case 'cc': verb = 'reward'; break;
             case 'cd': verb = 'sucker'; break;
@@ -136,14 +107,8 @@ module.exports = {
             case 'dd': verb = 'punish'; break;
             default: verb = undefined; break;
             }
-        }
-	if (outro)
-            outro = GameService.expandText (outro, game, outcome, role)
-        return { outro: outro,
-                 verb: verb,
-                 time: new Date(),
-                 self: { mood: selfMood },
-                 other: { id: other.id, name: other.name, mood: otherMood } }
+	}
+	return typeof(verb) == 'undefined' ? '' : ('<outcome:' + verb + '>')
     },
 };
 

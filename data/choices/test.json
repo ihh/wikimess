@@ -18,6 +18,6 @@
     },
     {
 	name: "auto",
-	cc: {next:["root","root"]}
+	auto: {next:["root","root"]}
     }
 ]

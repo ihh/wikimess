@@ -112,6 +112,7 @@ module.exports = {
         var add_dd = function (outcome) { addOutcome ('d', 'd', outcome) }
 
         var add_flipped = function (outcome) { addOutcome ('d', 'c', flip_cd (outcome)) }
+        var add_auto = function (outcome) { addOutcome (undefined, undefined, outcome); config.autoexpand = true }
 
         addOutcomes ('cc', [add_cc])
         addOutcomes ('cd', [add_cd])
@@ -133,6 +134,8 @@ module.exports = {
         addOutcomes ('same', [add_cc, add_dd])
         addOutcomes ('diff', [add_cd, add_dc])
         addOutcomes (['cd2','symdiff'], [add_cd, add_flipped])
+
+        addOutcomes (['auto'], [add_auto])
 
         if (config.hint) {
             // various ways of specifying asymmetric things

@@ -98,29 +98,22 @@ module.exports = {
                                          current: choice,
 					 mood1: 'happy',
 					 mood2: 'happy' }
-			    GameService.playBotMoves (game)
-                            Game.create (game,
-                                         function (err, g) {
-                                             if (err)
-                                                 error (err)
-                                             else {
-						 game.id = g.id
-                                                 // update the 'waiting' fields
-                                                 Player.update ( { id: [player1.id, player2.id] },
-                                                                 { waiting: false },
-                                                                 function (err, updated) {
-                                                                     if (err)
-                                                                         error (err)
-                                                                      else
-									  gameStarted (opponent, game)
-                                                                  })
-                                             }
-                                         })
+			    GameService.createGame (game,
+						    function() { 
+							// update the 'waiting' fields
+							Player.update ( { id: [player1.id, player2.id] },
+									{ waiting: false },
+									function (err, updated) {
+									    if (err)
+										error (err)
+									    else
+										gameStarted (opponent, game)
+									})
+						    })
                         }
                     }
                 })
         }
     },
-
 }
 

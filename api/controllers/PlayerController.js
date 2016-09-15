@@ -163,12 +163,11 @@ module.exports = {
 		GameService.recordMove ({ game: info.game,
 					  moveNumber: moveNumber,
 					  update: update },
-					function (outcome, updatedGame, updatedPlayer1, updatedPlayer2) {
+					function (updatedGame, updatedPlayer1, updatedPlayer2) {
 					    MiscPlayerService
 						.sendMoveMessages ({ message: "timeout",
 								     game: updatedGame,
-								     moveNumber: moveNumber,
-								     outcome: outcome })
+								     moveNumber: moveNumber })
 					    rs (null, { game: info.game.id,
 							move: info.game.moves + 1,
 							kicked: timedOutRoles.map (function (role) {

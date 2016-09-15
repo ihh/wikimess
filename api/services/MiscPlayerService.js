@@ -41,7 +41,6 @@ module.exports = {
                 .populate ('player1')
                 .populate ('player2')
                 .populate ('current')
-                .populate ('lastOutcome')
                 .exec (function (err, games) {
                     if (err)
                         rs(err)
@@ -137,7 +136,7 @@ module.exports = {
 		    .recordMove ({ game: game,
 				   moveNumber: moveNumber,
 				   update: update },
-				 function (outcome, updatedGame, updatedPlayer1, updatedPlayer2) {
+				 function (updatedGame, updatedPlayer1, updatedPlayer2) {
 				     var updatedPlayer, updatedOpponent
 				     if (role == 1) {
 					 updatedPlayer = updatedPlayer1
@@ -148,7 +147,6 @@ module.exports = {
 				     }
 /*
 				     console.log('recordMove callback')
-				     console.log(outcome)
 				     console.log(updatedGame)
 				     console.log(updatedPlayer)
 				     console.log(updatedOpponent)
@@ -159,8 +157,7 @@ module.exports = {
 				     MiscPlayerService
 					 .sendMoveMessages ({ message: "move",
 							      game: game,
-							      moveNumber: moveNumber,
-							      outcome: outcome })
+							      moveNumber: moveNumber })
 				     rs (null, { game: game.id,
 						 move: moveNumber,
 						 choice: { self: move },
@@ -184,13 +181,11 @@ module.exports = {
 	var game = info.game
 	var moveNumber = info.moveNumber
 	var message = info.message
-	var outcome = info.outcome
 	var roles = [1,2]
 	roles.forEach (function (role) {
 	    var msg = { message: message,
 			game: game.id,
-			move: moveNumber,
-			outcome: outcome ? Outcome.forRole (game, outcome, role) : {} }
+			move: moveNumber }
 	    var playerID = Game.getRoleAttr(game,role,'player').id
 	    Player.message (playerID, msg)
 	    sails.log.debug ("Sending message " + JSON.stringify(msg) + " to player #" + playerID)

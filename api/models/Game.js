@@ -45,10 +45,6 @@ module.exports = {
           defaultsTo: 0
       },
 
-      lastOutcome: {
-	  model: 'outcome',
-      },
-
       currentStartTime: {
           type: 'date',
           defaultsTo: function() { return new Date() }
@@ -100,6 +96,14 @@ module.exports = {
           defaultsTo: {}
       },
 
+      text1 : {
+	  type: 'string'
+      },
+
+      text2 : {
+	  type: 'string'
+      },
+
       // state specific to this game, common to both players
       common: {
           type: 'json',
@@ -125,11 +129,10 @@ module.exports = {
     },
     
     forRole: function (game, role) {
-        var intro, verb, hintc, hintd, self, other, selfMood, otherMood, waiting
+        var text, verb, hintc, hintd, self, other, selfMood, otherMood, waiting
         var current = game.current
         if (role == 1) {
             if (current) {
-                intro = current.intro
                 verb = current.verb
                 hintc = current.hintc
                 hintd = current.hintd
@@ -138,9 +141,9 @@ module.exports = {
             other = game.player2
             selfMood = game.mood1
             otherMood = game.mood2
+	    text = game.text1
         } else {  // role == 2
             if (current) {
-                intro = current.intro2 || current.intro
                 verb = current.verb2 || current.verb
                 hintc = current.hintc2 || current.hintc
                 hintd = current.hintd2 || current.hintd
@@ -149,12 +152,11 @@ module.exports = {
             other = game.player1
             selfMood = game.mood2
             otherMood = game.mood1
+	    text = game.text2
         }
-        if (intro)
-            intro = GameService.expandText (intro, game, null, role)
         var json = { finished: game.finished,
                      waiting: Game.isWaitingForMove (game, role),
-                     intro: intro,
+                     text: text,
                      verb: verb,
                      hintc: hintc,
                      hintd: hintd,
@@ -163,8 +165,6 @@ module.exports = {
                      other: { id: other.id, name: other.name, mood: otherMood },
                      startline: game.currentStartTime,
                      move: game.moves + 1 }
-	if (game.lastOutcome)
-	    json.lastOutcome = Outcome.forRole (game, game.lastOutcome, role)
 	if (game.current && game.current.timeout)
 	    json.deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
 	return json

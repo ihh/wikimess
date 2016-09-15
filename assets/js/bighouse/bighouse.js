@@ -46,6 +46,8 @@ var BigHouse = (function() {
 	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
 	kickDelay: 1000,  // actual delay will be between 1* and 2* this
 	nTimeoutChimes: 3,
+	moveRetryCount: 3,
+	moveRetryWait: 500,
 
 	verbose: true,
         
@@ -1088,27 +1090,16 @@ var BigHouse = (function() {
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
-		    var outcome = data.lastOutcome
-		    var separateOutcomeCard = outcome && outcome.outro && outcome.outro.indexOf(bh.cardDelimiter) >= 0
-		    var firstCardClass = separateOutcomeCard ? 'outcome' : undefined
-		    var firstCardSfx = outcome && outcome.verb
-
                     if (data.finished) {
-			if (outcome)
-			    bh.createAndDealCards ({ text: outcome.outro,
-						     firstCardSfx: firstCardSfx,
-						     firstCardClass: firstCardClass })
+			if (data.text.length)
+			    bh.createAndDealCards ({ text: data.text })
                         bh.hideTimer()
 			bh.setGameState('gameOver')
 		    } else {
 			bh.createPlaceholderCards()
 			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
-			    var intro = data.intro || ''
-			    var outro = (outcome && outcome.outro) || ''
-			    bh.createAndDealCards ({ text: outro + ' ' + intro,
-						     firstCardClass: firstCardClass,
-						     firstCardSfx: firstCardSfx,
+			    bh.createAndDealCards ({ text: data.text,
 						     finalCardClass: 'verb-' + data.verb,
 						     finalCardIsChoice: true,
 						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
@@ -1309,9 +1300,13 @@ var BigHouse = (function() {
 		var cardConfig = {}
 		var isFirst = (n+1 == texts.length)
 		var isFinal = (n == 0)
-		var sfx = isFirst ? config.firstCardSfx : undefined
-		var cardClass = isFirst ? config.firstCardClass : (isFinal ? config.finalCardClass : undefined)
+		var sfx, cardClass = isFinal ? config.finalCardClass : undefined
 		// text can override default cardClass, sfx, hints
+		text = text.replace (/<outcome:([^> ]+)>/g, function (match, outcomeVerb) {
+		    cardClass = 'outcome'
+		    sfx = outcomeVerb
+		    return ""
+		})
 		text = text.replace (/<class:([^> ]+)>/g, function (match, className) {
 		    cardClass = className
 		    return ""
@@ -1523,6 +1518,26 @@ var BigHouse = (function() {
             }
         },
 
+	makeMoveOrRetry (moveNumber, choice) {
+	    var bh = this
+	    var def = $.Deferred()
+	    var attemptMove = function (triesLeft) {
+		bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+		    .done (function() { def.resolve() })
+		    .fail (function() {
+			if (triesLeft > 0) {
+			    var wait = Math.random() * bh.moveRetryWait
+			    if (bh.verbose)
+				console.log ("Move failed. Retrying in " + wait + "ms")
+			    window.setTimeout (attemptMove.bind (bh, triesLeft - 1), wait)
+			} else
+			    def.reject()
+		    })
+	    }
+	    attemptMove (this.moveRetryCount)
+	    return def
+	},
+
         makeMoveFunction: function (moveNumber, choice) {
             var bh = this
             return function() {
@@ -1530,7 +1545,7 @@ var BigHouse = (function() {
 		    if (this.verbose)
 			console.log ("Making move #" + moveNumber + ": " + choice)
 		    bh.setGameState ('sendingMove')
-		    bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
+		    bh.makeMoveOrRetry (moveNumber, choice)
 			.done (function() { bh.setGameState ('waitingForOther') })
 			.fail (function() {
 			    console.log("Failed to make move; rebuilding page")
@@ -1545,7 +1560,7 @@ var BigHouse = (function() {
 	    this.setGameState ('sendingDefaultMove')
 	    if (this.verbose)
 		console.log ("Making default move #" + this.moveNumber + ": " + this.defaultMove)
-	    this.socket_getPlayerGameMoveChoice (this.playerID, this.gameID, this.moveNumber, this.defaultMove)
+	    this.makeMoveOrRetry (this.moveNumber, this.defaultMove)
 		.done (bh.runTimeoutAnimationThenKick.bind(bh))
 		.fail (function() {
 		    console.log("Failed to make default move; rebuilding page")
