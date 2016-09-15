@@ -56,6 +56,11 @@ module.exports = {
               },
           }
       },
+
+      initialMood: {
+	  type: 'string',
+	  defaultsTo: 'happy'
+      },
       
       // references to games
       player1games: {

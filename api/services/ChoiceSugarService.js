@@ -8,18 +8,43 @@ module.exports = {
 //        console.log ('createChoice')
 //        console.log (config)
 
-        // keys for Outcomes
-        var symKeys = ['weight', 'next', 'flush', 'common']
+	// keys for Choices
         var asymKeys = ['local', 'global', 'mood']
         var aliasKeys = { 'l': 'local',
-                          'g': 'global',
-                          'm': 'mood',
-                          'l1': 'local1',
-                          'l2': 'local2',
-                          'g1': 'global1',
-                          'g2': 'global2',
-                          'm1': 'mood1',
-                          'm2': 'mood2' }
+			  'g': 'global',
+			  'm': 'mood',
+			  'l1': 'local1',
+			  'l2': 'local2',
+			  'g1': 'global1',
+			  'g2': 'global2',
+			  'm1': 'mood1',
+			  'm2': 'mood2' }
+
+	function expandAliases (obj) {
+            Object.keys(aliasKeys).forEach (function (key) {
+                if (obj.hasOwnProperty(key)) {
+                    obj[aliasKeys[key]] = obj[key]
+                    delete obj[key]
+                }
+            })
+            asymKeys.forEach (function (key) {
+                if (obj.hasOwnProperty(key)) {
+                    // various ways of specifying asymmetric things
+                    if (Object.prototype.toString.call(obj[key]) === '[object Array]') {
+                        obj[key+'1'] = obj[key][0]
+                        obj[key+'2'] = obj[key][1]
+                    } else if (typeof(obj[key]) === 'object') {
+                        obj[key+'1'] = obj[key]['1']
+                        obj[key+'2'] = obj[key]['2']
+                    } else
+                        obj[key+'1'] = obj[key+'2'] = obj[key]
+                }
+                delete obj[key]
+            })
+	}
+
+        // keys for Outcomes
+        var symOutcomeKeys = ['weight', 'next', 'flush', 'common']
         
         var outcomes = [], nestedChoices = []
         var addOutcome = function (move1, move2, json) {
@@ -42,26 +67,7 @@ module.exports = {
                 outs.forEach (function (out) {
                     if (typeof(out) == 'string')
                         out = { outro: out }
-                    Object.keys(aliasKeys).forEach (function (key) {
-                        if (out.hasOwnProperty(key)) {
-                            out[aliasKeys[key]] = out[key]
-                            delete out[key]
-                        }
-                    })
-                    asymKeys.forEach (function (key) {
-                        if (out.hasOwnProperty(key)) {
-                            // various ways of specifying asymmetric things
-                            if (Object.prototype.toString.call(out[key]) === '[object Array]') {
-                                out[key+'1'] = out[key][0]
-                                out[key+'2'] = out[key][1]
-                            } else if (typeof(out[key]) === 'object') {
-                                out[key+'1'] = out[key]['1']
-                                out[key+'2'] = out[key]['2']
-                            } else
-                                out[key+'1'] = out[key+'2'] = out[key]
-                        }
-                        delete out[key]
-                    })
+		    expandAliases (out)
                     if (out.next) {
                         if (Object.prototype.toString.call(out.next) !== '[object Array]')
                             out.next = [out.next]
@@ -93,7 +99,7 @@ module.exports = {
                 flipped.outro = outro2
             } else
                 flipped.outro = outro
-            symKeys.concat(asymKeys).forEach (function (key) {
+            symOutcomeKeys.concat(asymKeys).forEach (function (key) {
                 if (outcome.hasOwnProperty(key))
                     flipped[key] = outcome[key]
             })
@@ -137,18 +143,22 @@ module.exports = {
 
         addOutcomes (['auto'], [add_auto])
 
-        if (config.hint) {
-            // various ways of specifying asymmetric things
-            if (Object.prototype.toString.call(config.hint) === '[object Array]') {
-                config.hintd = config.hint[0]
-                config.hintc = config.hint[1]
-            } else if (typeof(config.hint) === 'object') {
-                config.hintd = config.hint.d
-                config.hintc = config.hint.c
-            } else
-                config.hintc = config.hintd = config.hint
-            delete config.hint
-        }
+	expandAliases (config);
+	['','2'].forEach (function (suffix) {
+	    var hint = 'hint' + suffix, hintd = 'hintd' + suffix, hintc = 'hintc' + suffix
+            if (config[hint]) {
+		// various ways of specifying asymmetric things
+		if (Object.prototype.toString.call(config[hint]) === '[object Array]') {
+                    config[hintd] = config[hint][0]
+                    config[hintc] = config[hint][1]
+		} else if (typeof(config[hint]) === 'object') {
+                    config[hintd] = config[hint].d
+                    config[hintc] = config[hint].c
+		} else
+                    config[hintc] = config[hintd] = config[hint]
+		delete config[hint]
+	    }
+        })
         
         // make a little callback-wrapper that concatenates created choices
         var appendChoices = function (prevChoices, callback) {

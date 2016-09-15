@@ -46,12 +46,14 @@ module.exports = {
 
       mood1: {
           type: 'string',
-          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged']
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged', 'auto'],
+	  defaultsTo: 'auto'
       },
 
       mood2: {
           type: 'string',
-          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged']
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged', 'auto'],
+	  defaultsTo: 'auto'
       },
       
       // the RHS of the CFG rule
@@ -69,9 +71,9 @@ module.exports = {
     mood: function (oldMood, newMood, move1, move2) {
         if (newMood == 'unchanged')
             return oldMood
-        else if (newMood)
+        else if (newMood && newMood != 'auto')
             return newMood
-	else if (move1 && move2) {
+	else if (move1 && move2 && move1 != 'none' && move2 != 'none') {
             var move12 = move1 + move2
             switch (move12) {
             case 'cc': return 'happy'
@@ -81,7 +83,7 @@ module.exports = {
             default: break
             }
 	}
-        return undefined
+        return oldMood
     },
 
     mood1: function (game, outcome) {

@@ -33,6 +33,18 @@ module.exports = {
       local2: { type: 'json' },
       global1: { type: 'json' },
       global2: { type: 'json' },
+
+      mood1: {
+          type: 'string',
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged'],
+	  defaultsTo: 'unchanged'
+      },
+
+      mood2: {
+          type: 'string',
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged'],
+	  defaultsTo: 'unchanged'
+      },
       
       intro: { type: 'string' },
       intro2: { type: 'string' },
@@ -71,5 +83,13 @@ module.exports = {
           dominant: true
       }
   },
+
+    mood1: function (game, choice) {
+        return (choice.mood1 && choice.mood1 != 'unchanged') ? choice.mood1 : game.mood1
+    },
+
+    mood2: function (game, choice) {
+        return (choice.mood2 && choice.mood2 != 'unchanged') ? choice.mood2 : game.mood2
+    },
 };
 

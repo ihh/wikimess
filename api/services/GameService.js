@@ -231,6 +231,8 @@ module.exports = {
 	var p2local = GameService.evalUpdatedState (game, choice, 2, true)
 
 	// update game state
+	game.mood1 = Choice.mood1 (game, choice)
+	game.mood2 = Choice.mood2 (game, choice)
 	game.common = common
 	game.local1 = p1local
 	game.local2 = p2local
@@ -276,8 +278,8 @@ module.exports = {
 
 		 // update game state
 		 game.move1 = game.move2 = 'none'
-		 game.mood1 = Outcome.mood1 (game, outcome) || game.mood1
-		 game.mood2 = Outcome.mood2 (game, outcome) || game.mood2
+		 game.mood1 = Outcome.mood1 (game, outcome)
+		 game.mood2 = Outcome.mood2 (game, outcome)
 		 game.common = common
 		 game.local1 = p1local
 		 game.local2 = p2local

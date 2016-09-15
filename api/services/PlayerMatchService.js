@@ -62,7 +62,7 @@ module.exports = {
             var sharedScenes = Player.getScenes(player).filter (function (scene) {
                 return Player.hasScene (opponent, scene)
             })
-            // pick a random choice
+            // find choices for this scene
             Choice
                 .find ({ scene: sharedScenes })
                 .exec (function (err, eligibleChoices) {
@@ -96,8 +96,8 @@ module.exports = {
 			    var game = { player1: player1,
                                          player2: player2,
                                          current: choice,
-					 mood1: 'happy',
-					 mood2: 'happy' }
+					 mood1: player1.initialMood || 'happy',
+					 mood2: player2.initialMood || 'happy' }
 			    GameService.createGame (game,
 						    function() { 
 							// update the 'waiting' fields
