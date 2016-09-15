@@ -79,7 +79,7 @@ module.exports = {
                             PlayerMatchService.tryRandomOpponent (player, eligibleOpponents, gameStarted, playerWaiting, error)
                         else {
                             // pick a random Choice
-                            var nChoice = Math.floor (Math.random (eligibleChoices.length))
+                            var nChoice = Math.floor (Math.random() * eligibleChoices.length)
                             var choice = eligibleChoices[nChoice]
                             // randomly assign player 1 & player 2
                             var eligible12 = PlayerMatchService.playerIsEligible(choice,player,1)

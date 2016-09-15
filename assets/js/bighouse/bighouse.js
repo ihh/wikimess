@@ -1336,9 +1336,12 @@ var BigHouse = (function() {
 		text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
 		    return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
 		})
-                var content = text.split(/\n/).map (function (para) {
-                    return $('<span>').html(para)
-                })
+                var content = text.split(/\n/)
+		    .filter (function (para) {
+			return /\S/.test(para)
+		    }).map (function (para) {
+			return $('<span>').html(para)
+                    })
 		// create the <li>
                 var cardListItem = bh.createCardListItem (content, cardClass)
 		cardConfig.listItem = cardListItem

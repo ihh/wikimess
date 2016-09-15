@@ -12,5 +12,5 @@ Your only hope is to rat them out and reduce your sentence.
   }
 }
 #cc You both stay silent: nice work!
-#cd2 $other rats $self out.
+#cd2 $player2 rats $player1 out.
 #dd You both rat each other out.
