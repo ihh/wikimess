@@ -291,6 +291,8 @@ module.exports = {
 	      fs.writeFileSync (targetLocation, imagemagick.convert({
 		  srcData: fs.readFileSync (uploadLocation),
 		  format: 'JPEG',
+		  strip: true,
+		  blur: .05,
 		  quality: 75,
 		  width: 128,
 		  height: 128
