@@ -16,7 +16,8 @@
 
 (setq story-highlights
       '(("#[a-z0-9]+" . font-lock-keyword-face)
-	("#[a-z0-9]+ +\\(.*\\)" 1 font-lock-function-name-face)
+	("#[a-z0-9]+ +\\([a-z0-9]+\\) *$" 1 font-lock-function-name-face)
+	("#[a-z0-9]+ +\\(\{\\) *$" 1 font-lock-function-name-face)
 	("^[ \t]*\}[ \t]*$" . font-lock-function-name-face)
 	("\\$\\(self\\|other\\|player1\\|player2\\)" . font-lock-constant-face)
 	("\{\{.*?\}\}" . font-lock-comment-face)
