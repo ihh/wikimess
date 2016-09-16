@@ -134,6 +134,7 @@ module.exports = {
 			    text2: game.text2,
 			    defaultMove1: game.defaultMove1,
 			    defaultMove2: game.defaultMove2,
+			    moves: game.moves,
 			    move1: game.move1,
 			    move2: game.move2,
 			    mood1: game.mood1,
@@ -142,7 +143,7 @@ module.exports = {
                             local1: game.local1,
                             local2: game.local2,
 			    current: game.current ? game.current.id : null,
-                            currentStartTime: new Date(),
+			    currentStartTime: game.currentStartTime,
 			    future: game.future,
 			    finished: game.current ? false : true
 			  }
@@ -455,6 +456,7 @@ module.exports = {
     },
 
     createGame: function (game, success, error) {
+	game.currentStartTime = new Date()
 	var create = function() {					 
 	    GameService.playBotMoves (game)
 	    Game.create (game,
@@ -489,6 +491,7 @@ module.exports = {
 	}
 	var updateWithOutcome = function() {
 	    ++game.moves
+	    game.currentStartTime = new Date()
 	    GameService.updateGameAndPlayers (query, game, success, error)
 	}
 	// update

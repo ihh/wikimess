@@ -44,10 +44,23 @@ var BigHouse = (function() {
         avatarSize: 128,
         cardDelimiter: ';;',
 	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
-	kickDelay: 1000,  // actual delay will be between 1* and 2* this
 	nTimeoutChimes: 3,
 	moveRetryCount: 3,
-	moveRetryWait: 500,
+	moveRetryMinWait: 10,
+	moveRetryMaxWait: 500,
+	kickRetryCount: 10,
+	kickRetryMinWait: 1000,
+	kickRetryMaxWait: 2000,
+	allowedStateTransition: { loading: { gameOver: true, ready: true, waitingForOther: true },
+				  ready: { sendingMove: true, sendingDefaultMove: true, loadTimeoutAnimation: true },
+				  waitingForOther: { kicking: true, loading: true },
+				  sendingMove: { waitingForOther: true, loading: true },
+				  sendingDefaultMove: { timerTimeoutAnimation: true, loading: true },
+				  loadTimeoutAnimation: { loading: true },
+				  timerTimeoutAnimation: { kicking: true },
+				  kicking: { loading: true, sendingKick: true },
+				  sendingKick: { kicking: true, loading: true },
+				  gameOver: { } },
 
 	verbose: true,
         
@@ -76,16 +89,16 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/games')
         },
 
-        REST_getPlayerGameKick: function (playerID, gameID) {
-            return $.get ('/player/' + playerID + '/game/' + gameID + '/kick')
-        },
-
         REST_getPlayerGameStatusSelf: function (playerID, gameID) {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/status/self')
         },
 
         REST_getPlayerGameStatusOther: function (playerID, gameID) {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/status/other')
+        },
+
+        REST_getPlayerGameMoveKick: function (playerID, gameID, moveNumber) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/kick')
         },
 
         REST_getPlayerGameMoveMood: function (playerID, gameID, move, mood) {
@@ -177,9 +190,15 @@ var BigHouse = (function() {
                 .on('click', this.callWithSoundEffect (callback, sfx))
         },
 
+	setPage: function (page) {
+	    if (this.verbose)
+		console.log ("Changing view from " + this.page + " to " + page)
+	    this.page = page
+	},
+
         // login menu
         showLoginPage: function() {
-            this.page = 'login'
+            this.setPage ('login')
             this.container
                 .empty()
                 .append ($('<div class="inputbar">')
@@ -285,7 +304,7 @@ var BigHouse = (function() {
             this.clearMoveTimer()
             this.changeMusic('menu')
 
-            this.page = 'play'
+            this.setPage ('play')
             if (!this.lastMood)
                 this.lastMood = 'happy'
             this.container
@@ -320,7 +339,7 @@ var BigHouse = (function() {
         showSettingsPage: function() {
             var bh = this
 
-            this.page = 'settings'
+            this.setPage ('settings')
             this.container
                 .empty()
                 .append (this.makePageTitle ("Settings"))
@@ -371,11 +390,9 @@ var BigHouse = (function() {
         pushView: function (newPage) {
             var elements = this.container.find(':not(.pushed)')
             var page = this.page
-	    if (this.verbose)
-		console.log ("Changing view from " + page + " to " + newPage)
             this.pushedViews.push ({ elements: elements, page: page })
             elements.addClass('pushed')
-            this.page = newPage
+            this.setPage (newPage)
         },
 
         popView: function() {
@@ -386,7 +403,7 @@ var BigHouse = (function() {
             this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
             this.container.find(':not(.pushed)').remove()
             poppedView.elements.find('*').addBack().removeClass('pushed')
-            this.page = poppedView.page
+            this.setPage (poppedView.page)
 	    this.handlePostponedMessages()
         },
 
@@ -441,7 +458,7 @@ var BigHouse = (function() {
             var showNextPage = config.showNextPage
             var transitionWhenUploaded = config.transitionWhenUploaded
             
-            this.page = 'upload'
+            this.setPage ('upload')
             this.moodDiv = []
             this.container
                 .empty()
@@ -534,7 +551,7 @@ var BigHouse = (function() {
 	    var bh = this
 	    bh.imageCrop = imageCrop
 
-            this.page = 'confirm'
+            this.setPage ('confirm')
             this.container
                 .empty()
                 .append (this.makePageTitle ("Rotate & scale", "confirmtitle"))
@@ -797,7 +814,7 @@ var BigHouse = (function() {
 	showActiveGamesPage: function() {
             var bh = this
 
-	    this.page = 'activeGames'
+	    this.setPage ('activeGames')
 	    var tbody
 	    this.container
 		.empty()
@@ -878,7 +895,7 @@ var BigHouse = (function() {
 
         showWaitingToJoinPage: function() {
             var bh = this
-            this.page = 'waitingToJoin'
+            this.setPage ('waitingToJoin')
             this.menuDiv
                 .empty()
                 .append ($('<span class="rubric">')
@@ -984,7 +1001,7 @@ var BigHouse = (function() {
             this.clearMoveTimer()
             this.changeMusic('game')
 
-            this.page = 'game'
+            this.setPage ('game')
             this.moodDiv = []
             this.moodImg = []
 	    this.postponedMessages = []
@@ -1046,11 +1063,15 @@ var BigHouse = (function() {
 	    if (this.gameState != state) {
 		if (this.verbose)
 		    console.log ("Changing state from " + this.gameState + " to " + state)
-                if (this.gameState == 'gameOver')
-                    throw "Attempt to exit gameOver state"
+		if (this.gameState && !this.allowedStateTransition[this.gameState][state])
+                    throw "Illegal state transition"
 		this.gameState = state
 		this.handlePostponedMessages()
 	    }
+	},
+
+	setGameStateCallback: function (state) {
+	    return this.setGameState.bind (this, state)
 	},
 
         loadGameCards: function() {
@@ -1084,6 +1105,8 @@ var BigHouse = (function() {
 		    if (loadingCardListItem)
 			bh.throwDummyCard (loadingCardListItem)
 
+		    if (bh.verbose > 2)
+			console.log(data)
                     bh.moveNumber = data.move
 
 		    bh.updatePlayerMood (data.self.mood, data.startline)
@@ -1093,8 +1116,7 @@ var BigHouse = (function() {
                     if (data.finished) {
 			if (data.text.length)
 			    bh.createAndDealCards ({ text: data.text })
-                        bh.hideTimer()
-			bh.setGameState('gameOver')
+			bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
 		    } else {
 			bh.createPlaceholderCards()
 			bh.defaultMove = data.defaultMove
@@ -1108,22 +1130,13 @@ var BigHouse = (function() {
 						     leftHint: data.hintd,
 						     dealt: function() {
 							 bh.showWaitingForOther()
-							 bh.setGameState('ready')
+							 bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
 						     }})
 			} else {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
-			    bh.setGameState('waitingForOther')
+			    bh.initMoveTimer (data, bh.setGameStateCallback('waitingForOther'))
 			}
-
-			if (data.deadline) {
-                            bh.cardCountDiv.css ('opacity', 1)
-			    bh.startline = bh.cardStartline = new Date(data.startline)
-			    bh.deadline = new Date(data.deadline)
-			    bh.timerCallback()
-			} else {
-                            bh.hideTimer()
-                        }
 
 			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
 		    }
@@ -1134,6 +1147,18 @@ var BigHouse = (function() {
                     // failed to load; rebuild the page
                     bh.showGamePage()
                 })
+	},
+
+	initMoveTimer: function (data, callback) {
+	    if (data.deadline) {
+                this.cardCountDiv.css ('opacity', 1)
+		this.startline = this.cardStartline = new Date(data.startline)
+		this.deadline = new Date(data.deadline)
+		this.timerCallback()
+	    } else {
+                this.hideTimer()
+            }
+	    callback()
 	},
 
 	getCardCount: function() {
@@ -1159,6 +1184,8 @@ var BigHouse = (function() {
         },
 
 	setMoveTimer: function (callback, delay) {
+	    if (this.verbose > 1)
+		console.log ("Setting move timer for " + Math.round(delay) + "ms")
 	    this.moveTimer = window.setTimeout (callback.bind(this), delay)
 	},
         
@@ -1170,12 +1197,14 @@ var BigHouse = (function() {
 	    var thisCardDeadline = new Date (this.cardStartline.getTime() + timeForThisCard)
 	    this.updateTimerDiv (this.cardStartline, thisCardDeadline, now)
 	    if (now.getTime() > this.deadline.getTime()) {
+		if (this.verbose > 3)
+		    console.log ("Timer callback at " + now + " passed deadline at " + this.deadline)
 		switch (this.gameState) {
 		case 'ready':
 		    this.makeDefaultMove()
 		    break
 		case 'waitingForOther':
-		    this.setKickTimer()
+		    this.startKicking()
 		    break
 		case 'loading':
 		    this.setMoveTimer (this.timerCallback, 500)
@@ -1204,7 +1233,7 @@ var BigHouse = (function() {
 
         runTimeoutAnimationThenKick: function() {
 	    this.setGameState('timerTimeoutAnimation')
-            this.runTimeoutAnimation (this.setKickTimer)
+            this.runTimeoutAnimation (this.startKicking)
         },
 
 	runTimeoutAnimation: function (callback) {
@@ -1235,17 +1264,34 @@ var BigHouse = (function() {
 	    return topCard
 	},
 
-	setKickTimer: function() {
-	    this.setMoveTimer (this.kickCallback, this.kickDelay * (1 + Math.random()))
+	startKicking: function() {
+	    this.setKickTimer (this.kickRetryCount)
+	},
+
+	setKickTimer: function (triesLeft) {
+	    this.setMoveTimer (this.kickCallback.bind (this, triesLeft),
+			       this.kickRetryMinWait + Math.random() * (this.kickRetryMaxWait - this.kickRetryMinWait))
 	    this.setGameState ('kicking')
 	},
 
-	kickCallback: function() {
+	kickCallback: function (triesLeft) {
+	    var bh = this
 	    this.clearMoveTimer()
+	    this.setGameState ('sendingKick')
 	    if (this.verbose)
 		console.log("Sending kick request")
-	    this.REST_getPlayerGameKick (this.playerID, this.gameID)
-		.fail (this.setKickTimer.bind (this))
+	    var retry = function() {
+		if (triesLeft > 0)
+		    bh.setKickTimer (triesLeft - 1)
+		else {
+		    if (this.verbose)
+			console.log("Failed to kick; rebuilding page")
+		    bh.showGamePage()
+		}
+	    }
+	    this.REST_getPlayerGameMoveKick (this.playerID, this.gameID, this.moveNumber)
+		.done (retry)
+		.fail (retry)
 	},
 
 	updateTimerDiv: function (start, end, now) {
@@ -1519,24 +1565,38 @@ var BigHouse = (function() {
             }
         },
 
-	makeMoveOrRetry (moveNumber, choice) {
+	callOrRetry (makePromise, retryCount, minWait, maxWait, validate) {
+	    validate = validate || function() { return null }
 	    var bh = this
 	    var def = $.Deferred()
-	    var attemptMove = function (triesLeft) {
-		bh.socket_getPlayerGameMoveChoice (bh.playerID, bh.gameID, moveNumber, choice)
-		    .done (function() { def.resolve() })
-		    .fail (function() {
-			if (triesLeft > 0) {
-			    var wait = Math.random() * bh.moveRetryWait
-			    if (bh.verbose)
-				console.log ("Move failed. Retrying in " + wait + "ms")
-			    window.setTimeout (attemptMove.bind (bh, triesLeft - 1), wait)
-			} else
-			    def.reject()
-		    })
+	    var attempt, retry
+	    retry = function (err) {
+		if (retryCount > 0) {
+		    --retryCount
+		    var wait = minWait + Math.random() * (maxWait - minWait)
+		    if (bh.verbose)
+			console.log ("Call failed (" + err.toString() + "). Retrying in " + Math.round(wait) + "ms")
+		    window.setTimeout (attempt, wait)
+		} else
+		    def.reject (err)
 	    }
-	    attemptMove (this.moveRetryCount)
+	    attempt = function() {
+		makePromise()
+		    .done (function (result) {
+			var err = validate (result)
+			if (!err)
+			    def.resolve (result)
+			else
+			    retry (err)
+		    }).fail (retry)
+	    }
+	    attempt()
 	    return def
+	},
+
+	makeMoveOrRetry: function (moveNumber, choice) {
+	    var f = this.socket_getPlayerGameMoveChoice.bind (this, this.playerID, this.gameID, moveNumber, choice)
+	    return this.callOrRetry (f, this.moveRetryCount, this.moveRetryMinWait, this.moveRetryMaxWait, null)
 	},
 
         makeMoveFunction: function (moveNumber, choice) {
@@ -1615,23 +1675,27 @@ var BigHouse = (function() {
                 break
             case "move":
             case "timeout":
-		if (this.verbose)
-		    console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
-                if (msg.data.game == this.gameID && msg.data.move >= this.moveNumber) {
-                    if (msg.data.move > this.moveNumber || this.gameState == 'ready')
-		        this.scheduleTimeoutAnimationThenLoad (msg)
-                    else
-                        this.callOrPostpone (this.loadGameCards.bind (this), msg)
-                }
+                if (msg.data.game == this.gameID) {
+		    if (this.verbose)
+			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
+                    if (msg.data.move >= this.moveNumber) {
+			if (msg.data.move > this.moveNumber || this.gameState == 'ready')
+		            this.scheduleTimeoutAnimationThenLoad (msg)
+			else
+                            this.callOrPostpone (this.loadGameCards.bind (this), msg)
+                    }
+		}
                 break
             case "mood":
-                if (this.verbose)
-		    console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + " time " + msg.data.time + "; last update at move #" + this.moveNumber + " time " + this.lastOpponentMoodTime)
-                if (this.gameID == msg.data.game && msg.data.move >= this.moveNumber && new Date(msg.data.time) > this.lastOpponentMoodTime)
-		    this.callOrPostpone (function() {
-			this.playSound (msg.data.other.mood, .5)
-			this.updateOpponentMood (msg.data.other.id, msg.data.other.mood, msg.data.time)
-                    }, msg)
+                if (this.gameID == msg.data.game) {
+                    if (this.verbose)
+			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + " time " + msg.data.time + "; last update at move #" + this.moveNumber + " time " + this.lastOpponentMoodTime)
+                    if (msg.data.move >= this.moveNumber && new Date(msg.data.time) > this.lastOpponentMoodTime)
+			this.callOrPostpone (function() {
+			    this.playSound (msg.data.other.mood, .5)
+			    this.updateOpponentMood (msg.data.other.id, msg.data.other.mood, msg.data.time)
+			}, msg)
+		}
                 break
             default:
                 console.log ("Unknown message")

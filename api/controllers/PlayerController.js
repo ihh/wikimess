@@ -149,47 +149,56 @@ module.exports = {
 
     // kick timed-out player
     kickTimedOutPlayers: function (req, res) {
+	var moveNumber = req.params.moveNumber
         MiscPlayerService.findGame (req, res, function (info, rs) {
-	    var timedOutRoles = Game.timedOutRoles (info.game)
-//	    console.log("timedOutRoles")
-//    	    console.log(timedOutRoles)
-	    if (timedOutRoles.length) {
-		var update = {}
-		timedOutRoles.forEach (function (timedOutRole) {
-		    var timedOutPlayer = Game.getRoleAttr (info.game, timedOutRole, 'player')
-		    update[Game.roleAttr(timedOutRole,'move')] = Game.getRoleAttr(info.game,timedOutRole,'defaultMove')
-		})
-		var moveNumber = info.game.moves + 1
-		GameService.recordMove ({ game: info.game,
-					  moveNumber: moveNumber,
-					  update: update },
-					function (updatedGame, updatedPlayer1, updatedPlayer2) {
-					    MiscPlayerService
-						.sendMoveMessages ({ message: "timeout",
-								     game: updatedGame,
-								     moveNumber: moveNumber })
-					    rs (null, { game: info.game.id,
-							move: info.game.moves + 1,
-							kicked: timedOutRoles.map (function (role) {
-							    return Game.getRoleAttr(info.game,role,'player').id
-							}) })
-					},
-					function() {
-					    // player waiting callback
-                                            // this should never be reached after a kick, since both players should have moved.
-                                            // best guess: it is probably reached when both clients send kick requests at the same time,
-                                            // which sometimes happens (despite a random delay) when both clients time out.
-                                            // the second kick request then fails because its moveNumber is out of date.
-                                            // it would be better for each client to first send its own defaultMove,
-                                            // then wait, then send the kick request...
-					    rs (new Error ("Player kick failed"))
-					},
-					rs)
-	    } else
-		rs (null, { game: info.game.id,
-			    move: info.game.moves + 1,
-			    kicked: []
-			  })
+	    var game = info.game
+            if (game.finished)
+		rs (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
+            else if (game.moves + 1 != moveNumber)
+		rs (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
+            else {
+		var timedOutRoles = Game.timedOutRoles (game)
+//		console.log("timedOutRoles")
+//		console.log(timedOutRoles)
+//		console.log(game)
+//		console.log(Game.isTimedOut(game))
+		if (timedOutRoles.length) {
+		    var update = {}
+		    timedOutRoles.forEach (function (timedOutRole) {
+			var timedOutPlayer = Game.getRoleAttr (game, timedOutRole, 'player')
+			update[Game.roleAttr(timedOutRole,'move')] = Game.getRoleAttr(game,timedOutRole,'defaultMove')
+		    })
+		    GameService.recordMove ({ game: game,
+					      moveNumber: moveNumber,
+					      update: update },
+					    function (updatedGame, updatedPlayer1, updatedPlayer2) {
+						MiscPlayerService
+						    .sendMoveMessages ({ message: "timeout",
+									 game: updatedGame,
+									 moveNumber: moveNumber })
+						rs (null, { game: game.id,
+							    move: game.moves + 1,
+							    kicked: timedOutRoles.map (function (role) {
+								return Game.getRoleAttr(game,role,'player').id
+							    }) })
+					    },
+					    function() {
+						// player waiting callback
+						// this should never be reached after a kick, since both players should have moved.
+						// best guess: it is probably reached when both clients send kick requests at the same time,
+						// which sometimes happens (despite a random delay) when both clients time out.
+						// the second kick request then fails because its moveNumber is out of date.
+						// it would be better for each client to first send its own defaultMove,
+						// then wait, then send the kick request...
+						rs (new Error ("Player kick failed"))
+					    },
+					    rs)
+		} else
+		    rs (null, { game: game.id,
+				move: game.moves + 1,
+				kicked: []
+			      })
+	    }
         })
     },
 

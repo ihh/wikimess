@@ -118,7 +118,8 @@ module.exports = {
     isTimedOut: function (game) {
         return game.current
 	    && game.current.timeout
-	    && ((Date.now() - game.currentStartTime) / 1000) >= game.current.timeout
+	    && game.currentStartTime
+	    && ((Date.now() - Date.parse(game.currentStartTime)) / 1000) >= game.current.timeout
     },
 
     timedOutRoles: function (game) {
@@ -154,7 +155,8 @@ module.exports = {
             otherMood = game.mood1
 	    text = game.text2
         }
-        var json = { finished: game.finished,
+        var json = { game: game.id,
+		     finished: game.finished,
                      waiting: Game.isWaitingForMove (game, role),
                      text: text,
                      verb: verb,
@@ -165,7 +167,7 @@ module.exports = {
                      other: { id: other.id, name: other.name, mood: otherMood },
                      startline: game.currentStartTime,
                      move: game.moves + 1 }
-	if (game.current && game.current.timeout)
+	if (!game.finished && game.current && game.current.timeout)
 	    json.deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
 	return json
     },
