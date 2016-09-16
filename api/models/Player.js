@@ -39,7 +39,7 @@ module.exports = {
 	  type: 'json',
 	  defaultsTo: {
 	      strategy: 'mood',
-	      probc: { happy: .5,
+	      probr: { happy: .5,
 		       sad: .5,
 		       angry: .5,
 		       surprised: .5 }

@@ -8,7 +8,10 @@ module.exports = {
 //        console.log ('createChoice')
 //        console.log (config)
 
-	// keys for Choices
+	// helpers
+        function isArray(x) { return Object.prototype.toString.call(x) === '[object Array]' }
+
+	// keys for Choices and Outcomes
         var asymKeys = ['local', 'global', 'mood']
         var aliasKeys = { 'l': 'local',
 			  'g': 'global',
@@ -20,6 +23,37 @@ module.exports = {
 			  'm1': 'mood1',
 			  'm2': 'mood2' }
 
+	// keys for intros/outros
+        var textAliasKeys = { 'l': 'left',
+			      'r': 'right',
+			      'n': 'next',
+			      't': 'text',
+			      'h': 'hint',
+			      'c': 'choice' }
+
+	function makeText (text) {
+	    if (typeof(text) == 'undefined')
+		return undefined
+	    else if (typeof(text) == 'string')
+		text = text.split(/\s*;;\s*/).map (function(x) { return { text: x } })
+	    else if (!isArray(text))
+		text = [text]
+	    text.forEach (function (obj) { expandTextAliases (obj) })
+	    return text
+	}
+
+	function expandTextAliases (obj) {
+            Object.keys(obj).forEach (function (key) {
+		if (typeof(obj[key]) == 'object')
+		    expandTextAliases (obj[key])
+		else
+		    if (textAliasKeys[key]) {
+			obj[textAliasKeys[key]] = obj[key]
+			delete obj[key]
+		    }
+	    })
+	}
+
 	function expandAliases (obj) {
             Object.keys(aliasKeys).forEach (function (key) {
                 if (obj.hasOwnProperty(key)) {
@@ -30,7 +64,7 @@ module.exports = {
             asymKeys.forEach (function (key) {
                 if (obj.hasOwnProperty(key)) {
                     // various ways of specifying asymmetric things
-                    if (Object.prototype.toString.call(obj[key]) === '[object Array]') {
+                    if (isArray(obj[key])) {
                         obj[key+'1'] = obj[key][0]
                         obj[key+'2'] = obj[key][1]
                     } else if (typeof(obj[key]) === 'object') {
@@ -41,6 +75,16 @@ module.exports = {
                 }
                 delete obj[key]
             })
+	}
+
+	function expandHints (obj, textKey) {
+	    if (obj.hint && obj[textKey]) {
+		obj[textKey].left = obj[textKey].left || {}
+		obj[textKey].right = obj[textKey].right || {}
+		obj[textKey].left.hint = obj.hint[0]
+		obj[textKey].right.hint = obj.hint[1]
+	    }
+	    delete obj.hint
 	}
 
         // keys for Outcomes
@@ -55,21 +99,25 @@ module.exports = {
             outcomes.push (oc)
         }
 
+	var outcomeAdder = {}
         var addOutcomes = function (tag, adders) {
-            if (Object.prototype.toString.call(tag) === '[object Array]') {
+            if (isArray(tag)) {
                 tag.forEach (function(t) { addOutcomes(t,adders) })
                 return
             }
-            if (config.hasOwnProperty(tag)) {
+	    outcomeAdder[tag] = function() {
                 var outs = config[tag]
-                if (Object.prototype.toString.call(outs) !== '[object Array]')
+                if (!isArray(outs))
                     outs = [outs]
                 outs.forEach (function (out) {
                     if (typeof(out) == 'string')
                         out = { outro: out }
 		    expandAliases (out)
+		    out.outro = makeText (out.outro)
+		    out.outro2 = makeText (out.outro2)
+		    expandHints (out, 'outro')
                     if (out.next) {
-                        if (Object.prototype.toString.call(out.next) !== '[object Array]')
+                        if (!isArray(out.next))
                             out.next = [out.next]
                         out.next = out.next.map (function (next) {
                             if (typeof(next) === 'object') {
@@ -90,7 +138,7 @@ module.exports = {
             }
         }
 
-        var flip_cd = function (outcome) {
+        var flip = function (outcome) {
             var flipped = {}
             var outro = outcome.outro ? GameService.swapTextRoles (outcome.outro) : null
             var outro2 = outcome.outro2 ? GameService.swapTextRoles (outcome.outro2) : null
@@ -112,53 +160,50 @@ module.exports = {
             return flipped
         }
 
-        var add_cc = function (outcome) { addOutcome ('c', 'c', outcome) }
-        var add_cd = function (outcome) { addOutcome ('c', 'd', outcome) }
-        var add_dc = function (outcome) { addOutcome ('d', 'c', outcome) }
-        var add_dd = function (outcome) { addOutcome ('d', 'd', outcome) }
+        var add = function (outcome) { addOutcome (outcome.move1, outcome.move2, outcome) }
 
-        var add_flipped = function (outcome) { addOutcome ('d', 'c', flip_cd (outcome)) }
+        var add_ll = function (outcome) { addOutcome ('l', 'l', outcome) }
+        var add_lr = function (outcome) { addOutcome ('l', 'r', outcome) }
+        var add_rl = function (outcome) { addOutcome ('r', 'l', outcome) }
+        var add_rr = function (outcome) { addOutcome ('r', 'r', outcome) }
+
+        var add_flipped_rl = function (outcome) { addOutcome ('r', 'l', flip (outcome)) }
+        var add_flipped_lr = function (outcome) { addOutcome ('l', 'r', flip (outcome)) }
         var add_auto = function (outcome) { addOutcome (undefined, undefined, outcome); config.autoexpand = true }
 
-        addOutcomes ('cc', [add_cc])
-        addOutcomes ('cd', [add_cd])
-        addOutcomes ('dc', [add_dc])
-        addOutcomes ('dd', [add_dd])
+        addOutcomes ('ll', [add_ll])
+        addOutcomes ('lr', [add_lr])
+        addOutcomes ('rl', [add_rl])
+        addOutcomes ('rr', [add_rr])
 
-        addOutcomes (['c*','cx'], [add_cc, add_cd])
-        addOutcomes (['d*','dx'], [add_dc, add_dd])
-        addOutcomes (['*c','xc'], [add_cc, add_dc])
-        addOutcomes (['*d','xd'], [add_cd, add_dd])
+        addOutcomes (['r*','rx'], [add_rr, add_rl])
+        addOutcomes (['l*','lx'], [add_lr, add_ll])
+        addOutcomes (['*r','xr'], [add_rr, add_lr])
+        addOutcomes (['*l','xl'], [add_rl, add_ll])
 
-        addOutcomes (['!cc','notcc'], [add_cd, add_dc, add_dd])
-        addOutcomes (['!cd','notcd'], [add_cc, add_dc, add_dd])
-        addOutcomes (['!dc','notdc'], [add_cc, add_cd, add_dd])
-        addOutcomes (['!dd','notdd'], [add_cc, add_cd, add_dc])
+        addOutcomes (['!rr','notrr'], [add_rl, add_lr, add_ll])
+        addOutcomes (['!rl','notrl'], [add_rr, add_lr, add_ll])
+        addOutcomes (['!lr','notlr'], [add_rr, add_rl, add_ll])
+        addOutcomes (['!ll','notll'], [add_rr, add_rl, add_lr])
 
-        addOutcomes (['*','any'], [add_cc, add_cd, add_dc, add_dd])
+        addOutcomes (['*','any'], [add_rr, add_rl, add_lr, add_ll])
 
-        addOutcomes ('same', [add_cc, add_dd])
-        addOutcomes ('diff', [add_cd, add_dc])
-        addOutcomes (['cd2','symdiff'], [add_cd, add_flipped])
+        addOutcomes ('same', [add_rr, add_ll])
+        addOutcomes ('diff', [add_rl, add_lr])
+        addOutcomes (['rl2','symdiff'], [add_rl, add_flipped_lr])
+        addOutcomes (['lr2','symdiff'], [add_lr, add_flipped_rl])
 
         addOutcomes (['auto'], [add_auto])
 
-	expandAliases (config);
-	['','2'].forEach (function (suffix) {
-	    var hint = 'hint' + suffix, hintd = 'hintd' + suffix, hintc = 'hintc' + suffix
-            if (config[hint]) {
-		// various ways of specifying asymmetric things
-		if (Object.prototype.toString.call(config[hint]) === '[object Array]') {
-                    config[hintd] = config[hint][0]
-                    config[hintc] = config[hint][1]
-		} else if (typeof(config[hint]) === 'object') {
-                    config[hintd] = config[hint].d
-                    config[hintc] = config[hint].c
-		} else
-                    config[hintc] = config[hintd] = config[hint]
-		delete config[hint]
-	    }
-        })
+	Object.keys(config).forEach (function (key) {
+	    if (outcomeAdder[key])
+		outcomeAdder[key].call()
+	})
+
+	expandAliases (config)
+	config.intro = makeText (config.intro)
+	config.intro2 = makeText (config.intro2)
+	expandHints (config, 'intro')
         
         // make a little callback-wrapper that concatenates created choices
         var appendChoices = function (prevChoices, callback) {

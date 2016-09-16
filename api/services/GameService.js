@@ -7,7 +7,18 @@ module.exports = {
 
     expandText: function (text, game, outcome, role) {
 	if (!text)
-	    return ''
+	    return []
+
+	if (typeof(text) == 'object') {
+	    var expanded = {}
+	    Object.keys(text).forEach (function (key) {
+		if (key == 'text' || typeof(text[key]) == 'object')
+		    expanded[key] = GameService.expandText (text[key], game, outcome, role)
+		else
+		    expanded[key] = text[key]
+	    })
+	    return expanded
+	}
 
         var self, other
         if (role == 1) {
@@ -67,8 +78,20 @@ module.exports = {
             .replace(/\$other/g,other)
     },
 
-    swapTextRoles: function (text) {
-        return text.replace(/\$player1/g,"$TMP_PLAYER1")  // placeholder
+    swapTextRoles: function (x) {
+	if (Object.prototype.toString.call(x) === '[object Array]') {
+	    return x.map (function (elem) { return GameService.swapTextRoles(elem) })
+	} else if (typeof(x) == 'object') {
+	    var swapped = {}
+	    Object.keys(x).forEach (function (key) {
+		if (typeof(x[key]) == 'object' || key == 'text')
+		    swapped[key] = GameService.swapTextRoles(x[key])
+		else
+		    swapped[key] = x[key]
+	    })
+	    return swapped
+	}
+        return x.replace(/\$player1/g,"$TMP_PLAYER1")  // placeholder
             .replace(/\$player2/g,"$player1")
             .replace(/\$TMP_PLAYER1/g,"$player2")
     },
@@ -77,10 +100,10 @@ module.exports = {
 //	console.log('moveOutcomes')
 //	console.log(game)
         var query = Outcome.find ({ choice: game.current.id })
-	if (game.move1 != 'none')
-	    query.where ({ move1: game.move1 })
-	if (game.move2 != 'none')
-	    query.where ({ move2: game.move2 })
+	if (game.move1)
+	    query.where ({ move1: [game.move1, null] })
+	if (game.move2)
+	    query.where ({ move2: [game.move2, null] })
         query.exec (function (err, outcomes) {
             if (err)
                 cb (err)
@@ -89,7 +112,7 @@ module.exports = {
         })
     },
 
-    randomOutcome: function (game, cb) {
+    randomOutcomes: function (game, cb) {
         GameService.moveOutcomes (game, function (err, outcomes) {
             if (err) {
                 cb (err)
@@ -98,19 +121,22 @@ module.exports = {
             var outcomeWeight = outcomes.map (function (outcome) {
                 return GameService.evalOutcomeWeight (game, outcome)
             })
-//	    console.log ("randomOutcome weights: " + JSON.stringify(outcomeWeight))
-            var totalWeight = outcomeWeight.reduce (function (total, w) {
+	    var exclusiveOutcomeWeight = outcomeWeight.filter (function (outcome, n) {
+		return outcomes[n].exclusive ? true : false
+	    })
+	    
+//	    console.log ("randomOutcomes weights: " + JSON.stringify(outcomeWeight))
+            var totalWeight = exclusiveOutcomeWeight.reduce (function (total, w) {
                 return total + w
             }, 0)
-            if (totalWeight) {
-                var w = totalWeight * Math.random()
-                for (var i = 0; i < outcomes.length; ++i)
-                    if ((w -= outcomeWeight[i]) <= 0) {
-                        cb (null, outcomes[i])
-                        return
-                    }
-            }
-            cb (null, null)
+	    var theOutcomes = []
+            var w = totalWeight * Math.random()
+            for (var i = 0; i < outcomes.length; ++i)
+		if (!outcome[i].exclusive && Math.random() < outcomeWeight[i]
+		    || (outcome[i].exclusive && w > 0 && (w -= outcomeWeight[i]) <= 0)) {
+		    theOutcomes.push (outcome[i])
+		}
+            cb (null, theOutcomes)
             return
         })
     },
@@ -240,55 +266,55 @@ module.exports = {
 	game.player1.global = p1global
 	game.player2.global = p2global
 
-	game.text1 += ' ' + GameService.expandText (choice.intro, game, null, 1)
-	game.text2 += ' ' + GameService.expandText (choice.intro2 || choice.intro, game, null, 2)
+	game.text1 = game.text1.concat (GameService.expandText (choice.intro, game, null, 1))
+	game.text2 = game.text2.concat (GameService.expandText (choice.intro2 || choice.intro, game, null, 2))
 
 	// auto-expand or update
 	if (choice.autoexpand)
 	    GameService
-	    .applyRandomOutcome (game,
-				 success,
-				 error)
+	    .applyRandomOutcomes (game,
+				  success,
+				  error)
 	else
 	    success()
     },
 
-    applyRandomOutcome: function (game, success, error) {
+    applyRandomOutcomes: function (game, success, error) {
 	// find a random outcome
-        GameService.randomOutcome
+        GameService.randomOutcomes
 	(game,
-         function (err, outcome) {
+         function (err, outcomes) {
              if (err)
 		 error (err)
-	     else if (!outcome)
-		 GameService.resolveNextChoice (game, success, error)
 	     else {
+		 outcomes.forEach (function (outcome) {
 //		 console.log (outcome)
 
-                 var future = outcome.next
-                 if (!outcome.flush)
-                     future = future.concat (game.future)
-		 game.future = future
+                     var future = outcome.next
+                     if (!outcome.flush)
+			 future = future.concat (game.future)
+		     game.future = future
 
-		 // evaluate updated vars
-		 var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
-		 var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
-		 var common = GameService.evalUpdatedState (game, outcome, 0, true)
-		 var p1local = GameService.evalUpdatedState (game, outcome, 1, true)
-		 var p2local = GameService.evalUpdatedState (game, outcome, 2, true)
+		     // evaluate updated vars
+		     var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
+		     var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
+		     var common = GameService.evalUpdatedState (game, outcome, 0, true)
+		     var p1local = GameService.evalUpdatedState (game, outcome, 1, true)
+		     var p2local = GameService.evalUpdatedState (game, outcome, 2, true)
 
-		 // update game state
-		 game.move1 = game.move2 = 'none'
-		 game.mood1 = Outcome.mood1 (game, outcome)
-		 game.mood2 = Outcome.mood2 (game, outcome)
-		 game.common = common
-		 game.local1 = p1local
-		 game.local2 = p2local
-		 game.player1.global = p1global
-		 game.player2.global = p2global
+		     // update game state
+		     game.move1 = game.move2 = 'none'
+		     game.mood1 = Outcome.mood1 (game, outcome)
+		     game.mood2 = Outcome.mood2 (game, outcome)
+		     game.common = common
+		     game.local1 = p1local
+		     game.local2 = p2local
+		     game.player1.global = p1global
+		     game.player2.global = p2global
 
-		 game.text1 += ' ' + Outcome.outcomeVerb(outcome,1) + GameService.expandText (outcome.outro, game, outcome, 1)
-		 game.text2 += ' ' + Outcome.outcomeVerb(outcome,2) + GameService.expandText (outcome.outro2 || outcome.outro, game, outcome, 2)
+		     game.text1 = game.text1.concat (Outcome.outcomeVerb(outcome,1) + GameService.expandText (outcome.outro, game, outcome, 1))
+		     game.text2 = game.text2.concat (Outcome.outcomeVerb(outcome,2) + GameService.expandText (outcome.outro2 || outcome.outro, game, outcome, 2))
+		 })
 
 		 GameService.resolveNextChoice (game, success, error)
 	     }
@@ -418,7 +444,10 @@ module.exports = {
             $local1 = $l1,
             $local2 = $l2,
             $name1 = $n1,
-            $name2 = $n2
+            $name2 = $n2,
+
+	    $1 = game.move1,
+	    $2 = game.move2
 
         var $s1 = {}, $s2 = {}
         extend (true, $s1, $g1)
@@ -452,7 +481,7 @@ module.exports = {
     },
 
     gotBothMoves: function (game) {
-	return game.move1 != 'none' && game.move2 != 'none'
+	return game.move1 && game.move2
     },
 
     createGame: function (game, success, error) {
@@ -469,7 +498,8 @@ module.exports = {
 			     }
 			 })
 	}
-	game.text1 = game.text2 = ''
+	game.text1 = []
+	game.text2 = []
 	GameService.expandCurrentChoice (game, create, error)
     },
 
@@ -497,8 +527,9 @@ module.exports = {
 	// update
 	extend (game, update)
 	if (GameService.gotBothMoves (game)) {
-	    game.text1 = game.text2 = ''
-	    GameService.applyRandomOutcome (game, updateWithOutcome, error)
+	    game.text1 = []
+	    game.text2 = []
+	    GameService.applyRandomOutcomes (game, updateWithOutcome, error)
 	} else
 	    updateWithPlayerWaiting()
     },

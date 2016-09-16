@@ -46,8 +46,8 @@ module.exports = {
 	  defaultsTo: 'unchanged'
       },
       
-      intro: { type: 'string' },
-      intro2: { type: 'string' },
+      intro: { type: 'json' },
+      intro2: { type: 'json' },
 
       autoexpand: {
 	  type: 'boolean',
@@ -60,18 +60,6 @@ module.exports = {
       },
       verb2: { type: 'string' },
       
-      hintc: {
-          type: 'string',
-          defaultsTo: 'OK'  // Co-operate
-      },
-      hintc2: { type: 'string' },
-
-      hintd: {
-          type: 'string',
-          defaultsTo: 'Nope'  // Defect
-      },
-      hintd2: { type: 'string' },
-
       timeout: {
           type: 'integer',
 	  defaultsTo: 60

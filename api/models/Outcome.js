@@ -21,12 +21,10 @@ module.exports = {
 
       move1: {
           type: 'string',
-          enum: ['c', 'd']
       },
 
       move2: {
           type: 'string',
-          enum: ['c', 'd']
       },
 
       weight: {
@@ -34,8 +32,13 @@ module.exports = {
           defaultsTo: '1'
       },
 
-      outro: { type: 'string' },  // if empty, will be skipped by client
-      outro2: { type: 'string' },
+      exclusive: {
+	  type: 'boolean',
+	  defaultsTo: true
+      },
+
+      outro: { type: 'json' },
+      outro2: { type: 'json' },
 
       // game & player state updates
       common: { type: 'json' },
@@ -73,13 +76,13 @@ module.exports = {
             return oldMood
         else if (newMood && newMood != 'auto')
             return newMood
-	else if (move1 && move2 && move1 != 'none' && move2 != 'none') {
+	else if (move1 && move2 && move1 != null && move2 != null) {
             var move12 = move1 + move2
             switch (move12) {
-            case 'cc': return 'happy'
-            case 'cd': return 'angry'
-            case 'dc': return 'surprised'
-            case 'dd': return 'sad'
+            case 'rr': case 'yy': return 'happy'
+            case 'rl': case 'yn': return 'angry'
+            case 'lr': case 'ny': return 'surprised'
+            case 'rr': case 'nn': return 'sad'
             default: break
             }
 	}
@@ -103,10 +106,10 @@ module.exports = {
 	    else
 		type = outcome.move2 + outcome.move1
             switch (type) {
-            case 'cc': verb = 'reward'; break;
-            case 'cd': verb = 'sucker'; break;
-            case 'dc': verb = 'cheat'; break;
-            case 'dd': verb = 'punish'; break;
+            case 'rr': case 'yy': return 'reward'
+            case 'rl': case 'yn': return 'sucker'
+            case 'lr': case 'ny': return 'cheat'
+            case 'rr': case 'nn': return 'punish'
             default: verb = undefined; break;
             }
 	}

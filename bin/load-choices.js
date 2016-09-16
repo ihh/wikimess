@@ -279,56 +279,76 @@ function parseStory (text) {
 	var currentObj, currentList = []
 	var stack = []
 	var hashReg = /^ *# *([a-z0-9]+) *(.*?) *$/;
-	var jsReg = /^[\[\{\"]/;
+	var jsArrayReg = /^\[/;
+	var jsObjReg = /^\{/;
 	var closingBraceReg = /^ *\} *$/;
 	var nonwhiteReg = /\S/;
 	var textField = { choice: 'intro',
 			  next: 'intro',
-			  outcome: 'outro' }
-	var outcomeKeys = ['cc','cd','dc','dd','notcc','notcd','notdc','notdd','cx','dx','xc','xd','any','same','diff','cd2','symdiff']
-	var isPushKey = { choice: {},
-			  next: {},
-			  outcome: { next: true } }
-	var innerContext = { choice: 'outcome',
-			     next: 'outcome',
-			     outcome: 'next' }
-	outcomeKeys.forEach (function (key) { isPushKey.choice[key] = isPushKey.next[key] = true })
+			  outcome: 'outro',
+			  intro: 'text',
+			  outro: 'text' }
+	var outcomeKeys = ['rr','rl','lr','ll','notrr','notrl','notlr','notll','rx','lx','xr','xl','any','same','diff','lr2','rl2','symdiff','outcome']
+	var innerContext = { choice: { intro: 'intro' },
+			     next: { intro: 'intro' },
+			     outcome: { outro: 'outro', next: 'next' },
+			     intro: { left: 'intro', right: 'intro', next: 'intro' },
+			     outro: { left: 'outro', right: 'outro', next: 'outro' } }
+	outcomeKeys.forEach (function (key) { innerContext.choice[key] = innerContext.next[key] = 'outcome' })
 	text.split(/\n/).forEach (function (line) {
 //	    console.log("\nparseStory inner loop")
 //	    console.log("line: "+line)
 	    var tf = textField[context]
-	    function append (txt) {
-		currentObj[tf] = (currentObj[tf] || '') + txt
-		currentObj[tf] = currentObj[tf].replace(/^ +/,'')
-		currentObj[tf] = currentObj[tf].replace(/ +$/,'')
-		currentObj[tf] = currentObj[tf].replace(/ +/g,' ')
-		currentObj[tf] = currentObj[tf].replace(/\n+/g,'\n')
-		currentObj[tf] = currentObj[tf].replace(/\s*;;\s*/g,';;')
+	    function append (txt, obj, f) {
+		obj = obj || currentObj
+		f = f || tf
+		if (typeof(obj[f]) == 'undefined' || typeof(obj[f]) == 'string') {
+		    obj[f] = (obj[f] || '') + txt
+		    obj[f] = obj[f].replace(/^ +/,'')
+		    obj[f] = obj[f].replace(/ +$/,'')
+		    obj[f] = obj[f].replace(/ +/g,' ')
+		    obj[f] = obj[f].replace(/\n+/g,'\n')
+		    obj[f] = obj[f].replace(/\s*;;\s*/g,';;')
+		} else
+		    append (txt, obj[f], 'text')
 	    }
 	    var hashMatch = hashReg.exec (line)
 	    if (hashMatch) {
 		var cmd = hashMatch[1], arg = hashMatch[2]
-		if (arg == '{' && isPushKey[context][cmd]) {
+		if (arg == '{') {
+		    var inner = innerContext[context][cmd]
+		    if (!inner)
+			throw new Error ("Can't nest #" + cmd + " in " + context + " context")
 		    stack.push ({ obj: currentObj,
 				  list: currentList,
 				  context: context,
 				  cmd: cmd })
-		    currentList = currentObj[cmd] || []
-		    currentObj = {}
-		    currentList.push (currentObj)
-		    context = innerContext[context]
+		    var obj = {}
+		    if (currentObj[cmd]) {
+			if (typeof (currentObj[cmd]) == 'string') {
+			    currentList = []
+			    obj[textField[inner]] = currentObj[cmd]
+			} else
+			    currentList = currentObj[cmd]
+		    } else
+			currentList = []
+		    currentList.push (obj)
+		    currentObj = obj
+		    context = inner
 		} else if (arg.length) {
 		    if (cmd == 'name' && context == 'choice')
 			currentList.push (currentObj = {})
 		    try {
-			if (jsReg.test(arg)) {
+			if (jsArrayReg.test(arg)) {
 			    var val = eval(arg)
 			    if (Object.prototype.toString.call(val) !== '[object Array]')
 				val = [val]
 			    currentObj[cmd] = (currentObj[cmd] || []).concat (val)
-			} else if (isPushKey[context][cmd]) {
+			} else if (jsObjReg.test(arg)) {
+			    currentObj[cmd] = eval ('['+arg+'][0]')  // horrible hack
+			} else if (innerContext[context][cmd]) {
 			    var val = {}
-			    val[textField[innerContext[context]]] = arg
+			    val[textField[innerContext[context][cmd]]] = arg
 			    currentObj[cmd] = (currentObj[cmd] || []).concat ([val])
 			} else
 			    currentObj[cmd] = arg
@@ -350,9 +370,11 @@ function parseStory (text) {
 	    } else {
 		append ('\n')
 	    }
+//	    console.log("context: "+context)
 //	    console.log("currentObj: "+JSON.stringify(currentObj))
 //	    console.log("currentList: "+JSON.stringify(currentList))
 //	    console.log("stack: "+JSON.stringify(stack))
+//	    console.log("stack size: "+stack.length)
 
 	})
 	if (stack.length)

@@ -52,25 +52,19 @@ module.exports = {
 
       // player choices
       move1: {
-          type: 'string',
-          enum: ['c', 'd', 'none'],
-          defaultsTo: 'none'
+          type: 'string'
       },
 
       move2: {
-          type: 'string',
-          enum: ['c', 'd', 'none'],
-          defaultsTo: 'none'
+          type: 'string'
       },
 
       defaultMove1: {
-          type: 'string',
-          enum: ['c', 'd'],
+          type: 'string'
       },
 
       defaultMove2: {
-          type: 'string',
-          enum: ['c', 'd'],
+          type: 'string'
       },
 
       // player state specific to this game
@@ -97,11 +91,11 @@ module.exports = {
       },
 
       text1 : {
-	  type: 'string'
+	  type: 'json'
       },
 
       text2 : {
-	  type: 'string'
+	  type: 'json'
       },
 
       // state specific to this game, common to both players
@@ -112,7 +106,7 @@ module.exports = {
 },
 
     isWaitingForMove: function (game, role) {
-	return (role == 1 ? game.move1 : game.move2) == 'none'
+	return (role == 1 ? game.move1 : game.move2) == null
     },
 
     isTimedOut: function (game) {
@@ -123,32 +117,26 @@ module.exports = {
     },
 
     timedOutRoles: function (game) {
-	var w1 = game.move1 == 'none', w2 = game.move2 == 'none'
+	var w1 = game.move1 == null, w2 = game.move2 == null
 	return Game.isTimedOut(game)
 	    ? (w1 ? (w2 ? [1,2] : [1]) : (w2 ? [2] : []))
 	: []
     },
     
     forRole: function (game, role) {
-        var text, verb, hintc, hintd, self, other, selfMood, otherMood, waiting
+        var text, verb, self, other, selfMood, otherMood, waiting
         var current = game.current
         if (role == 1) {
-            if (current) {
+            if (current)
                 verb = current.verb
-                hintc = current.hintc
-                hintd = current.hintd
-            }
             self = game.player1
             other = game.player2
             selfMood = game.mood1
             otherMood = game.mood2
 	    text = game.text1
         } else {  // role == 2
-            if (current) {
+            if (current)
                 verb = current.verb2 || current.verb
-                hintc = current.hintc2 || current.hintc
-                hintd = current.hintd2 || current.hintd
-            }
             self = game.player2
             other = game.player1
             selfMood = game.mood2
@@ -160,8 +148,6 @@ module.exports = {
                      waiting: Game.isWaitingForMove (game, role),
                      text: text,
                      verb: verb,
-                     hintc: hintc,
-                     hintd: hintd,
 		     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
                      self: { mood: selfMood },
                      other: { id: other.id, name: other.name, mood: otherMood },
