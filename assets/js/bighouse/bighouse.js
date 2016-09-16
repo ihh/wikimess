@@ -62,6 +62,10 @@ var BigHouse = (function() {
 				  sendingKick: { kicking: true, loading: true },
 				  gameOver: { } },
 
+	defaultNextHint: "Next",
+	defaultLeftHint: "Nope",
+	defaultRightHint: "OK",
+
 	verbose: true,
         
         // REST interface
@@ -1078,32 +1082,24 @@ var BigHouse = (function() {
 	    var bh = this
 	    this.clearMoveTimer()
 	    this.setGameState('loading')
-            var loadingCardListItem, loadingCardSwipe, loadingCardTimer
 	    var loadingSpan = $('<span>').text ("Loading")
 	    if (this.nextOutcomeCardListItem) {
 		// not the first move; repurpose the previously-added placeholder outcome card as a 'Loading' card
-                loadingCardListItem = this.nextOutcomeCardListItem
+                this.loadingCardListItem = this.nextOutcomeCardListItem
 		    .html (loadingSpan)
 		    .removeClass()
 		    .addClass('waitcard')
-		loadingCardSwipe = this.nextOutcomeCardSwipe
 	    } else {
-		// first move, so add a 'Loading' card, with a short time delay in case server response is quick
-		loadingCardTimer = window.setTimeout (function() {
-		    loadingCardListItem = bh.createCardListItem (loadingSpan, 'waitcard')
-		    loadingCardSwipe = bh.pushChoiceRevealer().wrapCallback()
-		    loadingCardTimer = null
-		}, 100)
+		// first move, so add a 'Loading' card
+		this.loadingCardListItem = bh.createCardListItem (loadingSpan, 'waitcard')
 	    }
 	    if (this.waitCardListItem)
 		this.throwDummyCard (this.waitCardListItem, this.waitCardSwipe)  // visibly throw the 'waiting for player' card
 
             this.socket_getPlayerGame (this.playerID, this.gameID)
                 .done (function (data) {
-		    if (loadingCardTimer)
-			window.clearTimeout (loadingCardTimer)
-		    if (loadingCardListItem)
-			bh.throwDummyCard (loadingCardListItem)
+		    if (bh.loadingCardListItem)
+			bh.throwDummyCard (bh.loadingCardListItem)
 
 		    if (bh.verbose > 2)
 			console.log(data)
@@ -1115,23 +1111,20 @@ var BigHouse = (function() {
 
                     if (data.finished) {
 			if (data.text.length)
-			    bh.createAndDealCards ({ text: data.text })
-			bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
+			    bh.dealChoiceCards ({ text: data.text,
+						  dealt: function() {
+						      bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
+						  }})
 		    } else {
 			bh.createPlaceholderCards()
 			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
-			    bh.createAndDealCards ({ text: data.text,
-						     finalCardClass: 'verb-' + data.verb,
-						     finalCardIsChoice: true,
-						     swipeRight: bh.makeMoveFunction (data.move, 'c'),
-						     swipeLeft: bh.makeMoveFunction (data.move, 'd'),
-						     rightHint: data.hintc, 
-						     leftHint: data.hintd,
-						     dealt: function() {
-							 bh.showWaitingForOther()
-							 bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
-						     }})
+			    bh.dealChoiceCards ({ text: data.text,
+						  defaultMove: data.defaultMove,
+						  dealt: function() {
+						      bh.showWaitingForOther()
+						      bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
+						  }})
 			} else {
 			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
@@ -1161,20 +1154,8 @@ var BigHouse = (function() {
 	    callback()
 	},
 
-	getCardCount: function() {
-	    var n
-	    this.stackList.children().each (function (idx, elem) {
-		if ($(elem).hasClass('choicecard'))
-		    n = 0
-		else if (typeof(n) !== 'undefined')
-		    ++n
-	    });
-	    return n
-	},
-
-        showCardCount: function() {
+        showCardCount: function (n) {
 	    var bh = this
-	    var n = this.getCardCount()
 	    if (!n)
                 this.cardCountSpan.text('')
             else
@@ -1337,71 +1318,134 @@ var BigHouse = (function() {
 	    this.waitCardListItem.html ($('<span>').text ("Waiting for other player"))
 	},
 
-	createAndDealCards: function (config) {
+	dealChoiceCards: function (config) {
 	    var bh = this
-	    var texts = config.text.split (this.cardDelimiter)
-		.filter (function (text) { return /\S/.test(text) })
-	    var prevReveal = function() {}
-	    texts.reverse().forEach (function (text, n) {
-		var cardConfig = {}
-		var isFirst = (n+1 == texts.length)
-		var isFinal = (n == 0)
-		var sfx, cardClass = isFinal ? config.finalCardClass : undefined
-		// text can override default cardClass, sfx, hints
-		text = text.replace (/<outcome:([^> ]+)>/g, function (match, outcomeVerb) {
-		    cardClass = 'outcome'
-		    sfx = outcomeVerb
-		    return ""
-		})
-		text = text.replace (/<class:([^> ]+)>/g, function (match, className) {
-		    cardClass = className
-		    return ""
-		})
-		text = text.replace (/<sfx:([^> ]+)>/g, function (match, sfxName) {
-		    sfx = sfxName
-		    return ""
-		})
-		text = text.replace (/<hint:([^>]+)>/g, function (match, hint) {
-		    cardConfig.leftHint = cardConfig.rightHint = hint
-		    return ""
-		})
-		text = text.replace (/<hintc:([^>]+)>/g, function (match, hint) {
-		    cardConfig.rightHint = hint
-		    return ""
-		})
-		text = text.replace (/<hintd:([^>]+)>/g, function (match, hint) {
-		    cardConfig.leftHint = hint
-		    return ""
-		})
-                // misc text expansions go here...
-		text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
-		    return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
-		})
-                var content = text.split(/\n/)
-		    .filter (function (para) {
-			return /\S/.test(para)
-		    }).map (function (para) {
-			return $('<span>').html(para)
-                    })
-		// create the <li>
-                var cardListItem = bh.createCardListItem (content, cardClass)
-		cardConfig.listItem = cardListItem
-		if (isFinal) {
-		    if (config.finalCardIsChoice)
-			cardListItem.addClass('choicecard')  // flag this for showCardCount
-		    $.extend (cardConfig, config)
+	    var text = config.text
+	    var dealt = config.dealt
+	    var defaultMove = config.defaultMove
+	    // rewire the array of trees into a single tree
+	    var nextTree
+	    text.reverse().forEach (function (tree) {
+		function recurse (node) {
+		    if (node.next) {
+			node.next.hint = node.next.hint || bh.defaultNextHint
+			node.left = node.right = node.next
+		    }
+		    if (node.left) {
+			recurse (node.left)
+			node.left.hint = node.left.hint || bh.defaultLeftHint
+		    } else {
+			node.left = nextTree
+			node.left.hint = node.left.hint || bh.defaultNextHint
+		    }
+		    if (node.right) {
+			if (!node.next)  // avoid visiting 'next' nodes twice
+			    recurse (node.right)
+			node.right.hint = node.right.hint || bh.defaultRightHint
+		    } else {
+			node.right = nextTree
+			node.right.hint = node.right.hint || bh.defaultNextHint
+		    }
+		    node.depth = Math.max (node.text ? 1 : 0,
+					   1 + Math.max (node.left && node.left.depth,
+							 node.right && node.right.depth))
+
+		    var isFinalLeaf = (node.depth == 0 && !nextTree)
+		    node.pathsToDefault = 0
+		    if ((node.choice && defaultMove && node.choice == defaultMove)
+			// what if the default move comes from just falling off a leaf of the last tree?
+			// i.e. no choice corresponding to defaultMove is specified anywhere in tree
+			// ...
+		       ) {}
 		}
-		// create & deal the card
-                var card = bh.dealCard (cardConfig)
-		card.fadeCallback = prevReveal
-		// create the reveal callback
-		var reveal = function() {
-		    if (sfx)
-			bh.playSound (sfx)
-		}
-		prevReveal = reveal
+		recurse (tree)
+		nextTree = tree
 	    })
-	    prevReveal()
+	    // deal the card for the root node
+	    bh.lastChoice = bh.lastSwipeDir = null
+	    this.dealCardForNode (nextTree, dealt)
+	},
+
+	makeSwipeFunction: function (node, dir) {
+	    var bh = this
+	    return function() {
+		bh.lastSwipeDir = dir
+		var child = node[dir]
+		if (child) {
+		    if (child.choice)
+			bh.lastChoice = child.choice
+		    bh.dealCardForNode (child)
+		} else
+		    bh.makeMove (bh.moveNumber, bh.lastChoice || bh.lastSwipeDir.charAt(0))
+	    }
+	},
+
+	dealCardForNode: function (node, callback) {
+	    callback = callback || {}
+	    var text = node.text
+	    var cardConfig = { leftHint: node.left.hint,
+			       rightHint: node.right.hint,
+			       cardsBeforeChoice: node.depth - 1 }
+			       
+	    // text can override default cardClass, sfx, hints
+	    var sfx, cardClass
+	    text = text.replace (/<outcome:([^> ]+)>/g, function (match, outcomeVerb) {
+		cardClass = 'outcome'
+		sfx = outcomeVerb
+		return ""
+	    })
+
+	    text = text.replace (/<class:([^> ]+)>/g, function (match, className) {
+		cardClass = className
+		return ""
+	    })
+
+	    text = text.replace (/<sfx:([^> ]+)>/g, function (match, sfxName) {
+		sfx = sfxName
+		return ""
+	    })
+
+	    text = text.replace (/<hint:([^>]+)>/g, function (match, hint) {
+		cardConfig.leftHint = cardConfig.rightHint = hint
+		return ""
+	    })
+
+	    text = text.replace (/<lefthint:([^>]+)>/g, function (match, hint) {
+		cardConfig.leftHint = hint
+		return ""
+	    })
+
+	    text = text.replace (/<righthint:([^>]+)>/g, function (match, hint) {
+		cardConfig.rightHint = hint
+		return ""
+	    })
+
+	    text = text.replace (/<choice:([^> ]+)>/g, function (match, choice) {
+		bh.currentChoice = choice
+		return ""
+	    })
+
+            // misc text expansions go here...
+	    text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
+		return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
+	    })
+
+	    // create the <span>'s
+            var content = text.split(/\n/)
+		.filter (function (para) {
+		    return /\S/.test(para)
+		}).map (function (para) {
+		    return $('<span>').html(para)
+                })
+
+	    // create the <li>
+            var cardListItem = bh.createCardListItem (content, cardClass)
+	    cardConfig.listItem = cardListItem
+
+	    // create & deal the card
+            var card = bh.dealCard (cardConfig)
+	    if (sfx)
+		bh.playSound (sfx)
 	},
 
         createCardListItem: function (cardContent, cardClass) {
@@ -1441,28 +1485,16 @@ var BigHouse = (function() {
 	pushChoiceRevealer: function() {
 	    var bh = this
 	    var newChoiceDiv, oldChoiceDiv = this.choiceDiv
-            var newCardCountSpan, oldCardCountSpan = this.cardCountSpan
-	    var oldCardCount = this.cardCount
 	    oldChoiceDiv.hide()
-            oldCardCountSpan.hide()
 	    this.choiceBar
                 .append (newChoiceDiv = $('<div>'))
-            this.cardCountDiv.append (newCardCountSpan = $('<span>'))
 	    this.choiceDiv = newChoiceDiv
-	    this.cardCountSpan = newCardCountSpan
 	    return { newChoiceDiv: newChoiceDiv,
-                     newCardCountSpan: newCardCountSpan,
 		     wrapCallback: function (callback) {
 			 return function() {
 			     newChoiceDiv.remove()
 			     oldChoiceDiv.show()
 			     bh.choiceDiv = oldChoiceDiv
-
-                             newCardCountSpan.remove()
-			     oldCardCountSpan.show()
-			     bh.cardCountSpan = oldCardCountSpan
-
-			     bh.cardCount = oldCardCount
 
 			     if (callback)
 				 callback.call (bh)
@@ -1496,7 +1528,7 @@ var BigHouse = (function() {
 		card.on ('throwinend', config.dealt)
             card.throwIn (-600, -100)
 
-            this.showCardCount()
+            this.showCardCount (config.cardsBeforeChoice || 0)
 
             return card
         },
@@ -1599,22 +1631,20 @@ var BigHouse = (function() {
 	    return this.callOrRetry (f, this.moveRetryCount, this.moveRetryMinWait, this.moveRetryMaxWait, null)
 	},
 
-        makeMoveFunction: function (moveNumber, choice) {
-            var bh = this
-            return function() {
-		if (bh.moveNumber == moveNumber && this.gameState == 'ready') {
-		    if (this.verbose)
-			console.log ("Making move #" + moveNumber + ": " + choice)
-		    bh.setGameState ('sendingMove')
-		    bh.makeMoveOrRetry (moveNumber, choice)
-			.done (function() { bh.setGameState ('waitingForOther') })
-			.fail (function() {
-			    if (this.verbose)
-				console.log("Failed to make move; rebuilding page")
-			    bh.showGamePage()
-			})
-		}
-            }
+        makeMove: function (moveNumber, choice) {
+	    var bh = this
+	    if (bh.moveNumber == moveNumber && this.gameState == 'ready') {
+		if (this.verbose)
+		    console.log ("Making move #" + moveNumber + ": " + choice)
+		bh.setGameState ('sendingMove')
+		bh.makeMoveOrRetry (moveNumber, choice)
+		    .done (function() { bh.setGameState ('waitingForOther') })
+		    .fail (function() {
+			if (this.verbose)
+			    console.log("Failed to make move; rebuilding page")
+			bh.showGamePage()
+		    })
+	    }
         },
         
 	makeDefaultMove: function() {
