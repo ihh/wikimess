@@ -1120,6 +1120,7 @@ var BigHouse = (function() {
 			    bh.dealChoiceCards ({ text: data.text,
                                                   dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
 						  dealt: function() {
+                                                      bh.showLoading()
 						      bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
 						  }})
 		    } else {
@@ -1128,6 +1129,7 @@ var BigHouse = (function() {
 			    bh.dealChoiceCards ({ text: data.text,
                                                   dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
 						  dealt: function() {
+                                                      bh.showLoading()
 						      bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
 						  }})
 			} else {
@@ -1203,7 +1205,7 @@ var BigHouse = (function() {
                 var quarterDeadtime = this.cardStartline.getTime() + timeForThisCard / 4
 		if (nowTime > thisCardDeadtime && this.page == 'game' && this.gameState == 'ready')
                     this.throwSingleCard()
-                else if (nowTime > quarterDeadtime)
+                else if (nowTime > quarterDeadtime && this.gameState == 'ready')
                     this.stackList.children().last().addClass('jiggle')
 		this.setMoveTimer (this.timerCallback, 10)
 	    }
