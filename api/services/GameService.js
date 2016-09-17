@@ -278,7 +278,7 @@ module.exports = {
              if (err)
                  error (err)
              else if (updatedGames.length != 1)
-                 error (new Error ("Couldn't update Game"))
+                 error (new Error ("Couldn't update Game (colliding updates from both players?)"))
              else
 		 success()
 	 })
