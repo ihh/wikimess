@@ -1178,11 +1178,11 @@ var BigHouse = (function() {
 	timerCallback: function() {
 	    var bh = this
 	    this.clearMoveTimer()
-	    var now = new Date()
+	    var now = new Date(), nowTime = now.getTime()
 	    var timeForThisCard = (this.deadline - this.cardStartline) / (1 + (this.cardCount || 0))
-	    var thisCardDeadline = new Date (this.cardStartline.getTime() + timeForThisCard)
+	    var thisCardDeadtime = this.cardStartline.getTime() + timeForThisCard, thisCardDeadline = new Date (thisCardDeadtime)
 	    this.updateTimerDiv (this.cardStartline, thisCardDeadline, now)
-	    if (now.getTime() > this.deadline.getTime()) {
+	    if (nowTime > this.deadline.getTime()) {
 		if (this.verbose > 3)
 		    console.log ("Timer callback at " + now + " passed deadline at " + this.deadline)
 		switch (this.gameState) {
@@ -1200,8 +1200,11 @@ var BigHouse = (function() {
 		    break
 		}
 	    } else {
-		if (now.getTime() > thisCardDeadline.getTime() && this.page == 'game' && this.gameState == 'ready')
+                var quarterDeadtime = this.cardStartline.getTime() + timeForThisCard / 4
+		if (nowTime > thisCardDeadtime && this.page == 'game' && this.gameState == 'ready')
                     this.throwSingleCard()
+                else if (nowTime > quarterDeadtime)
+                    this.stackList.children().last().addClass('jiggle')
 		this.setMoveTimer (this.timerCallback, 10)
 	    }
 	},
@@ -1320,18 +1323,15 @@ var BigHouse = (function() {
 	},
 
 	showLoading: function() {
-	    this.fadeInWaitCardText ("Loading...")
+	    this.showWaitCardText ("Loading...")
 	},
 
 	showWaitingForOther: function() {
-	    this.fadeInWaitCardText ("Waiting for " + this.opponentName)
+	    this.showWaitCardText ("Waiting for " + this.opponentName)
 	},
 
-	fadeInWaitCardText: function (text) {
-	    this.waitCardListItem.html ($('<span>')
-                                      .text (text)
-                                      .css('opacity',0)
-                                      .fadeTo(this.loadingTextFadeTime,1))
+	showWaitCardText: function (text) {
+	    this.waitCardListItem.html ($('<span>').text(text))
 	},
 
 	dealChoiceCards: function (config) {
@@ -1344,6 +1344,7 @@ var BigHouse = (function() {
 
 	makeSwipeFunction: function (node, dir) {
 	    var bh = this
+            var waitCardContents = this.waitCardListItem.find('*')
 	    return function() {
 		bh.lastSwipe = dir
 
@@ -1356,7 +1357,7 @@ var BigHouse = (function() {
 		    bh.dealCardForNode ({ node: next,
                                           dealDirection: dir == 'right' ? 'left' : 'right',
                                           dealt: function() {
-                                              bh.waitCardListItem.empty()
+                                              waitCardContents.remove()
                                           }})
 		} else {
                     if (bh.cardCount) {
@@ -1444,8 +1445,6 @@ var BigHouse = (function() {
 
 	    // create the <li>
             var cardListItem = bh.createCardListItem (content, cardClass)
-            if (node.depth == 1)
-                cardListItem.addClass ('choicecard')
 	    cardConfig.listItem = cardListItem
 
 	    // create & deal the card
@@ -1470,12 +1469,14 @@ var BigHouse = (function() {
             var bh = this
             var card = this.stack.createCard (listItem[0])
             card.on ('throwoutright', function () {
+                listItem.removeClass('jiggle')
                 if (!silent)
                     bh.playSound ('swiperight')
                 rightCallback.call (bh)
                 bh.fadeCard (listItem, card)
             })
             card.on ('throwoutleft', function () {
+                listItem.removeClass('jiggle')
                 if (!silent)
                     bh.playSound ('swipeleft')
                 leftCallback.call (bh)

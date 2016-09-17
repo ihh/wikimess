@@ -146,6 +146,59 @@ body {
     background-color: antiquewhite;
 }
 
+.bighouse .cardbar .cardtable .jiggle {
+    animation: jiggle 5s ease 0s infinite;
+    -moz-animation: jiggle 5s ease 0s infinite;
+    -webkit-animation: jiggle 5s ease 0s infinite;
+}
+
+@-webkit-keyframes jiggle {
+    0% { transform: rotate(0deg); }
+    95% { transform: rotate(0deg); }
+    97% { transform: rotate(1deg); }
+    99% { transform: rotate(-0.5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.bighouse .cardbar .cardtable .waitcard span {
+    animation: fadein 1s, pulsate 3s ease 500ms infinite;
+    -moz-animation: fadein 1s, pulsate 3s ease 500ms infinite;
+    -webkit-animation: fadein 1s, pulsate 3s ease 500ms infinite;
+}
+
+@-webkit-keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1.0; }
+}
+
+@-webkit-keyframes pulsate {
+    0% { opacity: 1.0; }
+    33% { opacity: 0.1; }
+    100% { opacity: 1.0; }
+}
+
+@-moz-keyframes pulsate {
+    0% { opacity: 1.0; }
+    33% { opacity: 0.1; }
+    100% { opacity: 1.0; }
+}
+
+@-moz-keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1.0; }
+}
+
+@keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1.0; }
+}
+
+@keyframes pulsate {
+    0% { opacity: 1.0; }
+    33% { opacity: 0.1; }
+    100% { opacity: 1.0; }
+}
+
 .bighouse .cardbar .cardtable .outcome {
     font-style: italic;
     background-color: lightcyan;
