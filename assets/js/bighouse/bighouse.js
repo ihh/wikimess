@@ -1102,12 +1102,15 @@ var BigHouse = (function() {
             this.socket_getPlayerGame (this.playerID, this.gameID)
                 .done (function (data) {
 
-		    if (bh.verbose > 2)
+		    if (bh.verbose) {
+                        console.log("Received game state from server")
 			console.log(data)
+                    }
 
 		    bh.throwDummyCard (loadingCardListItem)
                     bh.moveNumber = data.move
-
+                    bh.defaultMove = data.defaultMove
+                    
 		    bh.updatePlayerMood (data.self.mood, data.startline)
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
@@ -1334,7 +1337,7 @@ var BigHouse = (function() {
 	dealChoiceCards: function (config) {
 	    var bh = this
 	    bh.textNodes = config.text
-	    bh.lastChoice = bh.lastSwipe = null
+	    bh.lastChoice = bh.lastPriority = bh.lastSwipe = undefined
 	    this.dealCardForNode ({ node: bh.textNodes[bh.textNodes.length-1],
                                     dealt: config.dealt })
 	},
@@ -1343,10 +1346,14 @@ var BigHouse = (function() {
 	    var bh = this
 	    return function() {
 		bh.lastSwipe = dir
-                if (typeof(node[dir].id) !== 'undefined') {
+
+		var child = node[dir]
+                bh.updateLastChoice (child)
+
+                if (typeof(child.id) !== 'undefined') {
 		    bh.showLoading()
-		    var child = bh.textNodes[node[dir].id]
-		    bh.dealCardForNode ({ node: child,
+		    var next = bh.textNodes[child.id]
+		    bh.dealCardForNode ({ node: next,
                                           dealDirection: dir == 'right' ? 'left' : 'right',
                                           dealt: function() {
                                               bh.waitCardListItem.empty()
@@ -1357,18 +1364,28 @@ var BigHouse = (function() {
                         bh.showCardCount (0)
                     }
                     bh.showWaitingForOther()
-		    bh.makeMove (bh.moveNumber, node[dir].choice)
+		    bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
                 }
 	    }
 	},
 
+        updateLastChoice: function (node) {
+	    if (node.choice) {
+                var newPriority = node.priority || 0
+                if (!(this.lastPriority > newPriority)) {  // gives correct result when this.lastPriority is undefined
+		    this.lastChoice = node.choice
+                    this.lastPriority = newPriority
+                }
+            }
+        },
+        
 	dealCardForNode: function (info) {
             var bh = this
             var node = info.node
 	    var dealt = info.dealt || function() {}
+
             bh.currentChoiceNode = node
-	    if (node.choice)
-		bh.lastChoice = node.choice
+            bh.updateLastChoice (node)
 
 	    var cardConfig = { leftHint: node.left.hint,
 			       rightHint: node.right.hint,
@@ -1636,9 +1653,12 @@ var BigHouse = (function() {
 	makeDefaultMove: function() {
 	    var bh = this
 	    this.setGameState ('sendingDefaultMove')
+            if (this.currentChoiceNode.defaultMove)
+                this.updateLastChoice (this.currentChoiceNode.defaultMove)
+            var move = this.lastChoice
 	    if (this.verbose)
-		console.log ("Making default move #" + this.moveNumber + ": " + this.currentChoiceNode.defaultMove)
-	    this.makeMoveOrRetry (this.moveNumber, this.currentChoiceNode.defaultMove)
+		console.log ("Making default move #" + this.moveNumber + ": " + move)
+	    this.makeMoveOrRetry (this.moveNumber, move)
 		.done (bh.runTimeoutAnimationThenKick.bind(bh))
 		.fail (function() {
 		    console.log("Failed to make default move; rebuilding page")

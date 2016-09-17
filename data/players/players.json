@@ -13,7 +13,7 @@
     "human": false,
     "botmind": {
 	"strategy": "mood",
-	"probc": {
+	"swipeRightProb": {
 	    "happy": 1,
 	    "angry": 0,
 	    "surprised": 1,

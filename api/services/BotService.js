@@ -15,10 +15,10 @@ module.exports = {
             if (typeof(child.id) !== 'undefined')
                 node.defaultMove = textNodes[child.id].defaultMove
             else
-                node.defaultMove = child.choice
+                node.defaultMove = { choice: child.choice, priority: child.priority }
         })
 
-        game[Game.roleAttr(role,'defaultMove')] = textNodes[textNodes.length - 1].defaultMove
+        game[Game.roleAttr(role,'defaultMove')] = textNodes[textNodes.length - 1].defaultMove.choice
     },
 
     randomSwipe: function (player, game, node) {
@@ -26,7 +26,7 @@ module.exports = {
 	var mood = Game.getRoleAttr (game, role, 'mood')
 	switch (player.botmind.strategy) {
 	case 'mood':
-	    return Math.random() < player.botmind.probr[mood] ? 'right' : 'left'
+	    return Math.random() < player.botmind.swipeRightProb[mood] ? 'right' : 'left'
 	    break;
 	default:
 	    break;

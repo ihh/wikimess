@@ -5,20 +5,38 @@ var merge = require('deepmerge');
 
 module.exports = {
 
-    buildTextTree: function (texts) {
+    buildTextTree: function (texts, game) {
 //        console.log('buildTextTree')
 //        console.log(JSON.stringify(texts))
         var defaultNextHint = 'Next'
+        var defaultAbsentText = 'Time passes...'
     	// rewire the array of trees into a single tree,
         // then convert it into an array of nodes
 	var nextTree, nodeList = []
 	texts.reverse().forEach (function (tree) {
+            function linkSummary (node, defaultChoice) {
+                var summary = {}
+		summary.hint = node.hint || defaultNextHint
+                if (!node.depth) {
+                    if (node.choice) {
+                        summary.choice = node.choice
+                        summary.priority = node.priority
+                    } else {
+                        summary.choice = defaultChoice
+                        summary.priority = -1
+                    }
+                }
+                summary.id = node.id
+                return summary
+            }
+
 	    function recurse (node) {
                 if (!node.text) {
                     if (node.left || node.right || node.next) {
                         sails.debug.log ("Node has children but no text: " + node)
-                        node.text = "[no text]"
+                        node.text = defaultAbsentText
                     } else if (nextTree) {
+                        // bypass the empty leaf node
                         node.id = nextTree.id
                         node.depth = nextTree.depth
                         return
@@ -28,37 +46,20 @@ module.exports = {
                 if (isLeaf)
                     node.depth = 0
                 else {
-                    var l = {}, r = {}
 		    if (node.next) {
                         recurse (node.next)
                         node.left = node.right = node.next
-                        l.hint = r.hint = node.next.hint || defaultNextHint
-                        if (node.next.depth == 0 && !node.next.choice) {
-                            l.choice = 'l'
-                            r.choice = 'r'
-                        } else
-		            l.choice = r.choice = node.next.choice
-                        l.id = r.id = node.next.id
 
 		    } else {
-                        var noLeft = !node.left, noRight = !node.right
                         if (node.left)
                             recurse (node.left)
                         else
                             node.left = nextTree || {}
-		        l.hint = node.left.hint || defaultNextHint
-                        if (!node.left.depth)
-                            l.choice = node.left.choice || 'l'
-                        l.id = node.left.id
 
                         if (node.right)
                             recurse (node.right)
                         else
                             node.right = nextTree || {}
-		        r.hint = node.right.hint || defaultNextHint
-                        if (!node.right.depth)
-                            r.choice = node.right.choice || 'r'
-                        r.id = node.right.id
 		    }
 
                     node.depth = 1 + Math.max (node.left.depth || 0,
@@ -66,9 +67,11 @@ module.exports = {
 
                     node.id = nodeList.length
                     nodeList.push ({ id: node.id,
-                                     left: l,
-                                     right: r,
+                                     left: linkSummary (node.left, 'l'),
+                                     right: linkSummary (node.right, 'r'),
                                      depth: node.depth,
+                                     choice: node.choice,
+                                     priority: node.priority,
                                      text: node.text })
 	        }
             }
@@ -76,6 +79,13 @@ module.exports = {
 	    nextTree = tree
 	})
 //        console.log(JSON.stringify(nodeList))
+        if (!nodeList.length) {
+            nodeList= [{ id: 0,
+                         text: defaultAbsentText,
+                         left: { hint: defaultNextHint, choice: 'l' },
+                         right: { hint: defaultNextHint, choice: 'r' },
+                         depth: 1 }]
+        }
         return nodeList
     },
 
@@ -186,8 +196,8 @@ module.exports = {
     },
 
     moveOutcomes: function (game, cb) {
-	console.log('moveOutcomes')
-	console.log(game)
+//	console.log('moveOutcomes')
+//	console.log(game)
         var query = Outcome.find ({ choice: game.current.id })
 	if (game.move1 != '')
 	    query.where ({ move1: [game.move1, '*'] })
@@ -214,8 +224,8 @@ module.exports = {
 		return outcomes[n].exclusive ? true : false
 	    })
 	    
-	    console.log ("outcomes: " + JSON.stringify(outcomes))
-	    console.log ("randomOutcomes weights: " + JSON.stringify(outcomeWeight))
+//	    console.log ("outcomes: " + JSON.stringify(outcomes))
+//	    console.log ("randomOutcomes weights: " + JSON.stringify(outcomeWeight))
             var totalWeight = exclusiveOutcomeWeight.reduce (function (total, w) {
                 return total + w
             }, 0)
@@ -314,7 +324,7 @@ module.exports = {
 	if (game.future.length) {
 	    var nextChoiceName = game.future[0]
 	    game.future = game.future.slice(1)
-	    console.log ("Attempting to resolve "+nextChoiceName)
+//	    console.log ("Attempting to resolve "+nextChoiceName)
 	    Choice.findOne ({ name: nextChoiceName }).exec (function (err, choice) {
 		if (err)
 		    error (err)
@@ -376,7 +386,7 @@ module.exports = {
 	     else {
 		 outcomes.forEach (function (outcome) {
 
-		     console.log (outcome)
+//		     console.log (outcome)
 
                      var future = outcome.next
                      if (!outcome.flush)
@@ -647,8 +657,8 @@ module.exports = {
     },
 
     prepareTextTrees: function (game) {
-        game.text1 = GameService.buildTextTree (game.tree1)
-        game.text2 = GameService.buildTextTree (game.tree2)
+        game.text1 = GameService.buildTextTree (game.tree1, game)
+        game.text2 = GameService.buildTextTree (game.tree2, game)
     },
     
     playBotMoves: function (game) {
