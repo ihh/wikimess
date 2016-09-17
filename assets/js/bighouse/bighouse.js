@@ -41,6 +41,7 @@ var BigHouse = (function() {
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
 	cardFadeTime: 500,
+        loadingTextFadeTime: 500,
         avatarSize: 128,
         cardDelimiter: ';;',
 	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
@@ -51,6 +52,8 @@ var BigHouse = (function() {
 	kickRetryCount: 10,
 	kickRetryMinWait: 1000,
 	kickRetryMaxWait: 2000,
+        dealXOffset: 400,
+        dealYOffset: 600,
 	allowedStateTransition: { loading: { gameOver: true, ready: true, waitingForOther: true },
 				  ready: { sendingMove: true, sendingDefaultMove: true, loadTimeoutAnimation: true },
 				  waitingForOther: { kicking: true, loading: true },
@@ -1082,27 +1085,27 @@ var BigHouse = (function() {
 	    var bh = this
 	    this.clearMoveTimer()
 	    this.setGameState('loading')
-	    var loadingSpan = $('<span>').text ("Loading")
+	    var loadingCardListItem, loadingSpan = $('<span>').text ("Loading...")
 	    if (this.nextOutcomeCardListItem) {
 		// not the first move; repurpose the previously-added placeholder outcome card as a 'Loading' card
-                this.loadingCardListItem = this.nextOutcomeCardListItem
+                loadingCardListItem = this.nextOutcomeCardListItem
 		    .html (loadingSpan)
 		    .removeClass()
 		    .addClass('waitcard')
 	    } else {
 		// first move, so add a 'Loading' card
-		this.loadingCardListItem = bh.createCardListItem (loadingSpan, 'waitcard')
+		loadingCardListItem = bh.createCardListItem (loadingSpan, 'waitcard')
 	    }
 	    if (this.waitCardListItem)
 		this.throwDummyCard (this.waitCardListItem, this.waitCardSwipe)  // visibly throw the 'waiting for player' card
 
             this.socket_getPlayerGame (this.playerID, this.gameID)
                 .done (function (data) {
-		    if (bh.loadingCardListItem)
-			bh.throwDummyCard (bh.loadingCardListItem)
 
 		    if (bh.verbose > 2)
 			console.log(data)
+
+		    bh.throwDummyCard (loadingCardListItem)
                     bh.moveNumber = data.move
 
 		    bh.updatePlayerMood (data.self.mood, data.startline)
@@ -1112,17 +1115,16 @@ var BigHouse = (function() {
                     if (data.finished) {
 			if (data.text.length)
 			    bh.dealChoiceCards ({ text: data.text,
+                                                  dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
 						  dealt: function() {
 						      bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
 						  }})
 		    } else {
 			bh.createPlaceholderCards()
-			bh.defaultMove = data.defaultMove
 			if (data.waiting) {
 			    bh.dealChoiceCards ({ text: data.text,
-						  defaultMove: data.defaultMove,
+                                                  dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
 						  dealt: function() {
-						      bh.showWaitingForOther()
 						      bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
 						  }})
 			} else {
@@ -1159,7 +1161,7 @@ var BigHouse = (function() {
 	    if (!n)
                 this.cardCountSpan.text('')
             else
-                this.cardCountSpan.text(n+' card'+(n>1?'s':'')+' before next choice')
+                this.cardCountSpan.text(n+' card'+(n>1?'s':'')+' before end of turn')
             this.cardCountDiv.css ('opacity', 1)
 	    this.cardCount = n
         },
@@ -1290,7 +1292,7 @@ var BigHouse = (function() {
                     nChimes = Math.min (this.nTimeoutChimes, Math.floor (totalTime / 2000)),
                     firstChimeTime = endTime - 1000 * nChimes
 	        if (nowTime >= firstChimeTime && nowTime < endTime) {
-		    var choiceClass = this.defaultMove == 'd' ? 'choice1' : 'choice2'
+		    var choiceClass = this.currentChoiceNode.defaultSwipe == 'left' ? 'choice1' : 'choice2'
                     var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
 		    $('.'+choiceClass).find(':visible').css ('opacity', opacity)
                     this.cardCountDiv.css ('opacity', opacity)
@@ -1314,80 +1316,70 @@ var BigHouse = (function() {
 	    this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
 	},
 
+	showLoading: function() {
+	    this.fadeInWaitCardText ("Loading...")
+	},
+
 	showWaitingForOther: function() {
-	    this.waitCardListItem.html ($('<span>').text ("Waiting for other player"))
+	    this.fadeInWaitCardText ("Waiting for " + this.opponentName)
+	},
+
+	fadeInWaitCardText: function (text) {
+	    this.waitCardListItem.html ($('<span>')
+                                      .text (text)
+                                      .css('opacity',0)
+                                      .fadeTo(this.loadingTextFadeTime,1))
 	},
 
 	dealChoiceCards: function (config) {
 	    var bh = this
-	    var text = config.text
-	    var dealt = config.dealt
-	    var defaultMove = config.defaultMove
-	    // rewire the array of trees into a single tree
-	    var nextTree
-	    text.reverse().forEach (function (tree) {
-		function recurse (node) {
-		    if (node.next) {
-			node.next.hint = node.next.hint || bh.defaultNextHint
-			node.left = node.right = node.next
-		    }
-		    if (node.left) {
-			recurse (node.left)
-			node.left.hint = node.left.hint || bh.defaultLeftHint
-		    } else {
-			node.left = nextTree
-			node.left.hint = node.left.hint || bh.defaultNextHint
-		    }
-		    if (node.right) {
-			if (!node.next)  // avoid visiting 'next' nodes twice
-			    recurse (node.right)
-			node.right.hint = node.right.hint || bh.defaultRightHint
-		    } else {
-			node.right = nextTree
-			node.right.hint = node.right.hint || bh.defaultNextHint
-		    }
-		    node.depth = Math.max (node.text ? 1 : 0,
-					   1 + Math.max (node.left && node.left.depth,
-							 node.right && node.right.depth))
-
-		    var isFinalLeaf = (node.depth == 0 && !nextTree)
-		    node.pathsToDefault = 0
-		    if ((node.choice && defaultMove && node.choice == defaultMove)
-			// what if the default move comes from just falling off a leaf of the last tree?
-			// i.e. no choice corresponding to defaultMove is specified anywhere in tree
-			// ...
-		       ) {}
-		}
-		recurse (tree)
-		nextTree = tree
-	    })
-	    // deal the card for the root node
-	    bh.lastChoice = bh.lastSwipeDir = null
-	    this.dealCardForNode (nextTree, dealt)
+	    bh.textNodes = config.text
+	    bh.lastChoice = bh.lastSwipe = null
+	    this.dealCardForNode ({ node: bh.textNodes[bh.textNodes.length-1],
+                                    dealt: config.dealt })
 	},
 
 	makeSwipeFunction: function (node, dir) {
 	    var bh = this
 	    return function() {
-		bh.lastSwipeDir = dir
-		var child = node[dir]
-		if (child) {
-		    if (child.choice)
-			bh.lastChoice = child.choice
-		    bh.dealCardForNode (child)
-		} else
-		    bh.makeMove (bh.moveNumber, bh.lastChoice || bh.lastSwipeDir.charAt(0))
+		bh.lastSwipe = dir
+                if (typeof(node[dir].id) !== 'undefined') {
+		    bh.showLoading()
+		    var child = bh.textNodes[node[dir].id]
+		    bh.dealCardForNode ({ node: child,
+                                          dealDirection: dir == 'right' ? 'left' : 'right',
+                                          dealt: function() {
+                                              bh.waitCardListItem.empty()
+                                          }})
+		} else {
+                    if (bh.cardCount) {
+                        bh.cardStartline = new Date()
+                        bh.showCardCount (0)
+                    }
+                    bh.showWaitingForOther()
+		    bh.makeMove (bh.moveNumber, node[dir].choice)
+                }
 	    }
 	},
 
-	dealCardForNode: function (node, callback) {
-	    callback = callback || {}
-	    var text = node.text
+	dealCardForNode: function (info) {
+            var bh = this
+            var node = info.node
+	    var dealt = info.dealt || function() {}
+            bh.currentChoiceNode = node
+	    if (node.choice)
+		bh.lastChoice = node.choice
+
 	    var cardConfig = { leftHint: node.left.hint,
 			       rightHint: node.right.hint,
-			       cardsBeforeChoice: node.depth - 1 }
-			       
+                               swipeLeft: bh.makeSwipeFunction (node, 'left'),
+                               swipeRight: bh.makeSwipeFunction (node, 'right'),
+			       cardsBeforeChoice: node.depth - 1,
+                               dealt: dealt,
+                               dealDirection: info.dealDirection }
+
 	    // text can override default cardClass, sfx, hints
+	    var text = node.text
 	    var sfx, cardClass
 	    text = text.replace (/<outcome:([^> ]+)>/g, function (match, outcomeVerb) {
 		cardClass = 'outcome'
@@ -1420,11 +1412,6 @@ var BigHouse = (function() {
 		return ""
 	    })
 
-	    text = text.replace (/<choice:([^> ]+)>/g, function (match, choice) {
-		bh.currentChoice = choice
-		return ""
-	    })
-
             // misc text expansions go here...
 	    text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
 		return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
@@ -1440,6 +1427,8 @@ var BigHouse = (function() {
 
 	    // create the <li>
             var cardListItem = bh.createCardListItem (content, cardClass)
+            if (node.depth == 1)
+                cardListItem.addClass ('choicecard')
 	    cardConfig.listItem = cardListItem
 
 	    // create & deal the card
@@ -1466,16 +1455,12 @@ var BigHouse = (function() {
             card.on ('throwoutright', function () {
                 if (!silent)
                     bh.playSound ('swiperight')
-		if (!listItem.hasClass('choicecard'))
-		    bh.cardStartline = new Date()
                 rightCallback.call (bh)
                 bh.fadeCard (listItem, card)
             })
             card.on ('throwoutleft', function () {
                 if (!silent)
                     bh.playSound ('swipeleft')
-		if (!listItem.hasClass('choicecard'))
-		    bh.cardStartline = new Date()
                 leftCallback.call (bh)
                 bh.fadeCard (listItem, card)
             })
@@ -1526,8 +1511,9 @@ var BigHouse = (function() {
 
 	    if (config.dealt)
 		card.on ('throwinend', config.dealt)
-            card.throwIn (-600, -100)
+            card.throwIn (config.dealDirection == 'left' ? -this.dealXOffset : +this.dealXOffset, -this.dealYOffset)
 
+	    this.cardStartline = new Date()
             this.showCardCount (config.cardsBeforeChoice || 0)
 
             return card
@@ -1651,8 +1637,8 @@ var BigHouse = (function() {
 	    var bh = this
 	    this.setGameState ('sendingDefaultMove')
 	    if (this.verbose)
-		console.log ("Making default move #" + this.moveNumber + ": " + this.defaultMove)
-	    this.makeMoveOrRetry (this.moveNumber, this.defaultMove)
+		console.log ("Making default move #" + this.moveNumber + ": " + this.currentChoiceNode.defaultMove)
+	    this.makeMoveOrRetry (this.moveNumber, this.currentChoiceNode.defaultMove)
 		.done (bh.runTimeoutAnimationThenKick.bind(bh))
 		.fail (function() {
 		    console.log("Failed to make default move; rebuilding page")
@@ -1685,7 +1671,7 @@ var BigHouse = (function() {
         },
 
 	throwCard: function (card) {
-	    var dir = this.defaultMove == 'd' ? gajus.Swing.Card.DIRECTION_LEFT	: gajus.Swing.Card.DIRECTION_RIGHT;
+	    var dir = this.currentChoiceNode.defaultSwipe == 'left' ? gajus.Swing.Card.DIRECTION_LEFT : gajus.Swing.Card.DIRECTION_RIGHT;
 	    (this.cardThrowFunction (card, dir)) ()
 	},
         
@@ -1742,6 +1728,7 @@ var BigHouse = (function() {
 	    delete this.waitCardListItem
 	    delete this.waitCardSwipe
             delete this.gameState
+            delete this.lastSwipe
             this.showGamePage()
 	},
 

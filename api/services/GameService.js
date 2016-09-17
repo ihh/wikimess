@@ -5,11 +5,89 @@ var merge = require('deepmerge');
 
 module.exports = {
 
+    buildTextTree: function (texts) {
+//        console.log('buildTextTree')
+//        console.log(JSON.stringify(texts))
+        var defaultNextHint = 'Next'
+    	// rewire the array of trees into a single tree,
+        // then convert it into an array of nodes
+	var nextTree, nodeList = []
+	texts.reverse().forEach (function (tree) {
+	    function recurse (node) {
+                if (!node.text) {
+                    if (node.left || node.right || node.next) {
+                        sails.debug.log ("Node has children but no text: " + node)
+                        node.text = "[no text]"
+                    } else if (nextTree) {
+                        node.id = nextTree.id
+                        node.depth = nextTree.depth
+                        return
+                    }
+                }
+                var isLeaf = !(node.next || node.left || node.right || nextTree || node.text)
+                if (isLeaf)
+                    node.depth = 0
+                else {
+                    var l = {}, r = {}
+		    if (node.next) {
+                        recurse (node.next)
+                        node.left = node.right = node.next
+                        l.hint = r.hint = node.next.hint || defaultNextHint
+                        if (node.next.depth == 0 && !node.next.choice) {
+                            l.choice = 'l'
+                            r.choice = 'r'
+                        } else
+		            l.choice = r.choice = node.next.choice
+                        l.id = r.id = node.next.id
+
+		    } else {
+                        var noLeft = !node.left, noRight = !node.right
+                        if (node.left)
+                            recurse (node.left)
+                        else
+                            node.left = nextTree || {}
+		        l.hint = node.left.hint || defaultNextHint
+                        if (!node.left.depth)
+                            l.choice = node.left.choice || 'l'
+                        l.id = node.left.id
+
+                        if (node.right)
+                            recurse (node.right)
+                        else
+                            node.right = nextTree || {}
+		        r.hint = node.right.hint || defaultNextHint
+                        if (!node.right.depth)
+                            r.choice = node.right.choice || 'r'
+                        r.id = node.right.id
+		    }
+
+                    node.depth = 1 + Math.max (node.left.depth || 0,
+                                               node.right.depth || 0)
+
+                    node.id = nodeList.length
+                    nodeList.push ({ id: node.id,
+                                     left: l,
+                                     right: r,
+                                     depth: node.depth,
+                                     text: node.text })
+	        }
+            }
+	    recurse (tree)
+	    nextTree = tree
+	})
+//        console.log(JSON.stringify(nodeList))
+        return nodeList
+    },
+
     expandText: function (text, game, outcome, role) {
 	if (!text)
 	    return []
 
-	if (typeof(text) == 'object') {
+        if (Object.prototype.toString.call(text) === '[object Array]') {
+            return text.map (function (t) {
+                return GameService.expandText (t, game, outcome, role)
+            })
+        } else if (typeof(text) == 'object') {
 	    var expanded = {}
 	    Object.keys(text).forEach (function (key) {
 		if (key == 'text' || typeof(text[key]) == 'object')
@@ -77,6 +155,17 @@ module.exports = {
             .replace(/\$self/g,self)
             .replace(/\$other/g,other)
     },
+    
+    expandOutcomeText: function (text, game, outcome, role) {
+        var outro = GameService.expandText (text, game, outcome, role)
+        var verb = Outcome.outcomeVerb (outcome, role)
+        if (verb.length) {
+            if (outro.length == 0)
+                outro.push ({ text: '' })
+            outro[0].text = verb + outro[0].text
+        }
+        return outro
+    },
 
     swapTextRoles: function (x) {
 	if (Object.prototype.toString.call(x) === '[object Array]') {
@@ -97,13 +186,13 @@ module.exports = {
     },
 
     moveOutcomes: function (game, cb) {
-//	console.log('moveOutcomes')
-//	console.log(game)
+	console.log('moveOutcomes')
+	console.log(game)
         var query = Outcome.find ({ choice: game.current.id })
-	if (game.move1)
-	    query.where ({ move1: [game.move1, null] })
-	if (game.move2)
-	    query.where ({ move2: [game.move2, null] })
+	if (game.move1 != '')
+	    query.where ({ move1: [game.move1, '*'] })
+	if (game.move2 != '')
+	    query.where ({ move2: [game.move2, '*'] })
         query.exec (function (err, outcomes) {
             if (err)
                 cb (err)
@@ -125,16 +214,17 @@ module.exports = {
 		return outcomes[n].exclusive ? true : false
 	    })
 	    
-//	    console.log ("randomOutcomes weights: " + JSON.stringify(outcomeWeight))
+	    console.log ("outcomes: " + JSON.stringify(outcomes))
+	    console.log ("randomOutcomes weights: " + JSON.stringify(outcomeWeight))
             var totalWeight = exclusiveOutcomeWeight.reduce (function (total, w) {
                 return total + w
             }, 0)
 	    var theOutcomes = []
             var w = totalWeight * Math.random()
             for (var i = 0; i < outcomes.length; ++i)
-		if (!outcome[i].exclusive && Math.random() < outcomeWeight[i]
-		    || (outcome[i].exclusive && w > 0 && (w -= outcomeWeight[i]) <= 0)) {
-		    theOutcomes.push (outcome[i])
+		if (!outcomes[i].exclusive && Math.random() < outcomeWeight[i]
+		    || (outcomes[i].exclusive && w > 0 && (w -= outcomeWeight[i]) <= 0)) {
+		    theOutcomes.push (outcomes[i])
 		}
             cb (null, theOutcomes)
             return
@@ -142,6 +232,7 @@ module.exports = {
     },
 
     updateGameAndPlayers: function (query, game, success, error) {
+	GameService.prepareTextTrees (game)
 	GameService.updateGame (query,
 				game,
 				function() {
@@ -151,11 +242,7 @@ module.exports = {
     },
 
     updateGame: function (query, game, success, error) {
-//	console.log('updateGame')
-//	console.log(game)
-
 	GameService.playBotMoves (game)
-
 	var updateAttrs = { text1: game.text1,
 			    text2: game.text2,
 			    defaultMove1: game.defaultMove1,
@@ -227,7 +314,7 @@ module.exports = {
 	if (game.future.length) {
 	    var nextChoiceName = game.future[0]
 	    game.future = game.future.slice(1)
-//	    console.log ("Attempting to resolve "+nextChoiceName)
+	    console.log ("Attempting to resolve "+nextChoiceName)
 	    Choice.findOne ({ name: nextChoiceName }).exec (function (err, choice) {
 		if (err)
 		    error (err)
@@ -266,8 +353,8 @@ module.exports = {
 	game.player1.global = p1global
 	game.player2.global = p2global
 
-	game.text1 = game.text1.concat (GameService.expandText (choice.intro, game, null, 1))
-	game.text2 = game.text2.concat (GameService.expandText (choice.intro2 || choice.intro, game, null, 2))
+	game.tree1 = game.tree1.concat (GameService.expandText (choice.intro, game, null, 1))
+	game.tree2 = game.tree2.concat (GameService.expandText (choice.intro2 || choice.intro, game, null, 2))
 
 	// auto-expand or update
 	if (choice.autoexpand)
@@ -288,7 +375,8 @@ module.exports = {
 		 error (err)
 	     else {
 		 outcomes.forEach (function (outcome) {
-//		 console.log (outcome)
+
+		     console.log (outcome)
 
                      var future = outcome.next
                      if (!outcome.flush)
@@ -303,7 +391,6 @@ module.exports = {
 		     var p2local = GameService.evalUpdatedState (game, outcome, 2, true)
 
 		     // update game state
-		     game.move1 = game.move2 = 'none'
 		     game.mood1 = Outcome.mood1 (game, outcome)
 		     game.mood2 = Outcome.mood2 (game, outcome)
 		     game.common = common
@@ -312,10 +399,11 @@ module.exports = {
 		     game.player1.global = p1global
 		     game.player2.global = p2global
 
-		     game.text1 = game.text1.concat (Outcome.outcomeVerb(outcome,1) + GameService.expandText (outcome.outro, game, outcome, 1))
-		     game.text2 = game.text2.concat (Outcome.outcomeVerb(outcome,2) + GameService.expandText (outcome.outro2 || outcome.outro, game, outcome, 2))
+		     game.tree1 = game.tree1.concat (GameService.expandOutcomeText (outcome.outro, game, outcome, 1))
+		     game.tree2 = game.tree2.concat (GameService.expandOutcomeText (outcome.outro2 || outcome.outro, game, outcome, 2))
 		 })
 
+		 game.move1 = game.move2 = ''
 		 GameService.resolveNextChoice (game, success, error)
 	     }
 	 })
@@ -481,12 +569,13 @@ module.exports = {
     },
 
     gotBothMoves: function (game) {
-	return game.move1 && game.move2
+	return game.move1 != '' && game.move2 != ''
     },
 
     createGame: function (game, success, error) {
 	game.currentStartTime = new Date()
 	var create = function() {					 
+	    GameService.prepareTextTrees (game)
 	    GameService.playBotMoves (game)
 	    Game.create (game,
 			 function (err, g) {
@@ -498,8 +587,8 @@ module.exports = {
 			     }
 			 })
 	}
-	game.text1 = []
-	game.text2 = []
+	game.tree1 = []
+	game.tree2 = []
 	GameService.expandCurrentChoice (game, create, error)
     },
 
@@ -527,8 +616,8 @@ module.exports = {
 	// update
 	extend (game, update)
 	if (GameService.gotBothMoves (game)) {
-	    game.text1 = []
-	    game.text2 = []
+	    game.tree1 = []
+	    game.tree2 = []
 	    GameService.applyRandomOutcomes (game, updateWithOutcome, error)
 	} else
 	    updateWithPlayerWaiting()
@@ -557,12 +646,18 @@ module.exports = {
         }
     },
 
+    prepareTextTrees: function (game) {
+        game.text1 = GameService.buildTextTree (game.tree1)
+        game.text2 = GameService.buildTextTree (game.tree2)
+    },
+    
     playBotMoves: function (game) {
-	game.defaultMove1 = BotService.randomMove (game.player1, game)
-	game.defaultMove2 = BotService.randomMove (game.player2, game)
+        // call prepareTextTrees first
+	BotService.decorate (game.player1, game)
+	BotService.decorate (game.player2, game)
 	if (!game.player1.human)
 	    game.move1 = game.defaultMove1
-	else if (!game.player2.human)
+        if (!game.player2.human)
 	    game.move2 = game.defaultMove2
     },
 

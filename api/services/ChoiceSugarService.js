@@ -79,12 +79,13 @@ module.exports = {
 
 	function expandHints (obj, textKey) {
 	    if (obj.hint && obj[textKey]) {
-		obj[textKey].left = obj[textKey].left || {}
-		obj[textKey].right = obj[textKey].right || {}
-		obj[textKey].left.hint = obj.hint[0]
-		obj[textKey].right.hint = obj.hint[1]
-	    }
-	    delete obj.hint
+                var text = obj[textKey][obj[textKey].length - 1]
+		text.left = text.left || {}
+		text.right = text.right || {}
+		text.left.hint = obj.hint[0]
+		text.right.hint = obj.hint[1]
+	        delete obj.hint
+            }
 	}
 
         // keys for Outcomes
@@ -171,6 +172,8 @@ module.exports = {
         var add_flipped_lr = function (outcome) { addOutcome ('l', 'r', flip (outcome)) }
         var add_auto = function (outcome) { addOutcome (undefined, undefined, outcome); config.autoexpand = true }
 
+        var add_nonexclusive = function (outcome) { outcome.exclusive = false; addOutcome (undefined, undefined, outcome) }
+
         addOutcomes ('ll', [add_ll])
         addOutcomes ('lr', [add_lr])
         addOutcomes ('rl', [add_rl])
@@ -194,6 +197,9 @@ module.exports = {
         addOutcomes (['lr2','symdiff'], [add_lr, add_flipped_rl])
 
         addOutcomes (['auto'], [add_auto])
+
+        addOutcomes ('outcome', [add])
+        addOutcomes ('effect', [add_nonexclusive])
 
 	Object.keys(config).forEach (function (key) {
 	    if (outcomeAdder[key])

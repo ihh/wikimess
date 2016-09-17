@@ -21,10 +21,12 @@ module.exports = {
 
       move1: {
           type: 'string',
+          defaultsTo: '*'
       },
 
       move2: {
           type: 'string',
+          defaultsTo: '*'
       },
 
       weight: {
@@ -76,7 +78,7 @@ module.exports = {
             return oldMood
         else if (newMood && newMood != 'auto')
             return newMood
-	else if (move1 && move2 && move1 != null && move2 != null) {
+	else if (move1 != '' && move2 != '') {
             var move12 = move1 + move2
             switch (move12) {
             case 'rr': case 'yy': return 'happy'
@@ -106,14 +108,14 @@ module.exports = {
 	    else
 		type = outcome.move2 + outcome.move1
             switch (type) {
-            case 'rr': case 'yy': return 'reward'
-            case 'rl': case 'yn': return 'sucker'
-            case 'lr': case 'ny': return 'cheat'
-            case 'rr': case 'nn': return 'punish'
+            case 'rr': case 'yy': verb = 'reward'; break;
+            case 'rl': case 'yn': verb = 'sucker'; break;
+            case 'lr': case 'ny': verb = 'cheat'; break;
+            case 'll': case 'nn': verb = 'punish'; break;
             default: verb = undefined; break;
             }
 	}
-	return typeof(verb) == 'undefined' ? '' : ('<outcome:' + verb + '>')
+	return verb ? ('<outcome:' + verb + '>') : ''
     },
 };
 

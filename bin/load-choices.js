@@ -288,7 +288,7 @@ function parseStory (text) {
 			  outcome: 'outro',
 			  intro: 'text',
 			  outro: 'text' }
-	var outcomeKeys = ['rr','rl','lr','ll','notrr','notrl','notlr','notll','rx','lx','xr','xl','any','same','diff','lr2','rl2','symdiff','outcome']
+	var outcomeKeys = ['rr','rl','lr','ll','notrr','notrl','notlr','notll','rx','lx','xr','xl','any','same','diff','lr2','rl2','symdiff','outcome','effect']
 	var innerContext = { choice: { intro: 'intro' },
 			     next: { intro: 'intro' },
 			     outcome: { outro: 'outro', next: 'next' },

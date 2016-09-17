@@ -124,7 +124,7 @@ module.exports = {
         else {
             var oldPlayerMove = role == 1 ? game.move1 : game.move2
             var opponentMove = role == 1 ? game.move2 : game.move1
-            if (oldPlayerMove != 'none' && oldPlayerMove != move)
+            if (oldPlayerMove != '' && oldPlayerMove != move)
                 rs (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
             else {
 
