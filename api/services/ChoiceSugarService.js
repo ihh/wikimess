@@ -12,16 +12,19 @@ module.exports = {
         function isArray(x) { return Object.prototype.toString.call(x) === '[object Array]' }
 
 	// keys for Choices and Outcomes
-        var asymKeys = ['local', 'global', 'mood']
+        var asymKeys = ['local', 'global', 'mood', 'verb']
         var aliasKeys = { 'l': 'local',
 			  'g': 'global',
 			  'm': 'mood',
+                          'v': 'verb',
 			  'l1': 'local1',
 			  'l2': 'local2',
 			  'g1': 'global1',
 			  'g2': 'global2',
 			  'm1': 'mood1',
-			  'm2': 'mood2' }
+			  'm2': 'mood2',
+                          'v1': 'verb1',
+                          'v2': 'verb2' }
 
 	// keys for intros/outros
         var textAliasKeys = { 'l': 'left',

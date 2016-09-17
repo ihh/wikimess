@@ -54,11 +54,15 @@ module.exports = {
 	  defaultsTo: false
       },
 
-      verb: {
+      verb1: {
           type: 'string',
           defaultsTo: 'choose'
       },
-      verb2: { type: 'string' },
+
+      verb2: {
+          type: 'string',
+          defaultsTo: 'choose'
+      },
       
       timeout: {
           type: 'integer',

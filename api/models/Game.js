@@ -130,7 +130,7 @@ module.exports = {
         var current = game.current
         if (role == 1) {
             if (current)
-                verb = current.verb
+                verb = current.verb1
             self = game.player1
             other = game.player2
             selfMood = game.mood1
@@ -138,7 +138,7 @@ module.exports = {
 	    text = game.text1
         } else {  // role == 2
             if (current)
-                verb = current.verb2 || current.verb
+                verb = current.verb2
             self = game.player2
             other = game.player1
             selfMood = game.mood2

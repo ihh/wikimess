@@ -10,27 +10,14 @@ module.exports = {
 //        console.log(JSON.stringify(texts))
         var defaultNextHint = 'Next'
         var defaultAbsentText = 'Time passes...'
-    	// rewire the array of trees into a single tree,
-        // then convert it into an array of nodes
-	var nextTree, nodeList = []
-	texts.reverse().forEach (function (tree) {
-            function linkSummary (node, defaultChoice) {
-                var summary = {}
-		summary.hint = node.hint || defaultNextHint
-                if (!node.depth) {
-                    if (node.choice) {
-                        summary.choice = node.choice
-                        summary.priority = node.priority
-                    } else {
-                        summary.choice = defaultChoice
-                        summary.priority = -1
-                    }
-                }
-                summary.id = node.id
-                return summary
-            }
 
-	    function recurse (node) {
+    	// rewire the array of trees into a single DAG; build name index
+        var nextTree, nodeByName = {}
+	texts.reverse().forEach (function (tree) {
+	    function connect (node) {
+                if (node.goto)
+                    return  // handle named links later
+
                 if (node.text) {
                     var split = node.text.split(/\s*;;\s*/)
                         .filter (function (text) { return /\S/.test(text) })
@@ -58,53 +45,114 @@ module.exports = {
                         node.text = split[0]
                     }
                 }
+                
                 if (!node.text) {
                     if (node.left || node.right || node.next) {
-                        sails.debug.log ("Node has children but no text: " + node)
+                        sails.log.debug ("Node has children but no text: " + node)
                         node.text = defaultAbsentText
                     } else if (nextTree) {
                         // bypass the empty leaf node
                         node.id = nextTree.id
                         node.depth = nextTree.depth
+                        node.isLeaf = nextTree.isLeaf
                         return
                     }
                 }
-                var isLeaf = !(node.next || node.left || node.right || nextTree || node.text)
-                if (isLeaf)
-                    node.depth = 0
-                else {
+
+                node.isLeaf = !(node.next || node.left || node.right || nextTree || node.text)
+                if (!node.isLeaf) {
 		    if (node.next) {
-                        recurse (node.next)
+                        connect (node.next)
                         node.left = node.right = node.next
 
 		    } else {
                         if (node.left)
-                            recurse (node.left)
+                            connect (node.left)
                         else
-                            node.left = nextTree || {}
+                            node.left = nextTree || { isLeaf: true }
 
                         if (node.right)
-                            recurse (node.right)
+                            connect (node.right)
                         else
-                            node.right = nextTree || {}
+                            node.right = nextTree || { isLeaf: true }
 		    }
+                }
 
-                    node.depth = 1 + Math.max (node.left.depth || 0,
-                                               node.right.depth || 0)
-
-                    node.id = nodeList.length
-                    nodeList.push ({ id: node.id,
-                                     left: linkSummary (node.left, 'l'),
-                                     right: linkSummary (node.right, 'r'),
-                                     depth: node.depth,
-                                     choice: node.choice,
-                                     priority: node.priority,
-                                     text: node.text })
-	        }
+                if (node.name)
+                    nodeByName[node.name] = node
             }
-	    recurse (tree)
-	    nextTree = tree
-	})
+	    connect (tree)
+            nextTree = tree
+        })
+        
+        // resolve names, check for cycles, convert into an array of nodes
+	var nodeList = []
+        function linkSummary (node, defaultChoice) {
+            var summary = {}
+	    summary.hint = node.hint || defaultNextHint
+            if (!node.depth) {
+                if (node.choice) {
+                    summary.choice = node.choice
+                    summary.priority = node.priority
+                } else {
+                    summary.choice = defaultChoice
+                    summary.priority = -1
+                }
+            }
+            summary.id = node.id
+            return summary
+        }
+
+	function recurse (node) {
+//            console.log("recurse: " + JSON.stringify(node))
+            if (node.depth)
+                return node
+
+            if (node.goto) {
+                var linkedNode = nodeByName[node.goto]
+                if (!linkedNode) {
+                    sails.log.debug ("Name " + node.goto + " unresolved - replacing with leaf node")
+                    return { depth: 0, isLeaf: true }
+                }
+                linkedNode = recurse (linkedNode)
+                node.id = linkedNode.id
+                node.depth = linkedNode.depth
+                node.isLeaf = linkedNode.isLeaf
+                return node
+            }
+
+            if (node.ancestral) {
+                sails.log.debug ("Cycle detected - replacing with leaf node")
+                return { depth: 0, isLeaf: true }
+            }
+            
+            if (node.isLeaf)
+                node.depth = 0
+            else {
+                node.ancestral = true
+                node.left = recurse (node.left)
+                node.right = recurse (node.right)
+                node.ancestral = false
+                
+                node.depth = 1 + Math.max (node.left.depth || 0,
+                                           node.right.depth || 0)
+
+                node.id = nodeList.length
+                nodeList.push ({ id: node.id,
+                                 left: linkSummary (node.left, 'l'),
+                                 right: linkSummary (node.right, 'r'),
+                                 depth: node.depth,
+                                 choice: node.choice,
+                                 priority: node.priority,
+                                 text: node.text })
+            }
+
+            return node
+        }
+
+        if (nextTree)
+	    recurse (nextTree)
+
 //        console.log(JSON.stringify(nodeList))
         if (!nodeList.length && !game.finished) {
             nodeList= [{ id: 0,
@@ -195,7 +243,7 @@ module.exports = {
     
     expandOutcomeText: function (text, game, outcome, role) {
         var outro = GameService.expandText (text, game, outcome, role)
-        var verb = Outcome.outcomeVerb (outcome, role)
+        var verb = Outcome.outcomeVerb (game, outcome, role)
         if (verb.length) {
             if (outro.length == 0)
                 outro.push ({ text: '' })
@@ -343,7 +391,7 @@ module.exports = {
 	return function (laterErr) {
 	    error (firstErr)
 	    if (laterErr)
-		sails.debug.log (laterErr)
+		sails.log.debug (laterErr)
 	}
     },
 
