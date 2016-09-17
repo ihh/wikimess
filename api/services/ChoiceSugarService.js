@@ -35,7 +35,7 @@ module.exports = {
 	    if (typeof(text) == 'undefined')
 		return undefined
 	    else if (typeof(text) == 'string')
-		text = text.split(/\s*;;\s*/).map (function(x) { return { text: x } })
+		return [{ text: text }]
 	    else if (!isArray(text))
 		text = [text]
 	    text.forEach (function (obj) { expandTextAliases (obj) })
@@ -78,7 +78,7 @@ module.exports = {
 	}
 
 	function expandHints (obj, textKey) {
-	    if (obj.hint && obj[textKey]) {
+	    if (obj.hint && obj[textKey] && obj[textKey].length) {
                 var text = obj[textKey][obj[textKey].length - 1]
 		text.left = text.left || {}
 		text.right = text.right || {}

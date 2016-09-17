@@ -31,6 +31,33 @@ module.exports = {
             }
 
 	    function recurse (node) {
+                if (node.text) {
+                    var split = node.text.split(/\s*;;\s*/)
+                        .filter (function (text) { return /\S/.test(text) })
+                    if (split.length == 0)
+                        delete node.text
+                    else if (split.length == 1)
+                        node.text = split[0]
+                    else {  // split.length > 1
+                        var head
+                        split.slice(1).reverse().forEach (function (text) {
+                            var prev = { text: text }
+                            if (head)
+                                prev.next = head
+                            else {
+                                prev.next = node.next
+                                prev.left = node.left
+                                prev.right = node.right
+                            }
+                            head = prev
+                        })
+                        delete node.next
+                        delete node.left
+                        delete node.right
+                        node.next = head
+                        node.text = split[0]
+                    }
+                }
                 if (!node.text) {
                     if (node.left || node.right || node.next) {
                         sails.debug.log ("Node has children but no text: " + node)
