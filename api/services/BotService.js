@@ -18,7 +18,8 @@ module.exports = {
                 node.defaultMove = { choice: child.choice, priority: child.priority }
         })
 
-        game[Game.roleAttr(role,'defaultMove')] = textNodes[textNodes.length - 1].defaultMove.choice
+        if (textNodes.length)
+            game[Game.roleAttr(role,'defaultMove')] = textNodes[textNodes.length - 1].defaultMove.choice
     },
 
     randomSwipe: function (player, game, node) {

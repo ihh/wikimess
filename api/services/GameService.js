@@ -79,7 +79,7 @@ module.exports = {
 	    nextTree = tree
 	})
 //        console.log(JSON.stringify(nodeList))
-        if (!nodeList.length) {
+        if (!nodeList.length && !game.finished) {
             nodeList= [{ id: 0,
                          text: defaultAbsentText,
                          left: { hint: defaultNextHint, choice: 'l' },
@@ -242,6 +242,7 @@ module.exports = {
     },
 
     updateGameAndPlayers: function (query, game, success, error) {
+        game.finished = game.current ? false : true
 	GameService.prepareTextTrees (game)
 	GameService.updateGame (query,
 				game,
@@ -268,7 +269,7 @@ module.exports = {
 			    current: game.current ? game.current.id : null,
 			    currentStartTime: game.currentStartTime,
 			    future: game.future,
-			    finished: game.current ? false : true
+			    finished: game.finished
 			  }
 
         Game.update
@@ -584,7 +585,8 @@ module.exports = {
 
     createGame: function (game, success, error) {
 	game.currentStartTime = new Date()
-	var create = function() {					 
+	var create = function() {
+            game.finished = game.current ? false : true
 	    GameService.prepareTextTrees (game)
 	    GameService.playBotMoves (game)
 	    Game.create (game,
@@ -663,12 +665,14 @@ module.exports = {
     
     playBotMoves: function (game) {
         // call prepareTextTrees first
-	BotService.decorate (game.player1, game)
-	BotService.decorate (game.player2, game)
-	if (!game.player1.human)
-	    game.move1 = game.defaultMove1
-        if (!game.player2.human)
-	    game.move2 = game.defaultMove2
+        if (!game.finished) {
+	    BotService.decorate (game.player1, game)
+	    BotService.decorate (game.player2, game)
+	    if (!game.player1.human)
+	        game.move1 = game.defaultMove1
+            if (!game.player2.human)
+	        game.move2 = game.defaultMove2
+        }
     },
 
 };
