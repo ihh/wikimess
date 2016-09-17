@@ -1470,6 +1470,12 @@ var BigHouse = (function() {
 	    var silent = config.silent
             var bh = this
             var card = this.stack.createCard (listItem[0])
+            card.on ('dragstart', function() {
+                listItem.addClass ('dragging')
+            })
+            card.on ('dragend', function() {
+                listItem.removeClass ('dragging')
+            })
             card.on ('throwoutright', function () {
                 listItem.removeClass('jiggle')
                 if (!silent)

@@ -146,7 +146,7 @@ body {
     background-color: antiquewhite;
 }
 
-.bighouse .cardbar .cardtable .jiggle {
+.bighouse .cardbar .cardtable .jiggle:not(.dragging) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
     -webkit-animation: jiggle 5s ease 0s infinite;
