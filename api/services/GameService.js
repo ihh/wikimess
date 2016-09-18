@@ -225,7 +225,7 @@ module.exports = {
             $current = game.current.name
         }
 
-        var braceRegex = /\{\{(.*?)\}\}/;
+        var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
         var braceMatch = braceRegex.exec(text)
         if (braceMatch && braceMatch[0].length == text.length) {
             // entire text string matches pattern {{...}}, so eval the code inside without coercing result to a string
