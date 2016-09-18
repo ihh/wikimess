@@ -44,6 +44,7 @@ in the [game-theoretic](https://en.wikipedia.org/wiki/Game_theory) sense).
  * They can however signal their intention, whether honestly or deceptively, by changing their **mood** avatar to one of the four available moods: _happy_, _angry_, _sad_, or _surprised_ (they can upload photos for all four of these).
  * Each Choice has a **name** that is used to identify it.
  * Each Choice has an **intro** that can be as simple as a text string or as complicated as a small self-contained Choose-Your-Own-Adventure story. In the latter case, the intro consists of a Directed Acyclic Graph. Each node can have the following fields: **text** for what's shown on the card, **left**/**right** for the next node (or **next** if they're both the same), **hint** for the hint that's shown before swiping, **choice** to commit the player to a move on reaching that node, **name**/**goto** to jump around the DAG.
+     * If there is a separate **intro2** field, then a separate intro is shown to player 2; otherwise, they both get the same intro (although text expansions can be used to make them _look_ different).
  * By default the two available Moves in a Choice are just `l` and `r` (for _left_ and _right_), but they can be any text string that can go in a URL. There can also be more than two of them; if the intro is just a text string, however, then the Choice will present as a single card with a swipe-left-or-right decision, and so it only makes sense to have two moves in that case. For more than two moves it is necessary to set up a more complicated intro (e.g. a decision tree, or DAG, with multiple exit nodes, each of which could correspond to a different move).
  * A Choice may have a time limit (**timeout**). The web client will nudge the player towards this time limit by making moves for them. Note that, design-wise, it does not make a whole lot of sense to mix time-limited choices with time-unlimited choices in the same game. A game should either be asynchronous (all choices time-unlimited), or synchronous (all choices time-limited).
  * A Choice can set game state using the same type of update expressions as an Outcome (see below), and an intro can refer to game state via embedded expressions like `{{ $local1.cash }}` which are treated as JavaScript evals (at least, everything between the curly braces is).
@@ -141,7 +142,7 @@ So, the above .story could have been written more compactly without the `#text` 
 
 Blank lines in the story file translate to newlines in the relevant text fields of the JSON file, which show up as separate `<span>` elements in the game client.
 
-Here is a (very simple) longer example of a scene in the .story file format:
+Here is a (very simple) longer example of a Choice in the .story file format:
 
     #name prison
     #scene init
@@ -172,7 +173,7 @@ Here is a (very simple) longer example of a scene in the .story file format:
     }
     
 
-And here is the JSON it expands into (using the [loader script](bin/load-choices.js)). Note that the entire output is wrapped in a list `[...]`; this is because there can be multiple scenes in a story file.
+And here is the JSON it expands into (using the [loader script](bin/load-choices.js)). Note that the entire output is wrapped in a list `[...]`; this is because there can be multiple Choices in a story file.
 
     [
       {
@@ -220,4 +221,139 @@ And here is the JSON it expands into (using the [loader script](bin/load-choices
         ]
       }
     ]
-    
+
+This is what gets POSTed to the REST API, though it gets processed a little more on the server side. For completeness, the internal database Choice table after this processing looks as follows (using the schema as of 9/18/2016)
+
+    [
+      {
+        "outcomes": [
+          {
+            "outro": [
+              {
+                "text": "$player2 rats $player1 out."
+              }
+            ],
+            "move1": "l",
+            "move2": "r",
+            "choice": 1,
+            "weight": "1",
+            "exclusive": true,
+            "mood1": "auto",
+            "mood2": "auto",
+            "next": [],
+            "flush": false,
+            "createdAt": "2016-09-18T17:22:56.337Z",
+            "updatedAt": "2016-09-18T17:22:56.337Z",
+            "id": 1
+          },
+          {
+            "outro": [
+              {
+                "text": "$player1 rats $player2 out."
+              }
+            ],
+            "move1": "r",
+            "move2": "l",
+            "choice": 1,
+            "weight": "1",
+            "exclusive": true,
+            "mood1": "auto",
+            "mood2": "auto",
+            "next": [],
+            "flush": false,
+            "createdAt": "2016-09-18T17:22:56.338Z",
+            "updatedAt": "2016-09-18T17:22:56.338Z",
+            "id": 2
+          },
+          {
+            "outro": [
+              {
+                "text": "You both rat each other out."
+              }
+            ],
+            "move1": "l",
+            "move2": "l",
+            "choice": 1,
+            "weight": "1",
+            "exclusive": true,
+            "mood1": "auto",
+            "mood2": "auto",
+            "next": [],
+            "flush": false,
+            "createdAt": "2016-09-18T17:22:56.339Z",
+            "updatedAt": "2016-09-18T17:22:56.339Z",
+            "id": 3
+          },
+          {
+            "outro": [
+              {
+                "text": "You both stay silent: good for you!"
+              }
+            ],
+            "next": [
+              "prison.1"
+            ],
+            "move1": "r",
+            "move2": "r",
+            "choice": 1,
+            "weight": "1",
+            "exclusive": true,
+            "mood1": "auto",
+            "mood2": "auto",
+            "flush": false,
+            "createdAt": "2016-09-18T17:22:56.339Z",
+            "updatedAt": "2016-09-18T17:22:56.339Z",
+            "id": 4
+          }
+        ],
+        "name": "prison",
+        "mood1": "unchanged",
+        "mood2": "unchanged",
+        "autoexpand": false,
+        "verb1": "choose",
+        "verb2": "choose",
+        "timeout": 60,
+        "createdAt": "2016-09-18T17:22:56.318Z",
+        "updatedAt": "2016-09-18T17:22:56.331Z",
+        "id": 1,
+        "scene": "init",
+        "intro": [
+          {
+            "text": "You are in a cold, uncomfortable prison cell.;;The police say $other is singing like a bird.\n Your only hope is to rat them out and reduce your sentence.",
+            "left": {
+              "hint": "Rat them out"
+            },
+            "right": {
+              "hint": "Stay quiet"
+            }
+          }
+        ],
+        "intro2": null
+      },
+      {
+        "outcomes": [],
+        "name": "prison.1",
+        "mood1": "unchanged",
+        "mood2": "unchanged",
+        "autoexpand": false,
+        "verb1": "choose",
+        "verb2": "choose",
+        "timeout": 60,
+        "createdAt": "2016-09-18T17:22:56.344Z",
+        "updatedAt": "2016-09-18T17:22:56.351Z",
+        "id": 2,
+        "intro": [
+          {
+            "text": "A life of crime awaits you on the outside.",
+            "left": {
+              "hint": "No!"
+            },
+            "right": {
+              "hint": "Awesome!"
+            }
+          }
+        ],
+        "parent": "prison",
+        "intro2": null
+      }
+    ]
