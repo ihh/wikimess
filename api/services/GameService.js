@@ -225,6 +225,19 @@ module.exports = {
             $current = game.current.name
         }
 
+        var braceRegex = /\{\{(.*?)\}\}/;
+        var braceMatch = braceRegex.exec(text)
+        if (braceMatch && braceMatch[0].length == text.length) {
+            // entire text string matches pattern {{...}}, so eval the code inside without coercing result to a string
+            var val = ''
+            try {
+                val = eval(braceMatch[1])
+            } catch (e) {
+                // do nothing, ignore undefined values and other errors in eval()
+            }
+            return val
+        }
+        
         return text
             .replace (/\{\{(.*?)\}\}/g, function (match, expr) {
                 var val
