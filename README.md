@@ -139,7 +139,7 @@ So, the above .story could have been written more compactly without the `#text` 
     }
 
 
-Blank lines in the story file translate to newlines in the JSON file.
+Blank lines in the story file translate to newlines in the relevant text fields of the JSON file, which show up as separate `<span>` elements in the game client.
 
 Here is a (very simple) longer example of a scene in the .story file format:
 
@@ -149,6 +149,7 @@ Here is a (very simple) longer example of a scene in the .story file format:
       You are in a cold, uncomfortable prison cell.
       ;;
       The police say $other is singing like a bird.
+      
       Your only hope is to rat them out and reduce your sentence.
       #left {
         #hint Rat them out
@@ -178,7 +179,7 @@ And here is the JSON it expands into (using the [loader script](bin/load-choices
         "name": "prison",
         "intro": [
           {
-            "text": "You are in a cold, uncomfortable prison cell.;;The police say $other is singing like a bird. Your only hope is to rat them out and reduce your sentence.",
+            "text": "You are in a cold, uncomfortable prison cell.;;The police say $other is singing like a bird.\n Your only hope is to rat them out and reduce your sentence.",
             "left": {
               "hint": "Rat them out"
             },
