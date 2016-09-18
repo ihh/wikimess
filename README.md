@@ -20,8 +20,8 @@ The repository follows the general [directory layout of a Sails app](http://sail
 
 Files of interest:
 
-* [Scene file in JSON](data/choices/test.json)
-* [Scene file in .story minilanguage](data/choices/prison.story) ... fewer quotes
+* [Story file in JSON](data/choices/test.json)
+* [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
 * [Emacs mode for .story minilanguage](emacs/story-mode.el)
 * [Monolithic JavaScript client](assets/js/bighouse/bighouse.js) and [libraries](assets/js/ext)
 * [EJS templates for status page](views/status)
