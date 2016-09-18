@@ -20,15 +20,18 @@ The repository follows the general [directory layout of a Sails app](http://sail
 
 Files of interest:
 
-* [Story file in JSON](data/choices/test.json)
-* [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
-* [Emacs mode for .story minilanguage](emacs/story-mode.el)
-* [Monolithic JavaScript client](assets/js/bighouse/bighouse.js) and [libraries](assets/js/ext)
-* [EJS templates for status page](views/status)
-* [Icons](assets/images/icons) (from [game-icons.net](http://game-icons.net/)) and [default mood avatars](assets/images/avatars/generic)
-* [Music and sound FX](assets/sounds) mostly produced using [cfxr](http://thirdcog.eu/apps/cfxr)
-* Sails config: [routes](config/routes.js), [policies](config/policies.js)
-* Sails code: [models](api/models), [controllers](api/controllers), [services](api/services)
+* Game data
+ * [Story file in JSON](data/choices/test.json)
+ * [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
+ * [Emacs mode for .story minilanguage](emacs/story-mode.el)
+* Code
+ * [Monolithic JavaScript client](assets/js/bighouse/bighouse.js) and [libraries](assets/js/ext)
+ * Sails config: [routes](config/routes.js), [policies](config/policies.js)
+ * Sails code: [models](api/models), [controllers](api/controllers), [services](api/services)
+* Assets
+ * [Music and sound FX](assets/sounds) mostly produced using [cfxr](http://thirdcog.eu/apps/cfxr)
+ * [Icons](assets/images/icons) (from [game-icons.net](http://game-icons.net/)) and [default mood avatars](assets/images/avatars/generic)
+ * [EJS templates for status page](views/status)
 
 
 ## Game concepts
