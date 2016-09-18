@@ -294,7 +294,8 @@ function parseStory (text) {
 			     outcome: { outro: 'outro', next: 'next' },
 			     intro: { left: 'intro', right: 'intro', next: 'intro' },
 			     outro: { left: 'outro', right: 'outro', next: 'outro' } }
-	outcomeKeys.forEach (function (key) { innerContext.choice[key] = innerContext.next[key] = 'outcome' })
+        var isArrayAttr = { intro: true, next: true, outro: true }
+	outcomeKeys.forEach (function (key) { innerContext.choice[key] = innerContext.next[key] = 'outcome'; isArrayAttr[key] = true })
 	text.split(/\n/).forEach (function (line) {
 //	    console.log("\nparseStory inner loop")
 //	    console.log("line: "+line)
@@ -341,7 +342,7 @@ function parseStory (text) {
 		    try {
 			if (jsArrayReg.test(arg)) {
 			    var val = eval(arg)
-			    if (Object.prototype.toString.call(val) !== '[object Array]')
+			    if (isArrayAttr[arg] && Object.prototype.toString.call(val) !== '[object Array]')
 				val = [val]
 			    currentObj[cmd] = (currentObj[cmd] || []).concat (val)
 			} else if (jsObjReg.test(arg)) {
@@ -360,7 +361,7 @@ function parseStory (text) {
 		if (stack.length == 0)
 		    throw "Too many closing braces"
 		var info = stack.pop()
-		info.obj[info.cmd] = currentList
+		info.obj[info.cmd] = isArrayAttr[info.cmd] ? currentList : currentList[0]
 		info.list.pop()
 		info.list.push (currentObj = info.obj)
 		currentList = info.list
