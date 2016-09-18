@@ -20,10 +20,11 @@ var opt = getopt.create([
     ['h' , 'host=STRING'      , 'hostname (default="' + defaultHost + '")'],
     ['p' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
     ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
-    ['c' , 'choices=PATH+'    , 'path to JSON choices file(s) or directories (default=' + defaultChoiceFilename + ')'],
-    ['p' , 'players=PATH+'    , 'path to JSON player file(s) or directories (default=' + defaultPlayerFilename + ')'],
+    ['c' , 'choices=PATH+'    , 'path to .json or .story file(s) or directories (default=' + defaultChoiceFilename + ')'],
+    ['l' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPlayerFilename + ')'],
     ['m' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
     ['d' , 'dummy'            , 'dummy run; do not POST anything'],
+    ['s' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
     ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
     ['h' , 'help'             , 'display this help message']
 ])              // create Getopt instance
@@ -42,6 +43,12 @@ function log (v, text) {
         var color = v <= 0 ? 'white' : (v > logColor.length ? logColor[logColor.length-1] : logColor[v-1])
         console.log (colors[color].call (colors, text))
     }
+}
+
+if (opt.options.story) {
+    var json = readJsonFileSync (opt.options.story, parseStory)
+    console.log (JSON.stringify(json,null,2))
+    return
 }
 
 var host = opt.options.host || defaultHost
@@ -302,6 +309,11 @@ function parseStory (text) {
 	    var tf = textField[context]
 	    function append (txt, obj, f) {
 		obj = obj || currentObj
+                if (!obj) {
+                    if (/\S/.test(txt))
+                        console.log ("Warning: discarding " + txt)
+                    return
+                }
 		f = f || tf
 		if (typeof(obj[f]) == 'undefined' || typeof(obj[f]) == 'string') {
 		    obj[f] = (obj[f] || '') + txt
