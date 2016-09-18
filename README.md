@@ -10,7 +10,9 @@
     sails lift
     bin/load-choices.js
 
-Then point your browser to http://localhost:1337/
+Then point your browser to [localhost:1337](http://localhost:1337/).
+
+By default, the [load-choices.js](bin/load-choices.js) script creates two test accounts, named `fred` and `sheila`, both with password `test`, as well as one AI player `titfortat`. These default accounts are defined in [data/players](data/players/players.json).
 
 ## Repository organization
 
