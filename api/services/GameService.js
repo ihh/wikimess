@@ -118,6 +118,7 @@ module.exports = {
                 node.id = linkedNode.id
                 node.depth = linkedNode.depth
                 node.isLeaf = linkedNode.isLeaf
+                // hints are pretty context-sensitive, so use the default hint ("Next"), or the hint specified in the 'goto' node; don't just blindly inherit the linkedNode hint
                 return node
             }
 
@@ -164,20 +165,24 @@ module.exports = {
         return nodeList
     },
 
-    expandText: function (text, game, outcome, role) {
+    expandText: function (text, game, outcome, role, allowNonStringEvals) {
 	if (!text)
 	    return []
 
         if (Object.prototype.toString.call(text) === '[object Array]') {
             return text.map (function (t) {
-                return GameService.expandText (t, game, outcome, role)
+                return GameService.expandText (t, game, outcome, role, false)
             })
         } else if (typeof(text) == 'object') {
-	    var expanded = {}
+            var expanded
+            if (text.expr)
+                expanded = GameService.expandText ('{{' + text.expr + '}}', game, outcome, role, true)
+            else
+	        expanded = {}
 	    Object.keys(text).forEach (function (key) {
 		if (key == 'text' || typeof(text[key]) == 'object')
-		    expanded[key] = GameService.expandText (text[key], game, outcome, role)
-		else
+		    expanded[key] = GameService.expandText (text[key], game, outcome, role, false)
+		else if (key != 'expr')
 		    expanded[key] = text[key]
 	    })
 	    return expanded
@@ -225,17 +230,19 @@ module.exports = {
             $current = game.current.name
         }
 
-        var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
-        var braceMatch = braceRegex.exec(text)
-        if (braceMatch && braceMatch[0].length == text.length) {
-            // entire text string matches pattern {{...}}, so eval the code inside without coercing result to a string
-            var val = ''
-            try {
-                val = eval(braceMatch[1])
-            } catch (e) {
-                // do nothing, ignore undefined values and other errors in eval()
+        if (allowNonStringEvals) {
+            var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
+            var braceMatch = braceRegex.exec(text)
+            if (braceMatch && braceMatch[0].length == text.length) {
+                // entire text string matches pattern {{...}}, so eval the code inside without coercing result to a string
+                var val = ''
+                try {
+                    val = eval(braceMatch[1])
+                } catch (e) {
+                    // do nothing, ignore undefined values and other errors in eval()
+                }
+                return val
             }
-            return val
         }
         
         return text
@@ -255,7 +262,7 @@ module.exports = {
     },
     
     expandOutcomeText: function (text, game, outcome, role) {
-        var outro = GameService.expandText (text, game, outcome, role)
+        var outro = GameService.expandText (text, game, outcome, role, true)
         var verb = Outcome.outcomeVerb (game, outcome, role)
         if (verb.length) {
             if (outro.length == 0)
@@ -452,8 +459,8 @@ module.exports = {
 	game.player1.global = p1global
 	game.player2.global = p2global
 
-	game.tree1 = game.tree1.concat (GameService.expandText (choice.intro, game, null, 1))
-	game.tree2 = game.tree2.concat (GameService.expandText (choice.intro2 || choice.intro, game, null, 2))
+	game.tree1 = game.tree1.concat (GameService.expandText (choice.intro, game, null, 1, true))
+	game.tree2 = game.tree2.concat (GameService.expandText (choice.intro2 || choice.intro, game, null, 2, true))
 
 	// auto-expand or update
 	if (choice.autoexpand)

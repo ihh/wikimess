@@ -1432,6 +1432,11 @@ var BigHouse = (function() {
 		return ""
 	    })
 
+	    text = text.replace (/<mood:([^> ]+)>/g, function (match, mood) {
+                bh.updatePlayerMood (mood)
+		return ""
+	    })
+
             // misc text expansions go here...
 	    text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
 		return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
