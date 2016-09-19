@@ -190,20 +190,20 @@ module.exports = {
 
         var self, other
         if (role == 1) {
-            self = game.player1.name
-            other = game.player2.name
+            self = game.player1.displayName
+            other = game.player2.displayName
         } else {
-            self = game.player2.name
-            other = game.player1.name
+            self = game.player2.displayName
+            other = game.player1.displayName
         }
 
         var $c = game.common,
             $g1 = game.player1.global,
             $l1 = game.local1,
-            $n1 = game.player1.name,
+            $n1 = game.player1.displayName,
             $g2 = game.player2.global,
             $l2 = game.local2,
-            $n2 = game.player2.name,
+            $n2 = game.player2.displayName,
 
             $common = $c,
             $global1 = $g1,
@@ -255,8 +255,8 @@ module.exports = {
                 }
                 return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
             })
-            .replace(/\$player1/g,game.player1.name)
-            .replace(/\$player2/g,game.player2.name)
+            .replace(/\$player1/g,game.player1.displayName)
+            .replace(/\$player2/g,game.player2.displayName)
             .replace(/\$self/g,self)
             .replace(/\$other/g,other)
     },
@@ -516,10 +516,10 @@ module.exports = {
     },
 
     evalUpdatedState: function (game, scene, role, local) {  // scene can be an Outcome or a Choice
-        var p1 = { name: game.player1.name,
+        var p1 = { name: game.player1.displayName,
                    local: { state: game.local1, expr: scene.local1 || {} },
                    global: { state: game.player1.global, expr: scene.global1 || {} } }
-        var p2 = { name: game.player2.name,
+        var p2 = { name: game.player2.displayName,
                    local: { state: game.local2, expr: scene.local2 || {} },
                    global: { state: game.player2.global, expr: scene.global2 || {} } }
         var info, context = local ? 'local' : 'global'
@@ -532,11 +532,11 @@ module.exports = {
             $s1 = p1[context].state,
             $g1 = p1.global.state,
             $l1 = p1.local.state,
-            $n1 = p1.name,
+            $n1 = p1.displayName,
             $s2 = p2[context].state,
             $g2 = p2.global.state,
             $l2 = p2.local.state,
-            $n2 = p2.name,
+            $n2 = p2.displayName,
 	
             $src = game.current.name,
             $next = scene.next,
@@ -555,11 +555,11 @@ module.exports = {
             $s = info.self[context].state
             $g = info.self.global.state
             $l = info.self.local.state
-            $n = info.self.name
+            $n = info.self.displayName
             $so = info.other[context].state
             $go = info.other.global
             $lo = info.other.local
-            $no = info.other.name
+            $no = info.other.displayName
         }
 
         var updatedState = {}
@@ -623,10 +623,10 @@ module.exports = {
         var $c = game.common,
             $g1 = game.player1.global,
             $l1 = game.local1,
-            $n1 = game.player1.name,
+            $n1 = game.player1.displayName,
             $g2 = game.player2.global,
             $l2 = game.local2,
-            $n2 = game.player2.name,
+            $n2 = game.player2.displayName,
 
             $src = game.current.name,
             $next = outcome.next,

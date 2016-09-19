@@ -295,6 +295,10 @@ body {
     text-align: center;
 }
 
+.bighouse .menubar li.noborder {
+    border-style: none;
+}
+
 .bighouse .menubar .card {
     cursor: default;
     width: 80vw;

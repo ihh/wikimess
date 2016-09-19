@@ -98,7 +98,7 @@ module.exports = {
         }
         
         res.view ('status/' + view,
-                  { name: player.name,
+                  { name: player.displayName,
 		    state: state,
 		    global: player.global,
 		    local: local,

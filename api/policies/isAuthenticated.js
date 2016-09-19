@@ -5,7 +5,7 @@ module.exports = function(req, res, next) {
        } else {
 	   return res.status(403).send("Forbidden");
        }
-   } else{
+   } else {
        return res.status(401).send("Not authenticated");
    }
 };

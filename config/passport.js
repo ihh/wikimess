@@ -1,5 +1,6 @@
 var passport = require('passport'),
 LocalStrategy = require('passport-local').Strategy,
+FacebookStrategy = require('passport-facebook').Strategy,
 bcrypt = require('bcrypt');
 
 passport.serializeUser(function(player, done) {
@@ -12,32 +13,65 @@ passport.deserializeUser(function(id, done) {
     });
 });
 
-passport.use(new LocalStrategy({
-    usernameField: 'name',
-    passwordField: 'password'
-  },
+passport.use
+(new LocalStrategy
+ ({ usernameField: 'name',
+    passwordField: 'password' },
   function(name, password, done) {
+      
+      Player.findOne({ name: name }, function (err, player) {
+          if (err) { return done(err); }
+          if (!player) {
+              return done(null, false, { message: 'Incorrect player name.' });
+          }
 
-    Player.findOne({ name: name }, function (err, player) {
-      if (err) { return done(err); }
-      if (!player) {
-        return done(null, false, { message: 'Incorrect player name.' });
-      }
-
-      bcrypt.compare(password, player.password, function (err, res) {
-          if (!res)
-            return done(null, false, {
-              message: 'Invalid Password'
-            });
-          var returnPlayer = {
-            name: player.name,
-            createdAt: player.createdAt,
-            id: player.id
-          };
-          return done(null, returnPlayer, {
-            message: 'Logged In Successfully'
+          bcrypt.compare(password, player.password, function (err, res) {
+              if (!res)
+                  return done(null, false, {
+                      message: 'Invalid Password'
+                  });
+              var returnPlayer = {
+                  name: player.name,
+                  createdAt: player.createdAt,
+                  id: player.id
+              };
+              return done(null, returnPlayer, {
+                  message: 'Logged In Successfully'
+              });
           });
-        });
-    });
+      });
   }
-));
+ ));
+
+passport.use
+(new FacebookStrategy
+ ({ clientID: "***REMOVED***",
+    clientSecret: "***REMOVED***",
+    callbackURL: "http://localhost:1337/login/facebook/callback",
+    enableProof: false },
+
+  function (accessToken, refreshToken, profile, done) {
+      
+//      console.log('FacebookStrategy')
+//      console.log(profile)
+
+      Player.findOrCreate ({ facebookId: profile.id },
+                           { facebookId: profile.id,
+                             displayName: profile.displayName,
+                             name: profile.displayName + ' ' + profile.id,
+                             password: Math.random()
+                           },
+                           function (err, player) {
+
+//                               console.log('FacebookStrategy -> findOrCreate')
+//                               console.log(err)
+//                               console.log(player)
+
+                               if (err || !player)
+                                   return done(err)
+                               
+                               return done(null, player, {
+                                   message: 'Logged In Successfully'
+                               });
+                           })
+  }))

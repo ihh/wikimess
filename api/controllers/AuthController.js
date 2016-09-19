@@ -15,7 +15,27 @@ module.exports = {
         rest: false
     },
 
-    login: function(req, res) {
+    homepage: function (req, res) {
+        var playerID = req.session.passport.user
+        if (playerID)
+            Player.findOne({ id: playerID })
+            .exec (function (err, player) {
+                if (player)
+                    return res.view ('homepage',
+                                     { loggedIn: true,
+                                       playerID: player.id,
+                                       playerName: player.name,
+                                       playerDisplayName: player.displayName })
+                else
+                    return res.view ('homepage',
+                                     { loggedIn: false })
+            })
+        else
+            return res.view ('homepage',
+                             { loggedIn: false })
+    },
+    
+    login: function(req, res, next) {
 
         passport.authenticate('local', function(err, player, info) {
             if ((err) || (!player)) {
@@ -32,12 +52,39 @@ module.exports = {
                 });
             });
 
-        })(req, res);
+        })(req, res, next);
     },
 
     logout: function(req, res) {
         req.logout();
         res.redirect('/');
-    }	
+    },
+
+    facebookLogin:function (req, res, next) {
+        passport.authenticate('facebook', { scope: ['email', 'user_about_me', 'user_friends']},
+                              function (err, player) {
+                                  req.logIn(player, function (err) {
+                                      if (err) res.send(err)
+                                      return res.send({
+                                          player: player
+                                      });
+                                  });
+                              })(req, res, next);
+    },
+
+  facebookLoginCallback: function (req, res, next) {
+      passport.authenticate('facebook',
+                            function (err, player) {
+//                                console.log("facebookLoginCallback")
+//                                console.log(err)
+//                                console.log(player)
+                                req.logIn(player, function (err) {
+                                    if (err) return res.send(err)
+                                    return res.redirect('/')
+                                });
+                            })(req, res, next);
+  }
+    
+
 };
 

@@ -152,7 +152,7 @@ module.exports = {
                      verb: verb,
 		     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
                      self: { mood: selfMood },
-                     other: { id: other.id, name: other.name, mood: otherMood },
+                     other: { id: other.id, name: other.displayName, mood: otherMood },
                      startline: game.currentStartTime,
                      move: game.moves + 1 }
 	if (!game.finished && game.current && game.current.timeout)

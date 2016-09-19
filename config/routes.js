@@ -32,9 +32,7 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-//  '/': {
-//    view: 'homepage'
-//  },
+    '/': 'AuthController.homepage',
 
   /***************************************************************************
   *                                                                          *
@@ -49,6 +47,9 @@ module.exports.routes = {
     'POST /login': 'AuthController.login',
     '/logout':     'AuthController.logout',
 
+    'GET /login/facebook':          'AuthController.facebookLogin',
+    'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
+    
     'GET /icon/:icon.svg':                    'IconController.getIcon',
     'GET /icon/:icon/:color.svg':             'IconController.getIcon',
     'GET /icon/:icon/:color/:background.svg': 'IconController.getIcon',

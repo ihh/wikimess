@@ -23,12 +23,21 @@ module.exports = {
           required: true
       },
 
+      displayName: {
+          type: 'string'
+      },
+      
       password: {
             type: 'string',
 //            minLength: 6,
             required: true
         },
 
+      facebookId: {
+          type: 'string',
+          unique: true
+      },
+      
       // bot players
       human: {
           type: 'boolean',
@@ -81,6 +90,7 @@ module.exports = {
   },
 
     beforeCreate: function(player, cb) {
+        player.displayName = player.displayName || player.name
         bcrypt.genSalt(10, function(err, salt) {
             bcrypt.hash(player.password, salt, function(err, hash) {
                 if (err) {

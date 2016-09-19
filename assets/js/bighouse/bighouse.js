@@ -5,7 +5,7 @@ var BigHouse = (function() {
         this.container = $('#'+this.containerID)
             .addClass("bighouse")
 
-	this.localStorage = { playerName: undefined,
+	this.localStorage = { playerLogin: undefined,
                               musicVolume: .5,
                               soundVolume: .5 }
 	try {
@@ -26,8 +26,13 @@ var BigHouse = (function() {
         this.pushedViews = []
 	this.postponedMessages = []
 
-        this.changeMusic('menu')
-        this.showLoginPage()
+        if (config.playerID) {
+            this.playerID = config.playerID
+            this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
+            this.playerName = config.playerDisplayName
+            this.showPlayPage()
+        } else
+            this.showLoginPage()
     }
 
     $.extend (proto.prototype, {
@@ -37,6 +42,7 @@ var BigHouse = (function() {
 	iconPrefix: '/icon/',
 	iconSuffix: '.svg',
 	blankImageUrl: '/images/1x1blank.png',
+        facebookButtonImageUrl: '/images/facebook.png',
         maxNameLength: 16,
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
@@ -72,6 +78,10 @@ var BigHouse = (function() {
 	verbose: true,
         
         // REST interface
+        REST_loginFacebook: function() {
+            window.location.replace ('/login/facebook')
+        },
+
         REST_postPlayer: function (playerName, playerPassword) {
             return $.post('/player', { name: playerName, password: playerPassword })
         },
@@ -193,7 +203,7 @@ var BigHouse = (function() {
             sfx = sfx || 'select'
             return $('<li>')
                 .append ($('<span>')
-                         .text(text))
+                         .html(text))
                 .on('click', this.callWithSoundEffect (callback, sfx))
         },
 
@@ -205,6 +215,7 @@ var BigHouse = (function() {
 
         // login menu
         showLoginPage: function() {
+            this.changeMusic('menu')
             this.setPage ('login')
             this.container
                 .empty()
@@ -220,24 +231,26 @@ var BigHouse = (function() {
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Log in', this.doReturnLogin))
-                                  .append (this.makeListLink ('Create player', this.createPlayer))))
-            if (this.playerName)
-                this.nameInput.val (this.playerName)
+                                  .append (this.makeListLink ('Sign up', this.createPlayer))
+                                  .append (this.makeListLink ($('<img>').attr('src',this.facebookButtonImageUrl), this.REST_loginFacebook)
+                                           .addClass("noborder"))))
+            if (this.playerLogin)
+                this.nameInput.val (this.playerLogin)
         },
-
+        
         validatePlayerName: function() {
-            this.playerName = this.nameInput.val()
+            this.playerLogin = this.nameInput.val()
             this.playerPassword = this.passwordInput.val()
-            this.playerName = this.playerName.replace(/^\s*/,'').replace(/\s*$/,'')
-            if (!/\S/.test(this.playerName)) {
-                this.showModalMessage ("Please enter a player name")
+            this.playerLogin = this.playerLogin.replace(/^\s*/,'').replace(/\s*$/,'')
+            if (!/\S/.test(this.playerLogin)) {
+                this.showModalMessage ("Please enter a player login name")
                 return false
             }
             if (!/\S/.test(this.playerPassword)) {
                 this.showModalMessage ("Please enter a password")
                 return false
             }
-            this.writeLocalStorage ('playerName')
+            this.writeLocalStorage ('playerLogin')
             return true
         },
 
@@ -258,7 +271,7 @@ var BigHouse = (function() {
         doLogin: function (showNextPage) {
             var bh = this
             if (this.validatePlayerName())
-                this.REST_postLogin (this.playerName, this.playerPassword)
+                this.REST_postLogin (this.playerLogin, this.playerPassword)
                 .done (function (data) {
 		    if (!data.player)
                         bh.showModalMessage (data.message)
@@ -266,6 +279,7 @@ var BigHouse = (function() {
                         bh.selectSound.stop()
                         bh.playSound ('login')
 			bh.playerID = data.player.id
+                        bh.playerName = data.player.name
                         showNextPage.call(bh)
 		    }
                 })
@@ -277,7 +291,7 @@ var BigHouse = (function() {
         createPlayer: function() {
             var bh = this
             if (this.validatePlayerName())
-                this.REST_postPlayer (this.playerName, this.playerPassword)
+                this.REST_postPlayer (this.playerLogin, this.playerPassword)
                 .done (function (data) {
                     bh.selectSound.stop()
                     bh.playSound ('login')
@@ -1811,8 +1825,3 @@ var BigHouse = (function() {
     // end of module
     return proto
 }) ()
-
-var bh
-$(function() {
-    bh = new BigHouse()
-})
