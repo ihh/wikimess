@@ -1329,7 +1329,8 @@ var BigHouse = (function() {
 	},
 
 	showWaitCardText: function (text) {
-	    this.waitCardListItem.html ($('<span>').text(text))
+            if (this.waitCardListItem)
+	        this.waitCardListItem.html ($('<span>').text(text))
 	},
 
 	dealChoiceCards: function (config) {
@@ -1342,7 +1343,7 @@ var BigHouse = (function() {
 
 	makeSwipeFunction: function (node, dir) {
 	    var bh = this
-            var waitCardContents = this.waitCardListItem.find('*')
+            var waitCardContents = this.waitCardListItem && this.waitCardListItem.find('*')
 	    return function() {
 		bh.lastSwipe = dir
 
@@ -1355,7 +1356,8 @@ var BigHouse = (function() {
 		    bh.dealCardForNode ({ node: next,
                                           dealDirection: dir == 'right' ? 'left' : 'right',
                                           dealt: function() {
-                                              waitCardContents.remove()
+                                              if (waitCardContents)
+                                                  waitCardContents.remove()
                                           }})
 		} else {
                     if (bh.cardCount) {
