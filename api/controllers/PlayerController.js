@@ -338,7 +338,8 @@ module.exports = {
                           // Modify avatar config
                           player.avatarConfig[mood].url = imagePath + '/' + targetFilename
                           Player.update ({ id: playerID },
-                                         { avatarConfig: player.avatarConfig },
+                                         { avatarConfig: player.avatarConfig,
+                                           newSignUp: false },
                                          function (err, updated) {
                                              if (err)
                                                  res.status(500).send(err)

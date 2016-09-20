@@ -30,7 +30,10 @@ var BigHouse = (function() {
             this.playerID = config.playerID
             this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
             this.playerName = config.playerDisplayName
-            this.showPlayPage()
+            if (config.newSignUp)
+                this.showInitialUploadPage()
+            else
+                this.showPlayPage()
         } else
             this.showLoginPage()
     }
@@ -126,7 +129,7 @@ var BigHouse = (function() {
             return '/player/' + playerID + '/avatar/' + mood
         },
 
-        REST_postPlayerAvatar: function (playerID, mood, blob) {
+        REST_postPlayerAvatarMood: function (playerID, mood, blob) {
             var url = '/player/' + playerID + '/avatar/' + mood
 	    var formData = new FormData()
 	    formData.append ('avatar', blob)
@@ -366,7 +369,7 @@ var BigHouse = (function() {
                 .append (this.makePageTitle ("Settings"))
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
-                                  .append (this.makeListLink ('Upload photos', this.showSettingsUploadPage))
+                                  .append (this.makeListLink ('Character settings', this.showSettingsUploadPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Back', this.showPlayPage))))
         },
@@ -457,14 +460,14 @@ var BigHouse = (function() {
 
         // avatar upload page
         showSettingsUploadPage: function() {
-            this.showUploadPage ({ uploadText: "Select one of the images below to upload a new photo",
+            this.showUploadPage ({ uploadText: "Select one of the images below to upload a new photo, or pick an avatar.",
                                    nextPageText: "Back",
                                    showNextPage: this.showSettingsPage,
                                    transitionWhenUploaded: false })
         },
 
         showInitialUploadPage: function() {
-            this.showUploadPage ({ uploadText: "Take a selfie for each of the four moods shown below, so other players can see how you feel.",
+            this.showUploadPage ({ uploadText: "Take a selfie for each of the four moods shown below, so other players can see how you feel. Or, pick an avatar.",
                                    nextPageText: "Later",
                                    showNextPage: this.showPlayPage,
                                    transitionWhenUploaded: true })
@@ -483,11 +486,12 @@ var BigHouse = (function() {
             this.moodDiv = []
             this.container
                 .empty()
-                .append (this.makePageTitle ("Upload photos"))
+                .append (this.makePageTitle ("Character settings"))
                 .append (this.menuBar = $('<div class="menubar">')
 			 .append ($('<span class="rubric">')
 				  .text(uploadText))
 			 .append ($('<ul>')
+				  .append (this.makeListLink ("Pick avatar", this.pickAvatarPage.bind (this, config)))
 				  .append (this.makeListLink (nextPageText, showNextPage))))
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
@@ -521,6 +525,39 @@ var BigHouse = (function() {
                 this.reloadMoodImage (this.playerID, config.reloadMood)
         },
 
+        pickAvatarPage: function (config) {
+            var bh = this
+
+            this.setPage ('avatar')
+            this.moodDiv = []
+            this.container
+                .empty()
+                .append (this.makePageTitle ("Pick an avatar"))
+                .append (this.menuBar = $('<div class="menubar">')
+			 .append ($('<span class="rubric">')
+				  .text("Pick a custom avatar. (Careful: selecting an avatar will erase any photos you have uploaded.)"))
+			 .append ($('<ul class="horizontal-list">')
+                                  .append (this.makeListLink ("More", this.pickAvatarPage.bind (this, config)))
+				  .append (this.makeListLink ("Cancel", this.showUploadPage.bind (this, config)))))
+                .append (this.moodSlugBar = $('<div class="moodslugbar">'))
+                .append (this.moodBar = $('<div class="mooduploadbar">'))
+		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
+
+            this.moods.forEach (function (mood, m) {
+		var moodClass = "mood" + (m+1)
+		var moodSlugClass = "moodslug" + (m+1)
+		var img = bh.makeMoodImage (bh.playerID, mood)
+		var div = $('<div>')
+		    .addClass(moodClass)
+		    .html (img)
+                bh.moodSlugBar.append ($('<div>')
+                                       .addClass(moodSlugClass)
+                                       .text(mood))
+		bh.moodBar.append (div)
+                bh.moodDiv.push (div)
+            })
+        },
+        
 	makeMoodImage: function (id, mood) {
 	    return $('<img class="mood">')
 		.attr ('src', this.REST_urlPlayerAvatar (id, mood))
@@ -583,7 +620,7 @@ var BigHouse = (function() {
                     .append (bh.makePageTitle ("Uploading"))
                     .append ($('<div class="menubar">')
 		             .append ($('<span>').text ("Uploading " + mood + " face...")))
-		bh.REST_postPlayerAvatar (bh.playerID, mood, finalBlob)
+		bh.REST_postPlayerAvatarMood (bh.playerID, mood, finalBlob)
 		    .then (function (data) {
 			bh.exitConfirmUpload (mood)
 			uploadedCallback()

@@ -80,7 +80,12 @@ module.exports = {
               surprised: {}
           },
       },
-      
+
+      newSignUp: {
+          type: 'boolean',
+          defaultsTo: true
+      },
+
       // references to games
       player1games: {
           collection: 'game',

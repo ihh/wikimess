@@ -105,11 +105,18 @@ body {
 
 .bighouse .statusbar a,
 .bighouse .menubar a,
+.bighouse .avatar-exit a,
 .bighouse .upload-exit a {
     color: #888;
     text-decoration: none;
     border: 1px solid #888;
     cursor: pointer;
+}
+
+.bighouse .menubar .avatar-grid {
+    text-align: center;
+    margin-top: 2vw;
+    margin-bottom: 2vw;
 }
 
 .bighouse img.mood {
@@ -332,12 +339,14 @@ body {
 .bighouse .moodbar div svg,
 .bighouse .mooduploadbar div img,
 .bighouse .mooduploadbar div svg,
+.bighouse .avatar-exit span,
 .bighouse .upload-exit span {
     cursor: pointer;
 }
 
 .bighouse .mooduploadbar .unclickable,
 .bighouse .moodslugbar .unclickable,
+.bighouse .avatar-exit .unclickable,
 .bighouse .upload-exit .unclickable,
 a.unclickable {
     opacity: .5;
@@ -582,8 +591,22 @@ a.unclickable {
 
     .bighouse .statusbar a,
     .bighouse .menubar a,
+    .bighouse .avatar-exit a,
     .bighouse .upload-exit a {
 	padding: 4px 8px 4px 8px;
+    }
+
+    .bighouse .avatar-exit a {
+	float: left;
+	margin: 4px 8px 4px 8px;
+	width: 20vw;
+	text-align: center;
+    }
+
+    .bighouse .menubar .avatar {
+	width: 19vw;
+	height: 19vw;
+	display: inline-block;
     }
 
     .bighouse .moodbar {
@@ -907,8 +930,22 @@ a.unclickable {
 
     .bighouse .statusbar a,
     .bighouse .menubar a,
+    .bighouse .avatar-exit a,
     .bighouse .upload-exit a {
 	padding: 4px 8px 4px 8px;
+    }
+
+    .bighouse .avatar-exit a {
+	float: left;
+	margin: 4px 8px 4px 8px;
+	width: 20vh;
+	text-align: center;
+    }
+
+    .bighouse .menubar .avatar {
+	width: 19vh;
+	height: 19vh;
+	display: inline-block;
     }
 
     .bighouse .moodbar {
@@ -1123,6 +1160,7 @@ a.unclickable {
 	padding-top: 5vh;
 	padding-bottom: 5vh;
 	text-align: center;
+
     }
 
     .bighouse .gametable thead th {
@@ -1142,6 +1180,16 @@ a.unclickable {
 	overflow-y: auto;
 	height: 70vh;
     }
+
+    .bighouse .menubar ul.horizontal-list {
+	list-style: none;
+	margin: 4vh;
+    }
+
+    .bighouse .menubar .horizontal-list li {
+	display: inline;
+    }
+
 }
 
 /* Specific aspect ratios... */

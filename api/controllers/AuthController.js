@@ -25,7 +25,8 @@ module.exports = {
                                      { loggedIn: true,
                                        playerID: player.id,
                                        playerName: player.name,
-                                       playerDisplayName: player.displayName })
+                                       playerDisplayName: player.displayName,
+                                       newSignUp: player.newSignUp })
                 else
                     return res.view ('homepage',
                                      { loggedIn: false })

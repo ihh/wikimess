@@ -1,11 +1,13 @@
 [
   {
-    "name": "fred",
-    "password": "test"
+      "name": "fred",
+      "password": "test",
+      "newSignUp": false
   },
   {
-    "name": "sheila",
-    "password": "test"
+      "name": "sheila",
+      "password": "test",
+      "newSignUp": false
   },
   {
     "name": "titfortat",
