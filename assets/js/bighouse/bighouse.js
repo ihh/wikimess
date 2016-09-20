@@ -530,19 +530,43 @@ var BigHouse = (function() {
 
             this.setPage ('avatar')
             this.moodDiv = []
+            this.currentFaceSet = undefined
+            var avatarGrid
             this.container
                 .empty()
                 .append (this.makePageTitle ("Pick an avatar"))
                 .append (this.menuBar = $('<div class="menubar">')
 			 .append ($('<span class="rubric">')
-				  .text("Pick a custom avatar. (Careful: selecting an avatar will erase any photos you have uploaded.)"))
-			 .append ($('<ul class="horizontal-list">')
-                                  .append (this.makeListLink ("More", this.pickAvatarPage.bind (this, config)))
-				  .append (this.makeListLink ("Cancel", this.showUploadPage.bind (this, config)))))
+				  .text("Pick a face to represent you in the game. (Warning: selecting an avatar will erase any photos you have previously uploaded.)"))
+                         .append (avatarGrid = $('<div class="avatar-grid">'))
+			 .append ($('<div class="avatar-exit">')
+                                  .append (this.makeLink ("OK", this.confirmPickAvatar))
+                                  .append (this.makeLink ("More", this.pickAvatarPage.bind (this, config)))
+				  .append (this.makeLink ("Cancel", this.showUploadPage.bind (this, config)))))
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
 
+            for (var row = 0; row < 2; ++row) {
+                var span = $('<span class="avatar-grid-row">')
+                avatarGrid.append (span)
+                for (var col = 0; col < 4; ++col) {
+                    var div = $('<div class="avatar">')
+                    span.append(div)
+                    var faceSet = faces.generateSet()
+                    var mood = this.moods[Math.floor (Math.random() * this.moods.length)]
+                    faces.display (div[0], faceSet[mood])
+                    div.on('click', (function(faceSet) {
+                        return function() {
+                            bh.currentFaceSet = faceSet
+                            for (var m = 0; m < bh.moods.length; ++m) {
+                                faces.display (bh.moodDiv[m][0], faceSet[bh.moods[m]])
+                            }
+                        }
+                    }) (faceSet))
+                }
+            }
+            
             this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
 		var moodSlugClass = "moodslug" + (m+1)
@@ -556,6 +580,9 @@ var BigHouse = (function() {
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
             })
+        },
+
+        confirmPickAvatar: function() {
         },
         
 	makeMoodImage: function (id, mood) {
