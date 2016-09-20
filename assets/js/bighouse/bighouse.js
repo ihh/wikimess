@@ -554,12 +554,16 @@ var BigHouse = (function() {
                         span.append(div)
                         var faceSet = faces.generateSet()
                         var mood = bh.moods[Math.floor (Math.random() * bh.moods.length)]
-                        faces.display (div[0], faceSet[mood])
+                        faces.display ({ container: div[0],
+                                         base: faceSet.base,
+                                         face: faceSet[mood] })
                         div.on('click', (function(faceSet) {
                             return function() {
                                 bh.currentFaceSet = faceSet
                                 for (var m = 0; m < bh.moods.length; ++m) {
-                                    faces.display (bh.moodDiv[m][0], faceSet[bh.moods[m]])
+                                    faces.display ({ container: bh.moodDiv[m][0],
+                                                     base: faceSet.base,
+                                                     face: faceSet[bh.moods[m]] })
                                 }
                             }
                         }) (faceSet))
