@@ -6,6 +6,7 @@
  */
 
 var bcrypt = require('bcrypt');
+var Faces = require('../../assets/js/ext/facesjs/faces.js')
 
 module.exports = {
 
@@ -72,13 +73,7 @@ module.exports = {
       },
 
       avatarConfig: {
-          type: 'json',
-          defaultsTo: {
-              happy: {},
-              angry: {},
-              sad: {},
-              surprised: {}
-          },
+          type: 'json'
       },
 
       newSignUp: {
@@ -106,6 +101,7 @@ module.exports = {
 
     beforeCreate: function(player, cb) {
         player.displayName = player.displayName || player.name
+        player.avatarConfig = player.avatarConfig || Faces.generateSet()
         bcrypt.genSalt(10, function(err, salt) {
             bcrypt.hash(player.password, salt, function(err, hash) {
                 if (err) {

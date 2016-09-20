@@ -9,6 +9,7 @@ var fs = require('fs');
 var SkipperDisk = require('skipper-disk');
 var imagemagick = require('imagemagick-native');
 var extend = require('extend');
+var md5File = require('md5-file');
 
 module.exports = {
 
@@ -44,7 +45,7 @@ module.exports = {
 				 finished: game.finished,
 				 running: parseInt ((now - created) / 1000),
 				 dormant: parseInt ((now - updated) / 1000),
-				 other: { name: (role == 1 ? game.player2 : game.player1).name },
+				 other: { name: (role == 1 ? game.player2 : game.player1).displayName },
 				 waiting: Game.isWaitingForMove (game, role) }
 		    }))
 	    })
@@ -263,21 +264,6 @@ module.exports = {
         })
     },
 
-    // Download mood avatar config for player
-    getMoodAvatarConfig: function (req, res){
-	var playerID = req.params.player
-	if (MiscPlayerService.isValidMood (mood))
-            Player.findOneById (playerID)
-            .exec (function (err, player) {
-                if (err)
-                    res.status(500).send (err)
-                else if (!player)
-                    res.status(404).send (new Error ("Player " + name + " not found"))
-                else
-                    res.send (player.avatarConfig)
-            })
-    },
-
     // Upload avatar for player
     uploadMoodAvatar: function (req, res) {
 	var playerID = req.params.player
@@ -292,7 +278,6 @@ module.exports = {
                     var imagePath = '/images/avatars/' + playerID
 	            var playerImageDir = process.cwd() + '/assets' + imagePath
 	            var tmpPlayerImageDir = process.cwd() + '/.tmp/public' + imagePath
-	            var targetFilename = mood + '.jpg'
 
 	            if (!fs.existsSync(playerImageDir))
 	                fs.mkdirSync(playerImageDir)
@@ -315,11 +300,10 @@ module.exports = {
 	                  // get ready to move some files around
                           var filename = uploadedFiles[0].fd.substring(uploadedFiles[0].fd.lastIndexOf('/')+1);
                           var uploadLocation = playerImageDir + '/' + filename;
-	                  var targetLocation = playerImageDir + '/' + targetFilename;
-                          var tempLocation = tmpPlayerImageDir + '/' + targetFilename;
+                          var convertedUploadLocation = playerImageDir + '/' + filename + '.conv';
 
 	                  // convert the file to the appropriate size using ImageMagick
-	                  fs.writeFileSync (targetLocation, imagemagick.convert({
+	                  fs.writeFileSync (convertedUploadLocation, imagemagick.convert({
 		              srcData: fs.readFileSync (uploadLocation),
 		              format: 'JPEG',
 		              strip: true,
@@ -328,9 +312,18 @@ module.exports = {
 		              width: 128,
 		              height: 128
 	                  }));
-
-	                  // remove the uploaded file
+                          
+	                  // remove the originally uploaded file
 	                  fs.unlinkSync (uploadLocation)
+
+                          // use MD5 to create new unique filename
+                          var hash = md5File.sync (convertedUploadLocation)
+	                  var targetFilename = hash + '.jpg'
+	                  var targetLocation = playerImageDir + '/' + targetFilename;
+                          var tempLocation = tmpPlayerImageDir + '/' + targetFilename;
+
+                          // Move the converted file to the correct location
+                          fs.renameSync (convertedUploadLocation, targetLocation)
 
                           // Copy the file to the temp folder so that it becomes available immediately
                           fs.createReadStream(targetLocation).pipe(fs.createWriteStream(tempLocation));
@@ -351,44 +344,35 @@ module.exports = {
             })
     },
 
-    // Download mood avatar of player
-    getMoodAvatar: function (req, res){
+    // Download mood avatar config for player
+    getMoodAvatarConfig: function (req, res) {
 	var playerID = req.params.player
-	var mood = req.params.mood
-	var imageDir = '/images/avatars/' + playerID
-	var genericImageDir = '/images/avatars/generic'
-
-	if (MiscPlayerService.isValidMood (mood))
-            Player.findOneById (playerID)
+        Player.findOneById (playerID)
             .exec (function (err, player) {
                 if (err)
                     res.status(500).send (err)
                 else if (!player)
                     res.status(404).send (new Error ("Player " + name + " not found"))
-                else {
-		    // at the moment, generic avatars are PNGs and uploaded avatars are JPEGs...
-		    var path = process.cwd() + '/assets' + genericImageDir + '/' + mood + '.png'
-		    try {
-			var testPath = process.cwd() + '/assets' + imageDir + '/' + mood + '.jpg'
-			var stats = fs.lstatSync (testPath);
-			if (stats.isFile())
-			    path = testPath
-		    } catch (e) {
-			// couldn't find custom avatar
-			// fall through to using generic avatar
-		    }
+                else
+                    res.json (player.avatarConfig)
+            })
+    },
 
-		    // Stream the file down
-		    var fileAdapter = SkipperDisk();
-		    fileAdapter.read(path)
-			.on('error', function (err){
-			    return res.serverError(err);
-			})
-			.pipe(res);
-		}
-	    })
-	else
-            res.status(400).send (new Error ("Bad mood"))
+    // Upload mood avatar config for player
+    setMoodAvatarConfig: function (req, res) {
+	var playerID = req.params.player
+        var config = req.body.avatarConfig
+        Player.update ({ id: playerID },
+                       { avatarConfig: config,
+                         newSignUp: false })
+            .exec (function (err, player) {
+                if (err)
+                    res.status(500).send (err)
+                else if (!player)
+                    res.status(404).send (new Error ("Player " + name + " not found"))
+                else
+                    res.ok()
+            })
     },
 
 };

@@ -32,6 +32,7 @@ module.exports.policies = {
     'PlayerController': {
 	'create': true,
 	'getMoodAvatar': true,
+	'getMoodAvatarConfig': true,
 //	'*': 'isAuthenticated'
 	'*': true
     },

@@ -28,6 +28,7 @@
 	"passport-local": "~1.0.0",
 	"passport-facebook": "~2.1.1",
 	"imagemagick-native": "~1.9.3",
+        "md5-file": "3.1.1",
 	"extend": "3.0.0",
         "deepmerge": "0.2.10"
   },

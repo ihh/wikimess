@@ -25,7 +25,8 @@ var BigHouse = (function() {
 
         this.pushedViews = []
 	this.postponedMessages = []
-
+        this.avatarConfigPromise = {}
+        
         if (config.playerID) {
             this.playerID = config.playerID
             this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
@@ -125,25 +126,25 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/mood/' + mood)
         },
 
-        REST_urlPlayerAvatar: function (playerID, mood) {
-            return '/player/' + playerID + '/avatar/' + mood
+        REST_getPlayerAvatarConfig: function (playerID) {
+            return $.get ('/player/' + playerID + '/avatar')
         },
 
         REST_putPlayerAvatarConfig: function (playerID, config) {
-            return $.ajax ({ url: '/player/' + playerID,
+            return $.ajax ({ url: '/player/' + playerID + '/avatar',
                              type: 'PUT',
                              cache: false,
-                             data: { avatarConfig: config,
-                                     newSignUp: false }
+                             contentType: 'application/json',
+                             data: JSON.stringify ({ avatarConfig: config })
                            })
         },
 
-        REST_postPlayerAvatarMood: function (playerID, mood, blob) {
+        REST_putPlayerAvatarMood: function (playerID, mood, blob) {
             var url = '/player/' + playerID + '/avatar/' + mood
 	    var formData = new FormData()
 	    formData.append ('avatar', blob)
 	    return $.ajax ({ url: url,
-			     type: 'POST',
+			     type: 'PUT',
 			     cache: false,
 			     contentType: false,
 			     processData: false,
@@ -223,6 +224,10 @@ var BigHouse = (function() {
 	    if (this.verbose)
 		console.log ("Changing view from " + this.page + " to " + page)
 	    this.page = page
+
+            if (this.pageAnimationTimer)
+                window.clearInterval (this.pageAnimationTimer)
+            delete this.pageAnimationTimer
 	},
 
         // login menu
@@ -507,21 +512,19 @@ var BigHouse = (function() {
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
             
-            config.nUploads = 0
-            config.moodUploaded = {}
+            if (typeof(config.moodUploaded) === 'undefined')
+                config.moodUploaded = {}
+            delete this.avatarConfigPromise[this.playerID]  // force reload of player avatar config
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
 		var moodSlugClass = "moodslug" + (m+1)
-		var img = bh.makeMoodImage (bh.playerID, mood)
 		var div = $('<div>')
 		    .addClass(moodClass)
-		    .html (img)
                 var uploadFunc = bh.uploadMoodPhotoFunction (mood, div, function() {
-                    if (!config.moodUploaded[mood]) {
+                    if (!config.moodUploaded[mood])
                         config.moodUploaded[mood] = true
-                        if (++config.nUploads == bh.moods.length && transitionWhenUploaded)
-                            showNextPage.call(bh)
-                    }
+                    if (transitionWhenUploaded && !bh.moods.find(function(m){return !config.moodUploaded[m]}))
+                        showNextPage.call(bh)
                 })
 		div.on ('click', ':not(.unclickable)', uploadFunc)
                 bh.moodSlugBar.append ($('<div>')
@@ -530,10 +533,8 @@ var BigHouse = (function() {
                                        .on('click', uploadFunc))
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
+                bh.showMoodImage (bh.playerID, mood, div)
             })
-            
-            if (config.reloadMood)
-                this.reloadMoodImage (this.playerID, config.reloadMood)
         },
 
         pickAvatarPage: function (config) {
@@ -542,32 +543,35 @@ var BigHouse = (function() {
             this.setPage ('avatar')
             this.moodDiv = []
             this.currentFaceSet = undefined
-            var avatarGrid
-
+            var avatarGrid, faceSets
             var randomizeFaces = function() {
                 avatarGrid.empty()
+                faceSets = []
                 for (var row = 0; row < 2; ++row) {
                     var span = $('<span class="avatar-grid-row">')
                     avatarGrid.append (span)
-                    for (var col = 0; col < 4; ++col) {
-                        var div = $('<div class="avatar">')
-                        span.append(div)
-                        var faceSet = faces.generateSet()
-                        var mood = bh.moods[Math.floor (Math.random() * bh.moods.length)]
-                        faces.display ({ container: div[0],
-                                         base: faceSet.base,
-                                         face: faceSet[mood] })
-                        div.on('click', (function(faceSet) {
-                            return function() {
+                    for (var col = 0; col < 4; ++col)
+                        (function() {
+                            var div = $('<div class="avatar">')
+                            span.append(div)
+                            var faceSet = faces.generateSet()
+                            var mood = bh.moods[Math.floor (Math.random() * bh.moods.length)]
+                            function update(mood) {
+                                faces.display ({ container: div[0],
+                                                 base: faceSet.base,
+                                                 face: faceSet[mood] })
+                            }
+                            faceSets.push ({ faceSet: faceSet, div: div, mood: mood, update: update })
+                            update(mood)
+                            div.on('click', function() {
                                 bh.currentFaceSet = faceSet
                                 for (var m = 0; m < bh.moods.length; ++m) {
                                     faces.display ({ container: bh.moodDiv[m][0],
                                                      base: faceSet.base,
                                                      face: faceSet[bh.moods[m]] })
                                 }
-                            }
-                        }) (faceSet))
-                    }
+                            })
+                        }) ()
                 }
             }
 
@@ -587,19 +591,23 @@ var BigHouse = (function() {
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
 
             randomizeFaces()
+            this.pageAnimationTimer = window.setInterval (function() {
+                var fs = faceSets[Math.floor(faceSets.length*Math.random())]
+                var newMoods = bh.moods.filter (function(m) { return m != fs.mood })
+                fs.update (fs.mood = newMoods[Math.floor(newMoods.length*Math.random())])
+            }, 100)
             
             this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
 		var moodSlugClass = "moodslug" + (m+1)
-		var img = bh.makeMoodImage (bh.playerID, mood)
 		var div = $('<div>')
 		    .addClass(moodClass)
-		    .html (img)
                 bh.moodSlugBar.append ($('<div>')
                                        .addClass(moodSlugClass)
                                        .text(mood))
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
+		bh.showMoodImage (bh.playerID, mood, div)
             })
         },
 
@@ -613,14 +621,29 @@ var BigHouse = (function() {
                         config.showNextPage.call (bh)
                     })
         },
-        
-	makeMoodImage: function (id, mood) {
-	    return $('<img class="mood">')
-		.attr ('src', this.REST_urlPlayerAvatar (id, mood))
-	},
 
-	reloadMoodImage: function (id, mood) {
-	    this.forceImgReload (this.REST_urlPlayerAvatar (id, mood))
+        getAvatarConfigPromise: function(id) {
+            if (!this.avatarConfigPromise[id])
+                this.avatarConfigPromise[id] = this.REST_getPlayerAvatarConfig(id)
+            return this.avatarConfigPromise[id]
+        },
+        
+        showMoodImage: function (id, mood, div, callback) {
+            this.getAvatarConfigPromise(id).done (function (avatarConfig) {
+                if (avatarConfig[mood].url) {
+                    var img = $('<img class="mood">')
+		              .attr ('src', avatarConfig[mood].url)
+	            div.html (img)
+                    if (callback)
+                        img.on('load',callback)
+                } else {
+                    faces.display ({ container: div[0],
+                                     base: avatarConfig.base,
+                                     face: avatarConfig[mood] })
+                    if (callback)
+                        callback()
+                }
+            })
 	},
 
 	uploadMoodPhotoFunction: function (mood, div, uploadedCallback) {
@@ -676,7 +699,7 @@ var BigHouse = (function() {
                     .append (bh.makePageTitle ("Uploading"))
                     .append ($('<div class="menubar">')
 		             .append ($('<span>').text ("Uploading " + mood + " face...")))
-		bh.REST_postPlayerAvatarMood (bh.playerID, mood, finalBlob)
+		bh.REST_putPlayerAvatarMood (bh.playerID, mood, finalBlob)
 		    .then (function (data) {
 			bh.exitConfirmUpload (mood)
 			uploadedCallback()
@@ -790,138 +813,7 @@ var BigHouse = (function() {
 	    this.removeImages()
             var config = {}
             $.extend (config, this.lastUploadConfig)
-            if (mood)
-                config.reloadMood = mood
             this.showUploadPage (config)
-	},
-
-	// force image reload
-	// http://stackoverflow.com/questions/1077041/refresh-image-with-a-new-one-at-the-same-url/22429796#22429796
-	// Force an image to be reloaded from the server, bypassing/refreshing the cache.
-	// due to limitations of the browser API, this actually requires TWO load attempts - an initial load into a hidden iframe, and then a call to iframe.contentWindow.location.reload(true);
-	// If image is from a different domain (i.e. cross-domain restrictions are in effect, you must set isCrossDomain = true, or the script will crash!
-	// imgDim is a 2-element array containing the image x and y dimensions, or it may be omitted or null; it can be used to set a new image size at the same time the image is updated, if applicable.
-	// if "twostage" is true, the first load will occur immediately, and the return value will be a function
-	// that takes a boolean parameter (true to proceed with the 2nd load (including the blank-and-reload procedure), false to cancel) and an optional updated imgDim.
-	// This allows you to do the first load early... for example during an upload (to the server) of the image you want to (then) refresh.
-	forceImgReload: function(src, isCrossDomain, imgDim, twostage)
-	{
-	    var bh = this
-	    var blankList, step = 0,                                // step: 0 - started initial load, 1 - wait before proceeding (twostage mode only), 2 - started forced reload, 3 - cancelled
-	    iframe = window.document.createElement("iframe"),   // Hidden iframe, in which to perform the load+reload.
-	    loadCallback = function(e)                          // Callback function, called after iframe load+reload completes (or fails).
-	    {                                                   // Will be called TWICE unless twostage-mode process is cancelled. (Once after load, once after reload).
-		if (!step)  // initial load just completed.  Note that it doesn't actually matter if this load succeeded or not!
-		{
-		    if (twostage) step = 1;  // wait for twostage-mode proceed or cancel; don't do anything else just yet
-		    else { step = 2; blankList = bh.imgReloadBlank(src); iframe.contentWindow.location.reload(true); }  // initiate forced-reload
-		}
-		else if (step===2)   // forced re-load is done
-		{
-		    bh.imgReloadRestore(src,blankList,imgDim,(e||window.event).type==="error");    // last parameter checks whether loadCallback was called from the "load" or the "error" event.
-		    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-		}
-	    }
-	    iframe.style.display = "none";
-	    window.parent.document.body.appendChild(iframe);    // NOTE: if this is done AFTER setting src, Firefox MAY fail to fire the load event!
-	    iframe.addEventListener("load",loadCallback,false);
-	    iframe.addEventListener("error",loadCallback,false);
-	    iframe.src = (isCrossDomain ? "/echoimg.php?src="+encodeURIComponent(src) : src);  // If src is cross-domain, script will crash unless we embed the image in a same-domain html page (using server-side script)!!!
-	    return (twostage
-		    ? function(proceed,dim)
-		    {
-			if (!twostage) return;
-			twostage = false;
-			if (proceed)
-			{
-			    imgDim = (dim||imgDim);  // overwrite imgDim passed in to forceImgReload() - just in case you know the correct img dimensions now, but didn't when forceImgReload() was called.
-			    if (step===1) { step = 2; blankList = bh.imgReloadBlank(src); iframe.contentWindow.location.reload(true); }
-			}
-			else
-			{
-			    step = 3;
-			    if (iframe.contentWindow.stop) iframe.contentWindow.stop();
-			    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-			}
-		    }
-		    : null);
-	},
-
-	// This function should blank all images that have a matching src, by changing their src property to /images/1x1blank.png.
-	// ##### You should code the actual contents of this function according to your page design, and what images there are on them!!! #####
-	// Optionally it may return an array (or other collection or data structure) of those images affected.
-	// This can be used by imgReloadRestore() to restore them later, if that's an efficient way of doing it (otherwise, you don't need to return anything).
-	// NOTE that the src argument here is just passed on from forceImgReload(), and MAY be a relative URI;
-	// However, be aware that if you're reading the src property of an <img> DOM object, you'll always get back a fully-qualified URI,
-	// even if the src attribute was a relative one in the original HTML.  So watch out if trying to compare the two!
-	// NOTE that if your page design makes it more efficient to obtain (say) an image id or list of ids (of identical images) *first*, and only then get the image src,
-	// you can pass this id or list data to forceImgReload() along with (or instead of) a src argument: just add an extra or replacement parameter for this information to
-	// this function, to imgReloadRestore(), to forceImgReload(), and to the anonymous function returned by forceImgReload() (and make it overwrite the earlier parameter variable from forceImgReload() if truthy), as appropriate.
-	imgReloadBlank: function(src)
-	{
-	    // ##### Everything here is provisional on the way the pages are designed, and what images they contain; what follows is for example purposes only!
-	    // ##### For really simple pages containing just a single image that's always the one being refreshed, this function could be as simple as just the one line:
-	    // ##### document.getElementById("myImage").src = "/images/1x1blank.png";
-
-	    var blankList = [],
-	    fullSrc = window.location.href + src.substr(1) /* Fully qualified (absolute) src - i.e. prepend protocol, server/domain, and path if not present in src */,
-	    imgs, img, i;
-
-	    // get list of matching images:
-	    imgs = window.document.body.getElementsByTagName("img");
-	    for (i = imgs.length; i--;) if ((img = imgs[i]).src===fullSrc)  // could instead use body.querySelectorAll(), to check both tag name and src attribute, which would probably be more efficient, where supported
-	    {
-		img.src = this.blankImageUrl;  // blank them
-		blankList.push(img);            // optionally, save list of blanked images to make restoring easy later on
-	    }
-
-	    // for each (/* img DOM node held only by javascript, for example in any image-caching script */) if (img.src===fullSrc)
-	    //	    {
-	    //		img.src = "/images/1x1blank.png";   // do the same as for on-page images!
-	    //		blankList.push(img);
-	    //	    }
-
-	    // ##### If necessary, do something here that tells all accessible windows not to create any *new* images with src===fullSrc, until further notice,
-	    // ##### (or perhaps to create them initially blank instead and add them to blankList).
-	    // ##### For example, you might have (say) a global object window.top.blankedSrces as a propery of your topmost window, initially set = {}.  Then you could do:
-	    // #####
-	    // #####     var bs = window.top.blankedSrces;
-	    // #####     if (bs.hasOwnProperty(src)) bs[src]++; else bs[src] = 1;
-	    // #####
-	    // ##### And before creating a new image using javascript, you'd first ensure that (blankedSrces.hasOwnProperty(src)) was false...
-	    // ##### Note that incrementing a counter here rather than just setting a flag allows for the possibility that multiple forced-reloads of the same image are underway at once, or are overlapping.
-
-	    return blankList;   // optional - only if using blankList for restoring back the blanked images!  This just gets passed in to imgReloadRestore(), it isn't used otherwise.
-	},
-
-	// This function restores all blanked images, that were blanked out by imgReloadBlank(src) for the matching src argument.
-	// ##### You should code the actual contents of this function according to your page design, and what images there are on them, as well as how/if images are dimensioned, etc!!! #####
-	imgReloadRestore: function(src,blankList,imgDim,loadError)
-	{
-	    // ##### Everything here is provisional on the way the pages are designed, and what images they contain; what follows is for example purposes only!
-	    // ##### For really simple pages containing just a single image that's always the one being refreshed, this function could be as simple as just the one line:
-	    // ##### document.getElementById("myImage").src = src;
-
-	    // ##### if in imgReloadBlank() you did something to tell all accessible windows not to create any *new* images with src===fullSrc until further notice, retract that setting now!
-	    // ##### For example, if you used the global object window.top.blankedSrces as described there, then you could do:
-	    // #####
-	    // #####     var bs = window.top.blankedSrces;
-	    // #####     if (bs.hasOwnProperty(src)&&--bs[src]) return; else delete bs[src];  // return here means don't restore until ALL forced reloads complete.
-
-	    var i, img, width = imgDim&&imgDim[0], height = imgDim&&imgDim[1];
-	    if (width) width += "px";
-	    if (height) height += "px";
-
-	    if (loadError) {/* If you want, do something about an image that couldn't load, e.g: src = "/img/brokenImg.jpg"; or alert("Couldn't refresh image from server!"); */}
-
-	    // If you saved & returned blankList in imgReloadBlank(), you can just use this to restore:
-
-	    for (i = blankList.length; i--;)
-	    {
-		(img = blankList[i]).src = src;
-		if (width) img.style.width = width;
-		if (height) img.style.height = height;
-	    }
 	},
 
         // active games
@@ -1117,7 +1009,6 @@ var BigHouse = (function() {
 
             this.setPage ('game')
             this.moodDiv = []
-            this.moodImg = []
 	    this.postponedMessages = []
             this.container
                 .empty()
@@ -1144,13 +1035,11 @@ var BigHouse = (function() {
 
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
-		var img = bh.makeMoodImage (bh.playerID, mood)
-		var div = $('<div>')
+		var div = $('<div class="moodbutton">')
 		    .addClass(moodClass)
-		    .html (img)
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
-                bh.moodImg.push (img)
+		bh.showMoodImage (bh.playerID, mood, div)
 	    })
 
             var throwOutConfidence = function (offset, element) {
@@ -1683,21 +1572,24 @@ var BigHouse = (function() {
                     console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
 		if (time)
                     this.lastPlayerMoodTime = date
-                var newMoodImg = this.makeMoodImage (this.playerID, mood)
-                newMoodImg.on ('load', function() {
-                    bh.playerMoodDiv
-		        .html (newMoodImg)
-                        .off ('click')
-                        .on ('click', bh.callWithSoundEffect (bh.showPlayerStatusPage))
+                this.showMoodImage
+                (this.playerID, mood, this.playerMoodDiv,
+                 function() {
+                     bh.playerMoodDiv
+                         .off ('click')
+                         .on ('click', bh.callWithSoundEffect (bh.showPlayerStatusPage))
                 })
                 for (var m = 0; m < this.moods.length; ++m) {
                     var newMood = this.moods[m]
                     this.moodDiv[m].off()
 		    if (newMood == mood)
-		        this.moodImg[m].fadeTo(100,1)
+		        this.moodDiv[m]
+                        .addClass('selected')
+                        .removeClass('unselected')
 		    else {
-		        this.moodImg[m].fadeTo(200,.5)
-                        this.moodDiv[m]
+		        this.moodDiv[m]
+                            .addClass('unselected')
+                            .removeClass('selected')
 			    .on('click',
 			        ':not(.unclickable)',
 			        bh.changeMoodFunction (bh.moveNumber, newMood))
@@ -1711,13 +1603,15 @@ var BigHouse = (function() {
             var date = new Date (time)
             if (!this.lastOpponentMoodTime || date > this.lastOpponentMoodTime) {
                 this.lastOpponentMoodTime = date
-                var newMoodImg = this.makeMoodImage (id, mood)
-                newMoodImg.on ('load', function() {
-                    bh.opponentMoodDiv
-		        .html (newMoodImg)
-                        .off ('click')
-                    .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))
-                })
+
+                bh.showMoodImage (id,
+                                  mood,
+                                  bh.opponentMoodDiv,
+                                  function() {
+                                      bh.opponentMoodDiv
+                                          .off ('click')
+                                          .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))
+                                  })
             }
         },
 
