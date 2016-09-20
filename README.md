@@ -2,6 +2,7 @@
 
 ## Installation
 
+    git submodule update --init --recursive
     brew install node
     brew install imagemagick
     brew install pkg-config

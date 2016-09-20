@@ -70,6 +70,16 @@ module.exports = {
 	  type: 'string',
 	  defaultsTo: 'happy'
       },
+
+      avatarConfig: {
+          type: 'json',
+          defaultsTo: {
+              happy: {},
+              angry: {},
+              sad: {},
+              surprised: {}
+          },
+      },
       
       // references to games
       player1games: {

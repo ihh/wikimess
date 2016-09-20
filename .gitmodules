@@ -1,0 +1,3 @@
+[submodule "assets/js/ext/facesjs"]
+	path = assets/js/ext/facesjs
+	url = https://github.com/ihh/facesjs

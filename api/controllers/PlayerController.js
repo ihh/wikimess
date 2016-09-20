@@ -263,62 +263,93 @@ module.exports = {
         })
     },
 
+    // Download mood avatar config for player
+    getMoodAvatarConfig: function (req, res){
+	var playerID = req.params.player
+	if (MiscPlayerService.isValidMood (mood))
+            Player.findOneById (playerID)
+            .exec (function (err, player) {
+                if (err)
+                    res.status(500).send (err)
+                else if (!player)
+                    res.status(404).send (new Error ("Player " + name + " not found"))
+                else
+                    res.send (player.avatarConfig)
+            })
+    },
+
     // Upload avatar for player
     uploadMoodAvatar: function (req, res) {
 	var playerID = req.params.player
 	var mood = req.params.mood
-	var imagePath = '/images/avatars/' + playerID
-	var playerImageDir = process.cwd() + '/assets' + imagePath
-	var tmpPlayerImageDir = process.cwd() + '/.tmp/public' + imagePath
-	var targetFilename = mood + '.jpg'
+        Player.findOneById (playerID)
+            .exec (function (err, player) {
+                if (err)
+                    res.status(500).send (err)
+                else if (!player)
+                    res.status(404).send (new Error ("Player " + name + " not found"))
+                else {
+                    var imagePath = '/images/avatars/' + playerID
+	            var playerImageDir = process.cwd() + '/assets' + imagePath
+	            var tmpPlayerImageDir = process.cwd() + '/.tmp/public' + imagePath
+	            var targetFilename = mood + '.jpg'
 
-	if (!fs.existsSync(playerImageDir))
-	    fs.mkdirSync(playerImageDir)
+	            if (!fs.existsSync(playerImageDir))
+	                fs.mkdirSync(playerImageDir)
 
-	if (!fs.existsSync(tmpPlayerImageDir))
-	    fs.mkdirSync(tmpPlayerImageDir)
+	            if (!fs.existsSync(tmpPlayerImageDir))
+	                fs.mkdirSync(tmpPlayerImageDir)
 
-	if (MiscPlayerService.isValidMood (mood))
-	    req.file('avatar').upload
-	( { maxBytes: 10000000,   // don't allow the total upload size to exceed ~10MB
-	    dirname : process.cwd() + '/assets' + imagePath },
-	  function (err, uploadedFiles) {
-              if (err) return res.send(500, err);
+	            if (MiscPlayerService.isValidMood (mood))
+	                req.file('avatar').upload
+	            ( { maxBytes: 10000000,   // don't allow the total upload size to exceed ~10MB
+	                dirname : process.cwd() + '/assets' + imagePath },
+	              function (err, uploadedFiles) {
+                          if (err) return res.send(500, err);
 
-	      // If no files were uploaded, respond with an error.
-	      if (uploadedFiles.length === 0){
-		  return res.badRequest('No file was uploaded');
-	      }
-              
-	      // get ready to move some files around
-              var filename = uploadedFiles[0].fd.substring(uploadedFiles[0].fd.lastIndexOf('/')+1);
-              var uploadLocation = playerImageDir + '/' + filename;
-	      var targetLocation = playerImageDir + '/' + targetFilename;
-              var tempLocation = tmpPlayerImageDir + '/' + targetFilename;
+	                  // If no files were uploaded, respond with an error.
+	                  if (uploadedFiles.length === 0){
+		              return res.badRequest('No file was uploaded');
+	                  }
+                          
+	                  // get ready to move some files around
+                          var filename = uploadedFiles[0].fd.substring(uploadedFiles[0].fd.lastIndexOf('/')+1);
+                          var uploadLocation = playerImageDir + '/' + filename;
+	                  var targetLocation = playerImageDir + '/' + targetFilename;
+                          var tempLocation = tmpPlayerImageDir + '/' + targetFilename;
 
-	      // convert the file to the appropriate size using ImageMagick
-	      fs.writeFileSync (targetLocation, imagemagick.convert({
-		  srcData: fs.readFileSync (uploadLocation),
-		  format: 'JPEG',
-		  strip: true,
-		  blur: .05,
-		  quality: 75,
-		  width: 128,
-		  height: 128
-	      }));
+	                  // convert the file to the appropriate size using ImageMagick
+	                  fs.writeFileSync (targetLocation, imagemagick.convert({
+		              srcData: fs.readFileSync (uploadLocation),
+		              format: 'JPEG',
+		              strip: true,
+		              blur: .05,
+		              quality: 75,
+		              width: 128,
+		              height: 128
+	                  }));
 
-	      // remove the uploaded file
-	      fs.unlinkSync (uploadLocation)
+	                  // remove the uploaded file
+	                  fs.unlinkSync (uploadLocation)
 
-              // Copy the file to the temp folder so that it becomes available immediately
-              fs.createReadStream(targetLocation).pipe(fs.createWriteStream(tempLocation));
-              
-              //Redirect or do something
-              res.json ({'url': imagePath + '/' + mood + '.png' });
-          });
-
+                          // Copy the file to the temp folder so that it becomes available immediately
+                          fs.createReadStream(targetLocation).pipe(fs.createWriteStream(tempLocation));
+                          
+                          // Modify avatar config
+                          player.avatarConfig[mood].url = imagePath + '/' + targetFilename
+                          Player.update ({ id: playerID },
+                                         { avatarConfig: player.avatarConfig },
+                                         function (err, updated) {
+                                             if (err)
+                                                 res.status(500).send(err)
+                                             else
+                                                 res.json (player.avatarConfig)
+                                         })
+                      });
+                }
+            })
     },
-    
+
     // Download mood avatar of player
     getMoodAvatar: function (req, res){
 	var playerID = req.params.player
