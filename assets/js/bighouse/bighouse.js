@@ -612,6 +612,7 @@ var BigHouse = (function() {
         },
 
         confirmPickAvatar: function (config) {
+            var bh = this
             if (!this.currentFaceSet)
                 this.showModalMessage ("You have not selected an avatar",
                                        this.pickAvatarPage.bind (this, config))
@@ -619,6 +620,8 @@ var BigHouse = (function() {
                 this.REST_putPlayerAvatarConfig (this.playerID, this.currentFaceSet)
                     .done (function() {
                         config.showNextPage.call (bh)
+	            }).fail (function (err) {
+                        bh.showModalWebError (err)
                     })
         },
 
@@ -858,7 +861,10 @@ var BigHouse = (function() {
 						  bh.startGame (info.game)
 					      })))
 		    }))
-		})
+		}).fail (function (err) {
+                    bh.showModalWebError (err)
+                    bh.showPlayPage()
+                })
 	},
 
 	hoursMinutes: function (seconds) {
@@ -896,6 +902,8 @@ var BigHouse = (function() {
                 .done (function (data) {
                     if (data.waiting)
                         bh.showWaitingToJoinPage()
+                }).fail (function (err) {
+                    bh.showModalWebError (err)
                 })
         },
 
@@ -925,6 +933,9 @@ var BigHouse = (function() {
                     window.clearInterval (bh.joinWaitTimer)
 		    delete bh.joinWaitTimer
 		    bh.REST_getPlayerJoinBot (bh.playerID)
+	                .fail (function (err) {
+                            bh.showModalWebError (err)
+                        })
                 }
 	    }, 10)
             
