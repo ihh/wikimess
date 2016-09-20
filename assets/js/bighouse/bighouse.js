@@ -129,6 +129,15 @@ var BigHouse = (function() {
             return '/player/' + playerID + '/avatar/' + mood
         },
 
+        REST_putPlayerAvatarConfig: function (playerID, config) {
+            return $.ajax ({ url: '/player/' + playerID,
+                             type: 'PUT',
+                             cache: false,
+                             data: { avatarConfig: config,
+                                     newSignUp: false }
+                           })
+        },
+
         REST_postPlayerAvatarMood: function (playerID, mood, blob) {
             var url = '/player/' + playerID + '/avatar/' + mood
 	    var formData = new FormData()
@@ -308,17 +317,18 @@ var BigHouse = (function() {
                 })
         },
 
-        showModalMessage: function (msg, sfx) {
+        showModalMessage: function (msg, sfx, callback) {
             sfx = sfx || 'error'
             if (this.selectSound)
                 this.selectSound.stop()
             this.playSound(sfx).once ('end', function() {
                 alert (msg)
+                callback()
             })
         },
 
-        showModalWebError: function (err, sfx) {
-            this.showModalMessage (err.status + " " + err.statusText, sfx)
+        showModalWebError: function (err, sfx, callback) {
+            this.showModalMessage (err.status + " " + err.statusText, sfx, callback)
         },
         
         // play menu
@@ -497,7 +507,8 @@ var BigHouse = (function() {
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
             
-            var nUploads = 0, moodUploaded = {}
+            config.nUploads = 0
+            config.moodUploaded = {}
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
 		var moodSlugClass = "moodslug" + (m+1)
@@ -506,9 +517,9 @@ var BigHouse = (function() {
 		    .addClass(moodClass)
 		    .html (img)
                 var uploadFunc = bh.uploadMoodPhotoFunction (mood, div, function() {
-                    if (!moodUploaded[mood]) {
-                        moodUploaded[mood] = true
-                        if (++nUploads == bh.moods.length && transitionWhenUploaded)
+                    if (!config.moodUploaded[mood]) {
+                        config.moodUploaded[mood] = true
+                        if (++config.nUploads == bh.moods.length && transitionWhenUploaded)
                             showNextPage.call(bh)
                     }
                 })
@@ -532,6 +543,30 @@ var BigHouse = (function() {
             this.moodDiv = []
             this.currentFaceSet = undefined
             var avatarGrid
+
+            var randomizeFaces = function() {
+                avatarGrid.empty()
+                for (var row = 0; row < 2; ++row) {
+                    var span = $('<span class="avatar-grid-row">')
+                    avatarGrid.append (span)
+                    for (var col = 0; col < 4; ++col) {
+                        var div = $('<div class="avatar">')
+                        span.append(div)
+                        var faceSet = faces.generateSet()
+                        var mood = bh.moods[Math.floor (Math.random() * bh.moods.length)]
+                        faces.display (div[0], faceSet[mood])
+                        div.on('click', (function(faceSet) {
+                            return function() {
+                                bh.currentFaceSet = faceSet
+                                for (var m = 0; m < bh.moods.length; ++m) {
+                                    faces.display (bh.moodDiv[m][0], faceSet[bh.moods[m]])
+                                }
+                            }
+                        }) (faceSet))
+                    }
+                }
+            }
+
             this.container
                 .empty()
                 .append (this.makePageTitle ("Pick an avatar"))
@@ -540,32 +575,14 @@ var BigHouse = (function() {
 				  .text("Pick a face to represent you in the game. (Warning: selecting an avatar will erase any photos you have previously uploaded.)"))
                          .append (avatarGrid = $('<div class="avatar-grid">'))
 			 .append ($('<div class="avatar-exit">')
-                                  .append (this.makeLink ("OK", this.confirmPickAvatar))
-                                  .append (this.makeLink ("More", this.pickAvatarPage.bind (this, config)))
+                                  .append (this.makeLink ("OK", this.confirmPickAvatar.bind (this, config)))
+                                  .append (this.makeLink ("More", randomizeFaces))
 				  .append (this.makeLink ("Cancel", this.showUploadPage.bind (this, config)))))
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
 
-            for (var row = 0; row < 2; ++row) {
-                var span = $('<span class="avatar-grid-row">')
-                avatarGrid.append (span)
-                for (var col = 0; col < 4; ++col) {
-                    var div = $('<div class="avatar">')
-                    span.append(div)
-                    var faceSet = faces.generateSet()
-                    var mood = this.moods[Math.floor (Math.random() * this.moods.length)]
-                    faces.display (div[0], faceSet[mood])
-                    div.on('click', (function(faceSet) {
-                        return function() {
-                            bh.currentFaceSet = faceSet
-                            for (var m = 0; m < bh.moods.length; ++m) {
-                                faces.display (bh.moodDiv[m][0], faceSet[bh.moods[m]])
-                            }
-                        }
-                    }) (faceSet))
-                }
-            }
+            randomizeFaces()
             
             this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
@@ -582,7 +599,15 @@ var BigHouse = (function() {
             })
         },
 
-        confirmPickAvatar: function() {
+        confirmPickAvatar: function (config) {
+            if (!this.currentFaceSet)
+                this.showModalMessage ("You have not selected an avatar",
+                                       this.pickAvatarPage.bind (this, config))
+            else
+                this.REST_putPlayerAvatarConfig (this.playerID, this.currentFaceSet)
+                    .done (function() {
+                        config.showNextPage.call (bh)
+                    })
         },
         
 	makeMoodImage: function (id, mood) {
