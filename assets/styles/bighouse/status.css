@@ -1,0 +1,20 @@
+.bighouse .detailbar .icon img {
+    width: 10vw;
+    height: 10vw;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.bighouse .detailbar .text {
+    padding-left: 4px;
+}
+
+/* Portrait view */
+@media all and (orientation:portrait) {
+    
+}
+
+/* Landscape view */
+@media all and (orientation:landscape) {
+    
+}

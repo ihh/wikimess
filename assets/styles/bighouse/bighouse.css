@@ -1,4 +1,5 @@
-/* Orientation-independent (colors, universal layout, etc) */
+/* Orientation-independent layout */
+
 html, body {
     height: 100%;
 }
@@ -15,9 +16,6 @@ body {
     font: normal 16px/20px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif;
     overflow: hidden;
 
-    background-color: black;
-    color: white;
-    
     -webkit-user-select: none; /* Chrome/Safari */        
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* IE10+ */
@@ -32,21 +30,16 @@ body {
 }
 
 .bighouse .cardbar .cardtable {
-    background: darkgreen;  /* old browsers */
-    background: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
-    box-shadow: 2px 2px 1px 1px #003200;
     z-index: 1;
 }
 
 .bighouse .cardbar .cardtable li {
-    list-style: none;
     background-color: #fff;
     border-radius: 5px;
-    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
     text-align: center;
-    color: black;
     font-size: 12px;
-    border: 10px solid rgba(1,1,1,.1);
+    border-width: 10px;
+    border-style: solid;
     box-sizing: border-box;
     cursor: pointer;
     padding: 4px;
@@ -74,13 +67,6 @@ body {
 
 .bighouse .choicebar a {
     text-decoration: none;
-    color: #ccc;
-}
-
-.bighouse .detailbar,
-.bighouse .statusbar,
-.bighouse .menubar {
-    color: #ccc;
 }
 
 .bighouse .statusbar span {
@@ -89,7 +75,6 @@ body {
 
 .bighouse .statusbar .leftmood,
 .bighouse .statusbar .rightmood {
-    background-color: #333;
     border-radius: 4px;
 }
 
@@ -113,9 +98,9 @@ body {
 .bighouse .menubar a,
 .bighouse .avatar-exit a,
 .bighouse .upload-exit a {
-    color: #888;
     text-decoration: none;
-    border: 1px solid #888;
+    border-width: 1px;
+    border-style: solid;
     cursor: pointer;
 }
 
@@ -140,16 +125,14 @@ body {
 }
 
 .bighouse .moodbar .selected {
-    background-color: #222;
     opacity: 1;
-    -webkit-transition: background-color 1000ms linear, opacity 1000ms linear;
-    -moz-transition: background-color 1000ms linear, opacity 1000ms linear;
-    -o-transition: background-color 1000ms linear, opacity 1000ms linear;
-    transition: background-color 1000ms linear, opacity 1000ms linear;
+    -webkit-transition: background-color 100ms linear, opacity 100ms linear;
+    -moz-transition: background-color 100ms linear, opacity 100ms linear;
+    -o-transition: background-color 100ms linear, opacity 100ms linear;
+    transition: background-color 100ms linear, opacity 100ms linear;
 }
 
 .bighouse .moodbar .unselected {
-    background-color: black;
     opacity: .5;
     -webkit-transition: background-color 500ms linear, opacity 500ms linear;
     -moz-transition: background-color 500ms linear, opacity 500ms linear;
@@ -164,10 +147,6 @@ body {
     display: flex;
     justify-content: center;
     position: relative;
-}
-
-.bighouse .timebar .timer {
-    background-color: #444;
 }
 
 .bighouse .timebar .cardcount {
@@ -188,7 +167,6 @@ body {
 
 .bighouse .cardbar .cardtable .waitcard {
     font-style: italic;
-    background-color: antiquewhite;
 }
 
 .bighouse .cardbar .cardtable .jiggle:not(.dragging) {
@@ -262,18 +240,10 @@ body {
 
 .bighouse .cardbar .cardtable .outcome {
     font-style: italic;
-    background-color: lightcyan;
 }
 
 .bighouse .cardbar .cardtable .gameover {
     font-style: italic;
-    background-color: antiquewhite;
-    color: brown;
-}
-
-.bighouse .cardbar .cardtable .verb-choose {
-    background-color: #fffcff;
-    color: #204;
 }
 
 .bighouse .inputbar {
@@ -284,16 +254,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.bighouse .titlebar,
-.bighouse .menubar,
-.bighouse .moodslugbar {
-    color: #ccc;
-}
-
-.bighouse .inputbar {
-    color: #aaa;
 }
 
 .bighouse .inputbar input[type=text],
@@ -307,10 +267,8 @@ body {
     line-height: 40px;
     font-size: 18px;
 
-    border: 1px solid #444;
-
-    background-color: #333;
-    color: white;
+    border-width: 1px;
+    border-style: solid;
 
     width: 100%;
 }
@@ -321,7 +279,6 @@ body {
 
 .bighouse .menubar li {
     list-style: none;
-    color: #888;
 }
 
 .bighouse .menubar li {
@@ -347,8 +304,6 @@ body {
 .bighouse .menubar .card {
     cursor: default;
     width: 80vw;
-    color: #888;
-    background: #444;
 }
 
 .bighouse .menubar li,
@@ -385,26 +340,10 @@ a.unclickable {
     cursor: default;
 }
 
-.bighouse .gametable thead {
-    color: black;
-}
-
-.bighouse .gametable tbody {
-    color: #aaa;
-}
-
 .bighouse .gametable thead,
 .bighouse .gametable tbody,
 .bighouse .gametable tr {
     display: block;
-}
-
-.bighouse .gametable thead tr:nth-child(odd) {
-    background-color: #666;
-}
-
-.bighouse .gametable tbody tr:nth-child(even) {
-    background-color: #444;
 }
 
 .bighouse .gametable tr:after {
@@ -418,18 +357,6 @@ a.unclickable {
 .bighouse .gametable thead th {
     overflow: hidden;
     padding: 0;
-}
-
-.bighouse .gametable tbody td.ready {
-    color: green;
-}
-
-.bighouse .gametable tbody td.over {
-    color: red;
-}
-
-.bighouse .gametable tbody td.waiting {
-    color: orange;
 }
 
 .bighouse .gametable tbody td:nth-child(1),
@@ -463,9 +390,8 @@ a.unclickable {
 }
 
 .bighouse .gametable tbody td:nth-child(5) span {
-    color: #ccc;
-    background-color: black;
-    border: 1px solid #888;
+    border-width: 1px;
+    border-style: solid;
     padding: 1px;
     cursor: pointer;
 }
@@ -826,6 +752,7 @@ a.unclickable {
 
     .bighouse .detailbar {
 	height: 85vh;
+	margin: 1vh;
     }
 }
 
@@ -1209,6 +1136,7 @@ a.unclickable {
 
     .bighouse .detailbar {
 	height: 65vh;
+	margin: 1vw;
     }
 
     .bighouse .gametable tbody {
