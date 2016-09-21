@@ -1,0 +1,146 @@
+/* Colors, plain theme */
+.bighouse.plain {
+    background-color: #f8f8f8;
+    color: black;
+}
+
+.bighouse.plain .cardbar .cardtable {
+    border-top-style: solid;
+    border-top-width: 1px;
+    border-top-color: #222;
+}
+
+.bighouse.plain .cardbar .cardtable li {
+    background-color: #fff;
+    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
+    color: black;
+    border-color: rgba(1,1,1,.1);
+}
+
+.bighouse.plain .choicebar a,
+.bighouse.plain .detailbar,
+.bighouse.plain .statusbar,
+.bighouse.plain .menubar {
+    color: #888;
+}
+
+.bighouse.plain .statusbar .leftmood,
+.bighouse.plain .statusbar .rightmood {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #ddd;
+}
+
+.bighouse.plain .statusbar a,
+.bighouse.plain .menubar a,
+.bighouse.plain .avatar-exit a,
+.bighouse.plain .upload-exit a,
+.bighouse.plain .menubar label {
+    color: #888;
+    border-color: #888;
+}
+
+.bighouse.plain .moodbar .moodbutton {
+    border-color: #bbb;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.bighouse.plain .moodbar .selected {
+}
+
+.bighouse.plain .moodbar .unselected {
+}
+
+.bighouse.plain .timebar .timer {
+    background-color: #ccc;
+}
+
+.bighouse.plain .cardbar .cardtable .waitcard {
+    background-color: antiquewhite;
+}
+
+.bighouse.plain .cardbar .cardtable .outcome {
+    background-color: lightcyan;
+}
+
+.bighouse.plain .cardbar .cardtable .gameover {
+    background-color: antiquewhite;
+    color: brown;
+}
+
+.bighouse.plain .cardbar .cardtable .verb-choose {
+    background-color: #fffcff;
+    color: #204;
+}
+
+.bighouse.plain .titlebar,
+.bighouse.plain .menubar,
+.bighouse.plain .moodslugbar {
+    color: #444;
+}
+
+.bighouse.plain .inputbar {
+    color: #666;
+}
+
+.bighouse.plain .inputbar input[type=text],
+.bighouse.plain .inputbar input[type=password] {
+    border-color: #ccc;
+    background-color: #ddd;
+    color: black;
+}
+
+.bighouse.plain .menubar li {
+    color: #888;
+}
+
+.bighouse.plain .menubar .card {
+    color: #888;
+    background-color: #ccc;
+}
+
+.bighouse.plain .gametable thead {
+    color: white;
+}
+
+.bighouse.plain .gametable tbody {
+    color: #666;
+}
+
+.bighouse.plain .gametable thead tr:nth-child(odd) {
+    background-color: #aaa;
+}
+
+.bighouse.plain .gametable tbody tr:nth-child(even) {
+    background-color: #ccc;
+}
+
+.bighouse.plain .gametable tbody td.ready {
+    color: darkgreen;
+}
+
+.bighouse.plain .gametable tbody td.over {
+    color: darkred;
+}
+
+.bighouse.plain .gametable tbody td.waiting {
+    color: darkorange;
+}
+
+.bighouse.plain .gametable tbody td:nth-child(5) span {
+    color: #444;
+    background-color: white;
+    border-color: #888;
+}
+
+.bighouse .menubar .themegroup label.plain {
+    color: white;
+}
+
+.bighouse.plain .detailbar .icon img {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #888;
+}
+

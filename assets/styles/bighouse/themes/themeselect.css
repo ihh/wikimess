@@ -1,0 +1,14 @@
+/* Theme selection page */
+
+.bighouse .themegroup input:checked + label li {
+    background-color: #444;
+    opacity: 1;
+}
+
+.bighouse .themegroup label {
+    background: black;
+}
+
+.bighouse .themegroup input:checked + label {
+    background: #444;
+}
