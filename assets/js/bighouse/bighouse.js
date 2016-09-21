@@ -468,6 +468,8 @@ var BigHouse = (function() {
 
         pushView: function (newPage) {
             var elements = this.container.find(':not(.pushed)')
+	    if (this.verbose)
+		console.log ("Pushing " + this.page + " view, going to " + newPage)
             var page = this.page
             this.pushedViews.push ({ elements: elements, page: page })
             elements.addClass('pushed')
@@ -478,7 +480,7 @@ var BigHouse = (function() {
 	    var bh = this
             var poppedView = this.pushedViews.pop()
 	    if (this.verbose)
-		console.log ("Changing view from " + this.page + " to " + poppedView.page)
+		console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
             this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
             this.container.find(':not(.pushed)').remove()
             poppedView.elements.find('*').addBack().removeClass('pushed')
@@ -1316,21 +1318,25 @@ var BigHouse = (function() {
 	kickCallback: function (triesLeft) {
 	    var bh = this
 	    this.clearMoveTimer()
-	    this.setGameState ('sendingKick')
-	    if (this.verbose)
-		console.log("Sending kick request")
-	    var retry = function() {
-		if (triesLeft > 0)
-		    bh.setKickTimer (triesLeft - 1)
-		else {
-		    if (this.verbose)
-			console.log("Failed to kick; rebuilding page")
-		    bh.showGamePage()
+	    if (this.page != 'game')
+		this.setKickTimer (triesLeft)
+	    else {
+		this.setGameState ('sendingKick')
+		if (this.verbose)
+		    console.log("Sending kick request")
+		var retry = function() {
+		    if (triesLeft > 0)
+			bh.setKickTimer (triesLeft - 1)
+		    else {
+			if (this.verbose)
+			    console.log("Failed to kick; rebuilding page")
+			bh.showGamePage()
+		    }
 		}
+		this.REST_getPlayerGameMoveKick (this.playerID, this.gameID, this.moveNumber)
+		    .done (retry)
+		    .fail (retry)
 	    }
-	    this.REST_getPlayerGameMoveKick (this.playerID, this.gameID, this.moveNumber)
-		.done (retry)
-		.fail (retry)
 	},
 
 	updateTimerDiv: function (start, end, now) {

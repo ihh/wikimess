@@ -1,8 +1,15 @@
+.bighouse .detailbar .statusline {
+    margin-top: 10px;
+    float: left;
+    clear: both;
+}
+
 .bighouse .detailbar .icon img {
     width: 10vw;
     height: 10vw;
     border-radius: 4px;
     margin-right: 10px;
+    float: left;
 }
 
 .bighouse .detailbar .text {

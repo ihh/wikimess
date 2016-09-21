@@ -86,9 +86,10 @@ module.exports = {
 		if (bgColor)
                     path = path + '/' + bgColor
 	    }
-            return '<p>'
+            return '<div class="statusline">'
                 + '<span class="icon"><img src="' + path + '"></img></span>'
                 + '<span class="text">' + text + '</span>'
+		+ '</div>'
         }
 
         var plural = function(n,singular,plural) {
