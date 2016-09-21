@@ -1824,7 +1824,7 @@ var BigHouse = (function() {
         startMusic: function (type, volume) {
             this.currentMusicVolume = volume
             this.music = new Howl({
-                src: ['/sounds/' + type + '-music.mp3'],
+                src: ['/audio/' + type + '-music.mp3'],
                 loop: true,
                 volume: this.currentMusicVolume
             });
@@ -1852,7 +1852,7 @@ var BigHouse = (function() {
         playSound: function (type, volume) {
             volume = volume || 1
             var sound = new Howl ({
-                src: ['/sounds/' + type + '.wav'],
+                src: ['/audio/' + type + '.wav'],
                 autoplay: true,
                 volume: volume * this.soundVolume
             })
