@@ -1,143 +1,134 @@
-/* Colors */
-body {
+/* Colors, cardroom theme */
+.bighouse.cardroom {
     background-color: black;
     color: white;
 }
 
-.bighouse .cardbar .cardtable {
+.bighouse.cardroom .cardbar .cardtable {
     background-color: darkgreen;  /* old browsers */
     background-color: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
     box-shadow: 2px 2px 1px 1px #003200;
 }
 
-.bighouse .cardbar .cardtable li {
+.bighouse.cardroom .cardbar .cardtable li {
     background-color: #fff;
     box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
     color: black;
     border-color: rgba(1,1,1,.1);
 }
 
-.bighouse .choicebar a,
-.bighouse .detailbar,
-.bighouse .statusbar,
-.bighouse .menubar {
+.bighouse.cardroom .choicebar a,
+.bighouse.cardroom .detailbar,
+.bighouse.cardroom .statusbar,
+.bighouse.cardroom .menubar {
     color: #ccc;
 }
 
-.bighouse .statusbar .leftmood,
-.bighouse .statusbar .rightmood {
+.bighouse.cardroom .statusbar .leftmood,
+.bighouse.cardroom .statusbar .rightmood {
     background-color: #333;
 }
 
-.bighouse .statusbar a,
-.bighouse .menubar a,
-.bighouse .avatar-exit a,
-.bighouse .upload-exit a,
-.bighouse .menubar label {
+.bighouse.cardroom .statusbar a,
+.bighouse.cardroom .menubar a,
+.bighouse.cardroom .avatar-exit a,
+.bighouse.cardroom .upload-exit a,
+.bighouse.cardroom .menubar label {
     color: #888;
     border-color: #888;
 }
 
-.bighouse .moodbar .selected {
+.bighouse.cardroom .moodbar .selected {
     background-color: #222;
 }
 
-.bighouse .moodbar .unselected {
+.bighouse.cardroom .moodbar .unselected {
     background-color: black;
 }
 
-.bighouse .timebar .timer {
+.bighouse.cardroom .timebar .timer {
     background-color: #444;
 }
 
-.bighouse .cardbar .cardtable .waitcard {
+.bighouse.cardroom .cardbar .cardtable .waitcard {
     background-color: antiquewhite;
 }
 
-.bighouse .cardbar .cardtable .outcome {
+.bighouse.cardroom .cardbar .cardtable .outcome {
     background-color: lightcyan;
 }
 
-.bighouse .cardbar .cardtable .gameover {
+.bighouse.cardroom .cardbar .cardtable .gameover {
     background-color: antiquewhite;
     color: brown;
 }
 
-.bighouse .cardbar .cardtable .verb-choose {
+.bighouse.cardroom .cardbar .cardtable .verb-choose {
     background-color: #fffcff;
     color: #204;
 }
 
-.bighouse .titlebar,
-.bighouse .menubar,
-.bighouse .moodslugbar {
+.bighouse.cardroom .titlebar,
+.bighouse.cardroom .menubar,
+.bighouse.cardroom .moodslugbar {
     color: #ccc;
 }
 
-.bighouse .inputbar {
+.bighouse.cardroom .inputbar {
     color: #aaa;
 }
 
-.bighouse .inputbar input[type=text],
-.bighouse .inputbar input[type=password] {
+.bighouse.cardroom .inputbar input[type=text],
+.bighouse.cardroom .inputbar input[type=password] {
     border-color: #444;
     background-color: #333;
     color: white;
 }
 
-.bighouse .menubar li {
+.bighouse.cardroom .menubar li {
     color: #888;
 }
 
-.bighouse .menubar .card {
+.bighouse.cardroom .menubar .card {
     color: #888;
     background-color: #444;
 }
 
-.bighouse .gametable thead {
+.bighouse.cardroom .gametable thead {
     color: black;
 }
 
-.bighouse .gametable tbody {
+.bighouse.cardroom .gametable tbody {
     color: #aaa;
 }
 
-.bighouse .gametable thead tr:nth-child(odd) {
+.bighouse.cardroom .gametable thead tr:nth-child(odd) {
     background-color: #666;
 }
 
-.bighouse .gametable tbody tr:nth-child(even) {
+.bighouse.cardroom .gametable tbody tr:nth-child(even) {
     background-color: #444;
 }
 
-.bighouse .gametable tbody td.ready {
+.bighouse.cardroom .gametable tbody td.ready {
     color: green;
 }
 
-.bighouse .gametable tbody td.over {
+.bighouse.cardroom .gametable tbody td.over {
     color: red;
 }
 
-.bighouse .gametable tbody td.waiting {
+.bighouse.cardroom .gametable tbody td.waiting {
     color: orange;
 }
 
-.bighouse .gametable tbody td:nth-child(5) span {
+.bighouse.cardroom .gametable tbody td:nth-child(5) span {
     color: #ccc;
     background-color: black;
     border-color: #888;
 }
 
-input:checked + label li {
-    background-color: #444;
-    opacity: 1;
+.bighouse .menubar .themegroup label.cardroom {
+    color: darkgreen;
 }
 
-label {
-    background: black;
-    color: white;
-}
-
-input:checked + label {
-    background: #444;
-}

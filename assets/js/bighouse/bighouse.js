@@ -389,12 +389,12 @@ var BigHouse = (function() {
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Character settings', this.showSettingsUploadPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
-                                  .append (this.makeListLink ('Theme', this.showThemePage))
+                                  .append (this.makeListLink ('Themes', this.showThemesPage))
                                   .append (this.makeListLink ('Back', this.showPlayPage))))
         },
 
         // settings
-        showThemePage: function() {
+        showThemesPage: function() {
             var bh = this
 
             var fieldset
@@ -413,7 +413,7 @@ var BigHouse = (function() {
             themes.forEach (function (theme) {
                 var id = 'theme-' + theme.style
                 fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
-	            .append (label[theme.style] = $('<label for="'+id+'">')
+	            .append (label[theme.style] = $('<label for="'+id+'" class="'+theme.style+'">')
                              .text(theme.text)
                              .on('click',bh.themeSelector(theme.style)))
             })
@@ -1008,6 +1008,7 @@ var BigHouse = (function() {
                                   .append (this.makeListLink ('Resume game', this.popView))
                                   .append (this.makeListLink ('Status', this.showPlayerStatusPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
+                                  .append (this.makeListLink ('Themes', this.showThemesPage))
                                   .append (this.makeListLink ('Exit to menu', this.exitGame))))
         },
 
@@ -1335,12 +1336,13 @@ var BigHouse = (function() {
 	updateTimerDiv: function (start, end, now) {
 	    var timeLeft = end - now, totalTime = end - start
 	    var timeLeftFrac = timeLeft / totalTime
-	    this.timerDiv
-		.width (Math.max (0, 100 * timeLeftFrac) + "%")
 	    var redTimeFrac = .5
 	    var redness = Math.max (0, Math.min (1, 1 - timeLeftFrac / redTimeFrac))
+	    var baseColor = this.timerDiv.attr('style','').css('background-color')
+	    var reddenedColor = $.xcolor.gradientlevel (baseColor, "red", redness, 1)
 	    this.timerDiv
-		.css ("background-color", "rgb(" + Math.round(63+192*redness) + "," + Math.round(64-64*redness) + "," + Math.round(64-64*redness) + ")")
+		.css ("background-color", reddenedColor)
+		.width (Math.max (0, 100 * timeLeftFrac) + "%")
             if (this.gameState == 'ready') {
 		var nowTime = now.getTime(),
                     endTime = end.getTime(),

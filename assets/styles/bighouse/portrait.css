@@ -32,7 +32,7 @@
 	align-items: flex-end;
 	justify-content: flex-end;
 	margin-right: 18vw;
-	padding-right: 4px;
+	padding-right: 8px;
     }
 
     .bighouse .statusbar .statuslink {
@@ -50,7 +50,7 @@
 	height: 18vw;
 	width: 18vw;
 	position: absolute;
-	left: 82vw;
+	right: 0vw;
 	top: 0vw;
     }
 
