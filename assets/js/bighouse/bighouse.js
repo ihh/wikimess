@@ -7,7 +7,8 @@ var BigHouse = (function() {
 
 	this.localStorage = { playerLogin: undefined,
                               musicVolume: .5,
-                              soundVolume: .5 }
+                              soundVolume: .5,
+                              theme: 'cardroom' }
 	try {
 	    var ls = JSON.parse (localStorage.getItem (this.localStorageKey))
             $.extend (this.localStorage, ls)
@@ -23,6 +24,8 @@ var BigHouse = (function() {
             e.preventDefault()
         })
 
+        this.themeSelector(this.theme) ()
+        
         this.pushedViews = []
 	this.postponedMessages = []
         this.avatarConfigPromise = {}
@@ -386,11 +389,47 @@ var BigHouse = (function() {
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Character settings', this.showSettingsUploadPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
-//                                  .append (this.makeListLink ('Appearance', this.showThemePage))
+                                  .append (this.makeListLink ('Theme', this.showThemePage))
                                   .append (this.makeListLink ('Back', this.showPlayPage))))
         },
 
         // settings
+        showThemePage: function() {
+            var bh = this
+
+            var fieldset
+            this.pushView ('theme')
+            this.container
+                .append (this.makePageTitle ("Audio settings"))
+                .append ($('<div class="menubar">')
+                         .append (fieldset = $('<fieldset class="themegroup">')
+                                  .append ($('<legend>').text("Select theme")))
+                         .append (this.makeLink ('Back', this.popView)))
+
+            var themes = [ {style: 'plain', text: 'Plain'},
+                           {style: 'cardroom', text: 'Card room'} ]
+
+            var label = {}
+            themes.forEach (function (theme) {
+                var id = 'theme-' + theme.style
+                fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
+	            .append (label[theme.style] = $('<label for="'+id+'">')
+                             .text(theme.text)
+                             .on('click',bh.themeSelector(theme.style)))
+            })
+
+            label[this.theme].click()
+        },
+
+        themeSelector: function(theme) {
+            var bh = this
+            return function() {
+                bh.container.removeClass().addClass('bighouse ' + theme)
+                bh.theme = theme
+                bh.writeLocalStorage ('theme')
+            }
+        },
+
         showAudioPage: function() {
             var bh = this
 

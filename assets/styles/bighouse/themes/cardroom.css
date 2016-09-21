@@ -32,7 +32,8 @@ body {
 .bighouse .statusbar a,
 .bighouse .menubar a,
 .bighouse .avatar-exit a,
-.bighouse .upload-exit a {
+.bighouse .upload-exit a,
+.bighouse .menubar label {
     color: #888;
     border-color: #888;
 }
