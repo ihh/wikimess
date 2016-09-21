@@ -1,0 +1,402 @@
+
+/* Landscape view */
+@media all and (orientation:landscape) {
+    /* Game view */
+    .bighouse {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+    }
+
+    .bighouse .statusbar {
+	width: 100vw;
+	height: 18vh;
+    }
+
+    .bighouse .statusbar .leftmood {
+	height: 18vh;
+	width: 18vh;
+	position: absolute;
+	left: 0vh;
+	top: 0vh;
+    }
+
+    .bighouse .statusbar .rightstatus {
+	width: 25vw;
+	height: 18vh;
+	position: absolute;
+	right: 0;
+	top: 0;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	margin-right: 18vh;
+	padding-right: 4px;
+    }
+
+    .bighouse .statusbar .statuslink {
+	width: 20vw;
+	position: absolute;
+	left: 40vw;
+	top: 0vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    }
+    
+    .bighouse .statusbar .rightmood {
+	height: 18vh;
+	width: 18vh;
+	position: absolute;
+	right: 0vw;
+	top: 0vh;
+    }
+
+    .bighouse .cardbar {
+	width: 100vw;
+	flex-grow: 1;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .cardbar .cardtable {
+	width: 90vw;
+	flex-grow: 1;
+	margin: 1%;
+	
+	position: relative;
+    }
+
+    .bighouse .cardbar .cardtable ul {
+	padding: 0;
+    }
+    
+    .bighouse .cardbar .cardtable li {
+	width: 70%;
+	height: 92%;
+	margin: 1% 15% 1% 15%;
+
+	position: absolute;
+	top: 0;
+	left: 0;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+    }
+
+    .bighouse .cardbar .cardtable li div,
+    .bighouse .cardbar .cardtable li span {
+	flex-grow: 1;
+	display: flex;
+	align-items: center;
+    }
+
+    .bighouse .cardbar .cardtable img {
+	height: 16vh;
+    }
+
+    .bighouse .choicebar {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	bottom: 0;
+    }
+
+    .bighouse .choicebar .choice1 {
+	width: 12%;
+	float: left;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-start;
+	text-align: left;
+	position: absolute;
+	bottom: 0;
+	left: 4px;
+    }
+
+    .bighouse .choicebar .choice2 {
+	width: 12%;
+	float: right;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	text-align: right;
+	position: absolute;
+	bottom: 0;
+	right: 4px;
+    }
+
+    .bighouse .statusbar a,
+    .bighouse .menubar a,
+    .bighouse .avatar-exit a,
+    .bighouse .upload-exit a {
+	padding: 4px 8px 4px 8px;
+    }
+
+    .bighouse .avatar-exit a {
+	float: left;
+	margin: 4px 8px 4px 8px;
+	width: 20vh;
+	text-align: center;
+    }
+
+    .bighouse .menubar .avatar {
+	width: 12vw;
+	height: 12vw;
+	display: inline-block;
+	margin-left: 2px;
+	margin-right: 2px;
+    }
+
+    .bighouse .moodbar {
+	width: 42vh;
+	height: 8vh;
+	position: absolute;
+	left: 18vh;
+	top: 10vh;
+    }
+
+    .bighouse .moodbar .mood1 {
+	width: 8vh;
+	height: 8vh;
+	position: absolute;
+	left: 2vh;
+	top: 0vh;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .moodbar .mood2 {
+	width: 8vh;
+	height: 8vh;
+	position: absolute;
+	left: 12vh;
+	top: 0vh;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .moodbar .mood3 {
+	width: 8vh;
+	height: 8vh;
+	position: absolute;
+	left: 22vh;
+	top: 0vh;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .moodbar .mood4 {
+	width: 8vh;
+	height: 8vh;
+	position: absolute;
+	left: 32vh;
+	top: 0vh;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .moodbar img.mood,
+    .bighouse .moodbar svg.mood {
+	width: 8vh;
+	height: 8vh;
+    }
+
+    .bighouse .mooduploadbar {
+	width: 100vw;
+	height: 21vh;
+    }
+
+    .bighouse .mooduploadbar .mood1 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 0vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar .mood2 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 25vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar .mood3 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 50vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar .mood4 {
+	width: 25vw;
+	height: 21vh;
+	position: absolute;
+	left: 75vw;
+	bottom: 0vw;
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .mooduploadbar img.mood,
+    .bighouse .mooduploadbar svg.mood {
+	width: 21vh;
+	height: 21vh;
+    }
+
+    /* Menu views */
+    .bighouse .inputbar {
+	width: 100vw;
+	height: 33vh;
+
+	display: flex;
+	justify-content: center;
+    }
+
+    .bighouse .inputbar form {
+	width: 60vw;
+    }
+
+    .bighouse .titlebar {
+	width: 100vw;
+	height: 12vh;
+	text-align: center;
+    }
+
+    .bighouse .menucontainer {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+    }
+
+    .bighouse .menubar {
+	width: 100vw;
+	flex-grow: 1;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+    }
+
+    .bighouse .menubar li,
+    .bighouse .menubar .card {
+	font-size: 16px;
+    }
+
+    .bighouse .menubar .rubric {
+	width: 80vw;
+    }
+
+    .bighouse .moodslugbar {
+	width: 100vw;
+	height: 6vh;
+	position: relative;
+    }
+
+    .bighouse .moodslugbar .moodslug1 {
+	width: 25vw;
+	position: absolute;
+	left: 0vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .moodslugbar .moodslug2 {
+	width: 25vw;
+	position: absolute;
+	left: 25vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .moodslugbar .moodslug3 {
+	width: 25vw;
+	position: absolute;
+	left: 50vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .moodslugbar .moodslug4 {
+	width: 25vw;
+	position: absolute;
+	left: 75vw;
+	bottom: 0;
+	text-align: center;
+    }
+
+    .bighouse .confirmtitle {
+	position: absolute;
+	right: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	padding-right: 4px;
+    }
+
+    .bighouse .upload-exit {
+	width: 20vw;
+	height: 100vh;
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+    }
+
+    .bighouse .upload-exit span {
+	padding-top: 5vh;
+	padding-bottom: 5vh;
+	text-align: center;
+
+    }
+
+    .bighouse .gametable thead th {
+	text-align: left;
+	height: 2em;
+    }
+
+    .bighouse .gametable tbody td {
+	height: 2em;
+    }
+
+    .bighouse .detailbar {
+	height: 65vh;
+	margin: 1vw;
+    }
+
+    .bighouse .gametable tbody {
+	overflow-y: auto;
+	height: 70vh;
+    }
+
+    .bighouse .menubar ul.horizontal-list {
+	list-style: none;
+	margin: 4vh;
+    }
+
+    .bighouse .menubar .horizontal-list li {
+	display: inline;
+    }
+
+    .bighouse .menubar fieldset {
+	margin: 4vw;
+    }
+}

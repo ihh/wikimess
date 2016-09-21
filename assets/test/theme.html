@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/styles/bighouse/bighouse.css"></link>
     <link rel="stylesheet" href="/styles/bighouse/portrait.css"></link>
     <link rel="stylesheet" href="/styles/bighouse/landscape.css"></link>
+    <link rel="stylesheet" href="/styles/bighouse/themes/cardroom.css"></link>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
 
@@ -14,12 +15,14 @@
 	<span style="background-color:pink;"><big>Hi there</big></span>
       </div>
       <div class="menubar" style="background-color:green;">
-	<ul>
-	  <li style="background-color:lightgreen;"><span>New game</span></li>
-	  <li style="background-color:darkseagreen;"><span>Active games</span></li>
-	  <li style="background-color:darkolivegreen;"><span>Settings</span></li>
-	  <li style="background-color:darkolivegreen;"><span>Log out</span></li>
-	</ul>
+	<fieldset class="themegroup">
+	  <legend>Select theme</legend>
+	    <input type="radio" name="theme" id="theme1" value="plain"></input>
+	    <label for="theme1"> Plain </label>
+	    <input type="radio" name="theme" id="theme2" value="cardroom"></input>
+	    <label for="theme2"> Card room </label>
+	</fieldset>
+	<a href="#" style="background-color:darkolivegreen;"><span>Back</span></a>
       </div>
     </div>
   </body>

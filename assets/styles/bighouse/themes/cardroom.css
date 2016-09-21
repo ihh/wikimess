@@ -126,3 +126,17 @@ body {
     background-color: black;
     border-color: #888;
 }
+
+input:checked + label li {
+    background-color: #444;
+    opacity: 1;
+}
+
+label {
+    background: black;
+    color: white;
+}
+
+input:checked + label {
+    background: #444;
+}

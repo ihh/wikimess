@@ -386,6 +386,7 @@ var BigHouse = (function() {
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Character settings', this.showSettingsUploadPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
+//                                  .append (this.makeListLink ('Appearance', this.showThemePage))
                                   .append (this.makeListLink ('Back', this.showPlayPage))))
         },
 
