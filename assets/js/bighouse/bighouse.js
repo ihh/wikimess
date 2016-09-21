@@ -1825,6 +1825,8 @@ var BigHouse = (function() {
 	    delete this.waitCardSwipe
             delete this.gameState
             delete this.lastSwipe
+	    delete this.lastPlayerMoodTime
+	    delete this.lastOpponentMoodTime
             this.showGamePage()
 	},
 
