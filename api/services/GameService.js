@@ -3,6 +3,10 @@
 var extend = require('extend')
 var merge = require('deepmerge');
 
+function isArray (obj) {
+    return Object.prototype.toString.call(obj) === '[object Array]'
+}
+
 module.exports = {
 
     buildTextTree: function (texts, game) {
@@ -55,6 +59,11 @@ module.exports = {
                         node.id = nextTree.id
                         node.depth = nextTree.depth
                         node.isLeaf = nextTree.isLeaf
+/*
+			if (!node.hasOwnProperty('choice')) node.choice = nextTree.choice
+			if (!node.hasOwnProperty('priority')) node.priority = nextTree.priority
+			if (!node.hasOwnProperty('concat')) node.concat = nextTree.concat
+*/
                         return
                     }
                 }
@@ -80,6 +89,15 @@ module.exports = {
 
                 if (node.name)
                     nodeByName[node.name] = node
+
+		if (node.define) {
+		    if (isArray (node.define))
+			node.define.forEach (function (def) {
+			    connect (def)
+			})
+		    else
+			connect (node.define)
+		}
             }
 	    connect (tree)
             nextTree = tree
@@ -90,14 +108,13 @@ module.exports = {
         function linkSummary (node, defaultChoice) {
             var summary = {}
 	    summary.hint = node.hint || defaultNextHint
-            if (!node.depth) {
-                if (node.choice) {
-                    summary.choice = node.choice
-                    summary.priority = node.priority
-                } else {
-                    summary.choice = defaultChoice
-                    summary.priority = -1
-                }
+            if (node.choice) {
+                summary.choice = node.choice
+                summary.priority = node.priority
+		summary.concat = node.concat
+            } else if (!node.depth) {
+                summary.choice = defaultChoice
+                summary.priority = -1
             }
             summary.id = node.id
             return summary
@@ -114,10 +131,18 @@ module.exports = {
                     sails.log.debug ("Name " + node.goto + " unresolved - replacing with leaf node")
                     return { depth: 0, isLeaf: true }
                 }
+                node.ancestral = true
                 linkedNode = recurse (linkedNode)
+                node.ancestral = false
+
                 node.id = linkedNode.id
                 node.depth = linkedNode.depth
                 node.isLeaf = linkedNode.isLeaf
+/*
+		if (!node.hasOwnProperty('choice')) node.choice = linkedNode.choice
+		if (!node.hasOwnProperty('priority')) node.priority = linkedNode.priority
+		if (!node.hasOwnProperty('concat')) node.concat = linkedNode.concat
+*/
                 // hints are pretty context-sensitive, so use the default hint ("Next"), or the hint specified in the 'goto' node; don't just blindly inherit the linkedNode hint
                 return node
             }
@@ -145,6 +170,7 @@ module.exports = {
                                  depth: node.depth,
                                  choice: node.choice,
                                  priority: node.priority,
+				 concat: node.concat,
                                  text: node.text })
             }
 
@@ -169,7 +195,7 @@ module.exports = {
 	if (!text)
 	    return []
 
-        if (Object.prototype.toString.call(text) === '[object Array]') {
+        if (isArray(text)) {
             return text.map (function (t) {
                 return GameService.expandText (t, game, outcome, role, false)
             })
@@ -273,7 +299,7 @@ module.exports = {
     },
 
     swapTextRoles: function (x) {
-	if (Object.prototype.toString.call(x) === '[object Array]') {
+        if (isArray(x)) {
 	    return x.map (function (elem) { return GameService.swapTextRoles(elem) })
 	} else if (typeof(x) == 'object') {
 	    var swapped = {}

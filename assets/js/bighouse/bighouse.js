@@ -1428,14 +1428,20 @@ var BigHouse = (function() {
                 }
 	    }
 	},
-
         updateLastChoice: function (node) {
 	    if (node.choice) {
                 var newPriority = node.priority || 0
                 if (!(this.lastPriority > newPriority)) {  // gives correct result when this.lastPriority is undefined
-		    this.lastChoice = node.choice
-                    this.lastPriority = newPriority
-                }
+		    if ((this.lastPriority || 0) == newPriority
+			&& this.lastChoice
+			&& node.concat
+			&& node.choice)
+			this.lastChoice += node.choice
+		    else {
+			this.lastChoice = node.choice
+			this.lastPriority = newPriority
+                    }
+		}
             }
         },
         
@@ -1729,8 +1735,10 @@ var BigHouse = (function() {
 	makeDefaultMove: function() {
 	    var bh = this
 	    this.setGameState ('sendingDefaultMove')
-            if (this.currentChoiceNode.defaultMove)
-                this.updateLastChoice (this.currentChoiceNode.defaultMove)
+            if (this.currentChoiceNode.defaultSwipe) {
+		var child = this.currentChoiceNode[this.currentChoiceNode.defaultSwipe]
+                this.updateLastChoice (child.defaultMove || child)
+	    }
             var move = this.lastChoice
 	    if (this.verbose)
 		console.log ("Making default move #" + this.moveNumber + ": " + move)
