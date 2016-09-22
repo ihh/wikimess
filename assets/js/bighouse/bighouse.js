@@ -400,7 +400,7 @@ var BigHouse = (function() {
             var fieldset
             this.pushView ('theme')
             this.container
-                .append (this.makePageTitle ("Audio settings"))
+                .append (this.makePageTitle ("Themes"))
                 .append ($('<div class="menubar">')
                          .append (fieldset = $('<fieldset class="themegroup">')
                                   .append ($('<legend>').text("Select theme")))
@@ -1100,7 +1100,7 @@ var BigHouse = (function() {
                 return Math.min(Math.abs(offset) / element.offsetWidth, 1)
             }
             var isThrowOut = function (offset, element, throwOutConfidence) {
-                return throwOutConfidence > .25
+                return throwOutConfidence > .25 && !(bh.throwDisabled && bh.throwDisabled())
             }
             this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
                                               isThrowOut: isThrowOut })
@@ -1355,9 +1355,15 @@ var BigHouse = (function() {
                     nChimes = Math.min (this.nTimeoutChimes, Math.floor (totalTime / 2000)),
                     firstChimeTime = endTime - 1000 * nChimes
 	        if (nowTime >= firstChimeTime && nowTime < endTime) {
-		    var choiceClass = this.currentChoiceNode.defaultSwipe == 'left' ? 'choice1' : 'choice2'
+		    var pulseElement
+		    if (this.currentChoiceNode.menu) {
+			pulseElement = this.menuLabel[this.currentChoiceNode.defaultMenuIndex]
+		    } else {
+			var choiceClass = this.currentChoiceNode.defaultSwipe == 'left' ? 'choice1' : 'choice2'
+			pulseElement = $('.'+choiceClass).find(':visible')
+		    }
                     var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
-		    $('.'+choiceClass).find(':visible').css ('opacity', opacity)
+		    pulseElement.css ('opacity', opacity)
                     this.cardCountDiv.css ('opacity', opacity)
                     if (!this.lastChimeTime || nowTime >= this.lastChimeTime + 1000)
                         this.playSound ('timewarning')
@@ -1406,7 +1412,11 @@ var BigHouse = (function() {
 	    return function() {
 		bh.lastSwipe = dir
 
-		var child = node[dir]
+		var child
+		if (node.menu)
+		    child = bh.selectedMenuItem
+		else
+		    child = node[dir]
                 bh.updateLastChoice (child)
 
                 if (typeof(child.id) !== 'undefined') {
@@ -1428,6 +1438,7 @@ var BigHouse = (function() {
                 }
 	    }
 	},
+
         updateLastChoice: function (node) {
 	    if (node.choice) {
                 var newPriority = node.priority || 0
@@ -1453,8 +1464,8 @@ var BigHouse = (function() {
             bh.currentChoiceNode = node
             bh.updateLastChoice (node)
 
-	    var cardConfig = { leftHint: node.left.hint,
-			       rightHint: node.right.hint,
+	    var cardConfig = { leftHint: node.menu ? undefined : node.left.hint,
+			       rightHint: node.menu ? undefined : node.right.hint,
                                swipeLeft: bh.makeSwipeFunction (node, 'left'),
                                swipeRight: bh.makeSwipeFunction (node, 'right'),
 			       cardsBeforeChoice: node.depth - 1,
@@ -1512,6 +1523,38 @@ var BigHouse = (function() {
 		}).map (function (para) {
 		    return $('<span>').html(para)
                 })
+
+	    // create the menu, if applicable
+	    if (node.menu) {
+		var fieldset = $('<fieldset class="cardmenu">')
+		this.menuLabel = []
+		delete this.selectedMenuItem
+		var menuSelectCallback
+		node.menu.forEach (function (item, n) {
+		    var id = 'cardmenuitem' + n
+                    fieldset
+			.append ($('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">'))
+			.append (bh.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">')
+				 .text(item.hint)
+				 .on('click',function() {
+				     bh.selectedMenuItem = item
+				     if (menuSelectCallback)
+					 menuSelectCallback.call (bh, item, n)
+				 }))
+		})
+		var selectWarning = $('<span class="warnselect">').text("Please select an option")
+		content.push (fieldset, selectWarning)
+		this.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
+		cardConfig.reveal = function (choiceDiv) {
+		    choiceDiv.hide()
+		    selectWarning.css('visibility','hidden')
+		    menuSelectCallback = function (menuItem, menuIndex) {
+			choiceDiv.show()
+			selectWarning.css('visibility','hidden')
+			delete bh.throwDisabled
+		    }
+		}
+	    }
 
 	    // create the <li>
             var cardListItem = bh.createCardListItem (content, cardClass)
@@ -1584,7 +1627,7 @@ var BigHouse = (function() {
 
         dealCard: function (config) {
             var bh = this
-	    var choiceRevealer = this.pushChoiceRevealer (config.reveal)
+	    var choiceRevealer = this.pushChoiceRevealer()
             config.swipeRight = choiceRevealer.wrapCallback (config.swipeRight || config.swipe)
             config.swipeLeft = choiceRevealer.wrapCallback (config.swipeLeft || config.swipe || config.swipeRight)
             var card = this.addCard (config)
@@ -1602,6 +1645,14 @@ var BigHouse = (function() {
 			          .append (this.makeLink (rightHint + " →",
 						          this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT),
                                                           ''))))
+
+	    // call config.reveal to set up additional conditions for throwing out the card,
+	    // e.g. selecting a menu item.
+	    // this only works here because menu cards are always top of the pile.
+	    // a more thorough implementation would have to ensure that
+	    // config.reveal was only called when the card was revealed.
+	    if (config.reveal)
+		config.reveal (choiceRevealer.newChoiceDiv)
 
 	    if (config.dealt)
 		card.on ('throwinend', config.dealt)
@@ -1735,10 +1786,13 @@ var BigHouse = (function() {
 	makeDefaultMove: function() {
 	    var bh = this
 	    this.setGameState ('sendingDefaultMove')
-            if (this.currentChoiceNode.defaultSwipe) {
-		var child = this.currentChoiceNode[this.currentChoiceNode.defaultSwipe]
+	    var child
+	    if (this.currentChoiceNode.menu)
+		child = this.selectedMenuItem = this.currentChoiceNode.menu[this.currentChoiceNode.defaultMenuIndex]
+	    else if (this.currentChoiceNode.defaultSwipe)
+		child = this.currentChoiceNode[this.currentChoiceNode.defaultSwipe]
+	    if (child)
                 this.updateLastChoice (child.defaultMove || child)
-	    }
             var move = this.lastChoice
 	    if (this.verbose)
 		console.log ("Making default move #" + this.moveNumber + ": " + move)

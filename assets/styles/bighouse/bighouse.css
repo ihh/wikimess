@@ -32,7 +32,6 @@ body {
 }
 
 .bighouse .cardbar .cardtable li {
-    background-color: #fff;
     border-radius: 5px;
     text-align: center;
     font-size: 12px;
@@ -238,6 +237,41 @@ body {
     100% { opacity: 1.0; }
 }
 
+.bighouse .cardbar .cardtable .cardmenu {
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 0;
+    width: 100%;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label {
+    display: block;
+    padding: 8px 0px;
+    border-top-style: solid;
+    border-top-width: 1px;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label:nth-child(2) {
+    border-top-style: none;
+}
+
+.bighouse .cardbar .cardtable .cardmenu input[type="radio"] {
+    display: none;
+}
+
+.bighouse .cardbar .cardtable .warnselect {
+    font-size: smaller;
+    font-style: italic;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
 .bighouse .cardbar .cardtable .outcome {
     font-style: italic;
 }
@@ -407,6 +441,6 @@ a.unclickable {
     text-align: center;
 }
 
-.bighouse input[type="radio"] {
+.bighouse .menubar input[type="radio"] {
     display: none;
 }

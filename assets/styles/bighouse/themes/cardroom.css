@@ -50,6 +50,19 @@
     background-color: #444;
 }
 
+.bighouse .cardbar .cardtable .cardmenu,
+.bighouse .cardbar .cardtable .cardmenu label {
+    border-color: #aaa;
+}
+
+.bighouse .cardbar .cardtable input:checked + label {
+    background: #eee;
+}
+
+.bighouse .cardbar .cardtable .warnselect {
+    color: darkred;
+}
+
 .bighouse.cardroom .cardbar .cardtable .waitcard {
     background-color: antiquewhite;
 }

@@ -1,0 +1,20 @@
+[
+    {
+	name: "root",
+	scene: "init",
+	intro: [{ text: "A, B or C?",
+		  menu:
+		  [{
+		      choice: 'A',
+		      hint: 'A is good'
+		  },
+		   {
+		       choice: 'B',
+		       hint: 'B is OK'
+		   },
+		   {
+		       choice: 'C',
+		       hint: 'C is evil'
+		   }] }]
+    }
+]

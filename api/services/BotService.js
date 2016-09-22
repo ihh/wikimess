@@ -26,9 +26,15 @@ module.exports = {
 	}
 
         textNodes.forEach (function (node) {
-            node.defaultSwipe = BotService.randomSwipe (player, game, node)
-            var childSummary = node[node.defaultSwipe]
-            
+            var childSummary
+	    if (node.menu) {
+		node.defaultMenuIndex = BotService.randomMenuIndex (player, game, node.menu)
+		childSummary = node.menu[node.defaultMenuIndex]
+	    } else {
+		node.defaultSwipe = BotService.randomSwipe (player, game, node)
+		childSummary = node[node.defaultSwipe]
+	    }
+
 	    childSummary.defaultMove = { choice: childSummary.choice,
 					 priority: childSummary.priority,
 					 concat: childSummary.concat }
@@ -38,13 +44,9 @@ module.exports = {
 		childSummary.defaultMove = updateDefaultMove (childSummary.defaultMove, childNode.defaultMove)
 	    }
 
-	    node.defaultMove = { priority: node.priority,
+	    node.defaultMove = { choice: node.choice,
+				 priority: node.priority,
 				 concat: node.concat }
-            if (node.menu) {
-                node.defaultMenuIndex = BotService.randomMenuIndex (player, game, node.menu)
-                node.defaultMove.choice = node.menu[node.defaultMenuIndex].choice
-            } else
-                node.defaultMove.choice = node.choice
 
 	    node.defaultMove = updateDefaultMove (node.defaultMove, childSummary.defaultMove)
         })

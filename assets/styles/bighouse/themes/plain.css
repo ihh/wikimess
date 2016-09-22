@@ -56,6 +56,19 @@
     background-color: #ccc;
 }
 
+.bighouse .cardbar .cardtable .cardmenu,
+.bighouse .cardbar .cardtable .cardmenu label {
+    border-color: #aaa;
+}
+
+.bighouse .cardbar .cardtable input:checked + label {
+    background: #eee;
+}
+
+.bighouse .cardbar .cardtable .warnselect {
+    color: darkred;
+}
+
 .bighouse.plain .cardbar .cardtable .waitcard {
     background-color: antiquewhite;
 }
@@ -143,4 +156,3 @@
     border-width: 1px;
     border-color: #888;
 }
-

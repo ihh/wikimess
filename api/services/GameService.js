@@ -39,19 +39,21 @@ module.exports = {
                                 prev.next = node.next
                                 prev.left = node.left
                                 prev.right = node.right
+				prev.menu = node.menu
                             }
                             head = prev
                         })
                         delete node.next
                         delete node.left
                         delete node.right
+			delete node.menu
                         node.next = head
                         node.text = split[0]
                     }
                 }
                 
                 if (!node.text) {
-                    if (node.left || node.right || node.next) {
+                    if (node.left || node.right || node.next || node.menu) {
                         sails.log.debug ("Node has children but no text: " + node)
                         node.text = defaultAbsentText
                     } else if (nextTree) {
@@ -63,9 +65,14 @@ module.exports = {
                     }
                 }
 
-                node.isLeaf = !(node.next || node.left || node.right || nextTree || node.text)
+                node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree || node.text)
                 if (!node.isLeaf) {
-		    if (node.next) {
+		    if (node.menu) {
+			node.menu.forEach (function (child) {
+			    connect (child)
+			})
+
+		    } else if (node.next) {
                         connect (node.next)
                         node.left = node.right = node.next
 
@@ -148,22 +155,34 @@ module.exports = {
                 node.depth = 0
             else {
                 node.ancestral = true
-                node.left = recurse (node.left)
-                node.right = recurse (node.right)
+		if (node.menu)
+		    node.menu = node.menu.map (recurse)
+		else {
+                    node.left = recurse (node.left)
+                    node.right = recurse (node.right)
+		}
                 node.ancestral = false
                 
-                node.depth = 1 + Math.max (node.left.depth || 0,
-                                           node.right.depth || 0)
+                node.depth = 1 + (node.menu
+				  ? Math.max.apply (null, node.menu.map (function(item) { return item.depth || 0 }))
+				  : Math.max (node.left.depth || 0,
+                                              node.right.depth || 0))
 
                 node.id = nodeList.length
                 nodeList.push ({ id: node.id,
-                                 left: linkSummary (node.left, 'l'),
-                                 right: linkSummary (node.right, 'r'),
+                                 left: (node.menu
+					? undefined
+					: linkSummary (node.left, 'l')),
+                                 right: (node.menu
+					 ? undefined
+					 : linkSummary (node.right, 'r')),
+				 menu: (node.menu
+					? node.menu.map (function (child, n) { return linkSummary (child, n) })
+					: undefined),
                                  depth: node.depth,
                                  choice: node.choice,
                                  menu: node.menu,
                                  priority: node.priority,
-                                 virtue: node.virtue,
 				 concat: node.concat,
                                  text: node.text })
             }
