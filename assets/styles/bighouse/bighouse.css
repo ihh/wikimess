@@ -238,23 +238,31 @@ body {
 }
 
 .bighouse .cardbar .cardtable .cardmenu {
-    border-style: solid;
+    border-style: none solid none solid;
     border-width: 1px;
     border-radius: 4px;
     margin-bottom: 10px;
     padding: 0;
-    width: 100%;
+    width: 95%;
 }
 
 .bighouse .cardbar .cardtable .cardmenu label {
     display: block;
     padding: 8px 0px;
     border-top-style: solid;
-    border-top-width: 1px;
+    border-width: 1px;
+    cursor: pointer;
 }
 
 .bighouse .cardbar .cardtable .cardmenu label:nth-child(2) {
-    border-top-style: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label:nth-last-child(1) {
+    border-bottom-style: solid;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
 }
 
 .bighouse .cardbar .cardtable .cardmenu input[type="radio"] {
