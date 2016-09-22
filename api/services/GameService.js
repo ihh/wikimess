@@ -59,11 +59,6 @@ module.exports = {
                         node.id = nextTree.id
                         node.depth = nextTree.depth
                         node.isLeaf = nextTree.isLeaf
-/*
-			if (!node.hasOwnProperty('choice')) node.choice = nextTree.choice
-			if (!node.hasOwnProperty('priority')) node.priority = nextTree.priority
-			if (!node.hasOwnProperty('concat')) node.concat = nextTree.concat
-*/
                         return
                     }
                 }
@@ -108,9 +103,11 @@ module.exports = {
         function linkSummary (node, defaultChoice) {
             var summary = {}
 	    summary.hint = node.hint || defaultNextHint
-            if (node.choice) {
+            if (node.choice || node.menu) {
                 summary.choice = node.choice
+                summary.menu = node.menu
                 summary.priority = node.priority
+                summary.virtue = node.virtue
 		summary.concat = node.concat
             } else if (!node.depth) {
                 summary.choice = defaultChoice
@@ -138,11 +135,6 @@ module.exports = {
                 node.id = linkedNode.id
                 node.depth = linkedNode.depth
                 node.isLeaf = linkedNode.isLeaf
-/*
-		if (!node.hasOwnProperty('choice')) node.choice = linkedNode.choice
-		if (!node.hasOwnProperty('priority')) node.priority = linkedNode.priority
-		if (!node.hasOwnProperty('concat')) node.concat = linkedNode.concat
-*/
                 // hints are pretty context-sensitive, so use the default hint ("Next"), or the hint specified in the 'goto' node; don't just blindly inherit the linkedNode hint
                 return node
             }
@@ -169,7 +161,9 @@ module.exports = {
                                  right: linkSummary (node.right, 'r'),
                                  depth: node.depth,
                                  choice: node.choice,
+                                 menu: node.menu,
                                  priority: node.priority,
+                                 virtue: node.virtue,
 				 concat: node.concat,
                                  text: node.text })
             }

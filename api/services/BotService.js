@@ -27,8 +27,8 @@ module.exports = {
 
         textNodes.forEach (function (node) {
             node.defaultSwipe = BotService.randomSwipe (player, game, node)
-
             var childSummary = node[node.defaultSwipe]
+            
 	    childSummary.defaultMove = { choice: childSummary.choice,
 					 priority: childSummary.priority,
 					 concat: childSummary.concat }
@@ -38,9 +38,13 @@ module.exports = {
 		childSummary.defaultMove = updateDefaultMove (childSummary.defaultMove, childNode.defaultMove)
 	    }
 
-	    node.defaultMove = { choice: node.choice,
-				 priority: node.priority,
+	    node.defaultMove = { priority: node.priority,
 				 concat: node.concat }
+            if (node.menu) {
+                node.defaultMenuIndex = BotService.randomMenuIndex (player, game, node.menu)
+                node.defaultMove.choice = node.menu[node.defaultMenuIndex].choice
+            } else
+                node.defaultMove.choice = node.choice
 
 	    node.defaultMove = updateDefaultMove (node.defaultMove, childSummary.defaultMove)
         })
@@ -50,15 +54,42 @@ module.exports = {
     },
 
     randomSwipe: function (player, game, node) {
+        return BotService.randomOption (player, game, [{ opt: 'left', node: node.left, defaultVirtue: 0 },
+                                                       { opt: 'right', node: node.right, defaultVirtue: 1 }])
+    },
+
+    randomMenuIndex: function (player, game, menu) {
+        var len = menu.length
+        var opts = menu.map (function (node, n) {
+            return { opt: n, node: node, defaultVirtue: (1 - (n / (len - 1))) }
+        })
+        return BotService.randomOption (player, game, opts)
+    },
+
+    randomOption: function (player, game, opts) {
 	var role = Game.getRole (game, player.id)
 	var mood = Game.getRoleAttr (game, role, 'mood')
+        var virtues = opts.map (function (opt) {
+            return typeof(opt.node.virtue) === 'undefined' ? opt.defaultVirtue : opt.node.virtue
+        })
+        var greeds = virtues.map (function (v) { return v >= 1 ? 0 : (1-v) })
+        var probVirtue = .5
 	switch (player.botmind.strategy) {
 	case 'mood':
-	    return Math.random() < player.botmind.swipeRightProb[mood] ? 'right' : 'left'
+            probVirtue = player.botmind.swipeRightProb[mood]
 	    break;
 	default:
 	    break;
 	}
-	return 'd'
+        var w = Math.random(), weights, i
+        if (w < probVirtue) { w /= probVirtue; weights = virtues }
+        else { w = (w - probVirtue) / (1 - probVirtue); weights = greeds }
+        var totalWeight = weights.reduce (function(sum,x) { return sum + x }, 0)
+        if (totalWeight == 0)
+            weights = weights.map (function() { return 1 })
+        for (i = 0; i < weights.length - 1; ++i)
+            if ((w -= weights[i]) <= 0)
+                break
+        return opts[i].opt
     },
 }
