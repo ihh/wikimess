@@ -1929,6 +1929,9 @@ var BigHouse = (function() {
                         console.log('Music loaded: '+type)
                     music.play()
                     promise.resolve (music)
+                },
+                onloaderror: function() {
+                    promise.reject()
                 }
             });
         },
@@ -1967,6 +1970,8 @@ var BigHouse = (function() {
                         oldMusic.once ('fade', stopAndStart)
                     } else
                         stopAndStart()
+                }).fail (function() {
+                    bh.startMusic (type, volume, newPromise)
                 })
             }
         },
