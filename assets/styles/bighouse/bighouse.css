@@ -84,6 +84,7 @@ body {
 }
 
 .bighouse .statusbar .rightstatus span {
+    font-size: small;
     word-wrap: break-word;  /* moz */
     overflow-wrap: break-word;  /* webkit */
     width: 100%;

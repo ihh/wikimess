@@ -80,13 +80,13 @@ var BigHouse = (function() {
 
 	defaultNextHint: "Next",
 
-	verbose: { page: true,
-                   gameState: true,
+	verbose: { page: false,
+                   gameState: false,
                    messages: true,
                    timer: false,
                    errors: true,
                    music: false,
-		   stack: true },
+		   stack: false },
         
         // REST interface
         REST_loginFacebook: function() {
@@ -681,10 +681,10 @@ var BigHouse = (function() {
             this.getAvatarConfigPromise(id).done (function (avatarConfig) {
                 if (avatarConfig[mood].url) {
                     var img = $('<img class="mood">')
-		              .attr ('src', avatarConfig[mood].url)
-	            div.html (img)
                     if (callback)
                         img.on('load',callback)
+		    img.attr ('src', avatarConfig[mood].url)
+	            div.html (img)
                 } else {
                     faces.display ({ container: div[0],
                                      base: avatarConfig.base,
@@ -1072,14 +1072,14 @@ var BigHouse = (function() {
             this.container
                 .empty()
                 .append ($('<div class="statusbar">')
+                         .append ($('<div class="statuslink">')
+                                  .append ($('<span>')
+                                           .html (this.makeLink ('Menu', this.showGameMenuPage))))
                          .append (this.playerMoodDiv = $('<div class="leftmood">'))
                          .append ($('<div class="rightstatus">')
                                   .append (this.opponentNameDiv = $('<span>')
                                            .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
-                         .append (this.opponentMoodDiv = $('<div class="rightmood">'))
-                         .append ($('<div class="statuslink">')
-                                  .append ($('<span>')
-                                           .html (this.makeLink ('Menu', this.showGameMenuPage)))))
+                         .append (this.opponentMoodDiv = $('<div class="rightmood">')))
                 .append ($('<div class="cardbar">')
                          .append ($('<div class="cardtable">')
                                   .append ($('<div class="slidebar">')
