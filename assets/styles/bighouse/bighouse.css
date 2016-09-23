@@ -116,6 +116,7 @@ body {
     border-style: none solid solid solid;
     border-left-color: transparent;
     border-right-color: transparent;
+    cursor: pointer;
 }
 
 .bighouse .menubar .avatar-grid {
