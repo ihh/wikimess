@@ -85,7 +85,8 @@ var BigHouse = (function() {
                    messages: true,
                    timer: false,
                    errors: true,
-                   music: false },
+                   music: false,
+		   stack: true },
         
         // REST interface
         REST_loginFacebook: function() {
@@ -1290,10 +1291,12 @@ var BigHouse = (function() {
         },
 
 	runTimeoutAnimation: function (callback) {
+	    var bh = this
 	    this.clearMoveTimer()
             var cardsToThrow = []
 	    this.stackList.children().each (function (idx, elem) {
-		if (!$(elem).hasClass ('gameover')) {
+		var jq = $(elem)
+		if (!(jq.hasClass('gameover') || jq.hasClass('thrown'))) {
 		    var card = bh.stack.getCard (elem)
 		    if (card)
                         cardsToThrow.push (card)
@@ -1395,10 +1398,10 @@ var BigHouse = (function() {
         },
         
 	createPlaceholderCards: function() {
-            this.nextOutcomeCardListItem = this.createCardListItem ('', 'outcome')  // placeholder, for appearances
+            this.nextOutcomeCardListItem = this.createCardListItem ('<!-- placeholder outcome -->', 'outcome')  // placeholder, for appearances
 	    this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
 
-            this.waitCardListItem = this.createCardListItem ('', 'waitcard')
+            this.waitCardListItem = this.createCardListItem ('<!-- placeholder waitcard -->', 'waitcard')
 	    this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
 	},
 
@@ -1429,30 +1432,35 @@ var BigHouse = (function() {
 	    return function() {
 		bh.lastSwipe = dir
 
-		var child
-		if (node.menu)
-		    child = bh.selectedMenuItem
-		else
-		    child = node[dir]
-                bh.updateLastChoice (child)
+		// only update choices & deal the next card if we're NOT in a timeout animation
+		if (bh.gameState !== 'loadTimeoutAnimation'
+		    && bh.gameState !== 'timerTimeoutAnimation') {
+		    
+		    var child
+		    if (node.menu)
+			child = bh.selectedMenuItem
+		    else
+			child = node[dir]
+                    bh.updateLastChoice (child)
 
-                if (typeof(child.id) !== 'undefined') {
-		    bh.showLoading()
-		    var next = bh.textNodes[child.id]
-		    bh.dealCardForNode ({ node: next,
-                                          dealDirection: dir == 'right' ? 'left' : 'right',
-                                          dealt: function() {
-                                              if (waitCardContents)
-                                                  waitCardContents.remove()
-                                          }})
-		} else {
-                    if (bh.cardCount) {
-                        bh.cardStartline = new Date()
-                        bh.showCardCount (0)
+                    if (typeof(child.id) !== 'undefined') {
+			bh.showLoading()
+			var next = bh.textNodes[child.id]
+			bh.dealCardForNode ({ node: next,
+                                              dealDirection: dir == 'right' ? 'left' : 'right',
+                                              dealt: function() {
+						  if (waitCardContents)
+                                                      waitCardContents.remove()
+                                              }})
+		    } else {
+			if (bh.cardCount) {
+                            bh.cardStartline = new Date()
+                            bh.showCardCount (0)
+			}
+			bh.showWaitingForOther()
+			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
                     }
-                    bh.showWaitingForOther()
-		    bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
-                }
+		}
 	    }
 	},
 
@@ -1591,16 +1599,25 @@ var BigHouse = (function() {
             if (cardClass)
                 listItem.addClass (cardClass)
             this.stackList.append (listItem)
+	    if (this.verbose.stack) {
+		console.log ("Card #" + this.cardIndex(listItem[0]) + " added: " + listItem[0].innerHTML)
+		this.logStack()
+	    }
             return listItem
         },
-        
+
+	cardIndex: function (elem) {
+	    return Array.prototype.indexOf.call (elem.parentNode.children, elem)
+	},
+
         addCard: function (config) {
+            var bh = this
 	    var listItem = config.listItem
             var rightCallback = config.swipeRight || function() { }
             var leftCallback = config.swipeLeft || function() { }
 	    var silent = config.silent
-            var bh = this
             var card = this.stack.createCard (listItem[0])
+	    card.elem = listItem[0]
             card.on ('dragstart', function() {
                 listItem.addClass ('dragging')
             })
@@ -1608,14 +1625,18 @@ var BigHouse = (function() {
                 listItem.removeClass ('dragging')
             })
             card.on ('throwoutright', function () {
-                listItem.removeClass('jiggle')
+		if (bh.verbose.stack)
+		    console.log ("Card #" + bh.cardIndex(listItem[0]) + " thrown: " + listItem[0].innerHTML)
+                listItem.removeClass('jiggle').addClass('thrown')
                 if (!silent)
                     bh.playSound ('swiperight')
                 rightCallback.call (bh)
                 bh.fadeCard (listItem, card)
             })
             card.on ('throwoutleft', function () {
-                listItem.removeClass('jiggle')
+		if (bh.verbose.stack)
+		    console.log ("Card #" + bh.cardIndex(listItem[0]) + " thrown: " + listItem[0].innerHTML)
+                listItem.removeClass('jiggle').addClass('thrown')
                 if (!silent)
                     bh.playSound ('swipeleft')
                 leftCallback.call (bh)
@@ -1623,6 +1644,13 @@ var BigHouse = (function() {
             })
             return card
         },
+
+	logStack: function() {
+	    console.log ($.map (bh.stackList.children(), function (elem, idx) {
+		var c = elem.getAttribute('class')
+		return (c ? ("("+c+") ") : "") + elem.innerHTML
+	    }))
+	},
 
 	pushChoiceRevealer: function() {
 	    var bh = this
@@ -1688,7 +1716,11 @@ var BigHouse = (function() {
 	    var bh = this
             listItem.find('*').off()
             listItem.fadeOut (this.cardFadeTime, function() {
+		if (bh.verbose.stack)
+		    console.log ("Card #" + bh.cardIndex(listItem[0]) + " removed after fade: " + listItem.html())
 		listItem.remove()
+		if (bh.verbose.stack)
+		    bh.logStack()
 		if (card.fadeCallback)
 		    card.fadeCallback()
 	    })
@@ -1847,6 +1879,10 @@ var BigHouse = (function() {
         cardThrowFunction: function (card, direction) {
             var bh = this
             return function() {
+		if (bh.verbose.stack) {
+		    console.log ("Throwing card #" + bh.cardIndex(card.elem) + ": " + card.elem.innerHTML)
+		    bh.logStack()
+		}
                 card.throwOut (300*direction, 600*(Math.random() - .5))
             }
         },
