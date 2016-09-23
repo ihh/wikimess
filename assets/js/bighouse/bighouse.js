@@ -1355,15 +1355,8 @@ var BigHouse = (function() {
                     nChimes = Math.min (this.nTimeoutChimes, Math.floor (totalTime / 2000)),
                     firstChimeTime = endTime - 1000 * nChimes
 	        if (nowTime >= firstChimeTime && nowTime < endTime) {
-		    var pulseElement
-		    if (this.currentChoiceNode.menu) {
-			pulseElement = this.menuLabel[this.currentChoiceNode.defaultMenuIndex]
-		    } else {
-			var choiceClass = this.currentChoiceNode.defaultSwipe == 'left' ? 'choice1' : 'choice2'
-			pulseElement = $('.'+choiceClass).find(':visible')
-		    }
                     var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
-		    pulseElement.css ('opacity', opacity)
+		    this.timerPulseElement().css ('opacity', opacity)
                     this.cardCountDiv.css ('opacity', opacity)
                     if (!this.lastChimeTime || nowTime >= this.lastChimeTime + 1000)
                         this.playSound ('timewarning')
@@ -1375,6 +1368,18 @@ var BigHouse = (function() {
         hideTimer: function() {
             this.timerDiv.width(0)
             this.cardCountDiv.css ('opacity', 0)
+        },
+
+        timerPulseElement: function() {
+	    var pulseElement
+	    if (this.currentChoiceNode.menu) {
+                var idx = this.selectedMenuItem ? this.selectedMenuItem.n : this.currentChoiceNode.defaultMenuIndex
+		pulseElement = this.menuLabel[idx]
+	    } else {
+		var choiceClass = this.currentChoiceNode.defaultSwipe == 'left' ? 'choice1' : 'choice2'
+		pulseElement = $('.'+choiceClass).find(':visible')
+	    }
+            return pulseElement
         },
         
 	createPlaceholderCards: function() {
@@ -1532,11 +1537,13 @@ var BigHouse = (function() {
 		var menuSelectCallback
 		node.menu.forEach (function (item, n) {
 		    var id = 'cardmenuitem' + n
+                    item.n = n
                     fieldset
 			.append ($('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">'))
 			.append (bh.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">')
 				 .text(item.hint)
 				 .on('click',function() {
+                                     bh.timerPulseElement().css ('opacity', 1)  // in case something else is pulsing
 				     bh.selectedMenuItem = item
 				     if (menuSelectCallback)
 					 menuSelectCallback.call (bh, item, n)
@@ -1787,9 +1794,11 @@ var BigHouse = (function() {
 	    var bh = this
 	    this.setGameState ('sendingDefaultMove')
 	    var child
-	    if (this.currentChoiceNode.menu)
-		child = this.selectedMenuItem = this.currentChoiceNode.menu[this.currentChoiceNode.defaultMenuIndex]
-	    else if (this.currentChoiceNode.defaultSwipe)
+	    if (this.currentChoiceNode.menu) {
+                if (!this.selectedMenuItem)
+                    this.selectedMenuItem = this.currentChoiceNode.menu[this.currentChoiceNode.defaultMenuIndex]
+		child = this.selectedMenuItem
+	    } else if (this.currentChoiceNode.defaultSwipe)
 		child = this.currentChoiceNode[this.currentChoiceNode.defaultSwipe]
 	    if (child)
                 this.updateLastChoice (child.defaultMove || child)
