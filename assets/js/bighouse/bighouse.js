@@ -1175,6 +1175,8 @@ var BigHouse = (function() {
 		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
+		    bh.createPlaceholderCards (!data.finished)
+
                     if (data.finished) {
 			if (data.text.length)
 			    bh.dealChoiceCards ({ text: data.text,
@@ -1186,7 +1188,6 @@ var BigHouse = (function() {
                         else
 			    bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
 		    } else {
-			bh.createPlaceholderCards()
 			if (data.waiting) {
 			    bh.dealChoiceCards ({ text: data.text,
                                                   dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
@@ -1195,7 +1196,6 @@ var BigHouse = (function() {
 						      bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
 						  }})
 			} else {
-			    bh.createPlaceholderCards()
 			    bh.showWaitingForOther()
 			    bh.initMoveTimer (data, bh.setGameStateCallback('waitingForOther'))
 			}
@@ -1397,9 +1397,11 @@ var BigHouse = (function() {
             return pulseElement
         },
         
-	createPlaceholderCards: function() {
-            this.nextOutcomeCardListItem = this.createCardListItem ('<!-- placeholder outcome -->', 'outcome')  // placeholder, for appearances
-	    this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
+	createPlaceholderCards: function (wantOutcome) {
+	    if (wantOutcome) {
+		this.nextOutcomeCardListItem = this.createCardListItem ('<!-- placeholder outcome -->', 'outcome')  // placeholder, for appearances
+		this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
+	    }
 
             this.waitCardListItem = this.createCardListItem ('<!-- placeholder waitcard -->', 'waitcard')
 	    this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
@@ -1457,7 +1459,11 @@ var BigHouse = (function() {
                             bh.cardStartline = new Date()
                             bh.showCardCount (0)
 			}
-			bh.showWaitingForOther()
+			if (bh.gameState === 'gameOver') {
+			    if (bh.waitCardListItem)
+				bh.throwDummyCard (bh.waitCardListItem)
+			} else
+			    bh.showWaitingForOther()
 			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
                     }
 		}
