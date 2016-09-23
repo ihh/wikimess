@@ -79,8 +79,6 @@ var BigHouse = (function() {
 				  gameOver: { } },
 
 	defaultNextHint: "Next",
-	defaultLeftHint: "Nope",
-	defaultRightHint: "OK",
 
 	verbose: { page: true,
                    gameState: true,
@@ -1485,6 +1483,7 @@ var BigHouse = (function() {
 
 	    var cardConfig = { leftHint: node.menu ? undefined : node.left.hint,
 			       rightHint: node.menu ? undefined : node.right.hint,
+                               hint: node.menu ? this.defaultNextHint : undefined,
                                swipeLeft: bh.makeSwipeFunction (node, 'left'),
                                swipeRight: bh.makeSwipeFunction (node, 'right'),
 			       cardsBeforeChoice: node.depth - 1,
@@ -1652,9 +1651,9 @@ var BigHouse = (function() {
             config.swipeRight = choiceRevealer.wrapCallback (config.swipeRight || config.swipe)
             config.swipeLeft = choiceRevealer.wrapCallback (config.swipeLeft || config.swipe || config.swipeRight)
             var card = this.addCard (config)
-	    var rightHint = config.rightHint || config.hint || "Next"
-	    var leftHint = config.leftHint || config.hint || rightHint
-	    if (rightHint)
+	    var rightHint = config.rightHint || config.hint || bh.defaultNextHint
+	    var leftHint = config.leftHint || config.hint || bh.defaultNextHint
+	    if (config.rightHint || config.leftHint || config.hint)
                 choiceRevealer.newChoiceDiv
 		.append ($('<div class="choice1">')
                          .append ($('<div class="hint">')

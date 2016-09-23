@@ -391,7 +391,7 @@
 
     .bighouse .detailbar {
 	height: 65vh;
-	margin: 1vw;
+	margin: 1vh 1vw;
     }
 
     .bighouse .gametable tbody {

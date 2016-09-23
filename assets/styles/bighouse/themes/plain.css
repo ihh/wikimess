@@ -11,9 +11,13 @@
 }
 
 .bighouse.plain .slidebar .slidetab {
-    border-bottom-color: #222;
+    border-bottom-color: #888;
 }
 
+.bighouse .detailbar .statusline {
+    border-color: #888;
+}
+    
 .bighouse.plain .cardbar .cardtable li {
     background-color: #fff;
     box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
@@ -159,4 +163,8 @@
     border-style: solid;
     border-width: 1px;
     border-color: #888;
+}
+
+.bighouse.plain .detailbar .statusline {
+    background: #eee;
 }

@@ -358,7 +358,7 @@
 
     .bighouse .detailbar {
 	height: 85vh;
-	margin: 1vh;
+	margin: 1vh 1vw;
     }
 
     .bighouse .menubar fieldset {

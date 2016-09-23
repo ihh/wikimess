@@ -68,8 +68,9 @@ module.exports = {
 	return mood == 'happy' || mood == 'sad' || mood == 'angry' || mood == 'surprised'
     },
 
-    makeStatus: function (res, player, local, view) {
+    makeStatus: function (res, game, player, local, view) {
 	var state = {}
+	extend (state, game.common)
 	extend (state, player.global)
 	state = merge (state, local)
 
@@ -92,6 +93,35 @@ module.exports = {
 		+ '</div>'
         }
 
+        // meter(label,level)
+        // meter(label,level,color)
+        // meter(label,level,max,color)
+        // meter(label,level,min,max,color)
+        var meter = function(label,level,min,max,color) {
+            if (typeof(min) === 'undefined') {
+                color = 'blue'
+                max = 1
+                min = 0
+            } else if (typeof(max) === 'undefined') {
+                color = min
+                max = 1
+                min = 0
+            } else if (typeof(color) === 'undefined') {
+                color = max
+                max = min
+                min = 0
+            }
+            return '<div class="meterline">'
+                  + '<div class="meterlabel">'
+                   + '<div class="metertext">' + label + '</div>'
+                   + '<div class="meternumber">(' + Math.round(level) + '/' + Math.round(max) + ')</div>'
+                  + '</div>'
+                  + '<div class="meter '+color+'">'
+                   + '<span style="width:' + (100*level/max) + '%;"></span>'
+                  + '</div>'
+                 + '</div>'
+        }
+        
         var plural = function(n,singular,plural) {
             plural = plural || (singular + 's')
             n = typeof(n) === 'undefined' ? 0 : n
@@ -99,13 +129,18 @@ module.exports = {
         }
         
         res.view ('status/' + view,
-                  { name: player.displayName,
-		    state: state,
-		    global: player.global,
-		    local: local,
-		    icon: icon,
-                    plural: plural,
-                    layout: 'status/layout' })
+                  { // locals
+                      name: player.displayName,
+		      state: state,
+		      global: player.global,
+		      local: local,
+                      common: game.common,
+                      // functions
+		      icon: icon,
+                      meter: meter,
+                      plural: plural,
+                      // layout
+                      layout: 'status/layout' })
     },
 
     makeMove: function (req, rs, info) {

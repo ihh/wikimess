@@ -55,6 +55,7 @@ module.exports = {
     selfGameStatus: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info) {
             MiscPlayerService.makeStatus (res,
+                                          info.game,
                                           info.player,
                                           info.role == 1 ? info.game.local1 : info.game.local2,
                                           'self')
@@ -65,6 +66,7 @@ module.exports = {
     otherGameStatus: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info) {
             MiscPlayerService.makeStatus (res,
+                                          info.game,
                                           info.opponent,
                                           info.role == 1 ? info.game.local2 : info.game.local1,
                                           'other')

@@ -1,19 +1,32 @@
+.bighouse .detailbar .iconblock,
+.bighouse .detailbar .meterblock {
+    clear: both;
+    width: 100%;
+}
+
 .bighouse .detailbar .statusline {
     margin-top: 10px;
     float: left;
-    clear: both;
+    width: 31%;
+    margin-right: 1%;
+    overflow: auto;
+    border-style: dotted;
+    border-width: 1px;
+    border-radius: 4px;
 }
 
 .bighouse .detailbar .icon img {
     width: 10vw;
     height: 10vw;
     border-radius: 4px;
-    margin-right: 10px;
-    float: left;
+    float: right;
+    background-color: black;
 }
 
 .bighouse .detailbar .text {
     padding-left: 4px;
+    display: inline-block;
+    font-size: small;
 }
 
 /* Portrait view */

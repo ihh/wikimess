@@ -151,3 +151,6 @@
     color: darkgreen;
 }
 
+.bighouse.cardroom .detailbar .statusline {
+    background: #111;
+}
