@@ -82,7 +82,12 @@ var BigHouse = (function() {
 	defaultLeftHint: "Nope",
 	defaultRightHint: "OK",
 
-	verbose: true,
+	verbose: { page: true,
+                   gameState: true,
+                   messages: true,
+                   timer: false,
+                   errors: true,
+                   music: false },
         
         // REST interface
         REST_loginFacebook: function() {
@@ -224,7 +229,7 @@ var BigHouse = (function() {
         },
 
 	setPage: function (page) {
-	    if (this.verbose)
+	    if (this.verbose.page)
 		console.log ("Changing view from " + this.page + " to " + page)
 	    this.page = page
 
@@ -468,7 +473,7 @@ var BigHouse = (function() {
 
         pushView: function (newPage) {
             var elements = this.container.find(':not(.pushed)')
-	    if (this.verbose)
+	    if (this.verbose.page)
 		console.log ("Pushing " + this.page + " view, going to " + newPage)
             var page = this.page
             this.pushedViews.push ({ elements: elements, page: page })
@@ -479,7 +484,7 @@ var BigHouse = (function() {
         popView: function() {
 	    var bh = this
             var poppedView = this.pushedViews.pop()
-	    if (this.verbose)
+	    if (this.verbose.page)
 		console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
             this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
             this.container.find(':not(.pushed)').remove()
@@ -497,7 +502,7 @@ var BigHouse = (function() {
 	    while (this.inMessageAcceptingState() && this.postponedMessages.length) {
 		var msg = this.postponedMessages[0]
 		this.postponedMessages = this.postponedMessages.slice(1)
-		if (this.verbose)
+		if (this.verbose.messages)
 		    console.log ("Dealing with postponed '" + msg.data.message + "' message (" + this.postponedMessages.length + " messages remaining on queue)")
 		this.handlePlayerMessage (msg)
 	    }
@@ -505,11 +510,11 @@ var BigHouse = (function() {
 
 	callOrPostpone: function (callback, msg) {
 	    if (this.inMessageAcceptingState() && this.postponedMessages.length == 0) {
-		if (this.verbose)
+		if (this.verbose.messages)
 		    console.log ("Processing '" + msg.data.message + "' message immediately")
 		callback.call (this)
 	    } else {
-		if (this.verbose)
+		if (this.verbose.messages)
 		    console.log ("Postponing '" + msg.data.message + "' message")
 		this.postponedMessages.push (msg)
 	    }
@@ -709,9 +714,10 @@ var BigHouse = (function() {
 
                         loadImage (file,
                                    function (canvas) {
-                                       if (canvas.type === "error")
-                                           console.log("Error loading image")
-                                       else
+                                       if (canvas.type === "error") {
+                                           if (bh.verbose.errors)
+                                               console.log("Error loading image")
+                                       } else
                                            canvas.toBlob (function (blob) {
                                                bh.showConfirmUploadPage (mood, div, blob, uploadedCallback, null)
                                            })
@@ -1118,7 +1124,7 @@ var BigHouse = (function() {
 
 	setGameState: function (state) {
 	    if (this.gameState != state) {
-		if (this.verbose)
+		if (this.verbose.gameState)
 		    console.log ("Changing state from " + this.gameState + " to " + state)
 		if (this.gameState && !this.allowedStateTransition[this.gameState][state])
                     throw "Illegal state transition"
@@ -1152,10 +1158,12 @@ var BigHouse = (function() {
             this.socket_getPlayerGame (this.playerID, this.gameID)
                 .done (function (data) {
 
-		    if (bh.verbose) {
+		    if (bh.verbose.messages) {
                         console.log("Received game state from server")
 			console.log(data)
                     }
+
+                    delete this.throwDisabled
 
 		    bh.throwDummyCard (loadingCardListItem)
                     bh.moveNumber = data.move
@@ -1173,6 +1181,8 @@ var BigHouse = (function() {
                                                       bh.showLoading()
 						      bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
 						  }})
+                        else
+			    bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
 		    } else {
 			bh.createPlaceholderCards()
 			if (data.waiting) {
@@ -1204,7 +1214,7 @@ var BigHouse = (function() {
                 this.cardCountDiv.css ('opacity', 1)
 		this.startline = this.cardStartline = new Date(data.startline)
 		this.deadline = new Date(data.deadline)
-		this.timerCallback()
+		this.setMoveTimer (this.timerCallback, 10)
 	    } else {
                 this.hideTimer()
             }
@@ -1222,7 +1232,7 @@ var BigHouse = (function() {
         },
 
 	setMoveTimer: function (callback, delay) {
-	    if (this.verbose > 1)
+	    if (this.verbose.timer)
 		console.log ("Setting move timer for " + Math.round(delay) + "ms")
 	    this.moveTimer = window.setTimeout (callback.bind(this), delay)
 	},
@@ -1235,7 +1245,7 @@ var BigHouse = (function() {
 	    var thisCardDeadtime = this.cardStartline.getTime() + timeForThisCard, thisCardDeadline = new Date (thisCardDeadtime)
 	    this.updateTimerDiv (this.cardStartline, thisCardDeadline, now)
 	    if (nowTime > this.deadline.getTime()) {
-		if (this.verbose > 3)
+		if (this.verbose.timer)
 		    console.log ("Timer callback at " + now + " passed deadline at " + this.deadline)
 		switch (this.gameState) {
 		case 'ready':
@@ -1248,7 +1258,8 @@ var BigHouse = (function() {
 		    this.setMoveTimer (this.timerCallback, 500)
                     break
 		default:
-		    console.log ("should never get here: move timer expired with gameState=" + this.gameState)
+                    if (this.verbose.errors)
+		        console.log ("should never get here: move timer expired with gameState=" + this.gameState)
 		    break
 		}
 	    } else {
@@ -1322,13 +1333,13 @@ var BigHouse = (function() {
 		this.setKickTimer (triesLeft)
 	    else {
 		this.setGameState ('sendingKick')
-		if (this.verbose)
+		if (this.verbose.messages)
 		    console.log("Sending kick request")
 		var retry = function() {
 		    if (triesLeft > 0)
 			bh.setKickTimer (triesLeft - 1)
 		    else {
-			if (this.verbose)
+			if (this.verbose.errors)
 			    console.log("Failed to kick; rebuilding page")
 			bh.showGamePage()
 		    }
@@ -1693,7 +1704,7 @@ var BigHouse = (function() {
             this.lastMood = mood
             var date = new Date (time)
             if (!time || !this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
-                if (this.verbose)
+                if (this.verbose.messages)
                     console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
 		if (time)
                     this.lastPlayerMoodTime = date
@@ -1749,7 +1760,7 @@ var BigHouse = (function() {
 		if (retryCount > 0) {
 		    --retryCount
 		    var wait = minWait + Math.random() * (maxWait - minWait)
-		    if (bh.verbose)
+		    if (bh.verbose.errors)
 			console.log ("Call failed (" + err.toString() + "). Retrying in " + Math.round(wait) + "ms")
 		    window.setTimeout (attempt, wait)
 		} else
@@ -1777,13 +1788,13 @@ var BigHouse = (function() {
         makeMove: function (moveNumber, choice) {
 	    var bh = this
 	    if (bh.moveNumber == moveNumber && this.gameState == 'ready') {
-		if (this.verbose)
+		if (this.verbose.messages)
 		    console.log ("Making move #" + moveNumber + ": " + choice)
 		bh.setGameState ('sendingMove')
 		bh.makeMoveOrRetry (moveNumber, choice)
 		    .done (function() { bh.setGameState ('waitingForOther') })
 		    .fail (function() {
-			if (this.verbose)
+			if (this.verbose.errors)
 			    console.log("Failed to make move; rebuilding page")
 			bh.showGamePage()
 		    })
@@ -1803,12 +1814,13 @@ var BigHouse = (function() {
 	    if (child)
                 this.updateLastChoice (child.defaultMove || child)
             var move = this.lastChoice
-	    if (this.verbose)
+	    if (this.verbose.messages)
 		console.log ("Making default move #" + this.moveNumber + ": " + move)
 	    this.makeMoveOrRetry (this.moveNumber, move)
 		.done (bh.runTimeoutAnimationThenKick.bind(bh))
 		.fail (function() {
-		    console.log("Failed to make default move; rebuilding page")
+                    if (bh.verbose.errors)
+		        console.log("Failed to make default move; rebuilding page")
 		    bh.showGamePage()
 		})
 	},
@@ -1859,7 +1871,7 @@ var BigHouse = (function() {
             case "move":
             case "timeout":
                 if (msg.data.game == this.gameID) {
-		    if (this.verbose)
+		    if (this.verbose.messages)
 			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
                     if (msg.data.move >= this.moveNumber) {
 			if (msg.data.move > this.moveNumber || this.gameState == 'ready')
@@ -1871,7 +1883,7 @@ var BigHouse = (function() {
                 break
             case "mood":
                 if (this.gameID == msg.data.game) {
-                    if (this.verbose)
+                    if (this.verbose.messages)
 			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + " time " + msg.data.time + "; last update at move #" + this.moveNumber + " time " + this.lastOpponentMoodTime)
                     if (msg.data.move >= this.moveNumber && new Date(msg.data.time) > this.lastOpponentMoodTime)
 			this.callOrPostpone (function() {
@@ -1881,8 +1893,10 @@ var BigHouse = (function() {
 		}
                 break
             default:
-                console.log ("Unknown message")
-                console.log (msg)
+                if (this.verbose.messages) {
+                    console.log ("Unknown message")
+                    console.log (msg)
+                }
                 break
             }
         },
@@ -1902,31 +1916,58 @@ var BigHouse = (function() {
 	},
 
         // audio
-        startMusic: function (type, volume) {
+        startMusic: function (type, volume, promise) {
+            if (this.verbose.music)
+                console.log('Starting music: '+type+' at volume '+volume)
             this.currentMusicVolume = volume
-            this.music = new Howl({
+            var music = new Howl({
                 src: ['/audio/' + type + '-music.mp3'],
                 loop: true,
-                volume: this.currentMusicVolume
+                volume: volume,
+                onload: function() {
+                    if (bh.verbose.music)
+                        console.log('Music loaded: '+type)
+                    music.play()
+                    promise.resolve (music)
+                }
             });
-            this.music.play()
         },
 
         changeMusic: function (type, volume) {
             type = type || this.musicType
             volume = (volume || 1) * this.musicVolume
             var bh = this
-            if (this.musicType == type)
-                this.music.volume (this.currentMusicVolume = volume)
+            var oldPromise = this.musicPromise
+            var oldType = this.musicType
+            if (this.verbose.music)
+                console.log ('Cueing music '+type+' after '+oldType)
+            if (!oldType)
+                this.startMusic (this.musicType = type, volume, this.musicPromise = $.Deferred())
+            else if (oldType == type)
+                oldPromise.done (function (oldMusic) {
+                    oldMusic.volume (bh.currentMusicVolume = volume)
+                })
             else {
-                this.musicType = type
-                if (this.music) {
-                    this.music.fade (this.currentMusicVolume, 0, this.musicFadeDelay)
-                    this.music.once ('fade', function() {
-                        bh.startMusic (type, volume)
-                    })
-                } else
-                    this.startMusic (type, volume)
+                var newPromise = $.Deferred()
+                bh.musicType = type
+                bh.musicPromise = newPromise
+                oldPromise.done (function (oldMusic) {
+                    if (bh.verbose.music)
+                        console.log ('Music '+oldType+' playing, switching to '+type)
+                    function stopAndStart() {
+                        if (bh.verbose.music)
+                            console.log ('Stopping music '+oldType+', so we can start '+type)
+                        oldMusic.stop()
+                        bh.startMusic (type, volume, newPromise)
+                    }
+                    if (bh.currentMusicVolume && bh.musicPromise === newPromise) {
+                        if (bh.verbose.music)
+                            console.log ('Fading out music '+oldType+', in preparation for '+type)
+                        oldMusic.fade (bh.currentMusicVolume, 0, bh.musicFadeDelay)
+                        oldMusic.once ('fade', stopAndStart)
+                    } else
+                        stopAndStart()
+                })
             }
         },
 
