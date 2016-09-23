@@ -1,0 +1,31 @@
+.bighouse.bigtable .statusbar,
+.bighouse.bigtable .moodbar {
+    display: none;
+}
+
+.bighouse.bigtable .cardbar .cardtable {
+    width: 100vw;
+    margin: 12px 0 0 0;
+}
+
+@media all and (orientation:portrait) {
+    .bighouse.bigtable .cardbar .cardtable li {
+	width: 95%;
+	height: 92%;
+	margin: 2.5%;
+
+    	font-size: 14px;
+	line-height: 17px;
+    }
+}
+
+@media all and (orientation:landscape) {
+    .bighouse.bigtable .cardbar .cardtable li {
+	width: 95%;
+	height: 90%;
+	margin: 1% 2.5%;
+
+    	font-size: 14px;
+	line-height: 17px;
+    }
+}

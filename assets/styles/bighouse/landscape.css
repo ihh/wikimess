@@ -71,6 +71,15 @@
 	position: relative;
     }
 
+    .bighouse .cardtable .slidebar {
+	top: -2vh;
+    }
+
+    .bighouse .cardtable .slidebar .slidetab {
+	width: 20vh;
+	border-width: 0 2vh 2vh 2vh;
+    }
+
     .bighouse .cardbar .cardtable ul {
 	padding: 0;
     }
@@ -79,6 +88,9 @@
 	width: 70%;
 	height: 92%;
 	margin: 1% 15% 1% 15%;
+	
+	font-size: 12px;
+	line-height: 16px;
 
 	position: absolute;
 	top: 0;

@@ -36,14 +36,14 @@
     }
 
     .bighouse .statusbar .statuslink {
-	width: 38vw;
+	width: 100vw;
 	height: 18vw;
 	position: absolute;
-	left: 42vw;
-	top: 0vw;
+	left: 0;
+	top: 0;
 	display: flex;
 	align-items: center;
-	justify-content: flex-start;
+	justify-content: center;
     }
 
     .bighouse .statusbar .rightmood {
@@ -71,6 +71,15 @@
 	margin-bottom: 2vw;
 	
 	position: relative;
+    }
+
+    .bighouse .cardtable .slidebar {
+	top: -2vw;
+    }
+
+    .bighouse .cardtable .slidebar .slidetab {
+	width: 20vw;
+	border-width: 0 2vw 2vw 2vw;
     }
 
     .bighouse .cardbar .cardtable ul {

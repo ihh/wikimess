@@ -6,8 +6,14 @@
 
 .bighouse.cardroom .cardbar .cardtable {
     background-color: darkgreen;  /* old browsers */
-    background-color: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
+    background: linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
+    background: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
+    background: -moz-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
     box-shadow: 2px 2px 1px 1px #003200;
+}
+
+.bighouse.cardroom .slidebar .slidetab {
+    border-bottom-color: #030;
 }
 
 .bighouse.cardroom .cardbar .cardtable li {
