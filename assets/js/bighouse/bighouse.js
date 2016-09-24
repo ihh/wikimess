@@ -329,7 +329,17 @@ var BigHouse = (function() {
                 })
         },
 
+        // showModalMessage(msg)
+        // showModalMessage(msg,callback)
+        // showModalMessage(msg,sfx,callback)
         showModalMessage: function (msg, sfx, callback) {
+            if (!sfx) {
+                callback = function() {}
+                sfx = 'error'
+            } else if (!callback) {
+                callback = sfx
+                sfx = 'error'
+            }
             sfx = sfx || 'error'
             if (this.selectSound)
                 this.selectSound.stop()
@@ -635,7 +645,7 @@ var BigHouse = (function() {
                 .append (this.moodSlugBar = $('<div class="moodslugbar">'))
                 .append (this.moodBar = $('<div class="mooduploadbar">'))
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
-
+            
             randomizeFaces()
             this.pageAnimationTimer = window.setInterval (function() {
                 var fs = faceSets[Math.floor(faceSets.length*Math.random())]
@@ -653,8 +663,18 @@ var BigHouse = (function() {
                                        .text(mood))
 		bh.moodBar.append (div)
                 bh.moodDiv.push (div)
-		bh.showMoodImage (bh.playerID, mood, div)
             })
+
+            this.getAvatarConfigPromise(this.playerID)
+                .done (function (avatarConfig) {
+                    var config = {}
+                    $.extend (true, config, avatarConfig)
+                    bh.moods.forEach (function (mood, m) {
+                        delete config[mood].url
+                        bh.showFace (config, mood, bh.moodDiv[m])
+                    })
+                    bh.currentFaceSet = config
+                })
         },
 
         confirmPickAvatar: function (config) {
@@ -678,6 +698,7 @@ var BigHouse = (function() {
         },
         
         showMoodImage: function (id, mood, div, callback) {
+            var bh = this
             this.getAvatarConfigPromise(id).done (function (avatarConfig) {
                 if (avatarConfig[mood].url) {
                     var img = $('<img class="mood">')
@@ -686,13 +707,17 @@ var BigHouse = (function() {
 		    img.attr ('src', avatarConfig[mood].url)
 	            div.html (img)
                 } else {
-                    faces.display ({ container: div[0],
-                                     base: avatarConfig.base,
-                                     face: avatarConfig[mood] })
+                    bh.showFace (avatarConfig, mood, div)
                     if (callback)
                         callback()
                 }
             })
+	},
+
+        showFace: function (faceSet, mood, div) {
+            faces.display ({ container: div[0],
+                             base: faceSet.base,
+                             face: faceSet[mood] })
 	},
 
 	uploadMoodPhotoFunction: function (mood, div, uploadedCallback) {
