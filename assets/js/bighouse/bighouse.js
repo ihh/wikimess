@@ -1207,7 +1207,7 @@ var BigHouse = (function() {
 		bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
-		bh.createPlaceholderCards (!data.finished)
+		bh.createPlaceholderCards (!data.finished, !(data.finished && text.length == 0))
 
                 var text, queuedHistory
                 if (data.history) {
@@ -1464,14 +1464,16 @@ var BigHouse = (function() {
             return pulseElement
         },
         
-	createPlaceholderCards: function (wantOutcome) {
+	createPlaceholderCards: function (wantOutcome, wantWaitcard) {
 	    if (wantOutcome) {
 		this.nextOutcomeCardListItem = this.createCardListItem ('<!-- placeholder outcome -->', 'outcome')  // placeholder, for appearances
 		this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
 	    }
 
-            this.waitCardListItem = this.createCardListItem ('<!-- placeholder waitcard -->', 'waitcard')
-	    this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
+            if (wantWaitcard) {
+                this.waitCardListItem = this.createCardListItem ('<!-- placeholder waitcard -->', 'waitcard')
+	        this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
+            }
 	},
 
 	showLoading: function() {
