@@ -724,24 +724,33 @@ module.exports = {
     },
 
     createGame: function (game, success, error) {
-	game.currentStartTime = new Date()
-	var create = function() {
-            game.finished = game.current ? false : true
-	    GameService.prepareTextTrees (game)
-	    GameService.playBotMoves (game)
-	    Game.create (game,
-			 function (err, g) {
-			     if (err)
-				 error (err)
-			     else {
-				 game.id = g.id
-				 success()
-			     }
-			 })
-	}
-	game.tree1 = []
-	game.tree2 = []
-	GameService.expandCurrentChoice (game, create, error)
+	Game.create (game,
+		     function (err, g) {
+			 if (err)
+			     error (err)
+			 else {
+			     game.id = g.id
+			     game.moves = g.moves
+                             game.common = g.common
+                             game.local1 = g.local1
+                             game.local2 = g.local2
+                             game.future = g.future
+
+                             game.tree1 = []
+                             game.tree2 = []
+                             game.move1 = game.move2 = ''
+                             
+	                     GameService.expandCurrentChoice (game,
+                                                              function() {
+	                                                          game.currentStartTime = new Date()
+                                                                  GameService.updateGameAndPlayers ({ id: game.id },
+                                                                                                    game,
+                                                                                                    success,
+                                                                                                    error);
+                                                              },
+                                                              error)
+			 }
+		     })
     },
 
     recordMove: function (info, gotOutcome, playerWaiting, error) {
