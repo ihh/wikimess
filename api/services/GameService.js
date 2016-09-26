@@ -378,7 +378,7 @@ module.exports = {
     updateGameAndPlayers: function (query, game, success, error) {
         game.finished = game.current ? false : true
 	GameService.prepareTextTrees (game)
-        // these three database updates (Game, Player 1, Player 2) should be wrapped in a transaction, to ensure consistency
+        // these database updates (Game, Player 1, Player 2, Turn) should be wrapped in a transaction, to ensure consistency
         // e.g. see http://stackoverflow.com/questions/25079408/how-to-handle-async-concurrent-requests-correctly/25100188#25100188
         // Could also use a quick-and-dirty locking mechanism on the Players (Games are already consistent due to 'moves' attribute):
         // Update [{id:player1id,lockTime:null or stale},{id:player2id,lockTime:null or stale}] -> [{lockTime:now},{lockTime:now}]
@@ -387,7 +387,20 @@ module.exports = {
 	GameService.updateGame (query,
 				game,
 				function() {
-				    GameService.updatePlayers (game, success, error)
+				    GameService.updatePlayers (game,
+                                                               function() {
+                                                                   Turn.create ({ game: game.id,
+                                                                                  move: game.moves + 1,
+                                                                                  text1: game.text1,
+                                                                                  text2: game.text2 })
+                                                                       .exec (function (err, turn) {
+                                                                           if (err)
+                                                                               error (err)
+                                                                           else
+                                                                               success()
+                                                                       })
+                                                               },
+                                                               error)
 				},
 				error)
     },
