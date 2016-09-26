@@ -150,6 +150,26 @@ module.exports = {
         })
     },
 
+    // game history from a given move, filtered for player
+    gameHistory: function (req, res) {
+        MiscPlayerService.findGame (req, res, function (info, rs) {
+            var json = GameService.forRole (info.game, info.role)
+            Turn.find ({ game: info.game.id,
+                         move: { '>=': req.params.moveNumber } })
+                .exec (function (err, turns) {
+                    if (err)
+                        rs (err)
+                    else {
+                        var textAttr = Game.roleAttr (info.role, 'text')
+                        json.history = turns.map (function (turn) {
+                            return { move: turn.move, text: turn[textAttr] }
+                        })
+	                rs (null, json)
+                    }
+                })
+        })
+    },
+
     // kick timed-out player
     kickTimedOutPlayers: function (req, res) {
 	var moveNumber = req.params.moveNumber
