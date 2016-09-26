@@ -29,6 +29,7 @@ var BigHouse = (function() {
         this.pushedViews = []
 	this.postponedMessages = []
         this.avatarConfigPromise = {}
+        this.gamePosition = {}
         
         if (config.playerID) {
             this.playerID = config.playerID
@@ -169,6 +170,10 @@ var BigHouse = (function() {
 
         socket_getPlayerGame: function (playerID, gameID) {
             return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID)
+        },
+
+        socket_getPlayerGameHistory: function (playerID, gameID, move) {
+            return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID + '/history/' + move)
         },
 
         socket_getPlayerGameMove: function (playerID, gameID, move) {
@@ -1182,58 +1187,78 @@ var BigHouse = (function() {
 	    if (this.waitCardListItem)
 		this.throwDummyCard (this.waitCardListItem, this.waitCardSwipe)  // visibly throw the 'waiting for player' card
 
-            this.socket_getPlayerGame (this.playerID, this.gameID)
-                .done (function (data) {
+            var loadPromise = this.currentChoiceMoveNumber
+                ? this.socket_getPlayerGameHistory (this.playerID, this.gameID, this.currentChoiceMoveNumber)
+                : this.socket_getPlayerGame (this.playerID, this.gameID)
 
-		    if (bh.verbose.messages) {
-                        console.log("Received game state from server")
-			console.log(data)
-                    }
+            loadPromise.done (function (data) {
 
-                    delete this.throwDisabled
+		if (bh.verbose.messages) {
+                    console.log("Received game state from server")
+		    console.log(data)
+                }
 
-		    bh.throwDummyCard (loadingCardListItem)
-                    bh.moveNumber = data.move
-                    bh.defaultMove = data.defaultMove
-                    
-		    bh.updatePlayerMood (data.self.mood, data.startline)
-		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
-		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
+                delete this.throwDisabled
 
-		    bh.createPlaceholderCards (!data.finished)
+		bh.throwDummyCard (loadingCardListItem)
+                bh.moveNumber = data.move
+                bh.defaultMove = data.defaultMove
+                
+		bh.updatePlayerMood (data.self.mood, data.startline)
+		bh.opponentNameDiv.text (bh.opponentName = data.other.name)
+		bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
-                    if (data.finished) {
-			if (data.text.length)
-			    bh.dealChoiceCards ({ text: data.text,
-                                                  dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
-						  dealt: function() {
-                                                      bh.showLoading()
-						      bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
-						  }})
-                        else
-			    bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
+		bh.createPlaceholderCards (!data.finished)
+
+                var text, queuedHistory
+                if (data.history && data.history.length) {
+                    text = data.history[0].text
+                    if (data.history[0].move != bh.currentChoiceMoveNumber)
+                        delete bh.currentChoiceNodeIndex
+                    bh.currentChoiceMoveNumber = data.history[0].move
+                    queuedHistory = data.history.slice(1)
+                } else {
+                    text = data.text
+                    if (data.move != bh.currentChoiceMoveNumber)
+                        delete bh.currentChoiceNodeIndex
+                    bh.currentChoiceMoveNumber = data.move
+                    queuedHistory = []
+                }
+
+                if (data.finished) {
+		    if (data.text.length)
+			bh.dealChoiceCards ({ text: data.text,
+                                              queuedHistory: queuedHistory,
+                                              dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
+					      dealt: function() {
+                                                  bh.showLoading()
+						  bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
+					      }})
+                    else
+			bh.initMoveTimer (data, bh.setGameStateCallback('gameOver'))
+		} else {
+		    if (data.waiting) {
+			bh.dealChoiceCards ({ text: data.text,
+                                              queuedHistory: queuedHistory,
+                                              dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
+					      dealt: function() {
+                                                  bh.showLoading()
+						  bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
+					      }})
 		    } else {
-			if (data.waiting) {
-			    bh.dealChoiceCards ({ text: data.text,
-                                                  dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
-						  dealt: function() {
-                                                      bh.showLoading()
-						      bh.initMoveTimer (data, bh.setGameStateCallback('ready'))
-						  }})
-			} else {
-			    bh.showWaitingForOther()
-			    bh.initMoveTimer (data, bh.setGameStateCallback('waitingForOther'))
-			}
-
-//			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
+			bh.showWaitingForOther()
+			bh.initMoveTimer (data, bh.setGameStateCallback('waitingForOther'))
 		    }
-                })
-                .fail (function() {
-                    if (loadingCardTimer)
-			window.clearTimeout (loadingCardTimer)
-                    // failed to load; rebuild the page
-                    bh.showGamePage()
-                })
+
+                    //			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
+		}
+
+            }).fail (function() {
+                if (loadingCardTimer)
+		    window.clearTimeout (loadingCardTimer)
+                // failed to load; rebuild the page
+                bh.showGamePage()
+            })
 	},
 
 	initMoveTimer: function (data, callback) {
@@ -1446,10 +1471,12 @@ var BigHouse = (function() {
 	},
 
 	dealChoiceCards: function (config) {
-	    var bh = this
-	    bh.textNodes = config.text
-	    bh.lastChoice = bh.lastPriority = bh.lastSwipe = undefined
-	    this.dealCardForNode ({ node: bh.textNodes[bh.textNodes.length-1],
+	    this.textNodes = config.text
+            this.queuedHistory = config.queuedHistory
+	    this.lastChoice = this.lastPriority = this.lastSwipe = undefined
+            var nodeIndex = config.hasOwnProperty('currentChoiceNodeIndex') ? config.currentChoiceNodeIndex : (this.textNodes.length - 1)
+	    this.dealCardForNode ({ nodeIndex: nodeIndex,
+                                    dealDirection: config.dealDirection,
                                     dealt: config.dealt })
 	},
 
@@ -1472,24 +1499,41 @@ var BigHouse = (function() {
 
                     if (typeof(child.id) !== 'undefined') {
 			bh.showLoading()
-			var next = bh.textNodes[child.id]
-			bh.dealCardForNode ({ node: next,
+			bh.dealCardForNode ({ nodeIndex: child.id,
                                               dealDirection: dir == 'right' ? 'left' : 'right',
                                               dealt: function() {
 						  if (waitCardContents)
                                                       waitCardContents.remove()
                                               }})
 		    } else {
-			if (bh.cardCount) {
-                            bh.cardStartline = new Date()
-                            bh.showCardCount (0)
-			}
-			if (bh.gameState === 'gameOver') {
-			    if (bh.waitCardListItem)
-				bh.throwDummyCard (bh.waitCardListItem)
-			} else
-			    bh.showWaitingForOther()
-			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
+                        delete bh.currentChoiceNodeIndex
+
+                        if (bh.queuedHistory.length) {
+
+                            bh.currentChoiceMoveNumber = bh.queuedHistory[0].move
+                            bh.textNodes = bh.queuedHistory[0].text
+                            bh.queuedHistory = bh.queuedHistory.slice(1)
+                            
+	                    bh.dealCardForNode ({ nodeIndex: bh.textNodes.length - 1,
+                                                  dealDirection: dir == 'right' ? 'left' : 'right',
+                                                  dealt: function() {
+						      if (waitCardContents)
+                                                          waitCardContents.remove()
+                                                  }})
+                            
+                        } else {
+                            ++bh.currentChoiceMoveNumber
+			    if (bh.cardCount) {
+                                bh.cardStartline = new Date()
+                                bh.showCardCount (0)
+			    }
+			    if (bh.gameState === 'gameOver') {
+			        if (bh.waitCardListItem)
+				    bh.throwDummyCard (bh.waitCardListItem)
+			    } else
+			        bh.showWaitingForOther()
+			    bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
+                        }
                     }
 		}
 	    }
@@ -1514,11 +1558,13 @@ var BigHouse = (function() {
         
 	dealCardForNode: function (info) {
             var bh = this
-            var node = info.node
 	    var dealt = info.dealt || function() {}
 
-            bh.currentChoiceNode = node
-            bh.updateLastChoice (node)
+            var node = this.textNodes[info.nodeIndex]
+            this.currentChoiceNodeIndex = info.nodeIndex
+            this.currentChoiceNode = node
+            this.gamePosition[this.gameID] = { move: this.currentChoiceMoveNumber, node: this.currentChoiceNodeIndex }
+            this.updateLastChoice (node)
 
 	    var cardConfig = { leftHint: node.menu ? undefined : node.left.hint,
 			       rightHint: node.menu ? undefined : node.right.hint,
@@ -1981,6 +2027,16 @@ var BigHouse = (function() {
             delete this.lastSwipe
 	    delete this.lastPlayerMoodTime
 	    delete this.lastOpponentMoodTime
+            delete this.moveNumber
+            delete this.currentChoiceMoveNumber
+            delete this.currentChoiceNodeIndex
+
+            var gamePos = this.gamePosition[this.gameID]
+            if (gamePos) {
+                this.currentChoiceMoveNumber = gamePos.move
+                this.currentChoiceNodeIndex = gamePos.node
+            }
+
             this.showGamePage()
 	},
 
