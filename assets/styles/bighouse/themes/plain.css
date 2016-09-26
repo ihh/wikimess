@@ -32,6 +32,10 @@
     color: #888;
 }
 
+.bighouse.plain .choicebar span.disabled {
+    color: #ccc;
+}
+
 .bighouse.plain .statusbar .leftmood,
 .bighouse.plain .statusbar .rightmood {
     border-style: solid;
@@ -64,16 +68,20 @@
     background-color: #ccc;
 }
 
-.bighouse .cardbar .cardtable .cardmenu,
-.bighouse .cardbar .cardtable .cardmenu label {
+.bighouse.plain .cardbar .cardtable .cardmenu,
+.bighouse.plain .cardbar .cardtable .cardmenu label {
     border-color: #aaa;
 }
 
-.bighouse .cardbar .cardtable input:checked + label {
+.bighouse.plain .cardbar .cardtable .cardmenu label.disabled {
+    color: #eee;
+}
+
+.bighouse.plain .cardbar .cardtable input:checked + label {
     background: #eee;
 }
 
-.bighouse .cardbar .cardtable .warnselect {
+.bighouse.plain .cardbar .cardtable .warnselect {
     color: darkred;
 }
 

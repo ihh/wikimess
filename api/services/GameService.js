@@ -17,7 +17,7 @@ module.exports = {
 
     	// rewire the array of trees into a single DAG; build name index
         var nextTree, nodeByName = {}
-	texts.reverse().forEach (function (tree) {
+	texts.reverse().forEach (function (tree, nTree) {
 	    function connect (node) {
                 if (node.goto)
                     return  // handle named links later
@@ -56,11 +56,9 @@ module.exports = {
                     if (node.left || node.right || node.next || node.menu) {
                         sails.log.debug ("Node has children but no text: " + node)
                         node.text = defaultAbsentText
-                    } else if (nextTree) {
+                    } else if (nextTree && !node.goto) {
                         // bypass the empty leaf node
-                        node.id = nextTree.id
-                        node.depth = nextTree.depth
-                        node.isLeaf = nextTree.isLeaf
+                        node.goto = nextTree.name
                         return
                     }
                 }
@@ -68,7 +66,7 @@ module.exports = {
                 node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree || node.text)
                 if (!node.isLeaf) {
 		    if (node.menu) {
-			node.menu.forEach (function (child) {
+<			node.menu.forEach (function (child) {
 			    connect (child)
 			})
 
@@ -101,6 +99,8 @@ module.exports = {
 			connect (node.define)
 		}
             }
+            if (!tree.name)
+                tree.name = '$$$' + nTree
 	    connect (tree)
             nextTree = tree
         })

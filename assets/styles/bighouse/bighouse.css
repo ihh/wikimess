@@ -66,6 +66,7 @@ body {
     text-decoration: none;
 }
 
+.bighouse .choicebar span.disabled,
 .bighouse .statusbar span {
     cursor: default;
 }

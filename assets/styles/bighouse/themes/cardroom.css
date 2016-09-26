@@ -23,6 +23,10 @@
     border-color: rgba(1,1,1,.1);
 }
 
+.bighouse.cardroom .choicebar span.disabled {
+    color: #787;
+}
+
 .bighouse.cardroom .choicebar a,
 .bighouse.cardroom .detailbar,
 .bighouse.cardroom .statusbar,
@@ -56,16 +60,20 @@
     background-color: #444;
 }
 
-.bighouse .cardbar .cardtable .cardmenu,
-.bighouse .cardbar .cardtable .cardmenu label {
+.bighouse.cardroom .cardbar .cardtable .cardmenu,
+.bighouse.cardroom .cardbar .cardtable .cardmenu label {
     border-color: #aaa;
 }
 
-.bighouse .cardbar .cardtable input:checked + label {
+.bighouse.cardroom .cardbar .cardtable .cardmenu label.disabled {
+    color: #eee;
+}
+
+.bighouse.cardroom .cardbar .cardtable input:checked + label {
     background: #eee;
 }
 
-.bighouse .cardbar .cardtable .warnselect {
+.bighouse.cardroom .cardbar .cardtable .warnselect {
     color: darkred;
 }
 
