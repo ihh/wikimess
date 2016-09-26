@@ -125,41 +125,6 @@ module.exports = {
 	: []
     },
     
-    forRole: function (game, role) {
-        var text, verb, self, other, selfMood, otherMood, waiting
-        var current = game.current
-        if (role == 1) {
-            if (current)
-                verb = current.verb1
-            self = game.player1
-            other = game.player2
-            selfMood = game.mood1
-            otherMood = game.mood2
-	    text = game.text1
-        } else {  // role == 2
-            if (current)
-                verb = current.verb2
-            self = game.player2
-            other = game.player1
-            selfMood = game.mood2
-            otherMood = game.mood1
-	    text = game.text2
-        }
-        var json = { game: game.id,
-		     finished: game.finished,
-                     waiting: Game.isWaitingForMove (game, role),
-                     text: text,
-                     verb: verb,
-		     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
-                     self: { mood: selfMood },
-                     other: { id: other.id, name: other.displayName, mood: otherMood },
-                     startline: game.currentStartTime,
-                     move: game.moves + 1 }
-	if (!game.finished && game.current && game.current.timeout)
-	    json.deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
-	return json
-    },
-
     getRole: function (game, playerID) {
 	var player1id = typeof(game.player1) == 'object' ? game.player1.id : game.player1
 	var player2id = typeof(game.player2) == 'object' ? game.player2.id : game.player2

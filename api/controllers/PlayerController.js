@@ -146,7 +146,7 @@ module.exports = {
     // current state of game, filtered for player
     gameInfo: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info, rs) {
-	    rs (null, Game.forRole (info.game, info.role))
+	    rs (null, GameService.forRole (info.game, info.role))
         })
     },
 
