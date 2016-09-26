@@ -1225,7 +1225,7 @@ var BigHouse = (function() {
 			    bh.initMoveTimer (data, bh.setGameStateCallback('waitingForOther'))
 			}
 
-			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
+//			bh.socket_getPlayerGameMove (bh.playerID, bh.gameID)
 		    }
                 })
                 .fail (function() {

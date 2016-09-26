@@ -77,9 +77,10 @@ module.exports = {
   },
 
     mood: function (oldMood, newMood, move1, move2) {
-        if (newMood == 'unchanged')
+//        console.log ('oldMood='+oldMood+' newMood='+newMood+' move1='+move1+' move2='+move2)
+        if (newMood === 'unchanged')
             return oldMood
-        else if (newMood && newMood != 'auto')
+        else if (newMood && newMood !== 'auto')
             return newMood
 	else if (move1 != '' && move2 != '') {
             var move12 = move1 + move2
@@ -87,7 +88,7 @@ module.exports = {
             case 'rr': case 'yy': return 'happy'
             case 'rl': case 'yn': return 'angry'
             case 'lr': case 'ny': return 'surprised'
-            case 'rr': case 'nn': return 'sad'
+            case 'll': case 'nn': return 'sad'
             default: break
             }
 	}
@@ -95,11 +96,11 @@ module.exports = {
     },
 
     mood1: function (game, outcome) {
-        return Outcome.mood (game.mood1, outcome.mood1, outcome.move1, outcome.move2)
+        return Outcome.mood (game.mood1, outcome.mood1, game.move1, game.move2)
     },
 
     mood2: function (game, outcome) {
-        return Outcome.mood (game.mood2, outcome.mood2, outcome.move2, outcome.move1)
+        return Outcome.mood (game.mood2, outcome.mood2, game.move2, game.move1)
     },
 
     outcomeVerb: function (game, outcome, role) {
