@@ -1207,8 +1207,6 @@ var BigHouse = (function() {
 		bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 		bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
-		bh.createPlaceholderCards (!data.finished, !(data.finished && text.length == 0))
-
                 var text, queuedHistory
                 if (data.history) {
                     if (data.history.length) {
@@ -1225,6 +1223,11 @@ var BigHouse = (function() {
                     queuedHistory = []
                 }
                 
+		if (!data.finished)
+		    bh.createPlaceholderOutcome()
+		if (!(data.finished && text.length == 0))
+		    bh.createPlaceholderWait()
+
                 if (data.finished) {
 		    if (text.length)
 			bh.dealChoiceCards ({ text: text,
@@ -1464,16 +1467,14 @@ var BigHouse = (function() {
             return pulseElement
         },
         
-	createPlaceholderCards: function (wantOutcome, wantWaitcard) {
-	    if (wantOutcome) {
-		this.nextOutcomeCardListItem = this.createCardListItem ('<!-- placeholder outcome -->', 'outcome')  // placeholder, for appearances
-		this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
-	    }
+	createPlaceholderOutcome: function() {
+	    this.nextOutcomeCardListItem = this.createCardListItem ('<!-- placeholder outcome -->', 'outcome')  // placeholder, for appearances
+	    this.nextOutcomeCardSwipe = this.pushChoiceRevealer().wrapCallback()
+	},
 
-            if (wantWaitcard) {
-                this.waitCardListItem = this.createCardListItem ('<!-- placeholder waitcard -->', 'waitcard')
-	        this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
-            }
+	createPlaceholderWait: function() {
+            this.waitCardListItem = this.createCardListItem ('<!-- placeholder waitcard -->', 'waitcard')
+	    this.waitCardSwipe = this.pushChoiceRevealer().wrapCallback()
 	},
 
 	showLoading: function() {
