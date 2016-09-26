@@ -66,7 +66,7 @@ module.exports = {
                 node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree || node.text)
                 if (!node.isLeaf) {
 		    if (node.menu) {
-<			node.menu.forEach (function (child) {
+			node.menu.forEach (function (child) {
 			    connect (child)
 			})
 
