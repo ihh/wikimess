@@ -1097,6 +1097,7 @@ var BigHouse = (function() {
             this.setPage ('game')
             this.moodDiv = []
 	    this.postponedMessages = []
+
             this.container
                 .empty()
                 .append ($('<div class="statusbar">')
@@ -1194,9 +1195,12 @@ var BigHouse = (function() {
                 var text, queuedHistory
                 if (data.history) {
                     if (data.history.length) {
-                        bh.setCurrentChoiceMoveNumber (data.history[0].move)
-                        text = data.history[0].text
-                        queuedHistory = data.history.slice(1)
+                        queuedHistory = data.history
+                        do {
+                            bh.setCurrentChoiceMoveNumber (queuedHistory[0].move)
+                            text = queuedHistory[0].text
+                            queuedHistory = queuedHistory.slice(1)
+                        } while (queuedHistory.length && !text.length)
                     } else {
                         text = []
                         queuedHistory = []
@@ -1207,6 +1211,9 @@ var BigHouse = (function() {
                     queuedHistory = []
                 }
 
+                if (queuedHistory.length)
+                    bh.hideMoods()
+                
 		var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
 
 		if (text.length) {
@@ -1228,6 +1235,22 @@ var BigHouse = (function() {
                 bh.loadGameCards()
             })
 	},
+
+        allMoodDivs: function() {
+            return [this.playerMoodDiv, this.opponentNameDiv, this.opponentMoodDiv].concat (this.moodDiv)
+        },
+        
+        hideMoods: function() {
+            this.allMoodDivs().forEach (function (div) {
+                div.css ('visibility', 'hidden')
+            })
+        },
+
+        revealMoods: function() {
+            this.allMoodDivs().forEach (function (div) {
+                div.css ('visibility', 'visible')
+            })
+        },
 
         setCurrentChoiceMoveNumber: function (moveNumber) {
             if (moveNumber != this.currentChoiceMoveNumber) {
@@ -1257,14 +1280,13 @@ var BigHouse = (function() {
 	    callback()
 	},
 
-        showCardCount: function (n) {
-	    var bh = this
-	    if (!(n > 0))
+        showCardCount: function (cardsLeft) {
+            // the last two cards are the final choice and then the end waitcard placeholder, so subtract those
+	    if (!(cardsLeft > 2) || this.gameState == 'gameOver')
                 this.cardCountSpan.text('')
             else
-                this.cardCountSpan.text(n+' card'+(n>1?'s':'')+' before end of turn')
+                this.cardCountSpan.text((cardsLeft-2)+' card'+(cardsLeft>3?'s':'')+' before end of turn')
             this.cardCountDiv.css ('opacity', 1)
-	    this.cardCount = n
         },
 
 	setMoveTimer: function (callback, delay) {
@@ -1434,17 +1456,28 @@ var BigHouse = (function() {
 		    if (nextNode.depth == 0 && bh.queuedHistory.length == 0)
 			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
 
-		    if (!bh.nextInChain(node))
+		    if (bh.nextInChain(node))
+                        bh.showCardCount (bh.cardsLeft(nextNode))
+                    else
 			bh.dealCardForNode ({ nodeIndex: child.id,
 					      showDealAnimation: true,
                                               dealDirection: dir == 'right' ? 'left' : 'right' })
 
 		} else {
+	            bh.lastChoice = bh.lastPriority = bh.lastSwipe = undefined
                     if (bh.queuedHistory.length) {
                         bh.setCurrentChoiceMoveNumber (bh.queuedHistory[0].move)
                         bh.textNodes = bh.queuedHistory[0].text
                         bh.queuedHistory = bh.queuedHistory.slice(1)
 
+                        if (bh.textNodes.length) {
+                            var nextNode = bh.textNodes[bh.textNodes.length - 1]
+                            bh.showCardCount (bh.cardsLeft (nextNode))
+                        }
+
+                        if (!bh.queuedHistory.length)
+                            bh.revealMoods()
+                        
 		    } else {
 			bh.playSound ('gameover')
 			bh.showPlayPage()
@@ -1500,18 +1533,16 @@ var BigHouse = (function() {
 		bh.dealCardForNode (nextInfo)
 	    }
 
-            var cardsBeforeChoice = bh.queuedHistory.reduce (function (totalDepth, history) {
-                return totalDepth + (history.text.length ? history.text[history.text.length - 1].depth : 0)
-            }, node.depth - 1)
-
-	    var isFinalCard = cardsBeforeChoice < 0
+            var cardsLeft = bh.cardsLeft(node)
+	    var isFinalCard = cardsLeft == 1
+            var isHistory = lookahead < bh.queuedHistory.length
 
 	    var cardConfig = { leftHint: (isFinalCard || node.menu) ? undefined : (node.left ? node.left.hint : this.defaultNextHint),
 			       rightHint: (isFinalCard || node.menu) ? undefined : (node.right ? node.right.hint : this.defaultNextHint),
                                hint: isFinalCard ? this.defaultBackHint : (node.menu ? this.defaultNextHint : undefined),
-                               swipeLeft: bh.makeSwipeFunction (node, 'left'),
-                               swipeRight: bh.makeSwipeFunction (node, 'right'),
-			       cardsBeforeChoice: cardsBeforeChoice,
+                               swipeLeft: bh.makeSwipeFunction (node, (isHistory && !node.menu) ? node.defaultSwipe : 'left'),
+                               swipeRight: bh.makeSwipeFunction (node, (isHistory && !node.menu) ? node.defaultSwipe : 'right'),
+			       cardsLeft: cardsLeft,
                                dealt: dealt,
 			       showDealAnimation: info.showDealAnimation,
                                dealDirection: info.dealDirection }
@@ -1571,7 +1602,6 @@ var BigHouse = (function() {
                 })
 
 	    // create the menu, if applicable
-            var isHistory = lookahead < bh.queuedHistory.length
 	    if (node.menu) {
 		var fieldset = $('<fieldset class="cardmenu">')
 		this.menuLabel = []
@@ -1639,6 +1669,12 @@ var BigHouse = (function() {
 	    return undefined
 	},
 
+        cardsLeft: function (node) {
+            return this.queuedHistory.reduce (function (totalDepth, history) {
+                return totalDepth + (history.text.length ? (history.text[history.text.length - 1].depth + 1) : 0)
+            }, node.depth + 1)
+        },
+        
         createCardListItem: function (cardContent, cardClass) {
             var listItem = $('<li>').append(cardContent)
             if (cardClass)
@@ -1770,7 +1806,7 @@ var BigHouse = (function() {
 	    } else
 		config.dealt.call()
 
-            this.showCardCount (config.cardsBeforeChoice || 0)
+            this.showCardCount (config.cardsLeft)
 
             return card
         },

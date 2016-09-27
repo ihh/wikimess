@@ -53,14 +53,8 @@ module.exports = {
                 }
 
                 if (!node.text) {
-		    if (nextTree && !node.goto) {
-                        // bypass the empty leaf node
-                        node.goto = nextTree.name
-                        return
-                    } else {
-                        sails.log.debug ("Node has no text: " + JSON.stringify(node))
-                        node.text = defaultAbsentText
-		    }
+                    sails.log.debug ("Node has no text: " + JSON.stringify(node))
+                    node.text = defaultAbsentText
                 }
 
                 node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree)
@@ -99,8 +93,6 @@ module.exports = {
 			connect (node.define)
 		}
             }
-            if (!tree.name)
-                tree.name = '$$$' + nTree   // ensure tree root has a name
 	    connect (tree)
             nextTree = tree
         })
