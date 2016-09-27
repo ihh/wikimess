@@ -1043,15 +1043,19 @@ var BigHouse = (function() {
             var bh = this
 
             this.pushView ('gamemenu')
+	    var menu
             this.container
                 .append (this.makePageTitle ("Game menu"))
                 .append ($('<div class="menubar">')
-                         .append ($('<ul>')
-                                  .append (this.makeListLink ('Resume game', this.popView))
-                                  .append (this.makeListLink ('Status', this.showPlayerStatusPage))
-                                  .append (this.makeListLink ('Audio settings', this.showAudioPage))
-                                  .append (this.makeListLink ('Themes', this.showThemesPage))
-                                  .append (this.makeListLink ('Exit to menu', this.exitGame))))
+                         .append (menu = $('<ul>')
+                                  .append (this.makeListLink ('Resume game', this.popView))))
+
+	    if (!this.currentChoiceNode.isHistory)
+                menu.append (this.makeListLink ('Status', this.showPlayerStatusPage))
+
+            menu.append (this.makeListLink ('Audio settings', this.showAudioPage))
+                .append (this.makeListLink ('Themes', this.showThemesPage))
+                .append (this.makeListLink ('Exit to menu', this.exitGame))
         },
 
 	clearMoveTimer: function() {
@@ -1104,27 +1108,20 @@ var BigHouse = (function() {
             this.setPage ('game')
             this.moodDiv = []
 	    this.postponedMessages = []
+	    this.revealMoods()
 
             this.container
                 .empty()
-                .append ($('<div class="statusbar">')
-                         .append ($('<div class="statuslink">')
-                                  .append ($('<span>')
-                                           .html (this.makeLink ('Menu', this.showGameMenuPage))))
-                         .append ($('<div class="leftmood">')
-				  .append (this.makeVeil())
-				  .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
-                         .append ($('<div class="rightstatus">')
-                                  .append (this.opponentNameDiv = $('<span>')
-                                           .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
-                         .append ($('<div class="rightmood">')
-				  .append (this.makeVeil())
-				  .append (this.opponentMoodDiv = $('<div class="moodcontainer">'))))
+                .append (this.statusBar = $('<div class="statusbar">'))
                 .append ($('<div class="cardbar">')
                          .append ($('<div class="cardtable">')
                                   .append ($('<div class="slidebar">')
                                            .append ($('<div class="slidetab">')
-                                                    .on ('click', function() { bh.container.toggleClass('bigtable') })))
+                                                    .on ('click', function() {
+							bh.container.toggleClass('bigtable')
+							bh.refreshPlayerMoodImage()
+							bh.refreshOpponentMoodImage()
+						    })))
                                   .append (this.choiceBar = $('<div class="choicebar">')
                                            .append (this.choiceDiv = $('<div>')))
 				  .append (this.stackList = $('<ul class="stack">'))))
@@ -1148,8 +1145,21 @@ var BigHouse = (function() {
             this.loadGameCards()
         },
 
-	initMoodButtons: function() {
+	initStatusBar: function() {
 	    var bh = this
+            this.statusBar
+                .append ($('<div class="rightstatus">')
+                         .append (this.opponentNameDiv = $('<span>')
+                                  .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
+                .append ($('<div class="statuslink">')
+                         .append ($('<span>')
+                                  .html (this.makeLink ('Menu', this.showGameMenuPage))))
+		.append ($('<div class="leftmood">')
+			 .append (this.makeVeil())
+			 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
+                .append ($('<div class="rightmood">')
+			 .append (this.makeVeil())
+			 .append (this.opponentMoodDiv = $('<div class="moodcontainer">')))
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
 		var child, div = $('<div class="moodbutton">')
@@ -1202,7 +1212,7 @@ var BigHouse = (function() {
                     delete this.throwDisabled
 
 		    if (isStart)
-			bh.initMoodButtons()
+			bh.initStatusBar()
 
 		    bh.clearStack()
 
@@ -1820,13 +1830,8 @@ var BigHouse = (function() {
                     console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
 		if (time)
                     this.lastPlayerMoodTime = date
-                this.showMoodImage
-                (this.playerID, mood, this.playerMoodDiv,
-                 function() {
-                     bh.playerMoodDiv
-                         .off ('click')
-                         .on ('click', bh.callWithSoundEffect (bh.showPlayerStatusPage))
-                })
+		this.playerMood = mood
+		this.refreshPlayerMoodImage()
                 for (var m = 0; m < this.moods.length; ++m) {
                     var newMood = this.moods[m]
                     this.moodDiv[m].off()
@@ -1851,15 +1856,36 @@ var BigHouse = (function() {
             var date = new Date (time)
             if (!this.lastOpponentMoodTime || date > this.lastOpponentMoodTime) {
                 this.lastOpponentMoodTime = date
-		bh.showMoodImage (id,
-				  mood,
-				  bh.opponentMoodDiv,
-				  function() {
-                                      bh.opponentMoodDiv
-					  .off ('click')
-					  .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))
-				  })
+		this.opponentId = id
+		this.opponentMood = mood
+		this.refreshOpponentMoodImage()
 	    }
+	},
+
+	refreshMoodImage: function (id, mood, div, callback) {
+	    var bh = this
+	    // the test for class 'bigtable' is for Moz's benefit...
+	    // somehow, the error thrown by facesjs when it can't get a bounding box
+	    // (which happens when its containing element is hidden)
+	    // is enough to derail JQuery's calling promise, breaking getAvatarConfigPromise.
+	    // i know, right? ...ugh.
+	    // We refresh the images when we toggle the bigtable class, so it's no biggie.
+	    if (mood && !this.container.hasClass('bigtable'))
+		this.showMoodImage
+            (id, mood, div,
+             function() {
+                 bh.playerMoodDiv
+                     .off ('click')
+                     .on ('click', bh.callWithSoundEffect (callback))
+             })
+	},
+
+	refreshPlayerMoodImage: function() {
+	    this.refreshMoodImage (this.playerID, this.playerMood, this.playerMoodDiv, this.showPlayerStatusPage)
+	},
+
+	refreshOpponentMoodImage: function() {
+	    this.refreshMoodImage (this.opponentId, this.opponentMood, this.opponentMoodDiv, this.showOpponentStatusPage)
 	},
 
 	callOrRetry (makePromise, retryCount, minWait, maxWait, validate) {

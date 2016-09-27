@@ -30,11 +30,15 @@
 }
 
 .bighouse.plain .veil {
-    background-color: black;
+    background-color: #eee;
 }
 
-.bighouse.plain .veil .cyloneye {
-    background-color: #445;
+.bighouse.history.plain .veil .cyloneye {
+    background-color: #ccd;
+    background-image: -webkit-linear-gradient(    left, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
+    background-image:    -moz-linear-gradient(    left, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
+    background-image:      -o-linear-gradient(    left, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
+    background-image:         linear-gradient(to right, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
 }
 
 .bighouse.plain .statusbar .leftmood,
