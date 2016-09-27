@@ -30,27 +30,29 @@ module.exports = {
 	    if (node.menu) {
 		node.defaultMenuIndex = BotService.randomMenuIndex (player, game, node.menu)
 		childSummary = node.menu[node.defaultMenuIndex]
-	    } else {
+	    } else if (node.left && node.right) {
 		node.defaultSwipe = BotService.randomSwipe (player, game, node)
 		childSummary = node[node.defaultSwipe]
 	    }
 
-	    childSummary.defaultMove = { choice: childSummary.choice,
-					 priority: childSummary.priority,
-					 concat: childSummary.concat }
+	    if (childSummary) {
+		childSummary.defaultMove = { choice: childSummary.choice,
+					     priority: childSummary.priority,
+					     concat: childSummary.concat }
 
-            if (typeof(childSummary.id) !== 'undefined') {
-		var childNode = textNodes[childSummary.id]
-		childSummary.defaultMove = updateDefaultMove (childSummary.defaultMove, childNode.defaultMove)
+		if (typeof(childSummary.id) !== 'undefined') {
+		    var childNode = textNodes[childSummary.id]
+		    childSummary.defaultMove = updateDefaultMove (childSummary.defaultMove, childNode.defaultMove)
+		}
+
+		node.defaultMove = { choice: node.choice,
+				     priority: node.priority,
+				     concat: node.concat }
+
+		node.defaultMove = updateDefaultMove (node.defaultMove, childSummary.defaultMove)
 	    }
-
-	    node.defaultMove = { choice: node.choice,
-				 priority: node.priority,
-				 concat: node.concat }
-
-	    node.defaultMove = updateDefaultMove (node.defaultMove, childSummary.defaultMove)
         })
-
+			   
         if (textNodes.length)
             game[Game.roleAttr(role,'defaultMove')] = textNodes[textNodes.length - 1].defaultMove.choice
     },

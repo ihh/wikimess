@@ -51,19 +51,19 @@ module.exports = {
                         node.text = split[0]
                     }
                 }
-                
+
                 if (!node.text) {
-                    if (node.left || node.right || node.next || node.menu) {
-                        sails.log.debug ("Node has children but no text: " + node)
-                        node.text = defaultAbsentText
-                    } else if (nextTree && !node.goto) {
+		    if (nextTree && !node.goto) {
                         // bypass the empty leaf node
                         node.goto = nextTree.name
                         return
-                    }
+                    } else {
+                        sails.log.debug ("Node has no text: " + JSON.stringify(node))
+                        node.text = defaultAbsentText
+		    }
                 }
 
-                node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree || node.text)
+                node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree)
                 if (!node.isLeaf) {
 		    if (node.menu) {
 			node.menu.forEach (function (child) {
@@ -100,7 +100,7 @@ module.exports = {
 		}
             }
             if (!tree.name)
-                tree.name = '$$$' + nTree
+                tree.name = '$$$' + nTree   // ensure tree root has a name
 	    connect (tree)
             nextTree = tree
         })
@@ -108,6 +108,8 @@ module.exports = {
         // resolve names, check for cycles, convert into an array of nodes
 	var nodeList = []
         function linkSummary (node, defaultChoice) {
+	    if (typeof(node) === 'undefined')
+		return undefined
             var summary = {}
 	    summary.hint = node.hint || defaultNextHint
             if (node.choice || node.menu) {
@@ -167,25 +169,25 @@ module.exports = {
 				  ? Math.max.apply (null, node.menu.map (function(item) { return item.depth || 0 }))
 				  : Math.max (node.left.depth || 0,
                                               node.right.depth || 0))
+	    }
 
-                node.id = nodeList.length
-                nodeList.push ({ id: node.id,
-                                 left: (node.menu
-					? undefined
-					: linkSummary (node.left, 'l')),
-                                 right: (node.menu
-					 ? undefined
-					 : linkSummary (node.right, 'r')),
-				 menu: (node.menu
-					? node.menu.map (function (child, n) { return linkSummary (child, n) })
-					: undefined),
-                                 depth: node.depth,
-                                 choice: node.choice,
-                                 menu: node.menu,
-                                 priority: node.priority,
-				 concat: node.concat,
-                                 text: node.text })
-            }
+            node.id = nodeList.length
+            nodeList.push ({ id: node.id,
+                             left: (node.menu
+				    ? undefined
+				    : linkSummary (node.left, 'l')),
+                             right: (node.menu
+				     ? undefined
+				     : linkSummary (node.right, 'r')),
+			     menu: (node.menu
+				    ? node.menu.map (function (child, n) { return linkSummary (child, n) })
+				    : undefined),
+                             depth: node.depth,
+                             choice: node.choice,
+                             menu: node.menu,
+                             priority: node.priority,
+			     concat: node.concat,
+                             text: node.text })
 
             return node
         }
