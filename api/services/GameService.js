@@ -372,31 +372,71 @@ module.exports = {
     updateGameAndPlayers: function (query, game, success, error) {
         game.finished = game.current ? false : true
 	GameService.prepareTextTrees (game)
-        // these database updates (Game, Player 1, Player 2, Turn) should be wrapped in a transaction, to ensure consistency
+        // these database updates (Game, Player 1, Player 2, Turn) should really be wrapped in a transaction,
+	// to ensure consistency
         // e.g. see http://stackoverflow.com/questions/25079408/how-to-handle-async-concurrent-requests-correctly/25100188#25100188
-        // Could also use a quick-and-dirty locking mechanism on the Players (Games are already consistent due to 'moves' attribute):
-        // Update [{id:player1id,lockTime:null or stale},{id:player2id,lockTime:null or stale}] -> [{lockTime:now},{lockTime:now}]
-        // Update Game (on failure, release Player locks)
-        // Update Players, releasing locks
-	GameService.updateGame (query,
-				game,
-				function() {
-				    GameService.updatePlayers (game,
-                                                               function() {
-                                                                   Turn.create ({ game: game.id,
-                                                                                  move: game.moves + 1,
-                                                                                  text1: game.text1,
-                                                                                  text2: game.text2 })
-                                                                       .exec (function (err, turn) {
-                                                                           if (err)
-                                                                               error (err)
-                                                                           else
-                                                                               success()
-                                                                       })
-                                                               },
-                                                               error)
-				},
-				error)
+        // Since Waterline transaction support is incomplete (September 2016),
+	// we use a quick-and-dirty locking mechanism on the Players
+	// (Games are already kept consistent by testing the 'moves' attribute during updates)
+	var maxLockDurationInSeconds = 5
+	var mostRecentBreakableLockTime = Date.now() - 1000*maxLockDurationInSeconds
+	var currentTime = Date.now()
+	function unlockPlayers (callback) {
+	    Player.update
+	    ({ id: [ game.player1.id, game.player2.id ] },
+	     { lastLockTime: 0 },
+	     function (err, unlockedPlayers) {
+		 if (err)
+		     error (err)
+		 else if (unlockedPlayers.length != 2)
+		     error (new Error ("Couldn't unlock Players"))
+		 else
+		     callback()
+	     })
+	}
+	function unlockingErrorHandler (err) {
+	    unlockPlayers (function() {
+		error (err)
+	    })
+	}
+	// lock the Players
+	Player.update
+	({ id: [ game.player1.id, game.player2.id ],
+	   lastLockTime: { '<=': mostRecentBreakableLockTime } },
+	 { lastLockTime: currentTime },
+	 function (err, lockedPlayers) {
+	     if (err)
+		 error (err)
+	     else if (lockedPlayers.length != 2)
+		 error (new Error ("Couldn't lock Players"))
+	     else {
+		 // update the Game
+		 GameService.updateGame
+		 (query,
+		  game,
+		  function() {
+		      // update the Players
+		      // we are committed at this point, but we've locked the Players, so...
+		      GameService.updatePlayers
+		      (game,
+		       function() {
+			   Turn.create
+			   ({ game: game.id,
+			      move: game.moves + 1,
+			      text1: game.text1,
+			      text2: game.text2 })
+			       .exec (function (err, turn) {
+				   if (err)
+				       unlockingErrorHandler (err)  // disastrous! (updated Game & Players, couldn't create Turn)
+				   else
+				       unlockPlayers (success)
+			       })
+		       },
+		       unlockingErrorHandler)  // disastrous! (updated Game, couldn't update Players or create Turn)
+		  },
+		  unlockingErrorHandler)  // not so disastrous (couldn't update anything)
+	     }
+	 })
     },
 
     updateGame: function (query, game, success, error) {
@@ -731,33 +771,35 @@ module.exports = {
     },
 
     createGame: function (game, success, error) {
-	Game.create (game,
-		     function (err, g) {
-			 if (err)
-			     error (err)
-			 else {
-			     game.id = g.id
-			     game.moves = g.moves
-                             game.common = g.common
-                             game.local1 = g.local1
-                             game.local2 = g.local2
-                             game.future = g.future
+	Game.create
+	(game,
+	 function (err, g) {
+	     if (err)
+		 error (err)
+	     else {
+		 game.id = g.id
+		 game.moves = g.moves
+                 game.common = g.common
+                 game.local1 = g.local1
+                 game.local2 = g.local2
+                 game.future = g.future
 
-                             game.tree1 = []
-                             game.tree2 = []
-                             game.move1 = game.move2 = ''
-                             
-	                     GameService.expandCurrentChoice (game,
-                                                              function() {
-	                                                          game.currentStartTime = new Date()
-                                                                  GameService.updateGameAndPlayers ({ id: game.id },
-                                                                                                    game,
-                                                                                                    success,
-                                                                                                    error);
-                                                              },
-                                                              error)
-			 }
-		     })
+                 game.tree1 = []
+                 game.tree2 = []
+                 game.move1 = game.move2 = ''
+                 
+	         GameService.expandCurrentChoice
+		 (game,
+                  function() {
+	              game.currentStartTime = new Date()
+                      GameService.updateGameAndPlayers ({ id: game.id },
+                                                        game,
+                                                        success,
+                                                        error)
+                  },
+                  error)
+	     }
+	 })
     },
 
     recordMove: function (info, gotOutcome, playerWaiting, error) {

@@ -109,7 +109,8 @@ module.exports = {
 									    else
 										gameStarted (opponent, game)
 									})
-						    })
+						    },
+						    error)
                         }
                     }
                 })

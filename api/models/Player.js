@@ -81,6 +81,12 @@ module.exports = {
           defaultsTo: true
       },
 
+      // crude locking mechanism
+      lastLockTime: {
+          type: 'integer',
+	  defaultsTo: 0
+      },
+
       // references to games
       player1games: {
           collection: 'game',
