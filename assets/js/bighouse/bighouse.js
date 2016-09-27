@@ -79,8 +79,12 @@ var BigHouse = (function() {
 				  sendingKick: { kicking: true, loading: true },
 				  gameOver: { } },
 
+	swingDir: { left: gajus.Swing.Card.DIRECTION_LEFT,
+		    right: gajus.Swing.Card.DIRECTION_RIGHT },
+
 	defaultBackHint: "Back",
 	defaultNextHint: "Next",
+	defaultAbsentText: "Time passes...",
 
 	verbose: { page: false,
                    gameState: true,
@@ -170,10 +174,6 @@ var BigHouse = (function() {
             return this.socketGetPromise ('/player/' + playerID + '/join')
         },
 
-        socket_getPlayerGame: function (playerID, gameID) {
-            return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID)
-        },
-
         socket_getPlayerGameHistory: function (playerID, gameID, move) {
             return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID + '/history/' + move)
         },
@@ -212,6 +212,10 @@ var BigHouse = (function() {
                 evt.preventDefault()
                 callback.call (bh, evt)
             }
+        },
+
+        makeSilentLink: function (text, callback) {
+	    return this.makeLink (text, callback, '')
         },
 
         makeLink: function (text, callback, sfx) {
@@ -1170,72 +1174,119 @@ var BigHouse = (function() {
 	    var isStart = this.gameState === 'start'
 	    this.setGameState('loading')
 
-            var loadPromise = this.currentChoiceMoveNumber
-                ? this.socket_getPlayerGameHistory (this.playerID, this.gameID, this.currentChoiceMoveNumber)
-                : this.socket_getPlayerGame (this.playerID, this.gameID)
-
-            loadPromise.done (function (data) {
-
-		if (bh.verbose.messages) {
-                    console.log("Received game state from server")
-		    console.log(data)
-                }
-
-                delete this.throwDisabled
-
-		bh.clearStack()
-
-                bh.moveNumber = data.move
-                bh.defaultMove = data.defaultMove
-                
-		bh.updatePlayerMood (data.self.mood, data.startline)
-		bh.opponentNameDiv.text (bh.opponentName = data.other.name)
-		bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
-
-                var text, queuedHistory
-                if (data.history) {
-                    if (data.history.length) {
-                        queuedHistory = data.history
-                        do {
-                            bh.setCurrentChoiceMoveNumber (queuedHistory[0].move)
-                            text = queuedHistory[0].text
-                            queuedHistory = queuedHistory.slice(1)
-                        } while (queuedHistory.length && !text.length)
-                    } else {
-                        text = []
-                        queuedHistory = []
+            this.socket_getPlayerGameHistory (this.playerID, this.gameID, this.currentChoiceMoveNumber || 1)
+		.done (function (data) {
+		    
+		    if (bh.verbose.messages) {
+			console.log("Received game state from server")
+			console.log(data)
                     }
-                } else {
-                    bh.setCurrentChoiceMoveNumber (data.move)
-                    text = data.text
-                    queuedHistory = []
-                }
 
-                if (queuedHistory.length)
-                    bh.hideMoods()
-                
-		var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
+                    delete this.throwDisabled
 
-		if (text.length) {
-		    bh.dealChoiceCards ({ text: text,
-                                          currentChoiceNodeIndex: bh.currentChoiceNodeIndex,
-                                          queuedHistory: queuedHistory,
+		    bh.clearStack()
+
+                    bh.moveNumber = data.move
+                    bh.defaultMove = data.defaultMove
+                    
+		    bh.updatePlayerMood (data.self.mood, data.startline)
+		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
+		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
+
+		    function hookup (node, summary, move) {
+			if (summary && typeof(summary.id) !== 'undefined') {
+			    if (typeof(summary.move) === 'undefined')
+				summary.move = move
+			    summary.node = bh.nodesForMove[summary.move][summary.id]
+			    node.minCardsLeft = bh.minDefined (node.minCardsLeft, summary.node.minCardsLeft + 1)
+			    node.maxCardsLeft = bh.maxDefined (node.maxCardsLeft, summary.node.maxCardsLeft + 1)
+			}
+		    }
+
+		    var nextTree
+		    data.history.slice(0).reverse().forEach (function (hist) {
+			if (!hist.text.length)
+			    hist.text = [{ text: bh.defaultAbsentText }]
+
+			bh.nodesForMove[hist.move] = hist.text
+			hist.text.slice(0).reverse().forEach (function (node) {
+			    node.move = hist.move
+			    if (nextTree && !(node.left || node.right || node.menu)) {
+				node.left = node.right = nextTree
+				node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
+			    }
+			    hookup (node, node.left, hist.move)
+			    hookup (node, node.right, hist.move)
+			    if (node.menu)
+				node.menu.forEach (function (item) {
+				    hookup (node, item, hist.move)
+				})
+			    if (bh.nodeIsHistory(node)) {
+				var next = bh.defaultNextNode(node)
+				node.minCardsLeft = next.minCardsLeft
+				node.maxCardsLeft = next.maxCardsLeft
+			    } else {
+				node.minCardsLeft = node.minCardsLeft || 1
+				node.maxCardsLeft = bh.maxDefined (node.maxCardsLeft, 1)
+			    }
+			})
+			nextTree = { hint: bh.defaultNextHint,
+				     move: hist.move,
+				     id: hist.text.length - 1 }
+		    })
+
+		    if (typeof (bh.currentChoiceMoveNumber) === 'undefined')
+			bh.currentChoiceMoveNumber = data.history[0].move
+		    if (typeof (bh.currentChoiceNodeIndex) === 'undefined')
+			bh.currentChoiceNodeIndex = bh.nodesForMove[bh.currentChoiceMoveNumber].length - 1
+		    var node = bh.nodesForMove[bh.currentChoiceMoveNumber][bh.currentChoiceNodeIndex]
+
+                    if (bh.nodeIsHistory(node))
+			bh.hideMoods()
+                    
+		    var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
+		    bh.dealCardForNode ({ node: node,
 					  showDealAnimation: isStart,
-                                          dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left',
-					  dealt: function() {
-					      bh.initMoveTimer (data, bh.setGameStateCallback(nextState))
-					  }})
-		} else
-		    bh.initMoveTimer (data, bh.setGameStateCallback(nextState))
+					  dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left' })
+			.done (function() {
+			    bh.initMoveTimer (data, bh.setGameStateCallback(nextState))
+			})
 
-            }).fail (function() {
-                if (loadingCardTimer)
-		    window.clearTimeout (loadingCardTimer)
-                // failed to load; rebuild the page
-                bh.loadGameCards()
-            })
+		}).fail (function() {
+                    if (loadingCardTimer)
+			window.clearTimeout (loadingCardTimer)
+                    // failed to load; rebuild the page
+                    bh.loadGameCards()
+		})
 	},
 
+	filterDefined: function() {
+	    return Array.prototype.filter.call (arguments, function (x) { return typeof(x) !== 'undefined' })
+	},
+
+	minDefined: function() {
+	    return Math.min.apply (null, this.filterDefined.apply (this, arguments))
+	},
+
+	maxDefined: function() {
+	    return Math.max.apply (null, this.filterDefined.apply (this, arguments))
+	},
+
+	nodeIsHistory: function (node) {
+	    return node.move < this.moveNumber
+	},
+
+	defaultNextSummary: function(node) {
+	    if (node.menu)
+		return node.menu[node.defaultMenuIndex]
+	    else
+		return node[node.defaultSwipe]
+	},
+
+	defaultNextNode: function(node) {
+	    return this.defaultNextSummary(node).node
+	},
+	
         allMoodDivs: function() {
             return [this.playerMoodDiv, this.opponentNameDiv, this.opponentMoodDiv].concat (this.moodDiv)
         },
@@ -1280,8 +1331,41 @@ var BigHouse = (function() {
 	    callback()
 	},
 
-        showCardCount: function (cardsLeft) {
+        showCountAndHints: function (node) {
+	    // show hints
+	    var card = node.card
+
+	    var leftHint = node.left ? node.left.hint : this.defaultNextHint
+	    var rightHint = node.right ? node.right.hint : this.defaultNextHint
+
+	    leftHint = "← " + leftHint
+	    rightHint = rightHint + " →"
+
+            // strike if we're history
+	    var leftStruck, rightStruck
+            if (this.nodeIsHistory(node) && !this.nextInChain(node)) {
+		if (node.defaultSwipe === 'left')
+		    rightStruck = true
+		else
+		    leftStruck = true
+	    }
+
+	    function makeHint (choiceClass, struck, hint, dir) {
+		return $('<div class="'+choiceClass+'">')
+		    .append ($('<div class="hint">')
+			     .append (struck
+				      ? $('<span class="disabled">').append ($('<strike>').text(hint))
+				      : bh.makeSilentLink (hint,
+							   bh.cardThrowFunction (node, dir))))
+	    }
+	    
+            this.choiceDiv.empty()
+		.append (makeHint ('choice1', leftStruck, leftHint, this.swingDir.left))
+		.append (makeHint ('choice2', rightStruck, rightHint, this.swingDir.right))
+
+	    // show counts
             // the last two cards are the final choice and then the end waitcard placeholder, so subtract those
+	    var cardsLeft = node.maxCardsLeft
 	    if (!(cardsLeft > 2) || this.gameState == 'gameOver')
                 this.cardCountSpan.text('')
             else
@@ -1418,21 +1502,6 @@ var BigHouse = (function() {
 	    }
             return pulseElement
         },
-        
-	dealChoiceCards: function (config) {
-	    this.textNodes = config.text
-            this.queuedHistory = config.queuedHistory
-	    this.lastChoice = this.lastPriority = this.lastSwipe = undefined
-            var nodeIndex = config.currentChoiceNodeIndex
-            if (typeof nodeIndex === 'undefined' && this.textNodes.length)
-                nodeIndex = this.textNodes.length - 1
-            if (typeof nodeIndex !== 'undefined')
-		this.dealCardForNode ({ lookahead: 0,
-					nodeIndex: nodeIndex,
-					showDealAnimation: config.showDealAnimation,
-					dealDirection: config.dealDirection,
-					dealt: config.dealt })
-	},
 
 	makeSwipeFunction: function (node, dir) {
 	    var bh = this
@@ -1446,44 +1515,37 @@ var BigHouse = (function() {
 		    child = node[dir]
 
                 if (child) {
-		    var nextNode = bh.textNodes[child.id]
+		    if (bh.nodeIsHistory (node))
+			bh.resetLastChoice()
+		    else
+			bh.updateLastChoice (node)
 
-		    bh.currentChoiceNodeIndex = child.id
-		    bh.currentChoiceNode = node
-		    bh.saveGamePosition()
-		    bh.updateLastChoice (nextNode)
+		    var nextNode = child.node
+		    bh.setCurrentNode (nextNode)
 
-		    if (nextNode.depth == 0 && bh.queuedHistory.length == 0)
+		    if (bh.isFinalCard (nextNode))
 			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
 
-		    if (bh.nextInChain(node))
-                        bh.showCardCount (bh.cardsLeft(nextNode))
+                    if (!bh.nodeIsHistory (nextNode))
+                        bh.revealMoods()
+
+		    if (bh.nextInChain (node))  // next card already dealt?
+                        bh.showCountAndHints (nextNode)
                     else
-			bh.dealCardForNode ({ nodeIndex: child.id,
+			bh.dealCardForNode ({ node: nextNode,
 					      showDealAnimation: true,
                                               dealDirection: dir == 'right' ? 'left' : 'right' })
 
 		} else {
-	            bh.lastChoice = bh.lastPriority = bh.lastSwipe = undefined
-                    if (bh.queuedHistory.length) {
-                        bh.setCurrentChoiceMoveNumber (bh.queuedHistory[0].move)
-                        bh.textNodes = bh.queuedHistory[0].text
-                        bh.queuedHistory = bh.queuedHistory.slice(1)
-
-                        if (bh.textNodes.length) {
-                            var nextNode = bh.textNodes[bh.textNodes.length - 1]
-                            bh.showCardCount (bh.cardsLeft (nextNode))
-                        }
-
-                        if (!bh.queuedHistory.length)
-                            bh.revealMoods()
-                        
-		    } else {
-			bh.playSound ('gameover')
-			bh.showPlayPage()
-		    }
+		    bh.playSound ('gameover')
+		    bh.showPlayPage()
                 }
 	    }
+	},
+
+	resetLastChoice: function() {
+	    delete this.lastChoice
+	    delete this.lastPriority
 	},
 
         updateLastChoice: function (node) {
@@ -1503,55 +1565,42 @@ var BigHouse = (function() {
             }
         },
         
+	setCurrentNode: function (node) {
+	    this.currentChoiceNode = node
+	    this.currentChoiceNodeIndex = node.id
+	    this.currentChoiceMoveNumber = node.move
+	    this.saveGamePosition()
+	    this.showCountAndHints (node)
+	    if (!this.nodeIsHistory (node))
+		this.updateLastChoice (node)
+	},
+
 	dealCardForNode: function (info) {
             var bh = this
-	    var dealt = info.dealt || function() {}
 
-	    var lookahead = info.lookahead
-	    var textNodes = lookahead ? this.queuedHistory[lookahead - 1].text : this.textNodes
-	    if (!textNodes.length)
-		return
-	    var nodeIndex = typeof(info.nodeIndex) === 'undefined' ? (textNodes.length - 1) : info.nodeIndex
-            var node = textNodes[nodeIndex]
+            var node = info.node
+	    if (!info.dealingAhead)
+		this.setCurrentNode (node)
 
-	    if (!info.chainedCard) {
-		this.currentChoiceNodeIndex = nodeIndex
-		this.currentChoiceNode = node
-		this.saveGamePosition()
-		this.updateLastChoice (node)
-	    }
-
-	    var nextInChain = this.nextInChain (node, lookahead)
+	    var nextInChain = this.nextInChain (node)
+	    var nextCardDealt
 	    if (nextInChain) {
 		var nextInfo = {}
 		$.extend (nextInfo, info)
-		nextInfo.dealt = dealt
-		nextInfo.lookahead = nextInChain.lookahead
-		nextInfo.nodeIndex = nextInChain.index
-		nextInfo.chainedCard = true
-		dealt = function() {}
-		bh.dealCardForNode (nextInfo)
+		nextInfo.node = nextInChain
+		nextInfo.dealingAhead = true
+		nextCardDealt = bh.dealCardForNode (nextInfo)
+	    } else {
+		nextCardDealt = $.Deferred()
+		nextCardDealt.resolve()
 	    }
 
-            var cardsLeft = bh.cardsLeft(node)
-	    var isFinalCard = cardsLeft == 1
-            var isHistory = lookahead < bh.queuedHistory.length
-
-	    var cardConfig = { leftHint: (isFinalCard || node.menu) ? undefined : (node.left ? node.left.hint : this.defaultNextHint),
-			       rightHint: (isFinalCard || node.menu) ? undefined : (node.right ? node.right.hint : this.defaultNextHint),
-                               hint: isFinalCard ? this.defaultBackHint : (node.menu ? this.defaultNextHint : undefined),
-                               swipeLeft: bh.makeSwipeFunction (node, (isHistory && !node.menu) ? node.defaultSwipe : 'left'),
-                               swipeRight: bh.makeSwipeFunction (node, (isHistory && !node.menu) ? node.defaultSwipe : 'right'),
-			       cardsLeft: cardsLeft,
-                               dealt: dealt,
-			       showDealAnimation: info.showDealAnimation,
-                               dealDirection: info.dealDirection }
-
-	    // text can override default cardClass, sfx, hints
+	    // text can override default cardClass, sfx
 	    var text = node.text
 	    var sfx, cardClass
-	    if (isFinalCard)
+	    if (this.isFinalCard(node))
 		cardClass = 'waitcard'
+
 	    text = text.replace (/<outcome:([^> ]+)>/g, function (match, outcomeVerb) {
 		cardClass = 'outcome'
 		sfx = outcomeVerb
@@ -1565,26 +1614,6 @@ var BigHouse = (function() {
 
 	    text = text.replace (/<sfx:([^> ]+)>/g, function (match, sfxName) {
 		sfx = sfxName
-		return ""
-	    })
-
-	    text = text.replace (/<hint:([^>]+)>/g, function (match, hint) {
-		cardConfig.leftHint = cardConfig.rightHint = hint
-		return ""
-	    })
-
-	    text = text.replace (/<lefthint:([^>]+)>/g, function (match, hint) {
-		cardConfig.leftHint = hint
-		return ""
-	    })
-
-	    text = text.replace (/<righthint:([^>]+)>/g, function (match, hint) {
-		cardConfig.rightHint = hint
-		return ""
-	    })
-
-	    text = text.replace (/<mood:([^> ]+)>/g, function (match, mood) {
-                bh.updatePlayerMood (mood)
 		return ""
 	    })
 
@@ -1628,103 +1657,100 @@ var BigHouse = (function() {
 				menuSelectCallback.call (bh, item, n)
 			})
 		})
+		content.push (fieldset)
                 if (!isHistory) {
-		    var selectWarning = $('<span class="warnselect">').text("Please select an option")
-		    content.push (fieldset, selectWarning)
-		    this.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
-		    cardConfig.reveal = function (choiceDiv) {
-		        choiceDiv.hide()
-		        selectWarning.css('visibility','hidden')
-		        menuSelectCallback = function (menuItem, menuIndex) {
-			    choiceDiv.show()
-			    selectWarning.css('visibility','hidden')
-			    delete bh.throwDisabled
-		        }
+		    if (info.dealingAhead)
+			throw "Oops: non-historic menu card is not top of pile"
+		    var selectWarning = $('<span class="warnselect">')
+			.text("Please select an option")
+			.css('visibility','hidden')
+		    content.push (selectWarning)
+		    bh.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
+		    bh.choiceDiv.hide()
+		    menuSelectCallback = function (menuItem, menuIndex) {
+			selectWarning.css('visibility','hidden')
+			bh.choiceDiv.show()
+			delete bh.throwDisabled
 		    }
                 }
 	    }
-
-            // strike if we're history
-            if (lookahead < bh.queuedHistory.length
-		&& node.left && node.right && !node.menu
-		&& !bh.nextInChain(node,lookahead))
-                cardConfig[node.defaultSwipe === 'left' ? 'rightStruck' : 'leftStruck'] = true
             
 	    // create the <li>
-            var cardListItem = bh.createCardListItem (content, cardClass)
-	    cardConfig.listItem = cardListItem
+            var cardListItem = $('<li>').append(content)
+            if (cardClass)
+                cardListItem.addClass (cardClass)
+            this.stackList.append (cardListItem)
+	    if (this.verbose.stack) {
+		console.log ("Card #" + this.cardIndex(cardListItem[0]) + " added: " + cardListItem[0].innerHTML)
+		this.logStack()
+	    }
 
 	    // create & deal the card
-            var card = bh.dealCard (cardConfig)
+	    var cardDealt = $.Deferred(), allCardsDealt = $.Deferred()
+
+            var card = this.stack.createCard (cardListItem[0])
+	    node.card = card
+
+	    card.elem = cardListItem[0]
+            card.on ('dragstart', function() {
+                cardListItem.addClass ('dragging')
+            })
+            card.on ('dragend', function() {
+                cardListItem.removeClass ('dragging')
+            })
+
+	    function addThrowListener (eventName, sfx, callback) {
+		card.on (eventName, function () {
+		    if (bh.verbose.stack)
+			console.log ("Card #" + bh.cardIndex(cardListItem[0]) + " thrown: " + cardListItem[0].innerHTML)
+                    cardListItem.removeClass('jiggle').addClass('thrown')
+		    bh.playSound (sfx)
+                    callback.call (bh)
+                    bh.fadeCard (cardListItem, card)
+		})
+	    }
+
+	    var isHistory = bh.nodeIsHistory (node)
+	    var swipeLeft = bh.makeSwipeFunction (node, (isHistory && !node.menu) ? node.defaultSwipe : 'left')
+            var swipeRight = bh.makeSwipeFunction (node, (isHistory && !node.menu) ? node.defaultSwipe : 'right')
+
+	    addThrowListener ('throwoutleft', 'swipeleft', swipeLeft)
+	    addThrowListener ('throwoutright', 'swiperight', swipeRight)
+
+	    if (info.showDealAnimation) {
+		card.on ('throwinend', function() {
+		    cardDealt.resolve()
+		})
+		card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset : +this.dealXOffset, -this.dealYOffset)
+	    } else
+		cardDealt.resolve()
+
+	    nextCardDealt.done (function() {
+		cardDealt.done (function() {
+		    allCardsDealt.resolve()
+		})
+	    })
+
+	    // play sound and return promise
 	    if (sfx)
 		bh.playSound (sfx)
+
+	    return allCardsDealt
 	},
 
-	nextInChain: function (node, lookahead) {
-	    lookahead = lookahead || 0
-	    if (!node.left && !node.right && !node.menu && this.queuedHistory.length > lookahead)
-		return { lookahead: lookahead + 1 }
-	    if (node.left && node.right && node.left.id == node.right.id && node.left.hint == node.right.hint)
-		return { lookahead: lookahead, index: node.left.id }
+	nextInChain: function (node) {
+	    if (node.left && node.right && node.left.node === node.right.node)
+		return node.left.node
 	    return undefined
 	},
 
-        cardsLeft: function (node) {
-            return this.queuedHistory.reduce (function (totalDepth, history) {
-                return totalDepth + (history.text.length ? (history.text[history.text.length - 1].depth + 1) : 0)
-            }, node.depth + 1)
-        },
+	isFinalCard: function (node) {
+	    return !(node.menu || node.left || node.right)
+	},
         
-        createCardListItem: function (cardContent, cardClass) {
-            var listItem = $('<li>').append(cardContent)
-            if (cardClass)
-                listItem.addClass (cardClass)
-            this.stackList.append (listItem)
-	    if (this.verbose.stack) {
-		console.log ("Card #" + this.cardIndex(listItem[0]) + " added: " + listItem[0].innerHTML)
-		this.logStack()
-	    }
-            return listItem
-        },
-
 	cardIndex: function (elem) {
 	    return elem.parentNode ? Array.prototype.indexOf.call (elem.parentNode.children, elem) : '???'
 	},
-
-        addCard: function (config) {
-            var bh = this
-	    var listItem = config.listItem
-            var rightCallback = config.swipeRight || function() { }
-            var leftCallback = config.swipeLeft || function() { }
-	    var silent = config.silent
-            var card = this.stack.createCard (listItem[0])
-	    card.elem = listItem[0]
-            card.on ('dragstart', function() {
-                listItem.addClass ('dragging')
-            })
-            card.on ('dragend', function() {
-                listItem.removeClass ('dragging')
-            })
-            card.on ('throwoutright', function () {
-		if (bh.verbose.stack)
-		    console.log ("Card #" + bh.cardIndex(listItem[0]) + " thrown: " + listItem[0].innerHTML)
-                listItem.removeClass('jiggle').addClass('thrown')
-                if (!silent)
-                    bh.playSound ('swiperight')
-                rightCallback.call (bh)
-                bh.fadeCard (listItem, card)
-            })
-            card.on ('throwoutleft', function () {
-		if (bh.verbose.stack)
-		    console.log ("Card #" + bh.cardIndex(listItem[0]) + " thrown: " + listItem[0].innerHTML)
-                listItem.removeClass('jiggle').addClass('thrown')
-                if (!silent)
-                    bh.playSound ('swipeleft')
-                leftCallback.call (bh)
-                bh.fadeCard (listItem, card)
-            })
-            return card
-        },
 
 	logStack: function() {
 	    console.log ($.map (bh.stackList.children(), function (elem, idx) {
@@ -1744,72 +1770,6 @@ var BigHouse = (function() {
 	    })
 	    bh.logStack()
 	},
-
-	pushChoiceRevealer: function() {
-	    var bh = this
-	    var newChoiceDiv, oldChoiceDiv = this.choiceDiv
-	    oldChoiceDiv.hide()
-	    this.choiceBar
-                .append (newChoiceDiv = $('<div>'))
-	    this.choiceDiv = newChoiceDiv
-	    return { newChoiceDiv: newChoiceDiv,
-		     wrapCallback: function (callback) {
-			 return function() {
-			     newChoiceDiv.remove()
-			     oldChoiceDiv.show()
-			     bh.choiceDiv = oldChoiceDiv
-
-			     if (callback)
-				 callback.call (bh)
-			 }
-		     }
-		   }
-	},
-
-        dealCard: function (config) {
-            var bh = this
-	    var choiceRevealer = this.pushChoiceRevealer()
-            config.swipeRight = choiceRevealer.wrapCallback (config.swipeRight || config.swipe)
-            config.swipeLeft = choiceRevealer.wrapCallback (config.swipeLeft || config.swipe || config.swipeRight)
-            var card = this.addCard (config)
-	    var leftHint = "← " + (config.leftHint || config.hint || bh.defaultNextHint)
-	    var rightHint = (config.rightHint || config.hint || bh.defaultNextHint) + " →"
-	    if (config.rightHint || config.leftHint || config.hint)
-                choiceRevealer.newChoiceDiv
-		.append ($('<div class="choice1">')
-                         .append ($('<div class="hint">')
-			          .append (config.leftStruck
-                                           ? $('<span class="disabled">').append ($('<strike>').text(leftHint))
-                                           : this.makeLink (leftHint,
-						            this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_LEFT),
-                                                            ''))))
-                .append ($('<div class="choice2">')
-                         .append ($('<div class="hint">')
-			          .append (config.rightStruck
-                                           ? $('<span class="disabled">').append ($('<strike>').text(rightHint))
-                                           : this.makeLink (rightHint,
-						            this.cardThrowFunction (card, gajus.Swing.Card.DIRECTION_RIGHT),
-                                                            ''))))
-
-	    // call config.reveal to set up additional conditions for throwing out the card,
-	    // e.g. selecting a menu item.
-	    // this only works here because menu cards are always top of the pile.
-	    // a more thorough implementation would have to ensure that
-	    // config.reveal was only called when the card was revealed.
-	    if (config.reveal)
-		config.reveal (choiceRevealer.newChoiceDiv)
-
-	    if (config.showDealAnimation) {
-		if (config.dealt)
-		    card.on ('throwinend', config.dealt)
-		card.throwIn (config.dealDirection == 'left' ? -this.dealXOffset : +this.dealXOffset, -this.dealYOffset)
-	    } else
-		config.dealt.call()
-
-            this.showCardCount (config.cardsLeft)
-
-            return card
-        },
         
         fadeCard: function (listItem, card) {
 	    var bh = this
@@ -1822,13 +1782,6 @@ var BigHouse = (function() {
 		if (bh.verbose.stack)
 		    bh.logStack()
 	    })
-        },
-
-        throwDummyCard: function (listItem, swipe) {
-            this.addCard ({ listItem: listItem,
-			    swipe: swipe,
-			    silent: true })
-		.throwOut()
         },
         
         updatePlayerMood: function (mood, time) {
@@ -1941,19 +1894,12 @@ var BigHouse = (function() {
             // if there's queued-up history, use the root node of the last history item in the queue (i.e. the text for the most recent cards)
             // otherwise, use the child pointed to by the defaultSwipe (if a swipe card), or the defaultMenuIndex (if a menu card)
             var oracleNode
-            if (this.queuedHistory.length) {
-                var endOfHistory = this.queuedHistory[this.queuedHistory.length - 1]
-                var text = endOfHistory.text
+            if (this.isHistory (this.currentChoiceNode)) {
+                var text = this.nodesForMove[this.moveNumber]
 		if (text.length)
                     oracleNode = text[text.length - 1]
-	    } else {
-	        if (this.currentChoiceNode.menu) {
-                    if (!this.selectedMenuItem)
-                        this.selectedMenuItem = this.currentChoiceNode.menu[this.currentChoiceNode.defaultMenuIndex]
-		    oracleNode = this.selectedMenuItem
-	        } else if (this.currentChoiceNode.defaultSwipe)
-		    oracleNode = this.currentChoiceNode[this.currentChoiceNode.defaultSwipe]
-            }
+	    } else
+		oracleNode = this.defaultNextSummary (node)
             if (oracleNode)
                 this.updateLastChoice (oracleNode.defaultMove || oracleNode)
             
@@ -1986,21 +1932,16 @@ var BigHouse = (function() {
             }
         },
 
-        cardThrowFunction: function (card, direction) {
+        cardThrowFunction: function (node, direction) {
             var bh = this
             return function() {
 		if (bh.verbose.stack) {
-		    console.log ("Throwing card #" + bh.cardIndex(card.elem) + ": " + card.elem.innerHTML)
+		    console.log ("Throwing card #" + bh.cardIndex(node.card.elem) + ": " + node.card.elem.innerHTML)
 		    bh.logStack()
 		}
-                card.throwOut (300*direction, 600*(Math.random() - .5))
+                node.card.throwOut (300*direction, 600*(Math.random() - .5))
             }
         },
-
-	throwCard: function (card) {
-	    var dir = this.currentChoiceNode.defaultSwipe == 'left' ? gajus.Swing.Card.DIRECTION_LEFT : gajus.Swing.Card.DIRECTION_RIGHT;
-	    (this.cardThrowFunction (card, dir)) ()
-	},
         
         // socket message handler
         handlePlayerMessage: function (msg) {
@@ -2057,6 +1998,7 @@ var BigHouse = (function() {
             delete this.currentChoiceMoveNumber
             delete this.currentChoiceNodeIndex
             delete this.currentChoiceNode
+	    this.nodesForMove = {}
             var gamePos = this.gamePosition[this.gameID]
             if (gamePos) {
                 this.moveNumber = gamePos.moveNumber
@@ -2064,6 +2006,7 @@ var BigHouse = (function() {
                 this.currentChoiceNodeIndex = gamePos.currentChoiceNodeIndex
             }
 
+	    this.resetLastChoice()
             this.showGamePage()
 	},
 
