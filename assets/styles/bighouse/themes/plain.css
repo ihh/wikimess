@@ -1,6 +1,6 @@
 /* Colors, plain theme */
 .bighouse.plain {
-    background-color: #f8f8f8;
+    background-color: #eee;
     color: black;
 }
 
@@ -17,13 +17,6 @@
 .bighouse .detailbar .statusline {
     border-color: #888;
 }
-    
-.bighouse.plain .cardbar .cardtable li {
-    background-color: #fff;
-    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
-    color: black;
-    border-color: rgba(1,1,1,.1);
-}
 
 .bighouse.plain .choicebar a,
 .bighouse.plain .detailbar,
@@ -36,10 +29,16 @@
     color: #ccc;
 }
 
+.bighouse.plain .veil {
+    background-color: black;
+}
+
+.bighouse.plain .veil .cyloneye {
+    background-color: #445;
+}
+
 .bighouse.plain .statusbar .leftmood,
 .bighouse.plain .statusbar .rightmood {
-    border-style: solid;
-    border-width: 1px;
     border-color: #ddd;
 }
 
@@ -54,8 +53,6 @@
 
 .bighouse.plain .moodbar .moodbutton {
     border-color: #bbb;
-    border-style: solid;
-    border-width: 1px;
 }
 
 .bighouse.plain .moodbar .selected {
@@ -66,41 +63,6 @@
 
 .bighouse.plain .timebar .timer {
     background-color: #ccc;
-}
-
-.bighouse.plain .cardbar .cardtable .cardmenu,
-.bighouse.plain .cardbar .cardtable .cardmenu label {
-    border-color: #aaa;
-}
-
-.bighouse.plain .cardbar .cardtable .cardmenu label.disabled {
-    color: #eee;
-}
-
-.bighouse.plain .cardbar .cardtable input:checked + label {
-    background: #eee;
-}
-
-.bighouse.plain .cardbar .cardtable .warnselect {
-    color: darkred;
-}
-
-.bighouse.plain .cardbar .cardtable .waitcard {
-    background-color: antiquewhite;
-}
-
-.bighouse.plain .cardbar .cardtable .outcome {
-    background-color: lightcyan;
-}
-
-.bighouse.plain .cardbar .cardtable .gameover {
-    background-color: antiquewhite;
-    color: brown;
-}
-
-.bighouse.plain .cardbar .cardtable .verb-choose {
-    background-color: #fffcff;
-    color: #204;
 }
 
 .bighouse.plain .titlebar,

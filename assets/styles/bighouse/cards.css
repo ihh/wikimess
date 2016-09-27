@@ -1,0 +1,45 @@
+.bighouse .cardbar .cardtable li {
+    background-color: #fff;
+    box-shadow: 0 0 2px rgba(0,0,0,.2), 1px 1px 1px rgba(0,0,0,.2);
+    color: black;
+    border-color: rgba(1,1,1,.1);
+}
+
+.bighouse .cardbar .cardtable .history {
+    background-color: lightpink;
+}
+
+.bighouse .cardbar .cardtable .waitcard {
+    background-color: antiquewhite;
+}
+
+.bighouse .cardbar .cardtable .outcome {
+    background-color: lightcyan;
+}
+
+.bighouse .cardbar .cardtable .gameover {
+    background-color: antiquewhite;
+    color: brown;
+}
+
+.bighouse .cardbar .cardtable .verb-choose {
+    background-color: #fffcff;
+    color: #204;
+}
+
+.bighouse .cardbar .cardtable .warnselect {
+    color: darkred;
+}
+
+.bighouse .cardbar .cardtable .cardmenu,
+.bighouse .cardbar .cardtable .cardmenu label {
+    border-color: #aaa;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label.disabled {
+    color: #eee;
+}
+
+.bighouse.cardroom .cardbar .cardtable input:checked + label {
+    background: #eee;
+}

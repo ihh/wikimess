@@ -51,7 +51,7 @@
                                  move2: "n",
                                  outro: "Right: ice cream sucks."
                                }]}}],
-	lr2: {outro:"Well, it was a good plan; but $player2 ratted $player1 out.\nTruancy doesn't pay, if you can't trust your friends.;; <sfx:surprised><class:outcome>Sorry, $player2...",
+	lr2: {outro:"Well, it was a good plan; but $player1 ratted $player2 out.\nTruancy doesn't pay, if you can't trust your friends.;; <sfx:surprised><class:outcome>Sorry, $player2...",
               global1:{count:{c:"$+1"}},
               local2:{count:{d:"$+1"}},
               common:{day:"++"}},
