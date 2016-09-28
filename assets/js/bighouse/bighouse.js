@@ -135,6 +135,10 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/status/other')
         },
 
+        REST_getPlayerGameMoveChoice: function (playerID, gameID, move, choice) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/choice/' + choice)
+        },
+
         REST_getPlayerGameMoveKick: function (playerID, gameID, moveNumber) {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/kick')
         },
@@ -181,11 +185,7 @@ var BigHouse = (function() {
             return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID + '/history/' + move)
         },
 
-        socket_getPlayerGameMoveChoice: function (playerID, gameID, move, choice) {
-            return this.socketGetPromise ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/choice/' + choice)
-        },
-
-        // helper to convert socket callbacks to promises
+        // helpers to convert socket callbacks to promises
         socketGetPromise: function (url) {
             var def = $.Deferred()
             io.socket.get (url, function (resData, jwres) {
@@ -1918,7 +1918,7 @@ var BigHouse = (function() {
 	},
 
 	makeMoveOrRetry: function (moveNumber, choice) {
-	    var f = this.socket_getPlayerGameMoveChoice.bind (this, this.playerID, this.gameID, moveNumber, choice)
+	    var f = this.REST_getPlayerGameMoveChoice.bind (this, this.playerID, this.gameID, moveNumber, choice)
 	    return this.callOrRetry (f, this.moveRetryCount, this.moveRetryMinWait, this.moveRetryMaxWait, null)
 	},
 
