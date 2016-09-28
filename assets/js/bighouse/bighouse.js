@@ -67,8 +67,6 @@ var BigHouse = (function() {
 	kickRetryMinWait: 1000,
 	kickRetryMaxWait: 2000,
 	minCardDisplayTimeInSeconds: 15,
-        dealXOffset: 400,
-        dealYOffset: 600,
 	allowedStateTransition: { start: { loading: true },
 				  loading: { gameOver: true, ready: true, waitingForOther: true },
 				  ready: { sendingMove: true, sendingDefaultMove: true, loading: true },
@@ -79,8 +77,8 @@ var BigHouse = (function() {
 				  sendingKick: { kicking: true, loading: true },
 				  gameOver: { } },
 
-	swingDir: { left: gajus.Swing.Card.DIRECTION_LEFT,
-		    right: gajus.Swing.Card.DIRECTION_RIGHT },
+	swingDir: { left: -1,
+		    right: +1 },
 
 	defaultBackHint: "Back",
 	defaultNextHint: "Next",
@@ -1150,7 +1148,7 @@ var BigHouse = (function() {
                 return throwOutConfidence > .25 && !(bh.throwDisabled && bh.throwDisabled())
             }
             this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
-					      throwOutDistance: function() { return $(document).width() * 2/3 },
+					      throwOutDistance: this.throwXOffset,
                                               isThrowOut: isThrowOut })
 
 	    this.setGameState ('start')
@@ -1792,7 +1790,7 @@ var BigHouse = (function() {
 		    cardListItem.attr('style','')
 		    cardDealt.resolve()
 		})
-		card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset : +this.dealXOffset, -this.dealYOffset)
+		card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset() : +this.dealXOffset(), this.dealYOffset())
 	    } else
 		cardDealt.resolve()
 
@@ -1812,6 +1810,22 @@ var BigHouse = (function() {
 		bh.playSound (sfx)
 
 	    return allCardsDealt
+	},
+
+        dealXOffset: function() {
+	    return $(document).width() * 2/3
+	},
+
+        dealYOffset: function() {
+	    return -$(document).height() / 4
+	},
+
+        throwXOffset: function() {
+	    return $(document).width() * 2/3
+	},
+
+        throwYOffset: function() {
+	    return $(document).height() / 4
 	},
 
 	isFinalCard: function (node) {
@@ -2031,12 +2045,12 @@ var BigHouse = (function() {
 
         throwCard: function (card, direction) {
             var bh = this
-	    direction = direction || this.swingDir[this.lastSwipeDir] || (2*Math.random() - 1)
+	    direction = direction || this.swingDir[this.lastSwipe] || (2*Math.random() - 1)
 	    if (bh.verbose.stack) {
 		console.log ("Throwing card #" + bh.cardIndex(card.elem) + ": " + card.elem.innerHTML)
 		bh.logStack()
 	    }
-            card.throwOut (direction * $(document).width() * 2/3, $(document).height() / 4)
+            card.throwOut (direction * this.throwXOffset(), this.throwYOffset())
         },
         
         // socket message handler
