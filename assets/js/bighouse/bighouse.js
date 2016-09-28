@@ -2045,7 +2045,7 @@ var BigHouse = (function() {
 
         throwCard: function (card, direction) {
             var bh = this
-	    direction = direction || this.swingDir[this.lastSwipe] || (2*Math.random() - 1)
+	    direction = direction || this.swingDir[this.lastSwipe] || (Math.random() < .5 ? -1 : +1)
 	    if (bh.verbose.stack) {
 		console.log ("Throwing card #" + bh.cardIndex(card.elem) + ": " + card.elem.innerHTML)
 		bh.logStack()
