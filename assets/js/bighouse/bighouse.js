@@ -135,8 +135,14 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/status/other')
         },
 
-        REST_getPlayerGameMoveChoice: function (playerID, gameID, move, choice) {
-            return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/choice/' + choice)
+        REST_putPlayerGameMove: function (playerID, gameID, move, choice, actions) {
+	    console.log(actions)
+            return $.ajax ({ url: '/player/' + playerID + '/game/' + gameID + '/move/' + move,
+                             type: 'PUT',
+                             cache: false,
+                             contentType: 'application/json',
+                             data: JSON.stringify ({ move: choice, actions: actions })
+                           })
         },
 
         REST_getPlayerGameMoveKick: function (playerID, gameID, moveNumber) {
@@ -1239,6 +1245,11 @@ var BigHouse = (function() {
 			if (!hist.text.length)
 			    hist.text = [{ text: bh.defaultAbsentText }]
 
+			if (hist.actions)
+			    Object.keys(hist.actions).forEach (function (id) {
+				hist.text[id].action = hist.actions[id]
+			    })
+
 			bh.nodesForMove[hist.move] = hist.text
 			hist.text.forEach (function (node) {
 			    node.move = hist.move
@@ -1256,11 +1267,11 @@ var BigHouse = (function() {
 				    hookup (node, item, hist.move)
 				})
 
-			    if (node.menu)
-				node.defaultNext = node.menu[node.defaultMenuIndex]
-			    else if (node.left && node.right)
-				node.defaultNext = node[node.defaultSwipe]
-			    else
+			    if (node.menu) {
+				node.autoNext = node.menu[node.autoMenuIndex = node.action || node.defaultMenuIndex]
+			    } else if (node.left && node.right) {
+				node.autoNext = node[node.autoSwipe = node.action || node.defaultSwipe]
+			    } else
 				node.isFinal = true
 
 			    if (node.left && node.right && node.left.node === node.right.node) {
@@ -1268,10 +1279,10 @@ var BigHouse = (function() {
 				if (node.left.hint === node.right.hint)
 				    node.hasNoChoice = true
 			    } else if (node.isHistory)
-				node.nextInChain = node.defaultNext.node
+				node.nextInChain = node.autoNext.node
 
 			    if (node.isHistory) {
-				var next = node.defaultNext.node
+				var next = node.autoNext.node
 				node.minCardsLeft = next.minCardsLeft
 				node.maxCardsLeft = next.maxCardsLeft
 			    } else {
@@ -1359,8 +1370,8 @@ var BigHouse = (function() {
 
             // strike if we're history
 	    var leftStruck, rightStruck
-            if (node.isHistory && !node.hasNoChoice) {
-		if (node.defaultSwipe === 'left')
+            if ((node.action || node.isHistory) && !node.hasNoChoice) {
+		if (node.autoSwipe === 'left')
 		    rightStruck = true
 		else
 		    leftStruck = true
@@ -1522,12 +1533,12 @@ var BigHouse = (function() {
         timerPulseElement: function() {
 	    var pulseElement
 	    if (this.currentChoiceNode.menu) {
-                var idx = this.selectedMenuItem ? this.selectedMenuItem.n : this.currentChoiceNode.defaultMenuIndex
+                var idx = this.selectedMenuItem ? this.selectedMenuItem.n : this.currentChoiceNode.autoMenuIndex
 		pulseElement = this.menuLabel[idx]
 	    } else if (this.currentChoiceNode.hasNoChoice)
 		pulseElement = $('.choice1,.choice2').find(':visible')
 	    else {
-		var choiceClass = this.currentChoiceNode.defaultSwipe == 'left' ? 'choice1' : 'choice2'
+		var choiceClass = this.currentChoiceNode.autoSwipe == 'left' ? 'choice1' : 'choice2'
 		pulseElement = $('.'+choiceClass).find(':visible')
 	    }
             return pulseElement
@@ -1540,11 +1551,14 @@ var BigHouse = (function() {
 
 		var child
 		if (node.isHistory)
-		    child = node.defaultNext
-		else if (node.menu)
+		    child = node.autoNext
+		else if (node.menu) {
 		    child = bh.selectedMenuItem
-		else
+		    node.action = bh.selectedMenuItem.n
+		} else {
 		    child = node[dir]
+		    node.action = dir
+		}
 
                 if (child) {
 		    if (node.isHistory)
@@ -1678,14 +1692,14 @@ var BigHouse = (function() {
 		var fieldset = $('<fieldset class="cardmenu">')
 		this.menuLabel = []
                 if (node.isHistory)
-                    this.selectedMenuItem = node.menu[node.defaultMenuIndex]
+                    this.selectedMenuItem = node.menu[node.autoMenuIndex]
                 else
 		    delete this.selectedMenuItem
 		var menuSelectCallback
 		node.menu.forEach (function (item, n) {
 		    var id = 'cardmenuitem' + n
                     item.n = n
-                    var itemStruck = node.isHistory && n != node.defaultMenuIndex
+                    var itemStruck = node.isHistory && n != node.autoMenuIndex
                     fieldset
 			.append ($('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">'))
 			.append (bh.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">'))
@@ -1753,8 +1767,8 @@ var BigHouse = (function() {
 		})
 	    }
 
-	    var swipeLeft = bh.makeSwipeFunction (node, (node.isHistory && !node.menu) ? node.defaultSwipe : 'left')
-            var swipeRight = bh.makeSwipeFunction (node, (node.isHistory && !node.menu) ? node.defaultSwipe : 'right')
+	    var swipeLeft = bh.makeSwipeFunction (node, (node.isHistory && !node.menu) ? node.autoSwipe : 'left')
+            var swipeRight = bh.makeSwipeFunction (node, (node.isHistory && !node.menu) ? node.autoSwipe : 'right')
 
 	    addThrowListener ('throwoutleft', 'swipeleft', swipeLeft)
 	    addThrowListener ('throwoutright', 'swiperight', swipeRight)
@@ -1918,7 +1932,12 @@ var BigHouse = (function() {
 	},
 
 	makeMoveOrRetry: function (moveNumber, choice) {
-	    var f = this.REST_getPlayerGameMoveChoice.bind (this, this.playerID, this.gameID, moveNumber, choice)
+	    actions = {}
+	    this.nodesForMove[moveNumber].forEach (function (node) {
+		if (node.action)
+		    actions[node.id] = node.action
+	    })
+	    var f = this.REST_putPlayerGameMove.bind (this, this.playerID, this.gameID, moveNumber, choice, actions)
 	    return this.callOrRetry (f, this.moveRetryCount, this.moveRetryMinWait, this.moveRetryMaxWait, null)
 	},
 
@@ -1944,14 +1963,14 @@ var BigHouse = (function() {
 
             // figure out which node, or summary, to look to for the default move
             // if there's queued-up history, use the root node of the last history item in the queue (i.e. the text for the most recent cards)
-            // otherwise, use the child pointed to by the defaultSwipe (if a swipe card), or the defaultMenuIndex (if a menu card)
+            // otherwise, use the child pointed to by the autoSwipe (if a swipe card), or the autoMenuIndex (if a menu card)
             var oracle
             if (this.currentChoiceNode.isHistory) {
                 var text = this.nodesForMove[this.moveNumber]
 		if (text.length)
                     oracle = text[text.length - 1]
 	    } else
-		oracle = this.currentChoiceNode.defaultNext
+		oracle = this.currentChoiceNode.autoNext
             if (oracle)
                 this.updateLastChoice (oracle.defaultMove || oracle)
             

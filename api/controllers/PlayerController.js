@@ -161,8 +161,11 @@ module.exports = {
                         rs (err)
                     else {
                         var textAttr = Game.roleAttr (info.role, 'text')
+                        var actionsAttr = Game.roleAttr (info.role, 'actions')
                         json.history = turns.map (function (turn) {
-                            return { move: turn.move, text: turn[textAttr] }
+                            return { move: turn.move,
+				     text: turn[textAttr],
+				     actions: turn[actionsAttr] }
                         })
 	                rs (null, json)
                     }
@@ -223,10 +226,12 @@ module.exports = {
     // make a move
     makeMove: function (req, res) {
         var moveNumber = req.params.moveNumber
-        var move = req.params.move
+        var move = req.body.move
+	var actions = req.body.actions
         MiscPlayerService.findGame (req, res, function (info, rs) {
 	    info.moveNumber = moveNumber
 	    info.move = move
+	    info.actions = actions
 	    MiscPlayerService.makeMove (req, rs, info)
 	})
     },
@@ -376,7 +381,7 @@ module.exports = {
     },
 
     // Upload mood avatar config for player
-    setMoodAvatarConfig: function (req, res) {
+    putMoodAvatarConfig: function (req, res) {
 	var playerID = req.params.player
         var config = req.body.avatarConfig
         Player.update ({ id: playerID },

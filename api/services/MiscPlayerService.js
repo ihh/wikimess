@@ -146,6 +146,7 @@ module.exports = {
     makeMove: function (req, rs, info) {
         var moveNumber = info.moveNumber
         var move = info.move
+	var actions = info.actions
         var player = info.player
         var opponent = info.opponent
         var game = info.game
@@ -164,14 +165,17 @@ module.exports = {
                 rs (new Error ("Player " + role + " can't choose '" + move + "' for move " + moveNumber + " in game " + game.id + " as they have already chosen '" + oldPlayerMove + "'"))
             else {
 
-                var update = {}
+                var gameUpdate = {}, turnUpdate = {}
 		var moveAttr = "move" + role
-                update[moveAttr] = move
+		var actionsAttr = "actions" + role
+                gameUpdate[moveAttr] = turnUpdate[moveAttr] = move
+		turnUpdate[actionsAttr] = actions
 
 		GameService
 		    .recordMove ({ game: game,
 				   moveNumber: moveNumber,
-				   update: update },
+				   update: gameUpdate,
+				   turnUpdate: turnUpdate },
 				 function (updatedGame, updatedPlayer1, updatedPlayer2) {
 				     var updatedPlayer, updatedOpponent
 				     if (role == 1) {

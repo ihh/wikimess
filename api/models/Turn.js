@@ -31,6 +31,21 @@ module.exports = {
 	  type: 'json'
       },
 
+      actions1 : {
+	  type: 'json'
+      },
+
+      actions2 : {
+	  type: 'json'
+      },
+
+      move1 : {
+	  type: 'json'
+      },
+
+      move2 : {
+	  type: 'json'
+      }
   }
 };
 

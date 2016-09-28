@@ -771,18 +771,36 @@ module.exports = {
         var game = info.game
         var moveNumber = info.moveNumber
 	var update = info.update
+	var turnUpdate = info.turnUpdate
 	var query = { id: game.id,
 		      moves: game.moves,
 		      move1: game.move1,
 		      move2: game.move2 }
-	sails.log.debug ("Recording " + JSON.stringify(update) + " for game #" + game.id + " move #" + moveNumber)
+	sails.log.debug ("Recording " + JSON.stringify(update) + " for game #" + game.id + " move #" + moveNumber + (turnUpdate ? (", turn update: " + JSON.stringify(turnUpdate)) : ""))
 
         var updateTimeBudget = .1  // time, as a proportion of lock duration, that we allow for GameService.updateGameAndPlayers to run
+
+	function turnUpdater (success, error) {
+	    return function() {
+		if (turnUpdate)
+		    Turn.update ({ game: game.id,
+				   move: moveNumber },
+				 turnUpdate,
+				 function (err, updated) {
+				     if (err)
+					 error (err)
+				     else
+					 success()
+				 })
+		else
+		    success()
+	    }
+	}
         
         // update
 	extend (game, update)
 	if (!GameService.gotBothMoves (game))
-            GameService.updateGame (query, game, playerWaiting, error)
+            GameService.updateGame (query, game, turnUpdater(playerWaiting,error), error)
         else {
             game.tree1 = []
 	    game.tree2 = []
@@ -793,7 +811,7 @@ module.exports = {
 	              ++game.moves
 	              game.currentStartTime = new Date()
                       if (Date.now() < lockExpiryTime - updateTimeBudget*lockDuration)  // this is at best a half-assed test. updateGameAndPlayers could take longer to run, and the lock would expire
-	                  GameService.updateGameAndPlayers (query, game, lockedSuccess, lockedError)
+	                  GameService.updateGameAndPlayers (query, game, turnUpdater(lockedSuccess,lockedError), lockedError)
                       else
                           lockedError (new Error ("lock expired"))
                   }

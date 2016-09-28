@@ -61,7 +61,7 @@ module.exports.routes = {
     'GET /player/id/:name':              'PlayerController.byName',
 
     'GET /player/:player/avatar':        'PlayerController.getMoodAvatarConfig',
-    'PUT /player/:player/avatar':        'PlayerController.setMoodAvatarConfig',
+    'PUT /player/:player/avatar':        'PlayerController.putMoodAvatarConfig',
     'PUT /player/:player/avatar/:mood':  'PlayerController.uploadMoodAvatar',
 
     'GET /player/:player/join':          'PlayerController.join',
@@ -76,8 +76,7 @@ module.exports.routes = {
     'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
     'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',
 
-    'GET /player/:player/game/:game/move/:moveNumber':              'PlayerController.listenForMove',
-    'GET /player/:player/game/:game/move/:moveNumber/choice/:move': 'PlayerController.makeMove',
-    'GET /player/:player/game/:game/move/:moveNumber/mood/:mood':   'PlayerController.changeMood',
-    'GET /player/:player/game/:game/move/:moveNumber/kick':         'PlayerController.kickTimedOutPlayers',
+    'PUT /player/:player/game/:game/move/:moveNumber':            'PlayerController.makeMove',
+    'GET /player/:player/game/:game/move/:moveNumber/mood/:mood': 'PlayerController.changeMood',
+    'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
 };
