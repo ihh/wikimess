@@ -1,0 +1,93 @@
+.bighouse .cardbar .cardtable .waitcard {
+    font-style: italic;
+}
+
+.bighouse .cardbar .cardtable .waitcard span {
+    animation: fadein 1s, pulsate 3s ease 500ms infinite;
+    -moz-animation: fadein 1s, pulsate 3s ease 500ms infinite;
+    -webkit-animation: fadein 1s, pulsate 3s ease 500ms infinite;
+}
+
+@-webkit-keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1.0; }
+}
+
+@-webkit-keyframes pulsate {
+    0% { opacity: 1.0; }
+    33% { opacity: 0.1; }
+    100% { opacity: 1.0; }
+}
+
+@-moz-keyframes pulsate {
+    0% { opacity: 1.0; }
+    33% { opacity: 0.1; }
+    100% { opacity: 1.0; }
+}
+
+@-moz-keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1.0; }
+}
+
+@keyframes fadein {
+    0% { opacity: 0; }
+    100% { opacity: 1.0; }
+}
+
+@keyframes pulsate {
+    0% { opacity: 1.0; }
+    33% { opacity: 0.1; }
+    100% { opacity: 1.0; }
+}
+
+.bighouse .cardbar .cardtable .cardmenu {
+    border-style: none solid none solid;
+    border-width: 1px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 0;
+    width: 95%;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label {
+    display: block;
+    padding: 8px 0px;
+    border-top-style: solid;
+    border-width: 1px;
+    cursor: pointer;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label:nth-child(2) {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.bighouse .cardbar .cardtable .cardmenu label:nth-last-child(1) {
+    border-bottom-style: solid;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.bighouse .cardbar .cardtable .cardmenu input[type="radio"] {
+    display: none;
+}
+
+.bighouse .cardbar .cardtable .warnselect {
+    font-size: smaller;
+    font-style: italic;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.bighouse .cardbar .cardtable .outcome {
+    font-style: italic;
+}
+
+.bighouse .cardbar .cardtable .gameover {
+    font-style: italic;
+}

@@ -212,13 +212,15 @@ var BigHouse = (function() {
 	    return window.innerHeight > window.innerWidth
 	},
 
-        callWithSoundEffect: function (callback, sfx) {
+        callWithSoundEffect: function (callback, sfx, elementToDisable) {
             sfx = sfx || 'select'
             var bh = this
             return function (evt) {
                 if (sfx.length)
                     bh.selectSound = bh.playSound (sfx)
                 evt.preventDefault()
+		if (elementToDisable)
+		    elementToDisable.off()
                 callback.call (bh, evt)
             }
         },
@@ -228,19 +230,22 @@ var BigHouse = (function() {
         },
 
         makeLink: function (text, callback, sfx) {
+	    var bh = this
             sfx = sfx || 'select'
-            return $('<a href="#">')
+            var link = $('<a href="#">')
                 .text (text)
                 .attr ('title', text)
-                .on ('click', this.callWithSoundEffect (callback, sfx))
+                .on ('click', bh.callWithSoundEffect (callback, sfx, link))
+	    return link
         },
 
         makeListLink: function (text, callback, sfx) {
             sfx = sfx || 'select'
-            return $('<li>')
+            var li = $('<li>')
                 .append ($('<span>')
                          .html(text))
-                .on('click', this.callWithSoundEffect (callback, sfx))
+                .on('click', this.callWithSoundEffect (callback, sfx, li))
+	    return li
         },
 
 	setPage: function (page) {
@@ -1145,6 +1150,7 @@ var BigHouse = (function() {
                 return throwOutConfidence > .25 && !(bh.throwDisabled && bh.throwDisabled())
             }
             this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
+					      throwOutDistance: function() { return $(document).width() * 2/3 },
                                               isThrowOut: isThrowOut })
 
 	    this.setGameState ('start')
@@ -1220,8 +1226,6 @@ var BigHouse = (function() {
 		    if (isStart)
 			bh.initStatusBar()
 
-		    bh.clearStack()
-
                     bh.moveNumber = data.move
                     bh.defaultMove = data.defaultMove
                     
@@ -1255,9 +1259,12 @@ var BigHouse = (function() {
 			    node.move = hist.move
 			    node.isHistory = (node.move < bh.moveNumber)
 
-			    if (nextTree && !(node.left || node.right || node.menu)) {
-				node.left = node.right = nextTree
-				node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
+			    if (!(node.left || node.right || node.menu)) {
+				node.isWait = true
+				if (nextTree) {
+				    node.left = node.right = nextTree
+				    node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
+				}
 			    }
 
 			    hookup (node, node.left, hist.move)
@@ -1301,6 +1308,9 @@ var BigHouse = (function() {
 		    if (typeof (bh.currentChoiceNodeIndex) === 'undefined')
 			bh.currentChoiceNodeIndex = bh.nodesForMove[bh.currentChoiceMoveNumber].length - 1
 		    var node = bh.nodesForMove[bh.currentChoiceMoveNumber][bh.currentChoiceNodeIndex]
+
+		    var tossCurrent = bh.waitingAtFinal && !node.isFinal
+		    bh.clearStack()
                     
 		    var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
 		    bh.dealCardForNode ({ node: node,
@@ -1308,6 +1318,8 @@ var BigHouse = (function() {
 					  dealDirection: bh.lastSwipe == 'left' ? 'right' : 'left' })
 			.done (function() {
 			    bh.initMoveTimer (data, bh.setGameStateCallback(nextState))
+			    if (tossCurrent)
+				bh.throwCard (bh.currentChoiceNode.card)
 			})
 
 		}).fail (function() {
@@ -1358,10 +1370,12 @@ var BigHouse = (function() {
 	    callback()
 	},
 
-        showCountAndHints: function (node) {
-	    // show hints
+        newTopCard: function (node) {
+	    // set card class
 	    var card = node.card
+	    $(card.elem).addClass ('topcard')
 
+	    // show hints
 	    var leftHint = node.isFinal ? this.defaultBackHint : (node.left ? node.left.hint : this.defaultNextHint)
 	    var rightHint = node.isFinal ? this.defaultBackHint : (node.right ? node.right.hint : this.defaultNextHint)
 
@@ -1383,7 +1397,7 @@ var BigHouse = (function() {
 			     .append (struck
 				      ? $('<span class="disabled">').append ($('<strike>').text(hint))
 				      : bh.makeSilentLink (hint,
-							   bh.cardThrowFunction (node, dir))))
+							   bh.nodeThrowFunction (node, dir))))
 	    }
 	    
             this.choiceDiv.empty()
@@ -1548,6 +1562,7 @@ var BigHouse = (function() {
 	    var bh = this
 	    return function() {
 		bh.lastSwipe = dir
+		bh.choiceDiv.empty()
 
 		var child
 		if (node.isHistory)
@@ -1567,13 +1582,11 @@ var BigHouse = (function() {
 			bh.updateLastChoice (node)
 
 		    var nextNode = child.node
-		    bh.setCurrentNode (nextNode)
-
 		    if (nextNode.isFinal)
 			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
 
 		    if (node.nextInChain)  // next card already dealt?
-                        bh.showCountAndHints (nextNode)
+                        bh.setCurrentNode (nextNode)
                     else
 			bh.dealCardForNode ({ node: nextNode,
 					      showDealAnimation: true,
@@ -1612,8 +1625,9 @@ var BigHouse = (function() {
 	    this.currentChoiceNode = node
 	    this.currentChoiceNodeIndex = node.id
 	    this.currentChoiceMoveNumber = node.move
+	    this.waitingAtFinal = this.currentChoiceNode.isFinal
 	    this.saveGamePosition()
-	    this.showCountAndHints (node)
+	    this.newTopCard (node)
 	    if (node.isHistory)
 		this.hideMoods()
 	    else {
@@ -1634,9 +1648,6 @@ var BigHouse = (function() {
             var bh = this
 
             var node = info.node
-	    if (!info.dealingAhead)
-		this.setCurrentNode (node)
-
 	    var nextInChain = node.nextInChain
 	    var nextCardDealt
 	    if (nextInChain) {
@@ -1653,7 +1664,7 @@ var BigHouse = (function() {
 	    // text can override default cardClass, sfx
 	    var text = node.text
 	    var sfx, cardClass
-	    if (node.isFinal)
+	    if (node.isWait)
 		cardClass = 'waitcard'
 	    else if (node.isHistory)
 		cardClass = 'history'
@@ -1760,7 +1771,10 @@ var BigHouse = (function() {
 		card.on (eventName, function () {
 		    if (bh.verbose.stack)
 			console.log ("Card #" + bh.cardIndex(cardListItem[0]) + " thrown: " + cardListItem[0].innerHTML)
-                    cardListItem.removeClass('jiggle').addClass('thrown')
+                    cardListItem
+			.removeClass('jiggle')
+			.removeClass('topcard')
+			.addClass('thrown')
 		    bh.playSound (sfx)
                     callback.call (bh)
                     bh.fadeCard (cardListItem, card)
@@ -1775,11 +1789,17 @@ var BigHouse = (function() {
 
 	    if (info.showDealAnimation) {
 		card.on ('throwinend', function() {
+		    cardListItem.attr('style','')
 		    cardDealt.resolve()
 		})
 		card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset : +this.dealXOffset, -this.dealYOffset)
 	    } else
 		cardDealt.resolve()
+
+	    if (!info.dealingAhead)
+		cardDealt.done (function() {
+		    bh.setCurrentNode (node)
+		})
 
 	    nextCardDealt.done (function() {
 		cardDealt.done (function() {
@@ -1825,11 +1845,11 @@ var BigHouse = (function() {
         fadeCard: function (listItem, card) {
 	    var bh = this
             listItem.find('*').off()
+	    card.destroy()
             listItem.fadeOut (this.cardFadeTime, function() {
 		if (bh.verbose.stack)
-		    console.log ("Card #" + bh.cardIndex(listItem[0]) + " removed after fade: " + listItem.html())
+		    console.log ("Card removed after fade: " + listItem.html())
 		listItem.remove()
-		card.destroy()
 		if (bh.verbose.stack)
 		    bh.logStack()
 	    })
@@ -2003,15 +2023,20 @@ var BigHouse = (function() {
             }
         },
 
-        cardThrowFunction: function (node, direction) {
+        nodeThrowFunction: function (node, direction) {
+	    return function() {
+		this.throwCard (node.card, direction)
+	    }
+	},
+
+        throwCard: function (card, direction) {
             var bh = this
-            return function() {
-		if (bh.verbose.stack) {
-		    console.log ("Throwing card #" + bh.cardIndex(node.card.elem) + ": " + node.card.elem.innerHTML)
-		    bh.logStack()
-		}
-                node.card.throwOut (300*direction, 600*(Math.random() - .5))
-            }
+	    direction = direction || this.swingDir[this.lastSwipeDir] || (2*Math.random() - 1)
+	    if (bh.verbose.stack) {
+		console.log ("Throwing card #" + bh.cardIndex(card.elem) + ": " + card.elem.innerHTML)
+		bh.logStack()
+	    }
+            card.throwOut (direction * $(document).width() * 2/3, $(document).height() / 4)
         },
         
         // socket message handler
@@ -2062,6 +2087,7 @@ var BigHouse = (function() {
             this.gameID = gameID
             delete this.gameState
             delete this.lastSwipe
+	    delete this.waitingAtFinal
 	    delete this.lastPlayerMoodTime
 	    delete this.lastOpponentMoodTime
 
