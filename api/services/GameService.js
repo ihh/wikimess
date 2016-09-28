@@ -797,7 +797,19 @@ module.exports = {
                       else
                           lockedError (new Error ("lock expired"))
                   }
-	          GameService.applyRandomOutcomes (game, update, lockedError)
+		  // refresh the Players, in case they changed before getting the lock
+		  Player.find ({ id: [game.player1.id, game.player2.id] })
+		      .exec (function (err, players) {
+			  if (err)
+			      lockedError (err)
+			  else if (players.length != 2)
+			      lockedError (new Error ("couldn't refresh Players"))
+			  else {
+			      game.player1 = players[0]
+			      game.player2 = players[1]
+			      GameService.applyRandomOutcomes (game, update, lockedError)
+			  }
+		      })
               },
               function() {
 	          gotOutcome (game, game.player1, game.player2)
