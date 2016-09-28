@@ -233,10 +233,11 @@ module.exports = {
     // Waterline lacks native support for database transactions, which makes it a bit tough to guarantee consistency...
     runWithLock: function (playerIdList, lockedCallback, success, error) {
 	var maxLockDurationInSeconds = 5
-	var mostRecentBreakableLockTime = Date.now() - 1000*maxLockDurationInSeconds
+	var maxLockDurationInMilliseconds = 1000*maxLockDurationInSeconds
+	var mostRecentBreakableLockTime = Date.now() - maxLockDurationInMilliseconds
 	var currentTime = Date.now()
         var currentDate = new Date(currentTime)
-        var lockExpiryTime = currentTime + 1000*maxLockDurationInSeconds
+        var lockExpiryTime = currentTime + maxLockDurationInMilliseconds
 
 	function unlockPlayers (callback) {
 	    Player.update
@@ -277,7 +278,7 @@ module.exports = {
 		 error (new Error ("Couldn't lock Players"))
 	     else {
 	         sails.log.debug ("Obtained lock for players (" + playerIdList.join(',') + ") at time " + currentDate)
-                 lockedCallback (unlockSuccess, unlockError, lockExpiryTime)
+                 lockedCallback (unlockSuccess, unlockError, lockExpiryTime, maxLockDurationInMilliseconds)
              }
          })
     },
