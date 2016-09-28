@@ -55,7 +55,7 @@ var BigHouse = (function() {
         moods: ['happy', 'surprised', 'sad', 'angry'],
         musicFadeDelay: 800,
 	cardFadeTime: 500,
-        loadingTextFadeTime: 500,
+        jiggleDelay: 5000,
         avatarSize: 128,
         cardDelimiter: ';;',
 	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
@@ -1361,14 +1361,14 @@ var BigHouse = (function() {
         },
 
 	initMoveTimer: function (data, callback) {
-	    if (data.deadline) {
-                this.cardCountDiv.css ('opacity', 1)
-		this.startline = new Date()
+	    this.startline = new Date()
+	    if (data.deadline)
 		this.deadline = new Date(data.deadline)
-		this.setMoveTimer (this.timerCallback, 10)
-	    } else {
+	    else {
+		delete this.deadline
                 this.hideTimer()
-            }
+	    }
+	    this.setMoveTimer (this.timerCallback, 10)
 	    callback()
 	},
 
@@ -1440,34 +1440,36 @@ var BigHouse = (function() {
 	timerCallback: function() {
 	    var bh = this
 	    this.clearMoveTimer()
+
 	    var now = new Date(), nowTime = now.getTime()
+            var jiggleTime = this.startline.getTime() + this.jiggleDelay
+	    if (nowTime >= jiggleTime)
+                $(this.currentChoiceNode.card.elem).addClass('jiggle')
 
-	    this.updateTimerDiv (this.startline, this.deadline, now)
-            var quarterDeadtime = this.startline.getTime() + (this.deadline - this.startline) / 4
-	    if (nowTime > quarterDeadtime && this.gameState === 'ready')
-                this.stackList.children().last().addClass('jiggle')
-
-	    if (nowTime > this.deadline.getTime()) {
-		if (this.verbose.timer)
-		    console.log ("Timer callback at " + now + " passed deadline at " + this.deadline)
-		switch (this.gameState) {
-		case 'ready':
-		    this.makeDefaultMove()
-		    break
-		case 'waitingForOther':
-		    this.startKicking()
-		    break
-		case 'loading':
-		    this.setMoveTimer (this.timerCallback, 500)
-                    break
-		default:
-                    if (this.verbose.errors)
-		        console.log ("should never get here: move timer expired with gameState=" + this.gameState)
-		    break
-		}
-	    } else {
-		this.setMoveTimer (this.timerCallback, 10)
-	    }
+	    if (this.deadline) {
+		this.updateTimerDiv (this.startline, this.deadline, now)
+		if (nowTime > this.deadline.getTime()) {
+		    if (this.verbose.timer)
+			console.log ("Timer callback at " + now + " passed deadline at " + this.deadline)
+		    switch (this.gameState) {
+		    case 'ready':
+			this.makeDefaultMove()
+			break
+		    case 'waitingForOther':
+			this.startKicking()
+			break
+		    case 'loading':
+			this.setMoveTimer (this.timerCallback, 500)
+			break
+		    default:
+			if (this.verbose.errors)
+		            console.log ("should never get here: move timer expired with gameState=" + this.gameState)
+			break
+		    }
+		} else
+		    this.setMoveTimer (this.timerCallback, 10)
+	    } else
+		this.setMoveTimer (this.timerCallback, 200)
 	},
 
 	getTopCard: function() {
