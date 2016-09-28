@@ -777,6 +777,8 @@ module.exports = {
 		      move2: game.move2 }
 	sails.log.debug ("Recording " + JSON.stringify(update) + " for game #" + game.id + " move #" + moveNumber)
 
+        var gameUpdateTimeBudget = 500  // time, in milliseconds, that we allow for GameService.updateGameAndPlayers to run
+        
         // update
 	extend (game, update)
 	if (!GameService.gotBothMoves (game))
@@ -786,11 +788,14 @@ module.exports = {
 	    game.tree2 = []
             MiscPlayerService.runWithLock
             ( [ game.player1.id, game.player2.id ],
-              function (lockedSuccess, lockedError) {
+              function (lockedSuccess, lockedError, lockExpiryTime) {
 	          function update() {
 	              ++game.moves
 	              game.currentStartTime = new Date()
-	              GameService.updateGameAndPlayers (query, game, lockedSuccess, lockedError)
+                      if (Date.now() < lockExpiryTime - gameUpdateTimeBudget)  // this is at best a half-assed test. updateGameAndPlayers could take longer to run, and the lock would expire...
+	                  GameService.updateGameAndPlayers (query, game, lockedSuccess, lockedError)
+                      else
+                          lockedError (new Error ("lock expired"))
                   }
 	          GameService.applyRandomOutcomes (game, update, lockedError)
               },

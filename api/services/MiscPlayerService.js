@@ -228,11 +228,15 @@ module.exports = {
 	})
     },
 
+    // this locking mechanism is pretty crude --
+    // e.g. currently it's up to lockedCallback to check if its own lock has expired.
+    // Waterline lacks native support for database transactions, which makes it a bit tough to guarantee consistency...
     runWithLock: function (playerIdList, lockedCallback, success, error) {
 	var maxLockDurationInSeconds = 5
 	var mostRecentBreakableLockTime = Date.now() - 1000*maxLockDurationInSeconds
 	var currentTime = Date.now()
         var currentDate = new Date(currentTime)
+        var lockExpiryTime = currentTime + 1000*maxLockDurationInSeconds
 
 	function unlockPlayers (callback) {
 	    Player.update
@@ -273,7 +277,7 @@ module.exports = {
 		 error (new Error ("Couldn't lock Players"))
 	     else {
 	         sails.log.debug ("Obtained lock for players (" + playerIdList.join(',') + ") at time " + currentDate)
-                 lockedCallback (unlockSuccess, unlockError)
+                 lockedCallback (unlockSuccess, unlockError, lockExpiryTime)
              }
          })
     },
