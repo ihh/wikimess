@@ -11,6 +11,10 @@ module.exports = {
                            waiting: true })
         else
             query.where ({ human: false })
+
+        // this call should be wrapped in a player lock
+        // to prevent e.g. race conditions where a player joins multiple games at once,
+        // each of which has an entry cost that they can barely afford
         query
             .exec (function (err, eligibleOpponents) {
                 if (err)

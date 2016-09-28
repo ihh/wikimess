@@ -227,4 +227,54 @@ module.exports = {
 	    sails.log.debug ("Sending message " + JSON.stringify(msg) + " to player #" + playerID)
 	})
     },
+
+    runWithLock: function (playerIdList, lockedCallback, success, error) {
+	var maxLockDurationInSeconds = 5
+	var mostRecentBreakableLockTime = Date.now() - 1000*maxLockDurationInSeconds
+	var currentTime = Date.now()
+        var currentDate = new Date(currentTime)
+
+	function unlockPlayers (callback) {
+	    Player.update
+	    ({ id: playerIdList },
+	     { lastLockTime: 0 },
+	     function (err, unlockedPlayers) {
+		 if (err)
+		     error (err)
+		 else if (unlockedPlayers.length != 2)
+		     error (new Error ("Couldn't unlock Players"))
+		 else {
+	             sails.log.debug ("Released lock for players (" + playerIdList.join(',') + ") from time " + currentDate + "; lock active for " + (Date.now() - currentTime) + "ms")
+		     callback()
+                 }
+	     })
+	}
+
+        function unlockSuccess (result) {
+            unlockPlayers (function() {
+                success (result)
+            })
+        }
+
+	function unlockError (err) {
+	    unlockPlayers (function() {
+		error (err)
+	    })
+	}
+
+        Player.update
+	({ id: playerIdList,
+	   lastLockTime: { '<=': mostRecentBreakableLockTime } },
+	 { lastLockTime: currentTime },
+	 function (err, lockedPlayers) {
+	     if (err)
+		 error (err)
+	     else if (lockedPlayers.length != playerIdList.length)
+		 error (new Error ("Couldn't lock Players"))
+	     else {
+	         sails.log.debug ("Obtained lock for players (" + playerIdList.join(',') + ") at time " + currentDate)
+                 lockedCallback (unlockSuccess, unlockError)
+             }
+         })
+    },
 }
