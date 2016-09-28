@@ -281,20 +281,20 @@ var BigHouse = (function() {
                 this.nameInput.val (this.playerLogin)
         },
         
-        validatePlayerName: function() {
+        validatePlayerName: function (success, failure) {
             this.playerLogin = this.nameInput.val()
             this.playerPassword = this.passwordInput.val()
             this.playerLogin = this.playerLogin.replace(/^\s*/,'').replace(/\s*$/,'')
             if (!/\S/.test(this.playerLogin)) {
-                this.showModalMessage ("Please enter a player login name")
-                return false
+                this.showModalMessage ("Please enter a player login name", failure)
+		return
             }
             if (!/\S/.test(this.playerPassword)) {
-                this.showModalMessage ("Please enter a password")
-                return false
+                this.showModalMessage ("Please enter a password", failure)
+                return
             }
             this.writeLocalStorage ('playerLogin')
-            return true
+	    success()
         },
 
         writeLocalStorage: function (key) {
@@ -313,39 +313,45 @@ var BigHouse = (function() {
 
         doLogin: function (showNextPage) {
             var bh = this
-            if (this.validatePlayerName())
-                this.REST_postLogin (this.playerLogin, this.playerPassword)
-                .done (function (data) {
-		    if (!data.player)
-                        bh.showModalMessage (data.message)
-		    else {
-                        bh.selectSound.stop()
-                        bh.playSound ('login')
-			bh.playerID = data.player.id
-                        bh.playerName = data.player.name
-                        showNextPage.call(bh)
-		    }
-                })
-                .fail (function (err) {
-                    bh.showModalWebError (err)
-                })
+	    var fail = this.showLoginPage.bind (this)
+            this.validatePlayerName
+	    (function() {
+                bh.REST_postLogin (bh.playerLogin, bh.playerPassword)
+                    .done (function (data) {
+			if (!data.player)
+                            bh.showModalMessage (data.message, fail)
+			else {
+                            bh.selectSound.stop()
+                            bh.playSound ('login')
+			    bh.playerID = data.player.id
+                            bh.playerName = data.player.name
+                            showNextPage.call(bh)
+			}
+                    })
+                    .fail (function (err) {
+			bh.showModalWebError (err, fail)
+                    })
+	    }, fail)
         },
 
         createPlayer: function() {
             var bh = this
-            if (this.validatePlayerName())
-                this.REST_postPlayer (this.playerLogin, this.playerPassword)
-                .done (function (data) {
-                    bh.selectSound.stop()
-                    bh.playSound ('login')
-		    bh.doInitialLogin()
-                })
-                .fail (function (err) {
-                    if (err.status == 400)
-                        bh.showModalMessage ("A player with that name already exists")
-                    else
-                        bh.showModalWebError (err)
-                })
+	    var fail = this.showLoginPage.bind (this)
+            this.validatePlayerName
+	    (function() {
+                bh.REST_postPlayer (bh.playerLogin, bh.playerPassword)
+                    .done (function (data) {
+			bh.selectSound.stop()
+			bh.playSound ('login')
+			bh.doInitialLogin()
+                    })
+                    .fail (function (err) {
+			if (err.status == 400)
+                            bh.showModalMessage ("A player with that name already exists", fail)
+			else
+                            bh.showModalWebError (err, fail)
+                    })
+	    }, fail)
         },
 
         // showModalMessage(msg)
@@ -698,15 +704,15 @@ var BigHouse = (function() {
 
         confirmPickAvatar: function (config) {
             var bh = this
+	    var fail = this.pickAvatarPage.bind (this, config)
             if (!this.currentFaceSet)
-                this.showModalMessage ("You have not selected an avatar",
-                                       this.pickAvatarPage.bind (this, config))
+                this.showModalMessage ("You have not selected an avatar", fail)
             else
                 this.REST_putPlayerAvatarConfig (this.playerID, this.currentFaceSet)
                     .done (function() {
                         config.showNextPage.call (bh)
 	            }).fail (function (err) {
-                        bh.showModalWebError (err)
+                        bh.showModalWebError (err, fail)
                     })
         },
 
@@ -799,8 +805,7 @@ var BigHouse = (function() {
 			uploadedCallback()
 		    })
 		    .fail (function (err) {
-			bh.showModalWebError (err)
-			bh.exitConfirmUpload()
+			bh.showModalWebError (err, bh.exitConfirmUpload.bind(bh))
 		    })
 	    }
 
@@ -953,8 +958,7 @@ var BigHouse = (function() {
 					      })))
 		    }))
 		}).fail (function (err) {
-                    bh.showModalWebError (err)
-                    bh.showPlayPage()
+                    bh.showModalWebError (err, bh.showPlayPage.bind(bh))
                 })
 	},
 
@@ -994,7 +998,7 @@ var BigHouse = (function() {
                     if (data.waiting)
                         bh.showWaitingToJoinPage()
                 }).fail (function (err) {
-                    bh.showModalWebError (err)
+                    bh.showModalWebError (err, bh.showPlayPage.bind(bh))
                 })
         },
 
@@ -1221,15 +1225,8 @@ var BigHouse = (function() {
 
                     delete this.throwDisabled
 
-		    if (isStart)
-			bh.initStatusBar()
-
                     bh.moveNumber = data.move
                     bh.defaultMove = data.defaultMove
-                    
-		    bh.updatePlayerMood (data.self.mood, data.startline)
-		    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
-		    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 
 		    function hookup (node, summary, move) {
 			if (summary && typeof(summary.id) !== 'undefined') {
@@ -1318,6 +1315,13 @@ var BigHouse = (function() {
 			    bh.initMoveTimer (data, bh.setGameStateCallback(nextState))
 			    if (tossCurrent)
 				bh.throwCard (bh.currentChoiceNode.card)
+
+			    if (isStart)
+				bh.initStatusBar()
+                    
+			    bh.updatePlayerMood (data.self.mood, data.startline)
+			    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
+			    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 			})
 
 		}).fail (function() {
