@@ -161,6 +161,7 @@ module.exports = {
 
     // game history from a given move, filtered for player
     gameHistory: function (req, res) {
+	var moveNumber = req.params.moveNumber || 0
         MiscPlayerService.findGame (req, res, function (info, rs) {
             var json = GameService.forRole (info.game, info.role)
             Turn.find ({ game: info.game.id,
@@ -171,11 +172,16 @@ module.exports = {
                     else {
                         var textAttr = Game.roleAttr (info.role, 'text')
                         var actionsAttr = Game.roleAttr (info.role, 'actions')
-                        json.history = turns.map (function (turn) {
+			var lastTurnWithActions = 0
+                        json.history = turns.map (function (turn, n) {
+			    if (!$.isEmptyObject (turn[actionsAttr]))
+				lastTurnWithActions = n
                             return { move: turn.move,
 				     text: turn[textAttr],
 				     actions: turn[actionsAttr] }
                         })
+			if (!req.params.moveNumber)
+			    json.history = json.history.splice (lastTurnWithActions)
 	                rs (null, json)
                     }
                 })

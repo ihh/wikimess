@@ -71,6 +71,7 @@ module.exports.routes = {
     'GET /player/:player/games':         'PlayerController.games',
 
     'GET /player/:player/game/:game':                     'PlayerController.gameInfo',
+    'GET /player/:player/game/:game/history':             'PlayerController.gameHistory',
     'GET /player/:player/game/:game/history/:moveNumber': 'PlayerController.gameHistory',
 
     'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
