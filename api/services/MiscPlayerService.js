@@ -39,6 +39,7 @@ module.exports = {
 	    Event.findOneById (req.params.event)
 		.exec (function (err, event) {
 		    if (err) rs(err)
+		    else if (!event) rs(new Error("Couldn't find Event"))
 		    else if (MiscPlayerService.eventInvisibleOrLocked (player, event))
 			rs(new Error ("Event locked"))
 		    else
