@@ -39,6 +39,10 @@ module.exports = {
 	  type: 'string'
       },
 
+      opponent: {
+	  type: 'string'  // name of opponent, or list of names. Typically a bot name. Overrides 'wantHuman'
+      },
+
       visible: {
 	  type: 'string'  // should eval to something truthy if visible
       },

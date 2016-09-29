@@ -5,37 +5,57 @@ module.exports = {
         var player = info.player
 	var event = info.event
 
-	function tryOpponents (potentialOpponents) {
-	    var weightedOpponents = potentialOpponents.map (function (opponent) {
-		return { opponent: opponent,
-			 weight: (event.compatibility
-				  ? Math.sqrt (evalPlayerExpr (player, opponent, event.compatibility)
-					       * evalPlayerExpr (opponent, player, event.compatibility))
-				  : 1) }
-	    })
-            PlayerMatchService
-                .tryRandomOpponent (player,
-				    event,
-                                    weightedOpponents,
-                                    gameStarted,
-                                    playerWaiting,
-                                    error)
-	}
+	// first check if there's a running Game
+	Game.find ({ where: { or: [ { player1: player.id }, { player2: player.id } ],
+			      event: event.id } })
+	    .exec (function (err, games) {
+		if (err) rs(err)
+		else if (games.length) {
+		    var game = games[0]
+		    gameStarted (game.player1.id == player.id ? game.player2 : game.player1, game)
+		} else {
 
-	if (info.wantHuman)
-	    Invite.find ({ event: event.id,
-			   player: { '!': player.id } })
-	    .populate ('player')
-	    .exec (function (err, invites) {
-		if (err) error (err)
-		else tryOpponents (invites.map (function (invite) { return invite.player }))
-	    })
-	else
-	    Player.find ({ id: { '!': player.id },
-			   human: false })
-	    .exec (function (err, players) {
-		if (err) error (err)
-		else tryOpponents (players)
+		    // prepare a callback for when we find opponents
+		    function tryOpponents (potentialOpponents) {
+			var weightedOpponents = potentialOpponents.map (function (opponent) {
+			    return { opponent: opponent,
+				     weight: (event.compatibility
+					      ? Math.sqrt (evalPlayerExpr (player, opponent, event.compatibility)
+							   * evalPlayerExpr (opponent, player, event.compatibility))
+					      : 1) }
+			})
+			PlayerMatchService
+			    .tryRandomOpponent (player,
+						event,
+						weightedOpponents,
+						gameStarted,
+						playerWaiting,
+						error)
+		    }
+
+		    // find eligible opponents
+		    if (event.opponent)
+			Player.find ({ name: event.opponent })
+			.exec (function (err, players) {
+			    if (err) error (err)
+			    else tryOpponents (players)
+			})
+		    else if (info.wantHuman)
+			Invite.find ({ event: event.id,
+				       player: { '!': player.id } })
+			.populate ('player')
+			.exec (function (err, invites) {
+			    if (err) error (err)
+			    else tryOpponents (invites.map (function (invite) { return invite.player }))
+			})
+		    else
+			Player.find ({ id: { '!': player.id },
+				       human: false })
+			.exec (function (err, players) {
+			    if (err) error (err)
+			    else tryOpponents (players)
+			})
+		}
 	    })
     },
 
@@ -92,6 +112,7 @@ module.exports = {
 				 // create the game
 				 var game = { player1: player1,
                                               player2: player2,
+					      event: event,
                                               current: choice,
 					      mood1: player1.initialMood || 'happy',
 					      mood2: player2.initialMood || 'happy' }

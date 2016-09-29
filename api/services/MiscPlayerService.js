@@ -395,14 +395,20 @@ module.exports = {
 				    .exec (function (err, games) {
 					if (err) rs(err)
 					else {
-					    games.forEach (function (game) { eventById[game.event].game = game })
+					    var now = new Date()
+					    games.forEach (function (game) {
+						var created = new Date(game.createdAt), updated = new Date(game.updatedAt)
+						eventById[game.event].game = { id: game.id,
+									       running: parseInt ((now - created) / 1000),
+									       dormant: parseInt ((now - updated) / 1000) }
+					    })
 					    Invite.find ({ event: eventIds,
 							   player: player.id })
 						.exec (function (err, invites) {
 						    if (err) rs(err)
 						    else {
 							invites.forEach (function (invite) {
-							    eventById[invite.event].invited = invite.createdAt
+							    eventById[invite.event].invited = new Date (invite.createdAt)
 							})
 							rs (null, {
 							    id: location.id,
@@ -415,13 +421,17 @@ module.exports = {
 									 locked: link.locked }
 							    }),
 							    events: events.map (function (event) {
+								var state = (event.game
+									     ? "go"
+									     : (event.invited
+										? "set"
+										: "ready"))
 								return { id: event.id,
-									 hint: (event.game
-										? event.go
-										: (event.invited
-										   ? event.set
-										   : event.ready)),
-									 invited: event.invited,
+									 hint: event[state],
+									 state: state,
+									 waiting: (event.invited && !event.game
+										   ? parseInt ((now - event.invited) / 1000)
+										   : undefined),
 									 game: event.game }
 							    })
 							})
