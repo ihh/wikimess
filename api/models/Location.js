@@ -8,7 +8,46 @@
 module.exports = {
 
   attributes: {
+      id: {
+          type: 'integer',
+          autoIncrement: true,
+          unique: true,
+          primaryKey: true
+      },
 
+      name: {
+	  type: 'string',
+	  unique: true,
+	  required: true
+      },
+
+      title: {
+	  type: 'string',
+	  required: true
+      },
+
+      description: {
+	  type: 'string',
+	  required: true
+      },
+
+      link: {
+	  type: 'json',
+	  defaultsTo: {}
+      },
+
+      events: {
+          collection: 'event',
+          via: 'location'
+      },
+
+      visible: {
+	  type: 'string'
+      },
+
+      locked: {
+	  type: 'string'
+      },
   }
 };
 

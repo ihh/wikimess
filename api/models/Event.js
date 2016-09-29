@@ -8,6 +8,64 @@
 module.exports = {
 
   attributes: {
+      id: {
+          type: 'integer',
+          autoIncrement: true,
+          unique: true,
+          primaryKey: true
+      },
+
+      location: {
+	  model: 'location'
+      },
+
+      ready: {
+	  type: 'string'
+      },
+
+      set: {
+	  type: 'string'
+      },
+
+      go: {
+	  type: 'string'
+      },
+
+      pitch: {
+	  type: 'string'
+      },
+
+      choice: {
+	  type: 'string'
+      },
+
+      visible: {
+	  type: 'string'  // should eval to something truthy if visible
+      },
+
+      locked: {
+	  type: 'string'  // should eval to a (truthy) string explaining how player can unlock
+      },
+
+      compatibility: {
+	  type: 'string'   // should eval to positive real value probabilistically weighting chance of player/opponent match
+	  // NB this eval is NOT tested inside the lock (it'd be too CPU-intensive, since it's run on all compatible players)
+	  // So don't make it too critical to game consistency logic
+      },
+
+      role1weight: {
+	  type: 'string'   // should eval to positive real value probabilistically weighting chance of player being in role 1
+      },
+
+      reset: {
+	  type: 'integer',
+	  defaultsTo: 30  // resets 30 seconds after game exited
+      },
+
+      wait: {
+	  type: 'integer',
+	  defaultsTo: 30  // open to bots after 30 seconds
+      },
 
   }
 };

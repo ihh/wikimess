@@ -60,10 +60,8 @@ module.exports = {
       global: {
           type: 'json',
           defaultsTo: {
-              // a special Global indicating the scenes this player should start games in
-              'scene': {
-                  'init': 1
-              },
+              // a special Global indicating the player's home location
+	      home: 'root'
           }
       },
 
@@ -119,22 +117,5 @@ module.exports = {
                 }
             });
         });
-    },
-
-    hasScene: function(player,scene) {
-        return player.global
-            && player.global.scene
-            && player.global.scene[scene]
-    },
-    
-    getScenes: function(player) {
-        return (player.global
-                && player.global.scene
-                && Object
-                .keys(player.global.scene)
-                .filter (function (scene) {
-                    return player.global.scene[scene]
-                }))
-            || []
     },
 };

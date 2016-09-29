@@ -11,7 +11,6 @@
 			hint: "Skip class"
 		    }
 		}],
-	scene: 'init',
 	rr: [{weight: "$c.iceCream || $c.iceCream",
 	      outro: [{ text: "Cool, let's skip class together!",
 			next: { text: "Party times, by the beach...",

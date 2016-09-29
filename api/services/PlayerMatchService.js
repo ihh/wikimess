@@ -3,122 +3,125 @@ module.exports = {
 
     joinGame: function (info, gameStarted, playerWaiting, error) {
         var player = info.player
-        var scenes = Player.getScenes (player)
-        var query = Player
-            .find ({ id: { '!': player.id } })
-        if (info.wantHuman)
-            query.where ({ human: true,
-                           waiting: true })
-        else
-            query.where ({ human: false })
+	var event = info.event
 
-        // this call should be wrapped in a player lock
-        // to prevent e.g. race conditions where a player joins multiple games at once,
-        // each of which has an entry cost that they can barely afford
-        query
-            .exec (function (err, eligibleOpponents) {
-                if (err)
-                    rs (err)
-                else {
-                    // to be eligible, opponents must share at least one scene
-                    eligibleOpponents = eligibleOpponents
-                        .filter (function (opp) {
-                            var oppScenes = opp.global.scene
-                            for (var s = 0; s < scenes.length; ++s)
-                                if (Player.hasScene (opp, scenes[s]))
-                                    return true
-                            return false
-                        })
-                    PlayerMatchService
-                        .tryRandomOpponent (player,
-                                            eligibleOpponents,
-                                            gameStarted,
-                                            playerWaiting,
-                                            error)
-                }
-            })
+	function tryOpponents (potentialOpponents) {
+	    var weightedOpponents = potentialOpponents.map (function (opponent) {
+		return { opponent: opponent,
+			 weight: (event.compatibility
+				  ? Math.sqrt (evalPlayerExpr (player, opponent, event.compatibility)
+					       * evalPlayerExpr (opponent, player, event.compatibility))
+				  : 1) }
+	    })
+            PlayerMatchService
+                .tryRandomOpponent (player,
+				    event,
+                                    weightedOpponents,
+                                    gameStarted,
+                                    playerWaiting,
+                                    error)
+	}
+
+	if (info.wantHuman)
+	    Invite.find ({ event: event.id,
+			   player: { '!': player.id } })
+	    .populate ('player')
+	    .exec (function (err, invites) {
+		if (err) error (err)
+		else tryOpponents (invites.map (function (invite) { return invite.player }))
+	    })
+	else
+	    Player.find ({ id: { '!': player.id },
+			   human: false })
+	    .exec (function (err, players) {
+		if (err) error (err)
+		else tryOpponents (players)
+	    })
     },
 
-    playerIsEligible: function (choice, player, role) {
-        // can implement more logic here, based on individual Choice parameters
-        return true
-    },
-    
-    tryRandomOpponent: function (player, eligibleOpponents, gameStarted, playerWaiting, error) {
-        if (eligibleOpponents.length == 0) {
+    tryRandomOpponent: function (player, event, weightedOpponents, gameStarted, playerWaiting, error) {
+        if (weightedOpponents.length == 0) {
             // no eligible opponents
-            // update the 'waiting' field
-            Player
-                .update ({ id: player.id },
-                         { waiting: true },
-                         function (err, updated) {
-                             if (err)
-                                 error (err)
-                             else
-                                 playerWaiting()
-                         })
-        } else {
-            // pick a random opponent
-            var nOpp = Math.floor (Math.random (eligibleOpponents.length))
-            var opponent = eligibleOpponents[nOpp]
-            eligibleOpponents.splice (nOpp, 1)  // remove from eligibleOpponents
-            // find shared scenes
-            var sharedScenes = Player.getScenes(player).filter (function (scene) {
-                return Player.hasScene (opponent, scene)
-            })
-            // find choices for this scene
-            Choice
-                .find ({ scene: sharedScenes })
-                .exec (function (err, eligibleChoices) {
+            // update the Invite table
+	    Invite.findOrCreate
+	    ({ player: player.id,
+	       event: event.id })
+		.exec (function (err, invites) {
                     if (err)
                         error (err)
-                    else {
-                        eligibleChoices = eligibleChoices.filter (function (choice) {
-                            return (PlayerMatchService.playerIsEligible(choice,player,1)
-                                    && PlayerMatchService.playerIsEligible(choice,opponent,2))
-                                || (PlayerMatchService.playerIsEligible(choice,opponent,1)
-                                    && PlayerMatchService.playerIsEligible(choice,player,2))
-                        })
-                        if (eligibleChoices.length == 0)
-                            PlayerMatchService.tryRandomOpponent (player, eligibleOpponents, gameStarted, playerWaiting, error)
-                        else {
-                            // pick a random Choice
-                            var nChoice = Math.floor (Math.random() * eligibleChoices.length)
-                            var choice = eligibleChoices[nChoice]
-                            // randomly assign player 1 & player 2
-                            var eligible12 = PlayerMatchService.playerIsEligible(choice,player,1)
-                                && PlayerMatchService.playerIsEligible(choice,opponent,2)
-                            var player1, player2
-                            if (Math.random() < .5 && eligible12) {
-                                player1 = player
-                                player2 = opponent
-                            } else {
-                                player1 = opponent
-                                player2 = player
-                            }
-                            // create the game
-			    var game = { player1: player1,
-                                         player2: player2,
-                                         current: choice,
-					 mood1: player1.initialMood || 'happy',
-					 mood2: player2.initialMood || 'happy' }
-			    GameService.createGame (game,
-						    function() { 
-							// update the 'waiting' fields
-							Player.update ( { id: [player1.id, player2.id] },
-									{ waiting: false },
-									function (err, updated) {
-									    if (err)
-										error (err)
-									    else
-										gameStarted (opponent, game)
-									})
-						    },
-						    error)
-                        }
-                    }
+                    else
+                        playerWaiting()
                 })
-        }
+        } else {
+            // pick a random opponent
+	    var totalWeight = weightedOpponents.reduce (function (total, wo) { return total + wo.weight }, 0)
+	    var nOpp, w = Math.random() * totalWeight
+	    for (nOpp = 0; nOpp < weightedOpponents.length - 1; ++nOpp)
+		if ((w -= weightedOpponents[nOpp].weight) <= 0)
+		    break
+            var opponent = weightedOpponents[nOpp].opponent
+            weightedOpponents.splice (nOpp, 1)  // remove from weightedOpponents
+	    // lock player & opponent, test eligibility & if all is OK, start the Game
+	    MiscPlayerService.runWithLock
+	    ([ player.id, opponent.id ],
+             function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
+		 if (MiscPlayerService.eventInvisibleOrLocked (player, event)
+		     || MiscPlayerService.eventInvisibleOrLocked (opponent, event))
+		     lockedSuccess (null)
+		 else {
+		     Choice.findOneByName (event.choice)
+			 .exec (function (err, choice) {
+			     if (err)
+				 lockedError (err)
+			     else {
+				 // randomly assign player 1 & player 2
+				 var p1weight, o1weight
+				 if (event.role1weight) {
+				     p1weight = MiscPlayerService.evalPlayerExpr (player, event.role1weight)
+				     o1weight = MiscPlayerService.evalPlayerExpr (opponent, event.role1weight)
+				 } else
+				     p1weight = o1weight = 1
+				 var p1o2prob = (p1weight + 1) / (p1weight + o1weight + 2)
+				 if (Math.random() < p1o2prob) {
+                                     player1 = player
+                                     player2 = opponent
+				 } else {
+                                     player1 = opponent
+                                     player2 = player
+				 }
+				 // create the game
+				 var game = { player1: player1,
+                                              player2: player2,
+                                              current: choice,
+					      mood1: player1.initialMood || 'happy',
+					      mood2: player2.initialMood || 'happy' }
+				 GameService.createGame
+				 (game,
+				  function (err, created) {
+				      if (err) lockedError(err)
+				      else {
+					  Invite.destroy ({ id: [player1.id, player2.id],
+							    event: event.id })
+					      .exec (function (err) {
+						  if (err)
+						      lockedError (err)
+						  else
+						      lockedSuccess (game)
+					      })
+				      }
+				  })
+			     }
+			 })
+		 }
+	     },
+	     function (game) {
+		 if (game)
+		     gameStarted (opponent, game)
+		 else
+                     PlayerMatchService.tryRandomOpponent (player, weightedOpponents, gameStarted, playerWaiting, error)
+	     },
+	     error)
+	}
     },
 }
 

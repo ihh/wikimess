@@ -24,10 +24,6 @@ module.exports = {
           type: 'string'  // for anonymously-declared Choices, the parent creator Choice
       },
 
-      scene: {
-          type: 'string'
-      },
-
       common: { type: 'json' },
       local1: { type: 'json' },
       local2: { type: 'json' },

@@ -75,62 +75,71 @@ module.exports = {
 
     // join game
     join: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
-            PlayerMatchService
+        MiscPlayerService.findEvent (req, res, function (player, event, rs) {
+	    PlayerMatchService
 		.joinGame ({ player: player,
-                             wantHuman: true },
+			     event: event,
+			     wantHuman: true },
 			   function (opponent, game) {
-                               // game started; return game info
-                               var playerMsg = { message: "join",
-                                                 player: player.id,
-                                                 game: game.id,
-                                                 waiting: false }
-                               var opponentMsg = { message: "join",
-                                                   player: opponent.id,
-                                                   game: game.id,
-                                                   waiting: false }
-                               if (req.isSocket)
-                                   Player.subscribe (req, [player.id])
-                               Player.message (opponent.id, opponentMsg)
-                               Player.message (player.id, playerMsg)
-                               rs (null, playerMsg)
-                           },
-                           function() {
-                               // player is waiting
-                               if (req.isSocket)
-                                   Player.subscribe (req, [player.id])
-                               rs (null, { player: player.id,
-                                           waiting: true })
-                           },
-                           rs)
-        })
+			       // game started; return game info
+			       var playerMsg = { message: "join",
+						 player: player.id,
+						 event: event.id,
+						 game: game.id,
+						 waiting: false }
+			       var opponentMsg = { message: "join",
+						   player: opponent.id,
+						   event: event.id,
+						   game: game.id,
+						   waiting: false }
+			       if (req.isSocket)
+				   Player.subscribe (req, [player.id])
+			       Player.message (opponent.id, opponentMsg)
+			       Player.message (player.id, playerMsg)
+			       rs (null, playerMsg)
+			   },
+			   function() {
+			       // player is waiting
+			       if (req.isSocket)
+				   Player.subscribe (req, [player.id])
+			       rs (null, { player: player.id,
+					   event: event.id,
+					   waiting: true })
+			   },
+			   rs)
+	})
     },
 
     // cancel a join
     cancelJoin: function (req, res) {
+	var event = req.params.event
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
-            // update the 'waiting' field
-            Player.update ( { id: player.id }, { waiting: false }, function (err, updated) {
-                if (err)
-                    rs (err)
-                else {
-                    rs (null, { player: player.id,
-                                waiting: false })
-                }
-            })
+            // update the Invite table
+	    Invite.destroy ({ player: player.id, event: event })
+		.exec (function (err) {
+                    if (err)
+			rs (err)
+                    else {
+			rs (null, { player: player.id,
+				    event: event,
+                                    waiting: false })
+                    }
+		})
         })
     },
 
     // start a game with a bot
     joinBot: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+        MiscPlayerService.findEvent (req, res, function (player, event, rs) {
             PlayerMatchService
 		.joinGame ({ player: player,
+			     event: event,
                              wantHuman: false },
 			   function (opponent, game) {
                                // game started; return game info
                                var playerMsg = { message: "join",
                                                  player: player.id,
+						 event: event.id,
                                                  game: game.id,
                                                  waiting: false }
                                if (req.isSocket)
@@ -397,5 +406,17 @@ module.exports = {
             })
     },
 
-};
+    // view a Location
+    viewLocation: function (req, res) {
+        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+	    MiscPlayerService.getLocation (player, { id: req.params.location }, rs)
+	})
+    },
 
+    // view home Location
+    viewHome: function (req, res) {
+        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+	    MiscPlayerService.getLocation (player, { name: player.global.home }, rs)
+	})
+    },
+};

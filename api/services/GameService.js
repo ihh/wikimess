@@ -234,9 +234,13 @@ module.exports = {
             $g1 = game.player1.global,
             $l1 = game.local1,
             $n1 = game.player1.displayName,
+            $id1 = game.player1.id,
+            $p1 = game.player1,
             $g2 = game.player2.global,
             $l2 = game.local2,
             $n2 = game.player2.displayName,
+            $id2 = game.player2.id,
+            $p2 = game.player2,
 
             $common = $c,
             $global1 = $g1,
@@ -249,10 +253,12 @@ module.exports = {
             $g = role == 1 ? $g1 : $g2,
             $l = role == 1 ? $l1 : $l2,
             $n = role == 1 ? $n1 : $n2,
+            $id = role == 1 ? $id1 : $id2,
             
             $go = role == 1 ? $g2 : $g1,
             $lo = role == 1 ? $l2 : $l1,
-            $no = role == 1 ? $n2 : $n1
+            $no = role == 1 ? $n2 : $n1,
+            $ido = role == 1 ? $id2 : $id1
 
         var $current, $src, $next, $dest
         if (outcome) {
@@ -590,10 +596,14 @@ module.exports = {
             $g1 = p1.global.state,
             $l1 = p1.local.state,
             $n1 = p1.displayName,
+            $p1 = p1,
+            $id1 = p1.id,
             $s2 = p2[context].state,
             $g2 = p2.global.state,
             $l2 = p2.local.state,
             $n2 = p2.displayName,
+            $p2 = p2,
+            $id2 = p2.id,
 	
             $src = game.current.name,
             $next = scene.next,
@@ -607,16 +617,18 @@ module.exports = {
             $name1 = $n1,
             $name2 = $n2
 
-        var $s, $g, $l, $n, $so, $go, $lo, $no
+        var $s, $g, $l, $n, $id, $so, $go, $lo, $no, $ido
         if (role) {
             $s = info.self[context].state
             $g = info.self.global.state
             $l = info.self.local.state
             $n = info.self.displayName
+	    $id = info.self.id
             $so = info.other[context].state
             $go = info.other.global
             $lo = info.other.local
             $no = info.other.displayName
+	    $ido = info.other.id
         }
 
         var updatedState = {}
@@ -681,9 +693,13 @@ module.exports = {
             $g1 = game.player1.global,
             $l1 = game.local1,
             $n1 = game.player1.displayName,
+	    $p1 = game.player1,
+	    $id1 = game.player1.id,
             $g2 = game.player2.global,
             $l2 = game.local2,
             $n2 = game.player2.displayName,
+	    $p2 = game.player2,
+	    $id2 = game.player2.id,
 
             $src = game.current.name,
             $next = outcome.next,

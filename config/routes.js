@@ -64,9 +64,9 @@ module.exports.routes = {
     'PUT /player/:player/avatar':        'PlayerController.putMoodAvatarConfig',
     'PUT /player/:player/avatar/:mood':  'PlayerController.uploadMoodAvatar',
 
-    'GET /player/:player/join':          'PlayerController.join',
-    'GET /player/:player/join/cancel':   'PlayerController.cancelJoin',
-    'GET /player/:player/join/bot':      'PlayerController.joinBot',
+    'GET /player/:player/join/:event':          'PlayerController.join',
+    'GET /player/:player/join/:event/cancel':   'PlayerController.cancelJoin',
+    'GET /player/:player/join/:event/bot':      'PlayerController.joinBot',
 
     'GET /player/:player/games':         'PlayerController.games',
 
@@ -79,4 +79,7 @@ module.exports.routes = {
     'PUT /player/:player/game/:game/move/:moveNumber':            'PlayerController.makeMove',
     'GET /player/:player/game/:game/move/:moveNumber/mood/:mood': 'PlayerController.changeMood',
     'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
+
+    'GET /player/:player/home':               'PlayerController.viewHome',
+    'GET /player/:player/location/:location': 'PlayerController.viewLocation',
 };

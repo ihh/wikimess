@@ -13,15 +13,17 @@ var defaultPort = "1337"
 var defaultUrlPrefix = ""
 var defaultChoiceFilename = "data/choices"
 var defaultPlayerFilename = "data/players"
+var defaultLocationFilename = "data/locations"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt|story)$'
 
 var opt = getopt.create([
     ['h' , 'host=STRING'      , 'hostname (default="' + defaultHost + '")'],
-    ['p' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
+    ['t' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
     ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
     ['c' , 'choices=PATH+'    , 'path to .json or .story file(s) or directories (default=' + defaultChoiceFilename + ')'],
-    ['l' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPlayerFilename + ')'],
+    ['p' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPlayerFilename + ')'],
+    ['l' , 'locations=PATH+'  , 'path to .json location file(s) or directories (default=' + defaultLocationFilename + ')'],
     ['m' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
     ['d' , 'dummy'            , 'dummy run; do not POST anything'],
     ['s' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
@@ -58,8 +60,14 @@ var urlPrefix = opt.options.root || defaultUrlPrefix
 var matchRegex = new RegExp (opt.options.match || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultChoiceFilename]
 var playerFilenames = opt.options.players || [defaultPlayerFilename]
+var locationFilenames = opt.options.locations || [defaultLocationFilename]
 
 var callback = function() {}
+
+callback = processFilenameList ({ path: '/location',
+                                  handler: locationHandler,
+                                  callback: callback,
+                                  list: locationFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/player',
                                   handler: playerHandler,
@@ -250,6 +258,37 @@ function choiceHandler (err, data) {
             }).join("\n"))
         else
             log ("Warning: zero Choices created")
+    }
+}
+
+function locationHandler (err, data) {
+    if (err)
+        log(err)
+    else {
+        var obj
+        try {
+            obj = JSON.parse (data)
+        } catch (err) {
+            log ("Warning: couldn't parse location response as JSON list")
+        }
+        if (obj.status == 400
+            && obj.code == "E_VALIDATION"
+            && obj.invalidAttributes.name
+            && obj.invalidAttributes.name[0].rule == "unique")
+            log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
+        else {
+            if (typeof(obj) !== 'undefined') {
+                if (!( typeof(obj.name) === 'string' ))
+                    log ("This doesn't look like a Location")
+                else {
+		    var links = obj.link.map (function (link) { return link.to })
+		    if (!links.length)
+			log (obj.name + " has no links!")
+                    log (3, ' ' + obj.name + ' -> ' + links.join(', '))
+		}
+            } else
+                log ("Warning: Location not created")
+        }
     }
 }
 

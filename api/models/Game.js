@@ -25,6 +25,10 @@ module.exports = {
           model: 'player'
       },
 
+      event: {
+	  model: 'event',
+      },
+
       // current state of the game
       finished: {
           type: 'boolean',

@@ -34,6 +34,19 @@ module.exports = {
         })
     },
 
+    findEvent: function (req, res, makeJson) {
+        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+	    Event.findOneById (req.params.event)
+		.exec (function (err, event) {
+		    if (err) rs(err)
+		    else if (MiscPlayerService.eventInvisibleOrLocked (player, event))
+			rs(new Error ("Event locked"))
+		    else
+			makeJson (player, event, rs)
+		})
+	})
+    },
+
     findGame: function (req, res, makeJson) {
         var rs = MiscPlayerService.responseSender (res)
         MiscPlayerService.findPlayer (req, res, function (player, cb) {
@@ -62,6 +75,11 @@ module.exports = {
                     }
                 })
         })
+    },
+
+    eventInvisibleOrLocked: function (player, event) {
+	return (event.visible && !MiscPlayerService.evalPlayerExpr (player, event.visible))
+	    || (event.locked && MiscPlayerService.evalPlayerExpr (player, event.locked))
     },
 
     isValidMood: function (mood) {
@@ -285,5 +303,134 @@ module.exports = {
                  lockedCallback (unlockSuccess, unlockError, lockExpiryTime, maxLockDurationInMilliseconds)
              }
          })
+    },
+
+    // evalPlayerExpr (player, opponent, expr)
+    // evalPlayerExpr (player, expr)
+    evalPlayerExpr: function (player, opponent, expr) {
+	if (typeof(expr) === 'undefined') {
+	    expr = opponent
+	    opponent = undefined
+	}
+
+        var $g = player.global,
+            $n = player.displayName,
+	    $h = player.human,
+	    $p = player,
+            $id = player.id
+
+	var $go, $no, $ho, $po, $ido
+	if (opponent) {
+	    $go = opponent.global
+            $no = opponent.displayName
+	    $ho = opponent.human
+	    $po = opponent
+            $ido = opponent.id
+	}
+
+        // handle negation as a special case; if anything is undefined in the negation return true
+        var negRegex = /^\s*\!\s*\((.*)\)\s*$/;
+        var negMatch = negRegex.exec (expr)
+        var func, val
+        if (negMatch) {
+            expr = negMatch[1]
+            func = function(w) { return !w }
+        } else {
+            func = function(w) { return w }
+        }
+
+        try {
+            val = eval(expr)
+        } catch (e) {
+            // do nothing, ignore undefined values and other errors in eval()
+        }
+
+        return func (val)
+    },
+
+    getLocation: function (player, locationQuery, rs) {
+	Location.findOne (locationQuery)
+	    .populate ('events')
+	    .exec (function (err, location) {
+		if (err) rs(err)
+		else if (!location) rs(new Error("Couldn't find location " + locationID))
+		else {
+		    var links = location.link.filter (function (link) {
+			return typeof(link.visible) === 'undefined'
+			    || MiscPlayerService.evalPlayerExpr (player, link.visible)
+		    })
+		    Location.find ({ name: links.map (function (link) { return link.to }) })
+			.exec (function (err, destLocations) {
+			    if (err) rs(err)
+			    else if (destLocations.length != links.length) rs("Couldn't find all Locations")
+			    else {
+				destLocations.forEach (function (loc, n) { links[n].location = loc })
+				links = links.filter (function (link) {
+				    return typeof(location.visible) === 'undefined'
+					|| MiscPlayerService.evalPlayerExpr (player, location.visible)
+				})
+				links.forEach (function (link) {
+				    if (link.locked)
+					link.locked = MiscPlayerService.evalPlayerExpr (player, link.locked)
+				    else if (link.location.locked)
+					link.locked = MiscPlayerService.evalPlayerExpr (player, link.location.locked)
+				})
+
+				var events = location.events, eventById = {}
+				events = events.filter (function (event) {
+				    return typeof(event.visible) === 'undefined'
+					|| MiscPlayerService.evalPlayerExpr (player, event.visible)
+				})
+				events.forEach (function (event) {
+				    if (event.locked)
+					event.locked = MiscPlayerService.evalPlayerExpr (player, event.locked)
+				    eventById[event.id] = event
+				})
+				var eventIds = events.map (function (event) { return event.id })
+				Game.find ({ where: { or: [{ player1: player.id },
+							   { player2: player.id }],
+						      event: eventIds },
+					     sort: 'createdAt' })
+				    .exec (function (err, games) {
+					if (err) rs(err)
+					else {
+					    games.forEach (function (game) { eventById[game.event].game = game })
+					    Invite.find ({ event: eventIds,
+							   player: player.id })
+						.exec (function (err, invites) {
+						    if (err) rs(err)
+						    else {
+							invites.forEach (function (invite) {
+							    eventById[invite.event].invited = invite.createdAt
+							})
+							rs (null, {
+							    id: location.id,
+							    title: location.title,
+							    description: location.description,
+							    links: links.map (function (link) {
+								return { id: link.location.id,
+									 title: link.location.title,
+									 hint: link.hint,
+									 locked: link.locked }
+							    }),
+							    events: events.map (function (event) {
+								return { id: event.id,
+									 hint: (event.game
+										? event.go
+										: (event.invited
+										   ? event.set
+										   : event.ready)),
+									 invited: event.invited,
+									 game: event.game }
+							    })
+							})
+						    }
+						})
+					}
+				    })
+			    }
+			})
+		}
+	    })
     },
 }
