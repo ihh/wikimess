@@ -20,8 +20,14 @@
 
 .bighouse.cardroom .locbar .link .hint,
 .bighouse.cardroom .locbar .event .hint {
-    border-color: white;
+    border-color: green;
     background-color: #333;
+    color: green;
+}
+
+.bighouse.cardroom .locbar .link .timer,
+.bighouse.cardroom .locbar .event .timer {
+    color: darkgreen;
 }
 
 .bighouse.cardroom .cardbar .cardtable {

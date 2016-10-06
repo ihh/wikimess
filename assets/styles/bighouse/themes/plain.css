@@ -22,6 +22,12 @@
 .bighouse.plain .locbar .event .hint {
     border-color: black;
     background-color: #eee;
+    color: #222;
+}
+
+.bighouse.plain .locbar .link .timer,
+.bighouse.plain .locbar .event .timer {
+    color: #666;
 }
 
 .bighouse.plain .cardbar .cardtable {
