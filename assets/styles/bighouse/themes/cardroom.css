@@ -4,6 +4,20 @@
     color: white;
 }
 
+.bighouse.cardroom .navbar {
+    background-color: black;
+}
+
+.bighouse.cardroom .locbar {
+    color: white;
+    background-color: black;
+}
+
+.bighouse.cardroom .locbar .link,
+.bighouse.cardroom .locbar .event {
+    border-color: white;
+}
+
 .bighouse.cardroom .cardbar .cardtable {
     background-color: darkgreen;  /* old browsers */
     background: linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);

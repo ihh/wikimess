@@ -9,6 +9,15 @@
 	height: 100%;
     }
 
+    .bighouse .navbar {
+	height: 25vh;
+    }
+
+    .bighouse .navbar .navicon {
+	width: 25vh;
+	height: 25vh;
+    }
+
     .bighouse .statusbar {
 	width: 100vw;
 	height: 18vh;

@@ -27,6 +27,43 @@ body {
     width: 0  !important;
 }
 
+.bighouse .navbar {
+    text-align: center;
+}
+
+.bighouse .navbar .view {
+    float: left;
+}
+
+.bighouse .navbar .games {
+    float: right;
+}
+
+.bighouse .locbar {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.bighouse .locbar .title {
+    font-weight: bold;
+    font-size: large;
+}
+
+.bighouse .locbar .link,
+.bighouse .locbar .event {
+    margin: 4px;
+    padding: 4px;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.bighouse .locbar .link .title,
+.bighouse .locbar .event .title {
+    font-weight: bold;
+    clear: both;
+}
+
 .bighouse .cardbar .cardtable {
     z-index: 10;
 }

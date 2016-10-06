@@ -4,6 +4,20 @@
     color: black;
 }
 
+.bighouse.plain .navbar {
+    background-color: black;
+}
+
+.bighouse.plain .locbar {
+    color: black;
+    background-color: white;
+}
+
+.bighouse.plain .locbar .link,
+.bighouse.plain .locbar .event {
+    border-color: black;
+}
+
 .bighouse.plain .cardbar .cardtable {
     border-top-style: solid;
     border-top-width: 1px;
