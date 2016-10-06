@@ -18,6 +18,12 @@
     border-color: black;
 }
 
+.bighouse.plain .locbar .link .hint,
+.bighouse.plain .locbar .event .hint {
+    border-color: black;
+    background-color: #eee;
+}
+
 .bighouse.plain .cardbar .cardtable {
     border-top-style: solid;
     border-top-width: 1px;

@@ -18,6 +18,12 @@
     border-color: white;
 }
 
+.bighouse.cardroom .locbar .link .hint,
+.bighouse.cardroom .locbar .event .hint {
+    border-color: white;
+    background-color: #333;
+}
+
 .bighouse.cardroom .cardbar .cardtable {
     background-color: darkgreen;  /* old browsers */
     background: linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);

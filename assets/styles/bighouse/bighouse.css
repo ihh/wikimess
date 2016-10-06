@@ -42,7 +42,6 @@ body {
 .bighouse .locbar {
     flex-grow: 1;
     overflow-y: auto;
-    padding: 4px;
 }
 
 .bighouse .locbar .title {
@@ -50,18 +49,36 @@ body {
     font-size: large;
 }
 
+.bighouse .locbar .location,
 .bighouse .locbar .link,
 .bighouse .locbar .event {
-    margin: 4px;
-    padding: 4px;
+    float: left;
+    clear: both;
+    width: 95vw;
+    margin: 1vw;
+}
+
+.bighouse .locbar .link,
+.bighouse .locbar .event {
     border-style: solid;
     border-width: 1px;
+    padding: 1vw;
 }
 
 .bighouse .locbar .link .title,
 .bighouse .locbar .event .title {
-    font-weight: bold;
+    font-weight: normal;
+    font-style: italic;
+    font-size: medium;
     clear: both;
+}
+
+.bighouse .locbar .link .hint,
+.bighouse .locbar .event .hint {
+    border-style: solid;
+    border-width: 1px;
+    padding: 1px 3px;
+    float: right;
 }
 
 .bighouse .cardbar .cardtable {
