@@ -393,6 +393,12 @@ var BigHouse = (function() {
             this.changeMusic('menu')
             this.setPage ('play')
 
+	    function eraseEventInfo() {
+		delete bh.lastStartedEventId
+		delete bh.eventsById
+	    }
+	    eraseEventInfo()
+
             this.showNavBar ('view')
             var locBarDiv
             this.container
@@ -415,82 +421,23 @@ var BigHouse = (function() {
                              .append ($('<div class="description">')
                                       .text (data.description)))
 
-                function updateEventTimer (event) {
-                    var now = new Date()
-
-                    if (event.game && event.game.deadline)
-                        event.timerDiv.text (bh.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
-                    else if (event.invited && event.state == 'starting') {
-                        var timeWaiting = (now - new Date(event.invited)) / 1000
-                        if (timeWaiting > bh.botWaitTime && !event.invitedBot) {
-                            event.invitedBot = true
-                            bh.REST_getPlayerJoinBot (bh.playerID, event.id)
-                                .fail (function() { delete event.invitedBot })
-                        }
-                        event.timerDiv.text (bh.shortTimerText (bh.botWaitTime - timeWaiting))
-                    } else
-                        event.timerDiv.empty()
-                }
-
+		bh.eventsById = {}
                 data.events.map (function (event) {
+		    bh.eventsById[event.id] = event
                     var div = $('<div class="event">')
                         .append ($('<div class="title">')
                                  .text (event.title))
                     if (event.hint)
                         div.append ($('<div class="hint">')
                                     .text (event.hint))
-                    var button = $('<div class="button">')
-                        .text (bh.capitalize (event.state))
+
+		    event.lockDiv = $('<div class="lock">')
+		    event.button = $('<div class="button">')
                     event.timerDiv = $('<div class="timer">')
-                    switch (event.state) {
-                    case 'locked':
-                        if (event.locked)
-                            div.append ($('<div class="lock">')
-                                        .text (event.locked))
-                        break;
 
-                    case 'start':
-                        button.on('click', function() {
-                            button.off()
-                            bh.REST_getPlayerJoin (bh.playerID, event.id)
-                                .done (function (data) {
-                                    if (data.waiting) {
-                                        event.state = 'starting'
-                                        event.invited = new Date()
-                                        button.text ('Starting')
-                                    } else {
-                                        event.state = 'ready'
-                                        event.game = data.game
-                                        button
-                                            .text ('Ready')
-                                            .on('click', function() {
-                                                bh.startGame (data.game.id)
-                                            })
-                                    }
-                                    updateEventTimer (event)
-                                }).fail (function (err) {
-                                    bh.showModalWebError (err, bh.showPlayPage.bind(bh))
-                                })
-                        })
-                        break;
+                    bh.updateEventButton (event)
 
-                    case 'starting':
-                        break;
-
-                    case 'ready':
-                    case 'waiting':
-                    case 'finished':
-                        button.on('click', function() {
-                            bh.startGame (event.game.id)
-                        })
-                        break;
-
-                    default:
-                        console.log("unknown event state")
-                        break;
-                    }
-                    updateEventTimer (event)
-                    div.append (event.timerDiv, button)
+                    div.append (event.lockDiv, event.timerDiv, event.button)
                     locBarDiv.append (div)
                 })
 
@@ -509,7 +456,7 @@ var BigHouse = (function() {
                     } else
                         button.text("Go").on('click', function() {
                             bh.playerLocation = link.id
-                            bh.playSound ('select')  // TODO: custom "Go" sound effect here
+                            bh.selectSound = bh.playSound ('select')  // TODO: custom "Go" sound effect here
                             bh.showPlayPage()
                         })
                     div.append (button)
@@ -518,15 +465,105 @@ var BigHouse = (function() {
 
                 var pageAnimationTimer = window.setInterval (function() {
                     data.events.forEach (function (event) {
-                        updateEventTimer (event)
+                        bh.updateEventTimer (event)
                     })
                 }, 100)
                 this.pageExit = function() {
+		    eraseEventInfo()
                     window.clearInterval (pageAnimationTimer)
                 }
             })
         },
 
+	updateEventFromJoinMessage: function (data) {
+	    var eventId = data.event
+	    if (this.lastStartedEventId && this.lastStartedEventId == eventId) {
+                this.selectSound.stop()
+                this.startGame (data.game.id)
+
+	    } else if (this.eventsById) {
+		var event = this.eventsById[eventId]
+		if (event) {
+		    event.game = data.game
+		    this.updateEventState (event, 'ready')
+		}
+	    }
+	},
+
+	updateEventState: function (event, state) {
+	    event.state = state
+	    this.updateEventButton (event)
+	},
+
+	updateEventButton: function (event) {
+	    var bh = this
+	    var button = event.button
+	    button
+		.text (this.capitalize (event.state))
+		.off()
+
+            switch (event.state) {
+            case 'locked':
+                event.lockDiv.text (event.locked)
+                break;
+
+            case 'start':
+                button.on('click', function() {
+                    button.off()
+                    bh.REST_getPlayerJoin (bh.playerID, event.id)
+                        .done (function (data) {
+                            if (data.waiting) {
+                                event.invited = new Date()
+				bh.updateEventState (event, 'starting')
+				bh.lastStartedEventId = event.id
+                            } else {
+                                event.game = data.game
+				bh.updateEventState (event, 'ready')
+                            }
+                            bh.updateEventTimer (event)
+                        }).fail (function (err) {
+                            bh.showModalWebError (err, bh.showPlayPage.bind(bh))
+                        })
+                })
+                break;
+
+            case 'starting':
+                break;
+
+            case 'ready':
+            case 'waiting':
+            case 'finished':
+                button.on('click', function() {
+                    bh.startGame (event.game.id)
+                })
+                break;
+
+            default:
+                console.log("unknown event state")
+                break;
+            }
+
+	    this.updateEventTimer (event)
+	},
+
+	updateEventTimer: function (event) {
+	    var bh = this
+            var now = new Date()
+	    
+            if (event.game && event.game.deadline)
+                event.timerDiv.text (bh.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
+            else if (event.invited && event.state == 'starting') {
+                var timeWaiting = (now - new Date(event.invited)) / 1000
+                if (timeWaiting > bh.botWaitTime && !event.invitedBot) {
+                    event.invitedBot = true
+                    bh.REST_getPlayerJoinBot (bh.playerID, event.id)
+                        .fail (function() { delete event.invitedBot })
+                }
+                event.timerDiv.text (bh.shortTimerText (bh.botWaitTime - timeWaiting))
+            } else
+                event.timerDiv.empty()
+        },
+	
         showNavBar: function (currentTab) {
             var bh = this
             
@@ -1274,7 +1311,7 @@ var BigHouse = (function() {
                                   .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
                 .append ($('<div class="statuslink">')
                          .append ($('<span>')
-                                  .html (this.makeLink ('Pause', this.exitGame))))
+                                  .html (this.makeLink ('Back', this.exitGame))))
 		.append ($('<div class="leftmood">')
 			 .append (this.makeVeil())
 			 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
@@ -2173,8 +2210,7 @@ var BigHouse = (function() {
                     // TODO: test if this event was the last one started; if not, just update the event state button
 		    if (this.verbose.messages)
 			console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.game.id)
-                    this.selectSound.stop()
-                    this.startGame (msg.data.game.id)
+                    this.updateEventFromJoinMessage (msg.data)
                 }
                 break
             case "move":
