@@ -15,7 +15,8 @@
 
 .bighouse.cardroom .locbar .link,
 .bighouse.cardroom .locbar .event {
-    border-color: white;
+    border-color: #ccc;
+    background-color: #111;
 }
 
 .bighouse.cardroom .locbar .link .hint,

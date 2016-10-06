@@ -16,12 +16,13 @@
 .bighouse.plain .locbar .link,
 .bighouse.plain .locbar .event {
     border-color: black;
+    background-color: #f8f8f8;
 }
 
 .bighouse.plain .locbar .link .hint,
 .bighouse.plain .locbar .event .hint {
     border-color: black;
-    background-color: #eee;
+    background-color: #e8e8e8;
     color: #222;
 }
 
