@@ -259,13 +259,12 @@ var BigHouse = (function() {
         },
 
 	setPage: function (page) {
+            if (this.pageExit)
+                this.pageExit()
+            
 	    if (this.verbose.page)
 		console.log ("Changing view from " + this.page + " to " + page)
 	    this.page = page
-
-            if (this.pageAnimationTimer)
-                window.clearInterval (this.pageAnimationTimer)
-            delete this.pageAnimationTimer
 	},
 
         // login menu
@@ -413,14 +412,23 @@ var BigHouse = (function() {
 		if (bh.verbose.messages)
                     console.log(data)
 
-                var now = new Date()
-
                 locBarDiv
                     .append ($('<div class="location">')
                              .append ($('<div class="title">')
                                       .text (data.title))
                              .append ($('<div class="description">')
                                       .text (data.description)))
+
+                function updateEventTimer (event) {
+                    var now = new Date()
+
+                    if (event.game && event.game.deadline)
+                        event.timerDiv.text (bh.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
+                    else if (event.invited && event.state == 'starting')
+                        event.timerDiv.text (bh.shortTimerText (bh.botWaitTime - (now - new Date(event.invited)) / 1000))
+                    else
+                        event.timerDiv.empty()
+                }
 
                 data.events.map (function (event) {
                     var div = $('<div class="event">')
@@ -431,7 +439,7 @@ var BigHouse = (function() {
                                     .text (event.hint))
                     var button = $('<div class="button">')
                         .text (bh.capitalize (event.state))
-                    var timerDiv = $('<div class="timer">')
+                    event.timerDiv = $('<div class="timer">')
                     switch (event.state) {
                     case 'locked':
                         if (event.locked)
@@ -444,7 +452,20 @@ var BigHouse = (function() {
                             button.off()
                             bh.REST_getPlayerJoin (bh.playerID, event.id)
                                 .done (function (data) {
-                                    button.text ('Starting')
+                                    if (data.waiting) {
+                                        event.state = 'starting'
+                                        event.invited = new Date()
+                                        button.text ('Starting')
+                                    } else {
+                                        event.state = 'ready'
+                                        event.game = data.game
+                                        button
+                                            .text ('Ready')
+                                            .on('click', function() {
+                                                bh.startGame (data.game.id)
+                                            })
+                                    }
+                                    updateEventTimer (event)
                                 }).fail (function (err) {
                                     bh.showModalWebError (err, bh.showPlayPage.bind(bh))
                                 })
@@ -466,9 +487,8 @@ var BigHouse = (function() {
                         console.log("unknown event state")
                         break;
                     }
-                    if (event.game && event.game.deadline)
-                        timerDiv.text (bh.shortTimerText ((now - new Date(event.game.deadline)) / 1000))
-                    div.append (timerDiv, button)
+                    updateEventTimer (event)
+                    div.append (event.timerDiv, button)
                     locBarDiv.append (div)
                 })
 
@@ -493,6 +513,15 @@ var BigHouse = (function() {
                     div.append (button)
                     locBarDiv.append (div)
                 })
+
+                var pageAnimationTimer = window.setInterval (function() {
+                    data.events.forEach (function (event) {
+                        updateEventTimer (event)
+                    })
+                }, 100)
+                this.pageExit = function() {
+                    window.clearInterval (pageAnimationTimer)
+                }
             })
         },
 
@@ -656,7 +685,14 @@ var BigHouse = (function() {
 	    if (this.verbose.page)
 		console.log ("Pushing " + this.page + " view, going to " + newPage)
             var page = this.page
-            this.pushedViews.push ({ elements: elements, page: page })
+            this.pushedViews.push ({ elements: elements,
+                                     page: page,
+                                     suspend: this.pageSuspend,
+                                     resume: this.pageResume,
+                                     exit: this.pageExit })
+            if (this.pageSuspend)
+                this.pageSuspend()
+            this.pageSuspend = this.pageResume = this.pageExit = undefined
             elements.addClass('pushed')
             this.setPage (newPage)
         },
@@ -670,6 +706,11 @@ var BigHouse = (function() {
             this.container.find(':not(.pushed)').remove()
             poppedView.elements.find('*').addBack().removeClass('pushed')
             this.setPage (poppedView.page)
+            this.pageSuspend = poppedView.pageSuspend
+            this.pageResume = poppedView.pageResume
+            this.pageExit = poppedView.pageExit
+            if (this.pageResume)
+                this.pageResume()
 	    this.handlePostponedMessages()
         },
 
@@ -818,11 +859,14 @@ var BigHouse = (function() {
 		.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
             
             randomizeFaces()
-            this.pageAnimationTimer = window.setInterval (function() {
+            var pageAnimationTimer = window.setInterval (function() {
                 var fs = faceSets[Math.floor(faceSets.length*Math.random())]
                 var newMoods = bh.moods.filter (function(m) { return m != fs.mood })
                 fs.update (fs.mood = newMoods[Math.floor(newMoods.length*Math.random())])
             }, 100)
+            this.pageExit = function() {
+                window.clearInterval (pageAnimationTimer)
+            }
             
             this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
@@ -1287,7 +1331,7 @@ var BigHouse = (function() {
                                   .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
                 .append ($('<div class="statuslink">')
                          .append ($('<span>')
-                                  .html (this.makeLink ('Exit', this.showPlayPage))))
+                                  .html (this.makeLink ('Pause', this.exitGame))))
 		.append ($('<div class="leftmood">')
 			 .append (this.makeVeil())
 			 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
@@ -1444,9 +1488,8 @@ var BigHouse = (function() {
 			    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 			})
 
-		}).fail (function() {
-                    if (loadingCardTimer)
-			window.clearTimeout (loadingCardTimer)
+		}).fail (function (err) {
+                    console.log(err)
                     // failed to load; rebuild the page
                     bh.loadGameCards()
 		})
@@ -1718,7 +1761,7 @@ var BigHouse = (function() {
 
 		} else {
 		    bh.playSound ('gameover')
-		    bh.showPlayPage()
+		    bh.exitGame()
                 }
 	    }
 	},
@@ -2189,7 +2232,7 @@ var BigHouse = (function() {
                     // (we allow play->game transitions because the 2nd player to join gets an immediate message,
                     // before the waitingToJoin page is shown)
                     this.selectSound.stop()
-                    this.startGame (msg.data.game)
+                    this.startGame (msg.data.game.id)
                 }
                 break
             case "move":

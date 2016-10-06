@@ -439,9 +439,7 @@ module.exports = {
                                                                          hint: event.hint,
                                                                          locked: event.locked,
 									 state: state,
-									 waiting: (event.invited && !event.game
-										   ? parseInt ((now - event.invited) / 1000)
-										   : undefined),
+                                                                         invited: event.invited,
 									 game: event.game }
 							    })
 							})
