@@ -125,10 +125,6 @@ var BigHouse = (function() {
             return $.get ('/player/' + playerID + '/join/' + eventID + '/bot')
         },
 
-        REST_getPlayerJoinCancel: function (playerID, eventID) {
-            return $.get ('/player/' + playerID + '/join/cancel')
-        },
-
         REST_getPlayerGames: function (playerID, eventID) {
             return $.get ('/player/' + playerID + '/games')
         },
@@ -424,9 +420,15 @@ var BigHouse = (function() {
 
                     if (event.game && event.game.deadline)
                         event.timerDiv.text (bh.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
-                    else if (event.invited && event.state == 'starting')
-                        event.timerDiv.text (bh.shortTimerText (bh.botWaitTime - (now - new Date(event.invited)) / 1000))
-                    else
+                    else if (event.invited && event.state == 'starting') {
+                        var timeWaiting = (now - new Date(event.invited)) / 1000
+                        if (timeWaiting > bh.botWaitTime && !event.invitedBot) {
+                            event.invitedBot = true
+                            bh.REST_getPlayerJoinBot (bh.playerID, event.id)
+                                .fail (function() { delete event.invitedBot })
+                        }
+                        event.timerDiv.text (bh.shortTimerText (bh.botWaitTime - timeWaiting))
+                    } else
                         event.timerDiv.empty()
                 }
 
@@ -1175,66 +1177,6 @@ var BigHouse = (function() {
             });
 	},
 
-        // start/join new game
-        joinGame: function (eventID, callback) {
-            var bh = this
-            this.REST_getPlayerJoin (this.playerID, eventID)
-                .done (function (data) {
-                    callback (data)
-                }).fail (function (err) {
-                    bh.showModalWebError (err, bh.showPlayPage.bind(bh))
-                })
-        },
-
-        showWaitingToJoinPage: function() {
-            var bh = this
-            this.setPage ('waitingToJoin')
-            this.menuDiv
-                .empty()
-                .append ($('<span class="rubric">')
-                         .text ("Waiting for another player"))
-                .append ($('<ul>')
-                         .append (this.makeListLink ('Cancel', this.cancelJoin)))
-
-            this.container
-                .append ($('<div class="timebar">')
-			 .append (this.timerDiv = $('<div class="timer">')))
-            
-            var totalTime = this.botWaitTime * 1000,
-            joinStartline = new Date(),
-            joinDeadline = new Date (joinStartline.getTime() + totalTime)
-
-	    this.joinWaitTimer = window.setInterval (function() {
-                var now = new Date()
-                var timeLeft = Math.max (0, joinDeadline - now)
-	        bh.timerDiv.width((100*timeLeft/totalTime)+"%")
-                if (timeLeft == 0) {
-                    window.clearInterval (bh.joinWaitTimer)
-		    delete bh.joinWaitTimer
-		    bh.REST_getPlayerJoinBot (bh.playerID)
-	                .fail (function (err) {
-                            bh.showModalWebError (err)
-                        })
-                }
-	    }, 10)
-            
-        },
-
-        cancelJoin: function() {
-            var bh = this
-	    this.cancelJoinBot()
-            this.REST_getPlayerJoinCancel (this.playerID)
-                .done (this.showPlayPage.bind (this))
-                .fail (this.showModalWebError.bind (this))
-        },
-
-	cancelJoinBot: function() {
-	    if (this.joinWaitTimer) {
-		window.clearInterval (this.joinWaitTimer)
-		delete this.joinWaitTimer
-	    }
-	},
-
 	clearMoveTimer: function() {
 	    if (this.moveTimer) {
 		window.clearTimeout (this.moveTimer)
@@ -1243,6 +1185,7 @@ var BigHouse = (function() {
 	},
 
 	exitGame: function() {
+            delete this.gameID
 	    this.clearMoveTimer()
 	    this.showPlayPage()
 	},
@@ -2223,21 +2166,21 @@ var BigHouse = (function() {
         
         // socket message handler
         handlePlayerMessage: function (msg) {
+	    if (this.verbose.messages)
+                console.log (msg)
             switch (msg.data.message) {
             case "join":
-                if (this.page == 'play' || this.page == 'waitingToJoin') {
-		    this.cancelJoinBot()
-                    // known bug: if logged in from multiple devices, they will all join the game here
-                    // even if they are just on the play page, not waitingToJoin
-                    // (we allow play->game transitions because the 2nd player to join gets an immediate message,
-                    // before the waitingToJoin page is shown)
+                if (this.page === 'play') {
+                    // TODO: test if this event was the last one started; if not, just update the event state button
+		    if (this.verbose.messages)
+			console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.game.id)
                     this.selectSound.stop()
                     this.startGame (msg.data.game.id)
                 }
                 break
             case "move":
             case "timeout":
-                if (msg.data.game == this.gameID) {
+                if (this.gameID == msg.data.game) {
 		    if (this.verbose.messages)
 			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
                     if (msg.data.move >= this.moveNumber)

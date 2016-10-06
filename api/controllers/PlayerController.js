@@ -142,7 +142,8 @@ module.exports = {
                                var playerMsg = { message: "join",
                                                  player: player.id,
 						 event: event.id,
-                                                 game: game.id,
+                                                 game: { id: game.id,
+                                                         deadline: Game.deadline(game) },
                                                  waiting: false }
                                if (req.isSocket)
                                    Player.subscribe (req, [player.id])
