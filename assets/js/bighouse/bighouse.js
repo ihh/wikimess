@@ -2033,8 +2033,7 @@ var BigHouse = (function() {
 		this.showMoodImage
             (id, mood, div,
              function() {
-                 bh.playerMoodDiv
-                     .off ('click')
+                 div.off ('click')
                      .on ('click', bh.callWithSoundEffect (callback))
              })
 	},
