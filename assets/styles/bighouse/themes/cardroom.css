@@ -25,6 +25,8 @@
     color: green;
 }
 
+.bighouse.cardroom .locbar .link .lock,
+.bighouse.cardroom .locbar .event .lock,
 .bighouse.cardroom .locbar .link .timer,
 .bighouse.cardroom .locbar .event .timer {
     color: darkgreen;

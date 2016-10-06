@@ -25,6 +25,8 @@
     color: #222;
 }
 
+.bighouse.plain .locbar .link .lock,
+.bighouse.plain .locbar .event .lock,
 .bighouse.plain .locbar .link .timer,
 .bighouse.plain .locbar .event .timer {
     color: #666;

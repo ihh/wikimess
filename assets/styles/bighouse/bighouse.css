@@ -99,6 +99,14 @@ body {
     font-size: x-small;
 }
 
+.bighouse .locbar .link .lock,
+.bighouse .locbar .event .lock {
+    position: absolute;
+    left: 1vw;
+    bottom: 0;
+    font-size: x-small;
+}
+
 .bighouse .cardbar .cardtable {
     z-index: 10;
 }
