@@ -405,7 +405,7 @@
 
     .bighouse .gametable tbody {
 	overflow-y: auto;
-	height: 70vh;
+	height: 100vh;
     }
 
     .bighouse .menubar ul.horizontal-list {

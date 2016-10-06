@@ -87,6 +87,10 @@ var BigHouse = (function() {
         themes: [ {style: 'plain', text: 'Plain'},
                   {style: 'cardroom', text: 'Card room'} ],
 
+        navIcons: { view: '/images/icons/binoculars.svg',
+                    settings: '/images/icons/cog.svg',
+                    games: '/images/icons/card-random.svg' },
+        
 	verbose: { page: false,
                    gameState: true,
                    moveNumber: true,
@@ -112,16 +116,20 @@ var BigHouse = (function() {
         REST_getLogout: function() {
             return $.post('/logout')
         },
-
-        REST_getPlayerJoinBot: function (playerID) {
-            return $.get ('/player/' + playerID + '/join/bot')
+        
+        REST_getPlayerJoin: function (playerID, eventID) {
+            return $.get ('/player/' + playerID + '/join/' + eventID)
         },
 
-        REST_getPlayerJoinCancel: function (playerID) {
+        REST_getPlayerJoinBot: function (playerID, eventID) {
+            return $.get ('/player/' + playerID + '/join/' + eventID + '/bot')
+        },
+
+        REST_getPlayerJoinCancel: function (playerID, eventID) {
             return $.get ('/player/' + playerID + '/join/cancel')
         },
 
-        REST_getPlayerGames: function (playerID) {
+        REST_getPlayerGames: function (playerID, eventID) {
             return $.get ('/player/' + playerID + '/games')
         },
 
@@ -181,8 +189,12 @@ var BigHouse = (function() {
             io.socket.on ('player', callback)
         },
 
-        socket_getPlayerJoin: function (playerID) {
-            return this.socketGetPromise ('/player/' + playerID + '/join')
+        socket_getPlayerHome: function (playerID) {
+            return this.socketGetPromise ('/player/' + playerID + '/home')
+        },
+
+        socket_getPlayerLocation: function (playerID, location) {
+            return this.socketGetPromise ('/player/' + playerID + '/location/' + location)
         },
 
         socket_getPlayerGameHistory: function (playerID, gameID, move) {
@@ -378,27 +390,162 @@ var BigHouse = (function() {
             this.showModalMessage (err.status + " " + err.statusText, sfx, callback)
         },
         
-        // play menu
+        // play page
         showPlayPage: function() {
             var bh = this
 
             this.clearMoveTimer()
             this.changeMusic('menu')
-
             this.setPage ('play')
-            if (!this.lastMood)
-                this.lastMood = 'happy'
+
+            this.showNavBar ('view')
+            var locBarDiv
             this.container
-                .empty()
-                .append (this.makePageTitle ("Hi " + this.playerName))
-                .append (this.menuDiv = $('<div class="menubar">')
-                         .append ($('<ul>')
-                                  .append (this.makeListLink ('New game', this.joinGame, 'waiting'))
-                                  .append (this.makeListLink ('Active games', this.showActiveGamesPage))
-                                  .append (this.makeListLink ('Settings', this.showSettingsPage))
-                                  .append (this.makeListLink ('Log out', this.doLogout, 'logout'))))
+                .append (locBarDiv = $('<div class="locbar">'))
+
+            var promise
+            if (this.playerLocation)
+                promise = this.socket_getPlayerLocation (this.playerID, this.playerLocation)
+            else
+                promise = this.socket_getPlayerHome (this.playerID)
+
+            promise.done (function (data) {
+		if (bh.verbose.messages)
+                    console.log(data)
+
+                var now = new Date()
+
+                locBarDiv
+                    .append ($('<div class="location">')
+                             .append ($('<div class="title">')
+                                      .text (data.title))
+                             .append ($('<div class="description">')
+                                      .text (data.description)))
+
+                data.events.map (function (event) {
+                    var div = $('<div class="event">')
+                        .append ($('<div class="title">')
+                                 .text (event.title))
+                    if (event.hint)
+                        div.append ($('<div class="hint">')
+                                    .text (event.hint))
+                    var button = $('<div class="button">')
+                        .text (bh.capitalize (event.state))
+                    var timerDiv = $('<div class="timer">')
+                    switch (event.state) {
+                    case 'locked':
+                        if (event.locked)
+                            div.append ($('<div class="lock">')
+                                        .text (event.locked))
+                        break;
+
+                    case 'start':
+                        button.on('click', function() {
+                            button.off()
+                            bh.REST_getPlayerJoin (bh.playerID, event.id)
+                                .done (function (data) {
+                                    button.text ('Starting')
+                                }).fail (function (err) {
+                                    bh.showModalWebError (err, bh.showPlayPage.bind(bh))
+                                })
+                        })
+                        break;
+
+                    case 'starting':
+                        break;
+
+                    case 'ready':
+                    case 'waiting':
+                    case 'finished':
+                        button.on('click', function() {
+                            bh.startGame (event.game.id)
+                        })
+                        break;
+
+                    default:
+                        console.log("unknown event state")
+                        break;
+                    }
+                    if (event.game && event.game.deadline)
+                        timerDiv.text (bh.shortTimerText ((now - new Date(event.game.deadline)) / 1000))
+                    div.append (timerDiv, button)
+                    locBarDiv.append (div)
+                })
+
+                data.links.map (function (link) {
+                    var div = $('<div class="link">')
+                        .append ($('<div class="title">')
+                                 .text (link.title))
+                    if (link.hint)
+                        div.append ($('<div class="hint">')
+                                    .text (link.hint))
+                    var button = $('<div class="button">')
+                    if (link.locked) {
+                        button.text("Locked")
+                        div.append ($('<div class="lock">')
+                                    .text (link.locked))
+                    } else
+                        button.text("Go").on('click', function() {
+                            bh.playerLocation = link.id
+                            bh.playSound ('select')  // TODO: custom "Go" sound effect here
+                            bh.showPlayPage()
+                        })
+                    div.append (button)
+                    locBarDiv.append (div)
+                })
+            })
         },
 
+        showNavBar: function (currentTab) {
+            var bh = this
+            
+            var tabs = [{ name: 'view', method: 'showPlayPage' },
+                        { name: 'settings', method: 'showSettingsPage' },
+                        { name: 'games', method: 'showActiveGamesPage' }]
+
+            var navbar
+            this.container
+                .empty()
+                .append (navbar = $('<div class="navbar">'))
+
+            tabs.map (function (tab) {
+                var div = $('<span class="'+tab.name+'">')
+                    .append ($('<img class="navicon">')
+                             .attr('src',bh.navIcons[tab.name]))
+                if (tab.name === currentTab)
+                    div.addClass('active')
+                else
+                    div.on ('click', bh[tab.method].bind(bh))
+                navbar.append (div)
+            })
+        },
+
+        capitalize: function (text) {
+            return text.charAt(0).toUpperCase() + text.substr(1)
+        },
+        
+        shortTimerText: function (secs) {
+            secs = Math.floor (secs)
+            if (secs <= 0)
+                return ""
+            else if (secs < 60)
+                return secs + "s"
+            else {
+                var mins = Math.floor (secs / 60)
+                if (mins < 60)
+                    return mins + "m " + (secs % 60) + "s"
+                else {
+                    var hours = Math.floor (mins / 60)
+                    if (hours < 24)
+                        return hours + "h " + (mins % 60) + "m"
+                    else {
+                        var days = Math.floor (hours / 24)
+                        return days + "d " + (hours % 24) + "h"
+                    }
+                }
+            }
+        },
+        
         makePageTitle: function (text, titleBarClass) {
             var titleBar = $('<div class="titlebar">')
                 .append ($('<span>')
@@ -421,15 +568,14 @@ var BigHouse = (function() {
             var bh = this
 
             this.setPage ('settings')
+            this.showNavBar ('settings')
             this.container
-                .empty()
-                .append (this.makePageTitle ("Settings"))
                 .append ($('<div class="menubar">')
                          .append ($('<ul>')
                                   .append (this.makeListLink ('Character settings', this.showSettingsUploadPage))
                                   .append (this.makeListLink ('Audio settings', this.showAudioPage))
                                   .append (this.makeListLink ('Themes', this.showThemesPage))
-                                  .append (this.makeListLink ('Back', this.showPlayPage))))
+                                  .append (this.makeListLink ('Log out', this.doLogout))))
         },
 
         // settings
@@ -749,7 +895,6 @@ var BigHouse = (function() {
 	    var bh = this
 	    return function (clickEvt) {
                 bh.playSound (mood)
-                bh.lastMood = mood
 		var inPortrait = bh.inPortraitMode()  // camera will change this, so preserve it now
 		bh.moodFileInput.on ('change', function (fileSelectEvt) {
 		    var file = this.files[0]
@@ -921,9 +1066,8 @@ var BigHouse = (function() {
 
 	    this.setPage ('activeGames')
 	    var tbody
+            this.showNavBar ('games')
 	    this.container
-		.empty()
-                .append (this.makePageTitle ("Active games"))
 		.append ($('<div>')
 			 .append ($('<table class="gametable">')
 				  .append ($('<thead>')
@@ -934,9 +1078,6 @@ var BigHouse = (function() {
 						    .append ($('<th>').text("State"))
 						    .append ($('<th>'))))
 				  .append (tbody = $('<tbody>'))))
-		.append ($('<div class="menubar">')
-			 .append ($('<span>')
-				  .html (this.makeLink ('Back', this.showPlayPage))))
 
 	    // allow scrolling for tbody, while preventing bounce at ends
 	    this.restoreScrolling (tbody)
@@ -991,12 +1132,11 @@ var BigHouse = (function() {
 	},
 
         // start/join new game
-        joinGame: function() {
+        joinGame: function (eventID, callback) {
             var bh = this
-            this.socket_getPlayerJoin (this.playerID)
+            this.REST_getPlayerJoin (this.playerID, eventID)
                 .done (function (data) {
-                    if (data.waiting)
-                        bh.showWaitingToJoinPage()
+                    callback (data)
                 }).fail (function (err) {
                     bh.showModalWebError (err, bh.showPlayPage.bind(bh))
                 })
@@ -1050,26 +1190,6 @@ var BigHouse = (function() {
 		delete this.joinWaitTimer
 	    }
 	},
-
-        // in-game menu
-        showGameMenuPage: function() {
-            var bh = this
-
-            this.pushView ('gamemenu')
-	    var menu
-            this.container
-                .append (this.makePageTitle ("Game menu"))
-                .append ($('<div class="menubar">')
-                         .append (menu = $('<ul>')
-                                  .append (this.makeListLink ('Resume game', this.popView))))
-
-	    if (!this.currentChoiceNode.isHistory)
-                menu.append (this.makeListLink ('Status', this.showPlayerStatusPage))
-
-            menu.append (this.makeListLink ('Audio settings', this.showAudioPage))
-                .append (this.makeListLink ('Themes', this.showThemesPage))
-                .append (this.makeListLink ('Exit to menu', this.exitGame))
-        },
 
 	clearMoveTimer: function() {
 	    if (this.moveTimer) {
@@ -1167,7 +1287,7 @@ var BigHouse = (function() {
                                   .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
                 .append ($('<div class="statuslink">')
                          .append ($('<span>')
-                                  .html (this.makeLink ('Menu', this.showGameMenuPage))))
+                                  .html (this.makeLink ('Exit', this.showPlayPage))))
 		.append ($('<div class="leftmood">')
 			 .append (this.makeVeil())
 			 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
@@ -1877,7 +1997,6 @@ var BigHouse = (function() {
         
         updatePlayerMood: function (mood, time) {
             var bh = this
-            this.lastMood = mood
             var date = new Date (time)
             if (!time || !this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
                 if (this.verbose.messages)

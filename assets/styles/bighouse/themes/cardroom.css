@@ -19,8 +19,8 @@
     background-color: #111;
 }
 
-.bighouse.cardroom .locbar .link .hint,
-.bighouse.cardroom .locbar .event .hint {
+.bighouse.cardroom .locbar .link .button,
+.bighouse.cardroom .locbar .event .button {
     border-color: green;
     background-color: #333;
     color: green;

@@ -362,7 +362,7 @@
 
     .bighouse .gametable tbody {
 	overflow-y: auto;
-	height: 73vh;
+	height: 100vh;
     }
 
     .bighouse .detailbar {

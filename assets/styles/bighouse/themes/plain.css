@@ -1,6 +1,6 @@
 /* Colors, plain theme */
 .bighouse.plain {
-    background-color: #eee;
+    background-color: #f8f8f8;
     color: black;
 }
 
@@ -19,8 +19,8 @@
     background-color: #f8f8f8;
 }
 
-.bighouse.plain .locbar .link .hint,
-.bighouse.plain .locbar .event .hint {
+.bighouse.plain .locbar .link .button,
+.bighouse.plain .locbar .event .button {
     border-color: black;
     background-color: #e8e8e8;
     color: #222;

@@ -912,18 +912,17 @@ module.exports = {
             otherMood = game.mood1
 	    text = game.text2
         }
-        var json = { game: game.id,
-		     finished: game.finished,
-                     waiting: Game.isWaitingForMove (game, role),
-                     text: text,
-                     verb: verb,
-		     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
-                     self: { mood: selfMood },
-                     other: { id: other.id, name: other.displayName, mood: otherMood },
-                     startline: game.currentStartTime,
-                     move: game.moves + 1 }
-	if (!game.finished && game.current && game.current.timeout)
-	    json.deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
+        return { game: game.id,
+		 finished: game.finished,
+                 waiting: Game.isWaitingForMove (game, role),
+                 text: text,
+                 verb: verb,
+		 defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
+                 self: { mood: selfMood },
+                 other: { id: other.id, name: other.displayName, mood: otherMood },
+                 startline: game.currentStartTime,
+                 deadline: Game.deadline(game),
+                 move: game.moves + 1 }
 	return json
     },
 

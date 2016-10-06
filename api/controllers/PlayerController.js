@@ -40,11 +40,11 @@ module.exports = {
 		else
 		    res.json (games.map (function (game) {
 			var role = Game.getRole (game, playerID)
-			var now = new Date(), created = new Date(game.createdAt), updated = new Date(game.updatedAt)
 			return { game: game.id,
 				 finished: game.finished,
-				 running: parseInt ((now - created) / 1000),
-				 dormant: parseInt ((now - updated) / 1000),
+				 running: Game.runningTime(game),
+				 dormant: Game.dormantTime(game),
+                                 deadline: Game.deadline(game),
 				 other: { name: (role == 1 ? game.player2 : game.player1).displayName },
 				 waiting: Game.isWaitingForMove (game, role) }
 		    }))
@@ -174,11 +174,12 @@ module.exports = {
                         var actionsAttr = Game.roleAttr (info.role, 'actions')
 			var lastTurnWithActions = 0
                         json.history = turns.map (function (turn, n) {
-			    if (!$.isEmptyObject (turn[actionsAttr]))
+                            var actions = turn[actionsAttr]
+			    if (actions && Object.keys(actions).length)
 				lastTurnWithActions = n
                             return { move: turn.move,
 				     text: turn[textAttr],
-				     actions: turn[actionsAttr] }
+				     actions: actions }
                         })
 			if (!req.params.moveNumber)
 			    json.history = json.history.splice (lastTurnWithActions)
@@ -415,6 +416,8 @@ module.exports = {
     // view a Location
     viewLocation: function (req, res) {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
+	    if (req.isSocket)
+		Player.subscribe (req, [player.id])
 	    MiscPlayerService.getLocation (player, { id: req.params.location }, rs)
 	})
     },
@@ -422,6 +425,8 @@ module.exports = {
     // view home Location
     viewHome: function (req, res) {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
+	    if (req.isSocket)
+		Player.subscribe (req, [player.id])
 	    MiscPlayerService.getLocation (player, { name: player.global.home }, rs)
 	})
     },

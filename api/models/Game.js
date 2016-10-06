@@ -115,6 +115,23 @@ module.exports = {
 	return (role == 1 ? game.move1 : game.move2) == ''
     },
 
+    runningTime: function (game) {
+    	var now = new Date(), created = new Date(game.createdAt)
+	return parseInt ((now - created) / 1000)
+    },
+
+    dormantTime: function (game) {
+    	var now = new Date(), updated = new Date(game.updatedAt)
+	return parseInt ((now - updated) / 1000)
+    },
+
+    deadline: function (game) {
+        var deadline
+	if (!game.finished && game.current && game.current.timeout)
+	    deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
+        return deadline
+    },
+    
     isTimedOut: function (game) {
         return game.current
 	    && game.current.timeout

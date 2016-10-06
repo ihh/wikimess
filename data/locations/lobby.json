@@ -10,10 +10,8 @@
       title: "The Lobby",
       description: "You are standing in the lobby.",
       link: [{ to: "deansoffice" }],
-      events: [ { ready: "Cut class",
-		  set: "Planning to cut class",
-		  go: "Cutting class",
-		  pitch: "Want to cut class?",
+      events: [ { title: "Cut class",
+		  hint: "Want to cut class?",
 		  choice: "root" } ]
   },
   {

@@ -83,8 +83,8 @@ body {
     clear: both;
 }
 
-.bighouse .locbar .link .hint,
-.bighouse .locbar .event .hint {
+.bighouse .locbar .link .button,
+.bighouse .locbar .event .button {
     border-style: solid;
     border-width: 1px;
     padding: 1px 3px;

@@ -392,15 +392,17 @@ module.exports = {
 							   { player2: player.id }],
 						      event: eventIds },
 					     sort: 'createdAt' })
+                                    .populate ('current')
 				    .exec (function (err, games) {
 					if (err) rs(err)
 					else {
 					    var now = new Date()
 					    games.forEach (function (game) {
-						var created = new Date(game.createdAt), updated = new Date(game.updatedAt)
 						eventById[game.event].game = { id: game.id,
-									       running: parseInt ((now - created) / 1000),
-									       dormant: parseInt ((now - updated) / 1000) }
+                                                                               finished: game.finished,
+									       running: Game.runningTime(game),
+									       dormant: Game.dormantTime(game),
+                                                                               deadline: Game.deadline(game) }
 					    })
 					    Invite.find ({ event: eventIds,
 							   player: player.id })
@@ -422,12 +424,20 @@ module.exports = {
 							    }),
 							    events: events.map (function (event) {
 								var state = (event.game
-									     ? "go"
+									     ? (event.game.finished
+                                                                                ? "finished"
+                                                                                : (Game.isWaitingForMove(event.game,Game.getRole(event.game,player.id))
+                                                                                   ? "waiting"
+                                                                                   : "ready"))
 									     : (event.invited
-										? "set"
-										: "ready"))
+										? "starting"
+										: (event.locked
+                                                                                   ? "locked"
+                                                                                   : "start")))
 								return { id: event.id,
-									 hint: event[state],
+									 title: event.title,
+                                                                         hint: event.hint,
+                                                                         locked: event.locked,
 									 state: state,
 									 waiting: (event.invited && !event.game
 										   ? parseInt ((now - event.invited) / 1000)
