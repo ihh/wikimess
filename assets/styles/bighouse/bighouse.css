@@ -76,6 +76,7 @@ body {
 
 .bighouse .locbar .link .title,
 .bighouse .locbar .event .title {
+    width: 80vw;
     font-weight: normal;
     font-style: italic;
     font-size: medium;
@@ -93,8 +94,8 @@ body {
 .bighouse .locbar .link .timer,
 .bighouse .locbar .event .timer {
     position: absolute;
-    left: 1vw;
-    bottom: 0;
+    top: 0;
+    right: 1vw;
     font-size: x-small;
 }
 
