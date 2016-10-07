@@ -61,6 +61,11 @@ module.exports = {
 	  type: 'string'   // should eval to positive real value probabilistically weighting chance of player being in role 1
       },
 
+      resetAllowed: {
+	  type: 'boolean',
+	  defaultsTo: true
+      },
+
       reset: {
 	  type: 'integer',
 	  defaultsTo: 30  // resets 30 seconds after game exited

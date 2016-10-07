@@ -89,6 +89,7 @@ body {
     border-width: 1px;
     padding: 1px 3px;
     float: right;
+    cursor: pointer;
 }
 
 .bighouse .locbar .link .timer,

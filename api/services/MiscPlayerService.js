@@ -55,6 +55,7 @@ module.exports = {
                 .populate ('player1')
                 .populate ('player2')
                 .populate ('current')
+                .populate ('event')
                 .exec (function (err, games) {
                     if (err)
                         rs(err)
@@ -162,6 +163,29 @@ module.exports = {
                       layout: 'status/layout' })
     },
 
+    quitGame: function (req, rs, info) {
+        var moveNumber = info.moveNumber
+        var player = info.player
+        var game = info.game
+        var role = info.role
+        if (!game.finished)
+            rs (new Error ("Can't quit game " + game.id + " since game is not finished"))
+        else if (game.moves + 1 != moveNumber)
+            rs (new Error ("Can't quit at move " + moveNumber + " in game " + game.id + " since game is at move " + (game.moves + 1)))
+        else {
+	    var update = {}
+	    update[Game.roleAttr(role,'quit')] = true
+	    Game.update ({ id: game.id },
+			 update,
+			 function (err, updated) {
+			     if (err) rs(err)
+			     else
+				 rs (null, { game: game.id,
+					     quit: true })
+			 })
+	}
+    },
+
     makeMove: function (req, rs, info) {
         var moveNumber = info.moveNumber
         var move = info.move
@@ -244,7 +268,10 @@ module.exports = {
 	roles.forEach (function (role) {
 	    var msg = { message: message,
 			game: game.id,
-			move: moveNumber }
+			event: game.event.id,
+			move: moveNumber,
+			finished: game.finished,
+			nextDeadline: Game.deadline(game) }
 	    var playerID = Game.getRoleAttr(game,role,'player').id
 	    Player.message (playerID, msg)
 	    sails.log.debug ("Sending message " + JSON.stringify(msg) + " to player #" + playerID)
@@ -378,10 +405,6 @@ module.exports = {
 				})
 
 				var events = location.events, eventById = {}
-				events = events.filter (function (event) {
-				    return typeof(event.visible) === 'undefined'
-					|| MiscPlayerService.evalPlayerExpr (player, event.visible)
-				})
 				events.forEach (function (event) {
 				    if (event.locked)
 					event.locked = MiscPlayerService.evalPlayerExpr (player, event.locked)
@@ -398,11 +421,22 @@ module.exports = {
 					else {
 					    var now = new Date()
 					    games.forEach (function (game) {
-						eventById[game.event].game = { id: game.id,
-                                                                               finished: game.finished,
-									       running: Game.runningTime(game),
-									       dormant: Game.dormantTime(game),
-                                                                               deadline: Game.deadline(game) }
+						var role = Game.getRole (game, player.id)
+						var event = eventById[game.event]
+						if (Game.getRoleAttr (game,role,'quit')) {
+						    if (event.resetAllowed) {
+							var resetTime = Game.resetTime (game, event)
+							if (now < resetTime)
+							    event.resetTime = resetTime
+						    } else
+							event.visible = false
+						} else
+						    event.game = { id: game.id,
+								   finished: game.finished,
+								   waiting: Game.isWaitingForMove(game,Game.getRole(game,player.id)),
+								   running: Game.runningTime(game),
+								   dormant: Game.dormantTime(game),
+								   deadline: Game.deadline(game) }
 					    })
 					    Invite.find ({ event: eventIds,
 							   player: player.id })
@@ -410,8 +444,17 @@ module.exports = {
 						    if (err) rs(err)
 						    else {
 							invites.forEach (function (invite) {
-							    eventById[invite.event].invited = new Date (invite.createdAt)
+							    var event = eventById[invite.event]
+							    event.invited = new Date (invite.createdAt.getTime() + 1000*event.wait)
 							})
+
+							events = events.filter (function (event) {
+							    return typeof(event.visible) === 'undefined'
+								|| MiscPlayerService.evalPlayerExpr (player, event.visible)
+								|| event.game
+								|| event.invited
+							})
+
 							rs (null, {
 							    id: location.id,
 							    title: location.title,
@@ -426,20 +469,23 @@ module.exports = {
 								var state = (event.game
 									     ? (event.game.finished
                                                                                 ? "finished"
-                                                                                : (Game.isWaitingForMove(event.game,Game.getRole(event.game,player.id))
-                                                                                   ? "waiting"
-                                                                                   : "ready"))
+                                                                                : (event.game.waiting
+                                                                                   ? "ready"
+                                                                                   : "waiting"))
 									     : (event.invited
 										? "starting"
 										: (event.locked
                                                                                    ? "locked"
-                                                                                   : "start")))
+                                                                                   : (event.resetTime
+										      ? "resetting"
+										      : "start"))))
 								return { id: event.id,
 									 title: event.title,
                                                                          hint: event.hint,
                                                                          locked: event.locked,
 									 state: state,
                                                                          invited: event.invited,
+									 reset: event.resetTime,
 									 game: event.game }
 							    })
 							})

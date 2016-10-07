@@ -31,7 +31,8 @@ module.exports = {
     // get a player's games
     games: function (req, res) {
 	var playerID = req.params.player
-	Game.find ({ where: { or: [ { player1: playerID }, { player2: playerID } ] } })
+	Game.find ({ where: { or: [ { player1: playerID, quit1: false },
+				    { player2: playerID, quit2: false } ] } })
 	    .populate ('player1')
 	    .populate ('player2')
 	    .exec (function (err, games) {
@@ -82,6 +83,7 @@ module.exports = {
 			     wantHuman: true },
 			   function (opponent, game) {
 			       // game started; return game info
+			       sails.log.debug ("Sending join messages to players #" + player.id + " and #" + opponent.id)
 			       var playerMsg = { message: "join",
 						 player: player.id,
 						 event: event.id,
@@ -106,7 +108,8 @@ module.exports = {
 				   Player.subscribe (req, [player.id])
 			       rs (null, { player: player.id,
 					   event: event.id,
-					   waiting: true })
+					   waiting: true,
+					   invited: new Date (Date.now() + 1000*event.wait) })
 			   },
 			   rs)
 	})
@@ -303,6 +306,15 @@ module.exports = {
                               },
                               rs)
         })
+    },
+
+    // quit a game
+    quitGame: function (req, res) {
+        var moveNumber = req.params.moveNumber
+        MiscPlayerService.findGame (req, res, function (info, rs) {
+	    info.moveNumber = moveNumber
+	    MiscPlayerService.quitGame (req, rs, info)
+	})
     },
 
     // Upload avatar for player

@@ -80,6 +80,7 @@ module.exports.routes = {
     'PUT /player/:player/game/:game/move/:moveNumber':            'PlayerController.makeMove',
     'GET /player/:player/game/:game/move/:moveNumber/mood/:mood': 'PlayerController.changeMood',
     'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
+    'GET /player/:player/game/:game/move/:moveNumber/quit':       'PlayerController.quitGame',
 
     'GET /player/:player/home':               'PlayerController.viewHome',
     'GET /player/:player/location/:location': 'PlayerController.viewLocation',

@@ -58,7 +58,6 @@ var BigHouse = (function() {
         jiggleDelay: 5000,
         avatarSize: 128,
         cardDelimiter: ';;',
-	botWaitTime: 10,  // time before 'join' will give up on finding a human opponent
 	nTimeoutChimes: 3,
 	moveRetryCount: 3,
 	moveRetryMinWait: 10,
@@ -153,6 +152,10 @@ var BigHouse = (function() {
 
         REST_getPlayerGameMoveMood: function (playerID, gameID, move, mood) {
             return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/mood/' + mood)
+        },
+
+        REST_getPlayerGameMoveQuit: function (playerID, gameID, moveNumber) {
+            return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/quit')
         },
 
         REST_getPlayerAvatarConfig: function (playerID) {
@@ -485,6 +488,20 @@ var BigHouse = (function() {
 		var event = this.eventsById[eventId]
 		if (event) {
 		    event.game = data.game
+		    this.updateEventState (event, data.finished ? 'finished' : 'ready')
+		}
+	    }
+	},
+
+	updateEventFromMoveMessage: function (data) {
+	    var eventId = data.event
+	    if (this.eventsById) {
+		var event = this.eventsById[eventId]
+		if (event) {
+		    if (data.nextDeadline)
+			event.game.deadline = data.nextDeadline
+		    else
+			delete event.game.deadline
 		    this.updateEventState (event, 'ready')
 		}
 	    }
@@ -510,12 +527,12 @@ var BigHouse = (function() {
             case 'start':
                 button.on('click', function() {
                     button.off()
+		    bh.lastStartedEventId = event.id
                     bh.REST_getPlayerJoin (bh.playerID, event.id)
                         .done (function (data) {
                             if (data.waiting) {
-                                event.invited = new Date()
+                                event.invited = data.invited
 				bh.updateEventState (event, 'starting')
-				bh.lastStartedEventId = event.id
                             } else {
                                 event.game = data.game
 				bh.updateEventState (event, 'ready')
@@ -527,6 +544,7 @@ var BigHouse = (function() {
                 })
                 break;
 
+            case 'resetting':
             case 'starting':
                 break;
 
@@ -547,19 +565,24 @@ var BigHouse = (function() {
 	},
 
 	updateEventTimer: function (event) {
-	    var bh = this
             var now = new Date()
 	    
             if (event.game && event.game.deadline)
-                event.timerDiv.text (bh.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
+                event.timerDiv.text (this.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
             else if (event.invited && event.state == 'starting') {
-                var timeWaiting = (now - new Date(event.invited)) / 1000
-                if (timeWaiting > bh.botWaitTime && !event.invitedBot) {
+                var timeToWait = (new Date(event.invited) - now) / 1000
+                if (timeToWait <= 0 && !event.invitedBot) {
                     event.invitedBot = true
-                    bh.REST_getPlayerJoinBot (bh.playerID, event.id)
+                    this.REST_getPlayerJoinBot (this.playerID, event.id)
                         .fail (function() { delete event.invitedBot })
                 }
-                event.timerDiv.text (bh.shortTimerText (bh.botWaitTime - timeWaiting))
+                event.timerDiv.text (this.shortTimerText (timeToWait))
+	    } else if (event.reset && event.state == 'resetting') {
+                var timeToWait = (new Date(event.reset) - now) / 1000
+		if (timeToWait <= 0)
+		    this.updateEventState (event, 'start')
+		else
+                    event.timerDiv.text (this.shortTimerText (timeToWait))
             } else
                 event.timerDiv.empty()
         },
@@ -1221,6 +1244,17 @@ var BigHouse = (function() {
 	    }
 	},
 
+	quitGame: function() {
+	    var bh = this
+	    this.REST_getPlayerGameMoveQuit (this.playerID, this.gameID, this.moveNumber)
+		.done (function() {
+		    bh.exitGame()
+		})
+		.fail (function() {
+		    bh.exitGame()
+		})
+	},
+
 	exitGame: function() {
             delete this.gameID
 	    this.clearMoveTimer()
@@ -1740,8 +1774,11 @@ var BigHouse = (function() {
                                               dealDirection: dir == 'right' ? 'left' : 'right' })
 
 		} else {
-		    bh.playSound ('gameover')
-		    bh.exitGame()
+		    if (bh.gameState === 'gameOver') {
+			bh.playSound ('gameover')
+			bh.quitGame()
+		    } else
+			bh.exitGame()
                 }
 	    }
 	},
@@ -2207,7 +2244,6 @@ var BigHouse = (function() {
             switch (msg.data.message) {
             case "join":
                 if (this.page === 'play') {
-                    // TODO: test if this event was the last one started; if not, just update the event state button
 		    if (this.verbose.messages)
 			console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.game.id)
                     this.updateEventFromJoinMessage (msg.data)
@@ -2220,7 +2256,8 @@ var BigHouse = (function() {
 			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
                     if (msg.data.move >= this.moveNumber)
                         this.callOrPostpone (this.loadGameCards.bind (this), msg)
-		}
+		} else if (this.page === 'play')
+                    this.updateEventFromMoveMessage (msg.data)
                 break
             case "mood":
                 if (this.gameID == msg.data.game) {

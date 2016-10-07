@@ -73,6 +73,16 @@ module.exports = {
           type: 'string'
       },
 
+      quit1: {
+          type: 'boolean',
+	  defaultsTo: false
+      },
+
+      quit2: {
+          type: 'boolean',
+	  defaultsTo: false
+      },
+
       // player state specific to this game
       mood1: {
           type: 'string',
@@ -112,7 +122,7 @@ module.exports = {
 },
 
     isWaitingForMove: function (game, role) {
-	return (role == 1 ? game.move1 : game.move2) == ''
+	return (role == 1 ? game.move1 : game.move2) === ''
     },
 
     runningTime: function (game) {
@@ -131,6 +141,13 @@ module.exports = {
 	    deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
         return deadline
     },
+
+    resetTime: function (game, event) {
+        var reset
+	if (game.finished)
+	    reset = new Date (game.currentStartTime.getTime() + 1000*event.reset)
+        return reset
+    },
     
     isTimedOut: function (game) {
         return game.current
@@ -147,8 +164,8 @@ module.exports = {
     },
     
     getRole: function (game, playerID) {
-	var player1id = typeof(game.player1) == 'object' ? game.player1.id : game.player1
-	var player2id = typeof(game.player2) == 'object' ? game.player2.id : game.player2
+	var player1id = typeof(game.player1) === 'object' ? game.player1.id : game.player1
+	var player2id = typeof(game.player2) === 'object' ? game.player2.id : game.player2
 	return playerID == player1id ? 1 : (playerID == player2id ? 2 : null)
     },
 

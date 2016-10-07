@@ -6,13 +6,14 @@ module.exports = {
 	var event = info.event
 
 	// first check if there's a running Game
-	Game.find ({ where: { or: [ { player1: player.id }, { player2: player.id } ],
+	Game.find ({ where: { or: [ { player1: player.id, quit1: false },
+				    { player2: player.id, quit2: false } ],
 			      event: event.id } })
 	    .exec (function (err, games) {
 		if (err) rs(err)
 		else if (games.length) {
 		    var game = games[0]
-		    gameStarted (game.player1.id == player.id ? game.player2 : game.player1, game)
+		    error (new Error ("Game " + game.id + " already in progress"))
 		} else {
 
 		    // prepare a callback for when we find opponents
