@@ -129,40 +129,6 @@
     background-color: #ccc;
 }
 
-.bighouse.plain .gametable thead {
-    color: white;
-}
-
-.bighouse.plain .gametable tbody {
-    color: #666;
-}
-
-.bighouse.plain .gametable thead tr:nth-child(odd) {
-    background-color: #aaa;
-}
-
-.bighouse.plain .gametable tbody tr:nth-child(even) {
-    background-color: #ccc;
-}
-
-.bighouse.plain .gametable tbody td.ready {
-    color: darkgreen;
-}
-
-.bighouse.plain .gametable tbody td.over {
-    color: darkred;
-}
-
-.bighouse.plain .gametable tbody td.waiting {
-    color: darkorange;
-}
-
-.bighouse.plain .gametable tbody td:nth-child(5) span {
-    color: #444;
-    background-color: white;
-    border-color: #888;
-}
-
 .bighouse .menubar .themegroup label.plain {
     color: white;
 }

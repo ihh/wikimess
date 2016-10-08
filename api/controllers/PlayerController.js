@@ -36,6 +36,7 @@ module.exports = {
 	    .populate ('player1')
 	    .populate ('player2')
 	    .populate ('event')
+	    .populate ('current')
 	    .exec (function (err, games) {
                 if (err)
                     res.status(500).send (err)
@@ -90,21 +91,19 @@ module.exports = {
 			   function (opponent, game) {
 			       // game started; return game info
 			       sails.log.debug ("Sending join messages to players #" + player.id + " and #" + opponent.id)
+			       var eventInfo = { id: event.id,
+						 title: event.title,
+						 hint: event.hint,
+						 state: game.finished ? "finished" : "ready",
+						 game: { id: game.id,
+							 deadline: Game.deadline(game) } }
 			       var playerMsg = { message: "join",
 						 player: player.id,
-						 event: { id: event.id,
-							  title: event.title,
-							  hint: event.hint },
-						 game: { id: game.id,
-                                                         deadline: Game.deadline(game) },
+						 event: eventInfo,
 						 waiting: false }
 			       var opponentMsg = { message: "join",
 						   player: opponent.id,
-						   event: { id: event.id,
-							    title: event.title,
-							    hint: event.hint },
-						   game: { id: game.id,
-                                                           deadline: Game.deadline(game) },
+						   event: eventInfo,
 						   waiting: false }
 			       if (req.isSocket)
 				   Player.subscribe (req, [player.id])
@@ -152,11 +151,15 @@ module.exports = {
                              wantHuman: false },
 			   function (opponent, game) {
                                // game started; return game info
+			       var eventInfo = { id: event.id,
+						 title: event.title,
+						 hint: event.hint,
+						 state: game.finished ? "finished" : "ready",
+						 game: { id: game.id,
+							 deadline: Game.deadline(game) } }
                                var playerMsg = { message: "join",
                                                  player: player.id,
-						 event: event.id,
-                                                 game: { id: game.id,
-                                                         deadline: Game.deadline(game) },
+						 event: eventInfo,
                                                  waiting: false }
                                if (req.isSocket)
                                    Player.subscribe (req, [player.id])

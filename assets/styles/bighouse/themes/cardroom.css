@@ -130,40 +130,6 @@
     background-color: #444;
 }
 
-.bighouse.cardroom .gametable thead {
-    color: black;
-}
-
-.bighouse.cardroom .gametable tbody {
-    color: #aaa;
-}
-
-.bighouse.cardroom .gametable thead tr:nth-child(odd) {
-    background-color: #666;
-}
-
-.bighouse.cardroom .gametable tbody tr:nth-child(even) {
-    background-color: #444;
-}
-
-.bighouse.cardroom .gametable tbody td.ready {
-    color: green;
-}
-
-.bighouse.cardroom .gametable tbody td.over {
-    color: red;
-}
-
-.bighouse.cardroom .gametable tbody td.waiting {
-    color: orange;
-}
-
-.bighouse.cardroom .gametable tbody td:nth-child(5) span {
-    color: #ccc;
-    background-color: black;
-    border-color: #888;
-}
-
 .bighouse .menubar .themegroup label.cardroom {
     color: darkgreen;
 }

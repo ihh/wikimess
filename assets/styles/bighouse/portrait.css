@@ -355,16 +355,6 @@
 	padding-right: 5vw;
     }
 
-    .bighouse .gametable thead th,
-    .bighouse .gametable tbody td {
-	height: 2em;
-    }
-
-    .bighouse .gametable tbody {
-	overflow-y: auto;
-	height: 100vh;
-    }
-
     .bighouse .detailbar {
 	height: 85vh;
 	margin: 1vh 1vw;

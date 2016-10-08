@@ -436,68 +436,6 @@ a.unclickable {
     opacity: .5;
 }
 
-.bighouse table.gametable {
-    width: 100%;
-    font-size: 12px;
-    cursor: default;
-}
-
-.bighouse .gametable thead,
-.bighouse .gametable tbody,
-.bighouse .gametable tr {
-    display: block;
-}
-
-.bighouse .gametable tr::after {
-    content: ' ';
-    display: block;
-    visibility: hidden;
-    clear: both;
-}
-
-.bighouse .gametable tbody td,
-.bighouse .gametable thead th {
-    overflow: hidden;
-    padding: 0;
-}
-
-.bighouse .gametable tbody td:nth-child(1),
-.bighouse .gametable thead th:nth-child(1) {
-    width: 25vw;
-    text-align: left;
-}
-
-.bighouse .gametable tbody td:nth-child(2),
-.bighouse .gametable thead th:nth-child(2) {
-    width: 19vw;
-    text-align: right;
-}
-
-.bighouse .gametable tbody td:nth-child(3),
-.bighouse .gametable thead th:nth-child(3) {
-    width: 19vw;
-    text-align: right;
-}
-
-.bighouse .gametable tbody td:nth-child(4),
-.bighouse .gametable thead th:nth-child(4) {
-    width: 16vw;
-    text-align: center;
-}
-
-.bighouse .gametable tbody td:nth-child(5),
-.bighouse .gametable thead th:nth-child(5) {
-    width: 11vw;
-    text-align: center;
-}
-
-.bighouse .gametable tbody td:nth-child(5) span {
-    border-width: 1px;
-    border-style: solid;
-    padding: 1px;
-    cursor: pointer;
-}
-
 .bighouse .detailbar {
     overflow-y: auto;
 }

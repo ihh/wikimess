@@ -510,15 +510,15 @@ var BigHouse = (function() {
 	    var eventId = data.event.id
 	    if (this.lastStartedEventId && this.lastStartedEventId == eventId) {
                 this.selectSound.stop()
-                this.startGame (data.game.id)
+                this.startGame (data.event.game.id)
 
 	    } else if (this.eventsById) {
 		var event = this.eventsById[eventId]
 		if (event) {
-		    event.game = data.game
-		    this.updateEventState (event, data.finished ? 'finished' : 'ready')
+		    event.game = data.event.game
+		    this.updateEventState (event, data.event.state)
 		} else if (this.page === 'activeGames')
-		    this.addEvent (event)
+		    this.addEvent (data.event)
 	    }
 	},
 
@@ -1213,12 +1213,14 @@ var BigHouse = (function() {
             this.container
                 .append (this.locBarDiv = $('<div class="locbar">')
 			 .append ($('<span>')
-				  .text('This page tracks all your active games.')))
+				  .text('This page shows all your currently active games.')))
 
 	    this.restoreScrolling (this.locBarDiv)
 
 	    this.REST_getPlayerGames (this.playerID)
 		.done (function (data) {
+		    if (bh.verbose.messages)
+			console.log (data)
 		    bh.addEvents (data)
 		}).fail (function (err) {
                     bh.showModalWebError (err, bh.showPlayPage.bind(bh))
@@ -2282,7 +2284,7 @@ var BigHouse = (function() {
             case "join":
                 if (this.page === 'play' || this.page === 'activeGames') {
 		    if (this.verbose.messages)
-			console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.game.id)
+			console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.event.game.id)
                     this.updateEventFromJoinMessage (msg.data)
                 }
                 break

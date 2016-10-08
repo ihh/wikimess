@@ -434,6 +434,7 @@ module.exports = {
 						} else
 						    event.game = { id: game.id,
 								   finished: game.finished,
+								   waiting: Game.isWaitingForMove(game,role),
 								   missed: Game.getRoleAttr(game,role,'missed'),
 								   running: Game.runningTime(game),
 								   dormant: Game.dormantTime(game),
@@ -485,7 +486,6 @@ module.exports = {
                                                                          hint: event.hint,
                                                                          locked: event.locked,
 									 state: state,
-									 missed: event.game && event.game.missed,
                                                                          invited: event.invited,
 									 reset: event.resetTime,
 									 game: event.game }
