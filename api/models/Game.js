@@ -49,6 +49,16 @@ module.exports = {
           defaultsTo: 0
       },
 
+      missed1: {
+          type: 'integer',
+          defaultsTo: 0
+      },
+
+      missed2: {
+          type: 'integer',
+          defaultsTo: 0
+      },
+
       currentStartTime: {
           type: 'date',
           defaultsTo: function() { return new Date() }

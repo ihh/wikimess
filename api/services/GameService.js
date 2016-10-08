@@ -417,6 +417,8 @@ module.exports = {
 			    defaultMove1: game.defaultMove1,
 			    defaultMove2: game.defaultMove2,
 			    moves: game.moves,
+			    missed1: game.missed1,
+			    missed2: game.missed2,
 			    move1: game.move1,
 			    move2: game.move2,
 			    mood1: game.mood1,
@@ -787,7 +789,9 @@ module.exports = {
         var game = info.game
         var moveNumber = info.moveNumber
 	var update = info.update
-	var turnUpdate = info.turnUpdate
+	var turnUpdate = { mood1: game.mood1,
+			   mood2: game.mood2 }
+	extend (turnUpdate, info.turnUpdate || {})
 	var query = { id: game.id,
 		      moves: game.moves,
 		      move1: game.move1,
@@ -798,23 +802,24 @@ module.exports = {
 
 	function turnUpdater (success, error) {
 	    return function() {
-		if (turnUpdate)
-		    Turn.update ({ game: game.id,
-				   move: moveNumber },
-				 turnUpdate,
-				 function (err, updated) {
-				     if (err)
-					 error (err)
-				     else
-					 success()
-				 })
-		else
-		    success()
+		Turn.update ({ game: game.id,
+			       move: moveNumber },
+			     turnUpdate,
+			     function (err, updated) {
+				 if (err)
+				     error (err)
+				 else
+				     success()
+			     })
 	    }
 	}
         
         // update
 	extend (game, update)
+	if (update.move1)
+	    game.missed1 = (turnUpdate.actions1 && Object.keys(turnUpdate.actions1).length) ? 0 : (game.missed1 + 1)
+	if (update.move2)
+	    game.missed2 = (turnUpdate.actions2 && Object.keys(turnUpdate.actions2).length) ? 0 : (game.missed2 + 1)
 	if (!GameService.gotBothMoves (game))
             GameService.updateGame (query, game, turnUpdater(playerWaiting,error), error)
         else {

@@ -30,7 +30,12 @@
 .bighouse.cardroom .locbar .event .lock,
 .bighouse.cardroom .locbar .link .timer,
 .bighouse.cardroom .locbar .event .timer {
-    color: darkgreen;
+    color: #ddd;
+}
+
+.bighouse.cardroom .locbar .link .missed,
+.bighouse.cardroom .locbar .event .missed {
+    color: red;
 }
 
 .bighouse.cardroom .cardbar .cardtable {

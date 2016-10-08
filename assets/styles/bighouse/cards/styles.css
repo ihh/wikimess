@@ -3,9 +3,11 @@
 }
 
 .bighouse .cardbar .cardtable .waitcard span {
+/*
     animation: fadein 1s, pulsate 3s ease 500ms infinite;
     -moz-animation: fadein 1s, pulsate 3s ease 500ms infinite;
     -webkit-animation: fadein 1s, pulsate 3s ease 500ms infinite;
+*/
 }
 
 @-webkit-keyframes fadein {

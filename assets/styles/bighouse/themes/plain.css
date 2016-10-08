@@ -33,6 +33,11 @@
     color: #666;
 }
 
+.bighouse.plain .locbar .link .missed,
+.bighouse.plain .locbar .event .missed {
+    color: red;
+}
+
 .bighouse.plain .cardbar .cardtable {
     border-top-style: solid;
     border-top-width: 1px;

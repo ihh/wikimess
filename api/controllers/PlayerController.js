@@ -35,19 +35,25 @@ module.exports = {
 				    { player2: playerID, quit2: false } ] } })
 	    .populate ('player1')
 	    .populate ('player2')
+	    .populate ('event')
 	    .exec (function (err, games) {
                 if (err)
                     res.status(500).send (err)
 		else
 		    res.json (games.map (function (game) {
 			var role = Game.getRole (game, playerID)
-			return { game: game.id,
-				 finished: game.finished,
-				 running: Game.runningTime(game),
-				 dormant: Game.dormantTime(game),
-                                 deadline: Game.deadline(game),
-				 other: { name: (role == 1 ? game.player2 : game.player1).displayName },
-				 waiting: Game.isWaitingForMove (game, role) }
+			var waiting = Game.isWaitingForMove(game,role)
+			return { id: game.event.id,
+				 title: game.event.title,
+				 hint: game.event.hint,
+				 state: (game.finished
+                                         ? "finished"
+                                         : (waiting
+                                            ? "ready"
+                                            : "waiting")),
+				 game: { id: game.id,
+					 missed: Game.getRoleAttr (game, role, 'missed'),
+					 deadline: Game.deadline (game) } }
 		    }))
 	    })
     },
@@ -86,13 +92,17 @@ module.exports = {
 			       sails.log.debug ("Sending join messages to players #" + player.id + " and #" + opponent.id)
 			       var playerMsg = { message: "join",
 						 player: player.id,
-						 event: event.id,
+						 event: { id: event.id,
+							  title: event.title,
+							  hint: event.hint },
 						 game: { id: game.id,
                                                          deadline: Game.deadline(game) },
 						 waiting: false }
 			       var opponentMsg = { message: "join",
 						   player: opponent.id,
-						   event: event.id,
+						   event: { id: event.id,
+							    title: event.title,
+							    hint: event.hint },
 						   game: { id: game.id,
                                                            deadline: Game.deadline(game) },
 						   waiting: false }
@@ -185,7 +195,9 @@ module.exports = {
 				lastTurnWithActions = n
                             return { move: turn.move,
 				     text: turn[textAttr],
-				     actions: actions }
+				     actions: actions,
+				     self: { mood: Game.getRoleAttr(turn,info.role,'mood') },
+				     other: { mood: Game.getOtherRoleAttr(turn,info.role,'mood') } }
                         })
 			if (!req.params.moveNumber)
 			    json.history = json.history.splice (lastTurnWithActions)
@@ -405,7 +417,7 @@ module.exports = {
                 if (err)
                     res.status(500).send (err)
                 else if (!player)
-                    res.status(404).send (new Error ("Player " + name + " not found"))
+                    res.status(404).send (new Error ("Player " + playerID + " not found"))
                 else
                     res.json (player.avatarConfig)
             })

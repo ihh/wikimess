@@ -101,7 +101,9 @@ body {
 }
 
 .bighouse .locbar .link .lock,
-.bighouse .locbar .event .lock {
+.bighouse .locbar .event .lock,
+.bighouse .locbar .link .missed,
+.bighouse .locbar .event .missed {
     position: absolute;
     left: 1vw;
     bottom: 0;

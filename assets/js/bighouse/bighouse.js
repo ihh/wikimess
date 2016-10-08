@@ -89,6 +89,14 @@ var BigHouse = (function() {
         navIcons: { view: '/images/icons/binoculars.svg',
                     settings: '/images/icons/cog.svg',
                     games: '/images/icons/card-random.svg' },
+
+	eventButtonText: { locked: 'Locked',
+			   start: 'Start',
+			   resetting: 'Locked',
+			   starting: 'Starting',
+			   ready: 'Go',
+			   waiting: 'Waiting',
+			   finished: 'Go' },
         
 	verbose: { page: false,
                    gameState: true,
@@ -396,16 +404,13 @@ var BigHouse = (function() {
             this.changeMusic('menu')
             this.setPage ('play')
 
-	    function eraseEventInfo() {
-		delete bh.lastStartedEventId
-		delete bh.eventsById
-	    }
-	    eraseEventInfo()
+	    this.eraseEventInfo()
 
             this.showNavBar ('view')
-            var locBarDiv
             this.container
-                .append (locBarDiv = $('<div class="locbar">'))
+                .append (this.locBarDiv = $('<div class="locbar">'))
+
+	    this.restoreScrolling (this.locBarDiv)
 
             var promise
             if (this.playerLocation)
@@ -417,32 +422,14 @@ var BigHouse = (function() {
 		if (bh.verbose.messages)
                     console.log(data)
 
-                locBarDiv
+                bh.locBarDiv
                     .append ($('<div class="location">')
                              .append ($('<div class="title">')
                                       .text (data.title))
                              .append ($('<div class="description">')
                                       .text (data.description)))
 
-		bh.eventsById = {}
-                data.events.map (function (event) {
-		    bh.eventsById[event.id] = event
-                    var div = $('<div class="event">')
-                        .append ($('<div class="title">')
-                                 .text (event.title))
-                    if (event.hint)
-                        div.append ($('<div class="hint">')
-                                    .text (event.hint))
-
-		    event.lockDiv = $('<div class="lock">')
-		    event.button = $('<div class="button">')
-                    event.timerDiv = $('<div class="timer">')
-
-                    bh.updateEventButton (event)
-
-                    div.append (event.lockDiv, event.timerDiv, event.button)
-                    locBarDiv.append (div)
-                })
+		bh.addEvents (data.events)
 
                 data.links.map (function (link) {
                     var div = $('<div class="link">')
@@ -463,23 +450,64 @@ var BigHouse = (function() {
                             bh.showPlayPage()
                         })
                     div.append (button)
-                    locBarDiv.append (div)
+                    bh.locBarDiv.append (div)
                 })
-
-                var pageAnimationTimer = window.setInterval (function() {
-                    data.events.forEach (function (event) {
-                        bh.updateEventTimer (event)
-                    })
-                }, 100)
-                this.pageExit = function() {
-		    eraseEventInfo()
-                    window.clearInterval (pageAnimationTimer)
-                }
             })
         },
 
+	eraseEventInfo: function() {
+	    delete this.lastStartedEventId
+	    delete this.eventsById
+	    delete this.currentEvents
+	},
+
+	initEventTimer: function() {
+	    var bh = this
+            var pageAnimationTimer = window.setInterval (function() {
+		bh.currentEvents.forEach (function (event) {
+                    bh.updateEventTimer (event)
+		})
+            }, 100)
+
+            bh.pageExit = function() {
+		bh.eraseEventInfo()
+		window.clearInterval (pageAnimationTimer)
+            }
+	},
+
+	addEvents: function (events) {
+	    var bh = this
+	    bh.eventsById = {}
+	    bh.currentEvents = []
+            events.map (function (event) {
+		bh.addEvent (event)
+            })
+	    bh.initEventTimer()
+	},
+
+	addEvent: function (event) {
+	    this.eventsById[event.id] = event
+	    this.currentEvents.push (event)
+            var div = $('<div class="event">')
+                .append ($('<div class="title">')
+                         .text (event.title))
+            if (event.hint)
+                div.append ($('<div class="hint">')
+                            .text (event.hint))
+
+	    event.lockDiv = $('<div class="lock">')
+            event.missedDiv = $('<div class="missed">')
+	    event.button = $('<div class="button">')
+            event.timerDiv = $('<div class="timer">')
+
+            this.updateEventButton (event)
+
+            div.append (event.lockDiv, event.missedDiv, event.timerDiv, event.button)
+            this.locBarDiv.append (div)
+	},
+
 	updateEventFromJoinMessage: function (data) {
-	    var eventId = data.event
+	    var eventId = data.event.id
 	    if (this.lastStartedEventId && this.lastStartedEventId == eventId) {
                 this.selectSound.stop()
                 this.startGame (data.game.id)
@@ -489,7 +517,8 @@ var BigHouse = (function() {
 		if (event) {
 		    event.game = data.game
 		    this.updateEventState (event, data.finished ? 'finished' : 'ready')
-		}
+		} else if (this.page === 'activeGames')
+		    this.addEvent (event)
 	    }
 	},
 
@@ -498,11 +527,12 @@ var BigHouse = (function() {
 	    if (this.eventsById) {
 		var event = this.eventsById[eventId]
 		if (event) {
+		    event.game.missed = data.missed
 		    if (data.nextDeadline)
 			event.game.deadline = data.nextDeadline
 		    else
 			delete event.game.deadline
-		    this.updateEventState (event, 'ready')
+		    this.updateEventState (event, data.finished ? 'finished' : 'ready')
 		}
 	    }
 	},
@@ -516,7 +546,7 @@ var BigHouse = (function() {
 	    var bh = this
 	    var button = event.button
 	    button
-		.text (this.capitalize (event.state))
+		.text (this.eventButtonText[event.state])
 		.off()
 
             switch (event.state) {
@@ -567,9 +597,14 @@ var BigHouse = (function() {
 	updateEventTimer: function (event) {
             var now = new Date()
 	    
-            if (event.game && event.game.deadline)
-                event.timerDiv.text (this.shortTimerText ((new Date(event.game.deadline) - now) / 1000))
-            else if (event.invited && event.state == 'starting') {
+            if (event.game) {
+                event.timerDiv.text (event.game.deadline
+				     ? this.shortTimerText ((new Date(event.game.deadline) - now) / 1000)
+				     : '')
+		event.missedDiv.text (event.game.missed
+				      ? ("Missed " + this.plural(event.game.missed,"turn"))
+				      : '')
+	    } else if (event.invited && event.state === 'starting') {
                 var timeToWait = (new Date(event.invited) - now) / 1000
                 if (timeToWait <= 0 && !event.invitedBot) {
                     event.invitedBot = true
@@ -1171,39 +1206,20 @@ var BigHouse = (function() {
             var bh = this
 
 	    this.setPage ('activeGames')
-	    var tbody
             this.showNavBar ('games')
-	    this.container
-		.append ($('<div>')
-			 .append ($('<table class="gametable">')
-				  .append ($('<thead>')
-					   .append ($('<tr>')
-						    .append ($('<th>').text("Player"))
-						    .append ($('<th>').text("Started"))
-						    .append ($('<th>').text("Updated"))
-						    .append ($('<th>').text("State"))
-						    .append ($('<th>'))))
-				  .append (tbody = $('<tbody>'))))
 
-	    // allow scrolling for tbody, while preventing bounce at ends
-	    this.restoreScrolling (tbody)
+	    this.eraseEventInfo()
+
+            this.container
+                .append (this.locBarDiv = $('<div class="locbar">')
+			 .append ($('<span>')
+				  .text('This page tracks all your active games.')))
+
+	    this.restoreScrolling (this.locBarDiv)
 
 	    this.REST_getPlayerGames (this.playerID)
 		.done (function (data) {
-		    tbody.append (data.map (function (info) {
-			var state = info.finished ? "Over" : (info.waiting ? "Ready" : "Waiting")
-			return $('<tr>')
-			    .append ($('<td>').text(info.other.name))
-			    .append ($('<td>').text(bh.hoursMinutes (info.running)))
-			    .append ($('<td>').text(bh.hoursMinutes (info.dormant)))
-			    .append ($('<td>').addClass(state.toLowerCase()).text(state))
-			    .append ($('<td>')
-				     .append ($('<span>')
-					      .text("Join")
-					      .on ('click', function() {
-						  bh.startGame (info.game)
-					      })))
-		    }))
+		    bh.addEvents (data)
 		}).fail (function (err) {
                     bh.showModalWebError (err, bh.showPlayPage.bind(bh))
                 })
@@ -1347,10 +1363,8 @@ var BigHouse = (function() {
                          .append ($('<span>')
                                   .html (this.makeLink ('Back', this.exitGame))))
 		.append ($('<div class="leftmood">')
-			 .append (this.makeVeil())
 			 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
                 .append ($('<div class="rightmood">')
-			 .append (this.makeVeil())
 			 .append (this.opponentMoodDiv = $('<div class="moodcontainer">')))
 	    this.moods.forEach (function (mood, m) {
 		var moodClass = "mood" + (m+1)
@@ -1367,6 +1381,7 @@ var BigHouse = (function() {
 	makeVeil: function() {
 	    return $('<div class="veil">')
 		.append ($('<div class="cyloneye">'))
+		.on ('click', this.showHistoryAlert.bind(this))
 	},
 
 	setGameState: function (state) {
@@ -1429,6 +1444,8 @@ var BigHouse = (function() {
 
 			bh.nodesForMove[hist.move] = hist.text
 			hist.text.forEach (function (node) {
+			    node.self = hist.self
+			    node.other = hist.other
 			    node.move = hist.move
 			    node.isHistory = (node.move < bh.moveNumber)
 
@@ -1482,7 +1499,7 @@ var BigHouse = (function() {
 			bh.currentChoiceNodeIndex = bh.nodesForMove[bh.currentChoiceMoveNumber].length - 1
 		    var node = bh.nodesForMove[bh.currentChoiceMoveNumber][bh.currentChoiceNodeIndex]
 
-		    var tossCurrent = bh.waitingAtFinal && !node.isFinal
+		    var tossCurrent = node.isWait && !node.isFinal
 		    bh.clearStack()
                     
 		    var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
@@ -1496,9 +1513,10 @@ var BigHouse = (function() {
 
 			    if (isStart)
 				bh.initStatusBar()
+
+			    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
                     
 			    bh.updatePlayerMood (data.self.mood, data.startline)
-			    bh.opponentNameDiv.text (bh.opponentName = data.other.name)
 			    bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
 			})
 
@@ -1620,8 +1638,11 @@ var BigHouse = (function() {
 
 	    var now = new Date(), nowTime = now.getTime()
             var jiggleTime = this.startline.getTime() + this.jiggleDelay
-	    if (nowTime >= jiggleTime)
-                $(this.currentChoiceNode.card.elem).addClass('jiggle')
+	    if (nowTime >= jiggleTime) {
+		var elem = $(this.currentChoiceNode.card.elem)
+                if (!elem.hasClass('thrown') && !elem.hasClass('waitcard'))
+		    elem.addClass('jiggle')
+	    }
 
 	    if (this.deadline) {
 		this.updateTimerDiv (this.startline, this.deadline, now)
@@ -1763,15 +1784,19 @@ var BigHouse = (function() {
 			bh.updateLastChoice (node)
 
 		    var nextNode = child.node
-		    if (nextNode.isFinal)
-			bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
+		    function makeMove() {
+			if (nextNode.isFinal)
+			    bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
+		    }
 
-		    if (node.nextInChain)  // next card already dealt?
+		    if (node.nextInChain) {  // next card already dealt?
                         bh.setCurrentNode (nextNode)
-                    else
+			makeMove()
+		    } else
 			bh.dealCardForNode ({ node: nextNode,
 					      showDealAnimation: true,
                                               dealDirection: dir == 'right' ? 'left' : 'right' })
+			.done (makeMove)
 
 		} else {
 		    if (bh.gameState === 'gameOver') {
@@ -1809,9 +1834,10 @@ var BigHouse = (function() {
 	    this.currentChoiceNode = node
 	    this.currentChoiceNodeIndex = node.id
 	    this.currentChoiceMoveNumber = node.move
-	    this.waitingAtFinal = this.currentChoiceNode.isFinal
 	    this.saveGamePosition()
 	    this.newTopCard (node)
+	    this.refreshPlayerMoodImage()
+	    this.refreshOpponentMoodImage()
 	    if (node.isHistory)
 		this.hideMoods()
 	    else {
@@ -2089,7 +2115,7 @@ var BigHouse = (function() {
             var date = new Date (time)
             if (!this.lastOpponentMoodTime || date > this.lastOpponentMoodTime) {
                 this.lastOpponentMoodTime = date
-		this.opponentId = id
+		this.opponentID = id
 		this.opponentMood = mood
 		this.refreshOpponentMoodImage()
 	    }
@@ -2112,12 +2138,24 @@ var BigHouse = (function() {
              })
 	},
 
+	showHistoryAlert: function() {
+            this.showModalMessage ("You are currently viewing old (expired) cards. Swipe through to current cards to access mood and status buttons.", this.loadGameCards.bind(this))
+	},
+
 	refreshPlayerMoodImage: function() {
-	    this.refreshMoodImage (this.playerID, this.playerMood, this.playerMoodDiv, this.showPlayerStatusPage)
+	    if (this.playerMoodDiv) {
+		var mood = this.currentChoiceNode.isHistory ? this.currentChoiceNode.self.mood : this.playerMood
+		var click = this.currentChoiceNode.isHistory ? this.showHistoryAlert : this.showPlayerStatusPage
+		this.refreshMoodImage (this.playerID, mood, this.playerMoodDiv, click)
+	    }
 	},
 
 	refreshOpponentMoodImage: function() {
-	    this.refreshMoodImage (this.opponentId, this.opponentMood, this.opponentMoodDiv, this.showOpponentStatusPage)
+	    if (this.opponentMoodDiv) {
+		var mood = this.currentChoiceNode.isHistory ? this.currentChoiceNode.other.mood : this.opponentMood
+		var click = this.currentChoiceNode.isHistory ? this.showHistoryAlert : this.showOpponentStatusPage
+		this.refreshMoodImage (this.opponentID, mood, this.opponentMoodDiv, click)
+	    }
 	},
 
 	callOrRetry (makePromise, retryCount, minWait, maxWait, validate) {
@@ -2210,7 +2248,6 @@ var BigHouse = (function() {
                 bh.playSound (mood)
                 bh.updatePlayerMood (mood)  // call to update image, don't provide a timestamp
                 bh.moodBar.find('*').addClass('unclickable')
-//                console.log ("changeMoodFunction: move=#" + moveNumber + " mood=" + mood)
                 bh.REST_getPlayerGameMoveMood (bh.playerID, bh.gameID, moveNumber, mood)
                     .done (function (data) {
                         bh.moodBar.find('*').removeClass('unclickable')
@@ -2243,7 +2280,7 @@ var BigHouse = (function() {
                 console.log (msg)
             switch (msg.data.message) {
             case "join":
-                if (this.page === 'play') {
+                if (this.page === 'play' || this.page === 'activeGames') {
 		    if (this.verbose.messages)
 			console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.game.id)
                     this.updateEventFromJoinMessage (msg.data)
@@ -2256,7 +2293,7 @@ var BigHouse = (function() {
 			console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
                     if (msg.data.move >= this.moveNumber)
                         this.callOrPostpone (this.loadGameCards.bind (this), msg)
-		} else if (this.page === 'play')
+		} else if (this.page === 'play' || this.page === 'activeGames')
                     this.updateEventFromMoveMessage (msg.data)
                 break
             case "mood":
@@ -2284,9 +2321,10 @@ var BigHouse = (function() {
             this.gameID = gameID
             delete this.gameState
             delete this.lastSwipe
-	    delete this.waitingAtFinal
 	    delete this.lastPlayerMoodTime
 	    delete this.lastOpponentMoodTime
+	    delete this.playerMoodDiv
+	    delete this.opponentMoodDiv
 
             delete this.moveNumber
             delete this.currentChoiceMoveNumber

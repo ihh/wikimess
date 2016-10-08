@@ -270,6 +270,7 @@ module.exports = {
 			game: game.id,
 			event: game.event.id,
 			move: moveNumber,
+			missed: Game.getRoleAttr(game,role,'missed'),
 			finished: game.finished,
 			nextDeadline: Game.deadline(game) }
 	    var playerID = Game.getRoleAttr(game,role,'player').id
@@ -433,7 +434,7 @@ module.exports = {
 						} else
 						    event.game = { id: game.id,
 								   finished: game.finished,
-								   waiting: Game.isWaitingForMove(game,Game.getRole(game,player.id)),
+								   missed: Game.getRoleAttr(game,role,'missed'),
 								   running: Game.runningTime(game),
 								   dormant: Game.dormantTime(game),
 								   deadline: Game.deadline(game) }
@@ -484,6 +485,7 @@ module.exports = {
                                                                          hint: event.hint,
                                                                          locked: event.locked,
 									 state: state,
+									 missed: event.game && event.game.missed,
                                                                          invited: event.invited,
 									 reset: event.resetTime,
 									 game: event.game }

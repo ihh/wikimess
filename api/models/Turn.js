@@ -45,6 +45,16 @@ module.exports = {
 
       move2 : {
 	  type: 'json'
+      },
+
+      mood1: {
+          type: 'string',
+          enum: ['happy', 'sad', 'angry', 'surprised']
+      },
+
+      mood2: {
+          type: 'string',
+          enum: ['happy', 'sad', 'angry', 'surprised']
       }
   }
 };
