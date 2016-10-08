@@ -1227,13 +1227,6 @@ var BigHouse = (function() {
                 })
 	},
 
-	hoursMinutes: function (seconds) {
-	    var m = parseInt(seconds / 60)
-	    var h = parseInt(m / 60)
-	    m = m % 60
-	    return h + ":" + (m < 10 ? "0" : "") + m
-	},
-
 	restoreScrolling: function (elem) {
 	    // allow scrolling for elem, while preventing bounce at ends
             // http://stackoverflow.com/a/20477023/726581
@@ -1266,14 +1259,14 @@ var BigHouse = (function() {
 	    var bh = this
 	    this.REST_getPlayerGameMoveQuit (this.playerID, this.gameID, this.moveNumber)
 		.done (function() {
-		    bh.exitGame()
+		    bh.exitGamePage()
 		})
 		.fail (function() {
-		    bh.exitGame()
+		    bh.exitGamePage()
 		})
 	},
 
-	exitGame: function() {
+	exitGamePage: function() {
             delete this.gameID
 	    this.clearMoveTimer()
 	    this.showPlayPage()
@@ -1363,7 +1356,7 @@ var BigHouse = (function() {
                                   .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
                 .append ($('<div class="statuslink">')
                          .append ($('<span>')
-                                  .html (this.makeLink ('Back', this.exitGame))))
+                                  .html (this.makeLink ('Back', this.exitGamePage))))
 		.append ($('<div class="leftmood">')
 			 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
                 .append ($('<div class="rightmood">')
@@ -1805,7 +1798,7 @@ var BigHouse = (function() {
 			bh.playSound ('gameover')
 			bh.quitGame()
 		    } else
-			bh.exitGame()
+			bh.exitGamePage()
                 }
 	    }
 	},
