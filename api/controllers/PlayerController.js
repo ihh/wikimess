@@ -226,14 +226,17 @@ module.exports = {
 //		console.log(game)
 //		console.log(Game.isTimedOut(game))
 		if (timedOutRoles.length) {
-		    var update = {}
+		    var update = {}, turnUpdate = {}
 		    timedOutRoles.forEach (function (timedOutRole) {
 			var timedOutPlayer = Game.getRoleAttr (game, timedOutRole, 'player')
-			update[Game.roleAttr(timedOutRole,'move')] = Game.getRoleAttr(game,timedOutRole,'defaultMove')
+			var moveAttr = Game.roleAttr(timedOutRole,'move')
+			var defaultMove = Game.getRoleAttr(game,timedOutRole,'defaultMove')
+			update[moveAttr] = turnUpdate[moveAttr] = defaultMove
 		    })
 		    GameService.recordMove ({ game: game,
 					      moveNumber: moveNumber,
-					      update: update },
+					      update: update,
+					      turnUpdate: turnUpdate },
 					    function (updatedGame, updatedPlayer1, updatedPlayer2) {
 						MiscPlayerService
 						    .sendMoveMessages ({ message: "timeout",

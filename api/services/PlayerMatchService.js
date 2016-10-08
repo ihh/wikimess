@@ -122,9 +122,10 @@ module.exports = {
 				  function (err, created) {
 				      if (err) lockedError(err)
 				      else {
-					  Invite.destroy ({ id: [player1.id, player2.id],
+					  Invite.destroy ({ player: [player1.id, player2.id],
 							    event: event.id })
 					      .exec (function (err) {
+						  console.log(err)
 						  if (err)
 						      lockedError (err)
 						  else
