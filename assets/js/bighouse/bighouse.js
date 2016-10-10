@@ -29,7 +29,7 @@ var BigHouse = (function() {
         this.pushedViews = []
 	this.postponedMessages = []
         this.avatarConfigPromise = {}
-        this.svgPromise = {}
+        this.iconPromise = {}
         this.gamePosition = {}
         
         if (config.playerID) {
@@ -639,8 +639,7 @@ var BigHouse = (function() {
                 var div = $('<span class="'+tab.name+'">')
                 bh.getIconPromise(bh.navIcons[tab.name])
                     .done (function (svg) {
-                        div.append (svg)
-                        div.children().addClass('navicon')
+                        div.append ($(svg).addClass('navicon'))
                     })
                     .fail (function (err) {
                         console.log(err)
@@ -654,17 +653,19 @@ var BigHouse = (function() {
         },
 
         getIconPromise: function(icon) {
-            if (!this.svgPromise[icon]) {
-                var def = $.Deferred()
-                $.ajax ({ url: this.iconPrefix + icon + this.iconSuffix,
-                          method: 'GET',
-                          success: function (svg) {
-                              def.resolve (new XMLSerializer().serializeToString(svg))
-                          },
-                          dataType: 'xml' })
-                this.svgPromise[icon] = def
-            }
-            return this.svgPromise[icon]
+            if (!this.iconPromise[icon])
+                this.iconPromise[icon] = $.ajax ({ url: this.iconPrefix + icon + this.iconSuffix,
+                                                  method: 'GET',
+                                                  dataType: 'text' })
+            return this.iconPromise[icon]
+        },
+
+        colorizeIcon: function(svg,fgColor,bgColor) {
+            if (fgColor)
+                svg = svg.replace(new RegExp("#fff", 'g'), fgColor)
+            if (bgColor)
+                svg = svg.replace(new RegExp("#000", 'g'), bgColor)
+            return svg
         },
         
         capitalize: function (text) {
