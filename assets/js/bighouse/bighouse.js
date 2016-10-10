@@ -29,6 +29,7 @@ var BigHouse = (function() {
         this.pushedViews = []
 	this.postponedMessages = []
         this.avatarConfigPromise = {}
+        this.svgPromise = {}
         this.gamePosition = {}
         
         if (config.playerID) {
@@ -47,7 +48,7 @@ var BigHouse = (function() {
         // default constants
         containerID: 'bighouse',
         localStorageKey: 'bighouse',
-	iconPrefix: '/icon/',
+	iconPrefix: '/images/icons/',
 	iconSuffix: '.svg',
 	blankImageUrl: '/images/1x1blank.png',
         facebookButtonImageUrl: '/images/facebook.png',
@@ -86,9 +87,9 @@ var BigHouse = (function() {
         themes: [ {style: 'plain', text: 'Plain'},
                   {style: 'cardroom', text: 'Card room'} ],
 
-        navIcons: { view: '/images/icons/binoculars.svg',
-                    settings: '/images/icons/cog.svg',
-                    games: '/images/icons/card-random.svg' },
+        navIcons: { view: 'binoculars',
+                    settings: 'cog',
+                    games: 'card-random' },
 
 	eventButtonText: { locked: 'Locked',
 			   start: 'Start',
@@ -636,8 +637,14 @@ var BigHouse = (function() {
 
             tabs.map (function (tab) {
                 var div = $('<span class="'+tab.name+'">')
-                    .append ($('<img class="navicon">')
-                             .attr('src',bh.navIcons[tab.name]))
+                bh.getIconPromise(bh.navIcons[tab.name])
+                    .done (function (svg) {
+                        div.append (svg)
+                        div.children().addClass('navicon')
+                    })
+                    .fail (function (err) {
+                        console.log(err)
+                    })
                 if (tab.name === currentTab)
                     div.addClass('active')
                 else
@@ -646,6 +653,20 @@ var BigHouse = (function() {
             })
         },
 
+        getIconPromise: function(icon) {
+            if (!this.svgPromise[icon]) {
+                var def = $.Deferred()
+                $.ajax ({ url: this.iconPrefix + icon + this.iconSuffix,
+                          method: 'GET',
+                          success: function (svg) {
+                              def.resolve (new XMLSerializer().serializeToString(svg))
+                          },
+                          dataType: 'xml' })
+                this.svgPromise[icon] = def
+            }
+            return this.svgPromise[icon]
+        },
+        
         capitalize: function (text) {
             return text.charAt(0).toUpperCase() + text.substr(1)
         },
@@ -2339,6 +2360,7 @@ var BigHouse = (function() {
 
         // audio
         startMusic: function (type, volume, promise) {
+            var bh = this
             if (this.verbose.music)
                 console.log('Starting music: '+type+' at volume '+volume)
             this.currentMusicVolume = volume
