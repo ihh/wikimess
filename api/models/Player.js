@@ -59,10 +59,7 @@ module.exports = {
       // global stats for this player
       global: {
           type: 'json',
-          defaultsTo: {
-              // a special Global indicating the player's home location
-	      home: 'root'
-          }
+          defaultsTo: { inv: {} }
       },
 
       initialMood: {
@@ -104,6 +101,18 @@ module.exports = {
   },
 
     beforeCreate: function(player, cb) {
+	DataService.item.forEach (function (item) {
+	    if (item.init)
+		player.global.inv[item.name] = item.init
+	    else if (item.alwaysShow)
+		player.global.inv[item.name] = 0
+	})
+
+	DataService.state.forEach (function (state) {
+	    if (state.init)
+		player.global[state.name] = state.init
+	})
+
         player.displayName = player.displayName || player.name
         player.avatarConfig = player.avatarConfig || Faces.generateSet()
         bcrypt.genSalt(10, function(err, salt) {

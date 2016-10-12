@@ -51,6 +51,16 @@ module.exports = {
 	  type: 'string'  // should eval to a (truthy) string explaining how player can unlock
       },
 
+      cost: {
+	  type: 'json',
+	  defaultsTo: {}
+      },
+
+      requires: {
+	  type: 'json',
+	  defaultsTo: {}
+      },
+
       compatibility: {
 	  type: 'string'   // should eval to positive real value probabilistically weighting chance of player/opponent match
 	  // NB this eval is NOT tested inside the lock (it'd be too CPU-intensive, since it's run on all compatible players)
