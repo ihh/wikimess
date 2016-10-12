@@ -636,19 +636,19 @@ var BigHouse = (function() {
                 .append (navbar = $('<div class="navbar">'))
 
             tabs.map (function (tab) {
-                var div = $('<span class="'+tab.name+'">')
+                var span = $('<span>').addClass(tab.name)
                 bh.getIconPromise(bh.navIcons[tab.name])
                     .done (function (svg) {
-                        div.append ($(svg).addClass('navicon'))
+                        span.append ($(svg).addClass('navicon'))
                     })
                     .fail (function (err) {
                         console.log(err)
                     })
                 if (tab.name === currentTab)
-                    div.addClass('active')
+                    span.addClass('active')
                 else
-                    div.on ('click', bh[tab.method].bind(bh))
-                navbar.append (div)
+                    span.on ('click', bh[tab.method].bind(bh))
+                navbar.append (span)
             })
         },
 
@@ -1317,10 +1317,55 @@ var BigHouse = (function() {
 	    this.restoreScrolling (detail)
 
             getMethod.call (this, this.playerID, this.gameID)
-		.done (function (data) {
-		    detail.html (data)
+		.done (function (status) {
+		    if (bh.verbose.messages)
+			console.log (status)
+		    status.element.forEach (function (elt) {
+			switch (elt.type) {
+			case 'header':
+			    detail.append ($('<h1>').text(elt.label))
+			    break
+			case 'icon':
+			    detail.append (bh.makeStatusIcon (elt.icon, elt.label))
+			    break
+			case 'meter':
+			    detail.append (bh.makeMeter (elt.label, elt.level, elt.min, elt.max, elt.color))
+			    break
+			default:
+			    break
+			}
+		    })
 		})
+                .fail (function (err) {
+                    console.log(err)
+                })
 	},
+
+	makeStatusIcon: function (icon, label) {
+	    var span = $('<span class="icon">')
+            this.getIconPromise(icon)
+                .done (function (svg) {
+                    span.append ($(svg).addClass('navicon'))
+                })
+                .fail (function (err) {
+                    console.log(err)
+                })
+            return $('<div class="statusline">')
+                .append (span)
+                .append ($('<span class="text">').text(label))
+	},
+
+        makeMeter: function(label,level,min,max,color) {
+	    color = color || 'blue'
+            return $('<div class="meterline">')
+		.append ($('<div class="meterlabel">')
+			 .append ($('<div class="metertext">').text(label))
+			 .append ($('<div class="meternumber">')
+				  .text ('(' + Math.round(level) + '/' + Math.round(max) + ')')))
+		.append ($('<div class="meter '+color+'">')
+			 .append ($('<span>')
+				  .css('width',(100*level/max) + '%')))
+        },
 
         // game pages
         showGamePage: function() {

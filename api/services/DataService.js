@@ -14,6 +14,11 @@ module.exports = {
 
     // attribute: status meters
     attribute: [
+	{ name: 'day',
+	  min: 0,
+	  max: 7,
+	  public: true,
+	  label: 'Days of school' }
     ],
 
     // accomplishment: icons

@@ -61,23 +61,23 @@ module.exports = {
 
     // get player game status
     selfGameStatus: function (req, res) {
-        MiscPlayerService.findGame (req, res, function (info) {
-            MiscPlayerService.makeStatus (res,
-                                          info.game,
-                                          info.player,
-                                          info.role == 1 ? info.game.local1 : info.game.local2,
-                                          'self')
+        MiscPlayerService.findGame (req, res, function (info, rs) {
+            MiscPlayerService.makeStatus ({ rs: rs,
+                                            game: info.game,
+                                            player: info.player,
+                                            local: info.role == 1 ? info.game.local1 : info.game.local2,
+                                            isPublic: false })
         })
     },
 
     // get opponent game status
     otherGameStatus: function (req, res) {
-        MiscPlayerService.findGame (req, res, function (info) {
-            MiscPlayerService.makeStatus (res,
-                                          info.game,
-                                          info.opponent,
-                                          info.role == 1 ? info.game.local2 : info.game.local1,
-                                          'other')
+        MiscPlayerService.findGame (req, res, function (info, rs) {
+            MiscPlayerService.makeStatus ({ rs: rs,
+                                            game: info.game,
+                                            player: info.opponent,
+                                            local: info.role == 1 ? info.game.local2 : info.game.local1,
+                                            isPublic: true })
         })
     },
 

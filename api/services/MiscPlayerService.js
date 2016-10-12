@@ -4,6 +4,23 @@ var fs = require('fs');
 var extend = require('extend');
 var merge = require('deepmerge');
 
+// Uncomment to show line numbers on console.log messages
+// https://remysharp.com/2014/05/23/where-is-that-console-log
+/*
+['log', 'warn'].forEach(function(method) {
+  var old = console[method];
+  console[method] = function() {
+    var stack = (new Error()).stack.split(/\n/);
+    // Chrome includes a single "Error" line, FF doesn't.
+    if (stack[0].indexOf('Error') === 0) {
+      stack = stack.slice(1);
+    }
+    var args = [].slice.apply(arguments).concat([stack[1].trim()]);
+    return old.apply(console, args);
+  };
+});
+*/
+
 module.exports = {
 
     // helpers
@@ -88,79 +105,53 @@ module.exports = {
 	return mood == 'happy' || mood == 'sad' || mood == 'angry' || mood == 'surprised'
     },
 
-    makeStatus: function (res, game, player, local, view) {
+        
+    plural: function(n,singular,plural) {
+        plural = plural || (singular + 's')
+        n = typeof(n) === 'undefined' ? 0 : n
+        return n + ' ' + (n == 1 ? singular : plural)
+    },
+
+    makeStatus: function (info) {
+	var rs = info.rs, game = info.game, player = info.player, local = info.local, isPublic = info.isPublic
 	var state = {}
-	extend (state, game.common)
+	if (game)
+	    extend (state, game.common)
 	extend (state, player.global)
 	state = merge (state, local)
 
-	var iconPrefix = '/images/icons/'
-        var iconPath = process.cwd() + '/assets' + iconPrefix
-        var iconSuffix = '.svg'
+	var status = { element: [] }
 
-        var icon = function(name,text,color,bgColor) {
-	    var path = '/icon/' + name
-	    if (bgColor && !color)
-		color = 'white'
-            if (color) {
-		path = path + '/' + color
-		if (bgColor)
-                    path = path + '/' + bgColor
-	    }
-            return '<div class="statusline">'
-                + '<span class="icon"><img src="' + path + '"></img></span>'
-                + '<span class="text">' + text + '</span>'
-		+ '</div>'
-        }
+	status.element.push ({ type: 'header', label: 'Attributes' })
+	DataService.attribute.forEach (function (attr) {
+	    status.element.push ({ type: 'meter',
+				   level: state[attr.name] || 0,
+				   min: attr.min,
+				   max: attr.max,
+				   label: attr.label })
+	})
 
-        // meter(label,level)
-        // meter(label,level,color)
-        // meter(label,level,max,color)
-        // meter(label,level,min,max,color)
-        var meter = function(label,level,min,max,color) {
-            if (typeof(min) === 'undefined') {
-                color = 'blue'
-                max = 1
-                min = 0
-            } else if (typeof(max) === 'undefined') {
-                color = min
-                max = 1
-                min = 0
-            } else if (typeof(color) === 'undefined') {
-                color = max
-                max = min
-                min = 0
-            }
-            return '<div class="meterline">'
-                  + '<div class="meterlabel">'
-                   + '<div class="metertext">' + label + '</div>'
-                   + '<div class="meternumber">(' + Math.round(level) + '/' + Math.round(max) + ')</div>'
-                  + '</div>'
-                  + '<div class="meter '+color+'">'
-                   + '<span style="width:' + (100*level/max) + '%;"></span>'
-                  + '</div>'
-                 + '</div>'
-        }
-        
-        var plural = function(n,singular,plural) {
-            plural = plural || (singular + 's')
-            n = typeof(n) === 'undefined' ? 0 : n
-            return n + ' ' + (n == 1 ? singular : plural)
-        }
-        
-        res.view ('status/' + view,
-                  { // locals
-                      name: player.displayName,
-		      state: state,
-		      global: player.global,
-		      local: local,
-                      common: game.common,
-                      // functions
-		      icon: icon,
-                      meter: meter,
-                      plural: plural,
-                      // layout
-                      layout: 'status/layout' })
+	status.element.push ({ type: 'header', label: 'Inventory' })
+	DataService.item.forEach (function (item) {
+	    if ((item.public || !isPublic)
+		&& (state.inv[item.name] || item.alwaysShow))
+		status.element.push ({ type: 'icon',
+				       icon: item.icon,
+				       label: MiscPlayerService.plural (state.inv[item.name] || 0,
+									item.noun,
+									item.pluralNoun) })
+	})
+
+	status.element.push ({ type: 'header', label: 'Accomplishments' })
+	DataService.accomplishment.forEach (function (accomp) {
+	    if ((accomp.public || !isPublic)
+		&& (state[accomp.name] || accomp.alwaysShow))
+		status.element.push ({ type: 'icon',
+				       icon: accomp.icon,
+				       label: accomp.label })
+	})
+
+	rs (null, status)
     },
 
     quitGame: function (req, rs, info) {

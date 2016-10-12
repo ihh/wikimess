@@ -1,7 +1,8 @@
-.bighouse .detailbar .iconblock,
-.bighouse .detailbar .meterblock {
+.bighouse .detailbar h1 {
+    margin: 4px 0;
     clear: both;
-    width: 100%;
+    font-size: large;
+    text-decoration: underline;
 }
 
 .bighouse .detailbar .statusline {
@@ -15,7 +16,8 @@
     border-radius: 4px;
 }
 
-.bighouse .detailbar .icon img {
+.bighouse .detailbar .icon img,
+.bighouse .detailbar .icon svg {
     width: 10vw;
     height: 10vw;
     border-radius: 4px;
