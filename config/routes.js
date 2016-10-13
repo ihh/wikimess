@@ -82,6 +82,7 @@ module.exports.routes = {
     'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
     'GET /player/:player/game/:game/move/:moveNumber/quit':       'PlayerController.quitGame',
 
-    'GET /player/:player/home':               'PlayerController.viewHome',
-    'GET /player/:player/location/:location': 'PlayerController.viewLocation',
+    'GET /player/:player/home':                      'PlayerController.viewHome',
+    'GET /player/:player/location/:location':        'PlayerController.viewLocation',
+    'POST /player/:player/location/:location/trade': 'PlayerController.trade',
 };

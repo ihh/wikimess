@@ -68,40 +68,65 @@ module.exports = {
                 })
         })
 
-        return items.map (function (info, n) {
+        return items.map (function (info) {
             var item = info.item
-            var buy = info.buy || item.buy
-            if (typeof(buy) !== 'object') {
-                var b = buy
-                buy = {}
-                buy[DataService.defaultCurrency] = b
+            function makePrice(p,markup,discount) {
+                var price = {}
+                if (typeof(p) !== 'object')
+                    price[DataService.defaultCurrency] = p * (markup || 1) / (discount || 1)
+                else
+                    Object.keys(p).forEach (function (unit) {
+                        price[unit] = p[unit] * (markup || 1) / (discount || 1)
+                    })
+                return price
             }
-            var sell = info.sell || item.sell
-            if (!sell) {
-                sell = {}
-                Object.keys(buy).forEach (function(unit) { sell[unit] = Math.round (buy[unit] / DataService.defaultBuySellRatio) })
+            function makePriceInfo(price) {
+                if (!price) return undefined
+                return Object.keys(price).map (function (itemName) {
+                    var item = DataService.itemByName[itemName]
+                    var amount = price[itemName]
+                    return { name: itemName,
+                             amount: amount,
+                             icon: item.icon,
+                             noun: item.noun,
+                             color: item.color }
+                })
             }
-            if (typeof(sell) !== 'object') {
-                var s = sell
-                sell = {}
-                sell[DataService.defaultCurrency] = s
-            }
-            if (info.markup) {
-                var b = buy, s = sell
-                buy = {}
-                sell = {}
-                Object.keys(b).forEach (function(unit) { buy[unit] = b[unit] * info.markup })
-                Object.keys(s).forEach (function(unit) { sell[unit] = s[unit] / info.markup })
-            }
-            return { id: n,
-                     name: item.name,
+
+            var buy, sell
+            if (info.buy)
+                buy = makePrice(info.buy)
+            else if (item.buy)
+                buy = makePrice(item.buy,info.markup)
+            else if (info.sell && info.markup)
+                buy = makePrice(info.sell,info.markup)
+            else if (item.sell && info.markup)
+                buy = makePrice(item.sell,info.markup / (info.discount || 1))
+            
+            if (info.sell)
+                sell = makePrice(info.sell)
+            else if ((info.buy || item.buy) && (info.discount || item.discount))
+                sell = makePrice(buy,info.discount || item.discount)
+            else if (item.sell)
+                sell = makePrice(item.sell)
+
+            return { name: item.name,
                      icon: item.icon,
+                     color: item.color,
                      noun: item.noun,
                      hint: item.hint,
-                     buy: buy,
-                     sell: sell,
+                     buy: makePriceInfo(buy),
+                     sell: makePriceInfo(sell),
                      inv: player && player.global.inv[item.name] }
         })
-    }
+    },
+
+    getItemsByName: function (location, player) {
+        var byName = {}
+        Location.getItems (location, player).forEach (function (item) {
+            byName[item.name] = item
+        })
+        return byName
+    },
 };
 

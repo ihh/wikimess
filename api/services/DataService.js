@@ -1,24 +1,28 @@
 // api/services/DataService.js
 
+var defaultCurrency = 'cash'
+var defaultDiscount = .8
+
 // item: counts in Player.global.inv or Game.local[12].inv that show up as icons
 var item = [
     { name: 'cash',  // internal variable name
       icon: 'coins',
+      color: 'yellow',
       noun: 'credit',  // displayed text
       init: 100,
       alwaysShow: true,
       public: false
     },
     { name: 'robe',
+      icon: 'robe',
+      color: 'red',
       category: 'clothing',
       noun: 'robe',
       buy: 20,
+      discount: defaultDiscount,
       public: true
     },
 ]
-
-var defaultCurrency = 'cash'
-var defaultBuySellRatio = 1.5
 
 // attribute: status meters
 var attribute = [
@@ -41,7 +45,8 @@ var state = [
 
 // do some indexing...
 var itemByCategory = {}, itemByName = {}
-item.forEach (function (it) {
+item.forEach (function (it, n) {
+    it.id = n
     itemByName[it.name] = it
     if (it.category) {
         itemByCategory[it.category] = itemByCategory[it.category] || []
@@ -54,7 +59,6 @@ module.exports = {
     itemByName: itemByName,
     itemByCategory: itemByCategory,
     defaultCurrency: defaultCurrency,
-    defaultBuySellRatio: defaultBuySellRatio,
     attribute: attribute,
     accomplishment: accomplishment,
     state: state

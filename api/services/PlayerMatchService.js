@@ -86,8 +86,8 @@ module.exports = {
 	    MiscPlayerService.runWithLock
 	    ([ player.id, opponent.id ],
              function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-		 if (MiscPlayerService.eventInvisibleOrLocked (player, event)
-		     || MiscPlayerService.eventInvisibleOrLocked (opponent, event))
+		 if (MiscPlayerService.invisibleOrLocked (player, event)
+		     || MiscPlayerService.invisibleOrLocked (opponent, event))
 		     lockedSuccess (null)
 		 else {
 		     Choice.findOneByName (event.choice)

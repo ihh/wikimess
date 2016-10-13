@@ -57,7 +57,7 @@ module.exports = {
 		.exec (function (err, event) {
 		    if (err) rs(err)
 		    else if (!event) rs(new Error("Couldn't find Event"))
-		    else if (MiscPlayerService.eventInvisibleOrLocked (player, event))
+		    else if (MiscPlayerService.invisibleOrLocked (player, event))
 			rs(new Error ("Event locked"))
 		    else
 			makeJson (player, event, rs)
@@ -96,9 +96,9 @@ module.exports = {
         })
     },
 
-    eventInvisibleOrLocked: function (player, event) {
-	return (event.visible && !MiscPlayerService.evalPlayerExpr (player, event.visible))
-	    || (event.locked && MiscPlayerService.evalPlayerExpr (player, event.locked))
+    invisibleOrLocked: function (player, obj) {
+	return (obj.visible && !MiscPlayerService.evalPlayerExpr (player, obj.visible))
+	    || (obj.locked && MiscPlayerService.evalPlayerExpr (player, obj.locked))
     },
 
     isValidMood: function (mood) {
@@ -137,6 +137,7 @@ module.exports = {
 		&& (state.inv[item.name] || item.alwaysShow))
 		status.element.push ({ type: 'icon',
 				       icon: item.icon,
+                                       color: item.color,
 				       label: MiscPlayerService.plural (state.inv[item.name] || 0,
 									item.noun,
 									item.pluralNoun) })
@@ -148,6 +149,7 @@ module.exports = {
 		&& (state[accomp.name] || accomp.alwaysShow))
 		status.element.push ({ type: 'icon',
 				       icon: accomp.icon,
+                                       color: accomp.color,
 				       label: accomp.label })
 	})
 
@@ -288,7 +290,7 @@ module.exports = {
 	     function (err, unlockedPlayers) {
 		 if (err)
 		     error (err)
-		 else if (unlockedPlayers.length != 2)
+		 else if (unlockedPlayers.length != playerIdList.length)
 		     error (new Error ("Couldn't unlock Players"))
 		 else {
 	             sails.log.debug ("Released lock for players (" + playerIdList.join(',') + ") from time " + currentDate + "; lock active for " + (Date.now() - currentTime) + "ms")
@@ -368,12 +370,65 @@ module.exports = {
         return func (val)
     },
 
+    trade: function (player, locationID, body, rs) {
+	Location.findOne ({ id: locationID })
+	    .populate ('events')
+	    .exec (function (err, location) {
+		if (err) rs(err)
+		else if (!location) rs(new Error("Couldn't find location " + locationID))
+                else if (MiscPlayerService.invisibleOrLocked(player,location)) rs(new Error("Location inaccessible: " + location.name))
+		else {
+                    var itemName = body.name
+                    var itemCount = parseInt (body.count)
+                    var itemsByName = Location.getItemsByName (location, player)
+                    var item = itemsByName[itemName]
+                    if (!item) rs(new Error("Couldn't find item " + itemName + " in location " + location.name))
+                    else {
+                        var tradeVerb = itemCount < 0 ? 'sell' : 'buy'
+                        var price = item[tradeVerb]
+                        if (!price) rs(new Error("Couldn't " + tradeVerb + " item " + itemName + " in location " + location.name))
+                        var invDelta = {}
+                        invDelta[itemName] = (invDelta[itemName] || 0) + itemCount
+                        price.forEach (function (unitInfo) {
+                            invDelta[unitInfo.name] = (invDelta[unitInfo.name] || 0) - itemCount * unitInfo.amount
+                        })
+                        MiscPlayerService.runWithLock
+                        ( [ player.id ],
+                          function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
+                              var gotPrice = true, updatedInv = {}
+                              Object.keys(invDelta).forEach (function (unit) {
+                                  if ((updatedInv[unit] = player.global.inv[unit] = ((player.global.inv[unit] || 0) + invDelta[unit])) < 0)
+                                      gotPrice = false
+                              })
+                              if (!gotPrice)
+                                  lockedSuccess (null)
+                              else
+                                  Player.update ({ id: player.id },
+                                                 { global: player.global },
+                                                 function (err, updated) {
+                                                     if (err) lockedError(err)
+                                                     else lockedSuccess(updatedInv)
+                                                 })
+                          },
+                          function (updatedInv) {
+                              if (updatedInv)
+                                  rs (null, { success: true, inv: updatedInv })
+                              else
+                                  rs (null, { success: false })
+                          },
+                          function (err) { rs (err) })
+                    }
+                }
+            })
+    },
+    
     getLocation: function (player, locationQuery, rs) {
 	Location.findOne (locationQuery)
 	    .populate ('events')
 	    .exec (function (err, location) {
 		if (err) rs(err)
-		else if (!location) rs(new Error("Couldn't find location " + locationID))
+		else if (!location) rs(new Error("Couldn't find location " + JSON.stringify(locationQuery)))
+                else if (MiscPlayerService.invisibleOrLocked(player,location)) rs(new Error("Location inaccessible: " + location.name))
 		else {
 		    var links = location.link.filter (function (link) {
 			return typeof(link.visible) === 'undefined'

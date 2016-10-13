@@ -463,4 +463,11 @@ module.exports = {
 	    MiscPlayerService.getLocation (player, { name: player.global.home }, rs)
 	})
     },
+
+    // buy or sell
+    trade: function (req, res) {
+        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+	    MiscPlayerService.trade (player, req.params.location, req.body, rs)
+	})
+    },
 };
