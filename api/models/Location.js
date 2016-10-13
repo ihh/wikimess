@@ -80,18 +80,6 @@ module.exports = {
                     })
                 return price
             }
-            function makePriceInfo(price) {
-                if (!price) return undefined
-                return Object.keys(price).map (function (itemName) {
-                    var item = DataService.itemByName[itemName]
-                    var amount = price[itemName]
-                    return { name: itemName,
-                             amount: amount,
-                             icon: item.icon,
-                             noun: item.noun,
-                             color: item.color }
-                })
-            }
 
             var buy, sell
             if (info.buy)
@@ -115,9 +103,9 @@ module.exports = {
                      color: item.color,
                      noun: item.noun,
                      hint: item.hint,
-                     buy: makePriceInfo(buy),
-                     sell: makePriceInfo(sell),
-                     inv: player && player.global.inv[item.name] }
+                     buy: buy,
+                     sell: sell,
+                     owned: player && player.global.inv[item.name] }
         })
     },
 

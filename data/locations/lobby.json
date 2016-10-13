@@ -9,7 +9,7 @@
       name: "lobby",
       title: "The Lobby",
       description: "You are standing in the lobby.",
-      link: [{ to: "deansoffice" }],
+      link: [{ to: "deansoffice", cost: {"robe":1} }],
       items: ['clothing'],
       events: [ { title: "Cut class",
 		  hint: "Want to cut class?",

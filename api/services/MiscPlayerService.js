@@ -96,20 +96,82 @@ module.exports = {
         })
     },
 
+    unaffordable: function (player, cost) {
+	var unaffordable = undefined
+	if (cost) {
+	    var missing = []
+	    Object.keys(cost).forEach (function(itemName) {
+		if (!unaffordable) {
+		    var owned = player.global.inv[itemName] || 0
+		    if (owned < cost[itemName]) {
+			var item = DataService.itemByName[itemName]
+			missing.push (MiscPlayerService.plural (cost[itemName] - owned,
+								item))
+		    }
+		}
+	    })
+	    if (missing.length) {
+		if (missing.length > 1)
+		    unaffordable = missing.slice(0,missing.length-1).join(", ") + " and " + missing[missing.length-1]
+		else 
+		    unaffordable = missing[0]
+		unaffordable = 'You need ' + unaffordable + ' to unlock this.'
+	    }
+	}
+	return unaffordable
+    },
+
+    deductCost: function (player, cost) {
+	Object.keys(cost).forEach (function(itemName) {
+	    player.global.inv[itemName] -= cost[itemName]
+	})
+    },
+
+    costInfo: function (player, cost) {
+        if (!cost) return undefined
+        return Object.keys(cost).map (function (itemName) {
+            var item = DataService.itemByName[itemName]
+            var amount = cost[itemName]
+            return { name: itemName,
+                     amount: amount,
+                     icon: item.icon,
+                     noun: item.noun,
+                     color: item.color,
+		     affordable: ((player.global.inv[itemName] || 0) >= amount)
+		   }
+        })
+    },
+
+    invisible: function (player, obj) {
+	var invisible = false
+	if (obj.visible)
+	    invisible = invisible || !MiscPlayerService.evalPlayerExpr (player, obj.visible)
+	if (obj.required)
+	    invisible = invisible || MiscPlayerService.unaffordable (player, obj.required)
+	return invisible
+    },
+
+    locked: function (player, obj) {
+	var locked = false
+	if (obj.locked)
+	    locked = locked || MiscPlayerService.evalPlayerExpr (player, obj.locked)
+	if (obj.cost)
+	    locked = locked || MiscPlayerService.unaffordable (player, obj.cost)
+	return locked
+    },
+
     invisibleOrLocked: function (player, obj) {
-	return (obj.visible && !MiscPlayerService.evalPlayerExpr (player, obj.visible))
-	    || (obj.locked && MiscPlayerService.evalPlayerExpr (player, obj.locked))
+	return MiscPlayerService.invisible(player,obj) || MiscPlayerService.locked(player,obj)
     },
 
     isValidMood: function (mood) {
 	return mood == 'happy' || mood == 'sad' || mood == 'angry' || mood == 'surprised'
     },
-
         
-    plural: function(n,singular,plural) {
-        plural = plural || (singular + 's')
+    plural: function(n,item) {
+        plural = item.pluralNoun || (item.noun + 's')
         n = typeof(n) === 'undefined' ? 0 : n
-        return n + ' ' + (n == 1 ? singular : plural)
+        return (n != 1 ? n : (item.article || (/^[aeiou]/i.test(item.noun) ? 'an' : 'a'))) + ' ' + (n == 1 ? item.noun : plural)
     },
 
     makeStatus: function (info) {
@@ -139,8 +201,7 @@ module.exports = {
 				       icon: item.icon,
                                        color: item.color,
 				       label: MiscPlayerService.plural (state.inv[item.name] || 0,
-									item.noun,
-									item.pluralNoun) })
+									item) })
 	})
 
 	status.element.push ({ type: 'header', label: 'Accomplishments' })
@@ -389,8 +450,8 @@ module.exports = {
                         if (!price) rs(new Error("Couldn't " + tradeVerb + " item " + itemName + " in location " + location.name))
                         var invDelta = {}
                         invDelta[itemName] = (invDelta[itemName] || 0) + itemCount
-                        price.forEach (function (unitInfo) {
-                            invDelta[unitInfo.name] = (invDelta[unitInfo.name] || 0) - itemCount * unitInfo.amount
+                        Object.keys(price).forEach (function (unit) {
+                            invDelta[unit] = (invDelta[unit] || 0) - itemCount * price[unit]
                         })
                         MiscPlayerService.runWithLock
                         ( [ player.id ],
@@ -431,8 +492,7 @@ module.exports = {
                 else if (MiscPlayerService.invisibleOrLocked(player,location)) rs(new Error("Location inaccessible: " + location.name))
 		else {
 		    var links = location.link.filter (function (link) {
-			return typeof(link.visible) === 'undefined'
-			    || MiscPlayerService.evalPlayerExpr (player, link.visible)
+			return !MiscPlayerService.invisible (player, link)
 		    })
 		    Location.find ({ name: links.map (function (link) { return link.to }) })
 			.exec (function (err, destLocations) {
@@ -441,20 +501,16 @@ module.exports = {
 			    else {
 				destLocations.forEach (function (loc, n) { links[n].location = loc })
 				links = links.filter (function (link) {
-				    return typeof(location.visible) === 'undefined'
-					|| MiscPlayerService.evalPlayerExpr (player, location.visible)
+				    return !MiscPlayerService.invisible (player, link.location)
 				})
 				links.forEach (function (link) {
-				    if (link.locked)
-					link.locked = MiscPlayerService.evalPlayerExpr (player, link.locked)
-				    else if (link.location.locked)
-					link.locked = MiscPlayerService.evalPlayerExpr (player, link.location.locked)
+				    link.locked = MiscPlayerService.locked (player,link)
+					|| MiscPlayerService.locked (player, link.location)
 				})
 
 				var events = location.events, eventById = {}
 				events.forEach (function (event) {
-				    if (event.locked)
-					event.locked = MiscPlayerService.evalPlayerExpr (player, event.locked)
+				    event.locked = MiscPlayerService.locked (player, event)
 				    eventById[event.id] = event
 				})
 				var eventIds = events.map (function (event) { return event.id })
@@ -497,22 +553,25 @@ module.exports = {
 							})
 
 							events = events.filter (function (event) {
-							    return typeof(event.visible) === 'undefined'
-								|| MiscPlayerService.evalPlayerExpr (player, event.visible)
-								|| event.game
+							    return event.game
 								|| event.invited
+								|| !MiscPlayerService.invisible (player, event)
 							})
 
 							rs (null, {
 							    id: location.id,
 							    title: location.title,
 							    description: location.description,
-                                                            items: Location.getItems (location, player),
+                                                            items: Location.getItems (location, player).map (function (item) {
+								item.buy = MiscPlayerService.costInfo (player, item.buy)
+								return item
+							    }),
 							    links: links.map (function (link) {
 								return { id: link.location.id,
 									 title: link.location.title,
 									 hint: link.hint,
-									 locked: link.locked }
+									 locked: link.locked,
+									 cost: link.cost && MiscPlayerService.costInfo (player, link.cost) }
 							    }),
 							    events: events.map (function (event) {
 								var state = (event.game

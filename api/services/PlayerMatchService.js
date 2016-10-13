@@ -110,6 +110,9 @@ module.exports = {
                                      player1 = opponent
                                      player2 = player
 				 }
+				 // deduct costs
+				 MiscPlayerService.deductCost (player1, event.cost)
+				 MiscPlayerService.deductCost (player2, event.cost)
 				 // create the game
 				 var game = { player1: player1,
                                               player2: player2,
