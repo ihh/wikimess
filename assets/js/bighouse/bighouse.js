@@ -521,20 +521,23 @@ var BigHouse = (function() {
                             .text (event.hint))
 
 	    event.lockDiv = $('<div class="lock">')
-            event.missedDiv = $('<div class="missed">')
 	    event.button = $('<div class="button">')
+
+            event.missedDiv = $('<div class="missed">')
             event.timerDiv = $('<div class="timer">')
+            event.turnDiv = $('<div class="turn">')
+                .append (event.missedDiv, event.timerDiv)
 
-            this.updateEventButton (event)
-
-            var costDiv = $('<div class="cost">')
+            event.costDiv = $('<div class="cost">')
             if (event.cost)
                 event.cost.forEach (function (cost) {
-                    costDiv.append (bh.makeIconPrice (cost))
+                    event.costDiv.append (bh.makeIconPrice (cost))
                 })
 
-            div.append (event.lockDiv, event.missedDiv, event.timerDiv, costDiv, event.button)
+            div.append (event.lockDiv, event.turnDiv, event.costDiv, event.button)
             this.locBarDiv.append (div)
+
+            this.updateEventButton (event)
 	},
 
 	updateEventFromJoinMessage: function (data) {
@@ -582,12 +585,15 @@ var BigHouse = (function() {
 
             switch (event.state) {
             case 'locked':
+                event.costDiv.show()
                 event.lockDiv.text (event.locked)
                 break;
 
             case 'start':
+                event.costDiv.show()
                 button.on('click', function() {
                     button.off()
+                    event.costDiv.hide()
 		    bh.lastStartedEventId = event.id
                     bh.REST_getPlayerJoin (bh.playerID, event.id)
                         .done (function (data) {
@@ -607,11 +613,13 @@ var BigHouse = (function() {
 
             case 'resetting':
             case 'starting':
+                event.costDiv.hide()
                 break;
 
             case 'ready':
             case 'waiting':
             case 'finished':
+                event.costDiv.hide()
                 button.on('click', function() {
                     bh.startGame (event.game.id)
                 })

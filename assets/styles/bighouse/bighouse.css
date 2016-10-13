@@ -77,9 +77,9 @@ body {
 .bighouse .locbar .link .title,
 .bighouse .locbar .event .title {
     width: 80vw;
-    font-weight: normal;
+    font-weight: bold;
     font-style: italic;
-    font-size: medium;
+    font-size: large;
     clear: both;
 }
 
@@ -94,12 +94,17 @@ body {
     bottom: 4px;
 }
 
-.bighouse .locbar .link .timer,
-.bighouse .locbar .event .timer {
+.bighouse .locbar .event .turn {
     position: absolute;
     top: 0;
     right: 1vw;
     font-size: x-small;
+}
+
+.bighouse .locbar .event .turn .timer,
+.bighouse .locbar .event .turn .missed {
+    float: right;
+    clear: right;
 }
 
 .bighouse .locbar .link .cost,
@@ -133,12 +138,11 @@ body {
     background: black;
     color: white;
     border-radius: 2px;
+    margin: 1px;
 }
 
 .bighouse .locbar .link .lock,
-.bighouse .locbar .event .lock,
-.bighouse .locbar .link .missed,
-.bighouse .locbar .event .missed {
+.bighouse .locbar .event .lock {
     font-size: x-small;
 }
 
