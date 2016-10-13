@@ -10,6 +10,7 @@
       title: "The Lobby",
       description: "You are standing in the lobby.",
       link: [{ to: "deansoffice" }],
+      items: ['clothing'],
       events: [ { title: "Cut class",
 		  hint: "Want to cut class?",
 		  choice: "root" } ]

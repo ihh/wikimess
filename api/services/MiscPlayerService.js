@@ -452,6 +452,7 @@ module.exports = {
 							    id: location.id,
 							    title: location.title,
 							    description: location.description,
+                                                            items: Location.getItems (location, player),
 							    links: links.map (function (link) {
 								return { id: link.location.id,
 									 title: link.location.title,
