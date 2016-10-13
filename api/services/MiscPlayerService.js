@@ -137,7 +137,7 @@ module.exports = {
                      icon: item.icon,
                      noun: item.noun,
                      color: item.color,
-		     affordable: ((player.global.inv[itemName] || 0) >= amount)
+		     affordable: (player ? ((player.global.inv[itemName] || 0) >= amount) : undefined)
 		   }
         })
     },
@@ -564,6 +564,7 @@ module.exports = {
 							    description: location.description,
                                                             items: Location.getItems (location, player).map (function (item) {
 								item.buy = MiscPlayerService.costInfo (player, item.buy)
+								item.sell = MiscPlayerService.costInfo (null, item.sell)
 								return item
 							    }),
 							    links: links.map (function (link) {

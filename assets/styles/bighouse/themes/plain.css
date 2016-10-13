@@ -14,12 +14,14 @@
 }
 
 .bighouse.plain .locbar .link,
+.bighouse.plain .locbar .trade,
 .bighouse.plain .locbar .event {
     border-color: black;
     background-color: #f8f8f8;
 }
 
 .bighouse.plain .locbar .link .button,
+.bighouse.plain .locbar .trade .button,
 .bighouse.plain .locbar .event .button {
     border-color: black;
     background-color: #e8e8e8;

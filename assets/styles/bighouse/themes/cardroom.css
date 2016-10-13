@@ -14,12 +14,14 @@
 }
 
 .bighouse.cardroom .locbar .link,
+.bighouse.cardroom .locbar .trade,
 .bighouse.cardroom .locbar .event {
     border-color: #ccc;
     background-color: #111;
 }
 
 .bighouse.cardroom .locbar .link .button,
+.bighouse.cardroom .locbar .trade .button,
 .bighouse.cardroom .locbar .event .button {
     border-color: green;
     background-color: #333;

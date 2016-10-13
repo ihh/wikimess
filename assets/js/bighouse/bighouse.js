@@ -192,6 +192,10 @@ var BigHouse = (function() {
 			     data: formData })
         },
 
+        REST_postPlayerLocationTrade: function (playerID, locationID, itemName, itemCount) {
+            return $.post('/player/' + playerID + '/location/' + locationID + '/trade', { name: itemName, count: itemCount })
+        },
+
         // WebSockets interface
         socket_onPlayer: function (callback) {
             io.socket.on ('player', callback)
@@ -432,7 +436,71 @@ var BigHouse = (function() {
 
 		bh.addEvents (data.events)
 
-                data.links.map (function (link) {
+                data.items.forEach (function (item) {
+                    var div = $('<div class="trade">')
+                    
+                    function addTradeRow (verb, count) {
+                        var button
+                        if (item[verb]) {
+                            var possible = (verb === 'buy'
+                                            ? item[verb].reduce (function (affordable, unit) {
+                                                return affordable && unit.affordable
+                                            }, true)
+                                            : item.owned)
+                            div.append ($('<div class="traderow">')
+                                        .append (bh.makeCostDiv (item[verb]))
+                                        .append (button = $('<div class="button">')
+                                                 .text (bh.capitalize (verb))))
+                            function fail() {
+			        bh.showModalMessage (verb === 'buy' ? "You can't afford that!" : "You have none to sell.", bh.showPlayPage.bind(bh))
+                            }
+                            if (possible)
+                                button.on ('click', function() {
+                                    button.off()
+                                    bh.REST_postPlayerLocationTrade (bh.playerID, bh.playerLocation, item.name, count)
+                                        .done (function (result) {
+                                            if (result.success)
+                                                bh.showPlayPage()
+                                            else
+			                        fail()
+                                        })
+                                        .fail (function (err) {
+			                    bh.showModalWebError (err, bh.showPlayPage.bind(bh))
+                                        })
+                                })
+                            else
+                                button.on ('click', fail)
+                        }
+                    }
+
+                    addTradeRow ('buy', +1)
+                    addTradeRow ('sell', -1)
+                    
+                    div.append ($('<div class="title">')
+                                .text (bh.capitalize (item.noun)))
+                    if (item.hint)
+                        div.append ($('<div class="hint">')
+                                    .text (item.hint))
+
+                    var iconSpan = $('<div class="bigicon">')
+                    bh.getIconPromise (item.icon)
+                        .done (function (svg) {
+                            svg = bh.colorizeIcon (svg, item.color)
+                            iconSpan.append ($(svg).addClass('bigicon'))
+                        })
+                        .fail (function (err) {
+                            console.log(err)
+                        })
+                    div.append (iconSpan)
+
+                    if (item.owned)
+                        div.append ($('<div class="owned">')
+                                    .text ("You own " + item.owned + " of these."))
+
+                    bh.locBarDiv.append (div)
+                })
+                
+                data.links.forEach (function (link) {
                     var div = $('<div class="link">')
                         .append ($('<div class="title">')
                                  .text (link.title))
@@ -440,9 +508,10 @@ var BigHouse = (function() {
                         div.append ($('<div class="hint">')
                                     .text (link.hint))
                     var button = $('<div class="button">')
+                    var costDiv = bh.makeCostDiv (link.cost)
                     if (link.locked) {
                         button.text("Locked")
-                        div.append ($('<div class="lock">')
+                        costDiv.append ($('<div class="lock">')
                                     .text (link.locked))
                     } else
                         button.text("Go").on('click', function() {
@@ -450,19 +519,22 @@ var BigHouse = (function() {
                             bh.selectSound = bh.playSound ('select')  // TODO: custom "Go" sound effect here
                             bh.showPlayPage()
                         })
-                    if (link.cost) {
-                        var costDiv = $('<div class="cost">')
-                        link.cost.forEach (function (cost) {
-                            costDiv.append (bh.makeIconPrice (cost))
-                        })
-                        div.append (costDiv)
-                    }
-                    div.append (button)
+                    div.append (costDiv, button)
                     bh.locBarDiv.append (div)
                 })
             })
         },
 
+        makeCostDiv: function (cost) {
+            var costDiv = $('<div class="cost">')
+            if (cost) {
+                cost.forEach (function (unit) {
+                    costDiv.append (bh.makeIconPrice (unit))
+                })
+            }
+            return costDiv
+        },
+        
 	makeIconPrice: function (price) {
             var bh = this
             var div = $('<div class="iconprice">')
@@ -528,13 +600,10 @@ var BigHouse = (function() {
             event.turnDiv = $('<div class="turn">')
                 .append (event.missedDiv, event.timerDiv)
 
-            event.costDiv = $('<div class="cost">')
-            if (event.cost)
-                event.cost.forEach (function (cost) {
-                    event.costDiv.append (bh.makeIconPrice (cost))
-                })
+            event.costDiv = this.makeCostDiv (event.cost)
+            event.costDiv.append (event.lockDiv)
 
-            div.append (event.lockDiv, event.turnDiv, event.costDiv, event.button)
+            div.append (event.turnDiv, event.costDiv, event.button)
             this.locBarDiv.append (div)
 
             this.updateEventButton (event)

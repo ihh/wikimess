@@ -59,6 +59,7 @@ body {
 
 .bighouse .locbar .location,
 .bighouse .locbar .link,
+.bighouse .locbar .trade,
 .bighouse .locbar .event {
     float: left;
     clear: both;
@@ -67,6 +68,7 @@ body {
 }
 
 .bighouse .locbar .link,
+.bighouse .locbar .trade,
 .bighouse .locbar .event {
     position: relative;
     border-style: solid;
@@ -75,15 +77,17 @@ body {
 }
 
 .bighouse .locbar .link .title,
+.bighouse .locbar .trade .title,
 .bighouse .locbar .event .title {
     width: 80vw;
     font-weight: bold;
     font-style: italic;
     font-size: large;
-    clear: both;
+    clear: left;
 }
 
 .bighouse .locbar .link .button,
+.bighouse .locbar .trade .button,
 .bighouse .locbar .event .button {
     border-style: solid;
     border-width: 1px;
@@ -109,26 +113,39 @@ body {
 
 .bighouse .locbar .link .cost,
 .bighouse .locbar .event .cost {
-    float: left;
+    height: 36px;
 }
 
+.bighouse .locbar .trade .iconprice,
 .bighouse .locbar .link .iconprice,
 .bighouse .locbar .event .iconprice {
+    position: relative;
     width: 32px;
     height: 32px;
-    margin-right: 4px;
+    margin: 4px 4px 4px 0px;
     border-radius: 4px;
-    position: relative;
     display: inline-block;
 }
 
+.bighouse .locbar .trade .traderow .icon,
 .bighouse .locbar .link .icon,
 .bighouse .locbar .event .icon {
-    width: 100%;
-    height: 100%;
+    width: 32px;
+    height: 32px;
     border-radius: 4px;
 }
 
+.bighouse .locbar .trade .bigicon {
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+    border-radius: 4px;
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+}
+
+.bighouse .locbar .trade .price,
 .bighouse .locbar .link .price,
 .bighouse .locbar .event .price {
     position: absolute;
@@ -143,7 +160,30 @@ body {
 
 .bighouse .locbar .link .lock,
 .bighouse .locbar .event .lock {
+    display: inline-block;
     font-size: x-small;
+}
+
+.bighouse .locbar .trade .owned {
+    font-size: x-small;
+}
+
+.bighouse .locbar .trade .traderow {
+    position: relative;
+    display: inline-block;
+    float: right;
+    clear: right;
+    text-align: right;
+}
+
+.bighouse .locbar .trade .traderow .iconprice {
+    position: relative;
+}
+
+.bighouse .locbar .trade .traderow .button {
+    display: inline-block;
+    position: relative;
+    float: right;
 }
 
 .bighouse .cardbar .cardtable {
