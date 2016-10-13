@@ -450,10 +450,34 @@ var BigHouse = (function() {
                             bh.selectSound = bh.playSound ('select')  // TODO: custom "Go" sound effect here
                             bh.showPlayPage()
                         })
+                    if (link.cost) {
+                        var costDiv = $('<div class="cost">')
+                        link.cost.forEach (function (cost) {
+                            costDiv.append (bh.makeIconPrice (cost))
+                        })
+                        div.append (costDiv)
+                    }
                     div.append (button)
                     bh.locBarDiv.append (div)
                 })
             })
+        },
+
+	makeIconPrice: function (price) {
+            var bh = this
+            var div = $('<div class="iconprice">')
+            this.getIconPromise (price.icon)
+                .done (function (svg) {
+                    svg = bh.colorizeIcon (svg, price.color)
+                    div.append ($(svg).addClass('icon'))
+                    if (price.amount != 1)
+                        div.append ($('<div class="price">')
+                                    .text (price.amount))
+                })
+                .fail (function (err) {
+                    console.log(err)
+                })
+            return div
         },
 
 	eraseEventInfo: function() {
@@ -503,7 +527,13 @@ var BigHouse = (function() {
 
             this.updateEventButton (event)
 
-            div.append (event.lockDiv, event.missedDiv, event.timerDiv, event.button)
+            var costDiv = $('<div class="cost">')
+            if (event.cost)
+                event.cost.forEach (function (cost) {
+                    costDiv.append (bh.makeIconPrice (cost))
+                })
+
+            div.append (event.lockDiv, event.missedDiv, event.timerDiv, costDiv, event.button)
             this.locBarDiv.append (div)
 	},
 

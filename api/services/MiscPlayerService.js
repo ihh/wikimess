@@ -591,6 +591,7 @@ module.exports = {
 									 title: event.title,
                                                                          hint: event.hint,
                                                                          locked: event.locked,
+                                                                         cost: event.cost && MiscPlayerService.costInfo (player, event.cost),
 									 state: state,
                                                                          invited: event.invited,
 									 reset: event.resetTime,

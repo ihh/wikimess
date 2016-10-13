@@ -13,6 +13,7 @@
       items: ['clothing'],
       events: [ { title: "Cut class",
 		  hint: "Want to cut class?",
+                  cost: { cash: 50 },
 		  choice: "root" } ]
   },
   {
