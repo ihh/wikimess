@@ -53,14 +53,32 @@ module.exports = {
     itemByName: {},
     itemByCategory: {},
 
-    // lifecycle callback to update in-memory index
-    afterCreate: function (it, callback) {
+    // startup method to create in-memory index (called from config/bootstrap.js)
+    createIndex: function (callback) {
+        Item.find({}).exec (function (err, items) {
+            if (err) throw err
+            else {
+                items.forEach (function (item) {
+                    Item.updateIndex (item)
+                })
+                callback()
+            }
+        })
+    },
+
+    // method to update in-memory index
+    updateIndex: function (it) {
         Item.items.push (it)
         Item.itemByName[it.name] = it
         if (it.category) {
             Item.itemByCategory[it.category] = Item.itemByCategory[it.category] || []
             Item.itemByCategory[it.category].push (it)
         }
+    },
+
+    // lifecycle callback to update in-memory index when new Items are added
+    afterCreate: function (item, callback) {
+        Item.updateIndex(item)
         callback()
     },
 
@@ -69,6 +87,13 @@ module.exports = {
         if (item.buy && !item.sell && !item.discount && !item.nosell)
             item.discount = Item.defaultDiscount
         cb()
-    }
+    },
+
+    // text functions
+    plural: function(n,item) {
+        plural = item.pluralNoun || (item.noun + 's')
+        n = typeof(n) === 'undefined' ? 0 : n
+        return (n != 1 ? n : (item.article || (/^[aeiou]/i.test(item.noun) ? 'an' : 'a'))) + ' ' + (n == 1 ? item.noun : plural)
+    },
 };
 

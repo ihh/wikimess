@@ -105,8 +105,12 @@ module.exports = {
 		    var owned = player.global.inv[itemName] || 0
 		    if (owned < cost[itemName]) {
 			var item = Item.itemByName[itemName]
-			missing.push (MiscPlayerService.plural (cost[itemName] - owned,
-								item))
+                        if (!item) {
+                            console.log (itemName)
+                            console.log (Item.itemByName)
+                        }
+			missing.push (Item.plural (cost[itemName] - owned,
+						   item))
 		    }
 		}
 	    })
@@ -174,6 +178,10 @@ module.exports = {
         return (n != 1 ? n : (item.article || (/^[aeiou]/i.test(item.noun) ? 'an' : 'a'))) + ' ' + (n == 1 ? item.noun : plural)
     },
 
+    capitalize: function (text) {
+        return text.charAt(0).toUpperCase() + text.substr(1)
+    },
+
     makeStatus: function (info) {
 	var rs = info.rs, game = info.game, player = info.player, local = info.local, isPublic = info.isPublic
 	var state = {}
@@ -199,8 +207,7 @@ module.exports = {
 		elements.Inventory.push ({ type: 'icon',
 				           icon: item.icon,
                                            color: item.color,
-				           label: MiscPlayerService.plural (state.inv[item.name] || 0,
-									    item) })
+				           label: MiscPlayerService.capitalize (Item.plural (state.inv[item.name] || 0, item)) })
 	})
 
 	DataService.accomplishment.forEach (function (accomp) {
