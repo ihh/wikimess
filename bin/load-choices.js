@@ -15,6 +15,8 @@ var defaultChoiceFilename = "data/choices"
 var defaultPlayerFilename = "data/players"
 var defaultLocationFilename = "data/locations"
 var defaultItemFilename = "data/items"
+var defaultMeterFilename = "data/meters"
+var defaultAwardFilename = "data/awards"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt|story)$'
 
@@ -26,7 +28,9 @@ var opt = getopt.create([
     ['p' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPlayerFilename + ')'],
     ['l' , 'locations=PATH+'  , 'path to .json location file(s) or directories (default=' + defaultLocationFilename + ')'],
     ['i' , 'items=PATH+'      , 'path to .json item file(s) or directories (default=' + defaultItemFilename + ')'],
-    ['m' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
+    ['m' , 'meters=PATH+'     , 'path to .json meter file(s) or directories (default=' + defaultMeterFilename + ')'],
+    ['a' , 'awards=PATH+'     , 'path to .json award file(s) or directories (default=' + defaultAwardFilename + ')'],
+    ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
     ['d' , 'dummy'            , 'dummy run; do not POST anything'],
     ['s' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
     ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
@@ -59,20 +63,25 @@ var host = opt.options.host || defaultHost
 var port = opt.options.port || defaultPort
 var urlPrefix = opt.options.root || defaultUrlPrefix
 
-var matchRegex = new RegExp (opt.options.match || defaultMatchRegex)
+var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultChoiceFilename]
 var playerFilenames = opt.options.players || [defaultPlayerFilename]
 var locationFilenames = opt.options.locations || [defaultLocationFilename]
 var itemFilenames = opt.options.items || [defaultItemFilename]
+var meterFilenames = opt.options.meters || [defaultMeterFilename]
+var awardFilenames = opt.options.awards || [defaultAwardFilename]
 
 var callback = function() {}
 
+var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
 callback = processFilenameList ({ path: '/player',
                                   handler: playerHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: playerFilenames.reverse() })
 
+var locationHandler = makeHandler ('Location', hasName, function (obj) {
+    return obj.name + ' -> ' + obj.link.map(function (link) { return link.to }).join(', ') })
 callback = processFilenameList ({ path: '/location',
                                   handler: locationHandler,
                                   callback: callback,
@@ -80,11 +89,27 @@ callback = processFilenameList ({ path: '/location',
                                   list: locationFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/item',
-                                  handler: itemHandler,
+                                  handler: genericHandler('Item'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: itemFilenames.reverse() })
 
+callback = processFilenameList ({ path: '/award',
+                                  handler: genericHandler('Award'),
+                                  callback: callback,
+                                  parsers: [JSON.parse, eval],
+                                  list: awardFilenames.reverse() })
+
+callback = processFilenameList ({ path: '/meter',
+                                  handler: genericHandler('Meter'),
+                                  callback: callback,
+                                  parsers: [JSON.parse, eval],
+                                  list: meterFilenames.reverse() })
+
+var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
+    return ' ' + c.name + '\t(id=' + c.id + ', '
+        + plural (c.outcomes && c.outcomes.length, 'outcome')
+        + ')' })
 callback = processFilenameList ({ path: '/choice',
                                   handler: choiceHandler,
                                   callback: callback,
@@ -250,119 +275,45 @@ function plural (n, singular, plural) {
     return n + ' ' + (n == 1 ? singular : plural)
 }
 
-function choiceHandler (err, data) {
-    if (err)
-        log (err)
-    else {
-        var choices = []
-        try {
-            var json = JSON.parse (data)
-            choices = json.filter (function (c) {
-                // check to see if this looks like a Choice
-                return typeof(c.name) === 'string' && typeof(c.id) === 'number'
-            })
-        } catch (err) {
-            log ("Warning: couldn't parse choice response as JSON list")
-        }
-        if (choices.length)
-            log (3, choices.map (function (c) {
-                return ' ' + c.name + '\t(id=' + c.id + ', '
-                    + plural (c.outcomes && c.outcomes.length, 'outcome')
-                    + ')'
-            }).join("\n"))
-        else
-            log ("Warning: zero Choices created")
+function makeHandler (model, filter, toString) {
+    return function (err, data) {
+	if (err)
+            log (err)
+	else {
+            var obj, results = []
+            try {
+		obj = JSON.parse (data)
+            } catch (err) {
+		log ("Warning: couldn't parse " + model + " response as JSON")
+            }
+	    if (obj) {
+		if (obj.status == 400
+		    && obj.code == "E_VALIDATION"
+		    && obj.invalidAttributes.name
+		    && obj.invalidAttributes.name[0].rule == "unique")
+		    log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
+		else {
+		    var json = isArray(obj) ? obj : [obj]
+		    results = json.filter (filter) 
+		    if (results.length)
+			log (3, ' ' + results.map(toString).join("\n "))
+		    else {
+			log (JSON.stringify(obj))
+			log ("Warning: zero " + model + "s created")
+		    }
+		}
+	    }
+	}
     }
 }
 
-function locationHandler (err, data) {
-    if (err)
-        log(err)
-    else {
-        var obj
-        try {
-            obj = JSON.parse (data)
-        } catch (err) {
-            log ("Warning: couldn't parse location response as JSON list")
-        }
-        if (obj.status == 400
-            && obj.code == "E_VALIDATION"
-            && obj.invalidAttributes.name
-            && obj.invalidAttributes.name[0].rule == "unique")
-            log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
-        else {
-            if (typeof(obj) !== 'undefined') {
-                if (!( typeof(obj.name) === 'string' ))
-                    log ("This doesn't look like a Location")
-                else {
-		    var links = obj.link.map (function (link) { return link.to })
-		    if (!links.length)
-			log (obj.name + " has no links!")
-                    log (3, ' ' + obj.name + ' -> ' + links.join(', '))
-		}
-            } else
-                log ("Warning: Location not created")
-        }
-    }
-}
-function locationHandler (err, data) {
-    if (err)
-        log(err)
-    else {
-        var obj
-        try {
-            obj = JSON.parse (data)
-        } catch (err) {
-            log ("Warning: couldn't parse location response as JSON list")
-        }
-        if (obj.status == 400
-            && obj.code == "E_VALIDATION"
-            && obj.invalidAttributes.name
-            && obj.invalidAttributes.name[0].rule == "unique")
-            log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
-        else {
-            if (typeof(obj) !== 'undefined') {
-                if (!( typeof(obj.name) === 'string' ))
-                    log ("This doesn't look like a Location")
-                else {
-		    var links = obj.link.map (function (link) { return link.to })
-		    if (!links.length)
-			log (obj.name + " has no links!")
-                    log (3, ' ' + obj.name + ' -> ' + links.join(', '))
-		}
-            } else
-                log ("Warning: Location not created")
-        }
-    }
+function genericHandler (model) {
+    return makeHandler (model, hasName, getName)
 }
 
-function itemHandler (err, data) {
-    if (err)
-        log(err)
-    else {
-        var obj
-        try {
-            obj = JSON.parse (data)
-        } catch (err) {
-            log ("Warning: couldn't parse item response as JSON list")
-        }
-        if (obj.status == 400
-            && obj.code == "E_VALIDATION"
-            && obj.invalidAttributes.name
-            && obj.invalidAttributes.name[0].rule == "unique")
-            log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
-        else {
-            if (typeof(obj) !== 'undefined') {
-                if (!( typeof(obj.name) === 'string' ))
-                    log ("This doesn't look like an Item")
-                else {
-                    log (3, ' ' + obj.name)
-		}
-            } else
-                log ("Warning: Item not created")
-        }
-    }
-}
+function getName (obj) { return obj.name }
+function hasName (obj) { return typeof(obj.name) === 'string' }
+function hasNameAndID (obj) { return typeof(obj.name) === 'string' && typeof(obj.id) === 'number' }
 
 function playerHandler (err, data) {
     if (err)

@@ -59,7 +59,10 @@ module.exports = {
       // global stats for this player
       global: {
           type: 'json',
-          defaultsTo: { inv: {} }
+          defaultsTo: {
+	      inv: {},
+	      home: 'root'
+	  }
       },
 
       initialMood: {
@@ -108,9 +111,9 @@ module.exports = {
 		player.global.inv[item.name] = 0
 	})
 
-	DataService.state.forEach (function (state) {
-	    if (state.init)
-		player.global[state.name] = state.init
+	Award.awards.forEach (function (award) {
+	    if (award.init)
+		player.global[award.name] = award.init
 	})
 
         player.displayName = player.displayName || player.name

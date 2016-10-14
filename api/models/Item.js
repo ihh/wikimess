@@ -8,12 +8,18 @@
 module.exports = {
 
   attributes: {
+      id: {
+          type: 'integer',
+          autoIncrement: true,
+          unique: true,
+          primaryKey: true
+      },
+
       // internal variable name
       name: {
           type: 'string',
           required: true,
           unique: true,
-          primaryKey: true
       },
 
       // appearance

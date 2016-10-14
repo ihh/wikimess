@@ -193,12 +193,12 @@ module.exports = {
 
 	var elements = { Attributes: [], Inventory: [], Accomplishments: [] }
 
-	DataService.attribute.forEach (function (attr) {
+	Meter.meters.forEach (function (attr) {
 	    elements.Attributes.push ({ type: 'meter',
 				        level: state[attr.name] || 0,
 				        min: attr.min,
 				        max: attr.max,
-				        label: attr.label })
+				        label: attr.label || attr.name })
 	})
 
 	Item.items.forEach (function (item) {
@@ -210,13 +210,14 @@ module.exports = {
 				           label: MiscPlayerService.capitalize (Item.plural (state.inv[item.name] || 0, item)) })
 	})
 
-	DataService.accomplishment.forEach (function (accomp) {
+	Award.awards.forEach (function (accomp) {
 	    if ((accomp.public || !isPublic)
-		&& (state[accomp.name] || accomp.alwaysShow))
+		&& state[accomp.name]
+		&& accomp.icon)
 		elements.Accomplishments.push ({ type: 'icon',
 				                 icon: accomp.icon,
                                                  color: accomp.color,
-				                 label: accomp.label })
+				                 label: accomp.label || accomp.name })
 	})
 
         var status = { element: [] };
