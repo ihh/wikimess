@@ -14,8 +14,8 @@
     }
 
     .bighouse .navbar .navicon {
-	width: 25vh;
-	height: 25vh;
+	width: 23vh;
+	height: 23vh;
     }
 
     .bighouse .statusbar {
@@ -387,11 +387,6 @@
 	padding-bottom: 5vh;
 	text-align: center;
 
-    }
-
-    .bighouse .detailbar {
-	height: 65vh;
-	margin: 1vh 1vw;
     }
 
     .bighouse .gametable tbody {

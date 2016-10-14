@@ -57,7 +57,7 @@ module.exports = {
 		.exec (function (err, event) {
 		    if (err) rs(err)
 		    else if (!event) rs(new Error("Couldn't find Event"))
-		    else if (MiscPlayerService.invisibleOrLocked (player, event))
+		    else if (MiscPlayerService.invisibleOrLocked (player, event, true))
 			rs(new Error ("Event locked"))
 		    else
 			makeJson (player, event, rs)
@@ -151,17 +151,17 @@ module.exports = {
 	return invisible
     },
 
-    locked: function (player, obj) {
+    locked: function (player, obj, ignoreCost) {
 	var locked = false
 	if (obj.locked)
 	    locked = locked || MiscPlayerService.evalPlayerExpr (player, obj.locked)
-	if (obj.cost)
+	if (obj.cost && !ignoreCost)
 	    locked = locked || MiscPlayerService.unaffordable (player, obj.cost)
 	return locked
     },
 
-    invisibleOrLocked: function (player, obj) {
-	return MiscPlayerService.invisible(player,obj) || MiscPlayerService.locked(player,obj)
+    invisibleOrLocked: function (player, obj, ignoreCost) {
+	return MiscPlayerService.invisible(player,obj) || MiscPlayerService.locked(player,obj,ignoreCost)
     },
 
     isValidMood: function (mood) {
@@ -180,39 +180,43 @@ module.exports = {
 	if (game)
 	    extend (state, game.common)
 	extend (state, player.global)
-	state = merge (state, local)
+        if (local)
+	    state = merge (state, local)
 
-	var status = { element: [] }
+	var elements = { Attributes: [], Inventory: [], Accomplishments: [] }
 
-	status.element.push ({ type: 'header', label: 'Attributes' })
 	DataService.attribute.forEach (function (attr) {
-	    status.element.push ({ type: 'meter',
-				   level: state[attr.name] || 0,
-				   min: attr.min,
-				   max: attr.max,
-				   label: attr.label })
+	    elements.Attributes.push ({ type: 'meter',
+				        level: state[attr.name] || 0,
+				        min: attr.min,
+				        max: attr.max,
+				        label: attr.label })
 	})
 
-	status.element.push ({ type: 'header', label: 'Inventory' })
 	DataService.item.forEach (function (item) {
 	    if ((item.public || !isPublic)
 		&& (state.inv[item.name] || item.alwaysShow))
-		status.element.push ({ type: 'icon',
-				       icon: item.icon,
-                                       color: item.color,
-				       label: MiscPlayerService.plural (state.inv[item.name] || 0,
-									item) })
+		elements.Inventory.push ({ type: 'icon',
+				           icon: item.icon,
+                                           color: item.color,
+				           label: MiscPlayerService.plural (state.inv[item.name] || 0,
+									    item) })
 	})
 
-	status.element.push ({ type: 'header', label: 'Accomplishments' })
 	DataService.accomplishment.forEach (function (accomp) {
 	    if ((accomp.public || !isPublic)
 		&& (state[accomp.name] || accomp.alwaysShow))
-		status.element.push ({ type: 'icon',
-				       icon: accomp.icon,
-                                       color: accomp.color,
-				       label: accomp.label })
+		elements.Accomplishments.push ({ type: 'icon',
+				                 icon: accomp.icon,
+                                                 color: accomp.color,
+				                 label: accomp.label })
 	})
+
+        var status = { element: [] };
+        ['Attributes','Inventory','Accomplishments'].forEach (function (key) {
+            if (elements[key].length)
+                status.element.push ({ type: 'div', element: [{ type: 'header', label: key }].concat (elements[key]) })
+        })
 
 	rs (null, status)
     },

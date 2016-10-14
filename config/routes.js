@@ -60,6 +60,8 @@ module.exports.routes = {
 
     'GET /player/id/:name':              'PlayerController.byName',
 
+    'GET /player/:player/status':        'PlayerController.selfStatus',
+
     'GET /player/:player/avatar':        'PlayerController.getMoodAvatarConfig',
     'PUT /player/:player/avatar':        'PlayerController.putMoodAvatarConfig',
     'PUT /player/:player/avatar/:mood':  'PlayerController.uploadMoodAvatar',

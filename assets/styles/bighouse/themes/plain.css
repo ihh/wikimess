@@ -13,6 +13,7 @@
     background-color: white;
 }
 
+.bighouse.plain .detailbar .statusdiv,
 .bighouse.plain .locbar .link,
 .bighouse.plain .locbar .trade,
 .bighouse.plain .locbar .event {

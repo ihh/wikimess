@@ -59,7 +59,15 @@ module.exports = {
 	    })
     },
 
-    // get player game status
+    // get player status
+    selfStatus: function (req, res) {
+        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+            MiscPlayerService.makeStatus ({ rs: rs,
+                                            player: player,
+                                            isPublic: false })
+        })
+    },
+
     selfGameStatus: function (req, res) {
         MiscPlayerService.findGame (req, res, function (info, rs) {
             MiscPlayerService.makeStatus ({ rs: rs,

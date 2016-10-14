@@ -28,15 +28,9 @@ body {
 }
 
 .bighouse .navbar {
-    text-align: center;
-}
-
-.bighouse .navbar .view {
-    float: left;
-}
-
-.bighouse .navbar .games {
-    float: right;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 .bighouse .navbar .navicon {

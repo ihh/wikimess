@@ -64,15 +64,29 @@ module.exports = {
         if (weightedOpponents.length == 0) {
             // no eligible opponents
             // update the Invite table
-	    Invite.findOrCreate
-	    ({ player: player.id,
-	       event: event.id })
-		.exec (function (err, invites) {
-                    if (err)
-                        error (err)
-                    else
-                        playerWaiting()
-                })
+	    MiscPlayerService.runWithLock
+	    ([ player.id ],
+             function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
+                 if (MiscPlayerService.unaffordable (player, event.cost))
+                     lockedError (new Error("Event unaffordable"))
+                 else
+	             Invite.findOrCreate
+	         ({ player: player.id,
+	            event: event.id })
+		     .exec (function (err, invites) {
+                         if (err)
+                             lockedError (err)
+                         else {
+			     MiscPlayerService.deductCost (player, event.cost)
+                             Player.update ({ id: player.id },
+                                            { global: player.global },
+                                            lockedSuccess,
+                                            lockedError)
+                         }
+                     })
+             },
+             playerWaiting,
+             error)
         } else {
             // pick a random opponent
 	    var totalWeight = weightedOpponents.reduce (function (total, wo) { return total + wo.weight }, 0)
@@ -86,64 +100,77 @@ module.exports = {
 	    MiscPlayerService.runWithLock
 	    ([ player.id, opponent.id ],
              function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-		 if (MiscPlayerService.invisibleOrLocked (player, event)
-		     || MiscPlayerService.invisibleOrLocked (opponent, event))
-		     lockedSuccess (null)
-		 else {
-		     Choice.findOneByName (event.choice)
-			 .exec (function (err, choice) {
-			     if (err)
-				 lockedError (err)
-			     else {
-				 // randomly assign player 1 & player 2
-				 var p1weight, o1weight
-				 if (event.role1weight) {
-				     p1weight = MiscPlayerService.evalPlayerExpr (player, event.role1weight)
-				     o1weight = MiscPlayerService.evalPlayerExpr (opponent, event.role1weight)
-				 } else
-				     p1weight = o1weight = 1
-				 var p1o2prob = (p1weight + 1) / (p1weight + o1weight + 2)
-				 if (Math.random() < p1o2prob) {
-                                     player1 = player
-                                     player2 = opponent
-				 } else {
-                                     player1 = opponent
-                                     player2 = player
-				 }
-				 // deduct costs
-				 MiscPlayerService.deductCost (player1, event.cost)
-				 MiscPlayerService.deductCost (player2, event.cost)
-				 // create the game
-				 var game = { player1: player1,
-                                              player2: player2,
-					      event: event,
-                                              current: choice,
-					      mood1: player1.initialMood || 'happy',
-					      mood2: player2.initialMood || 'happy' }
-				 GameService.createGame
-				 (game,
-				  function (err, created) {
-				      if (err) lockedError(err)
-				      else {
-					  Invite.destroy ({ player: [player1.id, player2.id],
-							    event: event.id })
-					      .exec (function (err) {
-						  if (err)
-						      lockedError (err)
-						  else
-						      lockedSuccess (game)
-					      })
-				      }
-				  })
-			     }
-			 })
-		 }
+		 // figure out if costs already deducted (i.e. Invite table entry exists)
+                 Invite.find ({ player: player.id,
+                                event: event.id })
+                     .exec (function (err, invites) {
+                         if (err) lockedError(err)
+                         else {
+                             var costsDeducted = invites.length > 0
+                             console.log ("costsDeducted="+costsDeducted)
+                             console.log (MiscPlayerService.invisibleOrLocked (player, event, costsDeducted))
+		             console.log (MiscPlayerService.invisibleOrLocked (opponent, event, true))
+
+		             if (MiscPlayerService.invisibleOrLocked (player, event, costsDeducted)
+		                 || MiscPlayerService.invisibleOrLocked (opponent, event, true))
+		                 lockedSuccess (null)
+		             else {
+		                 Choice.findOneByName (event.choice)
+			             .exec (function (err, choice) {
+			                 if (err)
+				             lockedError (err)
+			                 else {
+				             // randomly assign player 1 & player 2
+				             var p1weight, o1weight
+				             if (event.role1weight) {
+				                 p1weight = MiscPlayerService.evalPlayerExpr (player, event.role1weight)
+				                 o1weight = MiscPlayerService.evalPlayerExpr (opponent, event.role1weight)
+				             } else
+				                 p1weight = o1weight = 1
+				             var p1o2prob = (p1weight + 1) / (p1weight + o1weight + 2)
+				             if (Math.random() < p1o2prob) {
+                                                 player1 = player
+                                                 player2 = opponent
+				             } else {
+                                                 player1 = opponent
+                                                 player2 = player
+				             }
+                                             // deduct costs, if not already deducted
+                                             if (!costsDeducted)
+				                 MiscPlayerService.deductCost (player, event.cost)
+				             // create the game
+				             var game = { player1: player1,
+                                                          player2: player2,
+					                  event: event,
+                                                          current: choice,
+					                  mood1: player1.initialMood || 'happy',
+					                  mood2: player2.initialMood || 'happy' }
+				             GameService.createGame
+				             (game,
+				              function (err, created) {
+				                  if (err) lockedError(err)
+				                  else {
+					              Invite.destroy ({ player: [player1.id, player2.id],
+							                event: event.id })
+					                  .exec (function (err) {
+						              if (err)
+						                  lockedError (err)
+						              else
+						                  lockedSuccess (game)
+					                  })
+				                  }
+				              })
+			                 }
+			             })
+                             }
+		         }
+                     })
 	     },
 	     function (game) {
 		 if (game)
 		     gameStarted (opponent, game)
 		 else
-                     PlayerMatchService.tryRandomOpponent (player, weightedOpponents, gameStarted, playerWaiting, error)
+                     PlayerMatchService.tryRandomOpponent (player, event, weightedOpponents, gameStarted, playerWaiting, error)
 	     },
 	     error)
 	}

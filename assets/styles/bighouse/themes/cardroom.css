@@ -13,6 +13,7 @@
     background-color: black;
 }
 
+.bighouse.cardroom .detailbar .statusdiv,
 .bighouse.cardroom .locbar .link,
 .bighouse.cardroom .locbar .trade,
 .bighouse.cardroom .locbar .event {

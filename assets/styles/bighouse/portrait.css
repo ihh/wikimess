@@ -14,8 +14,8 @@
     }
 
     .bighouse .navbar .navicon {
-	width: 25vw;
-	height: 25vw;
+	width: 23vw;
+	height: 23vw;
     }
 
     .bighouse .statusbar {
@@ -353,11 +353,6 @@
     .bighouse .upload-exit span {
 	padding-left: 5vw;
 	padding-right: 5vw;
-    }
-
-    .bighouse .detailbar {
-	height: 85vh;
-	margin: 1vh 1vw;
     }
 
     .bighouse .menubar fieldset {

@@ -89,6 +89,7 @@ var BigHouse = (function() {
 
         navIcons: { view: 'binoculars',
                     settings: 'cog',
+                    status: 'swap-bag',
                     games: 'card-random' },
 
 	eventButtonText: { locked: 'Locked',
@@ -135,6 +136,10 @@ var BigHouse = (function() {
 
         REST_getPlayerGames: function (playerID, eventID) {
             return $.get ('/player/' + playerID + '/games')
+        },
+
+        REST_getPlayerStatus: function (playerID) {
+            return $.get ('/player/' + playerID + '/status')
         },
 
         REST_getPlayerGameStatusSelf: function (playerID, gameID) {
@@ -734,8 +739,9 @@ var BigHouse = (function() {
             var bh = this
             
             var tabs = [{ name: 'view', method: 'showPlayPage' },
-                        { name: 'settings', method: 'showSettingsPage' },
-                        { name: 'games', method: 'showActiveGamesPage' }]
+                        { name: 'status', method: 'showStatusPage' },
+                        { name: 'games', method: 'showActiveGamesPage' },
+                        { name: 'settings', method: 'showSettingsPage' }]
 
             var navbar
             this.container
@@ -817,7 +823,7 @@ var BigHouse = (function() {
             this.REST_getLogout()
 	    this.showLoginPage()
         },
-
+        
         // settings menu
         showSettingsPage: function() {
             var bh = this
@@ -1402,24 +1408,36 @@ var BigHouse = (function() {
 	},
 
 	// game status
+        showStatusPage: function() {
+            this.setPage ('status')
+            this.showNavBar ('status')
+            this.showGameStatusPage (this.playerName, this.REST_getPlayerStatus, this.setPage)
+        },
+
         showPlayerStatusPage: function() {
-            this.showGameStatusPage (this.playerName, this.REST_getPlayerGameStatusSelf)
+            this.pushGameStatusPage (this.playerName, this.REST_getPlayerGameStatusSelf)
         },
         
         showOpponentStatusPage: function() {
-            this.showGameStatusPage (this.opponentName, this.REST_getPlayerGameStatusOther)
+            this.pushGameStatusPage (this.opponentName, this.REST_getPlayerGameStatusOther)
         },
 
-        showGameStatusPage: function (name, getMethod) {
+        pushGameStatusPage: function (name, getMethod) {
             var bh = this
             this.pushView ('status')
 	    var detail
             this.container
                 .append (this.makePageTitle (name))
-		.append (detail = $('<div class="detailbar">'))
+            this.showGameStatusPage (name, getMethod)
+            this.container
 		.append ($('<div class="menubar">')
 			 .append ($('<span>')
 				  .html (this.makeLink ('Back', this.popView))))
+        },
+
+        showGameStatusPage: function (name, getMethod) {
+            this.container
+                .append (detail = $('<div class="detailbar">'))
 
 	    this.restoreScrolling (detail)
 
@@ -1427,27 +1445,36 @@ var BigHouse = (function() {
 		.done (function (status) {
 		    if (bh.verbose.messages)
 			console.log (status)
-		    status.element.forEach (function (elt) {
-			switch (elt.type) {
-			case 'header':
-			    detail.append ($('<h1>').text(elt.label))
-			    break
-			case 'icon':
-			    detail.append (bh.makeStatusIcon (elt))
-			    break
-			case 'meter':
-			    detail.append (bh.makeMeter (elt.label, elt.level, elt.min, elt.max, elt.color))
-			    break
-			default:
-			    break
-			}
-		    })
+                    bh.addStatusElements (status.element, detail)
 		})
                 .fail (function (err) {
                     console.log(err)
                 })
 	},
 
+        addStatusElements: function (elements, div) {
+            var bh = this
+	    elements.forEach (function (elt) {
+		switch (elt.type) {
+		case 'div':
+                    var child = $('<div class="statusdiv">')
+                    div.append (child)
+                    bh.addStatusElements (elt.element, child)
+		case 'header':
+		    div.append ($('<h1>').text(elt.label))
+		    break
+		case 'icon':
+		    div.append (bh.makeStatusIcon (elt))
+		    break
+		case 'meter':
+		    div.append (bh.makeMeter (elt.label, elt.level, elt.min, elt.max, elt.color))
+		    break
+		default:
+		    break
+		}
+	    })
+        },
+        
 	makeStatusIcon: function (element) {
             var bh = this
 	    var span = $('<span class="icon">')
