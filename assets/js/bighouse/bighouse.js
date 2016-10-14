@@ -438,7 +438,7 @@ var BigHouse = (function() {
 
                 data.items.forEach (function (item) {
                     var div = $('<div class="trade">')
-                    
+
                     function addTradeRow (verb, count) {
                         var button
                         if (item[verb]) {
@@ -486,7 +486,7 @@ var BigHouse = (function() {
                     bh.getIconPromise (item.icon)
                         .done (function (svg) {
                             svg = bh.colorizeIcon (svg, item.color)
-                            iconSpan.append ($(svg).addClass('bigicon'))
+                            iconSpan.append ($(svg))
                         })
                         .fail (function (err) {
                             console.log(err)
@@ -1433,7 +1433,7 @@ var BigHouse = (function() {
 			    detail.append ($('<h1>').text(elt.label))
 			    break
 			case 'icon':
-			    detail.append (bh.makeStatusIcon (elt.icon, elt.label))
+			    detail.append (bh.makeStatusIcon (elt))
 			    break
 			case 'meter':
 			    detail.append (bh.makeMeter (elt.label, elt.level, elt.min, elt.max, elt.color))
@@ -1448,10 +1448,12 @@ var BigHouse = (function() {
                 })
 	},
 
-	makeStatusIcon: function (icon, label) {
+	makeStatusIcon: function (element) {
+            var bh = this
 	    var span = $('<span class="icon">')
-            this.getIconPromise(icon)
+            this.getIconPromise(element.icon)
                 .done (function (svg) {
+                    svg = bh.colorizeIcon (svg, element.color)
                     span.append ($(svg).addClass('navicon'))
                 })
                 .fail (function (err) {
@@ -1459,7 +1461,7 @@ var BigHouse = (function() {
                 })
             return $('<div class="statusline">')
                 .append (span)
-                .append ($('<span class="text">').text(label))
+                .append ($('<span class="text">').text(element.label))
 	},
 
         makeMeter: function(label,level,min,max,color) {
