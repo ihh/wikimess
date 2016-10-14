@@ -32,6 +32,7 @@ module.exports = {
       category: { type: 'string' },
 
       // sale info
+      isDefaultCurrency: { type: 'boolean' },
       buy: { type: 'json' },
       sell: { type: 'json' },
       markup: { type: 'float' },
@@ -74,6 +75,8 @@ module.exports = {
             Item.itemByCategory[it.category] = Item.itemByCategory[it.category] || []
             Item.itemByCategory[it.category].push (it)
         }
+	if (it.isDefaultCurrency)
+	    Item.defaultCurrency = it.name
     },
 
     // lifecycle callback to update in-memory index when new Items are added

@@ -1,0 +1,20 @@
+[
+    { name: 'cash',  // internal variable name
+      icon: 'coins',
+      color: 'yellow',
+      noun: 'credit',  // displayed text
+      init: 100,
+      alwaysShow: true,
+      isDefaultCurrency: true,
+      public: false
+    },
+
+    { name: 'robe',
+      icon: 'robe',
+      color: 'red',
+      category: 'clothing',
+      noun: 'robe',
+      buy: 20,
+      public: true
+    },
+]
