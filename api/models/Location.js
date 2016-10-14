@@ -60,10 +60,10 @@ module.exports = {
         location.items.forEach (function (it) {
             if (typeof(it) === 'string')
                 it = { name: it }
-            if (it.name in DataService.itemByName)
-                items.push ({ item: DataService.itemByName[it.name], buy: it.buy, sell: it.sell, markup: it.markup })
+            if (it.name in Item.itemByName)
+                items.push ({ item: Item.itemByName[it.name], buy: it.buy, sell: it.sell, markup: it.markup })
             else
-                DataService.itemByCategory[it.name].forEach (function (item) {
+                Item.itemByCategory[it.name].forEach (function (item) {
                     items.push ({ item: item, buy: it.buy, sell: it.sell, markup: it.markup })
                 })
         })
@@ -73,7 +73,7 @@ module.exports = {
             function makePrice(p,markup,discount) {
                 var price = {}
                 if (typeof(p) !== 'object')
-                    price[DataService.defaultCurrency] = p * (markup || 1) / (discount || 1)
+                    price[Item.defaultCurrency] = p * (markup || 1) / (discount || 1)
                 else
                     Object.keys(p).forEach (function (unit) {
                         price[unit] = p[unit] * (markup || 1) / (discount || 1)

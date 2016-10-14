@@ -101,7 +101,7 @@ module.exports = {
   },
 
     beforeCreate: function(player, cb) {
-	DataService.item.forEach (function (item) {
+	Item.items.forEach (function (item) {
 	    if (item.init)
 		player.global.inv[item.name] = item.init
 	    else if (item.alwaysShow)

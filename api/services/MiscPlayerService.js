@@ -104,7 +104,7 @@ module.exports = {
 		if (!unaffordable) {
 		    var owned = player.global.inv[itemName] || 0
 		    if (owned < cost[itemName]) {
-			var item = DataService.itemByName[itemName]
+			var item = Item.itemByName[itemName]
 			missing.push (MiscPlayerService.plural (cost[itemName] - owned,
 								item))
 		    }
@@ -130,7 +130,7 @@ module.exports = {
     costInfo: function (player, cost) {
         if (!cost) return undefined
         return Object.keys(cost).map (function (itemName) {
-            var item = DataService.itemByName[itemName]
+            var item = Item.itemByName[itemName]
             var amount = cost[itemName]
             return { name: itemName,
                      amount: amount,
@@ -193,7 +193,7 @@ module.exports = {
 				        label: attr.label })
 	})
 
-	DataService.item.forEach (function (item) {
+	Item.items.forEach (function (item) {
 	    if ((item.public || !isPublic)
 		&& (state.inv[item.name] || item.alwaysShow))
 		elements.Inventory.push ({ type: 'icon',
