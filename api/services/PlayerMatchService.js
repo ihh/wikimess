@@ -67,7 +67,7 @@ module.exports = {
 	    MiscPlayerService.runWithLock
 	    ([ player.id ],
              function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-                 if (MiscPlayerService.unaffordable (player, event.cost))
+                 if (LocationService.unaffordable (player, event.cost))
                      lockedError (new Error("Event unaffordable"))
                  else
 	             Invite.findOrCreate
@@ -77,7 +77,7 @@ module.exports = {
                          if (err)
                              lockedError (err)
                          else {
-			     MiscPlayerService.deductCost (player, event.cost)
+			     LocationService.deductCost (player, event.cost)
                              Player.update ({ id: player.id },
                                             { global: player.global },
                                             lockedSuccess,
@@ -107,18 +107,16 @@ module.exports = {
                          if (err) lockedError(err)
                          else {
                              var costsDeducted = invites.length > 0
-                             console.log ("costsDeducted="+costsDeducted)
-                             console.log (MiscPlayerService.invisibleOrLocked (player, event, costsDeducted))
-		             console.log (MiscPlayerService.invisibleOrLocked (opponent, event, true))
-
-		             if (MiscPlayerService.invisibleOrLocked (player, event, costsDeducted)
-		                 || MiscPlayerService.invisibleOrLocked (opponent, event, true))
+		             if (LocationService.invisibleOrLocked (player, event, costsDeducted)
+		                 || LocationService.invisibleOrLocked (opponent, event, true))
 		                 lockedSuccess (null)
 		             else {
 		                 Choice.findOneByName (event.choice)
 			             .exec (function (err, choice) {
 			                 if (err)
 				             lockedError (err)
+                                         else if (!choice)
+				             lockedError ("Choice " + event.choice + " not found")
 			                 else {
 				             // randomly assign player 1 & player 2
 				             var p1weight, o1weight
@@ -137,7 +135,7 @@ module.exports = {
 				             }
                                              // deduct costs, if not already deducted
                                              if (!costsDeducted)
-				                 MiscPlayerService.deductCost (player, event.cost)
+				                 LocationService.deductCost (player, event.cost)
 				             // create the game
 				             var game = { player1: player1,
                                                           player2: player2,

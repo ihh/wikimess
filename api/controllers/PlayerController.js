@@ -459,7 +459,7 @@ module.exports = {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
 	    if (req.isSocket)
 		Player.subscribe (req, [player.id])
-	    MiscPlayerService.getLocation (player, { id: req.params.location }, rs)
+	    LocationService.getLocation (player, { id: req.params.location }, rs)
 	})
     },
 
@@ -468,14 +468,14 @@ module.exports = {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
 	    if (req.isSocket)
 		Player.subscribe (req, [player.id])
-	    MiscPlayerService.getLocation (player, { name: player.home }, rs)
+	    LocationService.getLocation (player, { name: player.home }, rs)
 	})
     },
 
     // buy or sell
     trade: function (req, res) {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
-	    MiscPlayerService.trade (player, req.params.location, req.body, rs)
+	    LocationService.trade (player, req.params.location, req.body, rs)
 	})
     },
 };
