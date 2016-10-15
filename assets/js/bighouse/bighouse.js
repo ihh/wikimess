@@ -598,9 +598,6 @@ var BigHouse = (function() {
             var div = $('<div class="event">')
                 .append ($('<div class="title">')
                          .text (event.title))
-            if (event.hint)
-                div.append ($('<div class="hint">')
-                            .text (event.hint))
 
 	    event.lockDiv = $('<div class="lock">')
 	    event.button = $('<div class="button">')
@@ -614,8 +611,12 @@ var BigHouse = (function() {
             event.tradeRows = $('<div class="traderows">')
                 .append ($('<div class="traderow">')
                          .append (event.costDiv, event.button))
-
+ 
             div.append (event.turnDiv, event.lockDiv, event.tradeRows)
+            if (event.hint)
+                div.append ($('<div class="hint">')
+                            .text (event.hint))
+
             this.locBarDiv.append (div)
 
             this.updateEventButton (event)
