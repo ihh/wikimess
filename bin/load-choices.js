@@ -81,7 +81,7 @@ callback = processFilenameList ({ path: '/player',
                                   list: playerFilenames.reverse() })
 
 var locationHandler = makeHandler ('Location', hasName, function (obj) {
-    return obj.name + ' -> ' + obj.link.map(function (link) { return link.to }).join(', ') })
+    return obj.name + ' -> ' + (obj.link ? obj.link.map(function (link) { return link.to }).join(', ') : 'no links!') })
 callback = processFilenameList ({ path: '/location',
                                   handler: locationHandler,
                                   callback: callback,

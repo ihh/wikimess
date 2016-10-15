@@ -9,6 +9,17 @@
       name: "intro_robe",
       title: "Outside WizCom",
       description: "As you step through the lobby door, you are blocked by a self-important porter. \"You can't go in there without a robe!\"",
-      link: [{ to: "lobby", requires: {"novice robe": 1}, hint: "Enter!" }]
+      items: ['clothing'],
+      link: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }]
   },
+  {
+      name: "lobby",
+      title: "The Lobby",
+      description: "You are standing in the lobby.",
+      checkpoint: true,
+      events: [ { title: "Cut class",
+		  hint: "Want to cut class?",
+                  cost: { cash: 50 },
+		  choice: "root" } ]
+  }
 ]

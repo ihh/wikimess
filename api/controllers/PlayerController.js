@@ -468,7 +468,7 @@ module.exports = {
         MiscPlayerService.findPlayer (req, res, function (player, rs) {
 	    if (req.isSocket)
 		Player.subscribe (req, [player.id])
-	    MiscPlayerService.getLocation (player, { name: player.global.home }, rs)
+	    MiscPlayerService.getLocation (player, { name: player.home }, rs)
 	})
     },
 

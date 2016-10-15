@@ -150,8 +150,8 @@ module.exports = {
 	var invisible = false
 	if (obj.visible)
 	    invisible = invisible || !MiscPlayerService.evalPlayerExpr (player, obj.visible)
-	if (obj.required)
-	    invisible = invisible || MiscPlayerService.unaffordable (player, obj.required)
+	if (obj.requires)
+	    invisible = invisible || MiscPlayerService.unaffordable (player, obj.requires)
 	return invisible
     },
 
@@ -503,116 +503,126 @@ module.exports = {
 		else if (!location) rs(new Error("Couldn't find location " + JSON.stringify(locationQuery)))
                 else if (MiscPlayerService.invisibleOrLocked(player,location)) rs(new Error("Location inaccessible: " + location.name))
 		else {
-		    var links = location.link.filter (function (link) {
-			return !MiscPlayerService.invisible (player, link)
-		    })
-		    Location.find ({ name: links.map (function (link) { return link.to }) })
-			.exec (function (err, destLocations) {
-			    if (err) rs(err)
-			    else if (destLocations.length != links.length) rs("Couldn't find all Locations")
-			    else {
-				destLocations.forEach (function (loc, n) { links[n].location = loc })
-				links = links.filter (function (link) {
-				    return !MiscPlayerService.invisible (player, link.location)
-				})
-				links.forEach (function (link) {
-				    link.locked = MiscPlayerService.locked (player,link)
-					|| MiscPlayerService.locked (player, link.location)
-				})
+                    function show() { MiscPlayerService.showLocation (player, location, rs) }
+                    if (location.checkpoint)
+                        Player.update ({ id: player.id },
+                                       { home: location.name },
+                                       show)
+                    else
+                        show()
+                }
+            })
+    },
 
-				var events = location.events, eventById = {}
-				events.forEach (function (event) {
-				    event.locked = MiscPlayerService.locked (player, event)
-				    eventById[event.id] = event
+    showLocation: function (player, location, rs) {
+        var links = location.link.filter (function (link) {
+	    return !MiscPlayerService.invisible (player, link)
+	})
+	Location.find ({ name: links.map (function (link) { return link.to }) })
+	    .exec (function (err, destLocations) {
+		if (err) rs(err)
+		else if (destLocations.length != links.length) rs("Couldn't find all Locations")
+		else {
+		    destLocations.forEach (function (loc, n) { links[n].location = loc })
+		    links = links.filter (function (link) {
+			return !MiscPlayerService.invisible (player, link.location)
+		    })
+		    links.forEach (function (link) {
+			link.locked = MiscPlayerService.locked (player,link)
+			    || MiscPlayerService.locked (player, link.location)
+		    })
+
+		    var events = location.events, eventById = {}
+		    events.forEach (function (event) {
+			event.locked = MiscPlayerService.locked (player, event)
+			eventById[event.id] = event
+		    })
+		    var eventIds = events.map (function (event) { return event.id })
+		    Game.find ({ where: { or: [{ player1: player.id },
+					       { player2: player.id }],
+					  event: eventIds },
+				 sort: 'createdAt' })
+                        .populate ('current')
+			.exec (function (err, games) {
+			    if (err) rs(err)
+			    else {
+				var now = new Date()
+				games.forEach (function (game) {
+				    var role = Game.getRole (game, player.id)
+				    var event = eventById[game.event]
+				    if (Game.getRoleAttr (game,role,'quit')) {
+					if (event.resetAllowed) {
+					    var resetTime = Game.resetTime (game, event)
+					    if (now < resetTime)
+						event.resetTime = resetTime
+					} else
+					    event.visible = false
+				    } else
+					event.game = { id: game.id,
+						       finished: game.finished,
+						       waiting: Game.isWaitingForMove(game,role),
+						       missed: Game.getRoleAttr(game,role,'missed'),
+						       running: Game.runningTime(game),
+						       dormant: Game.dormantTime(game),
+						       deadline: Game.deadline(game) }
 				})
-				var eventIds = events.map (function (event) { return event.id })
-				Game.find ({ where: { or: [{ player1: player.id },
-							   { player2: player.id }],
-						      event: eventIds },
-					     sort: 'createdAt' })
-                                    .populate ('current')
-				    .exec (function (err, games) {
+				Invite.find ({ event: eventIds,
+					       player: player.id })
+				    .exec (function (err, invites) {
 					if (err) rs(err)
 					else {
-					    var now = new Date()
-					    games.forEach (function (game) {
-						var role = Game.getRole (game, player.id)
-						var event = eventById[game.event]
-						if (Game.getRoleAttr (game,role,'quit')) {
-						    if (event.resetAllowed) {
-							var resetTime = Game.resetTime (game, event)
-							if (now < resetTime)
-							    event.resetTime = resetTime
-						    } else
-							event.visible = false
-						} else
-						    event.game = { id: game.id,
-								   finished: game.finished,
-								   waiting: Game.isWaitingForMove(game,role),
-								   missed: Game.getRoleAttr(game,role,'missed'),
-								   running: Game.runningTime(game),
-								   dormant: Game.dormantTime(game),
-								   deadline: Game.deadline(game) }
+					    invites.forEach (function (invite) {
+						var event = eventById[invite.event]
+						event.invited = new Date (invite.createdAt.getTime() + 1000*event.wait)
 					    })
-					    Invite.find ({ event: eventIds,
-							   player: player.id })
-						.exec (function (err, invites) {
-						    if (err) rs(err)
-						    else {
-							invites.forEach (function (invite) {
-							    var event = eventById[invite.event]
-							    event.invited = new Date (invite.createdAt.getTime() + 1000*event.wait)
-							})
 
-							events = events.filter (function (event) {
-							    return event.game
-								|| event.invited
-								|| !MiscPlayerService.invisible (player, event)
-							})
+					    events = events.filter (function (event) {
+						return event.game
+						    || event.invited
+						    || !MiscPlayerService.invisible (player, event)
+					    })
 
-							rs (null, {
-							    id: location.id,
-							    title: location.title,
-							    description: location.description,
-                                                            items: Location.getItems (location, player).map (function (item) {
-								item.buy = MiscPlayerService.costInfo (player, item.buy)
-								item.sell = MiscPlayerService.costInfo (null, item.sell)
-								return item
-							    }),
-							    links: links.map (function (link) {
-								return { id: link.location.id,
-									 title: link.location.title,
-									 hint: link.hint,
-									 locked: link.locked,
-									 cost: link.cost && MiscPlayerService.costInfo (player, link.cost) }
-							    }),
-							    events: events.map (function (event) {
-								var state = (event.game
-									     ? (event.game.finished
-                                                                                ? "finished"
-                                                                                : (event.game.waiting
-                                                                                   ? "ready"
-                                                                                   : "waiting"))
-									     : (event.invited
-										? "starting"
-										: (event.locked
-                                                                                   ? "locked"
-                                                                                   : (event.resetTime
-										      ? "resetting"
-										      : "start"))))
-								return { id: event.id,
-									 title: event.title,
-                                                                         hint: event.hint,
-                                                                         locked: event.locked,
-                                                                         cost: event.cost && MiscPlayerService.costInfo (player, event.cost),
-									 state: state,
-                                                                         invited: event.invited,
-									 reset: event.resetTime,
-									 game: event.game }
-							    })
-							})
-						    }
+					    rs (null, {
+						id: location.id,
+						title: location.title,
+						description: location.description,
+                                                items: Location.getItems (location, player).map (function (item) {
+						    item.buy = MiscPlayerService.costInfo (player, item.buy)
+						    item.sell = MiscPlayerService.costInfo (null, item.sell)
+						    return item
+						}),
+						links: links.map (function (link) {
+						    return { id: link.location.id,
+							     title: link.location.title,
+							     hint: link.hint,
+							     locked: link.locked,
+							     cost: link.cost && MiscPlayerService.costInfo (player, link.cost) }
+						}),
+						events: events.map (function (event) {
+						    var state = (event.game
+								 ? (event.game.finished
+                                                                    ? "finished"
+                                                                    : (event.game.waiting
+                                                                       ? "ready"
+                                                                       : "waiting"))
+								 : (event.invited
+								    ? "starting"
+								    : (event.locked
+                                                                       ? "locked"
+                                                                       : (event.resetTime
+									  ? "resetting"
+									  : "start"))))
+						    return { id: event.id,
+							     title: event.title,
+                                                             hint: event.hint,
+                                                             locked: event.locked,
+                                                             cost: event.cost && MiscPlayerService.costInfo (player, event.cost),
+							     state: state,
+                                                             invited: event.invited,
+							     reset: event.resetTime,
+							     game: event.game }
 						})
+					    })
 					}
 				    })
 			    }

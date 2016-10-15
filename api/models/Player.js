@@ -60,9 +60,13 @@ module.exports = {
       global: {
           type: 'json',
           defaultsTo: {
-	      inv: {},
-	      home: 'root'
+	      inv: {}
 	  }
+      },
+
+      home: {
+          type: 'string',
+          defaultsTo: 'root'
       },
 
       initialMood: {

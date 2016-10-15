@@ -33,7 +33,7 @@ module.exports = {
 
       link: {
 	  type: 'json',
-	  defaultsTo: {}
+	  defaultsTo: []
       },
 
       items: {
@@ -52,6 +52,10 @@ module.exports = {
 
       locked: {
 	  type: 'string'
+      },
+
+      checkpoint: {
+          type: 'boolean'
       },
   },
 
