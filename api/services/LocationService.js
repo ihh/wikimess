@@ -1,5 +1,9 @@
 // api/services/LocationService.js
 
+function isArray (obj) {
+    return Object.prototype.toString.call(obj) === '[object Array]'
+}
+
 module.exports = {
 
     itemInfoFields: ['visible','buy','sell','verb','markup','discount'],
@@ -293,7 +297,7 @@ module.exports = {
 					    rs (null, {
 						id: location.id,
 						title: location.title,
-						description: location.description,
+						description: LocationService.expandText (location.description, player),
                                                 items: LocationService.getItems (location, player).map (function (item) {
 						    item.buy = LocationService.costInfo (player, item.buy)
 						    item.sell = LocationService.costInfo (null, item.sell)
@@ -302,7 +306,7 @@ module.exports = {
 						links: links.map (function (link) {
 						    return { id: link.location.id,
 							     title: link.title || link.location.title,
-							     hint: link.hint,
+							     hint: LocationService.expandText (link.hint, player),
 							     locked: link.locked,
 							     cost: link.cost && LocationService.costInfo (player, link.cost) }
 						}),
@@ -322,7 +326,7 @@ module.exports = {
 									  : "start"))))
 						    return { id: event.id,
 							     title: event.title,
-                                                             hint: event.hint,
+                                                             hint: LocationService.expandText (event.hint, player),
                                                              locked: event.locked,
                                                              cost: event.cost && LocationService.costInfo (player, event.cost),
 							     state: state,
@@ -339,4 +343,64 @@ module.exports = {
 	    })
     },
 
+    expandText: function (text, player, allowNonStringEvals) {
+	if (!text)
+	    return []
+
+        if (isArray(text)) {
+            return text.map (function (t) {
+                return LocationService.expandText (t, false)
+            })
+        } else if (typeof(text) == 'object') {
+            var expanded
+            if (text.expr)
+                expanded = LocationService.expandText ('{{' + text.expr + '}}', true)
+            else
+	        expanded = {}
+	    Object.keys(text).forEach (function (key) {
+		if (key == 'text' || typeof(text[key]) == 'object')
+		    expanded[key] = LocationService.expandText (text[key], false)
+		else if (key != 'expr')
+		    expanded[key] = text[key]
+	    })
+	    return expanded
+	}
+
+        var $g = player.global,
+            $inv = $g.inv,
+            $n = player.displayName,
+	    $h = player.human,
+	    $p = player,
+            $id = player.id
+
+        if (allowNonStringEvals) {
+            var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
+            var braceMatch = braceRegex.exec(text)
+            if (braceMatch && braceMatch[0].length == text.length) {
+                // entire text string matches pattern {{...}}, so eval the code inside without coercing result to a string
+                var val = ''
+                try {
+                    val = eval(braceMatch[1])
+                } catch (e) {
+                    // do nothing, ignore undefined values and other errors in eval()
+                }
+                return val
+            }
+        }
+        
+        return text
+            .replace (/\{\{(.*?)\}\}/g, function (match, expr) {
+                var val
+                try {
+                    val = eval(expr)
+                } catch (e) {
+                    sails.log.debug ("When evaluating: " + expr)
+                    sails.log.debug ("Error: " + e)
+                    // do nothing, ignore undefined values and other errors in eval()
+                }
+                return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
+            })
+            .replace(/\$player/g,player.displayName)
+            .replace(/\$self/g,player.displayName)
+    },
 }

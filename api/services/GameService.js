@@ -232,11 +232,13 @@ module.exports = {
 
         var $c = game.common,
             $g1 = game.player1.global,
+            $inv1 = $g1.inv,
             $l1 = game.local1,
             $n1 = game.player1.displayName,
             $id1 = game.player1.id,
             $p1 = game.player1,
             $g2 = game.player2.global,
+            $inv2 = $g2.inv,
             $l2 = game.local2,
             $n2 = game.player2.displayName,
             $id2 = game.player2.id,
@@ -251,11 +253,13 @@ module.exports = {
             $name2 = $n2,
 
             $g = role == 1 ? $g1 : $g2,
+            $inv = role == 1 ? $inv1 : $inv2,
             $l = role == 1 ? $l1 : $l2,
             $n = role == 1 ? $n1 : $n2,
             $id = role == 1 ? $id1 : $id2,
             
             $go = role == 1 ? $g2 : $g1,
+            $invo = role == 1 ? $inv2 : $inv1,
             $lo = role == 1 ? $l2 : $l1,
             $no = role == 1 ? $n2 : $n1,
             $ido = role == 1 ? $id2 : $id1
@@ -278,6 +282,8 @@ module.exports = {
                 try {
                     val = eval(braceMatch[1])
                 } catch (e) {
+                    sails.log.debug ("When evaluating: " + braceMatch[1])
+                    sails.log.debug ("Error: " + e)
                     // do nothing, ignore undefined values and other errors in eval()
                 }
                 return val
@@ -290,6 +296,8 @@ module.exports = {
                 try {
                     val = eval(expr)
                 } catch (e) {
+                    sails.log.debug ("When evaluating: " + expr)
+                    sails.log.debug ("Error: " + e)
                     // do nothing, ignore undefined values and other errors in eval()
                 }
                 return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
@@ -596,12 +604,14 @@ module.exports = {
         var $c = game.common,
             $s1 = p1[context].state,
             $g1 = p1.global.state,
+            $inv1 = p1.global.state.inv,
             $l1 = p1.local.state,
             $n1 = p1.displayName,
             $p1 = p1,
             $id1 = p1.id,
             $s2 = p2[context].state,
             $g2 = p2.global.state,
+            $inv2 = p2.global.state.inv,
             $l2 = p2.local.state,
             $n2 = p2.displayName,
             $p2 = p2,
@@ -619,15 +629,17 @@ module.exports = {
             $name1 = $n1,
             $name2 = $n2
 
-        var $s, $g, $l, $n, $id, $so, $go, $lo, $no, $ido
+        var $s, $g, $inv, $l, $n, $id, $so, $go, $invo, $lo, $no, $ido
         if (role) {
             $s = info.self[context].state
             $g = info.self.global.state
+            $inv = info.self.global.state.inv
             $l = info.self.local.state
             $n = info.self.displayName
 	    $id = info.self.id
             $so = info.other[context].state
-            $go = info.other.global
+            $go = info.other.global.state
+            $invo = info.other.global.state.inv
             $lo = info.other.local
             $no = info.other.displayName
 	    $ido = info.other.id
@@ -669,6 +681,8 @@ module.exports = {
                     try {
                         val = eval(expr)
                     } catch (e) {
+                        sails.log.debug ("When evaluating: " + expr)
+                        sails.log.debug ("Error: " + e)
                         // do nothing, ignore undefined values and other errors in eval()
                     }
 
@@ -739,6 +753,8 @@ module.exports = {
         try {
             val = eval(expr)
         } catch (e) {
+            sails.log.debug ("When evaluating: " + expr)
+            sails.log.debug ("Error: " + e)
             // do nothing, ignore undefined values and other errors in eval()
         }
 
