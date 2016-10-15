@@ -3,13 +3,13 @@
       name: "root",
       title: "Outside",
       description: "You are standing outside the college.",
-      link: [{ to: "lobby", hint: "Enter!" }]
+      links: [{ to: "lobby", hint: "Enter!" }]
   },
   {
       name: "lobby",
       title: "The Lobby",
       description: "You are standing in the lobby.",
-      link: [{ to: "deansoffice", cost: {"robe":1} }],
+      links: [{ to: "deansoffice", cost: {"robe":1} }],
       items: ['clothing'],
       events: [ { title: "Cut class",
 		  hint: "Want to cut class?",
@@ -20,6 +20,6 @@
       name: "deansoffice",
       title: "The Dean's Office",
       description: "The Dean is hunched over a terminal, his back to the door. He might be aware of your presence; I wouldn't bet against it.",
-      link: [{ to: "lobby", hint: "Tiptoe back out." }]
+      links: [{ to: "lobby", hint: "Tiptoe back out." }]
   },
 ]

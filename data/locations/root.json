@@ -3,14 +3,14 @@
       name: "root",
       title: "Outside WizCom",
       description: "Welcome to your first day at Wizard Valley Community College.",
-      link: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" }]
+      links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" }]
   },
   {
       name: "intro_robe",
       title: "Outside WizCom",
       description: "As you step through the lobby door, you are blocked by a self-important porter. \"You can't go in there without a robe!\"",
       items: ['clothing'],
-      link: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }]
+      links: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }]
   },
   {
       name: "lobby",

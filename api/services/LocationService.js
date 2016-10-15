@@ -145,7 +145,7 @@ module.exports = {
     },
 
     showLocation: function (player, location, rs) {
-        var links = location.link.filter (function (link) {
+        var links = location.links.filter (function (link) {
 	    return !LocationService.invisible (player, link)
 	})
 	Location.find ({ name: links.map (function (link) { return link.to }) })

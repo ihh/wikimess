@@ -31,7 +31,7 @@ module.exports = {
 	  required: true
       },
 
-      link: {
+      links: {
 	  type: 'json',
 	  defaultsTo: []
       },
