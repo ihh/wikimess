@@ -9,7 +9,7 @@ module.exports = {
 
     // override blueprint for create, to allow inline specification of outcomes and nested choices
     create: function (req, res) {
-        ChoiceSugarService.createChoice (req.body,
+        ChoiceService.createChoice (req.body,
                                          function (createdChoices) {
                                              res.send (createdChoices)
                                          },

@@ -1,4 +1,4 @@
-// api/services/ChoiceSugarService.js
+// api/services/ChoiceService.js
 
 var extend = require('extend');
 
@@ -226,7 +226,7 @@ module.exports = {
         nestedChoices.forEach (function (nestedChoice) {
             callback = (function (prevCallback) {
                 return function (prevChoices) {
-                    ChoiceSugarService
+                    ChoiceService
                         .createChoice (nestedChoice,
                                        appendChoices (prevChoices, prevCallback),
                                        errorCallback)
@@ -235,7 +235,7 @@ module.exports = {
         })
 
         // create the choice, then call the chain
-        ChoiceSugarService
+        ChoiceService
             .createChoiceWithOutcomes (config,
                                        outcomes,
                                        callback,
@@ -266,7 +266,7 @@ module.exports = {
                              children.forEach (function (child) {
                                  next = (function(cb) {
                                      return function() {
-                                         ChoiceSugarService
+                                         ChoiceService
                                              .destroyOutcomesAndChildren
                                          (child,
                                           function (err) {
@@ -311,7 +311,7 @@ module.exports = {
                     errorCallback (new Error("Could not find/create choice"))
                 else {
                     // recursively delete any Outcomes and anonymous Choices descended from this Choice
-                    ChoiceSugarService
+                    ChoiceService
                         .destroyOutcomesAndChildren
                     (choice,
                      function (err) {
