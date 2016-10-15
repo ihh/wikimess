@@ -825,7 +825,7 @@ module.exports = {
         else {
             game.tree1 = []
 	    game.tree2 = []
-            MiscPlayerService.runWithLock
+            PlayerService.runWithLock
             ( [ game.player1.id, game.player2.id ],
               function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
 	          function update() {

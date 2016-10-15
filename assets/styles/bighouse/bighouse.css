@@ -35,6 +35,7 @@ body {
 
 .bighouse .navbar .navicon {
     opacity: .6;
+    cursor: pointer;
 }
 
 .bighouse .navbar .active .navicon {

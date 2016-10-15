@@ -1,4 +1,4 @@
-// api/services/PlayerMatchService.js
+// api/services/InviteService.js
 module.exports = {
 
     joinGame: function (info, gameStarted, playerWaiting, error) {
@@ -25,7 +25,7 @@ module.exports = {
 							   * evalPlayerExpr (opponent, player, event.compatibility))
 					      : 1) }
 			})
-			PlayerMatchService
+			InviteService
 			    .tryRandomOpponent (player,
 						event,
 						weightedOpponents,
@@ -64,7 +64,7 @@ module.exports = {
         if (weightedOpponents.length == 0) {
             // no eligible opponents
             // update the Invite table
-	    MiscPlayerService.runWithLock
+	    PlayerService.runWithLock
 	    ([ player.id ],
              function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
                  if (LocationService.unaffordable (player, event.cost))
@@ -97,7 +97,7 @@ module.exports = {
             var opponent = weightedOpponents[nOpp].opponent
             weightedOpponents.splice (nOpp, 1)  // remove from weightedOpponents
 	    // lock player & opponent, test eligibility & if all is OK, start the Game
-	    MiscPlayerService.runWithLock
+	    PlayerService.runWithLock
 	    ([ player.id, opponent.id ],
              function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
 		 // figure out if costs already deducted (i.e. Invite table entry exists)
@@ -121,8 +121,8 @@ module.exports = {
 				             // randomly assign player 1 & player 2
 				             var p1weight, o1weight
 				             if (event.role1weight) {
-				                 p1weight = MiscPlayerService.evalPlayerExpr (player, event.role1weight)
-				                 o1weight = MiscPlayerService.evalPlayerExpr (opponent, event.role1weight)
+				                 p1weight = PlayerService.evalPlayerExpr (player, event.role1weight)
+				                 o1weight = PlayerService.evalPlayerExpr (opponent, event.role1weight)
 				             } else
 				                 p1weight = o1weight = 1
 				             var p1o2prob = (p1weight + 1) / (p1weight + o1weight + 2)
@@ -168,7 +168,7 @@ module.exports = {
 		 if (game)
 		     gameStarted (opponent, game)
 		 else
-                     PlayerMatchService.tryRandomOpponent (player, event, weightedOpponents, gameStarted, playerWaiting, error)
+                     InviteService.tryRandomOpponent (player, event, weightedOpponents, gameStarted, playerWaiting, error)
 	     },
 	     error)
 	}

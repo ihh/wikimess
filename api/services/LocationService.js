@@ -54,7 +54,7 @@ module.exports = {
     invisible: function (player, obj) {
 	var invisible = false
 	if (obj.visible)
-	    invisible = invisible || !MiscPlayerService.evalPlayerExpr (player, obj.visible)
+	    invisible = invisible || !PlayerService.evalPlayerExpr (player, obj.visible)
 	if (obj.requires)
 	    invisible = invisible || LocationService.unaffordable (player, obj.requires)
 	return invisible
@@ -63,7 +63,7 @@ module.exports = {
     locked: function (player, obj, ignoreCost) {
 	var locked = false
 	if (obj.locked)
-	    locked = locked || MiscPlayerService.evalPlayerExpr (player, obj.locked)
+	    locked = locked || PlayerService.evalPlayerExpr (player, obj.locked)
 	if (obj.cost && !ignoreCost)
 	    locked = locked || LocationService.unaffordable (player, obj.cost)
 	return locked
@@ -95,7 +95,7 @@ module.exports = {
                         Object.keys(price).forEach (function (unit) {
                             invDelta[unit] = (invDelta[unit] || 0) - itemCount * price[unit]
                         })
-                        MiscPlayerService.runWithLock
+                        PlayerService.runWithLock
                         ( [ player.id ],
                           function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
                               var gotPrice = true, updatedInv = {}

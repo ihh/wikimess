@@ -1,4 +1,4 @@
-// api/services/MiscPlayerService.js
+// api/services/PlayerService.js
 
 var fs = require('fs');
 var extend = require('extend');
@@ -35,7 +35,7 @@ module.exports = {
     },
 
     findPlayer: function (req, res, makeJson, assocs) {
-        var rs = MiscPlayerService.responseSender (res)
+        var rs = PlayerService.responseSender (res)
         var query = Player.findById (req.params.player)
         if (assocs)
             assocs.forEach (function (assoc) {
@@ -52,7 +52,7 @@ module.exports = {
     },
 
     findEvent: function (req, res, makeJson) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+        PlayerService.findPlayer (req, res, function (player, rs) {
 	    Event.findOneById (req.params.event)
 		.exec (function (err, event) {
 		    if (err) rs(err)
@@ -66,8 +66,8 @@ module.exports = {
     },
 
     findGame: function (req, res, makeJson) {
-        var rs = MiscPlayerService.responseSender (res)
-        MiscPlayerService.findPlayer (req, res, function (player, cb) {
+        var rs = PlayerService.responseSender (res)
+        PlayerService.findPlayer (req, res, function (player, cb) {
             Game.findById (req.params.game)
                 .populate ('player1')
                 .populate ('player2')
@@ -129,7 +129,7 @@ module.exports = {
 		elements.Inventory.push ({ type: 'icon',
 				           icon: item.icon,
                                            color: item.color,
-				           label: MiscPlayerService.capitalize (Item.plural (state.inv[item.name] || 0, item)) })
+				           label: PlayerService.capitalize (Item.plural (state.inv[item.name] || 0, item)) })
 	})
 
 	Award.awards.forEach (function (accomp) {
@@ -225,7 +225,7 @@ module.exports = {
 				     // both players moved; return outcome
 				     if (req.isSocket)
 					 Player.subscribe (req, [player.id])
-				     MiscPlayerService
+				     PlayerService
 					 .sendMoveMessages ({ message: "move",
 							      game: game,
 							      moveNumber: moveNumber })

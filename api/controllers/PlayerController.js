@@ -61,16 +61,16 @@ module.exports = {
 
     // get player status
     selfStatus: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
-            MiscPlayerService.makeStatus ({ rs: rs,
+        PlayerService.findPlayer (req, res, function (player, rs) {
+            PlayerService.makeStatus ({ rs: rs,
                                             player: player,
                                             isPublic: false })
         })
     },
 
     selfGameStatus: function (req, res) {
-        MiscPlayerService.findGame (req, res, function (info, rs) {
-            MiscPlayerService.makeStatus ({ rs: rs,
+        PlayerService.findGame (req, res, function (info, rs) {
+            PlayerService.makeStatus ({ rs: rs,
                                             game: info.game,
                                             player: info.player,
                                             local: info.role == 1 ? info.game.local1 : info.game.local2,
@@ -80,8 +80,8 @@ module.exports = {
 
     // get opponent game status
     otherGameStatus: function (req, res) {
-        MiscPlayerService.findGame (req, res, function (info, rs) {
-            MiscPlayerService.makeStatus ({ rs: rs,
+        PlayerService.findGame (req, res, function (info, rs) {
+            PlayerService.makeStatus ({ rs: rs,
                                             game: info.game,
                                             player: info.opponent,
                                             local: info.role == 1 ? info.game.local2 : info.game.local1,
@@ -91,8 +91,8 @@ module.exports = {
 
     // join game
     join: function (req, res) {
-        MiscPlayerService.findEvent (req, res, function (player, event, rs) {
-	    PlayerMatchService
+        PlayerService.findEvent (req, res, function (player, event, rs) {
+	    InviteService
 		.joinGame ({ player: player,
 			     event: event,
 			     wantHuman: true },
@@ -135,7 +135,7 @@ module.exports = {
     // cancel a join
     cancelJoin: function (req, res) {
 	var event = req.params.event
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+        PlayerService.findPlayer (req, res, function (player, rs) {
             // update the Invite table
 	    Invite.destroy ({ player: player.id, event: event })
 		.exec (function (err) {
@@ -152,8 +152,8 @@ module.exports = {
 
     // start a game with a bot
     joinBot: function (req, res) {
-        MiscPlayerService.findEvent (req, res, function (player, event, rs) {
-            PlayerMatchService
+        PlayerService.findEvent (req, res, function (player, event, rs) {
+            InviteService
 		.joinGame ({ player: player,
 			     event: event,
                              wantHuman: false },
@@ -181,7 +181,7 @@ module.exports = {
 
     // current state of game, filtered for player
     gameInfo: function (req, res) {
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
 	    rs (null, GameService.forRole (info.game, info.role))
         })
     },
@@ -189,7 +189,7 @@ module.exports = {
     // game history from a given move, filtered for player
     gameHistory: function (req, res) {
 	var moveNumber = req.params.moveNumber || 0
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
             var json = GameService.forRole (info.game, info.role)
             Turn.find ({ game: info.game.id,
                          move: { '>=': req.params.moveNumber } })
@@ -221,7 +221,7 @@ module.exports = {
     // kick timed-out player
     kickTimedOutPlayers: function (req, res) {
 	var moveNumber = req.params.moveNumber
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
 	    var game = info.game
             if (game.finished)
 		rs (new Error ("Can't make move " + moveNumber + " in game " + game.id + " since game is finished"))
@@ -246,7 +246,7 @@ module.exports = {
 					      update: update,
 					      turnUpdate: turnUpdate },
 					    function (updatedGame, updatedPlayer1, updatedPlayer2) {
-						MiscPlayerService
+						PlayerService
 						    .sendMoveMessages ({ message: "timeout",
 									 game: updatedGame,
 									 moveNumber: moveNumber })
@@ -276,11 +276,11 @@ module.exports = {
         var moveNumber = req.params.moveNumber
         var move = req.body.move
 	var actions = req.body.actions
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
 	    info.moveNumber = moveNumber
 	    info.move = move
 	    info.actions = actions
-	    MiscPlayerService.makeMove (req, rs, info)
+	    PlayerService.makeMove (req, rs, info)
 	})
     },
 
@@ -288,7 +288,7 @@ module.exports = {
     listenForMove: function (req, res) {
         var moveNumber = req.params.moveNumber
         var move = req.params.move
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
             var player = info.player
             var game = info.game
             // waiting for opponent to move
@@ -305,7 +305,7 @@ module.exports = {
     changeMood: function (req, res) {
         var moveNumber = req.params.moveNumber
         var newMood = req.params.mood
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
             var player = info.player
             var opponent = info.opponent
             var game = info.game
@@ -337,9 +337,9 @@ module.exports = {
     // quit a game
     quitGame: function (req, res) {
         var moveNumber = req.params.moveNumber
-        MiscPlayerService.findGame (req, res, function (info, rs) {
+        PlayerService.findGame (req, res, function (info, rs) {
 	    info.moveNumber = moveNumber
-	    MiscPlayerService.quitGame (req, rs, info)
+	    PlayerService.quitGame (req, rs, info)
 	})
     },
 
@@ -364,7 +364,7 @@ module.exports = {
 	            if (!fs.existsSync(tmpPlayerImageDir))
 	                fs.mkdirSync(tmpPlayerImageDir)
 
-	            if (MiscPlayerService.isValidMood (mood))
+	            if (PlayerService.isValidMood (mood))
 	                req.file('avatar').upload
 	            ( { maxBytes: 10000000,   // don't allow the total upload size to exceed ~10MB
 	                dirname : process.cwd() + '/assets' + imagePath },
@@ -456,7 +456,7 @@ module.exports = {
 
     // view a Location
     viewLocation: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+        PlayerService.findPlayer (req, res, function (player, rs) {
 	    if (req.isSocket)
 		Player.subscribe (req, [player.id])
 	    LocationService.getLocation (player, { id: req.params.location }, rs)
@@ -465,7 +465,7 @@ module.exports = {
 
     // view home Location
     viewHome: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+        PlayerService.findPlayer (req, res, function (player, rs) {
 	    if (req.isSocket)
 		Player.subscribe (req, [player.id])
 	    LocationService.getLocation (player, { name: player.home }, rs)
@@ -474,7 +474,7 @@ module.exports = {
 
     // buy or sell
     trade: function (req, res) {
-        MiscPlayerService.findPlayer (req, res, function (player, rs) {
+        PlayerService.findPlayer (req, res, function (player, rs) {
 	    LocationService.trade (player, req.params.location, req.body, rs)
 	})
     },
