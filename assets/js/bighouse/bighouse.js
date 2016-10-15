@@ -611,8 +611,11 @@ var BigHouse = (function() {
                 .append (event.missedDiv, event.timerDiv)
 
             event.costDiv = this.makeCostDiv (event.cost)
+            event.tradeRows = $('<div class="traderows">')
+                .append ($('<div class="traderow">')
+                         .append (event.costDiv, event.button))
 
-            div.append (event.turnDiv, event.lockDiv, event.costDiv, event.button)
+            div.append (event.turnDiv, event.lockDiv, event.tradeRows)
             this.locBarDiv.append (div)
 
             this.updateEventButton (event)
@@ -825,7 +828,6 @@ var BigHouse = (function() {
 	// log out
         doLogout: function() {
             var bh = this
-            delete this.locationID
             this.gamePosition = {}
             this.REST_getLogout()
 	    this.showLoginPage()
@@ -2530,6 +2532,7 @@ var BigHouse = (function() {
 	    delete this.lastOpponentMoodTime
 	    delete this.playerMoodDiv
 	    delete this.opponentMoodDiv
+            delete this.playerLocation
 
             delete this.moveNumber
             delete this.currentChoiceMoveNumber

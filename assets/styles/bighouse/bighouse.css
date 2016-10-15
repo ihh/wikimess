@@ -81,8 +81,7 @@ body {
     clear: left;
 }
 
-.bighouse .locbar .link .button,
-.bighouse .locbar .event .button {
+.bighouse .locbar .link .button {
     position: absolute;
     right: 4px;
     bottom: 4px;
@@ -114,8 +113,7 @@ body {
     clear: right;
 }
 
-.bighouse .locbar .link .cost,
-.bighouse .locbar .event .cost {
+.bighouse .locbar .link .cost {
     height: 36px;
 }
 
@@ -125,9 +123,17 @@ body {
     position: relative;
     width: 32px;
     height: 32px;
-    margin: 4px 4px 4px 0px;
     border-radius: 4px;
     display: inline-block;
+}
+
+.bighouse .locbar .link .iconprice {
+    margin: 4px 4px 4px 0px;
+}
+
+.bighouse .locbar .event .traderow .iconprice,
+.bighouse .locbar .trade .traderow .iconprice {
+    margin: 4px 0px 4px 4px;
 }
 
 .bighouse .locbar .trade .traderow .icon,
@@ -138,12 +144,14 @@ body {
     border-radius: 4px;
 }
 
+.bighouse .locbar .event .traderows,
 .bighouse .locbar .trade .traderows {
     display: inline-block;
     float: right;
     clear: right;
 }
 
+.bighouse .locbar .event .hint,
 .bighouse .locbar .trade .hint {
     font-size: small;
 }
@@ -174,6 +182,7 @@ body {
     margin: 1px;
 }
 
+.bighouse .locbar .event .traderow,
 .bighouse .locbar .trade .traderow {
     position: relative;
     display: inline-block;
@@ -182,11 +191,7 @@ body {
     margin-left: 4px;
 }
 
-.bighouse .locbar .trade .traderow .iconprice {
-    position: relative;
-    margin: 4px 0px 4px 4px;
-}
-
+.bighouse .locbar .event .traderow .button,
 .bighouse .locbar .trade .traderow .button {
     display: inline-block;
     position: relative;
