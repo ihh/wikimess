@@ -17,6 +17,7 @@
       title: "The Lobby",
       description: "You are standing in the lobby.",
       checkpoint: true,
+      items: ['clothing'],
       events: [ { title: "Cut class",
 		  hint: "Want to cut class?",
                   cost: { cash: 50 },

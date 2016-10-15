@@ -97,10 +97,14 @@ body {
     cursor: pointer;
 }
 
+.bighouse .locbar .link .lock,
+.bighouse .locbar .event .lock,
+.bighouse .locbar .trade .owned,
 .bighouse .locbar .event .turn {
     position: absolute;
     top: 0;
-    right: 1vw;
+    right: 0;
+    margin: 1vw;
     font-size: x-small;
 }
 
@@ -134,11 +138,23 @@ body {
     border-radius: 4px;
 }
 
+.bighouse .locbar .trade .traderows {
+    display: inline-block;
+    float: right;
+    clear: right;
+}
+
+.bighouse .locbar .trade .hint {
+    font-size: small;
+}
+
 .bighouse .locbar .trade .bigicon {
     display: inline-block;
     width: 64px;
     height: 64px;
     border-radius: 4px;
+    float: left;
+    margin-right: 4px;
 }
 
 .bighouse .locbar .trade .bigicon svg {
@@ -158,22 +174,12 @@ body {
     margin: 1px;
 }
 
-.bighouse .locbar .link .lock,
-.bighouse .locbar .event .lock {
-    display: inline-block;
-    font-size: x-small;
-}
-
-.bighouse .locbar .trade .owned {
-    font-size: x-small;
-}
-
 .bighouse .locbar .trade .traderow {
     position: relative;
     display: inline-block;
     float: right;
-    clear: right;
     text-align: right;
+    margin-left: 4px;
 }
 
 .bighouse .locbar .trade .traderow .iconprice {

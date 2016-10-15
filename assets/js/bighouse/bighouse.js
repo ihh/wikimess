@@ -432,6 +432,8 @@ var BigHouse = (function() {
 		if (bh.verbose.messages)
                     console.log(data)
 
+                bh.playerLocation = data.id
+                
                 bh.locBarDiv
                     .append ($('<div class="location">')
                              .append ($('<div class="title">')
@@ -443,7 +445,8 @@ var BigHouse = (function() {
 
                 data.items.forEach (function (item) {
                     var div = $('<div class="trade">')
-
+                    var tradeRows = $('<div class="traderows">')
+                    
                     function addTradeRow (verb, count) {
                         var button
                         if (item[verb]) {
@@ -452,10 +455,10 @@ var BigHouse = (function() {
                                                 return affordable && unit.affordable
                                             }, true)
                                             : item.owned)
-                            div.append ($('<div class="traderow">')
-                                        .append (bh.makeCostDiv (item[verb]))
-                                        .append (button = $('<div class="button">')
-                                                 .text (bh.capitalize (item.verb ? item.verb[verb] : verb))))
+                            tradeRows.append ($('<div class="traderow">')
+                                              .append (bh.makeCostDiv (item[verb]))
+                                              .append (button = $('<div class="button">')
+                                                       .text (bh.capitalize (item.verb ? item.verb[verb] : verb))))
                             function fail() {
 			        bh.showModalMessage (verb === 'buy' ? "You can't afford that!" : "You have none to sell.", bh.showPlayPage.bind(bh))
                             }
@@ -483,9 +486,6 @@ var BigHouse = (function() {
                     
                     div.append ($('<div class="title">')
                                 .text (bh.capitalize (item.noun)))
-                    if (item.hint)
-                        div.append ($('<div class="hint">')
-                                    .text (item.hint))
 
                     var iconSpan = $('<div class="bigicon">')
                     bh.getIconPromise (item.icon)
@@ -497,6 +497,11 @@ var BigHouse = (function() {
                             console.log(err)
                         })
                     div.append (iconSpan)
+                    div.append (tradeRows)
+
+                    if (item.hint)
+                        div.append ($('<div class="hint">')
+                                    .text (item.hint))
 
                     if (item.owned)
                         div.append ($('<div class="owned">')
@@ -516,7 +521,7 @@ var BigHouse = (function() {
                     var costDiv = bh.makeCostDiv (link.cost)
                     if (link.locked) {
                         button.text("Locked")
-                        costDiv.append ($('<div class="lock">')
+                        div.append ($('<div class="lock">')
                                     .text (link.locked))
                     } else
                         button.text("Go").on('click', function() {
@@ -606,9 +611,8 @@ var BigHouse = (function() {
                 .append (event.missedDiv, event.timerDiv)
 
             event.costDiv = this.makeCostDiv (event.cost)
-            event.costDiv.append (event.lockDiv)
 
-            div.append (event.turnDiv, event.costDiv, event.button)
+            div.append (event.turnDiv, event.lockDiv, event.costDiv, event.button)
             this.locBarDiv.append (div)
 
             this.updateEventButton (event)
@@ -617,7 +621,8 @@ var BigHouse = (function() {
 	updateEventFromJoinMessage: function (data) {
 	    var eventId = data.event.id
 	    if (this.lastStartedEventId && this.lastStartedEventId == eventId) {
-                this.selectSound.stop()
+                if (this.selectSound)
+                    this.selectSound.stop()
                 this.startGame (data.event.game.id)
 
 	    } else if (this.eventsById) {
