@@ -825,6 +825,8 @@ var BigHouse = (function() {
 	// log out
         doLogout: function() {
             var bh = this
+            delete this.locationID
+            this.gamePosition = {}
             this.REST_getLogout()
 	    this.showLoginPage()
         },
