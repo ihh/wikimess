@@ -2,17 +2,28 @@
 
 module.exports = {
 
+    itemInfoFields: ['visible','buy','sell','verb','markup','discount'],
+    makeItemInfo (item, template) {
+        var info = { item: item }
+        LocationService.itemInfoFields.forEach (function (field) {
+            info[field] = template[field]
+        })
+        return info
+    },
+    
     getItems: function (location, player) {
         var items = []
         location.items.forEach (function (it) {
             if (typeof(it) === 'string')
                 it = { name: it }
-            if (it.name in Item.itemByName)
-                items.push ({ item: Item.itemByName[it.name], buy: it.buy, sell: it.sell, markup: it.markup })
-            else
-                Item.itemByCategory[it.name].forEach (function (item) {
-                    items.push ({ item: item, buy: it.buy, sell: it.sell, markup: it.markup })
-                })
+            if (!LocationService.invisibleOrLocked(player,it)) {
+                if (it.name in Item.itemByName)
+                    items.push (LocationService.makeItemInfo (Item.itemByName[it.name], it))
+                else
+                    Item.itemByCategory[it.name].forEach (function (item) {
+                        items.push (LocationService.makeItemInfo (item, it))
+                    })
+            }
         })
 
         return items.map (function (info) {
@@ -29,21 +40,25 @@ module.exports = {
             }
 
             var buy, sell
-            if (info.buy)
-                buy = makePrice(info.buy)
-            else if (item.buy)
-                buy = makePrice(item.buy,info.markup)
-            else if (info.sell && info.markup)
-                buy = makePrice(info.sell,info.markup)
-            else if (item.sell && info.markup)
-                buy = makePrice(item.sell,info.markup / (info.discount || 1))
-            
-            if (info.sell)
-                sell = makePrice(info.sell)
-            else if ((info.buy || item.buy) && (info.discount || item.discount))
-                sell = makePrice(buy,info.discount || item.discount)
-            else if (item.sell)
-                sell = makePrice(item.sell)
+            if (info.buy != false) {
+                if (info.buy)
+                    buy = makePrice(info.buy)
+                else if (item.buy)
+                    buy = makePrice(item.buy,info.markup)
+                else if (info.sell && info.markup)
+                    buy = makePrice(info.sell,info.markup)
+                else if (item.sell && info.markup)
+                    buy = makePrice(item.sell,info.markup / (info.discount || 1))
+            }
+
+            if (info.sell != false) {
+                if (info.sell)
+                    sell = makePrice(info.sell)
+                else if ((info.buy || item.buy) && (info.discount || item.discount))
+                    sell = makePrice(buy,info.discount || item.discount)
+                else if (item.sell)
+                    sell = makePrice(item.sell)
+            }
 
             return { name: item.name,
                      icon: item.icon,
@@ -52,6 +67,7 @@ module.exports = {
                      hint: item.hint,
                      buy: buy,
                      sell: sell,
+                     verb: info.verb || item.verb,
                      owned: player && player.global.inv[item.name] }
         })
     },

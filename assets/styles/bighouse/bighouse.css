@@ -139,9 +139,6 @@ body {
     width: 64px;
     height: 64px;
     border-radius: 4px;
-    position: absolute;
-    bottom: 4px;
-    left: 4px;
 }
 
 .bighouse .locbar .trade .bigicon svg {

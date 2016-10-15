@@ -43,7 +43,8 @@ module.exports = {
       sell: { type: 'json' },
       markup: { type: 'float' },
       discount: { type: 'float' },
-
+      verb: { type: 'json' },
+      
       // inventory info
       public: { type: 'boolean', defaultsTo: true },
       alwaysShow: { type: 'boolean', defaultsTo: false }

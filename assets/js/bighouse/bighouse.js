@@ -455,7 +455,7 @@ var BigHouse = (function() {
                             div.append ($('<div class="traderow">')
                                         .append (bh.makeCostDiv (item[verb]))
                                         .append (button = $('<div class="button">')
-                                                 .text (bh.capitalize (verb))))
+                                                 .text (bh.capitalize (item.verb ? item.verb[verb] : verb))))
                             function fail() {
 			        bh.showModalMessage (verb === 'buy' ? "You can't afford that!" : "You have none to sell.", bh.showPlayPage.bind(bh))
                             }
