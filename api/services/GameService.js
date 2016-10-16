@@ -836,6 +836,7 @@ module.exports = {
 	    game.missed1 = (turnUpdate.actions1 && Object.keys(turnUpdate.actions1).length) ? 0 : (game.missed1 + 1)
 	if (update.move2)
 	    game.missed2 = (turnUpdate.actions2 && Object.keys(turnUpdate.actions2).length) ? 0 : (game.missed2 + 1)
+	GameService.playBotMoves (game)
 	if (!GameService.gotBothMoves (game))
             GameService.updateGame (query, game, turnUpdater(playerWaiting,error), error)
         else {
