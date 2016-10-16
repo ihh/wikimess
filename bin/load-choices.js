@@ -182,18 +182,19 @@ function readJsonFileSync (filename, altParsers) {
     if (!fs.existsSync (filename))
         inputError ("File does not exist: " + filename)
     var data = fs.readFileSync (filename)
-    var result
+    var result, lastErr
     while (typeof(result) === 'undefined' && altParsers.length) {
 	var alternateParser = altParsers[0]
 	altParsers = altParsers.slice(1)
         try {
 	    result = alternateParser (data.toString())
         } catch (err) {
+            lastErr = err
 	    // do nothing
         }
     }
     if (!result)
-        log ("Warning: no JSON data in file " + filename)
+        log ("Warning: no JSON data in file " + filename + "\n" + lastErr)
     return result
 }
 

@@ -13,7 +13,7 @@ module.exports = {
 //        console.log('buildTextTree')
 //        console.log(JSON.stringify(texts))
         var defaultNextHint = 'Next'
-        var defaultAbsentText = 'Time passes...'
+        var defaultAbsentText = 'Waiting for <other>...'
 
     	// rewire the array of trees into a single DAG; build name index
         var nextTree, nodeByName = {}
@@ -904,12 +904,16 @@ module.exports = {
     playBotMoves: function (game) {
         // call prepareTextTrees first
         if (!game.finished) {
-	    BotService.decorate (game.player1, game)
-	    BotService.decorate (game.player2, game)
-	    if (!game.player1.human)
-	        game.move1 = game.defaultMove1
-            if (!game.player2.human)
-	        game.move2 = game.defaultMove2
+            if (game.player1.human || game.move2 !== '') {
+	        BotService.decorate (game.player1, game.player2, game)
+	        if (!game.player1.human)
+	            game.move1 = game.defaultMove1
+            }
+            if (game.player2.human || game.move1 !== '') {
+	        BotService.decorate (game.player2, game.player1, game)
+                if (!game.player2.human)
+	            game.move2 = game.defaultMove2
+            }
         }
     },
 

@@ -82,8 +82,8 @@ var BigHouse = (function() {
 
 	defaultBackHint: "Back",
 	defaultNextHint: "Next",
-	defaultAbsentText: "Time passes...",
-
+        defaultAbsentText: function() { "Waiting for " + this.opponentName + "..." },
+        
         themes: [ {style: 'plain', text: 'Plain'},
                   {style: 'cardroom', text: 'Card room'} ],
 
@@ -1643,7 +1643,7 @@ var BigHouse = (function() {
 		    var nextTree
 		    data.history.slice(0).reverse().forEach (function (hist) {
 			if (!hist.text.length)
-			    hist.text = [{ text: bh.defaultAbsentText }]
+			    hist.text = [{ text: bh.defaultAbsentText() }]
 
 			if (hist.actions)
 			    Object.keys(hist.actions).forEach (function (id) {
@@ -2106,6 +2106,14 @@ var BigHouse = (function() {
             // misc text expansions go here...
 	    text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
 		return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
+	    })
+
+            text = text.replace (/<self>/g, function() {
+		return bh.playerName
+	    })
+
+            text = text.replace (/<other>/g, function() {
+		return bh.opponentName
 	    })
 
 	    // create the <span>'s

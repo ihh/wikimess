@@ -1,26 +1,27 @@
 [
-  {
-      "name": "fred",
-      "password": "test",
-      "newSignUp": false
-  },
-  {
-      "name": "sheila",
-      "password": "test",
-      "newSignUp": false
-  },
-  {
-    "name": "titfortat",
-    "password": "test",
-    "human": false,
-    "botmind": {
-	"strategy": "mood",
-	"swipeRightProb": {
-	    "happy": 1,
-	    "angry": 0,
-	    "surprised": 1,
-	    "sad": 0
-	},
+    {
+        name: "fred",
+        password: "test",
+        newSignUp: false
     },
-  }
+    {
+        name: "sheila",
+        password: "test",
+        newSignUp: false
+    },
+    {
+        name: "titfortat",
+        password: "test",
+        human: false,
+        category: "student",
+        botmind: {
+	    strategy: "mood",
+	    swipeRightProb: {
+	        happy: 1,
+	        angry: 0,
+	        surprised: 1,
+	        sad: 0
+	    },
+        },
+    }
 ]

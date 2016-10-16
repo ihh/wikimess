@@ -45,6 +45,10 @@ module.exports = {
           defaultsTo: true
       },
 
+      category: {
+          type: 'string'
+      },
+      
       botmind: {
 	  type: 'json',
 	  defaultsTo: {

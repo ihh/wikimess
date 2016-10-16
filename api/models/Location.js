@@ -28,7 +28,7 @@ module.exports = {
 
       description: {
 	  type: 'string',
-	  required: true
+	  defaultsTo: ""
       },
 
       links: {

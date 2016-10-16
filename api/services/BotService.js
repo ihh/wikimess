@@ -4,7 +4,7 @@ var extend = require('extend')
 
 module.exports = {
 
-    decorate: function (player, game) {
+    decorate: function (player, opponent, game) {
 	var role = Game.getRole (game, player.id)
 	var textNodes = Game.getRoleAttr (game, role, 'text')
 
@@ -26,6 +26,10 @@ module.exports = {
 	}
 
         textNodes.forEach (function (node) {
+            // don't decorate twice
+            if (node.defaultMove)
+                return
+            
             var childSummary
 	    if (node.menu) {
 		node.defaultMenuIndex = BotService.randomMenuIndex (player, game, node.menu)
@@ -73,6 +77,7 @@ module.exports = {
     randomOption: function (player, game, opts) {
 	var role = Game.getRole (game, player.id)
 	var mood = Game.getRoleAttr (game, role, 'mood')
+	var oppMood = Game.getOtherRoleAttr (game, role, 'mood')
         var virtues = opts.map (function (opt) {
             return typeof(opt.node.virtue) === 'undefined' ? opt.defaultVirtue : opt.node.virtue
         })
@@ -81,6 +86,9 @@ module.exports = {
 	switch (player.botmind.strategy) {
 	case 'mood':
             probVirtue = player.botmind.swipeRightProb[mood]
+	    break;
+	case 'oppmood':
+            probVirtue = player.botmind.swipeRightProb[oppMood]
 	    break;
 	default:
 	    break;

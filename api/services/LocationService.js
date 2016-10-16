@@ -227,9 +227,11 @@ module.exports = {
     },
 
     showLocation: function (player, location, rs) {
-        var links = location.links.filter (function (link) {
-	    return !LocationService.invisible (player, link)
-	})
+        var links = location.links
+            .map (function (link) { return typeof(link) === 'string' ? { to: link } : link })
+            .filter (function (link) {
+	        return !LocationService.invisible (player, link)
+	    })
 	Location.find ({ name: links.map (function (link) { return link.to }) })
 	    .exec (function (err, destLocations) {
 		if (err) rs(err)
@@ -306,7 +308,7 @@ module.exports = {
 						links: links.map (function (link) {
 						    return { id: link.location.id,
 							     title: link.title || link.location.title,
-							     hint: LocationService.expandText (link.hint, player),
+							     hint: link.hint && LocationService.expandText (link.hint, player),
 							     locked: link.locked,
 							     cost: link.cost && LocationService.costInfo (player, link.cost) }
 						}),
