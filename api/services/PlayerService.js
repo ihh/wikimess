@@ -331,14 +331,16 @@ module.exports = {
 	}
 
         var $g = player.global,
+            $inv = player.global.inv,
             $n = player.displayName,
 	    $h = player.human,
 	    $p = player,
             $id = player.id
 
-	var $go, $no, $ho, $po, $ido
+	var $go, $invo, $no, $ho, $po, $ido
 	if (opponent) {
 	    $go = opponent.global
+	    $invo = opponent.global.inv
             $no = opponent.displayName
 	    $ho = opponent.human
 	    $po = opponent

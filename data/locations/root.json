@@ -9,7 +9,7 @@
         name: "intro_robe",
         title: "Outside WizCom",
         description: "{{$inv.robe ? \"The porter nods approvingly at your robe.\" : \"As you step through the lobby door, you are blocked by a self-important porter. \\\"You can't go in there without a robe!\\\"\"}}",
-        items: [{name:'robe',visible:"!$g.inv.robe",verb:{buy:"take"},buy:{},sell:false}],
+        items: [{name:'robe',visible:"!$inv.robe",verb:{buy:"take"},buy:{},sell:false}],
         links: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }]
     },
     {
