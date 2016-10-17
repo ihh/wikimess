@@ -711,11 +711,13 @@ module.exports = {
             $n1 = game.player1.displayName,
 	    $p1 = game.player1,
 	    $id1 = game.player1.id,
+            $m1 = game.mood1,
             $g2 = game.player2.global,
             $l2 = game.local2,
             $n2 = game.player2.displayName,
 	    $p2 = game.player2,
 	    $id2 = game.player2.id,
+            $m2 = game.mood2,
 
             $src = game.current.name,
             $next = outcome.next,
@@ -728,6 +730,8 @@ module.exports = {
             $local2 = $l2,
             $name1 = $n1,
             $name2 = $n2,
+            $mood1 = $m1,
+            $mood2 = $m2,
 
 	    $1 = game.move1,
 	    $2 = game.move2
