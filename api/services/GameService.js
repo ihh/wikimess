@@ -907,19 +907,19 @@ module.exports = {
     },
     
     playBotMoves: function (game) {
-        // call prepareTextTrees first
-        if (!game.finished) {
-            if (game.player1.human || game.move2 !== '') {
-	        BotService.decorate (game.player1, game.player2, game)
-	        if (!game.player1.human)
-	            game.move1 = game.defaultMove1
-            }
-            if (game.player2.human || game.move1 !== '') {
-	        BotService.decorate (game.player2, game.player1, game)
-                if (!game.player2.human)
-	            game.move2 = game.defaultMove2
-            }
-        }
+      // call prepareTextTrees before calling this
+      // set up defaultMove1 & defaultMove2
+      if (game.player1.human || game.move2 !== '')
+	BotService.decorate (game.player1, game.player2, game)
+      if (game.player2.human || game.move1 !== '')
+	BotService.decorate (game.player2, game.player1, game)
+      // if game is not finished, use defaultMoves to populate moves
+      if (!game.finished) {
+	if (!game.player1.human)
+	  game.move1 = game.defaultMove1
+        if (!game.player2.human)
+	  game.move2 = game.defaultMove2
+      }
     },
 
     forRole: function (game, role) {

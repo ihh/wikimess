@@ -40,7 +40,3 @@
 .bighouse .cardbar .cardtable .cardmenu label.disabled {
     color: #eee;
 }
-
-.bighouse.cardroom .cardbar .cardtable input:checked + label {
-    background: #eee;
-}

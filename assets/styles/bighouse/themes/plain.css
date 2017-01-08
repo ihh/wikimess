@@ -145,3 +145,7 @@
 .bighouse.plain .detailbar .statusline {
     background: #eee;
 }
+
+.bighouse.plain .cardbar .cardtable input:checked + label {
+    background: #eee;
+}
