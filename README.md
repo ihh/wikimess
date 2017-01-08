@@ -13,7 +13,31 @@
 
 Then point your browser to [localhost:1337](http://localhost:1337/).
 
-By default, the [load-choices.js](bin/load-choices.js) script creates two test accounts, named `fred` and `sheila`, both with password `test`, as well as one AI player `titfortat`. These default accounts are defined in [data/players](data/players/players.json).
+The final step of this initialization --- the [load-choices.js](bin/load-choices.js) script --- crawls the [data](data) directory to load some content.
+By default, this includes two test accounts, named `fred` and `sheila`, both with password `test`, as well as one AI player `titfortat`. These default accounts are defined in [data/players](data/players/players.json).
+
+You can also log in using Facebook authentication (via [passport.js](http://passportjs.org/)).
+However, currently this redirects back to `localhost:1337`, not a public URL, so it will only work on your local machine (if at all).
+You could probably edit the Facebook client ID & secret in [config/passport.js](config/passport.js) to use your own Facebook account, in theory.
+
+## Gameplay
+
+At the moment, the game UI is as follows:
+- you explore a little outer world of hyperlinked "Locations"
+- this includes links to "Events" which essentially register your interest in starting a game
+ - I'm in the process of developing a more MUD-like interface for the outer environment that allows you to specifically initiate games with particular players, rather than randomly matching you to whomever's logged in
+- when other players try to start the same Event, the game begins
+ - alternatively, if no other players join within a time limit, the game will start with an AI player
+ - I find the easiest way to test two-player is to open Firefox and Chrome side-by-side, but you still need to switch rapidly between them to join both players inside the time limit
+- the game itself is an inner minigame environment over a card table
+- you swipe to select choices, and can also flip the emotional state of your avatar as a side-channel
+- the game is oriented around a set of scenes ("Choices"), each "Choice" corresponding to a decision that both players make simultaneously
+- they can arrive at this decision via a series of binary decisions (swipe left or right) or multiple-choice decisions (select from menu then swipe)
+- the joint outcome of each Choice determines the next option
+- there are up to M*N possible joint Outcomes at each Choice, where M is the number of options for player 1 & N is the number of options for player 2. However, they don't all need to be different outcomes.
+- the overall structure (i.e. the procession of Choices and Outcomes) looks like a choose-your-own-adventure with GOSUBs (or, equivalently, a context-free grammar)
+
+The content of the test story is minimal. There is only one scene (Choice), and it repeats over and over. That's if you're lucky: unless you both swipe left on the first move, the game will end after the first scene. The purpose is just to test out most of the options. The [JSON story file](data/choices/test.json) shows these. There is also a slightly more Choicescript-like [story minilanguage](data/choices/prison.story) that has fewer quotes and braces than JSON, and so allows for more natural writing.
 
 ## Repository organization
 
@@ -23,14 +47,29 @@ Files of interest:
 
 * Game data
  * [Story file in JSON](data/choices/test.json)
- * [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
- * [Emacs mode for .story minilanguage](emacs/story-mode.el)
+  * [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
+  * [Emacs mode for .story minilanguage](emacs/story-mode.el)
+ * [Location file (JSON)](data/locations/root.json)
+ * [Items file (JSON)](data/items/cash.json) ... info about objects player can acquire
+ * [Awards file (JSON)](data/awards/test.json) ... info about accomplishments for player's status page
+ * [Meters file (JSON)](data/meters/days.json) ... info about meters for player's status page (stats, scores, etc.)
+ * [Players file (JSON)](data/players/players.json) ... test players
+  * [Player file for NPC Dean Wedgwood (JSON)](data/players/players.json) ... slightly (but not much) more complex character info that includes an avatar description
 * Code
  * [Monolithic JavaScript client](assets/js/bighouse/bighouse.js) and [libraries](assets/js/ext)
  * Sails config: [routes](config/routes.js), [policies](config/policies.js)
  * Sails code: [models](api/models), [controllers](api/controllers), [services](api/services)
+ * Default avatars use a custom fork of [facesjs](https://github.com/ihh/facesjs/)
+ * Other libraries/plugins:
+  * [jquery](https://jquery.com/)
+  * [swing](https://github.com/gajus/swing) for the card-swiping interface
+  * [howler.js](https://howlerjs.com/) for sound
+  * Moving/cropping of uploaded images uses [jquery-cropbox](https://github.com/acornejo/jquery-cropbox) plus [hammer.js](http://hammerjs.github.io/) for touch gestures
+  * [https://github.com/infusion/jQuery-xcolor](jquery-xcolor) for color manipulation
+
 * Assets
  * [Music and sound FX](assets/sounds) mostly produced using [cfxr](http://thirdcog.eu/apps/cfxr)
+  * except for the tunes which are currently [Hot Chip](http://www.hotchip.co.uk/), just as a placeholder, obviously not for commercial release
  * [Icons](assets/images/icons) (from [game-icons.net](http://game-icons.net/)) and [default mood avatars](assets/images/avatars/generic)
  * [EJS templates for status page](views/status)
 
