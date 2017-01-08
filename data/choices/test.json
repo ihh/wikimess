@@ -55,8 +55,10 @@
 		                        {
 		                          hint: 'Chocolate',
                                           text: "oh no you DIDN'T",
-                                          hint: "Try again",
-                                          goto: 'choose_flavor'
+                                          next: {
+                                            hint: "Try again",
+                                            goto: 'choose_flavor'
+                                          }
 		                        },
 		                        {
 		                          hint: 'Strawberry',
