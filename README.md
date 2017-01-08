@@ -2,6 +2,8 @@
 
 ## Installation
 
+This works for me on my late-2014 iMac (OS X El Capitan 10.11.16)
+
     git submodule update --init --recursive
     brew install node
     brew install imagemagick
@@ -9,6 +11,9 @@
     npm install -g sails
     npm install
     sails lift
+
+Then from another terminal:
+
     bin/load-choices.js
 
 Then point your browser to [localhost:1337](http://localhost:1337/).
@@ -23,8 +28,8 @@ You could probably edit the Facebook client ID & secret in [config/passport.js](
 ## Gameplay
 
 At the moment, the game UI is as follows:
-- you explore a little outer world of hyperlinked "Locations"
-- this includes links to "Events" which essentially register your interest in starting a game
+- you explore a little outer world of hyperlinked "Locations". The interface here is vaguely inspired by Fallen London.
+ - this outer world includes links to "Events" which essentially register your interest in starting a game
  - I'm in the process of developing a more MUD-like interface for the outer environment that allows you to specifically initiate games with particular players, rather than randomly matching you to whomever's logged in
 - when other players try to start the same Event, the game begins
  - alternatively, if no other players join within a time limit, the game will start with an AI player
@@ -47,25 +52,25 @@ Files of interest:
 
 * Game data
  * [Story file in JSON](data/choices/test.json)
-  * [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
-  * [Emacs mode for .story minilanguage](emacs/story-mode.el)
+    * [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
+    * [Emacs mode for .story minilanguage](emacs/story-mode.el)
  * [Location file (JSON)](data/locations/root.json)
  * [Items file (JSON)](data/items/cash.json) ... info about objects player can acquire
  * [Awards file (JSON)](data/awards/test.json) ... info about accomplishments for player's status page
  * [Meters file (JSON)](data/meters/days.json) ... info about meters for player's status page (stats, scores, etc.)
  * [Players file (JSON)](data/players/players.json) ... test players
-  * [Player file for NPC Dean Wedgwood (JSON)](data/players/players.json) ... slightly (but not much) more complex character info that includes an avatar description
-* Code
+    * [Player file for NPC Dean Wedgwood (JSON)](data/players/players.json) ... slightly (but not much) more complex character info that includes an avatar description
+* Main codebase
  * [Monolithic JavaScript client](assets/js/bighouse/bighouse.js) and [libraries](assets/js/ext)
  * Sails config: [routes](config/routes.js), [policies](config/policies.js)
  * Sails code: [models](api/models), [controllers](api/controllers), [services](api/services)
  * Default avatars use a custom fork of [facesjs](https://github.com/ihh/facesjs/)
- * Other libraries/plugins:
-  * [jquery](https://jquery.com/)
-  * [swing](https://github.com/gajus/swing) for the card-swiping interface
-  * [howler.js](https://howlerjs.com/) for sound
-  * Moving/cropping of uploaded images uses [jquery-cropbox](https://github.com/acornejo/jquery-cropbox) plus [hammer.js](http://hammerjs.github.io/) for touch gestures
-  * [https://github.com/infusion/jQuery-xcolor](jquery-xcolor) for color manipulation
+* Third-party libraries/plugins:
+ * [jquery](https://jquery.com/)
+ * [swing](https://github.com/gajus/swing) for the card-swiping interface
+ * [howler.js](https://howlerjs.com/) for sound
+ * Moving/cropping of uploaded images uses [jquery-cropbox](https://github.com/acornejo/jquery-cropbox) plus [hammer.js](http://hammerjs.github.io/) for touch gestures
+ * [https://github.com/infusion/jQuery-xcolor](jquery-xcolor) for color manipulation
 
 * Assets
  * [Music and sound FX](assets/sounds) mostly produced using [cfxr](http://thirdcog.eu/apps/cfxr)
