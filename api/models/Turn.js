@@ -23,12 +23,20 @@ module.exports = {
           type: 'integer',
       },
 
-      text1 : {
+      text1: {
 	  type: 'json'
       },
 
-      text2 : {
+      text2: {
 	  type: 'json'
+      },
+
+      queue1: {
+	  type: 'array'
+      },
+
+      queue2: {
+	  type: 'array'
       },
 
       actions1 : {

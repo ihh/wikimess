@@ -15,9 +15,9 @@ module.exports = {
     var defaultNextHint = 'Next'
     var defaultAbsentText = 'Waiting for <other>...'
 
-    // rewire the array of trees into a single DAG; build name index
-    var nextTree, nodeByName = {}
-    texts.reverse().forEach (function (tree, nTree) {
+    // build name index
+    var nodeByName = {}
+    texts.forEach (function (tree, nTree) {
       function connect (node) {
         if (node.goto)
           return  // handle named links later
@@ -57,7 +57,7 @@ module.exports = {
           node.text = defaultAbsentText
         }
 
-        node.isLeaf = !(node.next || node.left || node.right || node.menu || nextTree)
+        node.isLeaf = !(node.next || node.left || node.right || node.menu)
         if (!node.isLeaf) {
 	  if (node.menu) {
 	    node.menu.forEach (function (child) {
@@ -72,12 +72,12 @@ module.exports = {
             if (node.left)
               connect (node.left)
             else
-              node.left = nextTree || { isLeaf: true }
+              node.left = { isLeaf: true }
 
             if (node.right)
               connect (node.right)
             else
-              node.right = nextTree || { isLeaf: true }
+              node.right = { isLeaf: true }
 	  }
         }
 
@@ -94,7 +94,6 @@ module.exports = {
 	}
       }
       connect (tree)
-      nextTree = tree
     })
     
     // resolve names, check for cycles, convert into an array of nodes
@@ -110,7 +109,7 @@ module.exports = {
         summary.priority = node.priority
         summary.virtue = node.virtue
 	summary.concat = node.concat
-      } else if (!node.depth) {
+      } else if (node.isLeaf) {
         summary.choice = defaultChoice
         summary.priority = -1
       }
@@ -120,82 +119,56 @@ module.exports = {
 
     function recurse (node) {
       //            console.log("recurse: " + JSON.stringify(node))
-      if (node.depth)
+      if (node.hasOwnProperty('id'))  // guard against cycles
         return node
-
+      
       if (node.goto) {
         var linkedNode = nodeByName[node.goto]
         if (!linkedNode) {
           sails.log.debug ("Name " + node.goto + " unresolved - replacing with leaf node")
-          return { depth: 0, isLeaf: true }
+          return { isLeaf: true }
         }
-        node.onAncestralPath = true
         linkedNode = recurse (linkedNode)
-        node.onAncestralPath = false
 
         node.id = linkedNode.id
-        node.depth = linkedNode.depth
         node.isLeaf = linkedNode.isLeaf
         // hints are pretty context-sensitive, so use the default hint ("Next"), or the hint specified in the 'goto' node; don't just blindly inherit the linkedNode hint
         return node
       }
-
-      if (node.onAncestralPath) {
-        sails.log.debug ("Cycle detected - replacing with leaf node")
-        return { depth: 0, isLeaf: true }
-      }
-
-      if (node.isLeaf)
-        node.depth = 0
-      else {
-        node.onAncestralPath = true
-	if (node.menu)
-	  node.menu = node.menu.map (recurse)
-	else {
-          node.left = recurse (node.left)
-          node.right = recurse (node.right)
-	}
-        node.onAncestralPath = false
-        
-        node.depth = 1 + (node.menu
-			  ? Math.max.apply (null, node.menu.map (function(item) { return item.depth || 0 }))
-			  : Math.max (node.left.depth || 0,
-                                      node.right.depth || 0))
-      }
-
+      
       node.id = nodeList.length
-      nodeList.push ({ id: node.id,
-                       left: (node.menu
-			      ? undefined
-			      : linkSummary (node.left, 'l')),
-                       right: (node.menu
-			       ? undefined
-			       : linkSummary (node.right, 'r')),
-		       menu: (node.menu
-			      ? node.menu.map (function (child, n) { return linkSummary (child, n) })
-			      : undefined),
-                       depth: node.depth,
-                       choice: node.choice,
-                       menu: node.menu,
-                       priority: node.priority,
-		       concat: node.concat,
-                       text: node.text })
+      var descriptor = { id: node.id,
+                         choice: node.choice,
+                         menu: node.menu,
+                         priority: node.priority,
+		         concat: node.concat,
+                         text: node.text }
+      nodeList.push (descriptor)
+
+      if (!node.isLeaf) {
+        if (node.menu)
+          descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child), n) })
+        else {
+          descriptor.left = linkSummary (recurse(node.left), 'l')
+          descriptor.right = linkSummary (recurse(node.right), 'r')
+        }
+      }
 
       return node
     }
 
-    if (nextTree)
-      recurse (nextTree)
-
+    texts.map(recurse)
+    var queue = texts.map (function (root) { return root.id })
+    
     //        console.log(JSON.stringify(nodeList))
     if (!nodeList.length && !game.finished) {
-      nodeList= [{ id: 0,
-                   text: defaultAbsentText,
-                   left: { hint: defaultNextHint, choice: 'l' },
-                   right: { hint: defaultNextHint, choice: 'r' },
-                   depth: 1 }]
+      nodeList = [{ id: 0,
+                    text: defaultAbsentText,
+                    left: { hint: defaultNextHint, choice: 'l' },
+                    right: { hint: defaultNextHint, choice: 'r' } }]
+      queue = [0]
     }
-    return nodeList
+    return { nodeList: nodeList, queue: queue }
   },
 
   expandText: function (text, game, outcome, role, allowNonStringEvals) {
@@ -405,7 +378,9 @@ module.exports = {
 	  ({ game: game.id,
 	     move: game.moves + 1,
 	     text1: game.text1,
-	     text2: game.text2 })
+	     text2: game.text2,
+             queue1: game.queue1,
+             queue2: game.queue2 })
 	    .exec (function (err, turn) {
 	      if (err)
 		error (err)  // disastrous! (updated Game & Players, couldn't create Turn)
@@ -422,6 +397,8 @@ module.exports = {
     GameService.playBotMoves (game)
     var updateAttrs = { text1: game.text1,
 			text2: game.text2,
+			queue1: game.queue1,
+			queue2: game.queue2,
 			defaultMove1: game.defaultMove1,
 			defaultMove2: game.defaultMove2,
 			moves: game.moves,
@@ -902,8 +879,12 @@ module.exports = {
   },
 
   prepareTextTrees: function (game) {
-    game.text1 = GameService.buildTextTree (game.tree1, game)
-    game.text2 = GameService.buildTextTree (game.tree2, game)
+    var nq1 = GameService.buildTextTree (game.tree1, game)
+    game.text1 = nq1.nodeList
+    game.queue1 = nq1.queue
+    var nq2 = GameService.buildTextTree (game.tree2, game)
+    game.text2 = nq2.nodeList
+    game.queue2 = nq2.queue
   },
   
   playBotMoves: function (game) {
@@ -923,7 +904,7 @@ module.exports = {
   },
 
   forRole: function (game, role) {
-    var text, verb, self, other, selfMood, otherMood, waiting
+    var text, queue, verb, self, other, selfMood, otherMood, waiting
     var current = game.current
     if (role == 1) {
       if (current)
@@ -933,6 +914,7 @@ module.exports = {
       selfMood = game.mood1
       otherMood = game.mood2
       text = game.text1
+      queue = game.queue1
     } else {  // role == 2
       if (current)
         verb = current.verb2
@@ -941,11 +923,13 @@ module.exports = {
       selfMood = game.mood2
       otherMood = game.mood1
       text = game.text2
+      queue = game.queue2
     }
     return { game: game.id,
 	     finished: game.finished,
              waiting: Game.isWaitingForMove (game, role),
              text: text,
+             queue: queue,
              verb: verb,
 	     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
              self: { mood: selfMood },

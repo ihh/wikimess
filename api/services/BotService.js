@@ -25,7 +25,8 @@ module.exports = {
       return nodeDefaultMove
     }
 
-    textNodes.forEach (function (node) {
+    for (var nodeIndex = textNodes.length - 1; nodeIndex >= 0; --nodeIndex) {
+      var node = textNodes[nodeIndex]
       // don't decorate twice
       if (node.defaultMove)
         return
@@ -55,10 +56,10 @@ module.exports = {
 
 	node.defaultMove = updateDefaultMove (node.defaultMove, childSummary.defaultMove)
       }
-    })
+    }
     
     if (textNodes.length)
-      game[Game.roleAttr(role,'defaultMove')] = textNodes[textNodes.length - 1].defaultMove.choice
+      game[Game.roleAttr(role,'defaultMove')] = textNodes[0].defaultMove.choice
   },
 
   randomSwipe: function (player, game, node) {

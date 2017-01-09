@@ -42,9 +42,9 @@
                  outcome: [{ move1: "y",
 			     move2: "y",
 			     outro: {
-                               name: "choose_flavor",
                                text: "I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.\n<icon:ice-cream-cone>",
 			       next: { hint: "So true!",
+                                       name: "choose_flavor",
                                        text: "What flavor?",
 		                       menu:
 		                       [{

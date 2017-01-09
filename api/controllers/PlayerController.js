@@ -198,6 +198,7 @@ module.exports = {
                         rs (err)
                     else {
                         var textAttr = Game.roleAttr (info.role, 'text')
+                        var queueAttr = Game.roleAttr (info.role, 'queue')
                         var actionsAttr = Game.roleAttr (info.role, 'actions')
 			var lastTurnWithActions = 0
                         json.history = turns.map (function (turn, n) {
@@ -206,6 +207,7 @@ module.exports = {
 				lastTurnWithActions = n
                             return { move: turn.move,
 				     text: turn[textAttr],
+				     queue: turn[queueAttr],
 				     actions: actions,
 				     self: { mood: Game.getRoleAttr(turn,info.role,'mood') },
 				     other: { mood: Game.getOtherRoleAttr(turn,info.role,'mood') } }

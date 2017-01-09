@@ -1543,9 +1543,7 @@ var BigHouse = (function() {
         .append (this.moodBar = $('<div class="moodbar">'))
         .append ($('<div class="timebar">')
 		 .append (bh.timerDiv = $('<div class="timer">')
-			  .width("100%"))
-                 .append (this.cardCountDiv = $('<div class="cardcount">')
-                          .append (this.cardCountSpan = $('<span>'))))
+			  .width("100%")))
 
       var throwOutConfidence = function (offset, element) {
         return Math.min(Math.abs(offset) / element.offsetWidth, 1)
@@ -1635,13 +1633,9 @@ var BigHouse = (function() {
 	      if (typeof(summary.move) === 'undefined')
 		summary.move = move
 	      summary.node = bh.nodesForMove[summary.move][summary.id]
-	      node.minCardsLeft = bh.minDefined (node.minCardsLeft, summary.node.minCardsLeft + 1)
-	      node.maxCardsLeft = bh.maxDefined (node.maxCardsLeft, summary.node.maxCardsLeft + 1)
-	      node.expiredCardsLeft = bh.minDefined (node.expiredCardsLeft, summary.node.expiredCardsLeft + 1)
 	    }
 	  }
 
-	  var nextTree
 	  data.history.slice(0).reverse().forEach (function (hist) {
 	    if (!hist.text.length)
 	      hist.text = [{ text: bh.defaultAbsentText() }]
@@ -1652,6 +1646,12 @@ var BigHouse = (function() {
 	      })
 
 	    bh.nodesForMove[hist.move] = hist.text
+            bh.initialQueueForMove[hist.move] = hist.queue
+              .map (function (nodeIndex) {
+                return { moveNumber: hist.move,
+                         nodeIndex: nodeIndex,
+                         node: hist.text[nodeIndex] }
+              })
 	    hist.text.forEach (function (node) {
 	      node.self = hist.self
 	      node.other = hist.other
@@ -1659,11 +1659,8 @@ var BigHouse = (function() {
 	      node.isHistory = (node.move < bh.moveNumber)
 
 	      if (!(node.left || node.right || node.menu)) {
-		node.isWait = true
-		if (nextTree) {
-		  node.left = node.right = nextTree
-		  node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
-		}
+		node.isLeaf = true
+		node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
 	      }
 
 	      hookup (node, node.left, hist.move)
@@ -1677,38 +1674,39 @@ var BigHouse = (function() {
 		node.autoNext = node.menu[node.autoMenuIndex = node.action || node.defaultMenuIndex]
 	      } else if (node.left && node.right) {
 		node.autoNext = node[node.autoSwipe = node.action || node.defaultSwipe]
-	      } else
-		node.isFinal = true
+              }
 
 	      if (node.left && node.right && node.left.node === node.right.node) {
 		node.nextInChain = node.left.node
 		if (node.left.hint === node.right.hint)
 		  node.hasNoChoice = true
-	      } else if (node.isHistory)
+	      } else if (node.isHistory && node.autoNext)
 		node.nextInChain = node.autoNext.node
-
-	      if (node.isHistory) {
-		var next = node.autoNext.node
-		node.minCardsLeft = next.minCardsLeft
-		node.maxCardsLeft = next.maxCardsLeft
-	      } else {
-		node.expiredCardsLeft = 0
-		node.minCardsLeft = node.minCardsLeft || 1
-		node.maxCardsLeft = bh.maxDefined (node.maxCardsLeft, 1)
-	      }
 	    })
 	    nextTree = { hint: bh.defaultNextHint,
 			 move: hist.move,
 			 id: hist.text.length - 1 }
 	  })
 
-	  if (typeof (bh.currentChoiceMoveNumber) === 'undefined')
+	  if (typeof (bh.currentChoiceMoveNumber) === 'undefined') {
 	    bh.currentChoiceMoveNumber = data.history[0].move
-	  if (typeof (bh.currentChoiceNodeIndex) === 'undefined')
-	    bh.currentChoiceNodeIndex = bh.nodesForMove[bh.currentChoiceMoveNumber].length - 1
+            delete bh.currentChoiceQueue
+            delete bh.currentChoiceNodeIndex
+          }
+
+          if (typeof (bh.currentChoiceQueue) === 'undefined')
+	    bh.currentChoiceQueue = bh.initialQueueForMove[bh.currentChoiceMoveNumber]
+          function lastMoveNumberInQueue() { return bh.currentChoiceQueue.length ? bh.currentChoiceQueue[bh.currentChoiceQueue.length - 1].moveNumber : bh.currentChoiceMoveNumber }
+          while (lastMoveNumberInQueue() < bh.moveNumber) {
+            bh.currentChoiceQueue = bh.currentChoiceQueue.concat (bh.initialQueueForMove[lastMoveNumberInQueue() + 1])
+          }
+          
+          if (typeof (bh.currentChoiceNodeIndex) === 'undefined')
+	    bh.currentChoiceNodeIndex = bh.currentChoiceQueue.shift().nodeIndex
+
 	  var node = bh.nodesForMove[bh.currentChoiceMoveNumber][bh.currentChoiceNodeIndex]
 
-	  var tossCurrent = node.isWait && !node.isFinal
+	  var tossCurrent = bh.nodeIsWait(node) && bh.currentChoiceQueue.length
 	  bh.clearStack()
           
 	  var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
@@ -1751,6 +1749,7 @@ var BigHouse = (function() {
     setCurrentChoiceMoveNumber: function (moveNumber) {
       if (moveNumber != this.currentChoiceMoveNumber) {
         delete this.currentChoiceNodeIndex
+        delete this.currentChoiceQueue
         if (this.verbose.moveNumber)
           console.log ("Setting move# to " + moveNumber)
         this.currentChoiceMoveNumber = moveNumber
@@ -1761,6 +1760,7 @@ var BigHouse = (function() {
     saveGamePosition: function() {
       this.gamePosition[this.gameID] = { currentChoiceMoveNumber: this.currentChoiceMoveNumber,
                                          currentChoiceNodeIndex: this.currentChoiceNodeIndex,
+                                         currentChoiceQueue: this.currentChoiceQueue,
                                          moveNumber: this.moveNumber }
     },
 
@@ -1785,8 +1785,9 @@ var BigHouse = (function() {
       node.topCardCallback()
 
       // show hints
-      var leftHint = node.isFinal ? this.defaultBackHint : (node.left ? node.left.hint : this.defaultNextHint)
-      var rightHint = node.isFinal ? this.defaultBackHint : (node.right ? node.right.hint : this.defaultNextHint)
+      var isFinal = this.nodeIsFinal(node)
+      var leftHint = isFinal ? this.defaultBackHint : (node.left ? node.left.hint : this.defaultNextHint)
+      var rightHint = isFinal ? this.defaultBackHint : (node.right ? node.right.hint : this.defaultNextHint)
 
       leftHint = "← " + leftHint
       rightHint = rightHint + " →"
@@ -1812,24 +1813,6 @@ var BigHouse = (function() {
       this.choiceDiv.empty()
 	.append (makeHint ('choice1', leftStruck, leftHint, this.swingDir.left))
 	.append (makeHint ('choice2', rightStruck, rightHint, this.swingDir.right))
-
-      // show counts
-      // the last two cards are the final choice and then the end waitcard placeholder, so subtract those
-      var countText
-      if (node.isHistory)
-	countText = this.plural (node.expiredCardsLeft, "expired card") + " remaining"
-      else if (node.maxCardsLeft == 1)
-	countText = "Last card"
-      else {
-	if (node.minCardsLeft == node.maxCardsLeft)
-	  countText = node.maxCardsLeft + " cards"
-	else
-	  countText = "At least " + this.plural (node.minCardsLeft, "card")
-	countText += " in deck"
-      }
-
-      this.cardCountSpan.text(countText)
-      this.cardCountDiv.css ('opacity', 1)
     },
 
     plural: function(n,singular,plural) {
@@ -1946,7 +1929,6 @@ var BigHouse = (function() {
 	if (nowTime >= firstChimeTime && nowTime < endTime) {
           var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
 	  this.timerPulseElement().css ('opacity', opacity)
-          this.cardCountDiv.css ('opacity', opacity)
           if (!this.lastChimeTime || nowTime >= this.lastChimeTime + 1000)
             this.playSound ('timewarning')
           this.lastChimeTime = firstChimeTime + (1000 * Math.floor ((nowTime - firstChimeTime) / 1000))
@@ -1979,15 +1961,16 @@ var BigHouse = (function() {
 	bh.choiceDiv.empty()
 
 	var child
-	if (node.isHistory)
+	if (node.isHistory && node.autoNext)
 	  child = node.autoNext
 	else if (node.menu) {
 	  child = bh.selectedMenuItem
 	  node.action = bh.selectedMenuItem.n
-	} else {
+	} else if (node[dir]) {
 	  child = node[dir]
 	  node.action = dir
-	}
+        } else if (bh.currentChoiceQueue.length)
+          child = bh.currentChoiceQueue.shift()
 
         if (child) {
 	  if (node.isHistory)
@@ -1997,7 +1980,7 @@ var BigHouse = (function() {
 
 	  var nextNode = child.node
 	  function makeMove() {
-	    if (nextNode.isFinal)
+	    if (bh.nodeIsFinal(nextNode))
 	      bh.makeMove (bh.moveNumber, bh.lastChoice || dir.charAt(0))
 	  }
 
@@ -2066,6 +2049,14 @@ var BigHouse = (function() {
       this.container.removeClass ('history')
     },
 
+    nodeIsWait: function(node) {
+      return node.isLeaf && (this.currentChoiceQueue.length == 0 || this.currentChoiceQueue[0].moveNumber > node.move)
+    },
+
+    nodeIsFinal: function(node) {
+      return node.isLeaf && this.currentChoiceQueue.length == 0
+    },
+
     dealCardForNode: function (info) {
       var bh = this
 
@@ -2086,7 +2077,7 @@ var BigHouse = (function() {
       // text can override default cardClass, sfx
       var text = node.text
       var sfx, cardClass
-      if (node.isWait)
+      if (bh.nodeIsWait(node))
 	cardClass = 'waitcard'
       else if (node.isHistory)
 	cardClass = 'history'
@@ -2553,17 +2544,19 @@ var BigHouse = (function() {
       delete this.lastOpponentMoodTime
       delete this.playerMoodDiv
       delete this.opponentMoodDiv
-      delete this.playerLocation
 
       delete this.moveNumber
       delete this.currentChoiceMoveNumber
       delete this.currentChoiceNodeIndex
+      delete this.currentChoiceQueue
       delete this.currentChoiceNode
       this.nodesForMove = {}
+      this.initialQueueForMove = {}
       var gamePos = this.gamePosition[this.gameID]
       if (gamePos) {
         this.moveNumber = gamePos.moveNumber
         this.setCurrentChoiceMoveNumber (gamePos.currentChoiceMoveNumber)
+        this.currentChoiceQueue = gamePos.currentChoiceQueue
         this.currentChoiceNodeIndex = gamePos.currentChoiceNodeIndex
       }
 
