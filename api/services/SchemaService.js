@@ -117,6 +117,7 @@ var choiceSchema = {
 		required: ["sequence"],
                 properties: {
                   hint: { type: "string" },
+                  label: { type: "object" },
                   sequence: { type: "#/definitions/intro_node_list" },
                   define: { type: "#/definitions/intro_node_list" }
                 },
@@ -127,7 +128,7 @@ var choiceSchema = {
                   name: { type: "string" },
                   text: { type: "string" },
                   hint: { type: "string" },
-                  choice: { type: "string" },
+                  label: { type: "object" },
                   define: { type: "#/definitions/intro_node_list" },
                   left: { "$ref": "#/definitions/intro_node" },
                   right: { "$ref": "#/definitions/intro_node" },

@@ -6,6 +6,7 @@
 	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
 		hint: "Rat them out",
+		label: { choice: "l" },
 		sequence: [{ text: "You decide to rat them out." },
 			   { text: "That's pretty low.",
 			     right: { hint: "I know", text: "At least you admit it." },
@@ -13,7 +14,8 @@
 			   { text: "Just saying." }]
 	      },
 	      right: {
-		hint: "Skip class"
+		hint: "Skip class",
+		label: { choice: "r" }
 	      }
 	    }],
     rr: [{weight: "$c.iceCream || $c.iceCream",
@@ -39,11 +41,11 @@
 			  left: { hint: "No",
 				  text: "Why - because you don't like ice cream, or just don't feel like it today?",
 				  left: { hint: "Don't like ice cream",
-					  choice: "n" },
+					  label: { choice: "n" } },
 				  right: { hint: "Don't feel like it",
-					   choice: "n" } },
+					   label: { choice: "n" } } },
 			  right: { hint: "Yes",
-				   choice: "y" } },
+				   label: { choice: "y" } } },
                  outcome: [{ move1: "y",
 			     move2: "y",
 			     outro: {

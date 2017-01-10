@@ -5,15 +5,6 @@
         newSignUp: false,
         human: false,
         category: 'dean',
-        botmind: {
-	    strategy: "oppmood",
-	    swipeRightProb: {
-	        happy: 1,
-	        angry: 0,
-	        surprised: 0,
-	        sad: 0
-	    },
-        },
         avatarConfig: {
             base: {
                 global: {

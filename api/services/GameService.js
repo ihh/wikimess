@@ -101,20 +101,8 @@ module.exports = {
     function linkSummary (node, defaultChoice) {
       if (typeof(node) === 'undefined')
 	return undefined
-      var summary = {}
-      summary.hint = node.hint || defaultNextHint
-      if (node.choice || node.menu) {
-        summary.choice = node.choice
-        summary.menu = node.menu
-        summary.priority = node.priority
-        summary.virtue = node.virtue
-	summary.concat = node.concat
-      } else if (node.isLeaf) {
-        summary.choice = defaultChoice
-        summary.priority = -1
-      }
-      summary.id = node.id
-      return summary
+      return { hint: node.hint || defaultNextHint,
+	       id: node.id }
     }
 
     function recurse (node) {
@@ -138,10 +126,7 @@ module.exports = {
       
       node.id = nodeList.length
       var descriptor = { id: node.id,
-                         choice: node.choice,
-                         menu: node.menu,
-                         priority: node.priority,
-		         concat: node.concat,
+			 label: node.label,
                          text: node.text }
       nodeList.push (descriptor)
 
@@ -316,10 +301,12 @@ module.exports = {
     //	console.log('moveOutcomes')
     //	console.log(game)
     var query = Outcome.find ({ choice: game.current.id })
-    if (game.move1 != '')
-      query.where ({ move1: [game.move1, '*'] })
-    if (game.move2 != '')
-      query.where ({ move2: [game.move2, '*'] })
+    var move1 = GameService.moveChoice(game.move1)
+    var move2 = GameService.moveChoice(game.move2)
+    if (move1 != '')
+      query.where ({ move1: [move1, null] })
+    if (move2 != '')
+      query.where ({ move2: [move2, null] })
     query.exec (function (err, outcomes) {
       if (err)
         cb (err)
@@ -361,6 +348,7 @@ module.exports = {
   updateGameAndPlayers: function (query, game, success, error) {
     game.finished = game.current ? false : true
     GameService.prepareTextTrees (game)
+    GameService.playBotMoves (game)
     // these database updates (Game, Player 1, Player 2, Turn) should really be wrapped in a transaction,
     // to ensure consistency
     // e.g. see http://stackoverflow.com/questions/25079408/how-to-handle-async-concurrent-requests-correctly/25100188#25100188
@@ -396,13 +384,10 @@ module.exports = {
   },
 
   updateGame: function (query, game, success, error) {
-    GameService.playBotMoves (game)
     var updateAttrs = { text1: game.text1,
 			text2: game.text2,
 			queue1: game.queue1,
 			queue2: game.queue2,
-			defaultMove1: game.defaultMove1,
-			defaultMove2: game.defaultMove2,
 			moves: game.moves,
 			missed1: game.missed1,
 			missed2: game.missed2,
@@ -561,7 +546,7 @@ module.exports = {
 	   game.tree2 = game.tree2.concat (GameService.expandOutcomeText (outcome.outro2 || outcome.outro, game, outcome, 2))
 	 })
 
-	 game.move1 = game.move2 = ''
+	 game.move1 = game.move2 = null
 	 GameService.resolveNextChoice (game, success, error)
        }
      })
@@ -749,7 +734,7 @@ module.exports = {
   },
 
   gotBothMoves: function (game) {
-    return game.move1 != '' && game.move2 != ''
+    return game.move1 !== null && game.move2 !== null
   },
 
   createGame: function (game, success, error) {
@@ -768,7 +753,7 @@ module.exports = {
 
          game.tree1 = []
          game.tree2 = []
-         game.move1 = game.move2 = ''
+         game.move1 = game.move2 = null
          
 	 GameService.expandCurrentChoice
 	 (game,
@@ -819,7 +804,6 @@ module.exports = {
       game.missed1 = (turnUpdate.actions1 && Object.keys(turnUpdate.actions1).length) ? 0 : (game.missed1 + 1)
     if (update.move2)
       game.missed2 = (turnUpdate.actions2 && Object.keys(turnUpdate.actions2).length) ? 0 : (game.missed2 + 1)
-    GameService.playBotMoves (game)
     if (!GameService.gotBothMoves (game))
       GameService.updateGame (query, game, turnUpdater(playerWaiting,error), error)
     else {
@@ -890,18 +874,11 @@ module.exports = {
   },
   
   playBotMoves: function (game) {
-    // call prepareTextTrees before calling this
-    // set up defaultMove1 & defaultMove2
-    if (game.player1.human || game.move2 !== '')
-      BotService.decorate (game.player1, game.player2, game)
-    if (game.player2.human || game.move1 !== '')
-      BotService.decorate (game.player2, game.player1, game)
-    // if game is not finished, use defaultMoves to populate moves
     if (!game.finished) {
       if (!game.player1.human)
-	game.move1 = game.defaultMove1
+	game.move1 = BotService.randomMove (game.text1, game.queue1)
       if (!game.player2.human)
-	game.move2 = game.defaultMove2
+	game.move2 = BotService.randomMove (game.text2, game.queue2)
     }
   },
 
@@ -933,7 +910,6 @@ module.exports = {
              text: text,
              queue: queue,
              verb: verb,
-	     defaultMove: Game.getRoleAttr (game, role, 'defaultMove'),
              self: { mood: selfMood },
              other: { id: other.id, name: other.displayName, mood: otherMood },
              startline: game.currentStartTime,
@@ -942,4 +918,32 @@ module.exports = {
     return json
   },
 
+  moveChoice: function (move) {
+    return GameService.moveLabel (move, 'choice')
+  },
+
+  moveLabel: function (move, label) {
+    var s
+    if (move) {
+      s = (move.label && move.label[label]) ? move.label[label] : ''
+      if (move.children) s += move.children.map(function(c){return GameService.moveLabel(c,label)}).join('')
+    } else
+      s = ''
+    return s
+  },
+
+  objectsEqual: function (obj1, obj2) {
+    if (typeof(obj1) !== typeof(obj2))
+      return false
+    if (typeof(obj1) !== 'object')
+      return obj1 === obj2
+    var eq = true
+    Object.keys(obj1).forEach (function(k1) {
+      eq = eq && obj2.hasOwnProperty(k1) && GameService.objectsEqual(obj1,obj2)
+    })
+    Object.keys(obj2).forEach (function(k2) {
+      eq = eq && obj1.hasOwnProperty(k2)
+    })
+    return eq
+  }
 };

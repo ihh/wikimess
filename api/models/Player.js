@@ -49,17 +49,6 @@ module.exports = {
           type: 'string'
       },
       
-      botmind: {
-	  type: 'json',
-	  defaultsTo: {
-	      strategy: 'mood',
-	      swipeRightProb: { happy: .5,
-		                sad: .5,
-		                angry: .5,
-		                surprised: .5 }
-	  }
-      },
-      
       // global stats for this player
       global: {
           type: 'json',

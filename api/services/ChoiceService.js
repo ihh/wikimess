@@ -34,8 +34,7 @@ module.exports = {
 			  'r': 'right',
 			  'n': 'next',
 			  't': 'text',
-			  'h': 'hint',
-			  'c': 'choice' }
+			  'h': 'hint' }
 
     function makeText (text) {
       if (typeof(text) == 'undefined')

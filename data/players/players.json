@@ -13,15 +13,6 @@
         name: "titfortat",
         password: "test",
         human: false,
-        category: "student",
-        botmind: {
-	    strategy: "mood",
-	    swipeRightProb: {
-	        happy: 1,
-	        angry: 0,
-	        surprised: 1,
-	        sad: 0
-	    },
-        },
+        category: "student"
     }
 ]

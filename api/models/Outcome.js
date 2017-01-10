@@ -21,12 +21,12 @@ module.exports = {
 
       move1: {
           type: 'string',
-          defaultsTo: '*'
+          defaultsTo: null
       },
 
       move2: {
           type: 'string',
-          defaultsTo: '*'
+          defaultsTo: null
       },
 
       weight: {
@@ -51,14 +51,14 @@ module.exports = {
 
       mood1: {
           type: 'string',
-          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged', 'auto'],
-	  defaultsTo: 'auto'
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged'],
+	  defaultsTo: 'unchanged'
       },
 
       mood2: {
           type: 'string',
-          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged', 'auto'],
-	  defaultsTo: 'auto'
+          enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged'],
+	  defaultsTo: 'unchanged'
       },
 
       verb1: { type: 'string' },
@@ -78,21 +78,9 @@ module.exports = {
 
     mood: function (oldMood, newMood, move1, move2) {
 //        console.log ('oldMood='+oldMood+' newMood='+newMood+' move1='+move1+' move2='+move2)
-        if (newMood === 'unchanged')
-            return oldMood
-        else if (newMood && newMood !== 'auto')
-            return newMood
-	else if (move1 != '' && move2 != '') {
-            var move12 = move1 + move2
-            switch (move12) {
-            case 'rr': case 'yy': return 'happy'
-            case 'rl': case 'yn': return 'angry'
-            case 'lr': case 'ny': return 'surprised'
-            case 'll': case 'nn': return 'sad'
-            default: break
-            }
-	}
+      if (newMood === 'unchanged')
         return oldMood
+      return newMood
     },
 
     mood1: function (game, outcome) {
@@ -104,22 +92,8 @@ module.exports = {
     },
 
     outcomeVerb: function (game, outcome, role) {
-	var verb = role == 1 ? outcome.verb1 : outcome.verb2
-	if (!verb) {
-	    var type
-            if (role == 1)
-		type = game.move1 + game.move2
-	    else
-		type = game.move2 + game.move1
-            switch (type) {
-            case 'rr': case 'yy': verb = 'reward'; break;
-            case 'rl': case 'yn': verb = 'sucker'; break;
-            case 'lr': case 'ny': verb = 'cheat'; break;
-            case 'll': case 'nn': verb = 'punish'; break;
-            default: verb = undefined; break;
-            }
-	}
-	return verb ? ('<outcome:' + verb + '>') : ''
+      var verb = role == 1 ? outcome.verb1 : outcome.verb2
+      return verb ? ('<outcome:' + verb + '>') : ''
     },
 };
 

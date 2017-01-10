@@ -66,21 +66,13 @@ module.exports = {
 
     // player choices
     move1: {
-      type: 'string',
-      defaultsTo: ''
+      type: 'json',
+      defaultsTo: {}
     },
 
     move2: {
-      type: 'string',
-      defaultsTo: ''
-    },
-
-    defaultMove1: {
-      type: 'string'
-    },
-
-    defaultMove2: {
-      type: 'string'
+      type: 'json',
+      defaultsTo: {}
     },
 
     quit1: {
@@ -140,7 +132,7 @@ module.exports = {
   },
 
   isWaitingForMove: function (game, role) {
-    return (role == 1 ? game.move1 : game.move2) === ''
+    return (role == 1 ? game.move1 : game.move2) === null
   },
 
   runningTime: function (game) {
@@ -175,7 +167,7 @@ module.exports = {
   },
 
   timedOutRoles: function (game) {
-    var w1 = game.move1 == '', w2 = game.move2 == ''
+    var w1 = game.move1 === null, w2 = game.move2 === null
     return Game.isTimedOut(game)
       ? (w1 ? (w2 ? [1,2] : [1]) : (w2 ? [2] : []))
     : []
