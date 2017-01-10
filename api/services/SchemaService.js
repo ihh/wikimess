@@ -99,19 +99,36 @@ var choiceSchema = {
     },
 
     intro_list: {
-      oneOf: [{ type: "array", items: { "$ref": "#/definitions/intro_node" } },
+      oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
               { "$ref": "#/definitions/intro_node" }]
     },
 
     intro_node: {
       oneOf: [{ type: "string" },
               { type: "object",
+		required: ["goto"],
+                properties: {
+                  hint: { type: "string" },
+                  goto: { type: "string" }
+                },
+                additionalProperties: false
+              },
+              { type: "object",
+		required: ["sequence"],
+                properties: {
+                  hint: { type: "string" },
+                  sequence: { type: "#/definitions/intro_node_list" },
+                  define: { type: "#/definitions/intro_node_list" }
+                },
+                additionalProperties: false
+              },
+              { type: "object",
                 properties: {
                   name: { type: "string" },
                   text: { type: "string" },
                   hint: { type: "string" },
-                  goto: { type: "string" },
                   choice: { type: "string" },
+                  define: { type: "#/definitions/intro_node_list" },
                   left: { "$ref": "#/definitions/intro_node" },
                   right: { "$ref": "#/definitions/intro_node" },
                   next: { "$ref": "#/definitions/intro_node" },

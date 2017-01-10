@@ -47,22 +47,24 @@ module.exports = {
             delete node.left
             delete node.right
 	    delete node.menu
+	    delete node.sequence
             node.next = head
             node.text = split[0]
           }
         }
 
-        if (!node.text) {
+        if (!node.text && !node.sequence) {
           sails.log.debug ("Node has no text: " + JSON.stringify(node))
           node.text = defaultAbsentText
         }
 
-        node.isLeaf = !(node.next || node.left || node.right || node.menu)
+        node.isLeaf = !(node.next || node.left || node.right || node.menu || node.sequence)
         if (!node.isLeaf) {
 	  if (node.menu) {
-	    node.menu.forEach (function (child) {
-	      connect (child)
-	    })
+	    node.menu.map (connect)
+
+	  } else if (node.sequence) {
+	    node.sequence.map (connect)
 
 	  } else if (node.next) {
             connect (node.next)
@@ -86,9 +88,7 @@ module.exports = {
 
 	if (node.define) {
 	  if (isArray (node.define))
-	    node.define.forEach (function (def) {
-	      connect (def)
-	    })
+	    node.define.map (connect)
 	  else
 	    connect (node.define)
 	}
@@ -146,7 +146,9 @@ module.exports = {
       nodeList.push (descriptor)
 
       if (!node.isLeaf) {
-        if (node.menu)
+	if (node.sequence)
+          descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child), n) })
+	else if (node.menu)
           descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child), n) })
         else {
           descriptor.left = linkSummary (recurse(node.left), 'l')

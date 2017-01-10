@@ -1658,7 +1658,7 @@ var BigHouse = (function() {
 	      node.move = hist.move
 	      node.isHistory = (node.move < bh.moveNumber)
 
-	      if (!(node.left || node.right || node.menu)) {
+	      if (!(node.left || node.right || node.menu || node.sequence)) {
 		node.isLeaf = true
 		node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
 	      }
@@ -1674,8 +1674,7 @@ var BigHouse = (function() {
 		node.nextInChain = node.left.node
 		if (node.left.hint === node.right.hint)
 		  node.hasNoChoice = true
-	      } else if (node.isHistory && !node.isLeaf && (node.queuedActions ? (node.queuedActions.length < 2) : true))  // don't try to deal ahead if we're scheduled to visit node more than once
-		node.nextInChain = bh.peekNextAutoNode(node)
+	      }
 	    })
 	    nextTree = { hint: bh.defaultNextHint,
 			 move: hist.move,
@@ -2074,7 +2073,7 @@ var BigHouse = (function() {
     },
     
     peekNextAutoNode: function(node) {
-      return this.nodeForAction (this.peekNextAutoAction(node))
+      return this.nodeForAction (node, this.peekNextAutoAction(node))
     },
 
     recordAction: function(node,action) {
@@ -2086,6 +2085,18 @@ var BigHouse = (function() {
       var bh = this
 
       var node = info.node
+      if (node.sequence) {
+	var queued = node.sequence
+          .map (function (queuedNode) {
+            return { moveNumber: node.move,
+                     nodeIndex: queuedNode.id,
+                     node: bh.nodesForMove[node.move][queuedNode.id] }
+          })
+	bh.currentChoiceQueue = queued.concat (bh.currentChoiceQueue)
+	info.node = bh.currentChoiceQueue.shift().node
+	return bh.dealCardForNode(info)
+      }
+
       var nextInChain = node.nextInChain
       var nextCardDealt
       if (nextInChain) {
@@ -2285,10 +2296,6 @@ var BigHouse = (function() {
 
     throwYOffset: function() {
       return $(document).height() / 4
-    },
-
-    isFinalCard: function (node) {
-      return !(node.menu || node.left || node.right)
     },
     
     cardIndex: function (elem) {

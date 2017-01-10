@@ -5,7 +5,12 @@
 	    {
 	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
-		hint: "Rat them out"
+		hint: "Rat them out",
+		sequence: [{ text: "You decide to rat them out." },
+			   { text: "That's pretty low.",
+			     right: { hint: "I know", text: "At least you admit it." },
+			     left: { hint: "What?", text: "Ha! You can't even admit you're a snitch." } },
+			   { text: "Just saying." }]
 	      },
 	      right: {
 		hint: "Skip class"
