@@ -13,7 +13,7 @@ module.exports = {
     //        console.log('buildTextTree')
     //        console.log(JSON.stringify(texts))
     var defaultNextHint = 'Next'
-    var defaultAbsentText = 'Waiting for <other>...'
+    var defaultAbsentText = '<wait>'
 
     // build name index
     var nodeByName = {}
@@ -97,7 +97,8 @@ module.exports = {
     })
     
     // resolve names, check for cycles, convert into an array of nodes
-    var nodeList = []
+    var rootNode = { id: 0 }
+    var nodeList = [rootNode]
     function linkSummary (node, defaultChoice) {
       if (typeof(node) === 'undefined')
 	return undefined
@@ -147,15 +148,13 @@ module.exports = {
     texts.map(recurse)
     var queue = texts.map (function (root) { return root.id })
     
-    //        console.log(JSON.stringify(nodeList))
-    if (!nodeList.length && !game.finished) {
-      nodeList = [{ id: 0,
-                    text: defaultAbsentText,
-                    left: { hint: defaultNextHint, choice: 'l' },
-                    right: { hint: defaultNextHint, choice: 'r' } }]
-      queue = [0]
-    }
-    return { nodeList: nodeList, queue: queue }
+    if (nodeList.length == 1 && !game.finished) {
+      rootNode.text = defaultAbsentText
+      rootNode.left.hint = rootNode.right.hint = defaultNextHint
+    } else
+      rootNode.sequence = queue.map (function (id) { return { id: id } })
+
+    return nodeList
   },
 
   expandText: function (text, game, outcome, role, allowNonStringEvals) {
@@ -301,8 +300,8 @@ module.exports = {
     //	console.log('moveOutcomes')
     //	console.log(game)
     var query = Outcome.find ({ choice: game.current.id })
-    var move1 = GameService.moveChoice(game.move1)
-    var move2 = GameService.moveChoice(game.move2)
+    var move1 = GameService.moveString(game.move1)
+    var move2 = GameService.moveString(game.move2)
     if (move1 != '')
       query.where ({ move1: [move1, null] })
     if (move2 != '')
@@ -368,9 +367,7 @@ module.exports = {
 	  ({ game: game.id,
 	     move: game.moves + 1,
 	     text1: game.text1,
-	     text2: game.text2,
-             queue1: game.queue1,
-             queue2: game.queue2 })
+	     text2: game.text2 })
 	    .exec (function (err, turn) {
 	      if (err)
 		error (err)  // disastrous! (updated Game & Players, couldn't create Turn)
@@ -386,8 +383,6 @@ module.exports = {
   updateGame: function (query, game, success, error) {
     var updateAttrs = { text1: game.text1,
 			text2: game.text2,
-			queue1: game.queue1,
-			queue2: game.queue2,
 			moves: game.moves,
 			missed1: game.missed1,
 			missed2: game.missed2,
@@ -700,6 +695,11 @@ module.exports = {
 	$1 = game.move1,
 	$2 = game.move2
 
+    $1.label = GameService.moveLabel.bind (GameService, $1)
+    $2.label = GameService.moveLabel.bind (GameService, $2)
+    $1.move = GameService.moveString.bind (GameService, $1)
+    $2.move = GameService.moveString.bind (GameService, $2)
+
     var $s1 = {}, $s2 = {}
     extend (true, $s1, $g1)
     merge ($s1, $l1)
@@ -801,9 +801,9 @@ module.exports = {
     // update
     extend (game, update)
     if (update.move1)
-      game.missed1 = (turnUpdate.actions1 && Object.keys(turnUpdate.actions1).length) ? 0 : (game.missed1 + 1)
+      game.missed1 = update.move1.bot ? (game.missed1 + 1) : 0
     if (update.move2)
-      game.missed2 = (turnUpdate.actions2 && Object.keys(turnUpdate.actions2).length) ? 0 : (game.missed2 + 1)
+      game.missed2 = update.move2.bot ? (game.missed2 + 1) : 0
     if (!GameService.gotBothMoves (game))
       GameService.updateGame (query, game, turnUpdater(playerWaiting,error), error)
     else {
@@ -865,25 +865,21 @@ module.exports = {
   },
 
   prepareTextTrees: function (game) {
-    var nq1 = GameService.buildTextTree (game.tree1, game)
-    game.text1 = nq1.nodeList
-    game.queue1 = nq1.queue
-    var nq2 = GameService.buildTextTree (game.tree2, game)
-    game.text2 = nq2.nodeList
-    game.queue2 = nq2.queue
+    game.text1 = GameService.buildTextTree (game.tree1, game)
+    game.text2 = GameService.buildTextTree (game.tree2, game)
   },
   
   playBotMoves: function (game) {
     if (!game.finished) {
       if (!game.player1.human)
-	game.move1 = BotService.randomMove (game.text1, game.queue1)
+	game.move1 = BotService.randomMove (game.text1)
       if (!game.player2.human)
-	game.move2 = BotService.randomMove (game.text2, game.queue2)
+	game.move2 = BotService.randomMove (game.text2)
     }
   },
 
   forRole: function (game, role) {
-    var text, queue, verb, self, other, selfMood, otherMood, waiting
+    var text, verb, self, other, selfMood, otherMood, waiting
     var current = game.current
     if (role == 1) {
       if (current)
@@ -893,7 +889,6 @@ module.exports = {
       selfMood = game.mood1
       otherMood = game.mood2
       text = game.text1
-      queue = game.queue1
     } else {  // role == 2
       if (current)
         verb = current.verb2
@@ -902,13 +897,11 @@ module.exports = {
       selfMood = game.mood2
       otherMood = game.mood1
       text = game.text2
-      queue = game.queue2
     }
     return { game: game.id,
 	     finished: game.finished,
              waiting: Game.isWaitingForMove (game, role),
              text: text,
-             queue: queue,
              verb: verb,
              self: { mood: selfMood },
              other: { id: other.id, name: other.displayName, mood: otherMood },
@@ -918,8 +911,8 @@ module.exports = {
     return json
   },
 
-  moveChoice: function (move) {
-    return GameService.moveLabel (move, 'choice')
+  moveString: function (move) {
+    return GameService.moveLabel (move, 'move')
   },
 
   moveLabel: function (move, label) {

@@ -177,7 +177,6 @@ module.exports = {
   makeMove: function (req, rs, info) {
     var moveNumber = info.moveNumber
     var move = info.move
-    var actions = info.actions
     var player = info.player
     var opponent = info.opponent
     var game = info.game
@@ -198,9 +197,7 @@ module.exports = {
 
         var gameUpdate = {}, turnUpdate = {}
 	var moveAttr = "move" + role
-	var actionsAttr = "actions" + role
         gameUpdate[moveAttr] = turnUpdate[moveAttr] = move
-	turnUpdate[actionsAttr] = actions
 
 	GameService
 	  .recordMove ({ game: game,

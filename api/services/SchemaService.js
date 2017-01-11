@@ -10,6 +10,7 @@ var choiceSchema = {
         name: { type: "string" },
         parent: { type: "string" },
         intro: { "$ref": "#/definitions/intro_list" },
+        intro2: { "$ref": "#/definitions/intro_list" },
 
         outcome: { "$ref": "#/definitions/outcome_list" },
 
@@ -67,6 +68,7 @@ var choiceSchema = {
         move2: { type: "string" },
         weight: { type: ["string","number"] },
         outro: { "$ref": "#/definitions/intro_list" },
+        outro2: { "$ref": "#/definitions/intro_list" },
         next: { oneOf: [ { "$ref": "#/definitions/choice_ref" },
                          { type: "array", items: { "$ref": "#/definitions/choice_ref" } } ] },
         local: { type: "object" },

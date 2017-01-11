@@ -2,8 +2,10 @@
 
 module.exports = {
 
-  randomMove: function (text, queue) {
-    return { children: queue.map (function (id) { return BotService.randomExpansion (text, id) }) }
+  randomMove: function (text) {
+    var move = BotService.randomExpansion (text, 0)
+    move.bot = true
+    return move
   },
 
   randomExpansion: function (text, id) {

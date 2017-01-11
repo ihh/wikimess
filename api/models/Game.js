@@ -115,14 +115,6 @@ module.exports = {
     text2: {
       type: 'json'
     },
-
-    queue1: {
-      type: 'array'
-    },
-
-    queue2: {
-      type: 'array'
-    },
     
     // state specific to this game, common to both players
     common: {

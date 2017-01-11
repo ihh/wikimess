@@ -6,7 +6,7 @@
 	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
 		hint: "Rat them out",
-		label: { choice: "l" },
+		label: { move: "l" },
 		sequence: [{ text: "You decide to rat them out." },
 			   { text: "That's pretty low.",
 			     right: { hint: "I know", text: "At least you admit it." },
@@ -15,7 +15,7 @@
 	      },
 	      right: {
 		hint: "Skip class",
-		label: { choice: "r" }
+		label: { move: "r" }
 	      }
 	    }],
     rr: [{weight: "$c.iceCream || $c.iceCream",
@@ -41,39 +41,44 @@
 			  left: { hint: "No",
 				  text: "Why - because you don't like ice cream, or just don't feel like it today?",
 				  left: { hint: "Don't like ice cream",
-					  label: { choice: "n" } },
+					  label: { move: "n" } },
 				  right: { hint: "Don't feel like it",
-					   label: { choice: "n" } } },
+					   label: { move: "n" } } },
 			  right: { hint: "Yes",
-				   label: { choice: "y" } } },
+				   label: { move: "y" } } },
                  outcome: [{ move1: "y",
 			     move2: "y",
 			     outro: {
                                text: "I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.\n<icon:ice-cream-cone>",
 			       next: { hint: "So true!",
-                                       name: "choose_flavor",
-                                       text: "What flavor?",
-		                       menu:
-		                       [{
-		                         hint: 'Vanilla',
-                                         name: 'good_flavor',
-                                         text: 'Good choice!'
-		                       },
-		                        {
-		                          hint: 'Chocolate',
-                                          text: "oh no you DIDN'T",
-                                          next: {
-                                            hint: "Try again",
-                                            goto: 'choose_flavor'
-                                          }
-		                        },
-		                        {
-		                          hint: 'Strawberry',
-                                          goto: 'good_flavor'
-		                        }] }
+				       sequence:
+				       [{name: "choose_flavor",
+					 text: "What flavor?",
+					 menu:
+					 [{
+		                           hint: 'Vanilla',
+					   label: { flavor: ' vanilla' },
+                                           text: 'Excellent choice!'
+					 },
+		                          {
+		                            hint: 'Chocolate',
+					    label: { flavor: ' chocolate' },
+                                            text: "oh no you DIDN'T",
+                                            next: {
+                                              hint: "Try again",
+                                              goto: 'choose_flavor'
+                                            }
+		                          },
+		                          {
+		                            hint: 'Strawberry',
+					    label: { flavor: ' strawberry' },
+                                            text: 'Good choice!'
+		                          }] },
+					{ text: "You chose: <label:flavor>" }]
+				     }
                              },
 			     common:{iceCream:true}},
-                           { weight: "$1 != $2",
+                           { weight: "$1.move() != $2.move()",
 			     outro: { text: "Unfortunately, not everybody loves ice cream." } },
                            { move1: "n",
                              move2: "n",

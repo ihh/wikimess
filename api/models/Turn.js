@@ -31,22 +31,6 @@ module.exports = {
 	  type: 'json'
       },
 
-      queue1: {
-	  type: 'array'
-      },
-
-      queue2: {
-	  type: 'array'
-      },
-
-      actions1 : {
-	  type: 'json'
-      },
-
-      actions2 : {
-	  type: 'json'
-      },
-
       move1 : {
 	  type: 'json'
       },
