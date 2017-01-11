@@ -1973,11 +1973,11 @@ var BigHouse = (function() {
       var bh = this
       var node = expansion.node
       var children = node.sequence
-        .map (function (seqNode) {
-          return { creator: 'makeSequenceExpansion',
-                   node: seqNode.node,
-		   parent: expansion }
-        })
+          .map (function (seqNode) {
+            return { creator: 'makeSequenceExpansion',
+                     node: seqNode.node,
+		     parent: expansion }
+          })
       expansion.children = children
       return children
     },
@@ -2561,7 +2561,7 @@ var BigHouse = (function() {
 	s = ''
       return s
     },
-      
+    
     changeMoodFunction: function (moveNumber, mood) {
       var bh = this
       return function() {
