@@ -162,7 +162,7 @@ module.exports = {
     } else if (typeof(text) == 'object') {
       var expanded
       if (text.expr)
-        expanded = GameService.expandText ('{{' + text.expr + '}}', game, outcome, role, true)
+        expanded = GameService.expandTextString (text.expr, game, outcome, role, false, true)
       else
 	expanded = {}
       Object.keys(text).forEach (function (key) {
@@ -174,6 +174,10 @@ module.exports = {
       return expanded
     }
 
+    return this.expandTextString (text, game, outcome, role, !allowNonStringEvals)
+  },
+
+  expandTextString: function (text, game, outcome, role, coerceToString, treatAsExpr) {
     var self, other
     if (role == 1) {
       self = game.player1.displayName
@@ -226,14 +230,21 @@ module.exports = {
       $current = game.current.name
     }
 
-    if (allowNonStringEvals) {
-      var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
-      var braceMatch = braceRegex.exec(text)
-      if (braceMatch && braceMatch[0].length == text.length) {
-        // entire text string matches pattern {{...}}, so eval the code inside without coercing result to a string
+    if (!coerceToString) {
+      var expr
+      if (treatAsExpr)
+	expr = text
+      else {
+	// if entire string matches {{...}} then expand as an expression without coercing to string
+	var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
+	var braceMatch = braceRegex.exec(text)
+	if (braceMatch && braceMatch[0].length == text.length)
+	  expr = braceMatch[1]
+      }
+      if (expr) {
         var val = ''
         try {
-          val = eval(braceMatch[1])
+          val = eval(expr)
         } catch (e) {
           sails.log.debug ("When evaluating: " + braceMatch[1])
           sails.log.debug ("Error: " + e)

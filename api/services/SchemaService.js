@@ -112,6 +112,7 @@ var choiceSchema = {
                 properties: {
                   hint: { type: "string" },
 		  visible: { type: "string" },
+		  expr: { type: "string" },
                   goto: { type: "string" }
                 },
                 additionalProperties: false
@@ -121,6 +122,7 @@ var choiceSchema = {
                 properties: {
                   hint: { type: "string" },
 		  visible: { type: "string" },
+		  expr: { type: "string" },
                   label: { type: "object" },
                   sequence: { type: "#/definitions/intro_node_list" },
                   define: { type: "#/definitions/intro_node_list" }
@@ -133,6 +135,7 @@ var choiceSchema = {
                   text: { type: "string" },
                   hint: { type: "string" },
 		  visible: { type: "string" },
+		  expr: { type: "string" },
                   label: { type: "object" },
                   define: { type: "#/definitions/intro_node_list" },
                   left: { "$ref": "#/definitions/intro_node" },
