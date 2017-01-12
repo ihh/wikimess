@@ -10,11 +10,6 @@ function isArray (obj) {
 module.exports = {
 
   buildTextTree: function (texts, game) {
-    //        console.log('buildTextTree')
-    //        console.log(JSON.stringify(texts))
-    var defaultNextHint = 'Next'
-    var defaultAbsentText = '<wait>'
-
     // build name index
     var nodeByName = {}
     texts.forEach (function (tree, nTree) {
@@ -53,11 +48,6 @@ module.exports = {
           }
         }
 
-        if (!node.text && !node.sequence) {
-          sails.log.debug ("Node has no text: " + JSON.stringify(node))
-          node.text = defaultAbsentText
-        }
-
         node.isLeaf = !(node.next || node.left || node.right || node.menu || node.sequence)
         if (!node.isLeaf) {
 	  if (node.menu) {
@@ -68,7 +58,6 @@ module.exports = {
 
 	  } else if (node.next) {
             connect (node.next)
-            node.left = node.right = node.next
 
 	  } else {
             if (node.left)
@@ -99,11 +88,12 @@ module.exports = {
     // resolve names, check for cycles, convert into an array of nodes
     var rootNode = { id: 0 }
     var nodeList = [rootNode]
-    function linkSummary (node, defaultChoice) {
+
+    function linkSummary (node) {
       if (typeof(node) === 'undefined')
 	return undefined
-      return { hint: node.hint || defaultNextHint,
-	       id: node.id }
+      return { id: node.id,
+	       hint: node.hint }
     }
 
     function recurse (node) {
@@ -126,19 +116,20 @@ module.exports = {
       }
       
       node.id = nodeList.length
-      var descriptor = { id: node.id,
-			 label: node.label,
+      var descriptor = { label: node.label,
                          text: node.text }
       nodeList.push (descriptor)
 
       if (!node.isLeaf) {
 	if (node.sequence)
-          descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child), n) })
+          descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child)) })
 	else if (node.menu)
-          descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child), n) })
+          descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child)) })
+	else if (node.next)
+          descriptor.next = linkSummary (recurse(node.next))
         else {
-          descriptor.left = linkSummary (recurse(node.left), 'l')
-          descriptor.right = linkSummary (recurse(node.right), 'r')
+          descriptor.left = linkSummary (recurse(node.left))
+          descriptor.right = linkSummary (recurse(node.right))
         }
       }
 
@@ -148,11 +139,13 @@ module.exports = {
     texts.map(recurse)
     var queue = texts.map (function (root) { return root.id })
     
-    if (nodeList.length == 1 && !game.finished) {
-      rootNode.text = defaultAbsentText
-      rootNode.left.hint = rootNode.right.hint = defaultNextHint
-    } else
+    if (nodeList.length == 1 && !game.finished)
+      rootNode.wait = true
+    else {
+      queue.push (nodeList.length)
+      nodeList.push ({ wait: true })
       rootNode.sequence = queue.map (function (id) { return { id: id } })
+    }
 
     return nodeList
   },
@@ -695,10 +688,14 @@ module.exports = {
 	$1 = game.move1,
 	$2 = game.move2
 
-    $1.label = GameService.moveLabel.bind (GameService, $1)
-    $2.label = GameService.moveLabel.bind (GameService, $2)
-    $1.move = GameService.moveString.bind (GameService, $1)
-    $2.move = GameService.moveString.bind (GameService, $2)
+    if ($1) {
+      $1.label = GameService.moveLabel.bind (GameService, $1)
+      $1.move = GameService.moveString.bind (GameService, $1)
+    }
+    if ($2) {
+      $2.label = GameService.moveLabel.bind (GameService, $2)
+      $2.move = GameService.moveString.bind (GameService, $2)
+    }
 
     var $s1 = {}, $s2 = {}
     extend (true, $s1, $g1)

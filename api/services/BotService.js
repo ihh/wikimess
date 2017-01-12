@@ -18,6 +18,8 @@ module.exports = {
       else if (node.menu) {
 	exp.action = Math.floor (Math.random() * node.menu.length)
 	exp.children = [BotService.randomExpansion (text, node.menu[exp.action].id)]
+      } else if (node.next) {
+	exp.children = [BotService.randomExpansion (text, node.next)]
       } else if (node.left && node.right) {
 	exp.action = Math.random() < .5 ? 'left' : 'right'
 	exp.children = [BotService.randomExpansion (text, node[exp.action])]

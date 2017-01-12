@@ -82,6 +82,7 @@ var BigHouse = (function() {
 
     defaultBackHint: "Back",
     defaultNextHint: "Next",
+    defaultWaitText: "<wait>",
     defaultAbsentText: function() { "Time passes..." },
     
     themes: [ {style: 'plain', text: 'Plain'},
@@ -108,6 +109,8 @@ var BigHouse = (function() {
                errors: true,
                music: false,
 	       stack: false },
+
+    globalMenuCount: 0,
     
     // REST interface
     REST_loginFacebook: function() {
@@ -1630,34 +1633,10 @@ var BigHouse = (function() {
           bh.moveNumber = data.move
           bh.opponentName = data.other.name
 
-          var newRootForMove = {}
-	  data.history.slice(0).reverse().forEach (function (hist) {
+          var newRootForMove = {}, nextRoot
+	  data.history.slice(0).reverse().forEach (function (hist, h) {
 	    if (!hist.text.length)
 	      hist.text = [{ text: bh.defaultAbsentText() }]
-
-	    // process the moves received from the server, convert them to expansion trees
-	    var root
-	    if (hist.move) {
-	      function convertJsonMoveToExpansion (moveNode, parentExpansion) {
-		var expansion = { creator: 'convertJsonMoveToExpansion',
-				  isHistory: true,
-				  node: hist.text[moveNode.id],
-				  label: moveNode.label,
-				  action: moveNode.action,
-				  parent: parentExpansion }
-		if (moveNode.children)
-		  expansion.children = moveNode.children.map (function (child) {
-		    return convertJsonMoveToExpansion (child, expansion)
-		  })
-		return expansion
-	      }
-	      root = convertJsonMoveToExpansion (hist.move)
-	    } else if (bh.currentExpansionNode && hist.moveNumber == bh.currentChoiceNode().move)
-	      root = bh.rootForMove[hist.moveNumber]
-	    else
-	      root = { creator: 'loadGameCards',
-		       node: hist.text[0] }
-	    newRootForMove[hist.moveNumber] = root
 
 	    // process the grammar received from the server, use IDs to connect node objects
 	    function hookup (link, move) {
@@ -1667,16 +1646,15 @@ var BigHouse = (function() {
 		link.node = hist.text[link.id]
 	      }
 	    }
-	    hist.text.forEach (function (node) {
+	    hist.text.forEach (function (node, n) {
+	      node.id = n
 	      node.self = hist.self
 	      node.other = hist.other
 	      node.move = hist.moveNumber
+	      node.finish = node.wait && h == 0 && data.finished
 
-	      if (!(node.left || node.right || node.menu || node.sequence)) {
-		node.isLeaf = true
-		node.defaultSwipe = Math.random() < .5 ? 'left' : 'right'
-	      }
-
+	      if (node.next)
+		node.left = node.right = node.next
 	      hookup (node.left, hist.moveNumber)
 	      hookup (node.right, hist.moveNumber)
 	      if (node.menu)
@@ -1687,20 +1665,49 @@ var BigHouse = (function() {
 		node.sequence.forEach (function (item) {
 		  hookup (item, hist.moveNumber)
 		})
-
-	      // if we have a series of cards connected by "Next" segues,
-	      // link them together so we can deal them all in one go
-	      if (node.left && node.right && node.left.node === node.right.node) {
-		node.nextInChain = node.left.node
-		if (node.left.hint === node.right.hint)
-		  node.hasNoChoice = true
-	      }
 	    })
+
+	    // process the moves received from the server, convert them to expansion trees
+	    var root
+	    if (hist.move) {
+	      function convertJsonMoveToExpansion (moveNode, parentExpansion, nextPop) {
+		var node = hist.text[moveNode.id]
+		var expansion = { creator: 'convertJsonMoveToExpansion',
+				  isHistory: true,
+				  node: node,
+				  label: moveNode.label,
+				  action: moveNode.action,
+				  parent: parentExpansion }
+		if (moveNode.children) {
+		  var revChildren = moveNode.children.slice(0).reverse()
+		  expansion.children = revChildren.map (function (child) {
+		    var childExpansion = convertJsonMoveToExpansion (child, expansion, nextPop)
+		    nextPop = childExpansion
+		    return childExpansion
+		  }).reverse()
+		  expansion.next = expansion.children[0]
+		} else if (bh.nodeExpansionIsPredictable(node) || typeof(moveNode.action) !== 'undefined')
+		  expansion.next = nextPop
+		else
+		  expansion.nextPop = nextPop
+		return expansion
+	      }
+	      root = convertJsonMoveToExpansion (hist.move, undefined, nextRoot)
+	    } else if (bh.currentExpansionNode && hist.moveNumber == bh.currentChoiceNode().move)
+	      root = bh.getExpansionRoot (bh.currentExpansionNode)
+	    else
+	      root = { creator: 'loadGameCards',
+		       node: hist.text[0],
+		       label: hist.text[0].label }
+	    newRootForMove[hist.moveNumber] = root
+	    nextRoot = root
+	    bh.getVisibleExpansion (root)  // expand new tree up to the first visible node
 	  })
 
 	  if (bh.currentExpansionNode) {
 	    var currentMove = bh.currentChoiceNode().move
-	    if (bh.rootForMove[currentMove] !== newRootForMove[currentMove]) {
+	    var currentRoot = bh.getExpansionRoot (bh.currentExpansionNode)
+	    if (currentRoot !== newRootForMove[currentMove]) {
 	      // we were part-way through a move when we got sent a fully-expanded move from the server.
 	      // hopefully, this was because we timed out, and sent a default move to the server,
 	      // in which case we are part-way through what the server just sent back to us.
@@ -1709,18 +1716,13 @@ var BigHouse = (function() {
 	      // either way, try to align our current partially-expanded tree with what we just got from the server,
 	      // and find the most recent point of departure.
 	      var serverNode = newRootForMove[currentMove]
-	      var ourNode = bh.rootForMove[currentMove]
-	      var serverNodeQueue = [], ourNodeQueue = []
+	      var ourNode = currentRoot
 	      while (true) {
 		if (ourNode === bh.currentExpansionNode || ourNode.action !== serverNode.action)
 		  break
-		if (serverNode.children) {
-		  serverNodeQueue = serverNode.children.concat (serverNodeQueue)
-		  ourNodeQueue = ourNode.children.concat (ourNodeQueue)
-		}
-		if (serverNodeQueue.length) {
-		  serverNode = serverNodeQueue.shift()
-		  ourNode = ourNodeQueue.shift()
+		if (ourNode.next) {
+		  ourNode = ourNode.next
+		  serverNode = serverNode.next
 		} else {
 		  // at this point we've crawled the entire tree without finding our node OR any mismatches
 		  // this shouldn't happen
@@ -1729,23 +1731,17 @@ var BigHouse = (function() {
 		}
 	      }
 	      bh.currentExpansionNode = serverNode
-	      bh.currentExpansionQueue = serverNodeQueue
-	      // queue up future moves from the server
-	      for (var n = currentMove + 1; n <= bh.moveNumber; ++n)
-		bh.currentExpansionQueue.push (newRootForMove[n])
 	    }
 	  } else {
-	    // we don't have any partly-expanded move, so just queue up all the server's moves
-	    bh.currentExpansionQueue = Object.keys(newRootForMove)
-	      .sort(function(a,b) { return a - b })
-	      .map(function(moveNum) { return newRootForMove[moveNum] })
-	    bh.currentExpansionNode = bh.currentExpansionQueue.shift()
+	    // we don't have any partly-expanded move, so just start at the beginning
+	    bh.currentExpansionNode = bh.getVisibleExpansion (nextRoot)
 	  }
 	  $.extend (bh.rootForMove, newRootForMove)  // merge the old move history with the newly received moves
+	  bh.saveGamePosition()
 
 	  // set up the deck
 	  var node = bh.currentExpansionNode.node
-	  var tossCurrent = bh.nodeIsWait(node) && bh.currentExpansionQueue.length
+	  var tossCurrent = node.wait && bh.currentExpansionNode.next
 	  bh.clearStack()
           
 	  var nextState = data.finished ? 'gameOver' : (data.waiting ? 'ready' : 'waitingForOther')
@@ -1787,9 +1783,7 @@ var BigHouse = (function() {
     },
 
     saveGamePosition: function() {
-      this.gamePosition[this.gameID] = { currentExpansionQueue: this.currentExpansionQueue,
-                                         currentExpansionNode: this.currentExpansionNode,
-					 currentExpansionRoot: this.rootForMove[this.moveNumber],
+      this.gamePosition[this.gameID] = { currentExpansionNode: this.currentExpansionNode,
                                          moveNumber: this.moveNumber }
     },
 
@@ -1815,9 +1809,9 @@ var BigHouse = (function() {
 
       // show hints
       var node = expansion.node
-      var isFinal = this.nodeIsFinal(node)
-      var leftHint = isFinal ? this.defaultBackHint : (node.left ? node.left.hint : this.defaultNextHint)
-      var rightHint = isFinal ? this.defaultBackHint : (node.right ? node.right.hint : this.defaultNextHint)
+      var isFinal = this.expansionIsFinal(expansion)
+      var leftHint = isFinal ? this.defaultBackHint : ((node.left && node.left.hint) || this.defaultNextHint)
+      var rightHint = isFinal ? this.defaultBackHint : ((node.right && node.right.hint) || this.defaultNextHint)
 
       leftHint = "← " + leftHint
       rightHint = rightHint + " →"
@@ -1863,8 +1857,9 @@ var BigHouse = (function() {
 
       var now = new Date(), nowTime = now.getTime()
       var jiggleTime = this.startline.getTime() + this.jiggleDelay
-      if (nowTime >= jiggleTime) {
-	var elem = $(this.currentExpansionNode.card.elem)
+      var card = this.currentExpansionNode.card
+      if (card && nowTime >= jiggleTime) {
+	var elem = $(card.elem)
         if (!elem.hasClass('thrown') && !elem.hasClass('waitcard'))
 	  elem.addClass('jiggle')
       }
@@ -1969,6 +1964,25 @@ var BigHouse = (function() {
       this.timerDiv.width(0)
     },
 
+    expansionIsInvisible: function (expansion) {
+      var node = expansion.node
+      return this.nodeExpansionIsPredictable(node)
+	&& (typeof(node.text) === 'undefined' || node.text === '')
+	&& (!node.wait || (expansion.next && expansion !== bh.currentExpansionNode))
+    },
+
+    nodeIsLeaf: function (node) {
+      return !(node.left || node.right || node.menu || node.sequence)
+    },
+
+    nodeHasNext: function (node) {
+      return node.left === node.right && !node.menu
+    },
+
+    nodeExpansionIsPredictable: function (node) {
+      return this.nodeIsLeaf(node) || this.nodeHasNext(node)
+    },
+
     makeSequenceExpansion: function (expansion) {
       var bh = this
       var node = expansion.node
@@ -1978,27 +1992,70 @@ var BigHouse = (function() {
                      node: seqNode.node,
 		     parent: expansion }
           })
+      var nextPop = expansion.nextPop
+      for (var n = children.length - 1; n >= 0; --n) {
+	children[n].nextPop = nextPop
+	nextPop = children[n]
+      }
       expansion.children = children
+      expansion.next = expansion.children[0]
+      delete expansion.nextPop
       return children
     },
 
     getNextExpansion: function (expansion, action) {
       var bh = this
       var node = expansion.node
-      var child = bh.nodeForAction (node, action)
-      expansion.action = action
-      if (node.nextInChain && expansion.children) {  // have we already expanded the next node?
-	if (!(node.nextInChain === child.node
-	      && expansion.children.length == 1
-	      && expansion.children[0].node === child.node))
-	  console.log("ERROR: dealing ahead got out of sync")
-	return expansion.children[0]
+
+      if (typeof(action) === 'undefined')
+	action = expansion.action
+      else {
+	if (typeof(expansion.action) !== 'undefined' && expansion.action !== action)
+	console.log("ERROR: tried to change the action of an already-expanded parse tree node (from " + expansion.action + " to " + action + ")")
+	expansion.action = action
       }
-      var childExpansion = { creator: 'getNextExpansion',
-			     node: child.node,
-			     parent: expansion }
-      expansion.children = [childExpansion]
+
+      var childExpansion
+      if (expansion.next)  // already expanded?
+	childExpansion = expansion.next
+      else if (node.sequence) {
+	var children = bh.makeSequenceExpansion(expansion)
+	childExpansion = children[0]
+      } else if ((node.left && node.right) || node.menu) {
+	var childLink = bh.linkForAction (node, action)
+	childExpansion = { creator: 'getNextExpansion',
+			   node: childLink.node,
+			   parent: expansion,
+			   nextPop: expansion.nextPop }
+	expansion.children = [childExpansion]
+	expansion.next = childExpansion
+	delete expansion.nextPop
+      } else {
+	childExpansion = expansion.nextPop
+	expansion.next = childExpansion
+	delete expansion.nextPop
+      }
+
+      // expand ahead if next expansion is predictable
+      // this allows the caller to skip invisible-but-predictable expansions
+      // it also allows the viewer to queue up predictable future cards
+      if (childExpansion && this.nodeExpansionIsPredictable(childExpansion.node))
+	this.getNextExpansion (childExpansion)
+
       return childExpansion
+    },
+
+    getNextVisibleExpansion: function (expansion, action) {
+      var nextExpansion = this.getNextExpansion (expansion, action)
+      while (nextExpansion && this.expansionIsInvisible(nextExpansion))
+	nextExpansion = nextExpansion.next
+      return nextExpansion
+    },
+
+    getVisibleExpansion: function (expansion) {
+      if (expansion && this.expansionIsInvisible(expansion))
+	expansion = this.getNextVisibleExpansion(expansion)
+      return expansion
     },
 
     makeSwipeFunction: function (expansion, dir) {
@@ -2008,34 +2065,22 @@ var BigHouse = (function() {
 	bh.lastSwipe = dir
 	bh.choiceDiv.empty()
 
-	var nextExpansion
-	if (typeof(expansion.action) !== 'undefined')
-	  nextExpansion = expansion.children && expansion.children[0]
-	else if (node.menu)
-	  nextExpansion = bh.getNextExpansion (expansion, bh.selectedMenuItem.n)
-	else if (node[dir])
-	  nextExpansion = bh.getNextExpansion (expansion, dir)
-	else if (bh.currentExpansionQueue.length)
-          nextExpansion = bh.currentExpansionQueue.shift()
+	var action = node.menu ? bh.selectedMenuItem.n : dir
+	var nextExpansion = bh.getNextVisibleExpansion (expansion, action)
+
+	bh.currentExpansionNode = nextExpansion
+	bh.saveGamePosition()
 
         if (nextExpansion) {
 	  var nextNode = nextExpansion.node
 	  function makeMove() {
-	    if (bh.nodeIsFinal(nextNode))
+	    if (bh.expansionIsFinal(nextExpansion))
 	      bh.makeMove (bh.moveNumber)
 	  }
 
-	  // handle this special case of dealing ahead into a sequence node...
-	  while (nextExpansion.dealt && nextExpansion.node.sequence)
-	    nextExpansion = nextExpansion.children[0]
-
-	  if (nextExpansion.dealt) {  // next card already dealt?
-            bh.setCurrentExpansion (nextExpansion)
-	    makeMove()
-	  } else
-	    bh.dealCardForNode ({ expansion: nextExpansion,
-				  showDealAnimation: true,
-                                  dealDirection: dir == 'right' ? 'left' : 'right' })
+	  bh.dealCardForNode ({ expansion: nextExpansion,
+				showDealAnimation: true,
+                                dealDirection: dir == 'right' ? 'left' : 'right' })
 	    .done (makeMove)
 
 	} else {
@@ -2048,10 +2093,9 @@ var BigHouse = (function() {
       }
     },
 
-    setCurrentExpansion: function (expansion) {
+    updateGameView: function() {
+      var expansion = this.currentExpansionNode
       var node = expansion.node
-      this.currentExpansionNode = expansion
-      this.saveGamePosition()
       this.newTopCard (expansion)
       this.refreshPlayerMoodImage()
       this.refreshOpponentMoodImage()
@@ -2059,6 +2103,11 @@ var BigHouse = (function() {
 	this.hideMoods()
       else
 	this.revealMoods()
+    },
+
+    getExpansionRoot: function (expansion) {
+      while (expansion.parent) expansion = expansion.parent
+      return expansion
     },
 
     currentChoiceNode: function() {
@@ -2073,31 +2122,15 @@ var BigHouse = (function() {
       this.container.removeClass ('history')
     },
 
-    nodeIsWait: function(node) {
-      return node.isLeaf && (this.currentExpansionQueue.length == 0 || this.currentExpansionQueue[0].node.move > node.move)
+    expansionIsFinal: function(expansion) {
+      return this.nodeIsLeaf(expansion.node) && !expansion.nextPop && !expansion.next
     },
 
-    nodeIsFinal: function(node) {
-      return node.isLeaf && this.currentExpansionQueue.length == 0
-    },
-
-    expandRandomly: function (expansion, queue) {
+    expandRandomly: function (expansion) {
       var bh = this
-      if (expansion.children)
-	expansion.children.forEach (function (childExpansion) {
-	  bh.expandRandomly (childExpansion, queue)
-	})
-      else {
-	var node = expansion.node
-	if (node.sequence)
-	  bh.makeSequenceExpansion(expansion).forEach (function (childExpansion) {
-	    bh.expandRandomly (childExpansion, queue)
-	  })
-	else if (node.isLeaf) {
-	  if (queue.length)
-	    bh.expandRandomly (queue.shift(), queue)
-	} else
-	  bh.expandRandomly (bh.getNextExpansion (expansion, bh.randomAction(node)), queue)
+      while (expansion) {
+	var action = typeof(expansion.action) !== 'undefined' ? expansion.action : bh.randomAction(expansion.node)
+	expansion = bh.getNextExpansion (expansion, action)
       }
     },
 
@@ -2109,37 +2142,27 @@ var BigHouse = (function() {
       return action
     },
 
-    nodeForAction: function(node,action) {
-      return node.menu ? node.menu[action] : node[action]
+    linkForAction: function(node,action) {
+      return node.next || (node.menu ? node.menu[action] : node[action])
     },
 
     dealCardForNode: function (info) {
       var bh = this
 
       var expansion = info.expansion
+      if (expansion.dealt) {
+	bh.updateGameView()
+	var dummyDef = $.Deferred()
+	dummyDef.resolve()
+	return dummyDef
+      }
       expansion.dealt = true
 
-      var node = expansion.node
-      if (node.sequence) {
-	var queued = expansion.children || bh.makeSequenceExpansion(expansion)
-	bh.currentExpansionQueue = queued.concat (bh.currentExpansionQueue)
-	info.expansion = bh.currentExpansionQueue.shift()
-	return bh.dealCardForNode(info)
-      }
-
-      var nextInChain = node.nextInChain
       var nextCardDealt
-      if (nextInChain) {
+      if (expansion.next) {
 	var nextInfo = {}
 	$.extend (nextInfo, info)
-	if (expansion.children)
-	  nextInfo.expansion = expansion.children[0]
-	else {
-	  nextInfo.expansion = { creator: 'nextInChain',
-				 node: nextInChain,
-				 parent: expansion }
-	  expansion.children = [nextInfo.expansion]
-	}
+	nextInfo.expansion = expansion.next
 	nextInfo.dealingAhead = true
 	nextCardDealt = bh.dealCardForNode (nextInfo)
       } else {
@@ -2147,13 +2170,17 @@ var BigHouse = (function() {
 	nextCardDealt.resolve()
       }
 
+      if (bh.expansionIsInvisible(expansion))
+	return nextCardDealt
+
       // text can override default cardClass, sfx
-      var text = node.text
+      var node = expansion.node
+      var text = node.text || (node.wait ? bh.defaultWaitText : bh.defaultAbsentText())
       var sfx, cardClass
-      if (expansion.isHistory)
-	cardClass = 'history'
-      else if (bh.nodeIsWait(node))
+      if (node.wait)
 	cardClass = 'waitcard'
+      else if (expansion.isHistory)
+	cardClass = 'history'
 
       text = text.replace (/<outcome:([^> ]+)>/g, function (match, outcomeVerb) {
 	cardClass = 'outcome'
@@ -2185,9 +2212,11 @@ var BigHouse = (function() {
       })
 
       text = text.replace (/<wait>/g, function() {
-	return (expansion.isHistory && !info.firstDealAfterCardsLoaded)
-	  ? "Time passes..."
-	  : ("Waiting for " + bh.opponentName + "...")
+	return expansion.node.finish
+	  ? "Game over"
+	  : ((expansion.isHistory && !info.firstDealAfterCardsLoaded)
+	     ? "Time passes..."
+	     : ("Waiting for " + bh.opponentName + "..."))
       })
 
       text = text.replace (/<label:(\S+?)>/g, function (match, label) {
@@ -2216,7 +2245,7 @@ var BigHouse = (function() {
 	node.menuLabel = []
 	var menuSelectCallback
 	node.menu.forEach (function (item, n) {
-	  var id = 'cardmenuitem' + n
+	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
           var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
           var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
@@ -2320,7 +2349,7 @@ var BigHouse = (function() {
 
       if (!info.dealingAhead)
 	cardDealt.done (function() {
-	  bh.setCurrentExpansion (expansion)
+	  bh.updateGameView()
 	})
 
       nextCardDealt.done (function() {
@@ -2521,7 +2550,7 @@ var BigHouse = (function() {
       this.setGameState ('sendingDefaultMove')
 
       // expand the remaining parse tree randomly
-      bh.expandRandomly (bh.currentExpansionNode, bh.currentExpansionQueue.slice(0))
+      bh.expandRandomly (bh.currentExpansionNode)
 
       if (this.verbose.messages)
 	console.log ("Making default move #" + this.moveNumber + ": " + JSON.stringify(this.jsonMove(this.moveNumber)))
@@ -2647,18 +2676,23 @@ var BigHouse = (function() {
       delete this.opponentMoodDiv
 
       delete this.moveNumber
-      delete this.currentExpansionQueue
       delete this.currentExpansionNode
       this.rootForMove = {}
       var gamePos = this.gamePosition[this.gameID]
       if (gamePos) {
         this.moveNumber = gamePos.moveNumber
-        this.currentExpansionQueue = gamePos.currentExpansionQueue
         this.currentExpansionNode = gamePos.currentExpansionNode
-	this.rootForMove[gamePos.moveNumber] = gamePos.currentExpansionRoot
+	this.clearViewCache (this.currentExpansionNode)
       }
 
       this.showGamePage()
+    },
+
+    clearViewCache: function (expansion) {
+      delete expansion.dealt
+      delete expansion.card
+      if (expansion.next)
+	this.clearViewCache (expansion.next)
     },
 
     // audio

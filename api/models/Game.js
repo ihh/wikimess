@@ -67,12 +67,12 @@ module.exports = {
     // player choices
     move1: {
       type: 'json',
-      defaultsTo: {}
+      defaultsTo: null
     },
 
     move2: {
       type: 'json',
-      defaultsTo: {}
+      defaultsTo: null
     },
 
     quit1: {

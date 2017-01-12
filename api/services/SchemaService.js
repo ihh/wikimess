@@ -152,17 +152,46 @@ var choiceSchema = {
 
 };
 
+
+var moveSchema = {
+  definitions: {
+    move: {
+      type: "object",
+      properties: {
+	id: { type: "number" },
+	action: { type: ["string","number"] },
+	children: {
+	  type: "array",
+	  items: { "$ref": "#/definitions/move" }
+	},
+	label: { type: "object" }
+      },
+      additionalProperties: "false"
+    }
+  },
+
+  "$ref": "#/definitions/move"
+};
+
 module.exports = {
-  validateChoice: function (data, errorCallback) {
+  validate: function (data, schema, name, errorCallback) {
     var validator = new JsonValidator()
-    var result = validator.validate (data, choiceSchema, {nestedErrors: true})
+    var result = validator.validate (data, schema, {nestedErrors: true})
     if (result.errors.length) {
       if (errorCallback) {
         var errs = result.errors.map (function (ve) { return ve.stack }).join("\n")
-        errorCallback (new Error ("Choice schema validation error:\n" + errs))
+        errorCallback (new Error (name + " schema validation error:\n" + errs))
       }
       return false
     }
     return true
+  },
+
+  validateChoice: function (data, errorCallback) {
+    return this.validate (data, choiceSchema, "Choice", errorCallback)
+  },
+
+  validateMove: function (data, errorCallback) {
+    return this.validate (data, moveSchema, "Move", errorCallback)
   }
 };
