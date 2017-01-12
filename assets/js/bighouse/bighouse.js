@@ -1857,11 +1857,13 @@ var BigHouse = (function() {
 
       var now = new Date(), nowTime = now.getTime()
       var jiggleTime = this.startline.getTime() + this.jiggleDelay
-      var card = this.currentExpansionNode.card
-      if (card && nowTime >= jiggleTime) {
-	var elem = $(card.elem)
-        if (!elem.hasClass('thrown') && !elem.hasClass('waitcard'))
-	  elem.addClass('jiggle')
+      if (this.currentExpansionNode && nowTime >= jiggleTime) {
+	var card = this.currentExpansionNode.card
+	if (card) {
+	  var elem = $(card.elem)
+          if (!elem.hasClass('thrown') && !elem.hasClass('waitcard'))
+	    elem.addClass('jiggle')
+	}
       }
 
       if (this.deadline) {
@@ -2220,11 +2222,11 @@ var BigHouse = (function() {
       })
 
       text = text.replace (/<label:(\S+?)>/g, function (match, label) {
-	return bh.expansionLabel (bh.rootForMove[node.move], label)
+	return bh.expansionLabel (expansion, label)
       })
 
       text = text.replace (/<choice>/g, function() {
-	return bh.expansionLabel (bh.rootForMove[node.move], 'choice')
+	return bh.expansionLabel (expansion, 'choice')
       })
 
       text = text.replace (/<<(.*?)>>/g, function (code) {
@@ -2242,26 +2244,40 @@ var BigHouse = (function() {
       // create the menu, if applicable
       if (node.menu) {
 	var fieldset = $('<fieldset class="cardmenu">')
-	node.menuLabel = []
+	expansion.menuLabel = []
 	var menuSelectCallback
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
-          var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
-          var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
-          fieldset
-	    .append (radioInput)
-	    .append (node.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">'))
-          if (itemStruck) {
-            radioInput.attr('disabled',true)
-            node.menuLabel[n].html ($('<strike>').text(item.hint))
-          } else
-            node.menuLabel[n].text(item.hint)
-	    .on('click',function() {
-	      bh.selectedMenuItem = item
-	      if (menuSelectCallback)
-		menuSelectCallback.call (bh, item, n)
-	    })
+	  var visible
+	  if (item.visible) {
+	    var $label = bh.expansionLabel.bind (bh, expansion)
+	    try {
+	      visible = eval(item.visible)
+            } catch (e) {
+              console.log ("When evaluating: " + item.visible)
+              console.log ("Error: " + e)
+	      visible = false
+            }
+	  } else
+	    visible = true
+	  if (visible) {
+            var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
+            var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
+            fieldset
+	      .append (radioInput)
+	      .append (expansion.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">'))
+            if (itemStruck) {
+              radioInput.attr('disabled',true)
+              expansion.menuLabel[n].html ($('<strike>').text(item.hint))
+            } else
+              expansion.menuLabel[n].text(item.hint)
+	      .on('click',function() {
+		bh.selectedMenuItem = item
+		if (menuSelectCallback)
+		  menuSelectCallback.call (bh, item, n)
+	      })
+	  }
 	})
 	content.push (fieldset)
 
@@ -2279,7 +2295,7 @@ var BigHouse = (function() {
         expansion.topCardCallback = function() {
           bh.choiceDiv.hide()
           bh.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
-          bh.menuLabel = node.menuLabel
+          bh.menuLabel = expansion.menuLabel
           if (typeof(expansion.action) !== 'undefined')
             bh.selectedMenuItem = node.menu[expansion.action]
           else
@@ -2580,14 +2596,15 @@ var BigHouse = (function() {
     },
 
     expansionLabel: function (expansion, label) {
-      var bh = this, s
+      var bh = this, s = ''
       if (expansion) {
-	s = (expansion.node && expansion.node.label && expansion.node.label[label]) || ''
-	if (expansion.children) s += expansion.children.map (function (child) {
-	  return bh.expansionLabel (child, label)
-	}).join('')
-      } else
-	s = ''
+	var e = bh.getExpansionRoot(expansion)
+	while (e) {
+	  s += (e.node && e.node.label && e.node.label[label]) || ''
+	  if (e === expansion) break
+	  e = e.next
+	}
+      }
       return s
     },
     

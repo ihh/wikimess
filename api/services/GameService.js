@@ -93,7 +93,8 @@ module.exports = {
       if (typeof(node) === 'undefined')
 	return undefined
       return { id: node.id,
-	       hint: node.hint }
+	       hint: node.hint,
+	       visible: node.visible }
     }
 
     function recurse (node) {

@@ -71,6 +71,7 @@
 		                          },
 		                          {
 		                            hint: 'Strawberry',
+					    visible: "$label('flavor') === ''",
 					    label: { flavor: ' strawberry' },
                                             text: 'Good choice!'
 		                          }] },
