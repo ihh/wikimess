@@ -162,19 +162,25 @@ module.exports = {
     } else if (typeof(text) == 'object') {
       var expanded
       if (text.expr)
-        expanded = GameService.expandTextString (text.expr, game, outcome, role, false, true)
+        expanded = GameService.expandTextExpr (expr, game, outcome, role)
       else
 	expanded = {}
+      if (text.rndmenu)
+	expanded.menu = this.expandRandomMenu (text.rndmenu, game, outcome, role)
       Object.keys(text).forEach (function (key) {
 	if (key == 'text' || typeof(text[key]) == 'object')
 	  expanded[key] = GameService.expandText (text[key], game, outcome, role, false)
-	else if (key != 'expr')
+	else if (!expanded.hasOwnProperty(key))
 	  expanded[key] = text[key]
       })
       return expanded
     }
 
     return this.expandTextString (text, game, outcome, role, !allowNonStringEvals)
+  },
+
+  expandTextExpr: function (expr, game, outcome, role) {
+    return this.expandTextString (expr, game, outcome, role, false, true)
   },
 
   expandTextString: function (text, game, outcome, role, coerceToString, treatAsExpr) {
@@ -270,6 +276,44 @@ module.exports = {
       .replace(/\$player2/g,game.player2.displayName)
       .replace(/\$self/g,self)
       .replace(/\$other/g,other)
+  },
+
+  expandRandomMenu: function (rndMenu, game, outcome, role) {
+    var menu = Array.prototype.concat.apply
+    ([],
+     text.rndmenu.groups.map (function (rndMenuGroup) {
+       var n = rndMenuGroup.n || 1
+       var weights = rndMenuGroup.opts.map (function (opt) {
+	 if (opt.weight)
+	   return Math.max (0, Number (GameService.expandTextExpr (opt.weight, game, outcome, role)))
+	 return 1
+       })
+       var opts = []
+       var totalWeight = weights.reduce (function (total, w) {
+	 return total + w
+       }, 0)
+       while (n > 0 && totalWeight > 0) {
+	 var w = totalWeight * Math.random()
+	 for (var i = 0; i < weights.length; ++i)
+	   if ((w -= weight[i]) <= 0) {
+	     opts.push (rndMenuGroup.opts[i].option)
+	     totalWeight -= weight[i]
+	     weight[i] = 0
+	     break
+	   }
+	 --n
+       }
+       return opts
+     }))
+    if (text.rndmenu.shuffle) {
+      for (var i = 0; i < menu.length - 1; ++i) {
+	var j = i + Math.floor (Math.random() * (menu.length - i))
+	var tmp = menu[i]
+	menu[i] = menu[j]
+	menu[j] = tmp
+      }
+     }
+    return menu
   },
   
   expandOutcomeText: function (text, game, outcome, role) {

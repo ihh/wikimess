@@ -345,6 +345,7 @@ module.exports = {
       })
   },
 
+  // pretty much duplicates code from GameService... ugh
   expandText: function (text, player, allowNonStringEvals) {
     if (!text)
       return []
@@ -362,7 +363,7 @@ module.exports = {
       Object.keys(text).forEach (function (key) {
 	if (key == 'text' || typeof(text[key]) == 'object')
 	  expanded[key] = LocationService.expandText (text[key], false)
-	else if (key != 'expr')
+	else if (!expanded.hasOwnProperty(key))
 	  expanded[key] = text[key]
       })
       return expanded
