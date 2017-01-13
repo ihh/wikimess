@@ -168,7 +168,8 @@ module.exports = {
       if (text.expr && typeof(role) !== 'undefined')
         expanded = GameService.evalTextExpr (expr, game, outcome, role)
       if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
-	expanded.menu = this.expandRandomMenu (text.randmenu, game, outcome, role)
+	expanded.menu = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
+                                                game, outcome, role)
       Object.keys(text).forEach (function (key) {
         if (!expanded.hasOwnProperty(key))
 	  expanded[key] = GameService.expandText (text[key], game, outcome, role)
