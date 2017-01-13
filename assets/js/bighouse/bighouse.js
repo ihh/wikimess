@@ -1818,7 +1818,7 @@ var BigHouse = (function() {
 
       // strike if we're history
       var leftStruck, rightStruck
-      if (typeof(expansion.action) !== 'undefined') {
+      if (typeof(expansion.action) !== 'undefined' && bh.nodeIsAsymmetric(expansion.node)) {
 	if (expansion.action === 'left')
 	  rightStruck = true
 	else
@@ -1981,6 +1981,10 @@ var BigHouse = (function() {
       return node.left === node.right && !node.menu
     },
 
+    nodeIsAsymmetric: function (node) {
+      return node.left && node.right && !(node.menu || node.next)
+    },
+    
     nodeExpansionIsPredictable: function (node) {
       return this.nodeIsLeaf(node) || this.nodeHasNext(node)
     },
@@ -2269,7 +2273,7 @@ var BigHouse = (function() {
 	      .append (expansion.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">'))
             if (itemStruck) {
               radioInput.attr('disabled',true)
-              expansion.menuLabel[n].html ($('<strike>').text(item.hint))
+              expansion.menuLabel[n].html ($('<strike>').text(item.hint).addClass('disabled'))
             } else
               expansion.menuLabel[n].text(item.hint)
 	      .on('click',function() {
@@ -2706,10 +2710,11 @@ var BigHouse = (function() {
     },
 
     clearViewCache: function (expansion) {
-      delete expansion.dealt
-      delete expansion.card
-      if (expansion.next)
+      if (expansion) {
+        delete expansion.dealt
+        delete expansion.card
 	this.clearViewCache (expansion.next)
+      }
     },
 
     // audio

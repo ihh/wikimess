@@ -23,22 +23,13 @@ var choiceSchema = {
         lx: { "$ref": "#/definitions/outcome_list" },
         xr: { "$ref": "#/definitions/outcome_list" },
         xl: { "$ref": "#/definitions/outcome_list" },
-        'r*': { "$ref": "#/definitions/outcome_list" },
-        'l*': { "$ref": "#/definitions/outcome_list" },
-        '*r': { "$ref": "#/definitions/outcome_list" },
-        '*l': { "$ref": "#/definitions/outcome_list" },
 
         notrr: { "$ref": "#/definitions/outcome_list" },
         notrl: { "$ref": "#/definitions/outcome_list" },
         notlr: { "$ref": "#/definitions/outcome_list" },
         notll: { "$ref": "#/definitions/outcome_list" },
-        '!rr': { "$ref": "#/definitions/outcome_list" },
-        '!rl': { "$ref": "#/definitions/outcome_list" },
-        '!lr': { "$ref": "#/definitions/outcome_list" },
-        '!ll': { "$ref": "#/definitions/outcome_list" },
 
         any: { "$ref": "#/definitions/outcome_list" },
-        '*': { "$ref": "#/definitions/outcome_list" },
 
         same: { "$ref": "#/definitions/outcome_list" },
         diff: { "$ref": "#/definitions/outcome_list" },
@@ -67,6 +58,7 @@ var choiceSchema = {
         move1: { type: "string" },
         move2: { type: "string" },
         weight: { type: ["string","number"] },
+        exclusive: { type: "boolean" },
         outro: { "$ref": "#/definitions/intro_list" },
         outro2: { "$ref": "#/definitions/intro_list" },
         next: { oneOf: [ { "$ref": "#/definitions/choice_ref" },
@@ -83,19 +75,7 @@ var choiceSchema = {
         mood1: { type: "string" },
         mood2: { type: "string" },
         verb1: { type: "string" },
-        verb2: { type: "string" },
-        l: { type: "object" },
-        g: { type: "object" },
-        m: { type: "string" },
-        v: { type: "string" },
-        l1: { type: "object" },
-        l2: { type: "object" },
-        g1: { type: "object" },
-        g2: { type: "object" },
-        m1: { type: "string" },
-        m2: { type: "string" },
-        v1: { type: "string" },
-        v2: { type: "string" }
+        verb2: { type: "string" }
       },
       additionalProperties: false
     },
@@ -113,6 +93,7 @@ var choiceSchema = {
                   hint: { type: "string" },
 		  visible: { type: "string" },
 		  expr: { type: "string" },
+		  symexpr: { type: "string" },
                   goto: { type: "string" }
                 },
                 additionalProperties: false
@@ -123,6 +104,7 @@ var choiceSchema = {
                   hint: { type: "string" },
 		  visible: { type: "string" },
 		  expr: { type: "string" },
+		  symexpr: { type: "string" },
                   label: { type: "object" },
                   sequence: { type: "#/definitions/intro_node_list" },
                   define: { type: "#/definitions/intro_node_list" }
@@ -136,50 +118,55 @@ var choiceSchema = {
                   hint: { type: "string" },
 		  visible: { type: "string" },
 		  expr: { type: "string" },
+		  symexpr: { type: "string" },
                   label: { type: "object" },
                   define: { type: "#/definitions/intro_node_list" },
                   left: { "$ref": "#/definitions/intro_node" },
                   right: { "$ref": "#/definitions/intro_node" },
                   next: { "$ref": "#/definitions/intro_node" },
                   menu: { type: "array", items: { "$ref": "#/definitions/intro_node" } },
-                  l: { "$ref": "#/definitions/intro_node" },
-                  r: { "$ref": "#/definitions/intro_node" },
-                  n: { "$ref": "#/definitions/intro_node" },
-                  t: { type: "string" },
-                  h: { type: "string" },
-                  c: { type: "string" },
 
-                  rndmenu: {
-		    type: "object",
-		    properties: {
-		      shuffle: { type: "boolean" },
-		      groups: {
-			type: "array",
-			items: {
-			  type: "object",
-			  properties: {
-			    n: { type: "number" },
-			    opts: {
-			      type: "array",
-			      items: {
-				type: "object",
-				properties: {
-				  weight: { type: "number" },
-				  option: { "$ref": "#/definitions/intro_node" }
-				}
-			      }
-			    }
-			  },
-			  additionalProperties: false
-			}
-		      }
-		    },
-		    required: ["groups"],
-		    additionalProperties: false
+                  randmenu: {
+                    oneOf: [{ type: "object",
+		              properties: {
+		                asymmetric: { type: "boolean" },
+		                shuffle: { type: "boolean" },
+		                cluster: { type: "boolean" },
+		                groups: { type: "array", items: { "$ref": "#/definitions/random_menu_group" } }
+		              },
+		              required: ["groups"],
+		              additionalProperties: false
+                            }]
 		  }
+                  
                 },
                 additionalProperties: false
               }]
+    },
+
+    random_menu_group: {
+      type: "object",
+      properties: {
+	n: { type: "number" },
+        shuffle: { type: "boolean" },  // defaults to same as outer randmenu.shuffle
+	opts: {
+	  type: "array",
+	  items: {
+            oneOf: [{ "$ref": "#/definitions/intro_node" },
+                    { type: "object",
+                      required: ["option"],
+	              properties: {
+	                weight: { type: "number" },
+	                exclusive: { type: "boolean" },  // defaults to true
+	                option: { "$ref": "#/definitions/intro_node" }
+	              },
+                      additionalProperties: false
+	            }]
+	  }
+        }
+      },
+      required: ["opts"],
+      additionalProperties: false
     }
   },
 

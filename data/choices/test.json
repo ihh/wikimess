@@ -1,7 +1,18 @@
 [
   {
     name: "root",
-    intro: [{ text: "Here we are on day {{($c.day||0)+1}} of school." },
+    intro: [{ text: "[Here [you|we] are on|Well, [this is|it's]|Looks [as though it's|like]|So [now|] it's|Heads up! [It's|This is] ] day {{($c.day||0)+1}} of {school|college|community college|WizCom|the academy}.",
+              randmenu: {
+                asymmetric: false,
+                shuffle: true,
+                cluster: true,
+                groups: [
+                  { n: 2, opts: [ { hint: "Cool" }, { hint: "Awesome" }, { hint: "Terrific" }, { hint: "Wonderful" } ] },
+                  { n: 2, opts: [ { hint: "Whatever" }, { hint: "Meh" }, { hint: "OK" }, { hint: "So what?" } ] },
+                  { n: 2, opts: [ { hint: "This sucks" }, { hint: "Groan" }, { hint: "I hate it" }, { hint: "It's awful" } ] }
+                ]
+              },
+            },
 	    {
 	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
@@ -22,7 +33,7 @@
 	  outro: [{ text: "Cool, let's skip class together!",
 		    next: { text: "Party times, by the beach...",
 			    next: { text: "Co-operation is great!" } } }],
-	  g1:{count:{c:"$+1"}},  // g1 is a synonym for global1, so this increments global1.count.c
+	  global1:{count:{c:"$+1"}},  // global1 is a synonym for global1, so this increments global1.count.c
           global2:{count:{c:"$+1"}},  // this increments global2.count.c
           common:{day:"++"}},  // increments common.day
          {weight:"!$c.iceCream",
@@ -35,7 +46,7 @@
                             text: "Party times, by the beach...",
 			    next: { text: "Co-operation is great!" } } }],
 	  global1:{count:{c:"$+1"}},  // increments global1.count.c
-          g2:{count:{c:"$+1"}},  // g2 is a synonym for global2, this increments global2.count.c
+          global2:{count:{c:"$+1"}},  // global2 is a synonym for global2, this increments global2.count.c
           common:{day:"++"},  // increments common.day
           next: {intro: { text: "Want to have an ice cream together?",
 			  left: { hint: "No",
@@ -89,15 +100,15 @@
           global1:{count:{c:"$+1"}},
           local2:{count:{d:"$+1"}},
           common:{day:"++"}},
-    ll: [{weight:"!($l1.count.d && $l2.count.d)",
+    ll: [{weight:"!($local1.count.d && $local2.count.d)",
           outro:"You and {{$no}} are a couple of goody two-shoes ;; Too bad!",
           local1:{count:{d:"$+1"}},  // increments local1.count.d
-          l2:{count:{d:"$+1"}},  // l2 is a synonym for local2, this increments local2.count.d
+          local2:{count:{d:"$+1"}},  // local2 is a synonym for local2, this increments local2.count.d
           next:"auto",
           common:{day:"++"}},  // increments common.day
-         {weight:"$l1.count.d && $l2.count.d",
+         {weight:"$local1.count.d && $local2.count.d",
           outro:"You both chicken out - AGAIN ;; This keeps happening!",
-          l1:{count:{d:"$+1"}},
+          local1:{count:{d:"$+1"}},
           local2:{count:{d:"$+1"}},
           next:"auto",
           common:{day:"++"}}]

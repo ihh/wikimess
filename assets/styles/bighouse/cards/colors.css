@@ -36,7 +36,3 @@
 .bighouse .cardbar .cardtable .cardmenu label {
     border-color: #aaa;
 }
-
-.bighouse .cardbar .cardtable .cardmenu label.disabled {
-    color: #eee;
-}

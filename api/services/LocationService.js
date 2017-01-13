@@ -345,7 +345,7 @@ module.exports = {
       })
   },
 
-  // pretty much duplicates code from GameService... ugh
+  // based on old code from GameService that has now been cleaned up, leaving this ugly... ugh
   expandText: function (text, player, allowNonStringEvals) {
     if (!text)
       return []

@@ -16,25 +16,6 @@ module.exports = {
 
     // keys for Choices and Outcomes
     var asymKeys = ['local', 'global', 'mood', 'verb']
-    var aliasKeys = { 'l': 'local',
-		      'g': 'global',
-		      'm': 'mood',
-                      'v': 'verb',
-		      'l1': 'local1',
-		      'l2': 'local2',
-		      'g1': 'global1',
-		      'g2': 'global2',
-		      'm1': 'mood1',
-		      'm2': 'mood2',
-                      'v1': 'verb1',
-                      'v2': 'verb2' }
-
-    // keys for intros/outros
-    var textAliasKeys = { 'l': 'left',
-			  'r': 'right',
-			  'n': 'next',
-			  't': 'text',
-			  'h': 'hint' }
 
     function makeText (text) {
       if (typeof(text) == 'undefined')
@@ -43,29 +24,10 @@ module.exports = {
 	return [{ text: text }]
       else if (!isArray(text))
 	text = [text]
-      text.forEach (function (obj) { expandTextAliases (obj) })
       return text
     }
 
-    function expandTextAliases (obj) {
-      Object.keys(obj).forEach (function (key) {
-	if (typeof(obj[key]) == 'object')
-	  expandTextAliases (obj[key])
-	else
-	  if (textAliasKeys[key]) {
-	    obj[textAliasKeys[key]] = obj[key]
-	    delete obj[key]
-	  }
-      })
-    }
-
     function expandAliases (obj) {
-      Object.keys(aliasKeys).forEach (function (key) {
-        if (obj.hasOwnProperty(key)) {
-          obj[aliasKeys[key]] = obj[key]
-          delete obj[key]
-        }
-      })
       asymKeys.forEach (function (key) {
         if (obj.hasOwnProperty(key)) {
           // various ways of specifying asymmetric things
@@ -107,10 +69,6 @@ module.exports = {
 
     var outcomeAdder = {}
     var addOutcomes = function (tag, adders) {
-      if (isArray(tag)) {
-        tag.forEach (function(t) { addOutcomes(t,adders) })
-        return
-      }
       outcomeAdder[tag] = function() {
         var outs = config[tag]
         if (!isArray(outs))
@@ -184,24 +142,24 @@ module.exports = {
     addOutcomes ('rl', [add_rl])
     addOutcomes ('rr', [add_rr])
 
-    addOutcomes (['r*','rx'], [add_rr, add_rl])
-    addOutcomes (['l*','lx'], [add_lr, add_ll])
-    addOutcomes (['*r','xr'], [add_rr, add_lr])
-    addOutcomes (['*l','xl'], [add_rl, add_ll])
+    addOutcomes ('rx', [add_rr, add_rl])
+    addOutcomes ('lx', [add_lr, add_ll])
+    addOutcomes ('xr', [add_rr, add_lr])
+    addOutcomes ('xl', [add_rl, add_ll])
 
-    addOutcomes (['!rr','notrr'], [add_rl, add_lr, add_ll])
-    addOutcomes (['!rl','notrl'], [add_rr, add_lr, add_ll])
-    addOutcomes (['!lr','notlr'], [add_rr, add_rl, add_ll])
-    addOutcomes (['!ll','notll'], [add_rr, add_rl, add_lr])
+    addOutcomes ('notrr', [add_rl, add_lr, add_ll])
+    addOutcomes ('notrl', [add_rr, add_lr, add_ll])
+    addOutcomes ('notlr', [add_rr, add_rl, add_ll])
+    addOutcomes ('notll', [add_rr, add_rl, add_lr])
 
-    addOutcomes (['*','any'], [add_rr, add_rl, add_lr, add_ll])
+    addOutcomes ('any', [add_rr, add_rl, add_lr, add_ll])
 
     addOutcomes ('same', [add_rr, add_ll])
     addOutcomes ('diff', [add_rl, add_lr])
-    addOutcomes (['rl2'], [add_rl, add_flipped_lr])
-    addOutcomes (['lr2'], [add_lr, add_flipped_rl])
+    addOutcomes ('rl2', [add_rl, add_flipped_lr])
+    addOutcomes ('lr2', [add_lr, add_flipped_rl])
 
-    addOutcomes (['auto'], [add_auto])
+    addOutcomes ('auto', [add_auto])
 
     addOutcomes ('outcome', [add])
     addOutcomes ('effect', [add_nonexclusive])

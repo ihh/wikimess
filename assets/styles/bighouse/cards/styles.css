@@ -71,6 +71,10 @@
     border-bottom-right-radius: 4px;
 }
 
+.bighouse .cardbar .cardtable .cardmenu label .disabled {
+    opacity: .5;
+}
+
 .bighouse .cardbar .cardtable .cardmenu input[type="radio"] {
     display: none;
 }

@@ -151,48 +151,35 @@ module.exports = {
     return nodeList
   },
 
-  expandText: function (text, game, outcome, role, allowNonStringEvals) {
+  expandText: function (text, game, outcome, role) {
     if (!text)
       return []
 
     if (isArray(text)) {
       return text.map (function (t) {
-        return GameService.expandText (t, game, outcome, role, false)
+        return GameService.expandText (t, game, outcome, role)
       })
     } else if (typeof(text) == 'object') {
-      var expanded
-      if (text.expr)
-        expanded = GameService.expandTextExpr (expr, game, outcome, role)
-      else
-	expanded = {}
-      if (text.rndmenu)
-	expanded.menu = this.expandRandomMenu (text.rndmenu, game, outcome, role)
+      var expanded = {}
+      if (text.symexpr && typeof(role) === 'undefined')
+        expanded = GameService.evalTextExpr (symexpr, game, outcome, role)
+      if (text.expr && typeof(role) !== 'undefined')
+        expanded = GameService.evalTextExpr (expr, game, outcome, role)
+      if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
+	expanded.menu = this.expandRandomMenu (text.randmenu, game, outcome, role)
       Object.keys(text).forEach (function (key) {
 	if (key == 'text' || typeof(text[key]) == 'object')
-	  expanded[key] = GameService.expandText (text[key], game, outcome, role, false)
+	  expanded[key] = GameService.expandText (text[key], game, outcome, role)
 	else if (!expanded.hasOwnProperty(key))
 	  expanded[key] = text[key]
       })
       return expanded
     }
 
-    return this.expandTextString (text, game, outcome, role, !allowNonStringEvals)
+    return this.expandTextString (text, game, outcome, role)
   },
 
-  expandTextExpr: function (expr, game, outcome, role) {
-    return this.expandTextString (expr, game, outcome, role, false, true)
-  },
-
-  expandTextString: function (text, game, outcome, role, coerceToString, treatAsExpr) {
-    var self, other
-    if (role == 1) {
-      self = game.player1.displayName
-      other = game.player2.displayName
-    } else {
-      self = game.player2.displayName
-      other = game.player1.displayName
-    }
-
+  evalTextExpr: function (expr, game, outcome, role) {
     var $c = game.common,
         $g1 = game.player1.global,
         $inv1 = $g1.inv,
@@ -213,19 +200,28 @@ module.exports = {
         $local1 = $l1,
         $local2 = $l2,
         $name1 = $n1,
-        $name2 = $n2,
+        $name2 = $n2
 
-        $g = role == 1 ? $g1 : $g2,
-        $inv = role == 1 ? $inv1 : $inv2,
-        $l = role == 1 ? $l1 : $l2,
-        $n = role == 1 ? $n1 : $n2,
-        $id = role == 1 ? $id1 : $id2,
-        
-        $go = role == 1 ? $g2 : $g1,
-        $invo = role == 1 ? $inv2 : $inv1,
-        $lo = role == 1 ? $l2 : $l1,
-        $no = role == 1 ? $n2 : $n1,
-        $ido = role == 1 ? $id2 : $id1
+    var $g, $inv, $l, $n, $id,
+        $go, $invo, $lo, $no, $ido,
+        $p, $po
+
+    if (typeof(role) !== 'undefined') {
+      $p = role == 1 ? $p1 : $p2
+      $po = role == 1 ? $p2 : $p1
+
+      $g = $p.global
+      $inv = $g.inv
+      $l = Game.getRoleAttr (game, role, 'local')
+      $n = $p.displayName
+      $id = $p.id
+
+      $go = $po.global
+      $invo = $go.inv
+      $lo = Game.getOtherRoleAttr (game, role, 'local')
+      $no = $po.displayName
+      $ido = $po.id
+    }
 
     var $current, $src, $next, $dest
     if (outcome) {
@@ -236,88 +232,115 @@ module.exports = {
       $current = game.current.name
     }
 
-    if (!coerceToString) {
-      var expr
-      if (treatAsExpr)
-	expr = text
-      else {
-	// if entire string matches {{...}} then expand as an expression without coercing to string
-	var braceRegex = /\s*\{\{(.*?)\}\}\s*/;
-	var braceMatch = braceRegex.exec(text)
-	if (braceMatch && braceMatch[0].length == text.length)
-	  expr = braceMatch[1]
-      }
-      if (expr) {
-        var val = ''
-        try {
-          val = eval(expr)
-        } catch (e) {
-          sails.log.debug ("When evaluating: " + braceMatch[1])
-          sails.log.debug ("Error: " + e)
-          // do nothing, ignore undefined values and other errors in eval()
-        }
-        return val
-      }
+    var val
+    try {
+      val = eval(expr)
+    } catch (e) {
+      sails.log.debug ("When evaluating: " + braceMatch[1])
+      sails.log.debug ("Error: " + e)
+      // do nothing, ignore undefined values and other errors in eval()
     }
-    
-    return text
-      .replace (/\{\{(.*?)\}\}/g, function (match, expr) {
-        var val
-        try {
-          val = eval(expr)
-        } catch (e) {
-          sails.log.debug ("When evaluating: " + expr)
-          sails.log.debug ("Error: " + e)
-          // do nothing, ignore undefined values and other errors in eval()
-        }
-        return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
-      })
-      .replace(/\$player1/g,game.player1.displayName)
-      .replace(/\$player2/g,game.player2.displayName)
-      .replace(/\$self/g,self)
-      .replace(/\$other/g,other)
+
+    return val
   },
 
-  expandRandomMenu: function (rndMenu, game, outcome, role) {
-    var menu = Array.prototype.concat.apply
-    ([],
-     text.rndmenu.groups.map (function (rndMenuGroup) {
-       var n = rndMenuGroup.n || 1
-       var weights = rndMenuGroup.opts.map (function (opt) {
-	 if (opt.weight)
-	   return Math.max (0, Number (GameService.expandTextExpr (opt.weight, game, outcome, role)))
-	 return 1
-       })
-       var opts = []
-       var totalWeight = weights.reduce (function (total, w) {
-	 return total + w
-       }, 0)
-       while (n > 0 && totalWeight > 0) {
-	 var w = totalWeight * Math.random()
-	 for (var i = 0; i < weights.length; ++i)
-	   if ((w -= weight[i]) <= 0) {
-	     opts.push (rndMenuGroup.opts[i].option)
-	     totalWeight -= weight[i]
-	     weight[i] = 0
-	     break
-	   }
-	 --n
-       }
-       return opts
-     }))
-    if (text.rndmenu.shuffle) {
-      for (var i = 0; i < menu.length - 1; ++i) {
-	var j = i + Math.floor (Math.random() * (menu.length - i))
-	var tmp = menu[i]
-	menu[i] = menu[j]
-	menu[j] = tmp
-      }
-     }
+  expandTextString: function (text, game, outcome, role) {
+    function evalReplace (match, expr) {
+      var val = GameService.evalTextExpr (expr, game, outcome, role)
+      return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
+    }
+
+    if (typeof(role) === 'undefined') {
+      text = GameService.replaceAll (text, '\\[', '\\]', game, outcome, role)
+      text = text.replace(/\$player1/g,game.player1.displayName)
+      text = text.replace(/\$player2/g,game.player2.displayName)
+    } else {
+      text = GameService.replaceAll (text, '{', '}', game, outcome, role)
+      text = text.replace(/\$self/g,Game.getRoleAttr(game,role,'player').displayName)
+      text = text.replace(/\$other/g,Game.getOtherRoleAttr(game,role,'player').displayName)
+    }
+    return text
+  },
+
+  replaceAll: function (text, lb, rb, game, outcome, role) {
+    var evalRegex = new RegExp (lb + lb + "(.*?)" + rb + rb, 'g')
+    var optRegex = new RegExp (lb + "([^" + lb + rb + "]*?\|[^" + lb + rb + "]*?)" + rb)
+    function evalReplace (match, expr) {
+      var val = GameService.evalTextExpr (expr, game, outcome, role)
+      return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
+    }
+    var foundOptRegex
+    function randomOption (_match, optionList) {
+      foundOptRegex = true
+      var options = optionList.split('|')
+      return options[Math.floor (Math.random() * options.length)]
+    }
+    text = text.replace (evalRegex, evalReplace)
+    do {
+      foundOptRegex = false
+      text = text.replace (optRegex, randomOption)
+    } while (foundOptRegex)
+    return text
+  },
+  
+  expandRandomMenu: function (randMenu, game, outcome, role) {
+    var groups = randMenu.groups.map (function (group) {
+      var opts = GameService.expandRandomMenuGroup (group, game, outcome, role)
+      if (group.shuffle || (randMenu.shuffle && randMenu.cluster && (group.shuffle !== false)))
+        GameService.knuthShuffle (opts)
+      return opts
+    })
+    if (randMenu.shuffle && randMenu.cluster)
+      GameService.knuthShuffle (groups)
+    var menu = Array.prototype.concat.apply ([], groups)
+    if (randMenu.shuffle && !randMenu.cluster)
+      GameService.knuthShuffle (menu)
     return menu
+  },
+
+  expandRandomMenuGroup: function (group, game, outcome, role) {
+    var n = group.n || 1
+    var opts = group.opts.map (function (opt) {
+      return opt.option ? opt : { option: opt }
+    })
+    var keep = new Array(opts.length).fill(false)
+    var weights = opts.map (function (opt, i) {
+      if (opt.exclusive === false) {
+        if (keep[i] = (Math.random() < opt.weight))
+          --n
+        return 0
+      } else if (opt.weight)
+	return Math.max (0, Number (GameService.expandTextExpr (opt.weight, game, outcome, role)))
+      return 1
+    })
+    var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
+    while (n > 0 && totalWeight > 0) {
+      var w = totalWeight * Math.random()
+      for (var i = 0; i < weights.length; ++i)
+	if ((w -= weights[i]) <= 0) {
+          keep[i] = true
+	  totalWeight -= weights[i]
+	  weights[i] = 0
+	  break
+	}
+      --n
+    }
+    return opts
+      .filter (function (opt, i) { return keep[i] })
+      .map (function (opt) { return opt.option })
+  },
+
+  knuthShuffle: function (array) {
+    for (var i = 0; i < array.length - 1; ++i) {
+      var j = i + Math.floor (Math.random() * (array.length - i))
+      var tmp = array[i]
+      array[i] = array[j]
+      array[j] = tmp
+    }
   },
   
   expandOutcomeText: function (text, game, outcome, role) {
-    var outro = GameService.expandText (text, game, outcome, role, true)
+    var outro = GameService.expandText (text, game, outcome, role)
     var verb = Outcome.outcomeVerb (game, outcome, role)
     if (verb.length) {
       if (outro.length == 0)
@@ -540,8 +563,10 @@ module.exports = {
     game.player1.global = p1global
     game.player2.global = p2global
 
-    game.tree1 = game.tree1.concat (GameService.expandText (choice.intro, game, null, 1, true))
-    game.tree2 = game.tree2.concat (GameService.expandText (choice.intro2 || choice.intro, game, null, 2, true))
+    var firstPassIntro = GameService.expandText (choice.intro, game, null)
+    var firstPassIntro2 = choice.intro2 ? GameService.expandText (choice.intro2, game, null) : firstPassIntro
+    game.tree1 = game.tree1.concat (GameService.expandText (firstPassIntro, game, null, 1))
+    game.tree2 = game.tree2.concat (GameService.expandText (firstPassIntro2 || choice.intro, game, null, 2))
 
     // auto-expand or update
     if (choice.autoexpand)
@@ -586,8 +611,10 @@ module.exports = {
 	   game.player1.global = p1global
 	   game.player2.global = p2global
 
-	   game.tree1 = game.tree1.concat (GameService.expandOutcomeText (outcome.outro, game, outcome, 1))
-	   game.tree2 = game.tree2.concat (GameService.expandOutcomeText (outcome.outro2 || outcome.outro, game, outcome, 2))
+           var firstPassOutro = GameService.expandText (outcome.outro, game, outcome)
+           var firstPassOutro2 = outcome.outro2 ? GameService.expandText (outcome.outro2, game, outcome) : firstPassOutro
+	   game.tree1 = game.tree1.concat (GameService.expandOutcomeText (firstPassOutro, game, outcome, 1))
+	   game.tree2 = game.tree2.concat (GameService.expandOutcomeText (firstPassOutro2, game, outcome, 2))
 	 })
 
 	 game.move1 = game.move2 = null
