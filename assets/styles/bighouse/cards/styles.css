@@ -75,6 +75,10 @@
     opacity: .5;
 }
 
+.bighouse .cardbar .cardtable .cardmenu label span {
+    justify-content: center;
+}
+
 .bighouse .cardbar .cardtable .cardmenu input[type="radio"] {
     display: none;
 }

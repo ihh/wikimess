@@ -1955,11 +1955,26 @@ var BigHouse = (function() {
             firstChimeTime = endTime - 1000 * nChimes
 	if (nowTime >= firstChimeTime && nowTime < endTime) {
           var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
+          this.timerPulseElement().css ('opacity', opacity)
           if (!this.lastChimeTime || nowTime >= this.lastChimeTime + 1000)
             this.playSound ('timewarning')
           this.lastChimeTime = firstChimeTime + (1000 * Math.floor ((nowTime - firstChimeTime) / 1000))
 	}
       }
+    },
+
+    timerPulseElement: function() {
+      var pulseElement
+      if (this.currentChoiceNode().menu) {
+        var idx = this.selectedMenuItem ? this.selectedMenuItem.n : this.nextRandomAction(this.currentExpansionNode)
+	pulseElement = this.currentExpansionNode.menuLabel[idx]
+      } else if (this.nodeExpansionIsPredictable (this.currentChoiceNode()))
+	pulseElement = $('.choice1,.choice2').find(':visible')
+      else {
+	var choiceClass = this.nextRandomAction(this.currentExpansionNode) == 'left' ? 'choice1' : 'choice2'
+	pulseElement = $('.'+choiceClass).find(':visible')
+      }
+      return pulseElement
     },
 
     hideTimer: function() {
@@ -2135,16 +2150,21 @@ var BigHouse = (function() {
     expandRandomly: function (expansion) {
       var bh = this
       while (expansion) {
-	var action = typeof(expansion.action) !== 'undefined' ? expansion.action : bh.randomAction(expansion.node)
+	var action = typeof(expansion.action) !== 'undefined' ? expansion.action : bh.nextRandomAction(expansion)
 	expansion = bh.getNextExpansion (expansion, action)
       }
     },
 
-    randomAction: function (node) {
-      if (node.menu)
-	action = Math.floor (Math.random() * node.menu.length)
+    nextRandomAction: function (expansion) {
+      if (expansion.action)
+        return expansion.action
+      if (expansion.nextRandomAction)
+        return expansion.nextRandomAction
+      if (expansion.node.menu)
+	action = Math.floor (Math.random() * expansion.node.menu.length)
       else
 	action = Math.random() < .5 ? 'left' : 'right'
+      expansion.nextRandomAction = action
       return action
     },
 
@@ -2259,7 +2279,8 @@ var BigHouse = (function() {
             var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
             fieldset
 	      .append (radioInput)
-	      .append (expansion.menuLabel[n] = $('<label for="'+id+'" class="cardmenulabel">'))
+	      .append ($('<label for="'+id+'" class="cardmenulabel">')
+                       .append (expansion.menuLabel[n] = $('<span>')))
             if (itemStruck) {
               radioInput.attr('disabled',true)
               expansion.menuLabel[n].html ($('<strike>').text(item.hint).addClass('disabled'))
@@ -2288,7 +2309,6 @@ var BigHouse = (function() {
         expansion.topCardCallback = function() {
           bh.choiceDiv.hide()
           bh.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
-          bh.menuLabel = expansion.menuLabel
           if (typeof(expansion.action) !== 'undefined')
             bh.selectedMenuItem = node.menu[expansion.action]
           else
@@ -2297,7 +2317,6 @@ var BigHouse = (function() {
       } else  // not a menu card
         expansion.topCardCallback = function() {
           // none of this is strictly necessary except to prevent stray properties sitting around
-          delete bh.menuLabel
 	  delete bh.throwDisabled
 	  delete bh.selectedMenuItem
 	  bh.choiceDiv.show()
