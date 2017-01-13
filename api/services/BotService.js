@@ -8,46 +8,55 @@ module.exports = {
     return move
   },
 
-  randomExpansion: function (text, id, cumulativeLabel) {
+  addLabel: function (x, y) {
+    return typeof(x) === 'undefined' ? y : (x + y)
+  },
+  
+  randomExpansion: function (text, id, labelAccum) {
     var exp = { id: id }
     var node = text[id]
     if (node) {
-      if (node.label) {
-	exp.label = node.label
-	Object.keys(node.label).forEach (function (lab) {
-	  cumulativeLabel[lab] = (cumulativeLabel[lab] || '') + node.label[lab]
-	})
+
+      var $label = function (lab) { return labelAccum[lab] }
+      function evalExpansionExpr (expr, failureVal) {
+        var val
+	try {
+	  val = eval(expr)
+        } catch (e) {
+          sails.log.debug ("When evaluating: " + expr)
+          sails.log.debug ("Error: " + e)
+	  val = failureVal
+	}
+        return val
       }
+
+      exp.label = node.label || {}
+      if (node.labelexpr)
+	Object.keys(node.labelexpr).forEach (function (lab) {
+	  exp.label[lab] = evalExpansionExpr (node.labelexpr[lab])
+	})
+      Object.keys(exp.label).forEach (function (lab) {
+	labelAccum[lab] = BotService.addLabel (labelAccum[lab], exp.label[lab])
+      })
+
       if (node.sequence)
 	exp.children = node.sequence.map (function (child) {
-	  return BotService.randomExpansion (text, child.id, cumulativeLabel)
+	  return BotService.randomExpansion (text, child.id, labelAccum)
 	})
       else if (node.menu) {
-	var $label = function (lab) { return cumulativeLabel[lab] }
 	var visibleMenuItems = node.menu.filter (function (item, n) {
 	  item.n = n
-	  var visible
-	  if (item.visible) {
-	    try {
-	      visible = eval(item.visible)
-            } catch (e) {
-              sails.log.debug ("When evaluating: " + item.visible)
-              sails.log.debug ("Error: " + e)
-	      visible = false
-	    }
-	  } else
-	    visible = true
-	  return visible
+	  return item.visible ? evalExpansionExpr(item.visible,false) : true
 	})
 	if (visibleMenuItems.length) {
 	  exp.action = visibleMenuItems[Math.floor (Math.random() * visibleMenuItems.length)].n
-	  exp.children = [BotService.randomExpansion (text, node.menu[exp.action].id, cumulativeLabel)]
+	  exp.children = [BotService.randomExpansion (text, node.menu[exp.action].id, labelAccum)]
 	}
       } else if (node.next) {
-	exp.children = [BotService.randomExpansion (text, node.next.id, cumulativeLabel)]
+	exp.children = [BotService.randomExpansion (text, node.next.id, labelAccum)]
       } else if (node.left && node.right) {
 	exp.action = Math.random() < .5 ? 'left' : 'right'
-	exp.children = [BotService.randomExpansion (text, node[exp.action].id, cumulativeLabel)]
+	exp.children = [BotService.randomExpansion (text, node[exp.action].id, labelAccum)]
       }
     }
     return exp

@@ -2,6 +2,7 @@
   {
     name: "root",
     intro: [{ text: "<<Here <<you|we>> are on|Well, <<this is|it's>>|Looks <<as though it's|like>>|So <<now|>> it's|Heads up! <<It's|This is>>>> day {{($c.day||0)+1}} of #<school|college|community college|WizCom|the academy>#.",
+              label: { x: "{{($c.day||0)+1}}" },  // test of server-side code evaluation in labels
               randmenu: {
                 asymmetric: false,
                 shuffle: true,
@@ -13,8 +14,11 @@
                 ]
               },
             },
+            {
+              labelexpr: { y: "$label('x')" }  // test of empty intro node & labelexpr
+            },
 	    {
-	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
+	      text: "On day [[$label('y')]], $other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
 		hint: "Rat them out",
 		label: { move: "l" },
@@ -82,7 +86,7 @@
 		                          },
 		                          {
 		                            hint: 'Strawberry',
-					    visible: "$label('flavor') === ''",
+					    visible: "!$label('flavor')",
 					    label: { flavor: ' strawberry' },
                                             text: 'Good choice!'
 		                          }] },

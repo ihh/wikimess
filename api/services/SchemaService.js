@@ -106,6 +106,7 @@ var choiceSchema = {
 		  expr: { type: "string" },
 		  symexpr: { type: "string" },
                   label: { type: "object" },
+                  labelexpr: { type: "object" },
                   sequence: { type: "#/definitions/intro_node_list" },
                   define: { type: "#/definitions/intro_node_list" }
                 },
@@ -120,6 +121,7 @@ var choiceSchema = {
 		  expr: { type: "string" },
 		  symexpr: { type: "string" },
                   label: { type: "object" },
+                  labelexpr: { type: "object" },
                   define: { type: "#/definitions/intro_node_list" },
                   left: { "$ref": "#/definitions/intro_node" },
                   right: { "$ref": "#/definitions/intro_node" },

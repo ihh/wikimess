@@ -2229,12 +2229,12 @@ var BigHouse = (function() {
 	return bh.expansionLabel (expansion, label)
       })
 
-      text = text.replace (/<choice>/g, function() {
-	return bh.expansionLabel (expansion, 'choice')
+      text = text.replace (/<move>/g, function() {
+	return bh.expansionLabel (expansion, 'move')
       })
 
-      text = text.replace (/<<(.*?)>>/g, function (code) {
-	return eval (code)
+      text = text.replace (/\[\[(.*?)\]\]/g, function (expr) {
+	return bh.evalExpansionExpr (expansion, expr, '')
       })
 
       // create the <span>'s
@@ -2253,18 +2253,7 @@ var BigHouse = (function() {
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
-	  var visible
-	  if (item.visible) {
-	    var $label = bh.expansionLabel.bind (bh, expansion)
-	    try {
-	      visible = eval(item.visible)
-            } catch (e) {
-              console.log ("When evaluating: " + item.visible)
-              console.log ("Error: " + e)
-	      visible = false
-            }
-	  } else
-	    visible = true
+	  var visible = item.visible ? bh.evalExpansionExpr(expansion,item.visible,false) : true
 	  if (visible) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
             var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
@@ -2591,27 +2580,59 @@ var BigHouse = (function() {
       var bh = this
       var jm = { action: expansion.action }
       if (expansion.node) {
-	jm.id = expansion.node.id
-	if (expansion.node.label) jm.label = expansion.node.label
+        var node = expansion.node
+	jm.id = node.id
+        jm.label = node.label || {}
+	if (node.labelexpr)
+          Object.keys(node.labelexpr).forEach (function (lab) {
+	    jm.label[lab] = bh.evalExpansionExpr (expansion, node.labelexpr[lab])
+	  })
       }
       if (expansion.children && expansion.children.length)
 	jm.children = expansion.children.map (function (child) { return bh.jsonExpansion(child) })
       return jm
     },
 
+    addLabel: function (x, y) {
+      return typeof(x) === 'undefined' ? y : (x + y)
+    },
+
     expansionLabel: function (expansion, label) {
-      var bh = this, s = ''
+      var bh = this, s
       if (expansion) {
 	var e = bh.getExpansionRoot(expansion)
 	while (e) {
-	  s += (e.node && e.node.label && e.node.label[label]) || ''
+          var expr
+          if (e.node) {
+            var l = undefined
+            if (e.node.labelexpr && e.node.labelexpr[label])
+              l = bh.evalExpansionExpr(e,e.node.labelexpr[label])
+            else if (e.node.label && e.node.label[label])
+	      l = e.node.label[label]
+            if (l)
+	      s = bh.addLabel (s, l)
+          }
 	  if (e === expansion) break
 	  e = e.next
 	}
       }
       return s
     },
-    
+
+    evalExpansionExpr: function (expansion, expr, failureVal) {
+      var bh = this
+      var $label = bh.expansionLabel.bind (bh, expansion)
+      var val
+      try {
+	val = eval(expr)
+      } catch (e) {
+        console.log ("When evaluating: " + expr)
+        console.log ("Error: " + e)
+	val = failureVal
+      }
+      return val
+    },
+
     changeMoodFunction: function (moveNumber, mood) {
       var bh = this
       return function() {

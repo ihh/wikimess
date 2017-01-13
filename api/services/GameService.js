@@ -10,6 +10,8 @@ function isArray (obj) {
 module.exports = {
 
   buildTextTree: function (texts, game) {
+    texts = texts.filter (function (node) { return node })  // filter out nulls
+    
     // build name index
     var nodeByName = {}
     texts.forEach (function (tree, nTree) {
@@ -118,6 +120,7 @@ module.exports = {
       
       node.id = nodeList.length
       var descriptor = { label: node.label,
+                         labelexpr: node.labelexpr,
                          text: node.text }
       nodeList.push (descriptor)
 
@@ -153,13 +156,12 @@ module.exports = {
 
   expandText: function (text, game, outcome, role) {
     if (!text)
-      return []
-
-    if (isArray(text)) {
+      return text
+    else if (isArray(text)) {
       return text.map (function (t) {
         return GameService.expandText (t, game, outcome, role)
       })
-    } else if (typeof(text) == 'object') {
+    } else if (typeof(text) === 'object') {
       var expanded = {}
       if (text.symexpr && typeof(role) === 'undefined')
         expanded = GameService.evalTextExpr (symexpr, game, outcome, role)
@@ -168,15 +170,14 @@ module.exports = {
       if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
 	expanded.menu = this.expandRandomMenu (text.randmenu, game, outcome, role)
       Object.keys(text).forEach (function (key) {
-	if (key == 'text' || typeof(text[key]) == 'object')
+        if (!expanded.hasOwnProperty(key))
 	  expanded[key] = GameService.expandText (text[key], game, outcome, role)
-	else if (!expanded.hasOwnProperty(key))
-	  expanded[key] = text[key]
       })
       return expanded
-    }
+    } else if (typeof(text) === 'string')
+      return this.expandTextString (text, game, outcome, role)
 
-    return this.expandTextString (text, game, outcome, role)
+    return text
   },
 
   evalTextExpr: function (expr, game, outcome, role) {
