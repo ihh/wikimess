@@ -251,20 +251,20 @@ module.exports = {
     }
 
     if (typeof(role) === 'undefined') {
-      text = GameService.replaceAll (text, '\\[', '\\]', game, outcome, role)
+      text = GameService.replaceAll (text, '{{', '}}', '<<', '>>', game, outcome, role)
       text = text.replace(/\$player1/g,game.player1.displayName)
       text = text.replace(/\$player2/g,game.player2.displayName)
     } else {
-      text = GameService.replaceAll (text, '{', '}', game, outcome, role)
+      text = GameService.replaceAll (text, '#{', '}#', '#<', '>#', game, outcome, role)
       text = text.replace(/\$self/g,Game.getRoleAttr(game,role,'player').displayName)
       text = text.replace(/\$other/g,Game.getOtherRoleAttr(game,role,'player').displayName)
     }
     return text
   },
 
-  replaceAll: function (text, lb, rb, game, outcome, role) {
-    var evalRegex = new RegExp (lb + lb + "(.*?)" + rb + rb, 'g')
-    var optRegex = new RegExp (lb + "([^" + lb + rb + "]*?\|[^" + lb + rb + "]*?)" + rb)
+  replaceAll: function (text, lbEval, rbEval, lbOpt, rbOpt, game, outcome, role) {
+    var evalRegex = new RegExp (lbEval + "(.*?)" + rbEval, 'g')
+    var optRegex = new RegExp (lbOpt + "([^#<>{}]*?\|[^#<>{}]*?)" + rbOpt)
     function evalReplace (match, expr) {
       var val = GameService.evalTextExpr (expr, game, outcome, role)
       return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''

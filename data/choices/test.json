@@ -1,7 +1,7 @@
 [
   {
     name: "root",
-    intro: [{ text: "[Here [you|we] are on|Well, [this is|it's]|Looks [as though it's|like]|So [now|] it's|Heads up! [It's|This is] ] day {{($c.day||0)+1}} of {school|college|community college|WizCom|the academy}.",
+    intro: [{ text: "<<Here <<you|we>> are on|Well, <<this is|it's>>|Looks <<as though it's|like>>|So <<now|>> it's|Heads up! <<It's|This is>>>> day {{($c.day||0)+1}} of #<school|college|community college|WizCom|the academy>#.",
               randmenu: {
                 asymmetric: false,
                 shuffle: true,
@@ -101,7 +101,7 @@
           local2:{count:{d:"$+1"}},
           common:{day:"++"}},
     ll: [{weight:"!($local1.count.d && $local2.count.d)",
-          outro:"You and {{$no}} are a couple of goody two-shoes ;; Too bad!",
+          outro:"You and #{$no}# are a couple of goody two-shoes ;; Too bad!",
           local1:{count:{d:"$+1"}},  // increments local1.count.d
           local2:{count:{d:"$+1"}},  // local2 is a synonym for local2, this increments local2.count.d
           next:"auto",
