@@ -1,0 +1,31 @@
+{
+  "definitions": {
+    "move": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number"
+        },
+        "action": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/move"
+          }
+        },
+        "label": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": "false"
+    }
+  },
+  "$ref": "#/definitions/move",
+  "$schema": "http://json-schema.org/schema#",
+  "id": "http://localhost:1337/schemas/move.json"
+}
