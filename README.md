@@ -25,6 +25,30 @@ You can also log in using Facebook authentication (via [passport.js](http://pass
 However, currently this redirects back to `localhost:1337`, not a public URL, so it will only work on your local machine (if at all).
 You could probably edit the Facebook client ID & secret in [config/passport.js](config/passport.js) to use your own Facebook account, in theory.
 
+### Running tests
+
+First download geckodriver (Firefox webdriver) for your system from https://github.com/mozilla/geckodriver/releases
+and copy it into your `$PATH`
+e.g. for MacOS:
+
+    curl -O https://github.com/mozilla/geckodriver/releases/download/v0.13.0/geckodriver-v0.13.0-macos.tar.gz
+    mv geckodriver /usr/local/bin
+
+(you may need to sudo the last step)
+
+Similarly ChromeDriver (Chrome webdriver) from https://sites.google.com/a/chromium.org/chromedriver/downloads
+e.g.
+
+     curl -O https://chromedriver.storage.googleapis.com/2.27/chromedriver_mac64.zip
+     unzip chromedriver_mac64.zip
+     mv chromedriver /usr/local/bin
+
+Then:
+
+    npm test
+
+(Make sure sails is not running when you do this: the test suite lifts sails on its own, and populates it with a custom dataset. It will preserve your main game database and restore it after the test)
+
 ## Gameplay
 
 At the moment, the game UI is as follows:
