@@ -200,6 +200,67 @@ module.exports = {
     "$ref": "#/definitions/move"
   },
 
+  // Location schema
+  locationSchema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      name: { type: "string" },
+      title: { type: "string" },
+      description: { type: "string" },
+      checkpoint: { type: "boolean" },
+      visible: { type: "string" },
+      locked: { type: "string" },
+      links: {
+        type: "array",
+        items: {
+          oneOf: [
+            { type: "string" },
+            { type: "object",
+              additionalProperties: false,
+              properties: {
+                to: { type: "string" },
+                title: { type: "string" },
+                requires: { type: "object" },
+                hint: { type: "string" }
+              }
+            }
+          ]
+        }
+      },
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            name: { type: "string" },
+            visible: { type: "string" },
+            verb: { type: "object",
+                    additionalProperties: false,
+                    properties: { buy: { type: "string" },
+                                  sell: { type: "string" } } },
+            buy: { type: ["boolean","object"] },
+            sell: { type: ["boolean","object"] }
+          }
+        }
+      },
+      events: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            title: { type: "string" },
+            hint: { type: "string" },
+            cost: { type: "object" },
+            choice: { type: "string" }
+          }
+        }
+      }
+    }
+  },
+  
   // Validators
   validate: function (data, schema, name, errorCallback) {
     var validator = new JsonValidator()
@@ -220,5 +281,9 @@ module.exports = {
 
   validateMove: function (data, errorCallback) {
     return this.validate (data, this.moveSchema, "Move", errorCallback)
+  },
+
+  validateLocation: function (data, errorCallback) {
+    return this.validate (data, this.locationSchema, "Location", errorCallback)
   }
 };

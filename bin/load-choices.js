@@ -29,6 +29,10 @@ function defaultPath (subdir, opt) {
   return pathVar
 }
 
+function schemaPath (schema) {
+  return 'assets/schemas/' + schema + '.json'
+}
+
 var opt = getopt.create([
   ['h' , 'host=STRING'      , 'hostname (default="' + defaultHost + '")'],
   ['t' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
@@ -93,6 +97,7 @@ callback = processFilenameList ({ path: '/player',
 var locationHandler = makeHandler ('Location', hasName, function (obj) {
   return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
 callback = processFilenameList ({ path: '/location',
+                                  schema: schemaPath('location'),
                                   handler: locationHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
@@ -121,7 +126,7 @@ var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
     + plural (c.outcomes && c.outcomes.length, 'outcome')
     + ')' })
 callback = processFilenameList ({ path: '/choice',
-                                  schema: 'assets/schemas/choice.json',
+                                  schema: schemaPath('choice'),
                                   handler: choiceHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval, parseStory],
@@ -185,11 +190,11 @@ function processFile (info) {
     json = json.filter (function (item, n) {
       var result = validator.validate (item, schema, {nestedErrors: true})
       if (result.errors.length) {
-        log(3, 'Error validating array element #' + n)
+        log(3, 'Error validating array element #' + n + ' '+ (item.name || ''))
         log (result.errors.map (function (ve) { return ve.stack }).join("\n"))
         return false
       }
-      log(3, 'Validated array element #' + n)
+      log(4, 'Validated array element #' + n + ' '+ (item.name || ''))
       return true
     })
   }

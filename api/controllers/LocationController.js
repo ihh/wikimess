@@ -6,5 +6,18 @@
  */
 
 module.exports = {
+  // override blueprint for create, to allow validation
+  create: function (req, res) {
+    if (SchemaService.validateLocation (req.body, res.badRequest)) {
+      Location
+        .findOrCreate ({ name: req.body.name }, req.body)
+        .exec (function (err, location) {
+          if (err)
+            res.badRequest (err)
+          else
+            res.json (location)
+        })
+    }
+  }
 };
 

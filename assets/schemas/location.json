@@ -1,0 +1,114 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "checkpoint": {
+      "type": "boolean"
+    },
+    "visible": {
+      "type": "string"
+    },
+    "locked": {
+      "type": "string"
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "to": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "requires": {
+                "type": "object"
+              },
+              "hint": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "visible": {
+            "type": "string"
+          },
+          "verb": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "buy": {
+                "type": "string"
+              },
+              "sell": {
+                "type": "string"
+              }
+            }
+          },
+          "buy": {
+            "type": [
+              "boolean",
+              "object"
+            ]
+          },
+          "sell": {
+            "type": [
+              "boolean",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "object"
+          },
+          "choice": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/schema#",
+  "id": "http://localhost:1337/schemas/location.json"
+}

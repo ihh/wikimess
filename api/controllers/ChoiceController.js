@@ -7,16 +7,16 @@
 
 module.exports = {
 
-    // override blueprint for create, to allow inline specification of outcomes and nested choices
-    create: function (req, res) {
-        ChoiceService.createChoice (req.body,
-                                         function (createdChoices) {
-                                             res.send (createdChoices)
-                                         },
-                                         function (err) {
-                                             console.log(err)
-                                             res.status(500).send(err)
-                                         })
-    }
+  // override blueprint for create, to allow inline specification of outcomes and nested choices
+  create: function (req, res) {
+    ChoiceService.createChoice (req.body,
+                                function (createdChoices) {
+                                  res.send (createdChoices)
+                                },
+                                function (err) {
+                                  console.log(err)
+                                  res.status(500).send(err)
+                                })
+  }
 };
 
