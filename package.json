@@ -31,11 +31,16 @@
     "md5-file": "3.1.1",
     "extend": "3.0.0",
     "deepmerge": "0.2.10",
-    "jsonschema": "~1.1.1"
+    "jsonschema": "~1.1.1",
+    "mocha": "~3.2.0",
+    "should": "~11.1.2",
+    "rimraf": "~2.5.4",
+    "supertest": "~2.0.1"
   },
   "scripts": {
     "debug": "node debug app.js",
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "node ./node_modules/mocha/bin/mocha test/bootstrap.test.js test/integration/**/*.test.js"
   },
   "main": "app.js",
   "repository": {

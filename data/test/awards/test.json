@@ -1,0 +1,8 @@
+[
+    { name: 'novice',
+      icon: 'robe',
+      color: 'red',
+      public: true
+    }
+]
+

@@ -1,0 +1,21 @@
+[
+    { name: 'cash',  // internal variable name
+      icon: 'coins',
+      color: 'yellow',
+      noun: 'credit',  // displayed text
+      init: 100,
+      alwaysShow: true,
+      isDefaultCurrency: true,
+      public: false
+    },
+
+    { name: 'robe',
+      icon: 'robe',
+      color: 'red',
+      hint: "The standard novice's robe. Could just about pass for a red raincoat, not that this looks any less eccentric in Northern California.",
+      category: 'clothing',
+      noun: 'robe',
+      buy: 20,
+      public: true
+    },
+]

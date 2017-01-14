@@ -1,0 +1,18 @@
+[
+    {
+        name: "fred",
+        password: "test",
+        newSignUp: false
+    },
+    {
+        name: "sheila",
+        password: "test",
+        newSignUp: false
+    },
+    {
+        name: "titfortat",
+        password: "test",
+        human: false,
+        category: "student"
+    }
+]

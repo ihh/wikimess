@@ -1,0 +1,124 @@
+[
+  {
+    name: "root",
+    intro: [{ text: "<<Here <<you|we>> are on|Well, <<this is|it's>>|Looks <<as though it's|like>>|So <<now|>> it's|Heads up! <<It's|This is>>>> day {{($c.day||0)+1}} of #<school|college|community college|WizCom|the academy>#.",
+              label: { x: "{{($c.day||0)+1}}" },  // test of server-side code evaluation in labels
+              randmenu: {
+                asymmetric: false,
+                shuffle: true,
+                cluster: true,
+                groups: [
+                  { n: 2, opts: [ { hint: "Cool" }, { hint: "Awesome" }, { hint: "Terrific" }, { hint: "Wonderful" } ] },
+                  { n: 2, opts: [ { hint: "Whatever" }, { hint: "Meh" }, { hint: "OK" }, { hint: "So what?" } ] },
+                  { n: 2, opts: [ { hint: "This sucks" }, { hint: "Groan" }, { hint: "I hate it" }, { hint: "It's awful" } ] }
+                ]
+              },
+            },
+            {
+              labelexpr: { y: "$label('x')" }  // test of empty intro node & labelexpr
+            },
+	    {
+	      text: "On day [[$label('y')]], $other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
+	      left: {
+		hint: "Rat them out",
+		label: { move: "l" },
+		sequence: [{ text: "You decide to rat them out." },
+			   { text: "That's pretty low.",
+			     right: { hint: "I know", text: "At least you admit it." },
+			     left: { hint: "What?", text: "Ha! You can't even admit you're a snitch." } },
+			   { text: "Just saying." }]
+	      },
+	      right: {
+		hint: "Skip class",
+		label: { move: "r" }
+	      }
+	    }],
+    rr: [{weight: "$c.iceCream || $c.iceCream",
+	  outro: [{ text: "Cool, let's skip class together!",
+		    next: { text: "Party times, by the beach...",
+			    next: { text: "Co-operation is great!" } } }],
+	  global1:{count:{c:"$+1"}},  // global1 is a synonym for global1, so this increments global1.count.c
+          global2:{count:{c:"$+1"}},  // this increments global2.count.c
+          common:{day:"++"}},  // increments common.day
+         {weight:"!$c.iceCream",
+	  outro:[{ text: "Cool, let's skip class together!\nShall we go to the beach, or to the mall?",
+                   left: { hint: "Mall",
+                           text: "You scuttle around like a couple of mall-rats. Eventually you get bored, and decide to head for the beach.",
+                           next: { goto: "beach" } },
+		   right: { name: "beach",
+                            hint: "Beach",
+                            text: "Party times, by the beach...",
+			    next: { text: "Co-operation is great!" } } }],
+	  global1:{count:{c:"$+1"}},  // increments global1.count.c
+          global2:{count:{c:"$+1"}},  // global2 is a synonym for global2, this increments global2.count.c
+          common:{day:"++"},  // increments common.day
+          next: {intro: { text: "Want to have an ice cream together?",
+			  left: { hint: "No",
+				  text: "Why - because you don't like ice cream, or just don't feel like it today?",
+				  left: { hint: "Don't like ice cream",
+					  label: { move: "n" } },
+				  right: { hint: "Don't feel like it",
+					   label: { move: "n" } } },
+			  right: { hint: "Yes",
+				   label: { move: "y" } } },
+                 outcome: [{ move1: "y",
+			     move2: "y",
+			     outro: {
+                               text: "I love ice cream.\nYou love ice cream.\nWe all love ice cream! So much that I want to eat ice cream until I literally look like a giant cone.\n<icon:ice-cream-cone>",
+			       next: { hint: "So true!",
+				       sequence:
+				       [{name: "choose_flavor",
+					 text: "What flavor?",
+					 menu:
+					 [{
+		                           hint: 'Vanilla',
+					   label: { flavor: ' vanilla' },
+                                           text: 'Excellent choice!'
+					 },
+		                          {
+		                            hint: 'Chocolate',
+					    label: { flavor: ' chocolate' },
+                                            text: "oh no you DIDN'T",
+                                            next: {
+                                              hint: "Try again",
+                                              goto: 'choose_flavor'
+                                            }
+		                          },
+		                          {
+		                            hint: 'Strawberry',
+					    visible: "!$label('flavor')",
+					    label: { flavor: ' strawberry' },
+                                            text: 'Good choice!'
+		                          }] },
+					{ text: "You chose: <label:flavor>" }]
+				     }
+                             },
+			     common:{iceCream:true}},
+                           { weight: "$1.move() != $2.move()",
+			     outro: { text: "Unfortunately, not everybody loves ice cream." } },
+                           { move1: "n",
+                             move2: "n",
+                             outro: "Right: ice cream sucks."
+                           }]}}],
+    lr2: {outro:"Well, it was a good plan; but $player1 ratted $player2 out.\nTruancy doesn't pay, if you can't trust your friends.;; <sfx:surprised><class:outcome>Sorry, $player2...",
+          global1:{count:{c:"$+1"}},
+          local2:{count:{d:"$+1"}},
+          common:{day:"++"}},
+    ll: [{weight:"!($local1.count.d && $local2.count.d)",
+          outro:"You and #{$no}# are a couple of goody two-shoes ;; Too bad!",
+          local1:{count:{d:"$+1"}},  // increments local1.count.d
+          local2:{count:{d:"$+1"}},  // local2 is a synonym for local2, this increments local2.count.d
+          next:"auto",
+          common:{day:"++"}},  // increments common.day
+         {weight:"$local1.count.d && $local2.count.d",
+          outro:"You both chicken out - AGAIN ;; This keeps happening!",
+          local1:{count:{d:"$+1"}},
+          local2:{count:{d:"$+1"}},
+          next:"auto",
+          common:{day:"++"}}]
+  },
+  {
+    name: "auto",
+    auto: {next:["root","root"]}
+  }
+]
