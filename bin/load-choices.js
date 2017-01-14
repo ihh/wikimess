@@ -12,27 +12,36 @@ var fs = require('fs'),
 var defaultHost = "localhost"
 var defaultPort = "1337"
 var defaultUrlPrefix = ""
-var defaultChoiceFilename = "data/choices"
-var defaultPlayerFilename = "data/players"
-var defaultLocationFilename = "data/locations"
-var defaultItemFilename = "data/items"
-var defaultMeterFilename = "data/meters"
-var defaultAwardFilename = "data/awards"
+var defaultDataDir = "data"
+var defaultChoiceFilename = "$DATA/choices"
+var defaultPlayerFilename = "$DATA/players"
+var defaultLocationFilename = "$DATA/locations"
+var defaultItemFilename = "$DATA/items"
+var defaultMeterFilename = "$DATA/meters"
+var defaultAwardFilename = "$DATA/awards"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt|story)$'
+
+function defaultPath (subdir, opt) {
+  var dataDir = (opt && opt.options.data) || defaultDataDir
+  var pathVar = eval ('default' + subdir + 'Filename')
+  pathVar = pathVar.replace('$DATA',dataDir)
+  return pathVar
+}
 
 var opt = getopt.create([
   ['h' , 'host=STRING'      , 'hostname (default="' + defaultHost + '")'],
   ['t' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
   ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
-  ['c' , 'choices=PATH+'    , 'path to .json or .story file(s) or directories (default=' + defaultChoiceFilename + ')'],
-  ['p' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPlayerFilename + ')'],
-  ['l' , 'locations=PATH+'  , 'path to .json location file(s) or directories (default=' + defaultLocationFilename + ')'],
-  ['i' , 'items=PATH+'      , 'path to .json item file(s) or directories (default=' + defaultItemFilename + ')'],
-  ['m' , 'meters=PATH+'     , 'path to .json meter file(s) or directories (default=' + defaultMeterFilename + ')'],
-  ['a' , 'awards=PATH+'     , 'path to .json award file(s) or directories (default=' + defaultAwardFilename + ')'],
+  ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
+  ['c' , 'choices=PATH+'    , 'path to .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
+  ['p' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
+  ['l' , 'locations=PATH+'  , 'path to .json location file(s) or directories (default=' + defaultPath('Location') + ')'],
+  ['i' , 'items=PATH+'      , 'path to .json item file(s) or directories (default=' + defaultPath('Item') + ')'],
+  ['m' , 'meters=PATH+'     , 'path to .json meter file(s) or directories (default=' + defaultPath('Meter') + ')'],
+  ['a' , 'awards=PATH+'     , 'path to .json award file(s) or directories (default=' + defaultPath('Award') + ')'],
   ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
-  ['d' , 'dummy'            , 'dummy run; do not POST anything'],
+  ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
   ['h' , 'help'             , 'display this help message']
@@ -40,7 +49,7 @@ var opt = getopt.create([
     .bindHelp()     // bind option 'help' to default action
     .parseSystem() // parse command line
 
-var dummy = opt.options.dummy
+var dryRun = opt.options.dryrun
 var verbose = opt.options.verbose || defaultVerbosity
 var logColor = ['green', 'yellow', 'magenta', 'cyan', 'red', 'blue']
 function log (v, text) {
@@ -65,12 +74,12 @@ var port = opt.options.port || defaultPort
 var urlPrefix = opt.options.root || defaultUrlPrefix
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
-var choiceFilenames = opt.options.choices || [defaultChoiceFilename]
-var playerFilenames = opt.options.players || [defaultPlayerFilename]
-var locationFilenames = opt.options.locations || [defaultLocationFilename]
-var itemFilenames = opt.options.items || [defaultItemFilename]
-var meterFilenames = opt.options.meters || [defaultMeterFilename]
-var awardFilenames = opt.options.awards || [defaultAwardFilename]
+var choiceFilenames = opt.options.choices || [defaultPath('Choice',opt)]
+var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
+var locationFilenames = opt.options.locations || [defaultPath('Location',opt)]
+var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
+var meterFilenames = opt.options.meters || [defaultPath('Meter',opt)]
+var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 
 var callback = function() {}
 
@@ -256,7 +265,7 @@ function post (info) {
             callback: callback })
   }
 
-  if (dummy) {
+  if (dryRun) {
     log(3,post_data)
     post_next()
   } else {

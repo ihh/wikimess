@@ -426,7 +426,7 @@ module.exports = {
     // to ensure consistency
     // e.g. see http://stackoverflow.com/questions/25079408/how-to-handle-async-concurrent-requests-correctly/25100188#25100188
     // unfortunately, no transaction support in Waterline as of Sept.2016
-    
+
     // update the Game
     GameService.updateGame
     (query,
@@ -864,8 +864,10 @@ module.exports = {
 		  move2: game.move2 }
     sails.log.debug ("Recording " + JSON.stringify(update) + " for game #" + game.id + " move #" + moveNumber + (turnUpdate ? (", turn update: " + JSON.stringify(turnUpdate)) : ""))
 
-    var updateTimeBudget = .1  // time, as a proportion of lock duration, that we allow for GameService.updateGameAndPlayers to run
+    // time, as a proportion of lock duration, that we allow for GameService.updateGameAndPlayers to run
+    var updateTimeBudget = .1
 
+    // callback to record the turn
     function turnUpdater (success, error) {
       return function() {
 	Turn.update ({ game: game.id,
@@ -896,13 +898,16 @@ module.exports = {
         function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
 	  function update() {
 	    ++game.moves
+            // check that we have enough time left to update the game state before the lock expires
+            // we allow a proportion updateTimeBudget of the entire lockDuration for this game update
+            // this is at best a half-assed estimate. updateGameAndPlayers could take longer to run, and the lock would expire.
 	    game.currentStartTime = new Date()
-            if (Date.now() < lockExpiryTime - updateTimeBudget*lockDuration)  // this is at best a half-assed test. updateGameAndPlayers could take longer to run, and the lock would expire
+            if (Date.now() < lockExpiryTime - updateTimeBudget*lockDuration)
 	      GameService.updateGameAndPlayers (query, game, turnUpdater(lockedSuccess,lockedError), lockedError)
             else
               lockedError (new Error ("lock expired"))
           }
-	  // refresh the Players, in case they changed before getting the lock
+	  // refresh the Players, in case they changed state before we got the lock
 	  Player.find ({ id: [game.player1.id, game.player2.id] })
 	    .exec (function (err, players) {
 	      if (err)
