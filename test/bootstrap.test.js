@@ -30,7 +30,8 @@ after(function(done) {
   if (fs.existsSync('tmp.old')) {
     if (fs.existsSync('tmp.test'))
       rmdirSync('tmp.test')
-    fs.renameSync('.tmp','tmp.test')
+    if (fs.existsSync('.tmp'))
+	fs.renameSync('.tmp','tmp.test')
     fs.renameSync('tmp.old','.tmp')
   }
 });

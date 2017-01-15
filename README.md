@@ -31,7 +31,7 @@ First download geckodriver (Firefox webdriver) for your system from https://gith
 and copy it into your `$PATH`
 e.g. for MacOS:
 
-    curl -O https://github.com/mozilla/geckodriver/releases/download/v0.13.0/geckodriver-v0.13.0-macos.tar.gz
+    curl -L https://github.com/mozilla/geckodriver/releases/download/v0.13.0/geckodriver-v0.13.0-macos.tar.gz | tar xz
     mv geckodriver /usr/local/bin
 
 (you may need to sudo the last step)
