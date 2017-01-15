@@ -463,6 +463,7 @@ var BigHouse = (function() {
               tradeRows.append ($('<div class="traderow">')
                                 .append (bh.makeCostDiv (item[verb]))
                                 .append (button = $('<div class="button">')
+					 .attr ('name', verb + '-' + item.name)
                                          .text (bh.capitalize (item.verb ? item.verb[verb] : verb))))
               function fail() {
 		bh.showModalMessage (verb === 'buy' ? "You can't afford that!" : "You have none to sell.", bh.showPlayPage.bind(bh))
@@ -529,7 +530,7 @@ var BigHouse = (function() {
             div.append ($('<div class="lock">')
                         .text (link.locked))
           } else
-            button.text("Go").on('click', function() {
+            button.attr('name','link-'+link.id).text("Go").on('click', function() {
               bh.playerLocation = link.id
               bh.selectSound = bh.playSound ('select')  // TODO: custom "Go" sound effect here
               bh.showPlayPage()
@@ -605,7 +606,7 @@ var BigHouse = (function() {
                    .text (event.title))
 
       event.lockDiv = $('<div class="lock">')
-      event.button = $('<div class="button">')
+      event.button = $('<div class="button">').attr('name','event-'+event.id)
 
       event.missedDiv = $('<div class="missed">')
       event.timerDiv = $('<div class="timer">')
