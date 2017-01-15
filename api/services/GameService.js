@@ -3,10 +3,6 @@
 var extend = require('extend')
 var merge = require('deepmerge');
 
-function isArray (obj) {
-  return Object.prototype.toString.call(obj) === '[object Array]'
-}
-
 module.exports = {
 
   buildTextTree: function (texts, game) {
@@ -78,7 +74,7 @@ module.exports = {
           nodeByName[node.name] = node
 
 	if (node.define) {
-	  if (isArray (node.define))
+	  if (GameService.isArray (node.define))
 	    node.define.map (connect)
 	  else
 	    connect (node.define)
@@ -157,7 +153,7 @@ module.exports = {
   expandText: function (text, game, outcome, role) {
     if (!text)
       return text
-    else if (isArray(text)) {
+    else if (GameService.isArray(text)) {
       return text.map (function (t) {
         return GameService.expandText (t, game, outcome, role)
       })
@@ -350,24 +346,6 @@ module.exports = {
       outro[0].text = verb + outro[0].text
     }
     return outro
-  },
-
-  swapTextRoles: function (x) {
-    if (isArray(x)) {
-      return x.map (function (elem) { return GameService.swapTextRoles(elem) })
-    } else if (typeof(x) == 'object') {
-      var swapped = {}
-      Object.keys(x).forEach (function (key) {
-	if (typeof(x[key]) == 'object' || key == 'text')
-	  swapped[key] = GameService.swapTextRoles(x[key])
-	else
-	  swapped[key] = x[key]
-      })
-      return swapped
-    }
-    return x.replace(/\$player1/g,"$TMP_PLAYER1")  // placeholder
-      .replace(/\$player2/g,"$player1")
-      .replace(/\$TMP_PLAYER1/g,"$player2")
   },
 
   moveOutcomes: function (game, cb) {
@@ -917,8 +895,13 @@ module.exports = {
 	      else if (players.length != 2)
 		lockedError (new Error ("couldn't refresh Players"))
 	      else {
-		game.player1 = players[0]
-		game.player2 = players[1]
+		if (game.player1.id === players[0].id) {
+		  game.player1 = players[0]
+		  game.player2 = players[1]
+		} else {
+		  game.player2 = players[0]
+		  game.player1 = players[1]
+		}
 		GameService.applyRandomOutcomes (game, update, lockedError)
 	      }
 	    })
@@ -1027,5 +1010,9 @@ module.exports = {
       eq = eq && obj1.hasOwnProperty(k2)
     })
     return eq
+  },
+  
+  isArray: function (obj) {
+    return Object.prototype.toString.call(obj) === '[object Array]'
   }
 };

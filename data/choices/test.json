@@ -33,7 +33,7 @@
 		label: { move: "r" }
 	      }
 	    }],
-    rr: [{weight: "$c.iceCream || $c.iceCream",
+    rr: [{weight: "$c.iceCream",
 	  outro: [{ text: "Cool, let's skip class together!",
 		    next: { text: "Party times, by the beach...",
 			    next: { text: "Co-operation is great!" } } }],

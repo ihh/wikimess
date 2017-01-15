@@ -84,6 +84,8 @@ module.exports = {
             if (!role)
               res.status(401).send("Player " + player.id + " has no role in game " + game.id)
             else {
+//	      sails.log.debug("Player " + player.displayName + " (id " + player.id + ") has role " + role)
+//	      sails.log.debug("Player1=" + game.player1.displayName + " Player2=" + game.player2.displayName)
               var opponent = role == 1 ? game.player2 : game.player1
               makeJson ( { player: player,
                            opponent: opponent,

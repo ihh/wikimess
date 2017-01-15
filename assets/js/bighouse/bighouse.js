@@ -2602,11 +2602,13 @@ var BigHouse = (function() {
       if (expansion.node) {
         var node = expansion.node
 	jm.id = node.id
-        jm.label = node.label || {}
+        var label = node.label || {}
 	if (node.labelexpr)
           Object.keys(node.labelexpr).forEach (function (lab) {
-	    jm.label[lab] = bh.evalExpansionExpr (expansion, node.labelexpr[lab])
+	    label[lab] = bh.evalExpansionExpr (expansion, node.labelexpr[lab])
 	  })
+	if (Object.keys(label).length)
+	  jm.label = label
       }
       if (expansion.children && expansion.children.length)
 	jm.children = expansion.children.map (function (child) { return bh.jsonExpansion(child) })

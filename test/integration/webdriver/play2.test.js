@@ -126,19 +126,10 @@ function quit (obj) {
 	})
 }
 
-describe("two-player game", function() {
-  var fred = login (fredDriver, "fred", "test")
-  var sheila = login (sheilaDriver, "sheila", "test")
-
-  startGame (fred)
-  startGame (sheila)
-  
-  makeMove (fred, "Here we are on day 1 of school", "left")
-  makeMove (sheila, "Here we are on day 1 of school", "left")
-
+function makeDDMove (fred, sheila, text1, text2) {
   makeMove (fred, "Do you want to play truant", "left")
   makeMove (sheila, "Do you want to play truant", "left")
-
+  
   makeMove (fred, "You decide to rat them out", "left")
   makeMove (sheila, "You decide to rat them out", "left")
 
@@ -151,12 +142,25 @@ describe("two-player game", function() {
   makeMove (fred, "Just saying", "right")
   makeMove (sheila, "Just saying", "right")
 
-  makeMove (fred, "goody two-shoes", "right")
-  makeMove (sheila, "goody two-shoes", "right")
+  makeMove (fred, text1, "right")
+  makeMove (sheila, text1, "right")
 
-  makeMove (fred, "Too bad", "right")
-  makeMove (sheila, "Too bad", "right")
+  makeMove (fred, text2, "right")
+  makeMove (sheila, text2, "right")
+}
 
+describe("two-player game", function() {
+  var fred = login (fredDriver, "fred", "test")
+  var sheila = login (sheilaDriver, "sheila", "test")
+
+  startGame (fred)
+  startGame (sheila)
+  
+  makeMove (fred, "Here we are on day 1 of school", "left")
+  makeMove (sheila, "Here we are on day 1 of school", "left")
+
+  makeDDMove (fred, sheila, "goody two-shoes", "Too bad")
+  
   makeMove (fred, "Here we are on day 2 of school", "right")
   makeMove (sheila, "Here we are on day 2 of school", "right")
 
@@ -173,6 +177,35 @@ describe("two-player game", function() {
   makeMove (fred, "Co-operation is great", "right")
   makeMove (sheila, "Co-operation is great", "right")
 
+  makeMove (fred, "Want to have an ice cream", "right")
+  makeMove (sheila, "Want to have an ice cream", "left")
+
+  makeMove (sheila, "feel like it today", "left")
+
+  makeMove (fred, "not everybody loves ice cream", "right")
+  makeMove (sheila, "not everybody loves ice cream", "right")
+
+  makeMove (fred, "Here we are on day 3 of school", "right")
+  makeMove (sheila, "Here we are on day 3 of school", "right")
+
+  makeDDMove (fred, sheila, "AGAIN", "This keeps happening")
+
+  makeMove (fred, "Here we are on day 4 of school", "right")
+  makeMove (sheila, "Here we are on day 4 of school", "right")
+
+  makeMove (fred, "Do you want to play truant", "right")
+  makeMove (sheila, "Do you want to play truant", "right")
+
+  makeMove (fred, "Shall we go to the beach", "left")
+  makeMove (fred, "mall-rats", "left")
+  makeMove (sheila, "Shall we go to the beach", "right")
+
+  makeMove (fred, "Party times", "right")
+  makeMove (sheila, "Party times", "right")
+
+  makeMove (fred, "Co-operation is great", "right")
+  makeMove (sheila, "Co-operation is great", "right")
+  
   makeMove (fred, "Want to have an ice cream", "right")
   makeMove (sheila, "Want to have an ice cream", "right")
 
@@ -191,8 +224,13 @@ describe("two-player game", function() {
   makeMove (sheila, "Good choice", "right")
   makeMove (sheila, "You chose:  strawberry", "right")
 
-  makeMove (fred, "Here we are on day 3 of school", "right")
-  makeMove (sheila, "Here we are on day 3 of school", "right")
+  makeMove (fred, "Here we are on day 5 of school", "right")
+  makeMove (sheila, "Here we are on day 5 of school", "right")
+
+  makeDDMove (fred, sheila, "AGAIN", "This keeps happening")
+
+  makeMove (fred, "Here we are on day 6 of school", "right")
+  makeMove (sheila, "Here we are on day 6 of school", "right")
 
   makeMove (fred, "remember the ice cream", "left")
   makeMove (sheila, "remember the ice cream", "right")
@@ -207,6 +245,43 @@ describe("two-player game", function() {
 
   makeMove (fred, "Sorry, sheila...", "right")
   makeMove (sheila, "Sorry, sheila...", "right")
+
+  makeMove (fred, "Here we are on day 7 of school", "right")
+  makeMove (sheila, "Here we are on day 7 of school", "right")
+
+  makeDDMove (fred, sheila, "AGAIN", "This keeps happening")
+
+  makeMove (fred, "Here we are on day 8 of school", "right")
+  makeMove (sheila, "Here we are on day 8 of school", "right")
+
+  makeMove (fred, "remember the ice cream", "right")
+  makeMove (sheila, "remember the ice cream", "left")
+
+  makeMove (sheila, "You decide to rat them out", "left")
+  makeMove (sheila, "pretty low", "left")
+  makeMove (sheila, "even admit", "left")
+  makeMove (sheila, "Just saying", "right")
+
+  makeMove (fred, "sheila ratted fred out", "right")
+  makeMove (sheila, "sheila ratted fred out", "right")
+
+  makeMove (fred, "Sorry, fred...", "right")
+  makeMove (sheila, "Sorry, fred...", "right")
+
+  makeMove (fred, "Here we are on day 9 of school", "right")
+  makeMove (sheila, "Here we are on day 9 of school", "right")
+
+  makeMove (fred, "remember the ice cream", "right")
+  makeMove (sheila, "remember the ice cream", "right")
+
+  makeMove (fred, "skip class together", "left")
+  makeMove (sheila, "skip class together", "right")
+
+  makeMove (fred, "Party times", "right")
+  makeMove (sheila, "Party times", "right")
+
+  makeMove (fred, "Co-operation is great", "right")
+  makeMove (sheila, "Co-operation is great", "right")
 
   makeMove (fred, "Game over", "right")
   makeMove (sheila, "Game over", "right")

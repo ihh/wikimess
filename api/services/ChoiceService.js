@@ -10,9 +10,6 @@ module.exports = {
     // validate against schema
     if (!SchemaService.validateChoice (config, errorCallback))
       return
-    
-    // helpers
-    function isArray(x) { return Object.prototype.toString.call(x) === '[object Array]' }
 
     // keys for Choices and Outcomes
     var asymKeys = ['local', 'global', 'mood', 'verb']
@@ -22,7 +19,7 @@ module.exports = {
 	return undefined
       else if (typeof(text) == 'string')
 	return [{ text: text }]
-      else if (!isArray(text))
+      else if (!GameService.isArray(text))
 	text = [text]
       return text
     }
@@ -31,7 +28,7 @@ module.exports = {
       asymKeys.forEach (function (key) {
         if (obj.hasOwnProperty(key)) {
           // various ways of specifying asymmetric things
-          if (isArray(obj[key])) {
+          if (GameService.isArray(obj[key])) {
             obj[key+'1'] = obj[key][0]
             obj[key+'2'] = obj[key][1]
           } else if (typeof(obj[key]) === 'object') {
@@ -71,7 +68,7 @@ module.exports = {
     var addOutcomes = function (tag, adders) {
       outcomeAdder[tag] = function() {
         var outs = config[tag]
-        if (!isArray(outs))
+        if (!GameService.isArray(outs))
           outs = [outs]
         outs.forEach (function (out) {
           if (typeof(out) == 'string')
@@ -81,7 +78,7 @@ module.exports = {
 	  out.outro2 = makeText (out.outro2)
 	  expandHints (out, 'outro')
           if (out.next) {
-            if (!isArray(out.next))
+            if (!GameService.isArray(out.next))
               out.next = [out.next]
             out.next = out.next.map (function (next) {
               if (typeof(next) === 'object') {
@@ -104,8 +101,8 @@ module.exports = {
 
     var flip = function (outcome) {
       var flipped = {}
-      var outro = outcome.outro ? GameService.swapTextRoles (outcome.outro) : null
-      var outro2 = outcome.outro2 ? GameService.swapTextRoles (outcome.outro2) : null
+      var outro = outcome.outro ? ChoiceService.swapTextRoles (outcome.outro) : null
+      var outro2 = outcome.outro2 ? ChoiceService.swapTextRoles (outcome.outro2) : null
       if (outro2) {
         flipped.outro2 = outro
         flipped.outro = outro2
@@ -316,5 +313,24 @@ module.exports = {
            })
         }
       })
+  },
+
+  swapTextRoles: function (x) {
+    if (GameService.isArray(x)) {
+      return x.map (function (elem) { return ChoiceService.swapTextRoles(elem) })
+    } else if (typeof(x) == 'object') {
+      var swapped = {}
+      Object.keys(x).forEach (function (key) {
+	if (typeof(x[key]) == 'object' || key == 'text')
+	  swapped[key] = ChoiceService.swapTextRoles(x[key])
+	else
+	  swapped[key] = x[key]
+      })
+      return swapped
+    }
+    return x.replace(/\$player1/g,"$TMP_PLAYER1")  // placeholder
+      .replace(/\$player2/g,"$player1")
+      .replace(/\$TMP_PLAYER1/g,"$player2")
   }
+
 };
