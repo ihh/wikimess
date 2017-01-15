@@ -36,6 +36,7 @@
         events: [ { title: "Cut class",
 		    hint: "Want to cut class?",
                     cost: { cash: 1 },
+		    role1weight: "$n === 'sheila'",
 		    choice: "root" } ]
     }
 ]

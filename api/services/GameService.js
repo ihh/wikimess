@@ -376,11 +376,13 @@ module.exports = {
     var query = Outcome.find ({ choice: game.current.id })
     var move1 = GameService.moveString(game.move1)
     var move2 = GameService.moveString(game.move2)
-    if (move1 != '')
+    if (move1)
       query.where ({ move1: [move1, null] })
-    if (move2 != '')
+    if (move2)
       query.where ({ move2: [move2, null] })
+//    sails.log.debug("move1="+move1+" move2="+move2)
     query.exec (function (err, outcomes) {
+//      sails.log.debug("outcomes:\n",outcomes)
       if (err)
         cb (err)
       else

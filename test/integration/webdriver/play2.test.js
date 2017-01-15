@@ -17,7 +17,7 @@ let sheilaDriver = new webdriver.Builder()
     .forBrowser('chrome')
     .build()
 sheilaDriver.manage().window().setSize(375,667)
-sheilaDriver.manage().window().setPosition(375,0)
+sheilaDriver.manage().window().setPosition(400,0)
 
 function login (driver, name, password) {
   it('should navigate ' + name + ' to front page', function(done) {
@@ -53,7 +53,8 @@ function startGame (obj, password) {
       driver
 	.wait(until.elementLocated(By.xpath("//*[contains(text(), '"+expectText+"')]")))
 	.then(function() {
-	  setTimeout (done, 250)  // leave enough time to see what's happening
+	  done()
+	  //	  setTimeout (done, 250)  // leave enough time to see what's happening
 	})
 	.catch(error => done(error))
     })
@@ -74,22 +75,27 @@ function startGame (obj, password) {
 function makeMove (obj, cardText, menuText, dir) {
   var driver = obj.driver
   var name = obj.name
-  var cardElem
   
   if (!dir) {
     dir = menuText
     menuText = undefined
   }
 
-  it('should find a card containing "'+cardText+'" in '+name+'\'s page', function(done) {
-    driver.wait(until.elementLocated(By.xpath("//*[contains(text(), '"+cardText+"')]")))
-      .then(elem => { cardElem = elem; done() })
+  it('should wait until '+name+'\'s top card contains "'+cardText+'"', function(done) {
+    driver
+      .wait(until.elementLocated(By.xpath("//li[contains(@class,'topcard')]/span[contains(text(), '"+cardText+"')]")))
+      .then(elem => done())
       .catch(error => done(error))
   })
 
-  it('should wait until card in '+name+'\'s page is visible', function(done) {
-    driver.wait(until.elementIsVisible(cardElem))
-      .then(() => done())
+  it('should wait until '+name+'\'s thrown-card animation completes', function(done) {
+    driver
+      .wait (function() {
+	return driver.findElements(By.className('thrown')).then (function(elements) {
+          return elements.length === 0
+        })
+      })
+      .then(elem => { done() })
       .catch(error => done(error))
   })
 
@@ -105,13 +111,6 @@ function makeMove (obj, cardText, menuText, dir) {
     driver
       .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
       .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-  })
-
-  it('should wait for '+name+'\'s card to disappear', function(done) {
-    driver
-      .wait(until.stalenessOf(cardElem))
-      .then(() => done())
       .catch(error => done(error))
   })
 }
@@ -148,6 +147,69 @@ describe("two-player game", function() {
 
   makeMove (fred, "even admit", "left")
   makeMove (sheila, "At least you admit it", "right")
+
+  makeMove (fred, "Just saying", "right")
+  makeMove (sheila, "Just saying", "right")
+
+  makeMove (fred, "goody two-shoes", "right")
+  makeMove (sheila, "goody two-shoes", "right")
+
+  makeMove (fred, "Too bad", "right")
+  makeMove (sheila, "Too bad", "right")
+
+  makeMove (fred, "Here we are on day 2 of school", "right")
+  makeMove (sheila, "Here we are on day 2 of school", "right")
+
+  makeMove (fred, "Do you want to play truant", "right")
+  makeMove (sheila, "Do you want to play truant", "right")
+
+  makeMove (fred, "Shall we go to the beach", "right")
+  makeMove (sheila, "Shall we go to the beach", "left")
+  makeMove (sheila, "mall-rats", "right")
+
+  makeMove (fred, "Party times", "right")
+  makeMove (sheila, "Party times", "right")
+
+  makeMove (fred, "Co-operation is great", "right")
+  makeMove (sheila, "Co-operation is great", "right")
+
+  makeMove (fred, "Want to have an ice cream", "right")
+  makeMove (sheila, "Want to have an ice cream", "right")
+
+  makeMove (fred, "I love ice cream", "right")
+  makeMove (sheila, "I love ice cream", "right")
+
+  makeMove (fred, "What flavor", "Chocolate", "right")
+  makeMove (fred, "oh no", "right")
+  makeMove (fred, "What flavor", "Chocolate", "right")
+  makeMove (fred, "oh no", "right")
+  makeMove (fred, "What flavor", "Vanilla", "right")
+  makeMove (fred, "Excellent choice", "right")
+  makeMove (fred, "You chose:  chocolate chocolate vanilla", "right")
+
+  makeMove (sheila, "What flavor", "Strawberry", "right")
+  makeMove (sheila, "Good choice", "right")
+  makeMove (sheila, "You chose:  strawberry", "right")
+
+  makeMove (fred, "Here we are on day 3 of school", "right")
+  makeMove (sheila, "Here we are on day 3 of school", "right")
+
+  makeMove (fred, "remember the ice cream", "left")
+  makeMove (sheila, "remember the ice cream", "right")
+
+  makeMove (fred, "You decide to rat them out", "left")
+  makeMove (fred, "pretty low", "left")
+  makeMove (fred, "even admit", "left")
+  makeMove (fred, "Just saying", "right")
+
+  makeMove (fred, "fred ratted sheila out", "right")
+  makeMove (sheila, "fred ratted sheila out", "right")
+
+  makeMove (fred, "Sorry, sheila...", "right")
+  makeMove (sheila, "Sorry, sheila...", "right")
+
+  makeMove (fred, "Game over", "right")
+  makeMove (sheila, "Game over", "right")
 
   quit (fred)
   quit (sheila)

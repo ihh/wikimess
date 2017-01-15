@@ -253,7 +253,20 @@ module.exports = {
           properties: {
             title: { type: "string" },
             hint: { type: "string" },
+            ready: { type: "string" },
+            set: { type: "string" },
+            go: { type: "string" },
+            pitch: { type: "string" },
+            opponent: { type: "string" },
+            compatibility: { type: "string" },
+            role1weight: { type: "string" },
+            resetAllowed: { type: "boolean" },
+            reset: { type: "number" },
+            wait: { type: "number" },
+            visible: { type: "string" },
+            locked: { type: "string" },
             cost: { type: "object" },
+            required: { type: "object" },
             choice: { type: "string" }
           }
         }
