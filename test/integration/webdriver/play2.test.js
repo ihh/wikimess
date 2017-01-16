@@ -43,10 +43,10 @@ function login (driver, name, password) {
   return { name: name, driver: driver }
 }
 
-function clickExpect (driver, name, buttonName, expectText) {
-  it('should have ' + name + ' click "'+buttonName+'" and expect "'+expectText+'"', function(done) {
+function clickExpect (driver, name, buttonPath, expectText) {
+  it('should have ' + name + ' click "'+buttonPath+'" and expect "'+expectText+'"', function(done) {
     driver
-      .wait(until.elementLocated(By.name(buttonName)))
+      .wait(until.elementLocated(By.xpath(buttonPath)))
       .then(elem => elem.click())
     driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(), '"+expectText+"')]")))
@@ -59,17 +59,17 @@ function startGame (obj, password) {
   var driver = obj.driver
   var name = obj.name
 
-  function navigate (buttonName, expectText) {
-    clickExpect(driver,name,buttonName,expectText)
+  function navigate (buttonPath, expectText) {
+    clickExpect(driver,name,buttonPath,expectText)
   }
 
-  navigate('link-2','self-important porter')
-  navigate('buy-robe','The porter nods approvingly')
-  navigate('link-3','standing in the lobby')
-  navigate('link-6','Want to cut class?')
+  navigate('//*[text()="Go"]','self-important porter')
+  navigate('//*[text()="Take"]','The porter nods approvingly')
+  navigate('//*[text()="Go"]','standing in the lobby')
+  navigate('//*[@class="link" and ./div/text()="Student Union"]/div[@class="button"]','Want to cut class?')
 
   it('should start ' + name + '\'s game', function(done) {
-    driver.findElement(By.name('event-1')).click()
+    driver.findElement(By.xpath('//*[text()="Start"]')).click()
 	.then(() => done())
 	.catch(error => done(error))
   })
@@ -142,7 +142,7 @@ function roundTripToMenu (obj, cardText, eventNum) {
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
-  clickExpect(driver,name,'event-'+eventNum,cardText)
+  clickExpect(driver,name,'//*[text()="Go"]',cardText)
 }
 
 function waitForNavBar (obj) {

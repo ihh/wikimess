@@ -260,6 +260,7 @@ module.exports = {
             opponent: { type: "string" },
             compatibility: { type: "string" },
             role1weight: { type: "string" },
+            timeout: { type: "number" },
             resetAllowed: { type: "boolean" },
             reset: { type: "number" },
             wait: { type: "number" },

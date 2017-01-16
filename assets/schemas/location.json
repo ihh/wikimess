@@ -120,6 +120,9 @@
           "role1weight": {
             "type": "string"
           },
+          "timeout": {
+            "type": "number"
+          },
           "resetAllowed": {
             "type": "boolean"
           },

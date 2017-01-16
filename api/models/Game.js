@@ -139,8 +139,8 @@ module.exports = {
 
   deadline: function (game) {
     var deadline
-    if (!game.finished && game.current && game.current.timeout)
-      deadline = new Date (game.currentStartTime.getTime() + 1000*game.current.timeout)
+    if (!game.finished && game.event && game.event.timeout)
+      deadline = new Date (game.currentStartTime.getTime() + 1000*game.event.timeout)
     return deadline
   },
 
@@ -152,10 +152,10 @@ module.exports = {
   },
   
   isTimedOut: function (game) {
-    return game.current
-      && game.current.timeout
+    return game.event
+      && game.event.timeout
       && game.currentStartTime
-      && ((Date.now() - Date.parse(game.currentStartTime)) / 1000) >= game.current.timeout
+      && ((Date.now() - Date.parse(game.currentStartTime)) / 1000) >= game.event.timeout
   },
 
   timedOutRoles: function (game) {

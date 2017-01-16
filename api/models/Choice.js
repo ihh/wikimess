@@ -60,11 +60,6 @@ module.exports = {
       defaultsTo: 'choose'
     },
     
-    timeout: {
-      type: 'integer',
-      defaultsTo: 60
-    },
-    
     outcomes: {
       collection: 'outcome',
       via: 'choice',
