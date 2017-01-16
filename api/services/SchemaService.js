@@ -25,6 +25,7 @@ var intro_node_schema = {
 	      visible: { type: "string" },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
+	      switch: { type: "#/definitions/switch_node" },
               goto: { type: "string" }
             },
             additionalProperties: false
@@ -36,6 +37,7 @@ var intro_node_schema = {
 	      visible: { type: "string" },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
+	      switch: { type: "#/definitions/switch_node" },
               label: { type: "object" },
               labelexpr: { type: "object" },
               sequence: { type: "#/definitions/intro_node_list" },
@@ -51,6 +53,7 @@ var intro_node_schema = {
 	      visible: { type: "string" },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
+	      switch: { type: "#/definitions/switch_node" },
               label: { type: "object" },
               labelexpr: { type: "object" },
               define: { type: "#/definitions/intro_node_list" },
@@ -75,6 +78,53 @@ var intro_node_schema = {
             },
             additionalProperties: false
           }]
+}
+
+var random_menu_group_schema = {
+  type: "object",
+  properties: {
+    n: { type: "number" },
+    shuffle: { type: "boolean" },  // defaults to same as outer randmenu.shuffle
+    opts: {
+      type: "array",
+      items: {
+        oneOf: [{ "$ref": "#/definitions/intro_node" },
+                { type: "object",
+                  required: ["option"],
+	          properties: {
+	            weight: { type: "number" },
+	            exclusive: { type: "boolean" },  // defaults to true
+	            option: { "$ref": "#/definitions/intro_node" }
+	          },
+                  additionalProperties: false
+	        }]
+      }
+    }
+  },
+  required: ["opts"],
+  additionalProperties: false
+}
+
+var switch_node_schema = {
+  type: "array",
+  minItems: 1,
+  items: {
+    oneOf: [{ type: "object",
+	      required: ["default"],
+	      properties: {
+		"default": { "$ref": "#/definitions/intro_node" }
+	      },
+	      additionalProperties: false
+	    },
+	    { type: "object",
+	      required: ["test","case"],
+	      properties: {
+		"test": { type: "string" },
+		"case": { "$ref": "#/definitions/intro_node" }
+	      },
+	      additionalProperties: false
+	    }]
+  }
 }
 
 module.exports = {
@@ -148,31 +198,8 @@ module.exports = {
 
       intro_list: intro_list_schema,
       intro_node: intro_node_schema,
-
-      random_menu_group: {
-        type: "object",
-        properties: {
-	  n: { type: "number" },
-          shuffle: { type: "boolean" },  // defaults to same as outer randmenu.shuffle
-	  opts: {
-	    type: "array",
-	    items: {
-              oneOf: [{ "$ref": "#/definitions/intro_node" },
-                      { type: "object",
-                        required: ["option"],
-	                properties: {
-	                  weight: { type: "number" },
-	                  exclusive: { type: "boolean" },  // defaults to true
-	                  option: { "$ref": "#/definitions/intro_node" }
-	                },
-                        additionalProperties: false
-	              }]
-	    }
-          }
-        },
-        required: ["opts"],
-        additionalProperties: false
-      }
+      switch_node: switch_node_schema,
+      random_menu_group: random_menu_group_schema
     },
 
     "$ref": "#/definitions/choice"
@@ -182,7 +209,9 @@ module.exports = {
   textSchema: {
     definitions: {
       intro_list: intro_list_schema,
-      intro_node: intro_node_schema
+      intro_node: intro_node_schema,
+      switch_node: switch_node_schema,
+      random_menu_group: random_menu_group_schema
     },
     "$ref": "#/definitions/intro_node"
   },

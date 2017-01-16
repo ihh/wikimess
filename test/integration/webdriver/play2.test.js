@@ -213,16 +213,16 @@ describe("two-player game", function() {
   startGame (fred)
   startGame (sheila)
   
-  makeMove (fred, "Here we are on day 1 of school", "left")
-  makeMove (sheila, "Here we are on day 1 of school", "left")
+  makeMove (fred, "Here we are on the first day of school", "left")
+  makeMove (sheila, "Here we are on the first day of school", "left")
 
   changeMood (fred, sheila, 'sad')
   changeMood (sheila, fred, 'surprised')
   
   makeDDMove (fred, sheila, "goody two-shoes", "Too bad")
   
-  makeMove (fred, "Here we are on day 2 of school", "right")
-  makeMove (sheila, "Here we are on day 2 of school", "right")
+  makeMove (fred, "Here we are on the second day of school", "right")
+  makeMove (sheila, "Here we are on the second day of school", "right")
 
   changeMood (fred, sheila, 'angry')
   changeMood (sheila, fred, 'angry')

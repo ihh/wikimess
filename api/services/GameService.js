@@ -164,25 +164,35 @@ module.exports = {
       })
 
     else if (typeof(text) === 'object') {
+      // initialize with ref, expr/symexpr, or switch
       var initPromise
       if (text.ref)
 	initPromise = Text.findOne({ name: text.ref })
 	.then (function (ref) {
 	  delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
-	  return GameService.expandText (ref, game, outcome, role)
+	  return ref
 	})
-      else {
-	var expr = (typeof(role) === 'undefined') ? text.symexpr : text.expr
+      if (!initPromise) {
+	var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
+	var expr = text[exprKey]
 	if (expr)
           initPromise = Promise.resolve (GameService.evalTextExpr (expr, game, outcome, role))
-	else
-	  initPromise = Promise.resolve ({})
       }
+      if (!initPromise && text['switch']
+	  && (typeof(role) === 'undefined' ? text['switch'].symmetric : !text['switch'].symmetric))
+        initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
+      if (initPromise)
+	initPromise = initPromise.then (function (init) {
+	  return GameService.expandText (init, game, outcome, role)
+	})
+      else
+	initPromise = Promise.resolve ({})
 
       promise = initPromise
 	.then (function (expanded) {
 	  var randmenuPromise
-	  if (text.randmenu && (typeof(role) === 'undefined' ? text.randmenu.symmetric : !text.randmenu.symmetric))
+	  if (text.randmenu
+	      && (typeof(role) === 'undefined' ? text.randmenu.symmetric : !text.randmenu.symmetric))
 	    randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
 						      game, outcome, role)
 	    .then (function (expandedMenu) {
@@ -316,6 +326,19 @@ module.exports = {
       text = text.replace (optRegex, randomOption)
     } while (foundOptRegex)
     return text
+  },
+
+  expandSwitch: function (caseList, game, outcome, role) {
+    var result, defaultResult
+    for (var n = 0; n < caseList.length && !result; ++n) {
+      var caseNode = caseList[n]
+      if (caseNode['default'])
+	defaultResult = caseNode['default']
+      else
+	if (GameService.evalTextExpr (caseNode.test, game, outcome, role))
+	  result = caseNode['case']
+    }
+    return result || defaultResult || {}
   },
   
   expandRandomMenu: function (randMenu, game, outcome, role) {

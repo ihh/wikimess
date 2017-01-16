@@ -55,6 +55,9 @@
             "symexpr": {
               "type": "string"
             },
+            "switch": {
+              "type": "#/definitions/switch_node"
+            },
             "goto": {
               "type": "string"
             }
@@ -78,6 +81,9 @@
             },
             "symexpr": {
               "type": "string"
+            },
+            "switch": {
+              "type": "#/definitions/switch_node"
             },
             "label": {
               "type": "object"
@@ -114,6 +120,9 @@
             },
             "symexpr": {
               "type": "string"
+            },
+            "switch": {
+              "type": "#/definitions/switch_node"
             },
             "label": {
               "type": "object"
@@ -171,6 +180,85 @@
           "additionalProperties": false
         }
       ]
+    },
+    "switch_node": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "default"
+            ],
+            "properties": {
+              "default": {
+                "$ref": "#/definitions/intro_node"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "test",
+              "case"
+            ],
+            "properties": {
+              "test": {
+                "type": "string"
+              },
+              "case": {
+                "$ref": "#/definitions/intro_node"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "random_menu_group": {
+      "type": "object",
+      "properties": {
+        "n": {
+          "type": "number"
+        },
+        "shuffle": {
+          "type": "boolean"
+        },
+        "opts": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/intro_node"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "option"
+                ],
+                "properties": {
+                  "weight": {
+                    "type": "number"
+                  },
+                  "exclusive": {
+                    "type": "boolean"
+                  },
+                  "option": {
+                    "$ref": "#/definitions/intro_node"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "opts"
+      ],
+      "additionalProperties": false
     }
   },
   "$ref": "#/definitions/intro_node",
