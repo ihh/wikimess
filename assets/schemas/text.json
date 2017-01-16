@@ -144,7 +144,7 @@
                 {
                   "type": "object",
                   "properties": {
-                    "asymmetric": {
+                    "symmetric": {
                       "type": "boolean"
                     },
                     "shuffle": {

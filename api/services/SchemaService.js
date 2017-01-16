@@ -62,7 +62,7 @@ var intro_node_schema = {
               randmenu: {
                 oneOf: [{ type: "object",
 		          properties: {
-		            asymmetric: { type: "boolean" },
+		            symmetric: { type: "boolean" },
 		            shuffle: { type: "boolean" },
 		            cluster: { type: "boolean" },
 		            groups: { type: "array", items: { "$ref": "#/definitions/random_menu_group" } }

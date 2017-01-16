@@ -4,7 +4,6 @@
     intro: [{ text: "<<Here <<you|we>> are on|Well, <<this is|it's>>|Looks <<as though it's|like>>|So <<now|>> it's|Heads up! <<It's|This is>>>> day {{($c.day||0)+1}} of #<school|college|community college|WizCom|the academy>#.",
               label: { x: "{{($c.day||0)+1}}" },  // test of server-side code evaluation in labels
               randmenu: {
-                asymmetric: false,
                 shuffle: true,
                 cluster: true,
                 groups: [

@@ -182,7 +182,7 @@ module.exports = {
       promise = initPromise
 	.then (function (expanded) {
 	  var randmenuPromise
-	  if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
+	  if (text.randmenu && (typeof(role) === 'undefined' ? text.randmenu.symmetric : !text.randmenu.symmetric))
 	    randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
 						      game, outcome, role)
 	    .then (function (expandedMenu) {
