@@ -10,9 +10,8 @@
         newSignUp: false
     },
     {
-        name: "titfortat",
+        name: "bot",
         password: "test",
-        human: false,
-        category: "student"
+        human: false
     }
 ]

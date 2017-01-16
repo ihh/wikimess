@@ -4,7 +4,6 @@
         password: "TheHeadmasterRitual",
         newSignUp: false,
         human: false,
-        category: 'dean',
         avatarConfig: {
             base: {
                 global: {

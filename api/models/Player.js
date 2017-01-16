@@ -44,10 +44,6 @@ module.exports = {
           type: 'boolean',
           defaultsTo: true
       },
-
-      category: {
-          type: 'string'
-      },
       
       // global stats for this player
       global: {
