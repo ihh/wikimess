@@ -15,12 +15,16 @@ module.exports = {
     var asymKeys = ['local', 'global', 'mood', 'verb']
 
     function makeText (text) {
-      if (typeof(text) == 'undefined')
+      if (typeof(text) === 'undefined')
 	return undefined
-      else if (typeof(text) == 'string')
-	return [{ text: text }]
-      else if (!GameService.isArray(text))
-	text = [text]
+      else if (typeof(text) === 'string')
+	return { text: text }
+      else if (GameService.isArray(text)) {
+	if (text.length === 1)
+	  return text[0]
+	else
+	  return { sequence: text }
+      }
       return text
     }
 

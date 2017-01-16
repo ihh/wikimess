@@ -570,7 +570,7 @@ module.exports = {
       .then (function (sharedIntro) {
 	return GameService.expandText (sharedIntro, game, null, 1)
 	  .then (function (intro) {
-	    game.tree1 = game.tree1.concat (intro)
+	    game.tree1.push (intro)
 	    return sharedIntro
 	  })
       }).then (function (sharedIntro) {
@@ -581,7 +581,7 @@ module.exports = {
       }).then (function (sharedIntro2) {
 	return GameService.expandText (sharedIntro2, game, null, 2)
       }).then (function (intro2) {
-	game.tree2 = game.tree2.concat (intro2)
+	game.tree2.push (intro2)
 
 	// auto-expand or update
 	if (choice.autoexpand)
@@ -631,7 +631,7 @@ module.exports = {
 	     .then (function (sharedOutro) {
 	       return GameService.expandOutcomeText (sharedOutro, game, outcome, 1)
 		 .then (function (outro) {
-		   game.tree1 = game.tree1.concat (outro)
+		   game.tree1.push (outro)
 		   return sharedOutro
 		 })
 	     }).then (function (sharedOutro) {
@@ -642,7 +642,7 @@ module.exports = {
 	     }).then (function (sharedOutro2) {
 		 return GameService.expandText (sharedOutro2, game, outcome)
 	     }).then (function (outro2) {
-	       game.tree2 = game.tree2.concat (outro2)
+	       game.tree2.push (outro2)
 	     })
 	 }).then (function() {
 	   game.move1 = game.move2 = null
