@@ -1968,13 +1968,14 @@ var BigHouse = (function() {
 
     timerPulseElement: function() {
       var pulseElement
-      if (this.currentChoiceNode().menu) {
-        var idx = this.selectedMenuItem ? this.selectedMenuItem.n : this.nextRandomAction(this.currentExpansionNode)
-	pulseElement = this.currentExpansionNode.menuLabel[idx]
+      var expansion = this.currentExpansionNode
+      if (expansion.node && expansion.node.menu) {
+        var idx = this.nextRandomAction(expansion)
+	pulseElement = expansion.menuLabel[idx]
       } else if (this.nodeExpansionIsPredictable (this.currentChoiceNode()))
 	pulseElement = $('.choice1,.choice2').find(':visible')
       else {
-	var choiceClass = this.nextRandomAction(this.currentExpansionNode) == 'left' ? 'choice1' : 'choice2'
+	var choiceClass = this.nextRandomAction(expansion) === 'left' ? 'choice1' : 'choice2'
 	pulseElement = $('.'+choiceClass).find(':visible')
       }
       return pulseElement
@@ -2089,7 +2090,7 @@ var BigHouse = (function() {
 	bh.lastSwipe = dir
 	bh.choiceDiv.empty()
 
-	var action = node.menu ? bh.selectedMenuItem.n : dir
+	var action = node.menu ? expansion.selectedItem : dir
 	var nextExpansion = bh.getNextVisibleExpansion (expansion, action)
 
 	bh.currentExpansionNode = nextExpansion
@@ -2159,11 +2160,14 @@ var BigHouse = (function() {
     },
 
     nextRandomAction: function (expansion) {
-      if (expansion.action)
-        return expansion.action
-      if (expansion.nextRandomAction)
-        return expansion.nextRandomAction
-      if (expansion.node.menu)
+      var action
+      if (typeof(expansion.action) !== 'undefined')
+        action = expansion.action
+      else if (typeof(expansion.selectedItem) !== 'undefined')
+        action = expansion.selectedItem
+      else if (typeof(expansion.nextRandomAction) !== 'undefined')
+        action = expansion.nextRandomAction
+      else if (expansion.node.menu)
 	action = Math.floor (Math.random() * expansion.node.menu.length)
       else
 	action = Math.random() < .5 ? 'left' : 'right'
@@ -2272,6 +2276,7 @@ var BigHouse = (function() {
       if (node.menu) {
 	var fieldset = $('<fieldset class="cardmenu">')
 	expansion.menuLabel = []
+	expansion.menuInput = []
 	var menuSelectCallback
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
@@ -2279,18 +2284,20 @@ var BigHouse = (function() {
 	  var visible = item.visible ? bh.evalExpansionExpr(expansion,item.visible,false) : true
 	  if (visible) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
+	    var labelSpan = $('<span>')
+	    expansion.menuInput.push (radioInput)
+	    expansion.menuLabel.push (labelSpan)
             var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
             fieldset
 	      .append (radioInput)
-	      .append ($('<label for="'+id+'" class="cardmenulabel">')
-                       .append (expansion.menuLabel[n] = $('<span>')))
+	      .append ($('<label for="'+id+'" class="cardmenulabel">').append (labelSpan))
             if (itemStruck) {
               radioInput.attr('disabled',true)
-              expansion.menuLabel[n].html ($('<strike>').text(item.hint).addClass('disabled'))
+              labelSpan.html ($('<strike>').text(item.hint).addClass('disabled'))
             } else
-              expansion.menuLabel[n].text(item.hint)
+              labelSpan.text(item.hint)
 	      .on('click',function() {
-		bh.selectedMenuItem = item
+		expansion.selectedItem = n
 		if (menuSelectCallback)
 		  menuSelectCallback.call (bh, item, n)
 	      })
@@ -2313,9 +2320,11 @@ var BigHouse = (function() {
           bh.choiceDiv.hide()
           bh.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
           if (typeof(expansion.action) !== 'undefined')
-            bh.selectedMenuItem = node.menu[expansion.action]
-          else
-	    delete bh.selectedMenuItem
+            expansion.selectedItem = expansion.action
+	  if (typeof(expansion.selectedItem) !== 'undefined') {
+	    expansion.menuInput[expansion.selectedItem].prop('checked',true)
+	    menuSelectCallback()
+	  }
         }
       } else  // not a menu card
         expansion.topCardCallback = function() {
