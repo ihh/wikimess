@@ -1,7 +1,8 @@
 // api/services/GameService.js
 
 var extend = require('extend')
-var merge = require('deepmerge');
+var merge = require('deepmerge')
+var Promise = require('bluebird')
 
 module.exports = {
 
@@ -151,30 +152,50 @@ module.exports = {
   },
 
   expandText: function (text, game, outcome, role) {
+    var promise
     if (!text)
-      return text
-    else if (GameService.isArray(text)) {
-      return text.map (function (t) {
-        return GameService.expandText (t, game, outcome, role)
-      })
-    } else if (typeof(text) === 'object') {
-      var expanded = {}
-      if (text.symexpr && typeof(role) === 'undefined')
-        expanded = GameService.evalTextExpr (symexpr, game, outcome, role)
-      if (text.expr && typeof(role) !== 'undefined')
-        expanded = GameService.evalTextExpr (expr, game, outcome, role)
-      if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
-	expanded.menu = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
-                                                game, outcome, role)
-      Object.keys(text).forEach (function (key) {
-        if (!expanded.hasOwnProperty(key))
-	  expanded[key] = GameService.expandText (text[key], game, outcome, role)
-      })
-      return expanded
-    } else if (typeof(text) === 'string')
-      return this.expandTextString (text, game, outcome, role)
+      promise = Promise.resolve(text)
 
-    return text
+    else if (GameService.isArray(text))
+      promise = Promise.map (text, function (t) {
+        return GameService.expandText (t, game, outcome, role)
+      }).then (function (expandedArray) {
+	return expandedArray
+      })
+
+    else if (typeof(text) === 'object') {
+      var expanded = {}
+      var expr = (typeof(role) === 'undefined') ? text.symexpr : text.expr
+      if (expr)
+        expanded = GameService.evalTextExpr (expr, game, outcome, role)
+
+      var randmenuPromise
+      if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
+	randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
+						  game, outcome, role)
+	.then (function (expandedMenu) {
+	  expanded.menu = expandedMenu
+	})
+      else
+	randmenuPromise = Promise.resolve()
+
+      promise = randmenuPromise.then (function() {
+	return Promise.map (Object.keys(text).filter (function (key) {
+	  return !expanded.hasOwnProperty(key)
+	}), function (key) {
+	  return GameService.expandText (text[key], game, outcome, role)
+	    .then (function (expandedVal) {
+	      expanded[key] = expandedVal
+	    })
+	})
+      }).then (function() {
+	return expanded
+      })
+
+    } else if (typeof(text) === 'string')
+      promise = Promise.resolve (GameService.expandTextString (text, game, outcome, role))
+
+    return promise
   },
 
   evalTextExpr: function (expr, game, outcome, role) {
@@ -545,19 +566,32 @@ module.exports = {
     game.player1.global = p1global
     game.player2.global = p2global
 
-    var firstPassIntro = GameService.expandText (choice.intro, game, null)
-    var firstPassIntro2 = choice.intro2 ? GameService.expandText (choice.intro2, game, null) : firstPassIntro
-    game.tree1 = game.tree1.concat (GameService.expandText (firstPassIntro, game, null, 1))
-    game.tree2 = game.tree2.concat (GameService.expandText (firstPassIntro2 || choice.intro, game, null, 2))
+    GameService.expandText (choice.intro, game, null)
+      .then (function (sharedIntro) {
+	return GameService.expandText (sharedIntro, game, null, 1)
+	  .then (function (intro) {
+	    game.tree1 = game.tree1.concat (intro)
+	    return sharedIntro
+	  })
+      }).then (function (sharedIntro) {
+	if (choice.intro2)
+	  return GameService.expandText (choice.intro2, game, null)
+	else
+	  return Promise.resolve (sharedIntro)
+      }).then (function (sharedIntro2) {
+	return GameService.expandText (sharedIntro2, game, null, 2)
+      }).then (function (intro2) {
+	game.tree2 = game.tree2.concat (intro2)
 
-    // auto-expand or update
-    if (choice.autoexpand)
-      GameService
-      .applyRandomOutcomes (game,
-			    success,
-			    error)
-    else
-      success()
+	// auto-expand or update
+	if (choice.autoexpand)
+	  GameService
+	  .applyRandomOutcomes (game,
+				success,
+				error)
+	else
+	  success()
+      })
   },
 
   applyRandomOutcomes: function (game, success, error) {
@@ -567,8 +601,8 @@ module.exports = {
      function (err, outcomes) {
        if (err)
 	 error (err)
-       else {
-	 outcomes.forEach (function (outcome) {
+       else
+	 Promise.map (outcomes, function (outcome) {
 
            //		     console.log (outcome)
 
@@ -593,15 +627,27 @@ module.exports = {
 	   game.player1.global = p1global
 	   game.player2.global = p2global
 
-           var firstPassOutro = GameService.expandText (outcome.outro, game, outcome)
-           var firstPassOutro2 = outcome.outro2 ? GameService.expandText (outcome.outro2, game, outcome) : firstPassOutro
-	   game.tree1 = game.tree1.concat (GameService.expandOutcomeText (firstPassOutro, game, outcome, 1))
-	   game.tree2 = game.tree2.concat (GameService.expandOutcomeText (firstPassOutro2, game, outcome, 2))
+	   return GameService.expandText (outcome.outro, game, outcome)
+	     .then (function (sharedOutro) {
+	       return GameService.expandOutcomeText (sharedOutro, game, outcome, 1)
+		 .then (function (outro) {
+		   game.tree1 = game.tree1.concat (outro)
+		   return sharedOutro
+		 })
+	     }).then (function (sharedOutro) {
+	       if (outcome.outro2)
+		 return GameService.expandText (outcome.outro2, game, outcome)
+	       else
+		 return Promise.resolve(sharedOutro)
+	     }).then (function (sharedOutro2) {
+		 return GameService.expandText (sharedOutro2, game, outcome)
+	     }).then (function (outro2) {
+	       game.tree2 = game.tree2.concat (outro2)
+	     })
+	 }).then (function() {
+	   game.move1 = game.move2 = null
+	   GameService.resolveNextChoice (game, success, error)
 	 })
-
-	 game.move1 = game.move2 = null
-	 GameService.resolveNextChoice (game, success, error)
-       }
      })
   },
 
