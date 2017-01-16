@@ -181,9 +181,6 @@ function makeDDMove (fred, sheila, text1, text2) {
   makeMove (fred, "even admit", "left")
   makeMove (sheila, "At least you admit it", "right")
 
-  makeMove (fred, "Just saying", "right")
-  makeMove (sheila, "Just saying", "right")
-
   makeMove (fred, text1, "right")
   makeMove (sheila, text1, "right")
 
@@ -245,9 +242,6 @@ describe("two-player game", function() {
   makeMove (fred, "Party times", "right")
   makeMove (sheila, "Party times", "right")
 
-  makeMove (fred, "Co-operation is great", "right")
-  makeMove (sheila, "Co-operation is great", "right")
-
   makeMove (fred, "Want to have an ice cream", "right")
   makeMove (sheila, "Want to have an ice cream", "left")
 
@@ -273,9 +267,6 @@ describe("two-player game", function() {
 
   makeMove (fred, "Party times", "right")
   makeMove (sheila, "Party times", "right")
-
-  makeMove (fred, "Co-operation is great", "right")
-  makeMove (sheila, "Co-operation is great", "right")
   
   makeMove (fred, "Want to have an ice cream", "right")
   makeMove (sheila, "Want to have an ice cream", "right")
@@ -309,7 +300,6 @@ describe("two-player game", function() {
   makeMove (fred, "You decide to rat them out", "left")
   makeMove (fred, "pretty low", "left")
   makeMove (fred, "even admit", "left")
-  makeMove (fred, "Just saying", "right")
 
   makeMove (fred, "fred ratted sheila out", "right")
   makeMove (sheila, "fred ratted sheila out", "right")
@@ -331,7 +321,6 @@ describe("two-player game", function() {
   makeMove (sheila, "You decide to rat them out", "left")
   makeMove (sheila, "pretty low", "left")
   makeMove (sheila, "even admit", "left")
-  makeMove (sheila, "Just saying", "right")
 
   makeMove (fred, "sheila ratted fred out", "right")
   makeMove (sheila, "sheila ratted fred out", "right")

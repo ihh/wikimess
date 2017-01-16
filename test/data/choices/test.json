@@ -10,7 +10,7 @@
 		label: { move: "l" },
 		sequence: [{ text: "You decide to rat them out." },
 			   { ref: "low" },  // cross-reference to Text table
-			   { text: "Just saying." }]
+			   { text: "++\nJust saying." }]  // this will be concatenated with the previous node
 	      },
 	      right: {
 		hint: "Skip class",
@@ -21,7 +21,7 @@
 	  outro: [{ text: "Cool, let's skip class together!",
 		    next: { text: "Party times, by the beach...",
 			    next: { text: "Co-operation is great!" } } }],
-	  global1:{count:{c:"$+1"}},  // global1 is a synonym for global1, so this increments global1.count.c
+	  global1:{count:{c:"$+1"}},  // increments global1.count.c
           global2:{count:{c:"$+1"}},  // this increments global2.count.c
           common:{day:"++"}},  // increments common.day
          {weight:"!$c.iceCream",
@@ -31,10 +31,10 @@
                            next: { goto: "beach" } },
 		   right: { name: "beach",
                             hint: "Beach",
-                            text: "Party times, by the beach...",
+                            text: "Party times, by the beach...\n++",  // this will be concatenated with the next node
 			    next: { text: "Co-operation is great!" } } }],
 	  global1:{count:{c:"$+1"}},  // increments global1.count.c
-          global2:{count:{c:"$+1"}},  // global2 is a synonym for global2, this increments global2.count.c
+          global2:{count:{c:"$+1"}},  // increments global2.count.c
           common:{day:"++"},  // increments common.day
           next: {intro: { text: "Want to have an ice cream together?",
 			  left: { hint: "No",
@@ -91,7 +91,7 @@
     ll: [{weight:"!($local1.count.d && $local2.count.d)",
           outro:"You and #{$no}# are a couple of goody two-shoes ;; Too bad!",
           local1:{count:{d:"$+1"}},  // increments local1.count.d
-          local2:{count:{d:"$+1"}},  // local2 is a synonym for local2, this increments local2.count.d
+          local2:{count:{d:"$+1"}},  // increments local2.count.d
           next:"auto",
           common:{day:"++"}},  // increments common.day
          {weight:"$local1.count.d && $local2.count.d",

@@ -83,7 +83,7 @@ var BigHouse = (function() {
     defaultBackHint: "Back",
     defaultNextHint: "Next",
     defaultWaitText: "<wait>",
-    defaultAbsentText: function() { "Time passes..." },
+    defaultAbsentText: "Time passes...",
     
     themes: [ {style: 'plain', text: 'Plain'},
               {style: 'cardroom', text: 'Card room'} ],
@@ -110,6 +110,9 @@ var BigHouse = (function() {
                music: false,
 	       stack: false },
 
+    // for debugging:
+    disableMoveTimer: true,
+    
     globalMenuCount: 0,
     
     // REST interface
@@ -1639,7 +1642,7 @@ var BigHouse = (function() {
           var newRootForMove = {}, nextRoot
 	  data.history.slice(0).reverse().forEach (function (hist, h) {
 	    if (!hist.text.length)
-	      hist.text = [{ text: bh.defaultAbsentText() }]
+	      hist.text = [{}]
 
 	    // process the grammar received from the server, use IDs to connect node objects
 	    function hookup (link, move) {
@@ -1696,6 +1699,10 @@ var BigHouse = (function() {
 		return expansion
 	      }
 	      root = convertJsonMoveToExpansion (hist.move, undefined, nextRoot)
+	      // add pointers from expansion tails back to head nodes
+	      var head = root
+	      while (head)
+		head = bh.expansionTail(head).next  // this will automatically add the pointers back to head
 	    } else if (bh.currentExpansionNode && hist.moveNumber == bh.currentChoiceNode().move)
 	      root = bighouseLabel.getExpansionRoot (bh.currentExpansionNode)
 	    else
@@ -1704,7 +1711,7 @@ var BigHouse = (function() {
 		       label: hist.text[0].label }
 	    newRootForMove[hist.moveNumber] = root
 	    nextRoot = root
-	    bh.getVisibleExpansion (root)  // expand new tree up to the first visible node
+	    bh.getNextExpansionTail (root)  // expand new tree up to the first visible node
 	  })
 
 	  if (bh.currentExpansionNode) {
@@ -1737,7 +1744,7 @@ var BigHouse = (function() {
 	    }
 	  } else {
 	    // we don't have any partly-expanded move, so just start at the beginning
-	    bh.currentExpansionNode = bh.getVisibleExpansion (nextRoot)
+	    bh.currentExpansionNode = bh.getNextExpansionTail (nextRoot)
 	  }
 	  $.extend (bh.rootForMove, newRootForMove)  // merge the old move history with the newly received moves
 	  bh.saveGamePosition()
@@ -1851,7 +1858,8 @@ var BigHouse = (function() {
     setMoveTimer: function (callback, delay) {
       if (this.verbose.timer)
 	console.log ("Setting move timer for " + Math.round(delay) + "ms")
-      this.moveTimer = window.setTimeout (callback.bind(this), delay)
+      if (!this.disableMoveTimer)
+	this.moveTimer = window.setTimeout (callback.bind(this), delay)
     },
 
     timerCallback: function() {
@@ -1985,11 +1993,26 @@ var BigHouse = (function() {
       this.timerDiv.width(0)
     },
 
-    expansionIsInvisible: function (expansion) {
+    getExpansionText: function (expansion) {
       var node = expansion.node
-      return this.nodeExpansionIsPredictable(node)
-	&& (typeof(node.text) === 'undefined' || node.text === '')
-	&& (!node.wait || (expansion.next && expansion !== bh.currentExpansionNode))
+      var text = node.text || (node.wait ? this.defaultWaitText : '')
+
+      text = text.replace(/^\+\+/,'')
+      text = text.replace(/\+\+$/,'')
+
+      text = text.replace (/<label:(\S+?)>/g, function (match, label) {
+	return bighouseLabel.expansionLabel (expansion, label)
+      })
+
+      text = text.replace (/<move>/g, function() {
+	return bighouseLabel.expansionLabel (expansion, 'move')
+      })
+
+      text = text.replace (/\[\[(.*?)\]\]/g, function (expr) {
+	return bighouseLabel.evalExpansionExpr (expansion, expr, '')
+      })
+
+      return text
     },
 
     nodeIsLeaf: function (node) {
@@ -2070,17 +2093,31 @@ var BigHouse = (function() {
       return childExpansion
     },
 
-    getNextVisibleExpansion: function (expansion, action) {
-      var nextExpansion = this.getNextExpansion (expansion, action)
-      while (nextExpansion && this.expansionIsInvisible(nextExpansion))
-	nextExpansion = nextExpansion.next
-      return nextExpansion
+    expansionTail: function (head) {
+      var tail = head
+      if (tail) {
+	var text = ''
+	do {
+	  text = tail.node.text || text
+	  var append = false
+	  if (tail !== bh.currentExpansionNode && !tail.node.wait && this.nodeExpansionIsPredictable (tail.node)) {
+	    var next = tail.next
+	    if (next && (text === '' || !next.node.wait)) {
+	      var nextText = next.node.text
+	      append = text.match(/\+\+$/) || text === ''
+		|| !nextText || nextText === '' || nextText.match(/^\+\+/)
+	      if (append)
+		tail = next
+	    }
+	  }
+	} while (append)
+	tail.head = head
+      }
+      return tail
     },
-
-    getVisibleExpansion: function (expansion) {
-      if (expansion && this.expansionIsInvisible(expansion))
-	expansion = this.getNextVisibleExpansion(expansion)
-      return expansion
+    
+    getNextExpansionTail: function (expansion, action) {
+      return this.expansionTail (this.getNextExpansion (expansion, action))
     },
 
     makeSwipeFunction: function (expansion, dir) {
@@ -2091,7 +2128,7 @@ var BigHouse = (function() {
 	bh.choiceDiv.empty()
 
 	var action = node.menu ? expansion.selectedItem : dir
-	var nextExpansion = bh.getNextVisibleExpansion (expansion, action)
+	var nextExpansion = bh.getNextExpansionTail (expansion, action)
 
 	bh.currentExpansionNode = nextExpansion
 	bh.saveGamePosition()
@@ -2186,11 +2223,12 @@ var BigHouse = (function() {
       }
       expansion.dealt = true
 
+      // deal any cards after this one first, to ensure card stack finishes with this one on top
       var nextCardDealt
       if (expansion.next) {
 	var nextInfo = {}
 	$.extend (nextInfo, info)
-	nextInfo.expansion = expansion.next
+	nextInfo.expansion = bh.expansionTail (expansion.next)
 	nextInfo.dealingAhead = true
 	nextCardDealt = bh.dealCardForNode (nextInfo)
       } else {
@@ -2198,12 +2236,20 @@ var BigHouse = (function() {
 	nextCardDealt.resolve()
       }
 
-      if (bh.expansionIsInvisible(expansion))
-	return nextCardDealt
+      // concatenate text from the chain of expansion nodes that will be used to make this card
+      var text = '', head = expansion.head
+      while (head) {
+	text += bh.getExpansionText (head)
+	if (head === expansion)
+	  break
+	else
+	  head = head.next
+      }
+      if (text === '')
+	text = bh.defaultAbsentText
 
       // text can override default cardClass, sfx
       var node = expansion.node
-      var text = node.text || (node.wait ? bh.defaultWaitText : bh.defaultAbsentText())
       var sfx, cardClass
       if (node.wait)
 	cardClass = 'waitcard'
@@ -2226,7 +2272,7 @@ var BigHouse = (function() {
 	return ""
       })
 
-      // misc text expansions go here...
+      // misc text replacements go here...
       text = text.replace (/<icon:([^> ]+)>/g, function (match, iconName) {
 	return '<img src="' + bh.iconPrefix + iconName + bh.iconSuffix + '"></img>'
       })
@@ -2240,23 +2286,11 @@ var BigHouse = (function() {
       })
 
       text = text.replace (/<wait>/g, function() {
-	return expansion.node.finish
+	return node.finish
 	  ? "Game over"
 	  : ((expansion.isHistory && !info.firstDealAfterCardsLoaded)
 	     ? "Time passes..."
 	     : ("Waiting for " + bh.opponentName + "..."))
-      })
-
-      text = text.replace (/<label:(\S+?)>/g, function (match, label) {
-	return bighouseLabel.expansionLabel (expansion, label)
-      })
-
-      text = text.replace (/<move>/g, function() {
-	return bighouseLabel.expansionLabel (expansion, 'move')
-      })
-
-      text = text.replace (/\[\[(.*?)\]\]/g, function (expr) {
-	return bighouseLabel.evalExpansionExpr (expansion, expr, '')
       })
 
       // create the <span>'s
