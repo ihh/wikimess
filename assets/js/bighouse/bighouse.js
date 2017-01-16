@@ -1163,6 +1163,8 @@ var BigHouse = (function() {
     showMoodImage: function (id, mood, div, callback) {
       var bh = this
       this.getAvatarConfigPromise(id).done (function (avatarConfig) {
+	bh.moods.forEach (function (m) { div.removeClass('mood-'+m) })
+	div.addClass('mood-'+mood)
         if (avatarConfig[mood].url) {
           var img = $('<img class="mood">')
           if (callback)

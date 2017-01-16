@@ -149,6 +149,24 @@ function makeDDMove (fred, sheila, text1, text2) {
   makeMove (sheila, text2, "right")
 }
 
+
+var moodNum = {happy:1, surprised:2, sad:3, angry:4}
+function changeMood (sender, recipient, mood) {
+  var n = moodNum[mood]
+  it('should change '+sender.name+'\'s mood to '+mood, function(done) {
+    sender.driver
+      .wait(until.elementLocated(By.xpath("//div[@class='moodbutton mood"+n+"']")))
+      .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+  })
+  it('should see '+sender.name+'\'s '+mood+' avatar on '+recipient.name+'\'s page', function(done) {
+    recipient.driver
+      .wait(until.elementLocated(By.xpath("//div[@class='rightmood']/div[@class='moodcontainer mood-"+mood+"']")))
+      .then(() => done())
+      .catch(error => done(error))
+  })
+}
+
 describe("two-player game", function() {
   var fred = login (fredDriver, "fred", "test")
   var sheila = login (sheilaDriver, "sheila", "test")
@@ -159,13 +177,22 @@ describe("two-player game", function() {
   makeMove (fred, "Here we are on day 1 of school", "left")
   makeMove (sheila, "Here we are on day 1 of school", "left")
 
+  changeMood (fred, sheila, 'sad')
+  changeMood (sheila, fred, 'surprised')
+  
   makeDDMove (fred, sheila, "goody two-shoes", "Too bad")
   
   makeMove (fred, "Here we are on day 2 of school", "right")
   makeMove (sheila, "Here we are on day 2 of school", "right")
 
+  changeMood (fred, sheila, 'angry')
+  changeMood (sheila, fred, 'angry')
+
   makeMove (fred, "Do you want to play truant", "right")
   makeMove (sheila, "Do you want to play truant", "right")
+
+  changeMood (fred, sheila, 'happy')
+  changeMood (sheila, fred, 'happy')
 
   makeMove (fred, "Shall we go to the beach", "right")
   makeMove (sheila, "Shall we go to the beach", "left")
