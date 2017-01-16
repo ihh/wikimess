@@ -1,0 +1,18 @@
+[{ name: "timeout",
+   auto: {next: ["timeout_menu", "timeout_next", "timeout_next", "timeout_swipe", "timeout_swipe"]} },
+ { name: "timeout_next",
+   intro: [{ text: "A timeout test that exits with a 'Next'",
+	     next: { text: "What did you expect?" } }] },
+ { name: "timeout_swipe",
+   intro: [{ text: "A timeout test that exits with a swipe",
+	     left: { text: "Congratulations! You swiped left." },
+	     right: { text: "Congratulations! You swiped right." } }] },
+ { name: "timeout_menu",
+   intro: [{ text: "A timeout test that exits with a menu selection",
+	     menu: [{ hint: "A",
+		      text: "You chose A" },
+		    { hint: "B",
+		      text: "You chose B" },
+		    { hint: "C",
+		      text: "You chose C" }] }] }]
+

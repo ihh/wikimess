@@ -22,20 +22,8 @@ module.exports = {
           rl: { "$ref": "#/definitions/outcome_list" },
           rr: { "$ref": "#/definitions/outcome_list" },
 
-          rx: { "$ref": "#/definitions/outcome_list" },
-          lx: { "$ref": "#/definitions/outcome_list" },
-          xr: { "$ref": "#/definitions/outcome_list" },
-          xl: { "$ref": "#/definitions/outcome_list" },
-
-          notrr: { "$ref": "#/definitions/outcome_list" },
-          notrl: { "$ref": "#/definitions/outcome_list" },
-          notlr: { "$ref": "#/definitions/outcome_list" },
-          notll: { "$ref": "#/definitions/outcome_list" },
-
           any: { "$ref": "#/definitions/outcome_list" },
 
-          same: { "$ref": "#/definitions/outcome_list" },
-          diff: { "$ref": "#/definitions/outcome_list" },
           lr2: { "$ref": "#/definitions/outcome_list" },
           rl2: { "$ref": "#/definitions/outcome_list" },
 

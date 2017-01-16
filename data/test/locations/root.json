@@ -3,7 +3,12 @@
     name: "root",
     title: "Outside WizCom",
     description: "Welcome to your first day at Wizard Valley Community College.",
-    links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" }]
+    links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" }],
+    events: [ { title: "Timeout test",
+		hint: "Let's do a timeout test!",
+		timeout: 3,
+		role1weight: "$n === 'fred'",
+		choice: "timeout" } ]
   },
   {
     name: "intro_robe",
@@ -22,13 +27,7 @@
   {
     name: "dean",
     title: "Dean's Office",
-    links: ['lobby'],
-    events: [ { title: "Cut class",
-		hint: "Want to cut class?",
-		timeout: 3,
-                cost: { cash: 1 },
-		role1weight: "$n === 'sheila'",
-		choice: "root" } ]
+    links: ['lobby']
   },
   {
     name: "registration",

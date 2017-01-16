@@ -123,6 +123,8 @@ module.exports = {
 
     var add = function (outcome) { addOutcome (outcome.move1, outcome.move2, outcome) }
 
+    var add_wild = function (outcome) { addOutcome (null, null, outcome) }
+
     var add_ll = function (outcome) { addOutcome ('l', 'l', outcome) }
     var add_lr = function (outcome) { addOutcome ('l', 'r', outcome) }
     var add_rl = function (outcome) { addOutcome ('r', 'l', outcome) }
@@ -139,20 +141,8 @@ module.exports = {
     addOutcomes ('rl', [add_rl])
     addOutcomes ('rr', [add_rr])
 
-    addOutcomes ('rx', [add_rr, add_rl])
-    addOutcomes ('lx', [add_lr, add_ll])
-    addOutcomes ('xr', [add_rr, add_lr])
-    addOutcomes ('xl', [add_rl, add_ll])
+    addOutcomes ('any', [add_wild])
 
-    addOutcomes ('notrr', [add_rl, add_lr, add_ll])
-    addOutcomes ('notrl', [add_rr, add_lr, add_ll])
-    addOutcomes ('notlr', [add_rr, add_rl, add_ll])
-    addOutcomes ('notll', [add_rr, add_rl, add_lr])
-
-    addOutcomes ('any', [add_rr, add_rl, add_lr, add_ll])
-
-    addOutcomes ('same', [add_rr, add_ll])
-    addOutcomes ('diff', [add_rl, add_lr])
     addOutcomes ('rl2', [add_rl, add_flipped_lr])
     addOutcomes ('lr2', [add_lr, add_flipped_rl])
 
