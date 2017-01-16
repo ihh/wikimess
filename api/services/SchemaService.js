@@ -11,7 +11,11 @@ var intro_node_schema = {
   oneOf: [{ type: "string" },
           { type: "object",
 	    required: ["ref"],
-	    properties: { ref: { type: "string" } },
+	    properties: {
+              hint: { type: "string" },
+	      visible: { type: "string" },
+	      ref: { type: "string" }
+	    },
 	    additionalProperties: false
 	  },
           { type: "object",

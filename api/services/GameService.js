@@ -164,37 +164,46 @@ module.exports = {
       })
 
     else if (typeof(text) === 'object') {
+      var initPromise
       if (text.ref)
-	promise = Text.findOne ({ name: text.ref })
+	initPromise = Text.findOne({ name: text.ref })
+	.then (function (ref) {
+	  delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
+	  return ref
+	})
       else {
-	var expanded = {}
 	var expr = (typeof(role) === 'undefined') ? text.symexpr : text.expr
 	if (expr)
-          expanded = GameService.evalTextExpr (expr, game, outcome, role)
-
-	var randmenuPromise
-	if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
-	  randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
-						    game, outcome, role)
-	  .then (function (expandedMenu) {
-	    expanded.menu = expandedMenu
-	  })
+          initPromise = Promise.resolve (GameService.evalTextExpr (expr, game, outcome, role))
 	else
-	  randmenuPromise = Promise.resolve()
-
-	promise = randmenuPromise.then (function() {
-	  return Promise.map (Object.keys(text).filter (function (key) {
-	    return key !== 'id' && !expanded.hasOwnProperty(key)
-	  }), function (key) {
-	    return GameService.expandText (text[key], game, outcome, role)
-	      .then (function (expandedVal) {
-		expanded[key] = expandedVal
-	      })
-	  })
-	}).then (function() {
-	  return expanded
-	})
+	  initPromise = Promise.resolve ({})
       }
+
+      promise = initPromise
+	.then (function (expanded) {
+	  var randmenuPromise
+	  if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
+	    randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
+						      game, outcome, role)
+	    .then (function (expandedMenu) {
+	      expanded.menu = expandedMenu
+	    })
+	  else
+	    randmenuPromise = Promise.resolve()
+
+	  return randmenuPromise.then (function() {
+	    return Promise.map (Object.keys(text).filter (function (key) {
+	      return key !== 'id' && !expanded.hasOwnProperty(key)
+	    }), function (key) {
+	      return GameService.expandText (text[key], game, outcome, role)
+		.then (function (expandedVal) {
+		  expanded[key] = expandedVal
+		})
+	    })
+	  }).then (function() {
+	    return expanded
+	  })
+	})
 
     } else if (typeof(text) === 'string')
       promise = Promise.resolve (GameService.expandTextString (text, game, outcome, role))

@@ -25,6 +25,12 @@
             "ref"
           ],
           "properties": {
+            "hint": {
+              "type": "string"
+            },
+            "visible": {
+              "type": "string"
+            },
             "ref": {
               "type": "string"
             }

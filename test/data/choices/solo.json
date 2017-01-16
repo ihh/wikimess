@@ -11,5 +11,7 @@
 		    { hint: "Maybe",
 		      text: "Your doubt is well-founded" },
 		    { hint: "No",
-		      text: "HAHAHAHAA!" }] }] }]
+		      text: "HAHAHAHAA!" },
+		    { hint: "Only if I ask the Turing police for help",
+		      ref: "low" }] }] }]
 

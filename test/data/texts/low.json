@@ -1,0 +1,4 @@
+[{ name: "low",
+   text: "That's pretty low.",
+   right: { hint: "I know", text: "At least you admit it." },
+   left: { hint: "What?", text: "Ha! You can't even admit you're a snitch." } }]
