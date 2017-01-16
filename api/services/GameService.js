@@ -164,7 +164,7 @@ module.exports = {
       })
 
     else if (typeof(text) === 'object') {
-      // initialize with ref, expr/symexpr, or switch
+      // initialize with ref, switch, or expr/symexpr
       var initPromise
       if (text.ref)
 	initPromise = Text.findOne({ name: text.ref })
@@ -172,15 +172,15 @@ module.exports = {
 	  delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
 	  return ref
 	})
+      if (!initPromise && text['switch']
+	  && (typeof(role) === 'undefined' ? text['switch'].symmetric : !text['switch'].symmetric))
+        initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
       if (!initPromise) {
 	var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
 	var expr = text[exprKey]
 	if (expr)
           initPromise = Promise.resolve (GameService.evalTextExpr (expr, game, outcome, role))
       }
-      if (!initPromise && text['switch']
-	  && (typeof(role) === 'undefined' ? text['switch'].symmetric : !text['switch'].symmetric))
-        initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
       if (initPromise)
 	initPromise = initPromise.then (function (init) {
 	  return GameService.expandText (init, game, outcome, role)
