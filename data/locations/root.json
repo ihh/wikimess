@@ -1,41 +1,14 @@
 [
   {
     name: "root",
-    title: "Outside WizCom",
-    description: "Welcome to your first day at Wizard Valley Community College.",
-    links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" }]
-  },
-  {
-    name: "intro_robe",
-    title: "Outside WizCom",
-    description: "{{$inv.robe ? \"The porter nods approvingly at your robe.\" : \"As you step through the lobby door, you are blocked by a self-important porter. \\\"You can't go in there without a robe!\\\"\"}}",
-    items: [{name:'robe',visible:"!$inv.robe",verb:{buy:"take"},buy:{},sell:false}],
-    links: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }]
-  },
-  {
-    name: "lobby",
-    title: "Lobby",
-    description: "You are standing in the lobby.",
-    checkpoint: true,
-    links: ['dean','registration','union']
-  },
-  {
-    name: "dean",
-    title: "Dean's Office",
-    links: ['lobby']
-  },
-  {
-    name: "registration",
-    title: "Registration Office",
-    links: ['lobby']
-  },
-  {
-    name: "union",
-    title: "Student Union",
-    links: ['lobby'],
-    events: [ { title: "Cut class",
-		hint: "Want to cut class?",
-                cost: { cash: 1 },
-		choice: "root" } ]
+    title: "Institute of Advanced Invective",
+    description: "Welcome to the Institute of Advanced Invective! Here, you can learn to hurl abuse like a champ.",
+    events: [ { title: "Insult a human",
+		hint: "Engage in a battle of wits with another player. (If no human is available, you'll be matched with a computer player.)",
+		choice: "insult" },
+	      { title: "Insult a machine",
+		hint: "Sharpen your skills by insulting a CPU.",
+		opponent: ["bot"],
+		choice: "insult" } ]
   }
 ]

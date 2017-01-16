@@ -15,7 +15,7 @@
   "use strict";
 
   function getExpansionRoot (expansion) {
-      while (expansion.parent) expansion = expansion.parent
+    while (expansion.parent) expansion = expansion.parent
     return expansion
   }
 
@@ -23,33 +23,56 @@
     return typeof(x) === 'undefined' ? y : (x + y)
   }
 
-  function expansionLabel (expansion, label) {
-    var s
+  function expansionLabel (e, label) {
+    var l
+    if (e.node) {
+      if (e.node.labelexpr && e.node.labelexpr[label])
+        l = evalExpansionExpr(e,e.node.labelexpr[label])
+      else if (e.node.label && e.node.label[label])
+	l = e.node.label[label]
+    }
+    return l
+  }
+  
+  function expansionLabels (expansion, label) {
+    var labs = []
     if (expansion) {
       var e = getExpansionRoot (expansion)
       while (e) {
-        var expr
-        if (e.node) {
-          var l = undefined
-          if (e.node.labelexpr && e.node.labelexpr[label])
-            l = evalExpansionExpr(e,e.node.labelexpr[label])
-          else if (e.node.label && e.node.label[label])
-	    l = e.node.label[label]
-          if (l)
-	    s = addLabel (s, l)
-          }
-	  if (e === expansion) break
-	  e = e.next
-	}
+        var l = expansionLabel (e, label)
+        if (l)
+	  labs.push (l)
+	if (e === expansion) break
+	e = e.next
       }
-      return s
     }
+    return labs
+  }
 
+  function lastExpansionLabel (expansion, label) {
+    var labs = expansionLabels (expansion, label)
+    return labs.pop()
+  }
+
+  function sumExpansionLabels (expansion, label) {
+    var labs = expansionLabels (expansion, label)
+    return labs.reduce (addLabel, undefined)
+  }
+
+  function parentExpansionLabel (expansion, label) {
+    var l
+    while (!l && (expansion = expansion.parent))
+      l = expansionLabel (expansion, label)
+    return l
+  }
+  
   function evalExpansionExpr (expansion, expr, failureVal, log) {
     if (typeof(log) === 'undefined')
       log = console.log
 
-    var $label = expansionLabel.bind (this, expansion)
+    var $label = sumExpansionLabels.bind (this, expansion)
+    var $last = lastExpansionLabel.bind (this, expansion)
+    var $parent = parentExpansionLabel.bind (this, expansion)
 
     var val
     try {
@@ -65,7 +88,7 @@
   }
 
   function evalVisible (expansion, expr, log) {
-    return expr ? evalExpansionExpr(expansion,expr,false,log) : true
+    return typeof(expr) !== 'undefined' ? evalExpansionExpr(expansion,expr,false,log) : true
   }
 
   function evalLabel (expansion, label, labelexpr, log) {
@@ -80,7 +103,10 @@
   return {
     getExpansionRoot: getExpansionRoot,
     addLabel: addLabel,
-    expansionLabel: expansionLabel,
+    expansionLabels: expansionLabels,
+    lastExpansionLabel: lastExpansionLabel,
+    sumExpansionLabels: sumExpansionLabels,
+    parentExpansionLabel: parentExpansionLabel,
     evalExpansionExpr: evalExpansionExpr,
     evalVisible: evalVisible,
     evalLabel: evalLabel

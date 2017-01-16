@@ -112,7 +112,18 @@
             "type": "string"
           },
           "opponent": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "compatibility": {
             "type": "string"

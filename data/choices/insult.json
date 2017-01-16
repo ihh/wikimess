@@ -1,0 +1,20 @@
+[
+  { name: "insult",
+    intro: { text: "Let's start by picking a subject for your insult.",
+             randmenu: {
+               shuffle: true,
+	       groups: [{ n: 3,
+			  opts: [ { hint: "Your father", label: { subject: "Your father", person: '3s' } },
+				  { hint: "Your mother", label: { subject: "Your mother", person: '3s' } },
+				  { hint: "Your doctor", label: { subject: "Your doctor", person: '3s' } },
+				  { hint: "Your dentist", label: { subject: "Your dentist", person: '3s' } },
+				  { hint: "Your tailor", label: { subject: "Your tailor", person: '3s' } },
+				  { hint: "Your stylist", label: { subject: "Your stylist", person: '3s' } },
+				  { hint: "Your hairdresser", label: { subject: "Your hairdresser", person: '3s' } } ]
+			},
+			{ n: 1,
+			  opts: [{ hint: "You", label: { subject: "You", person: '2s' }}] }]
+	     }
+	   }
+  }
+]

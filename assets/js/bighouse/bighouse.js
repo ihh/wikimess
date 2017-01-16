@@ -110,8 +110,8 @@ var BigHouse = (function() {
                music: false,
 	       stack: false },
 
-    // for debugging:
-    disableMoveTimer: true,
+    // uncomment to remove time limit for debugging purposes (or to cheat)
+//    disableMoveTimer: true,
     
     globalMenuCount: 0,
     
@@ -2001,11 +2001,11 @@ var BigHouse = (function() {
       text = text.replace(/\+\+$/,'')
 
       text = text.replace (/<label:(\S+?)>/g, function (match, label) {
-	return bighouseLabel.expansionLabel (expansion, label)
+	return bighouseLabel.sumExpansionLabels (expansion, label)
       })
 
       text = text.replace (/<move>/g, function() {
-	return bighouseLabel.expansionLabel (expansion, 'move')
+	return bighouseLabel.sumExpansionLabels (expansion, 'move')
       })
 
       text = text.replace (/\[\[(.*?)\]\]/g, function (expr) {
