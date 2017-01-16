@@ -43,21 +43,24 @@ function login (driver, name, password) {
   return { name: name, driver: driver }
 }
 
+function clickExpect (driver, name, buttonName, expectText) {
+  it('should have ' + name + ' click "'+buttonName+'" and expect "'+expectText+'"', function(done) {
+    driver
+      .wait(until.elementLocated(By.name(buttonName)))
+      .then(elem => elem.click())
+    driver
+      .wait(until.elementLocated(By.xpath("//*[contains(text(), '"+expectText+"')]")))
+      .then(() => done())
+      .catch(error => done(error))
+	})
+}
+
 function startGame (obj, password) {
   var driver = obj.driver
   var name = obj.name
 
   function navigate (buttonName, expectText) {
-    it('should have ' + name + ' click "'+buttonName+'" and expect "'+expectText+'"', function(done) {
-      driver.findElement(By.name(buttonName)).click()
-      driver
-	.wait(until.elementLocated(By.xpath("//*[contains(text(), '"+expectText+"')]")))
-	.then(function() {
-	  done()
-	  //	  setTimeout (done, 250)  // leave enough time to see what's happening
-	})
-	.catch(error => done(error))
-    })
+    clickExpect(driver,name,buttonName,expectText)
   }
 
   navigate('link-2','self-important porter')
@@ -72,6 +75,18 @@ function startGame (obj, password) {
   })
 }
 
+function waitForCardText (obj, cardText) {
+  var driver = obj.driver
+  var name = obj.name
+
+  it('should wait until '+name+'\'s top card contains "'+cardText+'"', function(done) {
+    driver
+      .wait(until.elementLocated(By.xpath("//li[contains(@class,'topcard')]/span[contains(text(), '"+cardText+"')]")))
+      .then(elem => done())
+      .catch(error => done(error))
+  })
+}
+
 function makeMove (obj, cardText, menuText, dir) {
   var driver = obj.driver
   var name = obj.name
@@ -81,12 +96,7 @@ function makeMove (obj, cardText, menuText, dir) {
     menuText = undefined
   }
 
-  it('should wait until '+name+'\'s top card contains "'+cardText+'"', function(done) {
-    driver
-      .wait(until.elementLocated(By.xpath("//li[contains(@class,'topcard')]/span[contains(text(), '"+cardText+"')]")))
-      .then(elem => done())
-      .catch(error => done(error))
-  })
+  waitForCardText (obj, cardText)
 
   it('should wait until '+name+'\'s thrown-card animation completes', function(done) {
     driver
@@ -113,6 +123,27 @@ function makeMove (obj, cardText, menuText, dir) {
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
+}
+
+function roundTripToMenu (obj, cardText, eventNum) {
+  var driver = obj.driver
+  var name = obj.name
+  eventNum = eventNum || 1
+  waitForCardText (obj, cardText)
+  it('should have '+name+' click "Back"', function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.xpath("//div[@class='statuslink']/span/a[text()='Back']")))
+      .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+	})
+  it('should have '+name+' click on "Active games"', function(done) {
+    driver
+      .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[@class='games']")))
+//      .then(elem => { elem.click(); setTimeout (done, 5000) })
+      .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+  })
+  clickExpect(driver,name,'event-'+eventNum,cardText)
 }
 
 function quit (obj) {
@@ -187,6 +218,8 @@ describe("two-player game", function() {
 
   changeMood (fred, sheila, 'angry')
   changeMood (sheila, fred, 'angry')
+  
+  roundTripToMenu (fred, "truant")
 
   makeMove (fred, "Do you want to play truant", "right")
   makeMove (sheila, "Do you want to play truant", "right")
