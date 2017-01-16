@@ -1697,7 +1697,7 @@ var BigHouse = (function() {
 	      }
 	      root = convertJsonMoveToExpansion (hist.move, undefined, nextRoot)
 	    } else if (bh.currentExpansionNode && hist.moveNumber == bh.currentChoiceNode().move)
-	      root = bh.getExpansionRoot (bh.currentExpansionNode)
+	      root = bighouseLabel.getExpansionRoot (bh.currentExpansionNode)
 	    else
 	      root = { creator: 'loadGameCards',
 		       node: hist.text[0],
@@ -1709,7 +1709,7 @@ var BigHouse = (function() {
 
 	  if (bh.currentExpansionNode) {
 	    var currentMove = bh.currentChoiceNode().move
-	    var currentRoot = bh.getExpansionRoot (bh.currentExpansionNode)
+	    var currentRoot = bighouseLabel.getExpansionRoot (bh.currentExpansionNode)
 	    if (currentRoot !== newRootForMove[currentMove]) {
 	      // we were part-way through a move when we got sent a fully-expanded move from the server.
 	      // hopefully, this was because we timed out, and sent a default move to the server,
@@ -2130,11 +2130,6 @@ var BigHouse = (function() {
 	this.revealMoods()
     },
 
-    getExpansionRoot: function (expansion) {
-      while (expansion.parent) expansion = expansion.parent
-      return expansion
-    },
-
     currentChoiceNode: function() {
       return this.currentExpansionNode.node
     },
@@ -2253,15 +2248,15 @@ var BigHouse = (function() {
       })
 
       text = text.replace (/<label:(\S+?)>/g, function (match, label) {
-	return bh.expansionLabel (expansion, label)
+	return bighouseLabel.expansionLabel (expansion, label)
       })
 
       text = text.replace (/<move>/g, function() {
-	return bh.expansionLabel (expansion, 'move')
+	return bighouseLabel.expansionLabel (expansion, 'move')
       })
 
       text = text.replace (/\[\[(.*?)\]\]/g, function (expr) {
-	return bh.evalExpansionExpr (expansion, expr, '')
+	return bighouseLabel.evalExpansionExpr (expansion, expr, '')
       })
 
       // create the <span>'s
@@ -2281,8 +2276,7 @@ var BigHouse = (function() {
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
-	  var visible = item.visible ? bh.evalExpansionExpr(expansion,item.visible,false) : true
-	  if (visible) {
+	  if (bighouseLabel.evalVisible (expansion, item.visible)) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
 	    var labelSpan = $('<span>')
 	    expansion.menuInput.push (radioInput)
@@ -2613,57 +2607,11 @@ var BigHouse = (function() {
       if (expansion.node) {
         var node = expansion.node
 	jm.id = node.id
-        var label = node.label || {}
-	if (node.labelexpr)
-          Object.keys(node.labelexpr).forEach (function (lab) {
-	    label[lab] = bh.evalExpansionExpr (expansion, node.labelexpr[lab])
-	  })
-	if (Object.keys(label).length)
-	  jm.label = label
+        jm.label = bighouseLabel.evalLabel (expansion, node.label, node.labelexpr)
       }
       if (expansion.children && expansion.children.length)
 	jm.children = expansion.children.map (function (child) { return bh.jsonExpansion(child) })
       return jm
-    },
-
-    addLabel: function (x, y) {
-      return typeof(x) === 'undefined' ? y : (x + y)
-    },
-
-    expansionLabel: function (expansion, label) {
-      var bh = this, s
-      if (expansion) {
-	var e = bh.getExpansionRoot(expansion)
-	while (e) {
-          var expr
-          if (e.node) {
-            var l = undefined
-            if (e.node.labelexpr && e.node.labelexpr[label])
-              l = bh.evalExpansionExpr(e,e.node.labelexpr[label])
-            else if (e.node.label && e.node.label[label])
-	      l = e.node.label[label]
-            if (l)
-	      s = bh.addLabel (s, l)
-          }
-	  if (e === expansion) break
-	  e = e.next
-	}
-      }
-      return s
-    },
-
-    evalExpansionExpr: function (expansion, expr, failureVal) {
-      var bh = this
-      var $label = bh.expansionLabel.bind (bh, expansion)
-      var val
-      try {
-	val = eval(expr)
-      } catch (e) {
-        console.log ("When evaluating: " + expr)
-        console.log ("Error: " + e)
-	val = failureVal
-      }
-      return val
     },
 
     changeMoodFunction: function (moveNumber, mood) {
