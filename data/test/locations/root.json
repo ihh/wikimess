@@ -7,8 +7,16 @@
     events: [ { title: "Timeout test",
 		hint: "Let's do a timeout test!",
 		timeout: 3,
+		reset: 5,
 		role1weight: "$n === 'fred'",
-		choice: "timeout" } ]
+		choice: "timeout" },
+	      { title: "AI test",
+		hint: "Play a single-player test!",
+		opponent: "ai",
+		timeout: 10,
+		reset: 5,
+		role1weight: "$h",
+		choice: "solo" } ]
   },
   {
     name: "intro_robe",

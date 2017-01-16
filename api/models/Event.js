@@ -40,7 +40,7 @@ module.exports = {
     },
 
     opponent: {
-      type: 'string'  // name of opponent, or list of names. Typically a bot name. Overrides 'wantHuman'
+      type: 'json'  // name of opponent, or list of names. Should be bot names. Overrides 'wantHuman'
     },
 
     visible: {

@@ -1,0 +1,15 @@
+[{ name: "solo",
+   auto: {next: ["solo_menu", "solo_swipe"]} },
+ { name: "solo_swipe",
+   intro: [{ text: "You will NEVER beat me.",
+	     left: { hint: "Yes I will", text: "Dammit. Alright then, you win" },
+	     right: { hint: "OK then", text: "Yes, cower in fear, MORTAL" } }] },
+ { name: "solo_menu",
+   intro: [{ text: "So, you think you can beat me?",
+	     menu: [{ hint: "Easily",
+		      text: "Such arrogance!" },
+		    { hint: "Maybe",
+		      text: "Your doubt is well-founded" },
+		    { hint: "No",
+		      text: "HAHAHAHAA!" }] }] }]
+
