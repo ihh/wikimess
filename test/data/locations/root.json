@@ -29,7 +29,6 @@
     name: "lobby",
     title: "Lobby",
     description: "You are standing in the lobby.",
-    checkpoint: true,
     links: ['dean','registration','union']
   },
   {

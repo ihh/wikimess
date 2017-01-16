@@ -169,7 +169,7 @@ module.exports = {
 	initPromise = Text.findOne({ name: text.ref })
 	.then (function (ref) {
 	  delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
-	  return ref
+	  return GameService.expandText (ref, game, outcome, role)
 	})
       else {
 	var expr = (typeof(role) === 'undefined') ? text.symexpr : text.expr
