@@ -2,6 +2,77 @@
 
 var JsonValidator = require( 'jsonschema' ).Validator;
 
+var intro_list_schema = {
+  oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
+          { "$ref": "#/definitions/intro_node" }]
+}
+
+var intro_node_schema = {
+  oneOf: [{ type: "string" },
+          { type: "object",
+	    required: ["ref"],
+	    properties: { ref: { type: "string" } },
+	    additionalProperties: false
+	  },
+          { type: "object",
+	    required: ["goto"],
+            properties: {
+              hint: { type: "string" },
+	      visible: { type: "string" },
+	      expr: { type: "string" },
+	      symexpr: { type: "string" },
+              goto: { type: "string" }
+            },
+            additionalProperties: false
+          },
+          { type: "object",
+	    required: ["sequence"],
+            properties: {
+              hint: { type: "string" },
+	      visible: { type: "string" },
+	      expr: { type: "string" },
+	      symexpr: { type: "string" },
+              label: { type: "object" },
+              labelexpr: { type: "object" },
+              sequence: { type: "#/definitions/intro_node_list" },
+              define: { type: "#/definitions/intro_node_list" }
+            },
+            additionalProperties: false
+          },
+          { type: "object",
+            properties: {
+              name: { type: "string" },
+              text: { type: "string" },
+              hint: { type: "string" },
+	      visible: { type: "string" },
+	      expr: { type: "string" },
+	      symexpr: { type: "string" },
+              label: { type: "object" },
+              labelexpr: { type: "object" },
+              define: { type: "#/definitions/intro_node_list" },
+              left: { "$ref": "#/definitions/intro_node" },
+              right: { "$ref": "#/definitions/intro_node" },
+              next: { "$ref": "#/definitions/intro_node" },
+              menu: { type: "array", items: { "$ref": "#/definitions/intro_node" } },
+
+              randmenu: {
+                oneOf: [{ type: "object",
+		          properties: {
+		            asymmetric: { type: "boolean" },
+		            shuffle: { type: "boolean" },
+		            cluster: { type: "boolean" },
+		            groups: { type: "array", items: { "$ref": "#/definitions/random_menu_group" } }
+		          },
+		          required: ["groups"],
+		          additionalProperties: false
+                        }]
+	      }
+              
+            },
+            additionalProperties: false
+          }]
+}
+
 module.exports = {
 
   // Choice schema
@@ -71,71 +142,8 @@ module.exports = {
         additionalProperties: false
       },
 
-      intro_list: {
-        oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
-                { "$ref": "#/definitions/intro_node" }]
-      },
-
-      intro_node: {
-        oneOf: [{ type: "string" },
-                { type: "object",
-		  required: ["goto"],
-                  properties: {
-                    hint: { type: "string" },
-		    visible: { type: "string" },
-		    expr: { type: "string" },
-		    symexpr: { type: "string" },
-                    goto: { type: "string" }
-                  },
-                  additionalProperties: false
-                },
-                { type: "object",
-		  required: ["sequence"],
-                  properties: {
-                    hint: { type: "string" },
-		    visible: { type: "string" },
-		    expr: { type: "string" },
-		    symexpr: { type: "string" },
-                    label: { type: "object" },
-                    labelexpr: { type: "object" },
-                    sequence: { type: "#/definitions/intro_node_list" },
-                    define: { type: "#/definitions/intro_node_list" }
-                  },
-                  additionalProperties: false
-                },
-                { type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    text: { type: "string" },
-                    hint: { type: "string" },
-		    visible: { type: "string" },
-		    expr: { type: "string" },
-		    symexpr: { type: "string" },
-                    label: { type: "object" },
-                    labelexpr: { type: "object" },
-                    define: { type: "#/definitions/intro_node_list" },
-                    left: { "$ref": "#/definitions/intro_node" },
-                    right: { "$ref": "#/definitions/intro_node" },
-                    next: { "$ref": "#/definitions/intro_node" },
-                    menu: { type: "array", items: { "$ref": "#/definitions/intro_node" } },
-
-                    randmenu: {
-                      oneOf: [{ type: "object",
-		                properties: {
-		                  asymmetric: { type: "boolean" },
-		                  shuffle: { type: "boolean" },
-		                  cluster: { type: "boolean" },
-		                  groups: { type: "array", items: { "$ref": "#/definitions/random_menu_group" } }
-		                },
-		                required: ["groups"],
-		                additionalProperties: false
-                              }]
-		    }
-                    
-                  },
-                  additionalProperties: false
-                }]
-      },
+      intro_list: intro_list_schema,
+      intro_node: intro_node_schema,
 
       random_menu_group: {
         type: "object",
@@ -164,7 +172,15 @@ module.exports = {
     },
 
     "$ref": "#/definitions/choice"
+  },
 
+  // Text schema
+  textSchema: {
+    definitions: {
+      intro_list: intro_list_schema,
+      intro_node: intro_node_schema
+    },
+    "$ref": "#/definitions/intro_node"
   },
 
   // Move schema
@@ -263,6 +279,7 @@ module.exports = {
     }
   },
   
+  
   // Validators
   validate: function (data, schema, name, errorCallback) {
     var validator = new JsonValidator()
@@ -279,6 +296,10 @@ module.exports = {
 
   validateChoice: function (data, errorCallback) {
     return this.validate (data, this.choiceSchema, "Choice", errorCallback)
+  },
+
+  validateText: function (data, errorCallback) {
+    return this.validate (data, this.textSchema, "Text", errorCallback)
   },
 
   validateMove: function (data, errorCallback) {

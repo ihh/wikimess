@@ -42,8 +42,8 @@ module.exports = {
       defaultsTo: 'unchanged'
     },
     
-    intro: { type: 'json' },
-    intro2: { type: 'json' },
+    intro: { model: 'text' },
+    intro2: { model: 'text' },
 
     autoexpand: {
       type: 'boolean',

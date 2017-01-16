@@ -14,6 +14,7 @@ var defaultPort = "1337"
 var defaultUrlPrefix = ""
 var defaultDataDir = "data"
 var defaultChoiceFilename = "$DATA/choices"
+var defaultTextFilename = "$DATA/texts"
 var defaultPlayerFilename = "$DATA/players"
 var defaultLocationFilename = "$DATA/locations"
 var defaultItemFilename = "$DATA/items"
@@ -35,10 +36,11 @@ function schemaPath (schema) {
 
 var opt = getopt.create([
   ['h' , 'host=STRING'      , 'hostname (default="' + defaultHost + '")'],
-  ['t' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
+  ['o' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
   ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['c' , 'choices=PATH+'    , 'path to .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
+  ['t' , 'texts=PATH+'      , 'path to .json text file(s) or directories (default=' + defaultPath('Text') + ')'],
   ['p' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
   ['l' , 'locations=PATH+'  , 'path to .json location file(s) or directories (default=' + defaultPath('Location') + ')'],
   ['i' , 'items=PATH+'      , 'path to .json item file(s) or directories (default=' + defaultPath('Item') + ')'],
@@ -79,6 +81,7 @@ var urlPrefix = opt.options.root || defaultUrlPrefix
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultPath('Choice',opt)]
+var textFilenames = opt.options.choices || [defaultPath('Text',opt)]
 var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
 var locationFilenames = opt.options.locations || [defaultPath('Location',opt)]
 var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
@@ -121,6 +124,13 @@ callback = processFilenameList ({ path: '/meter',
                                   parsers: [JSON.parse, eval],
                                   list: meterFilenames.reverse() })
 
+callback = processFilenameList ({ path: '/text',
+                                  schema: schemaPath('text'),
+                                  handler: genericHandler('Text'),
+                                  callback: callback,
+                                  parsers: [JSON.parse, eval],
+                                  list: textFilenames.reverse() })
+
 var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
   return ' ' + c.name + '\t(id=' + c.id + ', '
     + plural (c.outcomes && c.outcomes.length, 'outcome')
@@ -154,11 +164,13 @@ function process (info) {
   var filename = info.filename,
       first = info.first,
       callback = info.callback
-  var stats = fs.statSync (filename)
-  if (stats.isDirectory())
-    return processDir (info)
-  else if (matchRegex.test(filename) || first)
-    return processFile (info)
+  if (fs.existsSync (filename)) {
+    var stats = fs.statSync (filename)
+    if (stats.isDirectory())
+      return processDir (info)
+    else if (matchRegex.test(filename) || first)
+      return processFile (info)
+  }
   return callback
 }
 

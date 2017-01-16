@@ -38,7 +38,7 @@ after(function(done) {
 
 describe('bin/load-choices.js', function() {
   it('should run bin/load-choices.js', function (done) {
-    exec ('bin/load-choices.js --data=data/test', function (error, stdout, stderr) {
+    exec ('bin/load-choices.js --data=test/data', function (error, stdout, stderr) {
       console.log(stdout)
       console.log(stderr)
       done (error)

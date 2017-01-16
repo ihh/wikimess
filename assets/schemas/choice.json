@@ -172,6 +172,18 @@
         {
           "type": "object",
           "required": [
+            "ref"
+          ],
+          "properties": {
+            "ref": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
             "goto"
           ],
           "properties": {

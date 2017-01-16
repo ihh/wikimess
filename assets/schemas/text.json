@@ -1,0 +1,173 @@
+{
+  "definitions": {
+    "intro_list": {
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/intro_node"
+          }
+        },
+        {
+          "$ref": "#/definitions/intro_node"
+        }
+      ]
+    },
+    "intro_node": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "ref"
+          ],
+          "properties": {
+            "ref": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "goto"
+          ],
+          "properties": {
+            "hint": {
+              "type": "string"
+            },
+            "visible": {
+              "type": "string"
+            },
+            "expr": {
+              "type": "string"
+            },
+            "symexpr": {
+              "type": "string"
+            },
+            "goto": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "sequence"
+          ],
+          "properties": {
+            "hint": {
+              "type": "string"
+            },
+            "visible": {
+              "type": "string"
+            },
+            "expr": {
+              "type": "string"
+            },
+            "symexpr": {
+              "type": "string"
+            },
+            "label": {
+              "type": "object"
+            },
+            "labelexpr": {
+              "type": "object"
+            },
+            "sequence": {
+              "type": "#/definitions/intro_node_list"
+            },
+            "define": {
+              "type": "#/definitions/intro_node_list"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "hint": {
+              "type": "string"
+            },
+            "visible": {
+              "type": "string"
+            },
+            "expr": {
+              "type": "string"
+            },
+            "symexpr": {
+              "type": "string"
+            },
+            "label": {
+              "type": "object"
+            },
+            "labelexpr": {
+              "type": "object"
+            },
+            "define": {
+              "type": "#/definitions/intro_node_list"
+            },
+            "left": {
+              "$ref": "#/definitions/intro_node"
+            },
+            "right": {
+              "$ref": "#/definitions/intro_node"
+            },
+            "next": {
+              "$ref": "#/definitions/intro_node"
+            },
+            "menu": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/intro_node"
+              }
+            },
+            "randmenu": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asymmetric": {
+                      "type": "boolean"
+                    },
+                    "shuffle": {
+                      "type": "boolean"
+                    },
+                    "cluster": {
+                      "type": "boolean"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/random_menu_group"
+                      }
+                    }
+                  },
+                  "required": [
+                    "groups"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "$ref": "#/definitions/intro_node",
+  "$schema": "http://json-schema.org/schema#",
+  "id": "http://localhost:1337/schemas/text.json"
+}

@@ -112,6 +112,8 @@ module.exports = {
 		 lockedSuccess (null)
 	       else {
 		 Choice.findOneByName (event.choice)
+		   .populate('intro')
+		   .populate('intro2')
 		   .exec (function (err, choice) {
 		     if (err)
 		       lockedError (err)

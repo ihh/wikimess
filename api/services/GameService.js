@@ -164,37 +164,44 @@ module.exports = {
       })
 
     else if (typeof(text) === 'object') {
-      var expanded = {}
-      var expr = (typeof(role) === 'undefined') ? text.symexpr : text.expr
-      if (expr)
-        expanded = GameService.evalTextExpr (expr, game, outcome, role)
+      if (text.ref)
+	promise = Text.findOne ({ name: text.ref })
+      else {
+	var expanded = {}
+	var expr = (typeof(role) === 'undefined') ? text.symexpr : text.expr
+	if (expr)
+          expanded = GameService.evalTextExpr (expr, game, outcome, role)
 
-      var randmenuPromise
-      if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
-	randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
-						  game, outcome, role)
-	.then (function (expandedMenu) {
-	  expanded.menu = expandedMenu
-	})
-      else
-	randmenuPromise = Promise.resolve()
+	var randmenuPromise
+	if (text.randmenu && (typeof(role) === 'undefined' ? !text.randmenu.asymmetric : text.randmenu.asymmetric))
+	  randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
+						    game, outcome, role)
+	  .then (function (expandedMenu) {
+	    expanded.menu = expandedMenu
+	  })
+	else
+	  randmenuPromise = Promise.resolve()
 
-      promise = randmenuPromise.then (function() {
-	return Promise.map (Object.keys(text).filter (function (key) {
-	  return !expanded.hasOwnProperty(key)
-	}), function (key) {
-	  return GameService.expandText (text[key], game, outcome, role)
-	    .then (function (expandedVal) {
-	      expanded[key] = expandedVal
-	    })
+	promise = randmenuPromise.then (function() {
+	  return Promise.map (Object.keys(text).filter (function (key) {
+	    return key !== 'id' && !expanded.hasOwnProperty(key)
+	  }), function (key) {
+	    return GameService.expandText (text[key], game, outcome, role)
+	      .then (function (expandedVal) {
+		expanded[key] = expandedVal
+	      })
+	  })
+	}).then (function() {
+	  return expanded
 	})
-      }).then (function() {
-	return expanded
-      })
+      }
 
     } else if (typeof(text) === 'string')
       promise = Promise.resolve (GameService.expandTextString (text, game, outcome, role))
 
+    else
+      promise = Promise.resolve (text)
+    
     return promise
   },
 
@@ -380,6 +387,7 @@ module.exports = {
     if (move2)
       query.where ({ move2: [move2, null] })
 //    sails.log.debug("move1="+move1+" move2="+move2)
+    query.populate('outro').populate('outro2')
     query.exec (function (err, outcomes) {
 //      sails.log.debug("outcomes:\n",outcomes)
       if (err)
@@ -528,7 +536,10 @@ module.exports = {
       var nextChoiceName = game.future[0]
       game.future = game.future.slice(1)
       //	    console.log ("Attempting to resolve "+nextChoiceName)
-      Choice.findOne ({ name: nextChoiceName }).exec (function (err, choice) {
+      Choice.findOne ({ name: nextChoiceName })
+	.populate('intro')
+	.populate('intro2')
+	.exec (function (err, choice) {
 	if (err)
 	  error (err)
 	else if (!choice)

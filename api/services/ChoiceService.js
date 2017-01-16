@@ -213,6 +213,7 @@ module.exports = {
                callback (err)
              else {
                // create a chain of callbacks
+	       // ugh, should use promises for this...
                var next = callback
                children.forEach (function (child) {
                  next = (function(cb) {
