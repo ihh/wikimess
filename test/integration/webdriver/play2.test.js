@@ -139,11 +139,22 @@ function roundTripToMenu (obj, cardText, eventNum) {
   it('should have '+name+' click on "Active games"', function(done) {
     driver
       .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[@class='games']")))
-//      .then(elem => { elem.click(); setTimeout (done, 5000) })
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
   clickExpect(driver,name,'event-'+eventNum,cardText)
+}
+
+function waitForNavBar (obj) {
+  var driver = obj.driver
+  var name = obj.name
+
+  it('should wait for '+name+'\'s navbar', function(done) {
+    driver
+      .wait(until.elementLocated(By.xpath("//div[@class='navbar']")))
+      .then(() => done())
+      .catch(error => done(error))
+  })
 }
 
 function quit (obj) {
@@ -224,12 +235,12 @@ describe("two-player game", function() {
   makeMove (fred, "Do you want to play truant", "right")
   makeMove (sheila, "Do you want to play truant", "right")
 
-  changeMood (fred, sheila, 'happy')
-  changeMood (sheila, fred, 'happy')
-
   makeMove (fred, "Shall we go to the beach", "right")
   makeMove (sheila, "Shall we go to the beach", "left")
   makeMove (sheila, "mall-rats", "right")
+
+  changeMood (fred, sheila, 'happy')
+  changeMood (sheila, fred, 'happy')
 
   makeMove (fred, "Party times", "right")
   makeMove (sheila, "Party times", "right")
@@ -346,6 +357,9 @@ describe("two-player game", function() {
   makeMove (fred, "Game over", "right")
   makeMove (sheila, "Game over", "right")
 
+  waitForNavBar (fred)
+  waitForNavBar (sheila)
+  
   quit (fred)
   quit (sheila)
 })
