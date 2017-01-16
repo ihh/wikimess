@@ -6,12 +6,15 @@ module.exports = {
 
   randomMove: function (text) {
     var move = BotService.randomExpansion (text, 0)
+    BotService.removeParentLinks (move)
     move.bot = true
     return move
   },
 
-  addLabel: function (x, y) {
-    return typeof(x) === 'undefined' ? y : (x + y)
+  removeParentLinks: function (exp) {
+    delete exp.parent
+    if (exp.children)
+      exp.children.map (BotService.removeParentLinks)
   },
   
   randomExpansion: function (text, id, parent) {
