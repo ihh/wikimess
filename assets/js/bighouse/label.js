@@ -23,13 +23,24 @@
     return typeof(x) === 'undefined' ? y : (x + y)
   }
 
+  function getNestedProperty (obj, key) {
+    var keys = key.split('.')
+    while (obj && keys.length)
+      obj = obj[keys.shift()]
+    return obj
+  }
+
+  function hasNestedProperty (obj, key) {
+    return typeof(getNestedProperty (obj, key)) !== 'undefined'
+  }
+
   function expansionLabel (e, label) {
     var l
     if (e.node) {
-      if (e.node.labelexpr && e.node.labelexpr[label])
-        l = evalExpansionExpr(e,e.node.labelexpr[label])
-      else if (e.node.label && e.node.label[label])
-	l = e.node.label[label]
+      if (e.node.labelexpr && hasNestedProperty (e.node.labelexpr, label))
+        l = evalExpansionExpr (e, getNestedProperty (e.node.labelexpr, label))
+      else if (e.node.label && hasNestedProperty (e.node.label, label))
+	l = getNestedProperty (e.node.label, label)
     }
     return l
   }
@@ -70,6 +81,7 @@
     if (typeof(log) === 'undefined')
       log = console.log
 
+    var $labels = expansionLabels.bind (this, expansion)
     var $label = sumExpansionLabels.bind (this, expansion)
     var $last = lastExpansionLabel.bind (this, expansion)
     var $parent = parentExpansionLabel.bind (this, expansion)
@@ -95,7 +107,10 @@
     label = label || {}
     if (labelexpr)
       Object.keys(labelexpr).forEach (function (lab) {
-	label[lab] = evalExpansionExpr (expansion, labelexpr[lab])
+	var expr = labelexpr[lab]
+	label[lab] = (typeof(expr) === 'object')
+	  ? evalLabel (expansion, label[lab], expr, log) 
+	  : evalExpansionExpr (expansion, expr)
       })
     return Object.keys(label).length ? label : undefined
   }

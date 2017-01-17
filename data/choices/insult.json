@@ -1,20 +1,58 @@
 [
   { name: "insult",
-    intro: { text: "Let's start by picking a subject for your insult.",
-             randmenu: {
-               shuffle: true,
-	       groups: [{ n: 3,
-			  opts: [ { hint: "Your father", label: { subject: "Your father", person: '3s' } },
-				  { hint: "Your mother", label: { subject: "Your mother", person: '3s' } },
-				  { hint: "Your doctor", label: { subject: "Your doctor", person: '3s' } },
-				  { hint: "Your dentist", label: { subject: "Your dentist", person: '3s' } },
-				  { hint: "Your tailor", label: { subject: "Your tailor", person: '3s' } },
-				  { hint: "Your stylist", label: { subject: "Your stylist", person: '3s' } },
-				  { hint: "Your hairdresser", label: { subject: "Your hairdresser", person: '3s' } } ]
-			},
-			{ n: 1,
-			  opts: [{ hint: "You", label: { subject: "You", person: '2s' }}] }]
-	     }
-	   }
+    intro: [{ text: "Let's start by picking a subject for your insult.",
+              randmenu: {
+		shuffle: true,
+		groups: [{ n: 3,
+			   opts: [ { hint: "Your father", label: { subject: "your father", person: '3s' } },
+				   { hint: "Your mother", label: { subject: "your mother", person: '3s' } },
+				   { hint: "Your doctor", label: { subject: "your doctor", person: '3s' } },
+				   { hint: "Your dentist", label: { subject: "your dentist", person: '3s' } },
+				   { hint: "Your tailor", label: { subject: "your tailor", person: '3s' } },
+				   { hint: "Your stylist", label: { subject: "your stylist", person: '3s' } },
+				   { hint: "Your hairdresser", label: { subject: "your hairdresser", person: '3s' } } ]
+			 },
+			 { n: 1,
+			   opts: [{ hint: "You", label: { subject: "you", person: '2s' }}] }]
+	      }
+	    },
+	    { text: "Good. Now, what do you want to insult about them?",
+              randmenu: {
+		shuffle: true,
+		groups: [{ n: 3,
+			   opts: [
+			     { hint: "Their sense of style",
+			       label: { quality: { noun: 'fashion sense', adj: 'unfashionable' } } },
+			     { hint: "Their education",
+			       label: { quality: { noun: 'education', adj: 'ignorant' } } },
+			     { hint: "Their kindness",
+			       label: { quality: { noun: 'kindness', adj: 'cruel' } } },
+			     { hint: "Their sexual morality",
+			       label: { quality: { noun: 'sexual morality', adj: 'slutty' } } },
+			     { hint: "Their appearance",
+			       label: { quality: { noun: 'appearance', adj: 'ugly' } } },
+			     { hint: "Their competence",
+			       label: { quality: { noun: 'competence', adj: 'incompetent' } } }
+			   ]
+			 }]
+	      }
+	    },
+	    { text: "Excellent! What will you compare their <label:quality.noun> to?",
+              randmenu: {
+		shuffle: true,
+		groups: [{ n: 1,
+			   opts: [
+			     { hint: "A pig", label: { object: 'pig' } },
+			     { hint: "A cow", label: { object: 'cow' } },
+			     { hint: "A dog", label: { object: 'dog' } } ] },
+			 { n: 1,
+			   opts: [
+			     { hint: "An imbecile", label: { object: 'imbecile' } },
+			     { hint: "A buffoon", label: { object: 'buffoon' } },
+			     { hint: "A fool", label: { object: 'fool' } } ] }]
+	      }
+	    }
+	   ]
+	      
   }
 ]
