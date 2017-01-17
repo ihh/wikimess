@@ -25,7 +25,10 @@
 	       { hint: "Your insults", label: { subject: { noun: "insults", person: 'p3' } } },
 	       { hint: "Your jibes", label: { subject: { noun: "jibes", person: 'p3' } } },
 	       { hint: "Your slights", label: { subject: { noun: "slights", person: 'p3' } } },
-	       { hint: "Your barbs", label: { subject: { noun: "barbs", person: 's3' } } } ]
+	       { hint: "Your barbs", label: { subject: { noun: "barbs", person: 's3' } } },
+	       { hint: "This conversation", label: { subject: { det: "this", noun: "conversation", person: 's3' } } },
+	       { hint: "This exchange", label: { subject: { det: "this", noun: "exchange", person: 's3' } } },
+	       { hint: "This back-and-forth", label: { subject: { det: "this", noun: "back-and-forth", person: 's3' } } }]
 	    },
 	    { n: 1,
 	      opts:
@@ -39,7 +42,7 @@
 	    { n: 1,
 	      opts: [{ hint: "You", label: { subject: { person: 's2' }}}] }] } } },
 
-     { labexpr: { subject: { text: "$label('subject.noun') ? ('your ' + $label('subject.noun')) : 'you'" } } },
+     { labexpr: { subject: { text: "$label('subject.noun') ? (($label('subject.det') || 'your') + ' ' + $label('subject.noun')) : 'you'" } } },
      { labexpr: { insult: "$label('subject.text')" } },
      { label: { insult: ' ' } },
 
