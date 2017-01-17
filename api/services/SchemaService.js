@@ -7,8 +7,8 @@ var intro_node_schema = {
           { type: "object",
 	    required: ["ref"],
 	    properties: {
-              hint: { type: "string" },
-	      visible: { type: "string" },
+              hint: ref_schema('sample_or_string'),
+	      visible: ref_schema('sample_or_string'),
 	      ref: { type: "string" }
 	    },
 	    additionalProperties: false
@@ -16,115 +16,135 @@ var intro_node_schema = {
           { type: "object",
 	    required: ["goto"],
             properties: {
-              hint: { type: "string" },
-	      visible: { type: "string" },
+              hint: ref_schema('sample_or_string'),
+	      visible: ref_schema('sample_or_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: { type: "#/definitions/switch_expr" },
-              goto: { type: "string" }
+	      switch: ref_schema('switch_intro_node'),
+              goto: ref_schema('sample_or_string')
             },
             additionalProperties: false
           },
           { type: "object",
 	    required: ["sequence"],
             properties: {
-              hint: { type: "string" },
-	      visible: { type: "string" },
+              hint: ref_schema('sample_or_string'),
+	      visible: ref_schema('sample_or_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: { type: "#/definitions/switch_expr" },
+	      switch: ref_schema('switch_intro_node'),
               label: { type: "object" },
               labexpr: { type: "object" },
-              sequence: { type: "#/definitions/sample_expr" },
-              define: { type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } }
+              sequence: ref_schema('sample_or_list_intro_nodes'),
+              define: { type: "array", minItems: 1, items: ref_schema('intro_node') }
             },
             additionalProperties: false
           },
           { type: "object",
             properties: {
               name: { type: "string" },
-              text: { type: "string" },
-              hint: { type: "string" },
-	      visible: { type: "string" },
+              text: ref_schema('sample_or_string'),
+              hint: ref_schema('sample_or_string'),
+	      visible: ref_schema('sample_or_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: { type: "#/definitions/switch_expr" },
+	      switch: ref_schema('switch_intro_node'),
               label: { type: "object" },
               labexpr: { type: "object" },
-              define: { type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
-              left: { "$ref": "#/definitions/intro_node" },
-              right: { "$ref": "#/definitions/intro_node" },
-              next: { "$ref": "#/definitions/intro_node" },
-              menu: { "$ref": "#/definitions/sample_expr" }
+              define: { type: "array", minItems: 1, items: ref_schema('intro_node') },
+              left: ref_schema('sample_or_intro_node'),
+              right: ref_schema('sample_or_intro_node'),
+              next: ref_schema('sample_or_intro_node'),
+              menu: ref_schema('sample_or_list_intro_nodes')
             },
             additionalProperties: false
           }]
 }
 
-var sample_expr_schema = {
-  oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
-	  { type: "object",
-	    required: ["sample"],
-	    properties: {
-	      sample: { type: "object",
-			properties: {
-			  symmetric: { type: "boolean" },
-			  shuffle: { type: "boolean" },
-			  cluster: { type: "boolean" },
-			  groups: { type: "array", items: { "$ref": "#/definitions/sample_group" } }
-			},
-		        required: ["groups"],
-			additionalProperties: false
-		      }
-	    },
-	    additionalProperties: false }]
-}
-
-var sample_group_schema = {
-  type: "object",
-  properties: {
-    n: { type: "number" },
-    shuffle: { type: "boolean" },  // defaults to same as enclosing sample_expr.shuffle
-    opts: {
-      type: "array",
-      items: {
-        oneOf: [{ "$ref": "#/definitions/intro_node" },
-                { type: "object",
-                  required: ["option"],
-	          properties: {
-	            weight: { type: "number" },
-	            exclusive: { type: "boolean" },  // defaults to true
-	            option: { "$ref": "#/definitions/intro_node" }
-	          },
-                  additionalProperties: false
-	        }]
-      }
-    }
-  },
-  required: ["opts"],
-  additionalProperties: false
-}
-
-var switch_expr_schema = {
-  type: "array",
-  minItems: 1,
-  items: {
-    oneOf: [{ type: "object",
-	      required: ["default"],
-	      properties: {
-		"default": { "$ref": "#/definitions/intro_node" }
-	      },
-	      additionalProperties: false
-	    },
+function sample_or_list_schema (itemType) {
+  return { oneOf:
+	   [{ type: "array", minItems: 1, items: itemType },
 	    { type: "object",
-	      required: ["test","case"],
-	      properties: {
-		"test": { type: "string" },
-		"case": { "$ref": "#/definitions/intro_node" }
-	      },
-	      additionalProperties: false
-	    }]
-  }
+	      required: ["sample"],
+	      properties:
+	      { sample:
+		{ type: "object",
+		  properties:
+		  { symmetric: { type: "boolean" },
+		    shuffle: { type: "boolean" },
+		    cluster: { type: "boolean" },
+		    groups:
+		    { type: "array",
+		      items:
+		      { type: "object",
+			properties:
+			{ n: { type: "number" },
+			  shuffle: { type: "boolean" },  // defaults to same as enclosing sample_expr.shuffle
+			  opts: sample_opts_schema(itemType) },
+			required: ["opts"],
+			additionalProperties: false } } } } } }] }
+}
+
+function sample_opts_schema (itemType) {
+  return { type: "array",
+	   items:
+	   { oneOf:
+	     [itemType,
+	      { type: "object",
+		required: ["option"],
+		properties:
+		{ weight: { type: "number" },
+		  exclusive: { type: "boolean" },  // defaults to true
+		  option: itemType },
+		additionalProperties: false }] } }
+}
+
+function sample1_or_item_schema (itemType) {
+  return { oneOf:
+	   [itemType,
+	    sample1_schema (itemType)] }
+}
+
+function sample1_schema (itemType) {
+  return { type: "object",
+	   required: ["sample1"],
+	   additionalProperties: false,
+	   properties:
+	   { sample1:
+	     { type: "object",
+	       required: ["opts"],
+	       additionalProperties: false,
+	       properties:
+	       { opts: sample_opts_schema(itemType),
+		 symmetric: { type: "boolean" } } } } }
+}
+
+function switch_expr_schema (itemType) {
+  return { type: "array",
+	   minItems: 1,
+	   items:
+	   { oneOf:
+	     [{ type: "object",
+		required: ["default"],
+		properties:
+		{ "default": itemType },
+		additionalProperties: false },
+	      { type: "object",
+		required: ["test","case"],
+		properties:
+		{ "test": ref_schema('sample_or_string'),
+		  "case": itemType },
+		additionalProperties: false }] } }
+}
+
+function one_or_list_schema (itemType) {
+  return { oneOf:
+	   [itemType,
+	    { type: "array", minItems: 1, items: itemType }] }
+}
+
+function ref_schema (type) {
+  return { "$ref": "#/definitions/" + type }
 }
 
 module.exports = {
@@ -137,36 +157,33 @@ module.exports = {
         properties: {
           name: { type: "string" },
           parent: { type: "string" },
-          intro: { "$ref": "#/definitions/intro_or_intro_list" },
-          intro2: { "$ref": "#/definitions/intro_or_intro_list" },
+          intro: ref_schema('intro_or_intro_list'),
+          intro2: ref_schema('intro_or_intro_list'),
 
-          outcome: { "$ref": "#/definitions/outcome_list" },
+          outcome: ref_schema('outcome_or_outcome_list'),
 
-          ll: { "$ref": "#/definitions/outcome_list" },
-          lr: { "$ref": "#/definitions/outcome_list" },
-          rl: { "$ref": "#/definitions/outcome_list" },
-          rr: { "$ref": "#/definitions/outcome_list" },
+          ll: ref_schema('outcome_or_outcome_list'),
+          lr: ref_schema('outcome_or_outcome_list'),
+          rl: ref_schema('outcome_or_outcome_list'),
+          rr: ref_schema('outcome_or_outcome_list'),
 
-          any: { "$ref": "#/definitions/outcome_list" },
+          any: ref_schema('outcome_or_outcome_list'),
 
-          lr2: { "$ref": "#/definitions/outcome_list" },
-          rl2: { "$ref": "#/definitions/outcome_list" },
+          lr2: ref_schema('outcome_or_outcome_list'),
+          rl2: ref_schema('outcome_or_outcome_list'),
 
-          auto: { "$ref": "#/definitions/outcome_list" },
-          effect: { "$ref": "#/definitions/outcome_list" }
+          auto: ref_schema('outcome_or_outcome_list'),
+          effect: ref_schema('outcome_or_outcome_list')
         },
         additionalProperties: false
       },
 
       choice_ref: {
         oneOf: [{ type: "string" },
-                { "$ref": "#/definitions/choice" }]
+                ref_schema('choice')]
       },
       
-      outcome_list: {
-        oneOf: [{ type: "array", items: { "$ref": "#/definitions/outcome_node" } },
-                { "$ref": "#/definitions/outcome_node" }]
-      },
+      outcome_or_outcome_list: one_or_list_schema(ref_schema('outcome_node')),
 
       outcome_node: {
         type: "object",
@@ -175,10 +192,9 @@ module.exports = {
           move2: { type: "string" },
           weight: { type: ["string","number"] },
           exclusive: { type: "boolean" },
-          outro: { "$ref": "#/definitions/intro_or_intro_list" },
-          outro2: { "$ref": "#/definitions/intro_or_intro_list" },
-          next: { oneOf: [ { "$ref": "#/definitions/choice_ref" },
-                           { type: "array", items: { "$ref": "#/definitions/choice_ref" } } ] },
+          outro: ref_schema('intro_or_intro_list'),
+          outro2: ref_schema('intro_or_intro_list'),
+          next: one_or_list_schema(ref_schema('choice_ref')),
           local: { type: "object" },
           global: { type: "object" },
           mood: { type: "string" },
@@ -196,15 +212,12 @@ module.exports = {
         additionalProperties: false
       },
 
-      intro_or_intro_list: {
-	oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
-		{ "$ref": "#/definitions/intro_node" }]
-      },
-
       intro_node: intro_node_schema,
-      switch_expr: switch_expr_schema,
-      sample_expr: sample_expr_schema,
-      sample_group: sample_group_schema
+      intro_or_intro_list: one_or_list_schema(ref_schema('intro_node')),
+      switch_intro_node: switch_expr_schema(ref_schema('intro_node')),
+      sample_or_list_intro_nodes: sample_or_list_schema(ref_schema('intro_node')),
+      sample_or_intro_node: sample1_or_item_schema(ref_schema('intro_node')),
+      sample_or_string: sample1_or_item_schema({ type: "string" })
     },
 
     "$ref": "#/definitions/choice"
@@ -214,9 +227,10 @@ module.exports = {
   textSchema: {
     definitions: {
       intro_node: intro_node_schema,
-      switch_expr: switch_expr_schema,
-      sample_expr: sample_expr_schema,
-      sample_group: sample_group_schema
+      switch_intro_node: switch_expr_schema(ref_schema('intro_node')),
+      sample_or_list_intro_nodes: sample_or_list_schema(ref_schema('intro_node')),
+      sample_or_intro_node: sample1_or_item_schema(ref_schema('intro_node')),
+      sample_or_string: sample1_or_item_schema({ type: "string" })
     },
     "$ref": "#/definitions/intro_node"
   },
@@ -231,7 +245,7 @@ module.exports = {
 	  action: { type: ["string","number"] },
 	  children: {
 	    type: "array",
-	    items: { "$ref": "#/definitions/move" }
+	    items: ref_schema('move')
 	  },
 	  label: { type: "object" }
         },

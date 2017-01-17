@@ -151,6 +151,10 @@ module.exports = {
     return nodeList
   },
 
+  expandProperty: function (text, prop, role) {
+    return text[prop] && (typeof(role) === 'undefined' ? text[prop].symmetric : !text[prop].symmetric)
+  },
+  
   expandText: function (text, game, outcome, role) {
     var promise
     if (!text)
@@ -165,9 +169,14 @@ module.exports = {
 
     else if (typeof(text) === 'object') {
       // sample?
-      if (text.sample)
+      if (GameService.expandProperty(text,'sample',role))
 	promise = GameService.expandText (GameService.expandSample (text.sample, game, outcome, role),
 					  game, outcome, role)
+
+      else if (GameService.expandProperty(text,'sample1',role))
+	promise = GameService.expandText (GameService.expandSampleOne (text.sample1, game, outcome, role),
+					  game, outcome, role)
+	
       else {
 	// initialize with ref, switch, or expr/symexpr
 	var initPromise
@@ -177,8 +186,7 @@ module.exports = {
 	    delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
 	    return ref
 	  })
-	if (!initPromise && text['switch']
-	    && (typeof(role) === 'undefined' ? text['switch'].symmetric : !text['switch'].symmetric))
+	if (!initPromise && text['switch'])
           initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
 	if (!initPromise) {
 	  var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
@@ -351,7 +359,12 @@ module.exports = {
     return list
   },
 
-  expandSampleGroup: function (group, game, outcome, role) {
+  expandSampleOne: function (sample1Expr, game, outcome, role) {
+    var opts = GameService.expandSampleGroup ({ n: 1, opts: sample1Expr.opts }, game, outcome, role)
+    return opts.length ? opts[0] : undefined
+  },
+
+  expandSampleGroup: function (group, game, outcome, role, n) {
     var n = group.n || 1
     var opts = group.opts.map (function (opt) {
       return opt.option ? opt : { option: opt }

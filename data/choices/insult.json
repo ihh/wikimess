@@ -8,29 +8,29 @@
 	   groups:
 	   [{ n: 2,
 	      opts:
-	      [{ hint: "Your father", label: { subject: "your father", subpers: 's3' } },
-	       { hint: "Your mother", label: { subject: "your mother", subpers: 's3' } },
-	       { hint: "Your brother", label: { subject: "your brother", subpers: 's3' } },
-	       { hint: "Your sister", label: { subject: "your sister", subpers: 's3' } },
-	       { hint: "Your husband", label: { subject: "your husband", subpers: 's3' } },
-	       { hint: "Your wife", label: { subject: "your wife", subpers: 's3' } },
-	       { hint: "Your girlfriend", label: { subject: "your girlfriend", subpers: 's3' } },
-	       { hint: "Your boyfriend", label: { subject: "your boyfriend", subpers: 's3' } },
-	       { hint: "Your spouse", label: { subject: "your spouse", subpers: 's3' } } ]
+	      [{ hint: "Your father", label: { subject: { text: "your father", person: 's3' } } },
+	       { hint: "Your mother", label: { subject: { text: "your mother", person: 's3' } } },
+	       { hint: "Your brother", label: { subject: { text: "your brother", person: 's3' } } },
+	       { hint: "Your sister", label: { subject: { text: "your sister", person: 's3' } } },
+	       { hint: "Your husband", label: { subject: { text: "your husband", person: 's3' } } },
+	       { hint: "Your wife", label: { subject: { text: "your wife", person: 's3' } } },
+	       { hint: "Your girlfriend", label: { subject: { text: "your girlfriend", person: 's3' } } },
+	       { hint: "Your boyfriend", label: { subject: { text: "your boyfriend", person: 's3' } } },
+	       { hint: "Your spouse", label: { subject: { text: "your spouse", person: 's3' } } } ]
 	    },
 	    { n: 1,
 	      opts:
-	      [{ hint: "Your doctor", label: { subject: "your doctor", subpers: 's3' } },
-	       { hint: "Your dentist", label: { subject: "your dentist", subpers: 's3' } },
-	       { hint: "Your tailor", label: { subject: "your tailor", subpers: 's3' } },
-	       { hint: "Your stylist", label: { subject: "your stylist", subpers: 's3' } },
-	       { hint: "Your boss", label: { subject: "your boss", subpers: 's3' } },
-	       { hint: "Your hairdresser", label: { subject: "your hairdresser", subpers: 's3' } } ]
+	      [{ hint: "Your doctor", label: { subject: { text: "your doctor", person: 's3' } } },
+	       { hint: "Your dentist", label: { subject: { text: "your dentist", person: 's3' } } },
+	       { hint: "Your tailor", label: { subject: { text: "your tailor", person: 's3' } } },
+	       { hint: "Your stylist", label: { subject: { text: "your stylist", person: 's3' } } },
+	       { hint: "Your boss", label: { subject: { text: "your boss", person: 's3' } } },
+	       { hint: "Your hairdresser", label: { subject: { text: "your hairdresser", person: 's3' } } } ]
 	    },
 	    { n: 1,
-	      opts: [{ hint: "You", label: { subject: "you", subpers: 's2' }}] }] } } },
+	      opts: [{ hint: "You", label: { subject: { text: "you", person: 's2' }}}] }] } } },
 
-     { labexpr: { insult: "$label('subject')" } },
+     { labexpr: { insult: "$label('subject.text')" } },
      { label: { insult: ' ' } },
 
      { text: "Good. Now, what do you want to insult about them?",
@@ -94,14 +94,14 @@
        { sample:
 	 { groups:
 	   [{ opts:
-	      [{ labexpr: { insult: "$is($label('subpers')) + ' as ' + $label('quality.adj') + ' as '" } },
-	       { labexpr: { insult: "$is($label('subpers')) + ' every bit as ' + $label('quality.adj') + ' as '" } },
-	       { labexpr: { insult: "$is($label('subpers')) + ' quite as ' + $label('quality.adj') + ' as '" } },
-	       { labexpr: { insult: "$is($label('subpers')) + ' just as ' + $label('quality.adj') + ' as '" } },
-	       { labexpr: { insult: "$has($label('subpers')) + ' every bit as much ' + $label('quality.noun') + ' as '" } },
-	       { labexpr: { insult: "$has($label('subpers')) + ' no more ' + $label('quality.noun') + ' than '" } },
-	       { labexpr: { insult: "$is($label('subpers')) + ' barely ' + $label('quality.comp') + ' than '" } },
-	       { labexpr: { insult: "$is($label('subpers')) + ' no ' + $label('quality.comp') + ' than '" } }] }] } } },
+	      [{ labexpr: { insult: "$is($label('subject.person')) + ' as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$is($label('subject.person')) + ' every bit as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$is($label('subject.person')) + ' quite as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$is($label('subject.person')) + ' just as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$has($label('subject.person')) + ' every bit as much ' + $label('quality.noun') + ' as '" } },
+	       { labexpr: { insult: "$has($label('subject.person')) + ' no more ' + $label('quality.noun') + ' than '" } },
+	       { labexpr: { insult: "$is($label('subject.person')) + ' barely ' + $label('quality.comp') + ' than '" } },
+	       { labexpr: { insult: "$is($label('subject.person')) + ' no ' + $label('quality.comp') + ' than '" } }] }] } } },
      { label: { insult: ' ' } },
 
      { text: "Excellent! What will you compare them to?",

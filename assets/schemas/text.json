@@ -12,10 +12,10 @@
           ],
           "properties": {
             "hint": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "visible": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "ref": {
               "type": "string"
@@ -30,10 +30,10 @@
           ],
           "properties": {
             "hint": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "visible": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "expr": {
               "type": "string"
@@ -42,10 +42,10 @@
               "type": "string"
             },
             "switch": {
-              "type": "#/definitions/switch_expr"
+              "$ref": "#/definitions/switch_intro_node"
             },
             "goto": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             }
           },
           "additionalProperties": false
@@ -57,10 +57,10 @@
           ],
           "properties": {
             "hint": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "visible": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "expr": {
               "type": "string"
@@ -69,7 +69,7 @@
               "type": "string"
             },
             "switch": {
-              "type": "#/definitions/switch_expr"
+              "$ref": "#/definitions/switch_intro_node"
             },
             "label": {
               "type": "object"
@@ -78,7 +78,7 @@
               "type": "object"
             },
             "sequence": {
-              "type": "#/definitions/sample_expr"
+              "$ref": "#/definitions/sample_or_list_intro_nodes"
             },
             "define": {
               "type": "array",
@@ -97,13 +97,13 @@
               "type": "string"
             },
             "text": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "hint": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "visible": {
-              "type": "string"
+              "$ref": "#/definitions/sample_or_string"
             },
             "expr": {
               "type": "string"
@@ -112,7 +112,7 @@
               "type": "string"
             },
             "switch": {
-              "type": "#/definitions/switch_expr"
+              "$ref": "#/definitions/switch_intro_node"
             },
             "label": {
               "type": "object"
@@ -128,23 +128,23 @@
               }
             },
             "left": {
-              "$ref": "#/definitions/intro_node"
+              "$ref": "#/definitions/sample_or_intro_node"
             },
             "right": {
-              "$ref": "#/definitions/intro_node"
+              "$ref": "#/definitions/sample_or_intro_node"
             },
             "next": {
-              "$ref": "#/definitions/intro_node"
+              "$ref": "#/definitions/sample_or_intro_node"
             },
             "menu": {
-              "$ref": "#/definitions/sample_expr"
+              "$ref": "#/definitions/sample_or_list_intro_nodes"
             }
           },
           "additionalProperties": false
         }
       ]
     },
-    "switch_expr": {
+    "switch_intro_node": {
       "type": "array",
       "minItems": 1,
       "items": {
@@ -169,7 +169,7 @@
             ],
             "properties": {
               "test": {
-                "type": "string"
+                "$ref": "#/definitions/sample_or_string"
               },
               "case": {
                 "$ref": "#/definitions/intro_node"
@@ -180,7 +180,7 @@
         ]
       }
     },
-    "sample_expr": {
+    "sample_or_list_intro_nodes": {
       "oneOf": [
         {
           "type": "array",
@@ -210,62 +210,166 @@
                 "groups": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/sample_group"
+                    "type": "object",
+                    "properties": {
+                      "n": {
+                        "type": "number"
+                      },
+                      "shuffle": {
+                        "type": "boolean"
+                      },
+                      "opts": {
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "$ref": "#/definitions/intro_node"
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "option"
+                              ],
+                              "properties": {
+                                "weight": {
+                                  "type": "number"
+                                },
+                                "exclusive": {
+                                  "type": "boolean"
+                                },
+                                "option": {
+                                  "$ref": "#/definitions/intro_node"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "opts"
+                    ],
+                    "additionalProperties": false
                   }
                 }
-              },
-              "required": [
-                "groups"
-              ],
-              "additionalProperties": false
+              }
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
-    "sample_group": {
-      "type": "object",
-      "properties": {
-        "n": {
-          "type": "number"
+    "sample_or_intro_node": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/intro_node"
         },
-        "shuffle": {
-          "type": "boolean"
-        },
-        "opts": {
-          "type": "array",
-          "items": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/intro_node"
-              },
-              {
-                "type": "object",
-                "required": [
-                  "option"
-                ],
-                "properties": {
-                  "weight": {
-                    "type": "number"
-                  },
-                  "exclusive": {
-                    "type": "boolean"
-                  },
-                  "option": {
-                    "$ref": "#/definitions/intro_node"
+        {
+          "type": "object",
+          "required": [
+            "sample1"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "sample1": {
+              "type": "object",
+              "required": [
+                "opts"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "opts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/definitions/intro_node"
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "option"
+                        ],
+                        "properties": {
+                          "weight": {
+                            "type": "number"
+                          },
+                          "exclusive": {
+                            "type": "boolean"
+                          },
+                          "option": {
+                            "$ref": "#/definitions/intro_node"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
-                "additionalProperties": false
+                "symmetric": {
+                  "type": "boolean"
+                }
               }
-            ]
+            }
           }
         }
-      },
-      "required": [
-        "opts"
-      ],
-      "additionalProperties": false
+      ]
+    },
+    "sample_or_string": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "sample1"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "sample1": {
+              "type": "object",
+              "required": [
+                "opts"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "opts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "option"
+                        ],
+                        "properties": {
+                          "weight": {
+                            "type": "number"
+                          },
+                          "exclusive": {
+                            "type": "boolean"
+                          },
+                          "option": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "symmetric": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "$ref": "#/definitions/intro_node",
