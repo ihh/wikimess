@@ -7,8 +7,8 @@ var intro_node_schema = {
           { type: "object",
 	    required: ["ref"],
 	    properties: {
-              hint: ref_schema('sample_or_string'),
-	      visible: ref_schema('sample_or_string'),
+              hint: ref_schema('sample_string'),
+	      visible: ref_schema('sample_string'),
 	      ref: { type: "string" }
 	    },
 	    additionalProperties: false
@@ -16,26 +16,28 @@ var intro_node_schema = {
           { type: "object",
 	    required: ["goto"],
             properties: {
-              hint: ref_schema('sample_or_string'),
-	      visible: ref_schema('sample_or_string'),
+              hint: ref_schema('sample_string'),
+	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: ref_schema('switch_intro_node'),
-              goto: ref_schema('sample_or_string')
+	      switch: ref_schema('intro_node_cases'),
+	      sample1: ref_schema('intro_node_opts'),
+              goto: ref_schema('sample_string')
             },
             additionalProperties: false
           },
           { type: "object",
 	    required: ["sequence"],
             properties: {
-              hint: ref_schema('sample_or_string'),
-	      visible: ref_schema('sample_or_string'),
+              hint: ref_schema('sample_string'),
+	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: ref_schema('switch_intro_node'),
+	      switch: ref_schema('intro_node_cases'),
+	      sample1: ref_schema('intro_node_opts'),
               label: { type: "object" },
               labexpr: { type: "object" },
-              sequence: ref_schema('sample_or_list_intro_nodes'),
+              sequence: ref_schema('sample_intro_nodes'),
               define: { type: "array", minItems: 1, items: ref_schema('intro_node') }
             },
             additionalProperties: false
@@ -43,25 +45,26 @@ var intro_node_schema = {
           { type: "object",
             properties: {
               name: { type: "string" },
-              text: ref_schema('sample_or_string'),
-              hint: ref_schema('sample_or_string'),
-	      visible: ref_schema('sample_or_string'),
+              text: ref_schema('sample_string'),
+              hint: ref_schema('sample_string'),
+	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: ref_schema('switch_intro_node'),
+	      switch: ref_schema('intro_node_cases'),
+	      sample1: ref_schema('intro_node_opts'),
               label: { type: "object" },
               labexpr: { type: "object" },
               define: { type: "array", minItems: 1, items: ref_schema('intro_node') },
-              left: ref_schema('sample_or_intro_node'),
-              right: ref_schema('sample_or_intro_node'),
-              next: ref_schema('sample_or_intro_node'),
-              menu: ref_schema('sample_or_list_intro_nodes')
+              left: ref_schema('intro_node'),
+              right: ref_schema('intro_node'),
+              next: ref_schema('intro_node'),
+              menu: ref_schema('sample_intro_nodes')
             },
             additionalProperties: false
           }]
 }
 
-function sample_or_list_schema (itemType) {
+function list_or_sample_schema (itemType) {
   return { oneOf:
 	   [{ type: "array", minItems: 1, items: itemType },
 	    { type: "object",
@@ -99,9 +102,10 @@ function sample_opts_schema (itemType) {
 		additionalProperties: false }] } }
 }
 
-function sample1_or_item_schema (itemType) {
+function sample1_switch_schema (itemType) {
   return { oneOf:
 	   [itemType,
+	    switch_schema (itemType),
 	    sample1_schema (itemType)] }
 }
 
@@ -110,16 +114,27 @@ function sample1_schema (itemType) {
 	   required: ["sample1"],
 	   additionalProperties: false,
 	   properties:
-	   { sample1:
-	     { type: "object",
-	       required: ["opts"],
-	       additionalProperties: false,
-	       properties:
-	       { opts: sample_opts_schema(itemType),
-		 symmetric: { type: "boolean" } } } } }
+	   { sample1: sample1_opts_schema (itemType) } }
 }
 
-function switch_expr_schema (itemType) {
+function sample1_opts_schema (itemType) {
+  return { type: "object",
+	   required: ["opts"],
+	   additionalProperties: false,
+	   properties:
+	   { opts: sample_opts_schema(itemType),
+	     symmetric: { type: "boolean" } } }
+}
+
+function switch_schema (itemType) {
+  return { type: "object",
+	   required: ["switch"],
+	   additionalProperties: false,
+	   properties:
+	   { "switch": case_list_schema(itemType) } }
+}
+
+function case_list_schema (itemType) {
   return { type: "array",
 	   minItems: 1,
 	   items:
@@ -132,7 +147,7 @@ function switch_expr_schema (itemType) {
 	      { type: "object",
 		required: ["test","case"],
 		properties:
-		{ "test": ref_schema('sample_or_string'),
+		{ "test": ref_schema('sample_string'),
 		  "case": itemType },
 		additionalProperties: false }] } }
 }
@@ -214,10 +229,10 @@ module.exports = {
 
       intro_node: intro_node_schema,
       intro_or_intro_list: one_or_list_schema(ref_schema('intro_node')),
-      switch_intro_node: switch_expr_schema(ref_schema('intro_node')),
-      sample_or_list_intro_nodes: sample_or_list_schema(ref_schema('intro_node')),
-      sample_or_intro_node: sample1_or_item_schema(ref_schema('intro_node')),
-      sample_or_string: sample1_or_item_schema({ type: "string" })
+      intro_node_cases: case_list_schema(ref_schema('intro_node')),
+      intro_node_opts: sample1_opts_schema(ref_schema('intro_node')),
+      sample_intro_nodes: list_or_sample_schema(ref_schema('intro_node')),
+      sample_string: sample1_switch_schema({ type: "string" })
     },
 
     "$ref": "#/definitions/choice"
@@ -227,10 +242,10 @@ module.exports = {
   textSchema: {
     definitions: {
       intro_node: intro_node_schema,
-      switch_intro_node: switch_expr_schema(ref_schema('intro_node')),
-      sample_or_list_intro_nodes: sample_or_list_schema(ref_schema('intro_node')),
-      sample_or_intro_node: sample1_or_item_schema(ref_schema('intro_node')),
-      sample_or_string: sample1_or_item_schema({ type: "string" })
+      intro_node_cases: case_list_schema(ref_schema('intro_node')),
+      intro_node_opts: sample1_opts_schema(ref_schema('intro_node')),
+      sample_intro_nodes: list_or_sample_schema(ref_schema('intro_node')),
+      sample_string: sample1_switch_schema({ type: "string" })
     },
     "$ref": "#/definitions/intro_node"
   },

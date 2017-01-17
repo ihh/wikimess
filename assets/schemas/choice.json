@@ -164,10 +164,10 @@
           ],
           "properties": {
             "hint": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "visible": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "ref": {
               "type": "string"
@@ -182,10 +182,10 @@
           ],
           "properties": {
             "hint": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "visible": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "expr": {
               "type": "string"
@@ -194,10 +194,13 @@
               "type": "string"
             },
             "switch": {
-              "$ref": "#/definitions/switch_intro_node"
+              "$ref": "#/definitions/intro_node_cases"
+            },
+            "sample1": {
+              "$ref": "#/definitions/intro_node_opts"
             },
             "goto": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             }
           },
           "additionalProperties": false
@@ -209,10 +212,10 @@
           ],
           "properties": {
             "hint": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "visible": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "expr": {
               "type": "string"
@@ -221,7 +224,10 @@
               "type": "string"
             },
             "switch": {
-              "$ref": "#/definitions/switch_intro_node"
+              "$ref": "#/definitions/intro_node_cases"
+            },
+            "sample1": {
+              "$ref": "#/definitions/intro_node_opts"
             },
             "label": {
               "type": "object"
@@ -230,7 +236,7 @@
               "type": "object"
             },
             "sequence": {
-              "$ref": "#/definitions/sample_or_list_intro_nodes"
+              "$ref": "#/definitions/sample_intro_nodes"
             },
             "define": {
               "type": "array",
@@ -249,13 +255,13 @@
               "type": "string"
             },
             "text": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "hint": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "visible": {
-              "$ref": "#/definitions/sample_or_string"
+              "$ref": "#/definitions/sample_string"
             },
             "expr": {
               "type": "string"
@@ -264,7 +270,10 @@
               "type": "string"
             },
             "switch": {
-              "$ref": "#/definitions/switch_intro_node"
+              "$ref": "#/definitions/intro_node_cases"
+            },
+            "sample1": {
+              "$ref": "#/definitions/intro_node_opts"
             },
             "label": {
               "type": "object"
@@ -280,16 +289,16 @@
               }
             },
             "left": {
-              "$ref": "#/definitions/sample_or_intro_node"
+              "$ref": "#/definitions/intro_node"
             },
             "right": {
-              "$ref": "#/definitions/sample_or_intro_node"
+              "$ref": "#/definitions/intro_node"
             },
             "next": {
-              "$ref": "#/definitions/sample_or_intro_node"
+              "$ref": "#/definitions/intro_node"
             },
             "menu": {
-              "$ref": "#/definitions/sample_or_list_intro_nodes"
+              "$ref": "#/definitions/sample_intro_nodes"
             }
           },
           "additionalProperties": false
@@ -310,7 +319,7 @@
         }
       ]
     },
-    "switch_intro_node": {
+    "intro_node_cases": {
       "type": "array",
       "minItems": 1,
       "items": {
@@ -335,7 +344,7 @@
             ],
             "properties": {
               "test": {
-                "$ref": "#/definitions/sample_or_string"
+                "$ref": "#/definitions/sample_string"
               },
               "case": {
                 "$ref": "#/definitions/intro_node"
@@ -346,7 +355,47 @@
         ]
       }
     },
-    "sample_or_list_intro_nodes": {
+    "intro_node_opts": {
+      "type": "object",
+      "required": [
+        "opts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "opts": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/intro_node"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "option"
+                ],
+                "properties": {
+                  "weight": {
+                    "type": "number"
+                  },
+                  "exclusive": {
+                    "type": "boolean"
+                  },
+                  "option": {
+                    "$ref": "#/definitions/intro_node"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "symmetric": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sample_intro_nodes": {
       "oneOf": [
         {
           "type": "array",
@@ -425,66 +474,55 @@
         }
       ]
     },
-    "sample_or_intro_node": {
+    "sample_string": {
       "oneOf": [
         {
-          "$ref": "#/definitions/intro_node"
+          "type": "string"
         },
         {
           "type": "object",
           "required": [
-            "sample1"
+            "switch"
           ],
           "additionalProperties": false,
           "properties": {
-            "sample1": {
-              "type": "object",
-              "required": [
-                "opts"
-              ],
-              "additionalProperties": false,
-              "properties": {
-                "opts": {
-                  "type": "array",
-                  "items": {
-                    "oneOf": [
-                      {
-                        "$ref": "#/definitions/intro_node"
-                      },
-                      {
-                        "type": "object",
-                        "required": [
-                          "option"
-                        ],
-                        "properties": {
-                          "weight": {
-                            "type": "number"
-                          },
-                          "exclusive": {
-                            "type": "boolean"
-                          },
-                          "option": {
-                            "$ref": "#/definitions/intro_node"
-                          }
-                        },
-                        "additionalProperties": false
+            "switch": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "default"
+                    ],
+                    "properties": {
+                      "default": {
+                        "type": "string"
                       }
-                    ]
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "test",
+                      "case"
+                    ],
+                    "properties": {
+                      "test": {
+                        "$ref": "#/definitions/sample_string"
+                      },
+                      "case": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "symmetric": {
-                  "type": "boolean"
-                }
+                ]
               }
             }
           }
-        }
-      ]
-    },
-    "sample_or_string": {
-      "oneOf": [
-        {
-          "type": "string"
         },
         {
           "type": "object",

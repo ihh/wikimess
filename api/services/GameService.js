@@ -186,7 +186,7 @@ module.exports = {
 	    delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
 	    return ref
 	  })
-	if (!initPromise && text['switch'])
+	if (!initPromise && text['switch'] && typeof(role) !== 'undefined')  // switch is always asymmetric
           initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
 	if (!initPromise) {
 	  var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
