@@ -1,58 +1,180 @@
 [
   { name: "insult",
-    intro: [{ text: "Let's start by picking a subject for your insult.",
-              menu: { sample: {
-		shuffle: true,
-		groups: [{ n: 3,
-			   opts: [ { hint: "Your father", label: { subject: "your father", person: '3s' } },
-				   { hint: "Your mother", label: { subject: "your mother", person: '3s' } },
-				   { hint: "Your doctor", label: { subject: "your doctor", person: '3s' } },
-				   { hint: "Your dentist", label: { subject: "your dentist", person: '3s' } },
-				   { hint: "Your tailor", label: { subject: "your tailor", person: '3s' } },
-				   { hint: "Your stylist", label: { subject: "your stylist", person: '3s' } },
-				   { hint: "Your hairdresser", label: { subject: "your hairdresser", person: '3s' } } ]
-			 },
-			 { n: 1,
-			   opts: [{ hint: "You", label: { subject: "you", person: '2s' }}] }]
-	      } }
+    intro:
+    [{ text: "Let's start by picking a subject for your insult.",
+       menu:
+       { sample:
+	 { shuffle: true,
+	   groups:
+	   [{ n: 2,
+	      opts:
+	      [{ hint: "Your father", label: { subject: "your father", subpers: 's3' } },
+	       { hint: "Your mother", label: { subject: "your mother", subpers: 's3' } },
+	       { hint: "Your brother", label: { subject: "your brother", subpers: 's3' } },
+	       { hint: "Your sister", label: { subject: "your sister", subpers: 's3' } },
+	       { hint: "Your husband", label: { subject: "your husband", subpers: 's3' } },
+	       { hint: "Your wife", label: { subject: "your wife", subpers: 's3' } },
+	       { hint: "Your girlfriend", label: { subject: "your girlfriend", subpers: 's3' } },
+	       { hint: "Your boyfriend", label: { subject: "your boyfriend", subpers: 's3' } },
+	       { hint: "Your spouse", label: { subject: "your spouse", subpers: 's3' } } ]
 	    },
-	    { text: "Good. Now, what do you want to insult about them?",
-              menu: { sample: {
-		shuffle: true,
-		groups: [{ n: 3,
-			   opts: [
-			     { hint: "Their sense of style",
-			       label: { quality: { noun: 'fashion sense', adj: 'unfashionable' } } },
-			     { hint: "Their education",
-			       label: { quality: { noun: 'education', adj: 'ignorant' } } },
-			     { hint: "Their kindness",
-			       label: { quality: { noun: 'kindness', adj: 'cruel' } } },
-			     { hint: "Their sexual morality",
-			       label: { quality: { noun: 'sexual morality', adj: 'slutty' } } },
-			     { hint: "Their appearance",
-			       label: { quality: { noun: 'appearance', adj: 'ugly' } } },
-			     { hint: "Their competence",
-			       label: { quality: { noun: 'competence', adj: 'incompetent' } } }
-			   ]
-			 }]
-	      } }
+	    { n: 1,
+	      opts:
+	      [{ hint: "Your doctor", label: { subject: "your doctor", subpers: 's3' } },
+	       { hint: "Your dentist", label: { subject: "your dentist", subpers: 's3' } },
+	       { hint: "Your tailor", label: { subject: "your tailor", subpers: 's3' } },
+	       { hint: "Your stylist", label: { subject: "your stylist", subpers: 's3' } },
+	       { hint: "Your boss", label: { subject: "your boss", subpers: 's3' } },
+	       { hint: "Your hairdresser", label: { subject: "your hairdresser", subpers: 's3' } } ]
 	    },
-	    { text: "Excellent! What will you compare their <label:quality.noun> to?",
-              menu: { sample: {
-		shuffle: true,
-		groups: [{ n: 1,
-			   opts: [
-			     { hint: "A pig", label: { object: 'pig' } },
-			     { hint: "A cow", label: { object: 'cow' } },
-			     { hint: "A dog", label: { object: 'dog' } } ] },
-			 { n: 1,
-			   opts: [
-			     { hint: "An imbecile", label: { object: 'imbecile' } },
-			     { hint: "A buffoon", label: { object: 'buffoon' } },
-			     { hint: "A fool", label: { object: 'fool' } } ] }]
-	      } }
-	    }
-	   ]
-	      
+	    { n: 1,
+	      opts: [{ hint: "You", label: { subject: "you", subpers: 's2' }}] }] } } },
+
+     { labexpr: { insult: "$label('subject')" } },
+     { label: { insult: ' ' } },
+
+     { text: "Good. Now, what do you want to insult about them?",
+       menu:
+       { sample:
+	 { shuffle: true,
+	   groups:
+	   [{ n: 1,
+	      opts:
+	      [{ hint: "Their sense of style",
+		 label: { quality: { noun: 'fashion sense', comp: 'more fashionable', adj: 'unfashionable' } } },
+	       { hint: "Their taste",
+		 label: { quality: { noun: 'taste', comp: 'more tasteful', adj: 'tasteless' } } },
+	       { hint: "Their education",
+		 label: { quality: { noun: 'education', comp: 'better educated', adj: 'ignorant' } } },
+	       { hint: "Their breeding",
+		 label: { quality: { noun: 'breeding', comp: 'better mannered', adj: 'ill-bred' } } }] },
+	    { n: 1,
+	      opts:
+	      [{ hint: "Their kindness",
+		 label: { quality: { noun: 'kindness', comp: 'kinder', adj: 'cruel' } } },
+	       { hint: "Their honesty",
+		 label: { quality: { noun: 'honesty', comp: 'more honest', adj: 'dishonest' } } },
+	       { hint: "Their virtue",
+		 label: { quality: { noun: 'virtue', comp: 'more virtuous', adj: 'wicked' } } },
+	       { hint: "Their diligence",
+		 label: { quality: { noun: 'diligence', comp: 'more diligent', adj: 'reckless' } } },
+	       { hint: "Their industriousness",
+		 label: { quality: { noun: 'industriousness', comp: 'more industrious', adj: 'lazy' } } },
+	       { hint: "Their sexual morality",
+		 label: { quality: { noun: 'sexual morality', comp: 'less slutty', adj: 'slutty' } } },
+	       { hint: "Their sobriety",
+		 label: { quality: { noun: 'sobriety', comp: 'more sober', adj: 'drunk' } } },
+	       { hint: "Their competence",
+		 label: { quality: { noun: 'competence', adj: 'more competent', adj: 'incompetent' } } },
+	       { hint: "Their courage",
+		 label: { quality: { noun: 'courage', comp: 'braver', adj: 'cowardly' } } },
+	       { hint: "Their honor",
+		 label: { quality: { noun: 'honor', comp: 'more honorable', adj: 'dishonorable' } } }] },
+	    { n: 1,
+	      opts:
+	      [{ hint: "Their sexual performance",
+		 label: { quality: { noun: 'sexual performance', comp: 'better in bed', adj: 'bad in bed' } } },
+	       { hint: "Their attractiveness",
+		 label: { quality: { noun: 'attractiveness', comp: 'more attractive', adj: 'ugly' } } },
+	       { hint: "Their prettiness",
+		 label: { quality: { noun: 'prettiness', comp: 'prettier', adj: 'ugly' } } },
+	       { hint: "Their posture",
+		 label: { quality: { noun: 'posture', comp: 'more poised', adj: 'stooped' } } },
+	       { hint: "Their height",
+		 label: { quality: { noun: 'height', comp: 'taller', adj: 'short' } } },
+	       { hint: "Their muscles",
+		 label: { quality: { noun: 'muscles', comp: 'more muscly', adj: 'spindly' } } }
+	      ]
+	    }]
+	 }
+       }
+     },
+
+     { sequence:
+       { sample:
+	 { groups:
+	   [{ opts:
+	      [{ labexpr: { insult: "$is($label('subpers')) + ' as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$is($label('subpers')) + ' every bit as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$is($label('subpers')) + ' quite as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$is($label('subpers')) + ' just as ' + $label('quality.adj') + ' as '" } },
+	       { labexpr: { insult: "$has($label('subpers')) + ' every bit as much ' + $label('quality.noun') + ' as '" } },
+	       { labexpr: { insult: "$has($label('subpers')) + ' no more ' + $label('quality.noun') + ' than '" } },
+	       { labexpr: { insult: "$is($label('subpers')) + ' barely ' + $label('quality.comp') + ' than '" } },
+	       { labexpr: { insult: "$is($label('subpers')) + ' no ' + $label('quality.comp') + ' than '" } }] }] } } },
+     { label: { insult: ' ' } },
+
+     { text: "Excellent! What will you compare them to?",
+       menu:
+       { sample:
+	 { shuffle: true,
+	   groups:
+	   [{ n: 1,
+	      opts:
+	      [{ hint: "A pig", label: { object: 'pig' } },
+	       { hint: "A cow", label: { object: 'cow' } },
+	       { hint: "A dog", label: { object: 'dog' } },
+	       { hint: "A turkey", label: { object: 'turkey' } },
+	       { hint: "A chicken", label: { object: 'chicken' } },
+	       { hint: "A weasel", label: { object: 'weasel' } },
+	       { hint: "A monkey", label: { object: 'monkey' } },
+	       { hint: "A horse", label: { object: 'horse' } },
+	       { hint: "An ape", label: { object: 'ape' } },
+	       { hint: "A gorilla", label: { object: 'gorilla' } },
+	       { hint: "A baboon", label: { object: 'baboon' } },
+	       { hint: "A chimp", label: { object: 'chimp' } },
+	       { hint: "A chimpanzee", label: { object: 'chimpanzee' } },
+	       { hint: "A lemur", label: { object: 'lemur' } },
+	       { hint: "A lemming", label: { object: 'lemming' } },
+	       { hint: "A whale", label: { object: 'whale' } },
+	       { hint: "A shrew", label: { object: 'shrew' } },
+	       { hint: "An ass", label: { object: 'ass' } },
+	       { hint: "A donkey", label: { object: 'donkey' } },
+	       { hint: "A mule", label: { object: 'mule' } },
+	       { hint: "A shrimp", label: { object: 'shrimp' } },
+	       { hint: "A cuttlefish", label: { object: 'cuttlefish' } },
+	       { hint: "A squid", label: { object: 'squid' } },
+	       { hint: "A goldfish", label: { object: 'goldfish' } },
+	       { hint: "A mouse", label: { object: 'mouse' } },
+	       { hint: "A rat", label: { object: 'rat' } } ] },
+	    { n: 1,
+	      opts:
+	      [{ hint: "An imbecile", label: { object: 'imbecile' } },
+	       { hint: "A buffoon", label: { object: 'buffoon' } },
+	       { hint: "An idiot", label: { object: 'idiot' } },
+	       { hint: "A fool", label: { object: 'fool' } },
+	       { hint: "A scoundrel", label: { object: 'scoundrel' } },
+	       { hint: "A rascal", label: { object: 'rascal' } },
+	       { hint: "A bastard", label: { object: 'bastard' } },
+	       { hint: "A jock", label: { object: 'jock' } },
+	       { hint: "A punk", label: { object: 'punk' } },
+	       { hint: "A nerd", label: { object: 'nerd' } },
+	       { hint: "A wussy", label: { object: 'wussy' } },
+	       { hint: "A fop", label: { object: 'fop' } } ] },
+	    { n: 1,
+	      opts:
+	      [{ hint: "An anti-vaxer", label: { object: 'anti-vaxer' } },
+	       { hint: "A flat-earther", label: { object: 'flat-earther' } },
+	       { hint: "A climate denier", label: { object: 'climate-denier' } },
+	       { hint: "A 9-11 truther", label: { object: '9-11 truther' } },
+	       { hint: "A conspiracy theorist", label: { object: 'conspiracy theorist' } },
+	       { hint: "A Luddite", label: { object: 'Luddite' } },
+	       { hint: "A fascist", label: { object: 'fascist' } },
+	       { hint: "A Nazi", label: { object: 'Nazi' } },
+	       { hint: "A Communist", label: { object: 'Communist' } },
+	       { hint: "A Socialist", label: { object: 'Socialist' } },
+	       { hint: "A commie", label: { object: 'commie' } },
+	       { hint: "A green", label: { object: 'green' } },
+	       { hint: "A liberal", label: { object: 'liberal' } },
+	       { hint: "A conservative", label: { object: 'conservative' } },
+	       { hint: "A Democrat", label: { object: 'Democrat' } },
+	       { hint: "A Republican", label: { object: 'Republican' } } ] }]
+	 }
+       }
+     },
+
+     { labexpr: { insult: "$a($label('object'))" } },
+     { text: "Your insult is:\n\"<Label:insult>!\"" }
+    ]
   }
 ]

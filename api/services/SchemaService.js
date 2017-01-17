@@ -34,7 +34,7 @@ var intro_node_schema = {
 	      symexpr: { type: "string" },
 	      switch: { type: "#/definitions/switch_expr" },
               label: { type: "object" },
-              labelexpr: { type: "object" },
+              labexpr: { type: "object" },
               sequence: { type: "#/definitions/sample_expr" },
               define: { type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } }
             },
@@ -50,7 +50,7 @@ var intro_node_schema = {
 	      symexpr: { type: "string" },
 	      switch: { type: "#/definitions/switch_expr" },
               label: { type: "object" },
-              labelexpr: { type: "object" },
+              labexpr: { type: "object" },
               define: { type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
               left: { "$ref": "#/definitions/intro_node" },
               right: { "$ref": "#/definitions/intro_node" },

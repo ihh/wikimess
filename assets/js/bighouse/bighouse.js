@@ -2004,6 +2004,10 @@ var BigHouse = (function() {
 	return bighouseLabel.sumExpansionLabels (expansion, label)
       })
 
+      text = text.replace (/<Label:(\S+?)>/g, function (match, label) {
+	return bighouseLabel.capitalize (bighouseLabel.sumExpansionLabels (expansion, label))
+      })
+
       text = text.replace (/<move>/g, function() {
 	return bighouseLabel.sumExpansionLabels (expansion, 'move')
       })

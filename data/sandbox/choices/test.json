@@ -14,7 +14,7 @@
               } },
             },
             {
-              labelexpr: { y: "$label('x')" }  // test of empty intro node & labelexpr
+              labexpr: { y: "$label('x')" }  // test of empty intro node & label expression (lex)
             },
 	    {
 	      text: "On day [[$label('y')]], $other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",

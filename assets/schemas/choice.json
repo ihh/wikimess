@@ -238,7 +238,7 @@
             "label": {
               "type": "object"
             },
-            "labelexpr": {
+            "labexpr": {
               "type": "object"
             },
             "sequence": {
@@ -281,7 +281,7 @@
             "label": {
               "type": "object"
             },
-            "labelexpr": {
+            "labexpr": {
               "type": "object"
             },
             "define": {

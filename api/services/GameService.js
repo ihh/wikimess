@@ -117,7 +117,7 @@ module.exports = {
       
       node.id = nodeList.length
       var descriptor = { label: node.label,
-                         labelexpr: node.labelexpr,
+                         labexpr: node.labexpr,
                          text: node.text }
       nodeList.push (descriptor)
 
