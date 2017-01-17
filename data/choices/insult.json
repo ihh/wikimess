@@ -1,7 +1,7 @@
 [
   { name: "insult",
     intro: [{ text: "Let's start by picking a subject for your insult.",
-              randmenu: {
+              menu: { sample: {
 		shuffle: true,
 		groups: [{ n: 3,
 			   opts: [ { hint: "Your father", label: { subject: "your father", person: '3s' } },
@@ -14,10 +14,10 @@
 			 },
 			 { n: 1,
 			   opts: [{ hint: "You", label: { subject: "you", person: '2s' }}] }]
-	      }
+	      } }
 	    },
 	    { text: "Good. Now, what do you want to insult about them?",
-              randmenu: {
+              menu: { sample: {
 		shuffle: true,
 		groups: [{ n: 3,
 			   opts: [
@@ -35,10 +35,10 @@
 			       label: { quality: { noun: 'competence', adj: 'incompetent' } } }
 			   ]
 			 }]
-	      }
+	      } }
 	    },
 	    { text: "Excellent! What will you compare their <label:quality.noun> to?",
-              randmenu: {
+              menu: { sample: {
 		shuffle: true,
 		groups: [{ n: 1,
 			   opts: [
@@ -50,7 +50,7 @@
 			     { hint: "An imbecile", label: { object: 'imbecile' } },
 			     { hint: "A buffoon", label: { object: 'buffoon' } },
 			     { hint: "A fool", label: { object: 'fool' } } ] }]
-	      }
+	      } }
 	    }
 	   ]
 	      

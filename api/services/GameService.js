@@ -164,63 +164,58 @@ module.exports = {
       })
 
     else if (typeof(text) === 'object') {
-      // initialize with ref, switch, or expr/symexpr
-      var initPromise
-      if (text.ref)
-	initPromise = Text.findOne({ name: text.ref })
-	.then (function (ref) {
-	  delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
-	  return ref
-	})
-      if (!initPromise && text['switch']
-	  && (typeof(role) === 'undefined' ? text['switch'].symmetric : !text['switch'].symmetric))
-        initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
-      if (!initPromise) {
-	var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
-	var expr = text[exprKey]
-	if (expr)
-          initPromise = Promise.resolve (GameService.evalTextExpr (expr, game, outcome, role))
-      }
-      if (initPromise)
-	initPromise = initPromise.then (function (init) {
-	  return GameService.expandText (init, game, outcome, role)
-	})
-      else
-	initPromise = Promise.resolve ({})
+      // sample?
+      if (text.sample)
+	promise = GameService.expandText (GameService.expandSample (text.sample, game, outcome, role),
+					  game, outcome, role)
+      else {
+	// initialize with ref, switch, or expr/symexpr
+	var initPromise
+	if (text.ref)
+	  initPromise = Text.findOne({ name: text.ref })
+	  .then (function (ref) {
+	    delete ref.id   // hack: prevent clash of Text attribute 'id' with internally used 'id' passed to client
+	    return ref
+	  })
+	if (!initPromise && text['switch']
+	    && (typeof(role) === 'undefined' ? text['switch'].symmetric : !text['switch'].symmetric))
+          initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
+	if (!initPromise) {
+	  var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
+	  var expr = text[exprKey]
+	  if (expr)
+            initPromise = Promise.resolve (GameService.evalTextExpr (expr, game, outcome, role))
+	}
+	if (initPromise)
+	  initPromise = initPromise.then (function (init) {
+	    return GameService.expandText (init, game, outcome, role)
+	  })
+	else
+	  initPromise = Promise.resolve ({})
 
-      promise = initPromise
-	.then (function (expanded) {
-	  var randmenuPromise
-	  if (text.randmenu
-	      && (typeof(role) === 'undefined' ? text.randmenu.symmetric : !text.randmenu.symmetric))
-	    randmenuPromise = GameService.expandText (GameService.expandRandomMenu (text.randmenu, game, outcome, role),
-						      game, outcome, role)
-	    .then (function (expandedMenu) {
-	      expanded.menu = expandedMenu
-	    })
-	  else
-	    randmenuPromise = Promise.resolve()
-
-	  return randmenuPromise.then (function() {
+	// expand all properties & merge with whatever was returned by ref, switch, expr/symexpr
+	promise = initPromise
+	  .then (function (expanded) {
 	    return Promise.map (Object.keys(text).filter (function (key) {
-	      return key !== 'id' && !expanded.hasOwnProperty(key)
+	      return key !== 'id'   // prevent clash of Text attribute 'id' with internally used 'id' passed to client
+		&& !expanded.hasOwnProperty(key)  // ref, switch, expr/symexpr can override defaults
 	    }), function (key) {
 	      return GameService.expandText (text[key], game, outcome, role)
 		.then (function (expandedVal) {
 		  expanded[key] = expandedVal
 		})
+	    }).then (function() {
+	      return expanded
 	    })
-	  }).then (function() {
-	    return expanded
 	  })
-	})
+      }
 
     } else if (typeof(text) === 'string')
       promise = Promise.resolve (GameService.expandTextString (text, game, outcome, role))
 
     else
       promise = Promise.resolve (text)
-    
+
     return promise
   },
 
@@ -341,22 +336,22 @@ module.exports = {
     return result || defaultResult || {}
   },
   
-  expandRandomMenu: function (randMenu, game, outcome, role) {
-    var groups = randMenu.groups.map (function (group) {
-      var opts = GameService.expandRandomMenuGroup (group, game, outcome, role)
-      if (group.shuffle || (randMenu.shuffle && randMenu.cluster && (group.shuffle !== false)))
+  expandSample: function (sampleExpr, game, outcome, role) {
+    var groups = sampleExpr.groups.map (function (group) {
+      var opts = GameService.expandSampleGroup (group, game, outcome, role)
+      if (group.shuffle || (sampleExpr.shuffle && sampleExpr.cluster && (group.shuffle !== false)))
         GameService.knuthShuffle (opts)
       return opts
     })
-    if (randMenu.shuffle && randMenu.cluster)
+    if (sampleExpr.shuffle && sampleExpr.cluster)
       GameService.knuthShuffle (groups)
-    var menu = Array.prototype.concat.apply ([], groups)
-    if (randMenu.shuffle && !randMenu.cluster)
-      GameService.knuthShuffle (menu)
-    return menu
+    var list = Array.prototype.concat.apply ([], groups)
+    if (sampleExpr.shuffle && !sampleExpr.cluster)
+      GameService.knuthShuffle (list)
+    return list
   },
 
-  expandRandomMenuGroup: function (group, game, outcome, role) {
+  expandSampleGroup: function (group, game, outcome, role) {
     var n = group.n || 1
     var opts = group.opts.map (function (opt) {
       return opt.option ? opt : { option: opt }

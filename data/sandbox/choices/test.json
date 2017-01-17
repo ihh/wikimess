@@ -3,7 +3,7 @@
     name: "root",
     intro: [{ text: "<<Here <<you|we>> are on|Well, <<this is|it's>>|Looks <<as though it's|like>>|So <<now|>> it's|Heads up! <<It's|This is>>>> day {{($c.day||0)+1}} of #<school|college|community college|WizCom|the academy>#.",
               label: { x: "{{($c.day||0)+1}}" },  // test of server-side code evaluation in labels
-              randmenu: {
+              menu: { sample: {
                 shuffle: true,
                 cluster: true,
                 groups: [
@@ -11,7 +11,7 @@
                   { n: 2, opts: [ { hint: "Whatever" }, { hint: "Meh" }, { hint: "OK" }, { hint: "So what?" } ] },
                   { n: 2, opts: [ { hint: "This sucks" }, { hint: "Groan" }, { hint: "I hate it" }, { hint: "It's awful" } ] }
                 ]
-              },
+              } },
             },
             {
               labelexpr: { y: "$label('x')" }  // test of empty intro node & labelexpr

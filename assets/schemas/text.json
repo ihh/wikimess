@@ -1,19 +1,5 @@
 {
   "definitions": {
-    "intro_list": {
-      "oneOf": [
-        {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/intro_node"
-          }
-        },
-        {
-          "$ref": "#/definitions/intro_node"
-        }
-      ]
-    },
     "intro_node": {
       "oneOf": [
         {
@@ -56,7 +42,7 @@
               "type": "string"
             },
             "switch": {
-              "type": "#/definitions/switch_node"
+              "type": "#/definitions/switch_expr"
             },
             "goto": {
               "type": "string"
@@ -83,7 +69,7 @@
               "type": "string"
             },
             "switch": {
-              "type": "#/definitions/switch_node"
+              "type": "#/definitions/switch_expr"
             },
             "label": {
               "type": "object"
@@ -92,10 +78,14 @@
               "type": "object"
             },
             "sequence": {
-              "type": "#/definitions/intro_node_list"
+              "type": "#/definitions/sample_expr"
             },
             "define": {
-              "type": "#/definitions/intro_node_list"
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/intro_node"
+              }
             }
           },
           "additionalProperties": false
@@ -122,7 +112,7 @@
               "type": "string"
             },
             "switch": {
-              "type": "#/definitions/switch_node"
+              "type": "#/definitions/switch_expr"
             },
             "label": {
               "type": "object"
@@ -131,7 +121,11 @@
               "type": "object"
             },
             "define": {
-              "type": "#/definitions/intro_node_list"
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/intro_node"
+              }
             },
             "left": {
               "$ref": "#/definitions/intro_node"
@@ -143,45 +137,14 @@
               "$ref": "#/definitions/intro_node"
             },
             "menu": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/intro_node"
-              }
-            },
-            "randmenu": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "symmetric": {
-                      "type": "boolean"
-                    },
-                    "shuffle": {
-                      "type": "boolean"
-                    },
-                    "cluster": {
-                      "type": "boolean"
-                    },
-                    "groups": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/random_menu_group"
-                      }
-                    }
-                  },
-                  "required": [
-                    "groups"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
+              "$ref": "#/definitions/sample_expr"
             }
           },
           "additionalProperties": false
         }
       ]
     },
-    "switch_node": {
+    "switch_expr": {
       "type": "array",
       "minItems": 1,
       "items": {
@@ -217,7 +180,51 @@
         ]
       }
     },
-    "random_menu_group": {
+    "sample_expr": {
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/intro_node"
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "sample"
+          ],
+          "properties": {
+            "sample": {
+              "type": "object",
+              "properties": {
+                "symmetric": {
+                  "type": "boolean"
+                },
+                "shuffle": {
+                  "type": "boolean"
+                },
+                "cluster": {
+                  "type": "boolean"
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/sample_group"
+                  }
+                }
+              },
+              "required": [
+                "groups"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "sample_group": {
       "type": "object",
       "properties": {
         "n": {

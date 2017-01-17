@@ -1979,7 +1979,7 @@ var BigHouse = (function() {
       var expansion = this.currentExpansionNode
       if (expansion.node && expansion.node.menu) {
         var idx = this.nextRandomAction(expansion)
-	pulseElement = expansion.menuLabel[idx]
+	pulseElement = expansion.menuSpan[idx]
       } else if (this.nodeExpansionIsPredictable (this.currentChoiceNode()))
 	pulseElement = $('.choice1,.choice2').find(':visible')
       else {
@@ -2304,7 +2304,7 @@ var BigHouse = (function() {
       // create the menu, if applicable
       if (node.menu) {
 	var fieldset = $('<fieldset class="cardmenu">')
-	expansion.menuLabel = []
+	expansion.menuSpan = []
 	expansion.menuInput = []
 	var menuSelectCallback
 	node.menu.forEach (function (item, n) {
@@ -2312,23 +2312,25 @@ var BigHouse = (function() {
           item.n = n
 	  if (bighouseLabel.evalVisible (expansion, item.visible)) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
-	    var labelSpan = $('<span>')
+	    var span = $('<span>')
+	    var label = $('<label for="'+id+'" class="cardmenulabel">').append (span)
 	    expansion.menuInput.push (radioInput)
-	    expansion.menuLabel.push (labelSpan)
+	    expansion.menuSpan.push (span)
             var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
             fieldset
 	      .append (radioInput)
-	      .append ($('<label for="'+id+'" class="cardmenulabel">').append (labelSpan))
+	      .append (label)
             if (itemStruck) {
               radioInput.attr('disabled',true)
-              labelSpan.html ($('<strike>').text(item.hint).addClass('disabled'))
-            } else
-              labelSpan.text(item.hint)
-	      .on('click',function() {
+              span.html ($('<strike>').text(item.hint).addClass('disabled'))
+            } else {
+              span.text(item.hint)
+	      label.on('click',function() {
 		expansion.selectedItem = n
 		if (menuSelectCallback)
 		  menuSelectCallback.call (bh, item, n)
 	      })
+	    }
 	  }
 	})
 	content.push (fieldset)

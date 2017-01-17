@@ -2,11 +2,6 @@
 
 var JsonValidator = require( 'jsonschema' ).Validator;
 
-var intro_list_schema = {
-  oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
-          { "$ref": "#/definitions/intro_node" }]
-}
-
 var intro_node_schema = {
   oneOf: [{ type: "string" },
           { type: "object",
@@ -25,7 +20,7 @@ var intro_node_schema = {
 	      visible: { type: "string" },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: { type: "#/definitions/switch_node" },
+	      switch: { type: "#/definitions/switch_expr" },
               goto: { type: "string" }
             },
             additionalProperties: false
@@ -37,11 +32,11 @@ var intro_node_schema = {
 	      visible: { type: "string" },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: { type: "#/definitions/switch_node" },
+	      switch: { type: "#/definitions/switch_expr" },
               label: { type: "object" },
               labelexpr: { type: "object" },
-              sequence: { type: "#/definitions/intro_node_list" },
-              define: { type: "#/definitions/intro_node_list" }
+              sequence: { type: "#/definitions/sample_expr" },
+              define: { type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } }
             },
             additionalProperties: false
           },
@@ -53,38 +48,43 @@ var intro_node_schema = {
 	      visible: { type: "string" },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
-	      switch: { type: "#/definitions/switch_node" },
+	      switch: { type: "#/definitions/switch_expr" },
               label: { type: "object" },
               labelexpr: { type: "object" },
-              define: { type: "#/definitions/intro_node_list" },
+              define: { type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
               left: { "$ref": "#/definitions/intro_node" },
               right: { "$ref": "#/definitions/intro_node" },
               next: { "$ref": "#/definitions/intro_node" },
-              menu: { type: "array", items: { "$ref": "#/definitions/intro_node" } },
-
-              randmenu: {
-                oneOf: [{ type: "object",
-		          properties: {
-		            symmetric: { type: "boolean" },
-		            shuffle: { type: "boolean" },
-		            cluster: { type: "boolean" },
-		            groups: { type: "array", items: { "$ref": "#/definitions/random_menu_group" } }
-		          },
-		          required: ["groups"],
-		          additionalProperties: false
-                        }]
-	      }
-              
+              menu: { "$ref": "#/definitions/sample_expr" }
             },
             additionalProperties: false
           }]
 }
 
-var random_menu_group_schema = {
+var sample_expr_schema = {
+  oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
+	  { type: "object",
+	    required: ["sample"],
+	    properties: {
+	      sample: { type: "object",
+			properties: {
+			  symmetric: { type: "boolean" },
+			  shuffle: { type: "boolean" },
+			  cluster: { type: "boolean" },
+			  groups: { type: "array", items: { "$ref": "#/definitions/sample_group" } }
+			},
+		        required: ["groups"],
+			additionalProperties: false
+		      }
+	    },
+	    additionalProperties: false }]
+}
+
+var sample_group_schema = {
   type: "object",
   properties: {
     n: { type: "number" },
-    shuffle: { type: "boolean" },  // defaults to same as outer randmenu.shuffle
+    shuffle: { type: "boolean" },  // defaults to same as enclosing sample_expr.shuffle
     opts: {
       type: "array",
       items: {
@@ -105,7 +105,7 @@ var random_menu_group_schema = {
   additionalProperties: false
 }
 
-var switch_node_schema = {
+var switch_expr_schema = {
   type: "array",
   minItems: 1,
   items: {
@@ -137,8 +137,8 @@ module.exports = {
         properties: {
           name: { type: "string" },
           parent: { type: "string" },
-          intro: { "$ref": "#/definitions/intro_list" },
-          intro2: { "$ref": "#/definitions/intro_list" },
+          intro: { "$ref": "#/definitions/intro_or_intro_list" },
+          intro2: { "$ref": "#/definitions/intro_or_intro_list" },
 
           outcome: { "$ref": "#/definitions/outcome_list" },
 
@@ -175,8 +175,8 @@ module.exports = {
           move2: { type: "string" },
           weight: { type: ["string","number"] },
           exclusive: { type: "boolean" },
-          outro: { "$ref": "#/definitions/intro_list" },
-          outro2: { "$ref": "#/definitions/intro_list" },
+          outro: { "$ref": "#/definitions/intro_or_intro_list" },
+          outro2: { "$ref": "#/definitions/intro_or_intro_list" },
           next: { oneOf: [ { "$ref": "#/definitions/choice_ref" },
                            { type: "array", items: { "$ref": "#/definitions/choice_ref" } } ] },
           local: { type: "object" },
@@ -196,10 +196,15 @@ module.exports = {
         additionalProperties: false
       },
 
-      intro_list: intro_list_schema,
+      intro_or_intro_list: {
+	oneOf: [{ type: "array", minItems: 1, items: { "$ref": "#/definitions/intro_node" } },
+		{ "$ref": "#/definitions/intro_node" }]
+      },
+
       intro_node: intro_node_schema,
-      switch_node: switch_node_schema,
-      random_menu_group: random_menu_group_schema
+      switch_expr: switch_expr_schema,
+      sample_expr: sample_expr_schema,
+      sample_group: sample_group_schema
     },
 
     "$ref": "#/definitions/choice"
@@ -208,10 +213,10 @@ module.exports = {
   // Text schema
   textSchema: {
     definitions: {
-      intro_list: intro_list_schema,
       intro_node: intro_node_schema,
-      switch_node: switch_node_schema,
-      random_menu_group: random_menu_group_schema
+      switch_expr: switch_expr_schema,
+      sample_expr: sample_expr_schema,
+      sample_group: sample_group_schema
     },
     "$ref": "#/definitions/intro_node"
   },
