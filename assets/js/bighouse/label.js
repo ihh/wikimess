@@ -142,11 +142,11 @@
     var form
     var rp = representativePronoun[person + gender] || representativePronoun[person]
     switch (infinitive) {
-    case 'have': form = (rp === 'i') ? 'have' : 'has'; break
+    case 'have': form = (rp === 'it') ? 'has' : 'have'; break
     case 'be': form = (rp === 'i') ? 'am' : (rp === 'it' ? 'is' : 'are'); break
     case 'do': form = (rp === 'it') ? 'does' : 'do'; break
     case 'go': form = (rp === 'it') ? 'goes' : 'go'; break
-    default: form = (rp === 'it') ? (infinitive + 's') : infinitive; break
+    default: form = (rp === 'it') ? (infinitive + (infinitive.match(/s$/) ? 'es' : 's')) : infinitive; break
     }
     return form
   }

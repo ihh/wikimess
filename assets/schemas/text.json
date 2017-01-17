@@ -246,6 +246,7 @@
           "properties": {
             "sample": {
               "type": "object",
+              "additionalProperties": false,
               "properties": {
                 "symmetric": {
                   "type": "boolean"

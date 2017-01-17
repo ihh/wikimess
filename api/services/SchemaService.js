@@ -72,6 +72,7 @@ function list_or_sample_schema (itemType) {
 	      properties:
 	      { sample:
 		{ type: "object",
+		  additionalProperties: false,
 		  properties:
 		  { symmetric: { type: "boolean" },
 		    shuffle: { type: "boolean" },
