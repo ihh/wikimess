@@ -8,28 +8,38 @@
 	   groups:
 	   [{ n: 2,
 	      opts:
-	      [{ hint: "Your father", label: { subject: { text: "your father", person: 's3' } } },
-	       { hint: "Your mother", label: { subject: { text: "your mother", person: 's3' } } },
-	       { hint: "Your brother", label: { subject: { text: "your brother", person: 's3' } } },
-	       { hint: "Your sister", label: { subject: { text: "your sister", person: 's3' } } },
-	       { hint: "Your husband", label: { subject: { text: "your husband", person: 's3' } } },
-	       { hint: "Your wife", label: { subject: { text: "your wife", person: 's3' } } },
-	       { hint: "Your girlfriend", label: { subject: { text: "your girlfriend", person: 's3' } } },
-	       { hint: "Your boyfriend", label: { subject: { text: "your boyfriend", person: 's3' } } },
-	       { hint: "Your spouse", label: { subject: { text: "your spouse", person: 's3' } } } ]
+	      [{ hint: "Your father", label: { subject: { noun: "father", person: 's3' } } },
+	       { hint: "Your mother", label: { subject: { noun: "mother", person: 's3' } } },
+	       { hint: "Your brother", label: { subject: { noun: "brother", person: 's3' } } },
+	       { hint: "Your sister", label: { subject: { noun: "sister", person: 's3' } } },
+	       { hint: "Your husband", label: { subject: { noun: "husband", person: 's3' } } },
+	       { hint: "Your wife", label: { subject: { noun: "wife", person: 's3' } } },
+	       { hint: "Your girlfriend", label: { subject: { noun: "girlfriend", person: 's3' } } },
+	       { hint: "Your boyfriend", label: { subject: { noun: "boyfriend", person: 's3' } } },
+	       { hint: "Your spouse", label: { subject: { noun: "spouse", person: 's3' } } } ]
 	    },
 	    { n: 1,
 	      opts:
-	      [{ hint: "Your doctor", label: { subject: { text: "your doctor", person: 's3' } } },
-	       { hint: "Your dentist", label: { subject: { text: "your dentist", person: 's3' } } },
-	       { hint: "Your tailor", label: { subject: { text: "your tailor", person: 's3' } } },
-	       { hint: "Your stylist", label: { subject: { text: "your stylist", person: 's3' } } },
-	       { hint: "Your boss", label: { subject: { text: "your boss", person: 's3' } } },
-	       { hint: "Your hairdresser", label: { subject: { text: "your hairdresser", person: 's3' } } } ]
+	      [{ hint: "Your rhymes", label: { subject: { noun: "rhymes", person: 'p3' } } },
+	       { hint: "Your words", label: { subject: { noun: "words", person: 'p3' } } },
+	       { hint: "Your insults", label: { subject: { noun: "insults", person: 'p3' } } },
+	       { hint: "Your jibes", label: { subject: { noun: "jibes", person: 'p3' } } },
+	       { hint: "Your slights", label: { subject: { noun: "slights", person: 'p3' } } },
+	       { hint: "Your barbs", label: { subject: { noun: "barbs", person: 's3' } } } ]
 	    },
 	    { n: 1,
-	      opts: [{ hint: "You", label: { subject: { text: "you", person: 's2' }}}] }] } } },
+	      opts:
+	      [{ hint: "Your doctor", label: { subject: { noun: "doctor", person: 's3' } } },
+	       { hint: "Your dentist", label: { subject: { noun: "dentist", person: 's3' } } },
+	       { hint: "Your tailor", label: { subject: { noun: "tailor", person: 's3' } } },
+	       { hint: "Your stylist", label: { subject: { noun: "stylist", person: 's3' } } },
+	       { hint: "Your boss", label: { subject: { noun: "boss", person: 's3' } } },
+	       { hint: "Your hairdresser", label: { subject: { noun: "hairdresser", person: 's3' } } } ]
+	    },
+	    { n: 1,
+	      opts: [{ hint: "You", label: { subject: { person: 's2' }}}] }] } } },
 
+     { labexpr: { subject: { text: "$label('subject.noun') ? ('your ' + $label('subject.noun')) : 'you'" } } },
      { labexpr: { insult: "$label('subject.text')" } },
      { label: { insult: ' ' } },
 

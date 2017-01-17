@@ -2549,7 +2549,7 @@ var BigHouse = (function() {
     },
 
     showHistoryAlert: function() {
-      this.showModalMessage ("You are currently viewing old (expired) cards. Swipe through to current cards to access mood and status buttons.", this.loadGameCards.bind(this))
+      this.showModalMessage ("You are currently viewing old (expired) cards. Swipe through to current cards to access mood and status buttons.", this.gameState === 'gameOver' ? function(){} : this.loadGameCards.bind(this))
     },
 
     refreshPlayerMoodImage: function() {
