@@ -50,12 +50,16 @@
 
   function expansionLabel (e, label) {
     var l
+    // if called during play (by the client, or by BotService on the server) then we have a node
+    // which may have a dynamic eval (labexpr) or a static label
+    // if called post-play (by GameService on the server) then we have a static label
     if (e.node) {
       if (e.node.labexpr && hasNestedProperty (e.node.labexpr, label))
         l = evalExpansionExpr (e, getNestedProperty (e.node.labexpr, label))
       else if (e.node.label && hasNestedProperty (e.node.label, label))
 	l = getNestedProperty (e.node.label, label)
-    }
+    } else if (e.label && hasNestedProperty (e.label, label))
+      l = getNestedProperty (e.label, label)
     return l
   }
   
@@ -97,11 +101,22 @@
 	 : (labs.slice(0,labs.length-1).join(', ') + (oxfordComma ? ', and ' : ' and ') + labs[labs.length-1]))
   }
 
-  function parentExpansionLabel (expansion, label) {
+  function baseExpansionLabel (expansion, label) {
     var l
     while (!l && (expansion = expansion.parent))
       l = expansionLabel (expansion, label)
     return l
+  }
+
+  var moveLabel = 'move'
+  function bindLabelFunctions (expansion) {
+    expansion.labels = function (lab) { return expansionLabels(expansion,lab) }
+    expansion.flat = function (lab) { return flatExpansionLabels(expansion,lab) }
+    expansion.label = function (lab) { return sumExpansionLabels(expansion,lab) }
+    expansion.list = function (lab) { return listExpansionLabels(expansion,lab) }
+    expansion.last = function (lab) { return lastExpansionLabel(expansion,lab) }
+    expansion.base = function (lab) { return baseExpansionLabel(expansion,lab) }
+    expansion.move = function() { return sumExpansionLabels(expansion,moveLabel) }
   }
   
   function evalExpansionExpr (expansion, expr, failureVal, log) {
@@ -113,7 +128,7 @@
     var $label = function (lab) { return sumExpansionLabels(expansion,lab) }
     var $list = function (lab) { return listExpansionLabels(expansion,lab) }
     var $last = function (lab) { return lastExpansionLabel(expansion,lab) }
-    var $parent = function (lab) { return parentExpansionLabel(expansion,lab) }
+    var $base = function (lab) { return baseExpansionLabel(expansion,lab) }
     
     var $conj = conjugate  // $conj(infinitive,person[,gender])
     var $is_p = function (person) { return conjugate('be',person) }
@@ -254,6 +269,8 @@
 
   // Externally exposed functions
   return {
+    moveLabel: moveLabel,
+    bindLabelFunctions: bindLabelFunctions,
     getExpansionRoot: getExpansionRoot,
     addLabel: addLabel,
     expansionLabels: expansionLabels,
@@ -261,7 +278,7 @@
     lastExpansionLabel: lastExpansionLabel,
     sumExpansionLabels: sumExpansionLabels,
     listExpansionLabels: listExpansionLabels,
-    parentExpansionLabel: parentExpansionLabel,
+    baseExpansionLabel: baseExpansionLabel,
     evalExpansionExpr: evalExpansionExpr,
     evalVisible: evalVisible,
     evalLabel: evalLabel,

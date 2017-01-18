@@ -838,6 +838,7 @@ var BigHouse = (function() {
     // log out
     doLogout: function() {
       var bh = this
+      delete this.playerLocation
       this.gamePosition = {}
       this.REST_getLogout()
       this.showLoginPage()

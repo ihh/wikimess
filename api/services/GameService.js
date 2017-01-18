@@ -3,6 +3,7 @@
 var extend = require('extend')
 var merge = require('deepmerge')
 var Promise = require('bluebird')
+var Label = require('../../assets/js/bighouse/label.js')
 
 module.exports = {
 
@@ -855,18 +856,14 @@ module.exports = {
         $mood1 = $m1,
         $mood2 = $m2,
 
-	$1 = game.move1,
-	$2 = game.move2
+	$1 = game.move1 && GameService.findMoveTail(extend(true,{},game.move1)),
+	$2 = game.move2 && GameService.findMoveTail(extend(true,{},game.move2))
 
-    if ($1) {
-      $1.label = GameService.moveLabel.bind (GameService, $1)
-      $1.move = GameService.moveString.bind (GameService, $1)
-    }
-    if ($2) {
-      $2.label = GameService.moveLabel.bind (GameService, $2)
-      $2.move = GameService.moveString.bind (GameService, $2)
-    }
-
+    if ($1)
+      Label.bindLabelFunctions($1)
+    if ($2)
+      Label.bindLabelFunctions($2)
+    
     var $s1 = {}, $s2 = {}
     extend (true, $s1, $g1)
     merge ($s1, $l1)
@@ -898,6 +895,20 @@ module.exports = {
 
   toWeight: function (w) {
     return w ? (typeof(w) === 'string' ? parseFloat(w) : w) : 0
+  },
+
+  // findMoveTail also hooks up parent & next pointers
+  findMoveTail: function (node, parent, prev) {
+    if (node) {
+      if (parent) node.parent = parent
+      if (prev) prev.next = node
+      prev = node
+      if (node.children)
+	node.children.forEach (function (child) {
+	  prev = GameService.findMoveTail (child, node, prev)
+	})
+    }
+    return prev
   },
 
   gotBothMoves: function (game) {
@@ -1089,17 +1100,11 @@ module.exports = {
   },
 
   moveString: function (move) {
-    return GameService.moveLabel (move, 'move')
+    return GameService.moveLabel (move, Label.moveLabel)
   },
 
   moveLabel: function (move, label) {
-    var s
-    if (move) {
-      s = (move.label && move.label[label]) ? move.label[label] : ''
-      if (move.children) s += move.children.map(function(c){return GameService.moveLabel(c,label)}).join('')
-    } else
-      s = ''
-    return s
+    return Label.sumExpansionLabels (GameService.findMoveTail(extend(true,{},move)), label)
   },
 
   objectsEqual: function (obj1, obj2) {
