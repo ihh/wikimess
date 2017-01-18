@@ -103,7 +103,7 @@ module.exports = {
       if (node.hasOwnProperty('id'))  // guard against cycles
         return node
 
-      var nextStack = stack ? stack.concat([node]) : undefined
+      var nextStack = (stack && GameService.isArray(stack)) ? stack.concat([node]) : undefined
 
       if (node.goto) {
         var linkedNode = nodeByName[node.goto]
