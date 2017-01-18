@@ -108,27 +108,27 @@
     if (typeof(log) === 'undefined')
       log = console.log
 
-    var $labels = (lab) => expansionLabels(expansion,lab)
-    var $flat = (lab) => flatExpansionLabels(expansion,lab)
-    var $label = (lab) => sumExpansionLabels(expansion,lab)
-    var $list = (lab) => listExpansionLabels(expansion,lab)
-    var $last = (lab) => lastExpansionLabel(expansion,lab)
-    var $parent = (lab) => parentExpansionLabel(expansion,lab)
+    var $labels = function (lab) { return expansionLabels(expansion,lab) }
+    var $flat = function (lab) { return flatExpansionLabels(expansion,lab) }
+    var $label = function (lab) { return sumExpansionLabels(expansion,lab) }
+    var $list = function (lab) { return listExpansionLabels(expansion,lab) }
+    var $last = function (lab) { return lastExpansionLabel(expansion,lab) }
+    var $parent = function (lab) { return parentExpansionLabel(expansion,lab) }
     
     var $conj = conjugate  // $conj(infinitive,person[,gender])
-    var $is_p = (person) => conjugate('be',person)
-    var $has_p = (person) => conjugate('have',person)
-    var $is = (noun) => [noun,conjugate('be',guessPerson(noun))]
-    var $has = (noun) => [noun,conjugate('have',guessPerson(noun))]
+    var $is_p = function (person) { return conjugate('be',person) }
+    var $has_p = function (person) { return conjugate('have',person) }
+    var $is = function (noun) { return [noun,conjugate('be',guessPerson(noun))] }
+    var $has = function (noun) { return [noun,conjugate('have',guessPerson(noun))] }
     var $cap = capitalize  // $cap(text)
-    var $he = (person) => nominative(person,'i')
-    var $they = (person) => nominative(person,'n')
-    var $him = (person) => oblique(person,'i')
-    var $them = (person) => oblique(person,'n')
-    var $her = (person) => possessiveDeterminer(person,'i')
-    var $their = (person) => possessiveDeterminer(person,'n')
-    var $hers = (person) => possessivePronoun(person,'i')
-    var $theirs = (person) => possessivePronoun(person,'n')
+    var $he = function (person) { return nominative(person,'i') }
+    var $they = function (person) { return nominative(person,'n') }
+    var $him = function (person) { return oblique(person,'i') }
+    var $them = function (person) { return oblique(person,'n') }
+    var $her = function (person) { return possessiveDeterminer(person,'i') }
+    var $their = function (person) { return possessiveDeterminer(person,'n') }
+    var $hers = function (person) { return possessivePronoun(person,'i') }
+    var $theirs = function (person) { return possessivePronoun(person,'n') }
     var $themself = reflexive  // $themself(person[,gender])
     var $a = indefiniteArticle  // $a(nounPhrase)
     var $less = lessOrFewer  // $less(noun)
@@ -235,11 +235,12 @@
 
   var irregularComparative = { good: 'better', bad: 'worse', far: 'farther', little: 'less', many: 'more' }
   function makeComparative(adj) {
+    if (adj.match(/^[a-z]+\b./i)) return 'more ' + adj  // hyphenated or multiple words
     var lc = adj.toLowerCase()
     if (irregularComparative[lc]) return irregularComparative[lc]
     switch (countSyllables(adj)) {
     case 1: return adj + (adj.match(/e$/) ? 'r' : ((adj.match(/[aeiou][b-df-hj-np-tv-z]$/) ? adj.charAt(adj.length-1) : '') + 'er'))
-    case 2: return adj.match(/y$/) ? adj.replace(/y$/,'ier') : (adj.match(/(er|le|ow)$/) ? (adj+'er') : ('more '+adj))
+    case 2: return adj.match(/y$/) ? adj.replace(/y$/,'ier') : (adj.match(/le$/) ? (adj+'r') : (adj.match(/(er|ow)$/) ? (adj+'er') : ('more '+adj)))
     default: return 'more '+adj
     }
   }

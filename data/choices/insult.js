@@ -2,10 +2,10 @@
 // the_subject_has less/fewer positive_abstract_noun than an_object
 // the_subject_has more negative_abstract_noun than an_object
 // the_subject's abstract_noun is more_negative_adjective than an_object
-// the_subject's abstract_noun is no more_positive_adjective than an_object
+// the_subject's abstract_noun is less positive_adjective than an_object
 // the_subject_is as adjective as an_object
 // the_subject_is less positive_adjective than an_object
-// the_subject_is more negative_adjective than an_object
+// the_subject_is more_negative_adjective than an_object
 // the_subject intransitive_verbs like an_object
 // the_subject transitive_verbs material_nouns like an_object
 // the_subject intransitive_verbs as adverb as an_object
@@ -155,7 +155,12 @@
     extend
     (seq (debug_sample1(['the_subject_has','less_positive_abstract_noun','than_an_object'],
 			['the_subject_has','more_negative_abstract_noun','than_an_object'],
-			['the_subjects','abstract_noun_is','more_negative_adjective','than_an_object']),
+			['the_subjects','abstract_noun_is','more_negative_adjective','than_an_object'],
+			['the_subjects','abstract_noun_is','less_positive_adjective','than_an_object'],
+			['the_subject_is','as_adjective','as_an_object'],
+			['the_subject_is','less_positive_adjective','than_an_object'],
+			['the_subject_is','more_negative_adjective','than_an_object']
+		       ),
 	  { text: "Your insult is:\n\"<Label:insult >!\"" }),
      {define:
       // menus
@@ -211,22 +216,37 @@
 	 { sample:
 	   { shuffle: true,
 	     groups:
-	     [{ opts: adjective_list('Too ',['tasteless','unfashionable','dated','incivil','crass','crude','boorish','outmoded','vulgar','jarring','discourteous','impolite','rude','ill-mannered','ill-bred']) },  // class
-	      { opts: adjective_list('Too ',['indecent','cruel','vicious','mean','nasty','horrible','sadistic','selfish','lazy','spiteful','gossipy','venal','callous']) },  // character
+	     [{ opts: adjective_list('Too ',['tasteless','unfashionable','dated','incivil','crass','crude','boorish','outmoded','vulgar','jarring','discourteous','impolite','rude','ill-mannered','ill-bred','ignorant','uneducated']) },  // class
+	      { opts: adjective_list('Too ',['indecent','cruel','vicious','mean','nasty','horrible','sadistic','selfish','lazy','spiteful','gossipy','venal','callous','thoughtless','weak','stupid','idiotic','banal','mundane','tedious','boring']) },  // character
 	      { opts: adjective_list('Too ',['ugly','smelly','disgusting','unwashed','filthy','stinky','fat','skinny','short','stunted','gangly']) }] } } }, // appearance
+
+       { name: 'select_positive_adjective',
+	 text: "What's bad about it?",
+	 menu:
+	 { sample:
+	   { shuffle: true,
+	     groups:
+	     [{ opts: adjective_list('Not ',['tasteful','fashionable','current','civil','well-educated','well-informed','well-rounded','well-bred','polite','courteous','genteel'],' enough') },  // class
+	      { opts: adjective_list('Not ',['decent','kind','generous','compassionate','gentle','thoughtful'],' enough') },  // character
+	      { opts: adjective_list('Not ',['sexy','fragrant','strong','clean','brave','well-toned','muscly','tall','powerful'],' enough') }] } } }, // appearance
 
        // sentence components
        defseq('the_subject_has',['select_subject',insult("[$label('subject.text'),$has_p($label('subject.person'))]")]),
+       defseq('the_subject_is',['select_subject',insult("[$label('subject.text'),$is_p($label('subject.person'))]")]),
        defseq('the_subjects',['select_subject',insult("$poss($label('subject.text'))")]),
 
+       extend({name:'select_abstract_noun'},debug_sample1('select_positive_abstract_noun','select_negative_abstract_noun')),
        defseq('less_positive_abstract_noun',['select_positive_abstract_noun',insult("$less($label('abstract_noun'))")]),
        defseq('more_negative_abstract_noun',['select_negative_abstract_noun',insult("['more',$label('abstract_noun')]")]),
-       extend({name:'abstract_noun'},debug_sample1('select_positive_abstract_noun','select_negative_abstract_noun')),
-       defseq('abstract_noun_is',['abstract_noun',insult("$is($label('abstract_noun'))")]),
+       defseq('abstract_noun_is',['select_abstract_noun',insult("$is($label('abstract_noun'))")]),
 
+       extend({name:'select_adjective'},debug_sample1('select_positive_adjective','select_negative_adjective')),
        defseq('more_negative_adjective',['select_negative_adjective',insult("$comp($label('adjective'))")]),
+       defseq('less_positive_adjective',['select_positive_adjective',insult("['less',$label('adjective')]")]),
+       defseq('as_adjective',['select_adjective',insult("['as',$label('adjective')]")]),
        
-       defseq('than_an_object',['select_object',insult("['than',$a($label('object'))]")])
+       defseq('than_an_object',['select_object',insult("['than',$a($label('object'))]")]),
+       defseq('as_an_object',['select_object',insult("['as',$a($label('object'))]")])
       ]
      })
   }
