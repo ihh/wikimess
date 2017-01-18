@@ -22,8 +22,8 @@
 	  outro: [{ text: "Cool, let's skip class together!",
 		    next: { text: "Party times, by the beach...",
 			    next: { text: "Co-operation is great!" } } }],
-	  global1:{count:{c:"$+1"}},  // increments global1.count.c
-          global2:{count:{c:"$+1"}},  // this increments global2.count.c
+	  global1:{count:{c:"$_+1||1"}},  // increments global1.count.c
+          global2:{count:{c:"$_+1||1"}},  // this increments global2.count.c
           common:{day:"++"}},  // increments common.day
          {weight:"!$c.iceCream",
 	  outro:[{ text: "Cool, let's skip class together!\nShall we go to the beach, or to the mall?",
@@ -34,8 +34,8 @@
                             hint: "Beach",
                             text: "Party times, by the beach...\n++",  // this will be concatenated with the next node
 			    next: { text: "Co-operation is great!" } } }],
-	  global1:{count:{c:"$+1"}},  // increments global1.count.c
-          global2:{count:{c:"$+1"}},  // increments global2.count.c
+	  global1:{count:{c:"$_+1||1"}},  // increments global1.count.c
+          global2:{count:{c:"$_+1||1"}},  // increments global2.count.c
           common:{day:"++"},  // increments common.day
           next: {intro: { text: "Want to have an ice cream together?",
 			  left: { hint: "No",
@@ -86,19 +86,19 @@
                              outro: "Right: ice cream sucks."
                            }]}}],
     lr2: {outro:"Well, it was a good plan; but $player1 ratted $player2 out.\nTruancy doesn't pay, if you can't trust your friends.;; <sfx:surprised><class:outcome>Sorry, $player2...",
-          global1:{count:{c:"$+1"}},
-          local2:{count:{d:"$+1"}},
+          global1:{count:{c:"$_+1||1"}},
+          local2:{count:{d:"$_+1||1"}},
           common:{day:"++"}},
     ll: [{weight:"!($local1.count.d && $local2.count.d)",
           outro:"You and #{$no}# are a couple of goody two-shoes ;; Too bad!",
-          local1:{count:{d:"$+1"}},  // increments local1.count.d
-          local2:{count:{d:"$+1"}},  // increments local2.count.d
+          local1:{count:{d:"$_+1||1"}},  // increments local1.count.d
+          local2:{count:{d:"$_+1||1"}},  // increments local2.count.d
           next:"auto",
           common:{day:"++"}},  // increments common.day
          {weight:"$local1.count.d && $local2.count.d",
           outro:"You both chicken out - AGAIN ;; This keeps happening!",
-          local1:{count:{d:"$+1"}},
-          local2:{count:{d:"$+1"}},
+          local1:{count:{d:"$_+1||1"}},
+          local2:{count:{d:"$_+1||1"}},
           next:"auto",
           common:{day:"++"}}]
   },

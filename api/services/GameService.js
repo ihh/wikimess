@@ -784,19 +784,19 @@ module.exports = {
                    p1State[key] || {},
                    p2State[key] || {})
         } else {
-          var $$ = commonState[key]
-          var $, $o, $1, $2
+          var $$_ = commonState[key]
+          var $_, $o_, $1_, $2_
           if (role) {
-            $ = selfState[key] || 0
-            $o = otherState[key] || 0
-            $1 = p1State[key] || 0
-            $2 = p2State[key] || 0
+            $_ = selfState[key] || 0
+            $o_ = otherState[key] || 0
+            $1_ = p1State[key] || 0
+            $2_ = p2State[key] || 0
           } else
-            $ = $$
+            $_ = $$_
 
           // common shorthands
-          if (expr == '++') expr = '($||0)+1'
-          if (expr == '--') expr = '($||0)-1'
+          if (expr == '++') expr = '($_||0)+1'
+          if (expr == '--') expr = '($_||0)-1'
 
           // do the eval
           var val
