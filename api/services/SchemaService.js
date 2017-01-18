@@ -16,6 +16,7 @@ var intro_node_schema = {
           { type: "object",
 	    required: ["goto"],
             properties: {
+              name: { type: "string" },
               hint: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
@@ -29,6 +30,7 @@ var intro_node_schema = {
           { type: "object",
 	    required: ["sequence"],
             properties: {
+              name: { type: "string" },
               hint: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },

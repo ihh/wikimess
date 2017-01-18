@@ -1646,10 +1646,13 @@ var BigHouse = (function() {
 
 	    // process the grammar received from the server, use IDs to connect node objects
 	    function hookup (link, move) {
-	      if (link && typeof(link.id) !== 'undefined') {
-		if (typeof(link.move) === 'undefined')
-		  link.move = move
-		link.node = hist.text[link.id]
+	      if (link) {
+		if (typeof(link.id) !== 'undefined') {
+		  if (typeof(link.move) === 'undefined')
+		    link.move = move
+		  link.node = hist.text[link.id] || {}
+		} else
+		  link.node = {}
 	      }
 	    }
 	    hist.text.forEach (function (node, n) {
@@ -1677,7 +1680,7 @@ var BigHouse = (function() {
 	    var root
 	    if (hist.move) {
 	      function convertJsonMoveToExpansion (moveNode, parentExpansion, nextPop) {
-		var node = hist.text[moveNode.id]
+		var node = hist.text[moveNode.id] || {}
 		var expansion = { creator: 'convertJsonMoveToExpansion',
 				  isHistory: true,
 				  node: node,
@@ -2000,12 +2003,13 @@ var BigHouse = (function() {
       text = text.replace(/^\+\+/,'')
       text = text.replace(/\+\+$/,'')
 
-      text = text.replace (/<label:(\S+?)>/g, function (match, label) {
-	return bighouseLabel.sumExpansionLabels (expansion, label)
-      })
-
-      text = text.replace (/<Label:(\S+?)>/g, function (match, label) {
-	return bighouseLabel.capitalize (bighouseLabel.sumExpansionLabels (expansion, label))
+      text = text.replace (/<([Ll])abel:(\S+?)([ ,]?)>/g, function (match, uc, label, sep) {
+	var joined = (sep === ''
+		      ? bighouseLabel.sumExpansionLabels (expansion, label)
+		      : (sep === ','
+			 ? bighouseLabel.listExpansionLabels (expansion, label)
+			 : bighouseLabel.flatExpansionLabels(expansion,label).join(sep)))
+	return uc === 'L' ? bighouseLabel.capitalize(joined) : joined
       })
 
       text = text.replace (/<move>/g, function() {

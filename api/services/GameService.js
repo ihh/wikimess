@@ -13,6 +13,13 @@ module.exports = {
     var nodeByName = {}
     texts.forEach (function (tree, nTree) {
       function connect (node) {
+	if (node.define) {
+	  if (GameService.isArray (node.define))
+	    node.define.map (connect)
+	  else
+	    connect (node.define)
+	}
+
         if (node.goto)
           return  // handle named links later
 
@@ -73,16 +80,11 @@ module.exports = {
 
         if (node.name)
           nodeByName[node.name] = node
-
-	if (node.define) {
-	  if (GameService.isArray (node.define))
-	    node.define.map (connect)
-	  else
-	    connect (node.define)
-	}
       }
       connect (tree)
     })
+
+//    console.log(JSON.stringify(texts,null,2))
     
     // resolve names, check for cycles, convert into an array of nodes
     var rootNode = { id: 0 }
@@ -96,21 +98,23 @@ module.exports = {
 	       visible: node.visible }
     }
 
-    function recurse (node) {
+    function recurse (node, stack) {
       //            console.log("recurse: " + JSON.stringify(node))
       if (node.hasOwnProperty('id'))  // guard against cycles
         return node
-      
+
+      var nextStack = stack ? stack.concat([node]) : undefined
+
       if (node.goto) {
         var linkedNode = nodeByName[node.goto]
         if (!linkedNode) {
           sails.log.debug ("Name " + node.goto + " unresolved - replacing with leaf node")
           return { isLeaf: true }
         }
-        linkedNode = recurse (linkedNode)
+        linkedNode = recurse (linkedNode, nextStack)
 
-        node.id = linkedNode.id
-        node.isLeaf = linkedNode.isLeaf
+	var keys = ['id','isLeaf','left','right','menu','sequence']
+	keys.forEach (function (key) { node[key] = linkedNode[key] })
         // hints are pretty context-sensitive, so use the default hint ("Next"), or the hint specified in the 'goto' node; don't just blindly inherit the linkedNode hint
         return node
       }
@@ -123,21 +127,26 @@ module.exports = {
 
       if (!node.isLeaf) {
 	if (node.sequence)
-          descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child)) })
+          descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child,nextStack)) })
 	else if (node.menu)
-          descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child)) })
+          descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child,nextStack)) })
 	else if (node.next)
-          descriptor.next = linkSummary (recurse(node.next))
+          descriptor.next = linkSummary (recurse(node.next,nextStack))
         else {
-          descriptor.left = linkSummary (recurse(node.left))
-          descriptor.right = linkSummary (recurse(node.right))
+	  if (!node.left) sails.log.debug("Node is missing left:\n",node,"\nStack:\n",stack)
+	  if (!node.right) sails.log.debug("Node is missing right:\n",node,"\nStack:\n",stack)
+          descriptor.left = linkSummary (recurse(node.left || {}, nextStack))
+          descriptor.right = linkSummary (recurse(node.right || {}, nextStack))
         }
       }
-
+      
       return node
     }
 
-    texts.map(recurse)
+    // uncomment to debug call chains
+    //    texts.map (function (text) { return recurse (text,[]) })
+    texts.map (recurse)
+    
     var queue = texts.map (function (root) { return root.id })
     
     if (nodeList.length == 1 && !game.finished)
@@ -172,13 +181,9 @@ module.exports = {
       if (GameService.expandProperty(text,'sample',role))
 	promise = GameService.expandText (GameService.expandSample (text.sample, game, outcome, role),
 					  game, outcome, role)
-
-      else if (GameService.expandProperty(text,'sample1',role))
-	promise = GameService.expandText (GameService.expandSampleOne (text.sample1, game, outcome, role),
-					  game, outcome, role)
 	
       else {
-	// initialize with ref, switch, or expr/symexpr
+	// initialize with ref, switch, sample1, or expr/symexpr
 	var initPromise
 	if (text.ref)
 	  initPromise = Text.findOne({ name: text.ref })
@@ -188,6 +193,9 @@ module.exports = {
 	  })
 	if (!initPromise && text['switch'] && typeof(role) !== 'undefined')  // switch is always asymmetric
           initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
+	if (!initPromise && GameService.expandProperty(text,'sample1',role))
+	  initPromise = GameService.expandText (GameService.expandSampleOne (text.sample1, game, outcome, role),
+						game, outcome, role)
 	if (!initPromise) {
 	  var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
 	  var expr = text[exprKey]

@@ -25,9 +25,37 @@ module.exports = {
 	else
 	  return { sequence: text }
       }
+      text.left = makeText (text.left)
+      text.right = makeText (text.right)
+      text.next = makeText (text.next)
+      if (text.menu)
+	text.menu = makeTextList (text.menu)
+      if (text.sequence)
+	text.sequence = makeTextList (text.sequence)
+      if (text.sample1)
+	text.sample1.opts = makeTextList (text.sample1.opts)
+      if (text['switch'])
+	text['switch'] = text['switch'].map (function (case_opt) {
+	  if (case_opt['default']) case_opt['default'] = makeText(case_opt['default'])
+	  if (case_opt['case']) case_opt['case'] = makeText(case_opt['case'])
+	  return case_opt
+	})
       return text
     }
 
+    function makeTextList (list) {
+      if (GameService.isArray(list))
+	return list.map (makeText)
+      if (list.sample)
+	list.sample.groups = list.sample.groups.map (function (group) {
+	  group.opts = group.opts.map (function (opt) {
+	    if (opt.option) { opt.option = makeText(opt.option); return opt }
+	    return makeText(opt)
+	  })
+	})
+      return list
+    }
+    
     function expandAliases (obj) {
       asymKeys.forEach (function (key) {
         if (obj.hasOwnProperty(key)) {

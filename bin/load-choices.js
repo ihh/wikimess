@@ -39,13 +39,13 @@ var opt = getopt.create([
   ['o' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
   ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
-  ['c' , 'choices=PATH+'    , 'path to .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
-  ['t' , 'texts=PATH+'      , 'path to .json text file(s) or directories (default=' + defaultPath('Text') + ')'],
-  ['p' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
-  ['l' , 'locations=PATH+'  , 'path to .json location file(s) or directories (default=' + defaultPath('Location') + ')'],
-  ['i' , 'items=PATH+'      , 'path to .json item file(s) or directories (default=' + defaultPath('Item') + ')'],
-  ['m' , 'meters=PATH+'     , 'path to .json meter file(s) or directories (default=' + defaultPath('Meter') + ')'],
-  ['a' , 'awards=PATH+'     , 'path to .json award file(s) or directories (default=' + defaultPath('Award') + ')'],
+  ['c' , 'choices=PATH+'    , 'path to .js, .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
+  ['t' , 'texts=PATH+'      , 'path to js/json text file(s) or directories (default=' + defaultPath('Text') + ')'],
+  ['p' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
+  ['l' , 'locations=PATH+'  , 'path to js/json location file(s) or directories (default=' + defaultPath('Location') + ')'],
+  ['i' , 'items=PATH+'      , 'path to js/json item file(s) or directories (default=' + defaultPath('Item') + ')'],
+  ['m' , 'meters=PATH+'     , 'path to js/json meter file(s) or directories (default=' + defaultPath('Meter') + ')'],
+  ['a' , 'awards=PATH+'     , 'path to js/json award file(s) or directories (default=' + defaultPath('Award') + ')'],
   ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
@@ -196,6 +196,8 @@ function processFile (info) {
       schemaFilename = info.schema
   log (1, 'Processing ' + filename)
   var json = readJsonFileSync (filename, parsers)
+  json = isArray(json) ? json : [json]
+  log (8, JSON.stringify(json))
   if (json && schemaFilename) {
     var schema = JSON.parse (fs.readFileSync (schemaFilename))
     var validator = new jsonschema.Validator()

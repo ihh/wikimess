@@ -14,12 +14,26 @@
 }(this, function () {
   "use strict";
 
+  function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
+
   function getExpansionRoot (expansion) {
     while (expansion.parent) expansion = expansion.parent
     return expansion
   }
 
+  function flatten(list) {
+    return list.reduce (function (x, y) {
+      return x.concat (isArray(y) ? flatten(y) : [y])
+    }, [])
+  }
+
   function addLabel (x, y) {
+    if (typeof(x) === 'object') {
+      var obj = {}
+      Object.keys(x).forEach (function (kx) { obj[kx] = addLabel (x[kx], y[ky]) })
+      Object.keys(y).forEach (function (ky) { if (typeof(obj[kx]) === 'undefined') obj[ky] = y[ky] })
+      return obj
+    }
     return typeof(x) === 'undefined' ? y : (x + y)
   }
 
@@ -60,14 +74,27 @@
     return labs
   }
 
+  function flatExpansionLabels (expansion, label) {
+    return flatten (expansionLabels (expansion, label))
+  }
+
   function lastExpansionLabel (expansion, label) {
-    var labs = expansionLabels (expansion, label)
+    var labs = flatExpansionLabels (expansion, label)
     return labs.pop()
   }
 
   function sumExpansionLabels (expansion, label) {
-    var labs = expansionLabels (expansion, label)
+    var labs = flatExpansionLabels (expansion, label)
     return labs.reduce (addLabel, undefined)
+  }
+
+  function listExpansionLabels (expansion, label, oxfordComma) {
+    var labs = flatExpansionLabels (expansion, label)
+    return labs.length === 1
+      ? labs[0]
+      : (labs.length === 2
+	 ? (labs[0] + ' and ' + labs[1])
+	 : (labs.slice(0,labs.length-1).join(', ') + (oxfordComma ? ', and ' : ' and ') + labs[labs.length-1]))
   }
 
   function parentExpansionLabel (expansion, label) {
@@ -82,10 +109,12 @@
       log = console.log
 
     var $labels = (lab) => expansionLabels(expansion,lab)
+    var $flat = (lab) => flatExpansionLabels(expansion,lab)
     var $label = (lab) => sumExpansionLabels(expansion,lab)
+    var $list = (lab) => listExpansionLabels(expansion,lab)
     var $last = (lab) => lastExpansionLabel(expansion,lab)
     var $parent = (lab) => parentExpansionLabel(expansion,lab)
-
+    
     var $conj = conjugate  // $conj (infinitive, person [,gender])
     var $is = (person) => conjugate('be',person)
     var $has = (person) => conjugate('have',person)
@@ -100,7 +129,8 @@
     var $theirs = (person) => possessivePronoun(person,'n')
     var $themself = reflexive  // $themself (person [,gender])
     var $a = indefiniteArticle  // $a (nounPhrase)
-
+    var $less = lessOrFewer  // $less (noun)
+    
     var val
     try {
       val = eval(expr)
@@ -171,6 +201,11 @@
     return (nounPhrase.match(/^[AEIOUaeiou]/) ? 'an ' : 'a ') + nounPhrase
   }
 
+  // Misc.
+  function lessOrFewer(noun) {
+    return (noun.match(/^[^ ]*[sS]\b/) ? 'fewer ' : 'less ') + noun
+  }
+  
   // Capitalization of first letters in sentences
   function capitalize (text) {
     return text
@@ -183,8 +218,10 @@
     getExpansionRoot: getExpansionRoot,
     addLabel: addLabel,
     expansionLabels: expansionLabels,
+    flatExpansionLabels: flatExpansionLabels,
     lastExpansionLabel: lastExpansionLabel,
     sumExpansionLabels: sumExpansionLabels,
+    listExpansionLabels: listExpansionLabels,
     parentExpansionLabel: parentExpansionLabel,
     evalExpansionExpr: evalExpansionExpr,
     evalVisible: evalVisible,

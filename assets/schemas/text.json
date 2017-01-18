@@ -29,6 +29,9 @@
             "goto"
           ],
           "properties": {
+            "name": {
+              "type": "string"
+            },
             "hint": {
               "$ref": "#/definitions/sample_string"
             },
@@ -59,6 +62,9 @@
             "sequence"
           ],
           "properties": {
+            "name": {
+              "type": "string"
+            },
             "hint": {
               "$ref": "#/definitions/sample_string"
             },
