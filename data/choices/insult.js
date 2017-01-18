@@ -105,7 +105,6 @@
   function defseq(name,opts) { return extend ({ name: name }, seq.apply(this,opts)) }
   function sample1() { return { sample1: { opts: Array.prototype.map.call (arguments, to_node) } } }
 
-  // Insult helpers
   function label_list (label, props, list, hintMap) {
     hintMap = hintMap || capitalize
     var lpath = label.split('.'), lkey = lpath.pop()
@@ -116,7 +115,8 @@
       return obj
     })
   }
-  
+
+  // Insult helpers
   function subject_list (person, list) {
     return label_list ('subject.text', { subject: { person: person } }, list)
   }
