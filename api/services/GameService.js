@@ -752,7 +752,15 @@ module.exports = {
         $name1 = $n1,
         $name2 = $n2
 
-    var $s, $g, $inv, $l, $n, $id, $so, $go, $invo, $lo, $no, $ido
+    var $1 = GameService.clonedMoveTail(game.move1),
+	$2 = GameService.clonedMoveTail(game.move2)
+
+    if ($1)
+      Label.bindLabelFunctions($1)
+    if ($2)
+      Label.bindLabelFunctions($2)
+
+    var $s, $g, $inv, $l, $n, $id, $so, $go, $invo, $lo, $no, $ido, $$, $$o
     if (role) {
       $s = info.self[context].state
       $g = info.self.global.state
@@ -766,6 +774,8 @@ module.exports = {
       $lo = info.other.local
       $no = info.other.displayName
       $ido = info.other.id
+      $$ = role === 1 ? $1 : $2
+      $$o = role === 1 ? $2 : $1
     }
 
     var updatedState = {}
@@ -856,8 +866,8 @@ module.exports = {
         $mood1 = $m1,
         $mood2 = $m2,
 
-	$1 = game.move1 && GameService.findMoveTail(extend(true,{},game.move1)),
-	$2 = game.move2 && GameService.findMoveTail(extend(true,{},game.move2))
+	$1 = GameService.clonedMoveTail(game.move1),
+	$2 = GameService.clonedMoveTail(game.move2)
 
     if ($1)
       Label.bindLabelFunctions($1)
@@ -897,15 +907,17 @@ module.exports = {
     return w ? (typeof(w) === 'string' ? parseFloat(w) : w) : 0
   },
 
-  // findMoveTail also hooks up parent & next pointers
-  findMoveTail: function (node, parent, prev) {
+  // _findMoveTail also hooks up parent & next pointers
+  // call clonedMoveTail instead to avoid cyclizing the data structure in the Game
+  clonedMoveTail: function (node) { return node && GameService._findMoveTail(extend(true,{},node)) },
+  _findMoveTail: function (node, parent, prev) {
     if (node) {
       if (parent) node.parent = parent
       if (prev) prev.next = node
       prev = node
       if (node.children)
 	node.children.forEach (function (child) {
-	  prev = GameService.findMoveTail (child, node, prev)
+	  prev = GameService._findMoveTail (child, node, prev)
 	})
     }
     return prev
@@ -1104,7 +1116,7 @@ module.exports = {
   },
 
   moveLabel: function (move, label) {
-    return Label.sumExpansionLabels (GameService.findMoveTail(extend(true,{},move)), label)
+    return Label.sumExpansionLabels (GameService.clonedMoveTail(move), label)
   },
 
   objectsEqual: function (obj1, obj2) {
