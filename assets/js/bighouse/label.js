@@ -115,10 +115,12 @@
     var $last = (lab) => lastExpansionLabel(expansion,lab)
     var $parent = (lab) => parentExpansionLabel(expansion,lab)
     
-    var $conj = conjugate  // $conj (infinitive, person [,gender])
-    var $is = (person) => conjugate('be',person)
-    var $has = (person) => conjugate('have',person)
-    var $cap = capitalize  // $cap (text)
+    var $conj = conjugate  // $conj(infinitive,person[,gender])
+    var $is_p = (person) => conjugate('be',person)
+    var $has_p = (person) => conjugate('have',person)
+    var $is = (noun) => [noun,conjugate('be',guessPerson(noun))]
+    var $has = (noun) => [noun,conjugate('have',guessPerson(noun))]
+    var $cap = capitalize  // $cap(text)
     var $he = (person) => nominative(person,'i')
     var $they = (person) => nominative(person,'n')
     var $him = (person) => oblique(person,'i')
@@ -127,9 +129,11 @@
     var $their = (person) => possessiveDeterminer(person,'n')
     var $hers = (person) => possessivePronoun(person,'i')
     var $theirs = (person) => possessivePronoun(person,'n')
-    var $themself = reflexive  // $themself (person [,gender])
-    var $a = indefiniteArticle  // $a (nounPhrase)
-    var $less = lessOrFewer  // $less (noun)
+    var $themself = reflexive  // $themself(person[,gender])
+    var $a = indefiniteArticle  // $a(nounPhrase)
+    var $less = lessOrFewer  // $less(noun)
+    var $poss = possessiveApostrophe  // $poss(nounPhrase)
+    var $comp = makeComparative  // $comp(adjective)
     
     var val
     try {
@@ -176,7 +180,7 @@
     case 'be': form = (rp === 'i') ? 'am' : (rp === 'it' ? 'is' : 'are'); break
     case 'do': form = (rp === 'it') ? 'does' : 'do'; break
     case 'go': form = (rp === 'it') ? 'goes' : 'go'; break
-    default: form = (rp === 'it') ? (infinitive + (infinitive.match(/s$/) ? 'es' : 's')) : infinitive; break
+    default: form = (rp === 'it') ? (infinitive + (infinitive.match(/s$/i) ? 'es' : 's')) : infinitive; break
     }
     return form
   }
@@ -196,14 +200,48 @@
   function possessivePronoun (person, gender) { return getPronoun (genderedPossessivePronoun, person, gender) }
   function reflexive (person, gender) { return getPronoun (genderedReflexive, person, gender) }
 
+  var possessivePronoun = { i: 'my', you: 'your', he: 'his', she: 'her', they: 'their', it: 'its', we: 'our' }
+  function possessiveApostrophe(noun) {
+    var lc = noun.toLowerCase()
+    return possessivePronoun[lc] ? possessivePronoun[lc] : (noun + (looksLikePlural(noun) ? "'" : "'s"))
+  }
+  
   // Articles
   function indefiniteArticle (nounPhrase) {
-    return (nounPhrase.match(/^[AEIOUaeiou]/) ? 'an ' : 'a ') + nounPhrase
+    return [nounPhrase.match(/^[aeiou]/i) ? 'an' : 'a', nounPhrase]
   }
 
   // Misc.
+  function looksLikePlural(noun) {
+    return noun.match(/^[^ ]*[s]\b/i)
+  }
+  
   function lessOrFewer(noun) {
-    return (noun.match(/^[^ ]*[sS]\b/) ? 'fewer ' : 'less ') + noun
+    return [looksLikePlural(noun) ? 'fewer' : 'less', noun]
+  }
+
+  function guessPerson(noun) {
+    return looksLikePlural(noun) ? 'p3' : 's3'
+  }
+
+  // from http://stackoverflow.com/a/8843915
+  function countSyllables(word) {
+    word = word.toLowerCase()
+    if (word.length <= 3) return 1
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/i, '')
+    word = word.replace(/^y/i, '')
+    return word.match(/[aeiouy]{1,2}/gi).length
+  }
+
+  var irregularComparative = { good: 'better', bad: 'worse', far: 'farther', little: 'less', many: 'more' }
+  function makeComparative(adj) {
+    var lc = adj.toLowerCase()
+    if (irregularComparative[lc]) return irregularComparative[lc]
+    switch (countSyllables(adj)) {
+    case 1: return adj + (adj.match(/e$/) ? 'r' : ((adj.match(/[aeiou][b-df-hj-np-tv-z]$/) ? adj.charAt(adj.length-1) : '') + 'er'))
+    case 2: return adj.match(/y$/) ? adj.replace(/y$/,'ier') : (adj.match(/(er|le|ow)$/) ? (adj+'er') : ('more '+adj))
+    default: return 'more '+adj
+    }
   }
   
   // Capitalization of first letters in sentences

@@ -5,11 +5,12 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-var fs = require('fs');
-var SkipperDisk = require('skipper-disk');
-var imagemagick = require('imagemagick-native');
-var extend = require('extend');
-var md5File = require('md5-file');
+var fs = require('fs')
+var SkipperDisk = require('skipper-disk')
+var imagemagick = require('imagemagick-native')
+var extend = require('extend')
+var md5File = require('md5-file')
+var mkdirpSync = require('mkdirp').sync
 
 module.exports = {
 
@@ -358,10 +359,10 @@ module.exports = {
 	  var tmpPlayerImageDir = process.cwd() + '/.tmp/public' + imagePath
 
 	  if (!fs.existsSync(playerImageDir))
-	    fs.mkdirSync(playerImageDir)
+	    mkdirpSync(playerImageDir)
 
 	  if (!fs.existsSync(tmpPlayerImageDir))
-	    fs.mkdirSync(tmpPlayerImageDir)
+	    mkdirpSync(tmpPlayerImageDir)
 
 	  if (PlayerService.isValidMood (mood))
 	    req.file('avatar').upload
