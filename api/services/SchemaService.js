@@ -60,7 +60,8 @@ var intro_node_schema = {
               left: ref_schema('intro_node'),
               right: ref_schema('intro_node'),
               next: ref_schema('intro_node'),
-              menu: ref_schema('sample_intro_nodes')
+              menu: ref_schema('sample_intro_nodes'),
+	      auto: { type: "boolean" }
             },
             additionalProperties: false
           }]

@@ -305,6 +305,9 @@
             },
             "menu": {
               "$ref": "#/definitions/sample_intro_nodes"
+            },
+            "auto": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false

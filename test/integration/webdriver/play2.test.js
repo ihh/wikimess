@@ -180,7 +180,7 @@ function quit (obj) {
 	})
 }
 
-function makeDDMove (fred, sheila, text1, text2) {
+function makeDDMove (fred, sheila, text1f, text1s, text2) {
   makeMove (fred, "Do you want to play truant", "left")
   makeMove (sheila, "Do you want to play truant", "left")
   
@@ -193,8 +193,8 @@ function makeDDMove (fred, sheila, text1, text2) {
   makeMove (fred, "even admit", "left")
   makeMove (sheila, "At least you admit it", "right")
 
-  makeMove (fred, text1, "right")
-  makeMove (sheila, text1, "right")
+  makeMove (fred, text1f, "right")
+  makeMove (sheila, text1s, "right")
 
   makeMove (fred, text2, "right")
   makeMove (sheila, text2, "right")
@@ -231,7 +231,7 @@ describe("two-player game", function() {
   changeMood (fred, sheila, 'sad')
   changeMood (sheila, fred, 'surprised')
   
-  makeDDMove (fred, sheila, "goody two-shoes", "Too bad")
+  makeDDMove (fred, sheila, "You and sheila", "You and fred", "Too bad")
   
   makeMove (fred, "Here we are on the second day of school", "right")
   makeMove (sheila, "Here we are on the second day of school", "right")
@@ -265,7 +265,7 @@ describe("two-player game", function() {
   makeMove (fred, "Here we are on day 3 of school", "right")
   makeMove (sheila, "Here we are on day 3 of school", "right")
 
-  makeDDMove (fred, sheila, "AGAIN", "This keeps happening")
+  makeDDMove (fred, sheila, "AGAIN", "AGAIN", "This keeps happening")
 
   makeMove (fred, "Here we are on day 4 of school", "right")
   makeMove (sheila, "Here we are on day 4 of school", "right")
@@ -303,7 +303,7 @@ describe("two-player game", function() {
   makeMove (fred, "Here we are on day 5 of school", "right")
   makeMove (sheila, "Here we are on day 5 of school", "right")
 
-  makeDDMove (fred, sheila, "AGAIN", "This keeps happening")
+  makeDDMove (fred, sheila, "AGAIN", "AGAIN", "This keeps happening")
 
   makeMove (fred, "Here we are on day 6 of school", "right")
   makeMove (sheila, "Here we are on day 6 of school", "right")
@@ -324,7 +324,7 @@ describe("two-player game", function() {
   makeMove (fred, "Here we are on day 7 of school", "right")
   makeMove (sheila, "Here we are on day 7 of school", "right")
 
-  makeDDMove (fred, sheila, "AGAIN", "This keeps happening")
+  makeDDMove (fred, sheila, "AGAIN", "AGAIN", "This keeps happening")
 
   makeMove (fred, "Here we are on day 8 of school", "right")
   makeMove (sheila, "Here we are on day 8 of school", "right")

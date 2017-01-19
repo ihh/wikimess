@@ -42,6 +42,7 @@ module.exports = {
                 prev.left = node.left
                 prev.right = node.right
 		prev.menu = node.menu
+		prev.auto = node.auto
               }
               head = prev
             })
@@ -49,6 +50,7 @@ module.exports = {
             delete node.left
             delete node.right
 	    delete node.menu
+	    delete node.auto
 	    delete node.sequence
             node.next = head
             node.text = split[0]
@@ -123,6 +125,7 @@ module.exports = {
       node.id = nodeList.length
       var descriptor = { label: node.label,
                          labexpr: node.labexpr,
+			 auto: node.auto,
                          text: node.text }
       nodeList.push (descriptor)
 
@@ -700,7 +703,7 @@ module.exports = {
 	       else
 		 return Promise.resolve(sharedOutro)
 	     }).then (function (sharedOutro2) {
-		 return GameService.expandText (sharedOutro2, game, outcome)
+	       return GameService.expandText (sharedOutro2, game, outcome, 2)
 	     }).then (function (outro2) {
 	       game.tree2.push (outro2)
 	     })

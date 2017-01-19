@@ -2037,7 +2037,7 @@ var BigHouse = (function() {
     },
     
     nodeExpansionIsPredictable: function (node) {
-      return this.nodeIsLeaf(node) || this.nodeHasNext(node)
+      return this.nodeIsLeaf(node) || this.nodeHasNext(node) || node.auto
     },
 
     makeSequenceExpansion: function (expansion) {
@@ -2064,6 +2064,11 @@ var BigHouse = (function() {
       var bh = this
       var node = expansion.node
 
+      if (node.menu && node.auto)
+	for (action = 0; action < node.menu.length - 1; ++action)
+	  if (bighouseLabel.evalVisible (expansion, node.menu[action].visible))
+	    break
+      
       if (typeof(action) === 'undefined')
 	action = expansion.action
       else {
@@ -2311,7 +2316,7 @@ var BigHouse = (function() {
           })
 
       // create the menu, if applicable
-      if (node.menu) {
+      if (node.menu && !node.auto) {
 	var fieldset = $('<fieldset class="cardmenu">')
 	expansion.menuSpan = []
 	expansion.menuInput = []
@@ -2365,7 +2370,7 @@ var BigHouse = (function() {
 	    menuSelectCallback()
 	  }
         }
-      } else  // not a menu card
+      } else  // not a menu card (or an auto-menu)
         expansion.topCardCallback = function() {
           // none of this is strictly necessary except to prevent stray properties sitting around
 	  delete bh.throwDisabled

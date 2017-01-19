@@ -96,7 +96,11 @@
           next:"auto",
           common:{day:"++"}},  // increments common.day
          {weight:"$local1.count.d && $local2.count.d",
-          outro:"You both chicken out - AGAIN ;; This keeps happening!",
+          outro: { text: "You both chicken out - AGAIN",
+		   auto: true,
+		   menu: [{ visible: "false", text: "This text should not be shown" },
+			  { visible: "true", text: "This keeps happening!" },
+			  { visible: "true", text: "This should not be shown either" }] },
           local1:{count:{d:"$_+1||1"}},
           local2:{count:{d:"$_+1||1"}},
           next:"auto",
