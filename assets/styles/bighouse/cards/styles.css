@@ -101,3 +101,25 @@
 .bighouse .cardbar .cardtable .gameover {
     font-style: italic;
 }
+
+.bighouse .cardbar .cardtable .leftballoon {
+    display: block;
+    text-align: left;
+    clear: both;
+}
+
+.bighouse .cardbar .cardtable .leftballoon img {
+    float: left;
+    margin-right: 4px;
+}
+
+.bighouse .cardbar .cardtable .rightballoon {
+    display: block;
+    text-align: right;
+    clear: both;
+}
+
+.bighouse .cardbar .cardtable .rightballoon img {
+    float: right;
+    margin-left: 4px;
+}
