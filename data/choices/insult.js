@@ -121,7 +121,7 @@
   function debug_sample1() {
     var args = Array.prototype.slice.call(arguments,0)
     return typeof(debug) !== 'undefined'
-      ? { text: "(DEBUG) Select an option:",
+      ? { text: "<happy>(DEBUG)</happy> <sadother>Select an option:</sadother>",
 	  menu: args.map (function(opt) { return extend ({ hint: to_string(opt) }, to_node(opt)) }) }
     : sample1.apply(this,args)
   }

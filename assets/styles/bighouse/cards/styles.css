@@ -103,23 +103,25 @@
 }
 
 .bighouse .cardbar .cardtable .leftballoon {
+    width: 100%;
     display: block;
     text-align: left;
     clear: both;
 }
 
-.bighouse .cardbar .cardtable .leftballoon img {
+.bighouse .cardbar .cardtable .leftballoon .avatar {
     float: left;
     margin-right: 4px;
 }
 
 .bighouse .cardbar .cardtable .rightballoon {
+    width: 100%;
     display: block;
     text-align: right;
     clear: both;
 }
 
-.bighouse .cardbar .cardtable .rightballoon img {
+.bighouse .cardbar .cardtable .rightballoon .avatar {
     float: right;
     margin-left: 4px;
 }

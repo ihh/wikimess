@@ -118,7 +118,9 @@
 	align-items: center;
     }
 
-    .bighouse .cardbar .cardtable img {
+    .bighouse .cardbar .cardtable img,
+    .bighouse .cardbar .cardtable .avatar {
+	width: 16vh;
 	height: 16vh;
     }
 

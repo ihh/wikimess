@@ -318,6 +318,9 @@ module.exports = {
       text = GameService.replaceAll (text, '#{', '}#', '#<', '>#', game, outcome, role)
       text = text.replace(/\$self/g,Game.getRoleAttr(game,role,'player').displayName)
       text = text.replace(/\$other/g,Game.getOtherRoleAttr(game,role,'player').displayName)
+      text = text.replace(/<(\/?)(happy|sad|angry|surprised)([12])>/g, function (match, slash, mood, moodRole) {
+        return '<' + slash + mood + (role == moodRole ? 'self' : 'other') + '>'
+      })
     }
     return text
   },

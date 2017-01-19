@@ -1639,7 +1639,8 @@ var BigHouse = (function() {
 
           bh.moveNumber = data.move
           bh.opponentName = data.other.name
-
+          bh.opponentID = data.other.id
+          
           var newRootForMove = {}, nextRoot
 	  data.history.slice(0).reverse().forEach (function (hist, h) {
 	    if (!hist.text.length)
@@ -1774,7 +1775,7 @@ var BigHouse = (function() {
 	      bh.opponentNameDiv.text (bh.opponentName)
               
 	      bh.updatePlayerMood (data.self.mood, data.startline)
-	      bh.updateOpponentMood (data.other.id, data.other.mood, data.startline)
+	      bh.updateOpponentMood (bh.opponentID, data.other.mood, data.startline)
 	    })
 
 	}).fail (function (err) {
@@ -2307,12 +2308,36 @@ var BigHouse = (function() {
 	     : ("Waiting for " + bh.opponentName + "..."))
       })
 
+      var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised)(|self|other)>(.*?)<\/\\1\\2>', 'g')
+      text = text.replace (avatarRegExp, function (match) { return '\n' + match + '\n' })
+      
       // create the <span>'s
+      var avatarCallbacks = []
       var content = text.split(/\n/)
 	  .filter (function (para) {
 	    return /\S/.test(para)
 	  }).map (function (para) {
-	    return $('<span>').html(para)
+            var span = $('<span>')
+            avatarRegExp.lastIndex = 0
+            var avatarMatch = avatarRegExp.exec (para)
+            if (avatarMatch) {
+              var mood = avatarMatch[1], role = avatarMatch[2], content = avatarMatch[3]
+              var isOther = (role === 'other')
+              var moodDiv = $('<div>').addClass('avatar')
+              span.addClass (isOther ? 'rightballoon' : 'leftballoon')
+                .append (moodDiv)
+                .append (content)
+              avatarCallbacks.push (function() {
+                bh.getAvatarConfigPromise(isOther ? bh.opponentID : bh.playerID)
+                  .done (function (avatarConfig) {
+                    var config = {}
+                    $.extend (true, config, avatarConfig)
+                    bh.showFace (config, mood, moodDiv)
+                  })
+              })
+            } else
+	      span.html(para)
+            return span
           })
 
       // create the menu, if applicable
@@ -2429,6 +2454,8 @@ var BigHouse = (function() {
       } else
 	cardDealt.resolve()
 
+      avatarCallbacks.forEach (function (f) { f() })
+      
       if (!info.dealingAhead)
 	cardDealt.done (function() {
 	  bh.updateGameView()
