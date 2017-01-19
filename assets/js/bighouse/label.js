@@ -102,7 +102,7 @@
   
   function listExpansionLabels (expansion, label, oxfordComma) {
     var labs = flatExpansionLabels (expansion, label)
-    labs = labs.slice (lastNonNullIndex (labs))
+    labs.splice (0, lastNonNullIndex (labs))
     return labs.length === 1
       ? labs[0]
       : (labs.length === 2
