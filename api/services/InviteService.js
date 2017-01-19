@@ -89,11 +89,8 @@ module.exports = {
        error)
     } else {
       // pick a random opponent
-      var totalWeight = weightedOpponents.reduce (function (total, wo) { return total + wo.weight }, 0)
-      var nOpp, w = Math.random() * totalWeight
-      for (nOpp = 0; nOpp < weightedOpponents.length - 1; ++nOpp)
-	if ((w -= weightedOpponents[nOpp].weight) <= 0)
-	  break
+      var weights = weightedOpponents.map (function (wo) { return wo.weight })
+      var nOpp = GameService.sampleByWeight (weights)
       var opponent = weightedOpponents[nOpp].opponent
       weightedOpponents.splice (nOpp, 1)  // remove from weightedOpponents
       // lock player & opponent, test eligibility & if all is OK, start the Game

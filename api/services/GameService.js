@@ -359,12 +359,7 @@ module.exports = {
               opts = Object.keys(rhs)
               weights = keys.map (function (key) { return opts[key] })
             }
-            var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
-            var w = totalWeight * Math.random()
-            for (var i = 0; i < weights.length; ++i)
-	      if ((w -= weights[i]) <= 0)
-                return expand (opts[i])
-            return ''
+	    return expand (opts[GameService.sampleByWeight(weights) || 0])
           }
           return expand (grammar[symbol])
         }
@@ -421,18 +416,8 @@ module.exports = {
 	return Math.max (0, Number (GameService.expandTextExpr (opt.weight, game, outcome, role)))
       return 1
     })
+    GameService.multiSampleByWeight(weights,n).forEach (function (idx) { keep[idx] = true })
     var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
-    while (n > 0 && totalWeight > 0) {
-      var w = totalWeight * Math.random()
-      for (var i = 0; i < weights.length; ++i)
-	if ((w -= weights[i]) <= 0) {
-          keep[i] = true
-	  totalWeight -= weights[i]
-	  weights[i] = 0
-	  break
-	}
-      --n
-    }
     return opts
       .filter (function (opt, i) { return keep[i] })
       .map (function (opt) { return opt.option })
@@ -1169,5 +1154,32 @@ module.exports = {
   
   isArray: function (obj) {
     return Object.prototype.toString.call(obj) === '[object Array]'
+  },
+
+  sampleByWeight: function (weights) {
+    var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
+    var w = totalWeight * Math.random()
+    for (var i = 0; i < weights.length; ++i)
+      if ((w -= weights[i]) <= 0)
+	return i
+    return undefined
+  },
+
+  multiSampleByWeight: function (weights, n) {
+    var samples = []
+    var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
+    while (n > 0 && totalWeight > 0) {
+      var w = totalWeight * Math.random()
+      for (var i = 0; i < weights.length; ++i)
+	if ((w -= weights[i]) <= 0) {
+	  samples.push (i)
+	  totalWeight -= weights[i]
+	  weights[i] = 0
+	  break
+	}
+      --n
+    }
+    return samples
   }
+
 };
