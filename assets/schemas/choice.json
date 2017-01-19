@@ -281,6 +281,9 @@
             "sample1": {
               "$ref": "#/definitions/intro_node_opts"
             },
+            "grammar": {
+              "type": "object"
+            },
             "label": {
               "type": "object"
             },

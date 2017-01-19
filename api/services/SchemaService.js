@@ -54,6 +54,7 @@ var intro_node_schema = {
 	      symexpr: { type: "string" },
 	      switch: ref_schema('intro_node_cases'),
 	      sample1: ref_schema('intro_node_opts'),
+              grammar: { type: "object" },
               label: { type: "object" },
               labexpr: { type: "object" },
               define: { type: "array", minItems: 1, items: ref_schema('intro_node') },

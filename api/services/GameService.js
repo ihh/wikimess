@@ -168,7 +168,7 @@ module.exports = {
     return text[prop] && (typeof(role) === 'undefined' ? text[prop].symmetric : !text[prop].symmetric)
   },
   
-  expandText: function (text, game, outcome, role) {
+  expandText: function (text, game, outcome, role, grammar) {
     var promise
     if (!text)
       promise = Promise.resolve(text)
@@ -218,9 +218,10 @@ module.exports = {
 	  .then (function (expanded) {
 	    return Promise.map (Object.keys(text).filter (function (key) {
 	      return key !== 'id'   // prevent clash of Text attribute 'id' with internally used 'id' passed to client
+                && key !== 'grammar'  // ignore grammar property
 		&& !expanded.hasOwnProperty(key)  // ref, switch, expr/symexpr can override defaults
 	    }), function (key) {
-	      return GameService.expandText (text[key], game, outcome, role)
+	      return GameService.expandText (text[key], game, outcome, role, text.grammar)
 		.then (function (expandedVal) {
 		  expanded[key] = expandedVal
 		})
@@ -231,7 +232,7 @@ module.exports = {
       }
 
     } else if (typeof(text) === 'string')
-      promise = Promise.resolve (GameService.expandTextString (text, game, outcome, role))
+      promise = Promise.resolve (GameService.expandTextString (text, game, outcome, role, grammar))
 
     else
       promise = Promise.resolve (text)
@@ -304,18 +305,18 @@ module.exports = {
     return val
   },
 
-  expandTextString: function (text, game, outcome, role) {
+  expandTextString: function (text, game, outcome, role, grammar) {
     function evalReplace (match, expr) {
       var val = GameService.evalTextExpr (expr, game, outcome, role)
       return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
     }
 
     if (typeof(role) === 'undefined') {
-      text = GameService.replaceAll (text, '{{', '}}', '<<', '>>', game, outcome, role)
+      text = GameService.replaceAll (text, '{{', '}}', '<<', '>>', '@', game, outcome, role, grammar)
       text = text.replace(/\$player1/g,game.player1.displayName)
       text = text.replace(/\$player2/g,game.player2.displayName)
     } else {
-      text = GameService.replaceAll (text, '#{', '}#', '#<', '>#', game, outcome, role)
+      text = GameService.replaceAll (text, '#{', '}#', '#<', '>#', '@#', game, outcome, role, grammar)
       text = text.replace(/\$self/g,Game.getRoleAttr(game,role,'player').displayName)
       text = text.replace(/\$other/g,Game.getOtherRoleAttr(game,role,'player').displayName)
       text = text.replace(/<(\/?)(happy|sad|angry|surprised|say)([12])>/g, function (match, slash, mood, moodRole) {
@@ -325,8 +326,9 @@ module.exports = {
     return text
   },
 
-  replaceAll: function (text, lbEval, rbEval, lbOpt, rbOpt, game, outcome, role) {
+  replaceAll: function (text, lbEval, rbEval, lbOpt, rbOpt, symPrefix, game, outcome, role, grammar) {
     var evalRegex = new RegExp (lbEval + "(.*?)" + rbEval, 'g')
+    var symRegex = new RegExp (symPrefix + '({[a-zA-Z0-9_]+}|[a-zA-Z0-9_]+)', 'g')
     var optRegex = new RegExp (lbOpt + "([^#<>{}]*?\|[^#<>{}]*?)" + rbOpt)
     function evalReplace (match, expr) {
       var val = GameService.evalTextExpr (expr, game, outcome, role)
@@ -343,6 +345,31 @@ module.exports = {
       foundOptRegex = false
       text = text.replace (optRegex, randomOption)
     } while (foundOptRegex)
+    if (grammar)
+      text = text.replace (symRegex, function (match, symbol) {
+        if (grammar[symbol]) {
+          function expand (rhs) {
+            if (typeof(rhs) === 'string')
+              return GameService.replaceAll (rhs, lbEval, rbEval, lbOpt, rbOpt, symPrefix, game, outcome, role, grammar)
+            var opts, weights
+            if (typeof(rhs) === 'object') {
+              opts = Object.keys(rhs)
+              weights = keys.map (function (key) { return opts[key] })
+            } else {
+              opts = rhs
+              weights = new Array(opts.length).fill(1)
+            }
+            var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
+            var w = totalWeight * Math.random()
+            for (var i = 0; i < weights.length; ++i)
+	      if ((w -= weights[i]) <= 0)
+                return expand (opts[i])
+            return ''
+          }
+          return expand (grammar[symbol])
+        }
+        return match
+      })
     return text
   },
 
