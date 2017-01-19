@@ -97,7 +97,7 @@ function makeMove (obj, cardText, menuText, dir) {
   }
 
   waitForCardText (obj, cardText)
-
+  
   it('should wait until '+name+'\'s thrown-card animation completes', function(done) {
     driver
       .wait (function() {
@@ -121,6 +121,18 @@ function makeMove (obj, cardText, menuText, dir) {
     driver
       .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
       .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+  })
+}
+
+function checkTextAbsent (obj, presentText, absentText) {
+  var driver = obj.driver
+  var name = obj.name
+  waitForCardText (obj, presentText)
+  it('should not find "'+absentText+'" on '+name+'\'s page ', function(done) {
+    driver
+      .wait(until.elementLocated(By.xpath("//*[contains(text(), '"+absentText+"')]")), 100)
+      .then(() => done(new Error("fail")), () => done())
       .catch(error => done(error))
   })
 }
@@ -276,6 +288,8 @@ describe("two-player game", function() {
 
   makeMove (fred, "What flavor", "Chocolate", "right")
   makeMove (fred, "oh no", "right")
+  checkTextAbsent (fred, "What flavor", "Strawberry")
+
   makeMove (fred, "What flavor", "Chocolate", "right")
   makeMove (fred, "oh no", "right")
   makeMove (fred, "What flavor", "Vanilla", "right")
