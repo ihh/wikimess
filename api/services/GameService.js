@@ -352,12 +352,12 @@ module.exports = {
             if (typeof(rhs) === 'string')
               return GameService.replaceAll (rhs, lbEval, rbEval, lbOpt, rbOpt, symPrefix, game, outcome, role, grammar)
             var opts, weights
-            if (typeof(rhs) === 'object') {
-              opts = Object.keys(rhs)
-              weights = keys.map (function (key) { return opts[key] })
-            } else {
+            if (GameService.isArray(rhs)) {
               opts = rhs
               weights = new Array(opts.length).fill(1)
+            } else {
+              opts = Object.keys(rhs)
+              weights = keys.map (function (key) { return opts[key] })
             }
             var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
             var w = totalWeight * Math.random()
