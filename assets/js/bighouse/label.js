@@ -28,6 +28,7 @@
   }
 
   function addLabel (x, y) {
+    if (y === null) return undefined
     if (typeof(x) === 'object') {
       var obj = {}
       Object.keys(x).forEach (function (kx) { obj[kx] = addLabel (x[kx], y[ky]) })
