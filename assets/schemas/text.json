@@ -17,6 +17,9 @@
             "visible": {
               "$ref": "#/definitions/sample_string"
             },
+            "grammar": {
+              "type": "object"
+            },
             "ref": {
               "type": "string"
             }
@@ -50,6 +53,9 @@
             "sample1": {
               "$ref": "#/definitions/intro_node_opts"
             },
+            "grammar": {
+              "type": "object"
+            },
             "goto": {
               "$ref": "#/definitions/sample_string"
             }
@@ -82,6 +88,9 @@
             },
             "sample1": {
               "$ref": "#/definitions/intro_node_opts"
+            },
+            "grammar": {
+              "type": "object"
             },
             "label": {
               "type": "object"

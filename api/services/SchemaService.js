@@ -9,6 +9,7 @@ var intro_node_schema = {
 	    properties: {
               hint: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
+              grammar: { type: "object" },
 	      ref: { type: "string" }
 	    },
 	    additionalProperties: false
@@ -23,6 +24,7 @@ var intro_node_schema = {
 	      symexpr: { type: "string" },
 	      switch: ref_schema('intro_node_cases'),
 	      sample1: ref_schema('intro_node_opts'),
+              grammar: { type: "object" },
               goto: ref_schema('sample_string')
             },
             additionalProperties: false
@@ -37,6 +39,7 @@ var intro_node_schema = {
 	      symexpr: { type: "string" },
 	      switch: ref_schema('intro_node_cases'),
 	      sample1: ref_schema('intro_node_opts'),
+              grammar: { type: "object" },
               label: { type: "object" },
               labexpr: { type: "object" },
               sequence: ref_schema('sample_intro_nodes'),

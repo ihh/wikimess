@@ -216,12 +216,14 @@ module.exports = {
 	// expand all properties & merge with whatever was returned by ref, switch, expr/symexpr
 	promise = initPromise
 	  .then (function (expanded) {
+	    if (text.grammar || expanded.grammar)
+	      grammar = extend ({}, text.grammar || {}, expanded.grammar || {}, grammar || {})
 	    return Promise.map (Object.keys(text).filter (function (key) {
 	      return key !== 'id'   // prevent clash of Text attribute 'id' with internally used 'id' passed to client
                 && key !== 'grammar'  // ignore grammar property
 		&& !expanded.hasOwnProperty(key)  // ref, switch, expr/symexpr can override defaults
 	    }), function (key) {
-	      return GameService.expandText (text[key], game, outcome, role, text.grammar || grammar)
+	      return GameService.expandText (text[key], game, outcome, role, grammar)
 		.then (function (expandedVal) {
 		  expanded[key] = expandedVal
 		})
@@ -311,16 +313,15 @@ module.exports = {
       return val && (typeof(val) === 'string' || typeof(val) === 'number') ? val : ''
     }
 
-    if (typeof(role) === 'undefined') {
-      text = GameService.replaceAll (text, '{{', '}}', '<<', '>>', '@', game, outcome, role, grammar)
-      text = text.replace(/\$player1/g,game.player1.displayName)
-      text = text.replace(/\$player2/g,game.player2.displayName)
-    } else {
+    text = GameService.replaceAll (text, '{{', '}}', '<<', '>>', '@', game, outcome, role, grammar)
+    text = text.replace(/\$player1/g,game.player1.displayName)
+    text = text.replace(/\$player2/g,game.player2.displayName)
+    if (typeof(role) !== 'undefined') {
       text = GameService.replaceAll (text, '#{', '}#', '#<', '>#', '@#', game, outcome, role, grammar)
       text = text.replace(/\$self/g,Game.getRoleAttr(game,role,'player').displayName)
       text = text.replace(/\$other/g,Game.getOtherRoleAttr(game,role,'player').displayName)
       text = text.replace(/<(\/?)(happy|sad|angry|surprised|say)([12])>/g, function (match, slash, mood, moodRole) {
-        return '<' + slash + mood + (Number(role) == moodRole ? 'self' : 'other') + '>'
+        return '<' + slash + mood + (parseInt(moodRole) === role ? 'self' : 'other') + '>'
       })
     }
     return text
@@ -350,14 +351,14 @@ module.exports = {
         if (grammar[symbol]) {
           function expand (rhs) {
             if (typeof(rhs) === 'string')
-              return GameService.replaceAll (rhs, lbEval, rbEval, lbOpt, rbOpt, symPrefix, game, outcome, role, grammar)
+              return GameService.expandTextString (rhs, game, outcome, role, grammar)
             var opts, weights
             if (GameService.isArray(rhs)) {
               opts = rhs
               weights = new Array(opts.length).fill(1)
             } else {
               opts = Object.keys(rhs)
-              weights = keys.map (function (key) { return opts[key] })
+              weights = opts.map (function (key) { return rhs[key] })
             }
 	    return expand (opts[GameService.sampleByWeight(weights) || 0])
           }
