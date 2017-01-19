@@ -93,8 +93,16 @@
     return labs.reduce (addLabel, undefined)
   }
 
+  function lastNonNullIndex (list) {
+    for (var n = labs.length - 1; n >= 0; --n)
+      if (labs[n] === null)
+	return n + 1
+    return 0
+  }
+  
   function listExpansionLabels (expansion, label, oxfordComma) {
     var labs = flatExpansionLabels (expansion, label)
+    labs = labs.slice (lastNonNullIndex (labs))
     return labs.length === 1
       ? labs[0]
       : (labs.length === 2
