@@ -348,6 +348,7 @@ module.exports = {
     } while (foundOptRegex)
     if (grammar)
       text = text.replace (symRegex, function (match, symbol) {
+ 	symbol = symbol.replace(/[{}]/g, '')
         if (grammar[symbol]) {
           function expand (rhs) {
             if (typeof(rhs) === 'string')
