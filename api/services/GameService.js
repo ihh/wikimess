@@ -175,7 +175,7 @@ module.exports = {
 
     else if (GameService.isArray(text))
       promise = Promise.map (text, function (t) {
-        return GameService.expandText (t, game, outcome, role)
+        return GameService.expandText (t, game, outcome, role, grammar)
       }).then (function (expandedArray) {
 	return expandedArray
       })
@@ -184,7 +184,7 @@ module.exports = {
       // sample?
       if (GameService.expandProperty(text,'sample',role))
 	promise = GameService.expandText (GameService.expandSample (text.sample, game, outcome, role),
-					  game, outcome, role)
+					  game, outcome, role, grammar)
 	
       else {
 	// initialize with ref, switch, sample1, or expr/symexpr
@@ -199,7 +199,7 @@ module.exports = {
           initPromise = Promise.resolve (GameService.expandSwitch (text['switch'], game, outcome, role))
 	if (!initPromise && GameService.expandProperty(text,'sample1',role))
 	  initPromise = GameService.expandText (GameService.expandSampleOne (text.sample1, game, outcome, role),
-						game, outcome, role)
+						game, outcome, role, grammar)
 	if (!initPromise) {
 	  var exprKey = (typeof(role) === 'undefined') ? 'symexpr' : 'expr'
 	  var expr = text[exprKey]
@@ -208,7 +208,7 @@ module.exports = {
 	}
 	if (initPromise)
 	  initPromise = initPromise.then (function (init) {
-	    return GameService.expandText (init, game, outcome, role)
+	    return GameService.expandText (init, game, outcome, role, grammar)
 	  })
 	else
 	  initPromise = Promise.resolve ({})
@@ -221,7 +221,7 @@ module.exports = {
                 && key !== 'grammar'  // ignore grammar property
 		&& !expanded.hasOwnProperty(key)  // ref, switch, expr/symexpr can override defaults
 	    }), function (key) {
-	      return GameService.expandText (text[key], game, outcome, role, text.grammar)
+	      return GameService.expandText (text[key], game, outcome, role, text.grammar || grammar)
 		.then (function (expandedVal) {
 		  expanded[key] = expandedVal
 		})
