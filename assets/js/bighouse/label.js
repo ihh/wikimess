@@ -237,7 +237,7 @@
 
   // Misc.
   function looksLikePlural(noun) {
-    return noun.match(/^[^ ]*[s]\b/i)
+    return noun.match(/^[^ ]*[^s][s]\b/i)
   }
   
   function lessOrFewer(noun) {
@@ -263,7 +263,7 @@
     var lc = adj.toLowerCase()
     if (irregularComparative[lc]) return irregularComparative[lc]
     switch (countSyllables(adj)) {
-    case 1: return adj + (adj.match(/e$/) ? 'r' : ((adj.match(/[aeiou][b-df-hj-np-tv-z]$/) ? adj.charAt(adj.length-1) : '') + 'er'))
+    case 1: return adj + (adj.match(/e$/) ? 'r' : ((adj.match(/[b-df-hj-np-tv-z][aeiou][b-df-hj-np-tv-z]$/) ? adj.charAt(adj.length-1) : '') + 'er'))
     case 2: return adj.match(/y$/) ? adj.replace(/y$/,'ier') : (adj.match(/le$/) ? (adj+'r') : (adj.match(/(er|ow)$/) ? (adj+'er') : ('more '+adj)))
     default: return 'more '+adj
     }

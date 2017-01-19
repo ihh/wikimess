@@ -1754,6 +1754,12 @@ var BigHouse = (function() {
 	  $.extend (bh.rootForMove, newRootForMove)  // merge the old move history with the newly received moves
 	  bh.saveGamePosition()
 
+          if (isStart)
+	    bh.initStatusBar()
+	  bh.opponentNameDiv.text (bh.opponentName)
+	  bh.updatePlayerMood (data.self.mood, data.startline)
+	  bh.updateOpponentMood (bh.opponentID, data.other.mood, data.startline)
+
 	  // set up the deck
 	  var node = bh.currentExpansionNode.node
 	  var tossCurrent = node.wait && bh.currentExpansionNode.next
@@ -1768,14 +1774,6 @@ var BigHouse = (function() {
 	      bh.initMoveTimer (data, bh.setGameStateCallback(nextState))
 	      if (tossCurrent)
 		bh.throwCard (bh.currentExpansionNode.card)
-
-	      if (isStart)
-		bh.initStatusBar()
-
-	      bh.opponentNameDiv.text (bh.opponentName)
-              
-	      bh.updatePlayerMood (data.self.mood, data.startline)
-	      bh.updateOpponentMood (bh.opponentID, data.other.mood, data.startline)
 	    })
 
 	}).fail (function (err) {
@@ -2115,7 +2113,7 @@ var BigHouse = (function() {
 	do {
 	  text = tail.node.text || text
 	  var append = false
-	  if (tail !== bh.currentExpansionNode && !tail.node.wait && this.nodeExpansionIsPredictable (tail.node)) {
+	  if (tail !== bh.currentExpansionNode && (!tail.node.wait || tail.next) && this.nodeExpansionIsPredictable (tail.node)) {
 	    var next = tail.next
 	    if (next && (text === '' || !next.node.wait)) {
 	      var nextText = next.node.text
@@ -2250,11 +2248,12 @@ var BigHouse = (function() {
 	nextCardDealt = $.Deferred()
 	nextCardDealt.resolve()
       }
-
+      
       // concatenate text from the chain of expansion nodes that will be used to make this card
       var text = '', head = expansion.head
       while (head) {
-	text += bh.getExpansionText (head)
+        if (!(info.dealingAhead && head.node.wait && head.next))  // don't include <wait> text from future wait cards that we're going to skip
+	  text += bh.getExpansionText (head)
 	if (head === expansion)
 	  break
 	else
@@ -2308,7 +2307,7 @@ var BigHouse = (function() {
 	     : ("Waiting for " + bh.opponentName + "..."))
       })
 
-      var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised)(|self|other)>(.*?)<\/\\1\\2>', 'g')
+      var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised|say)(|self|other)>(.*?)<\/\\1\\2>', 'g')
       text = text.replace (avatarRegExp, function (match) { return '\n' + match + '\n' })
       
       // create the <span>'s
@@ -2323,6 +2322,7 @@ var BigHouse = (function() {
             if (avatarMatch) {
               var mood = avatarMatch[1], role = avatarMatch[2], content = avatarMatch[3]
               var isOther = (role === 'other')
+              if (mood === 'say') mood = isOther ? bh.opponentMood : bh.playerMood
               var moodDiv = $('<div>').addClass('avatar')
               span.addClass (isOther ? 'rightballoon' : 'leftballoon')
                 .append (moodDiv)
