@@ -1981,7 +1981,7 @@ var BigHouse = (function() {
     timerPulseElement: function() {
       var pulseElement
       var expansion = this.currentExpansionNode
-      if (expansion.node && expansion.node.menu) {
+      if (expansion.node && expansion.node.menu && !expansion.node.auto) {
         var idx = this.nextRandomAction(expansion)
 	pulseElement = expansion.menuSpan[idx]
       } else if (this.nodeExpansionIsPredictable (this.currentChoiceNode()))
@@ -2372,9 +2372,7 @@ var BigHouse = (function() {
         }
       } else  // not a menu card (or an auto-menu)
         expansion.topCardCallback = function() {
-          // none of this is strictly necessary except to prevent stray properties sitting around
 	  delete bh.throwDisabled
-	  delete bh.selectedMenuItem
 	  bh.choiceDiv.show()
         }
       
