@@ -335,8 +335,12 @@ var BigHouse = (function() {
 
     writeLocalStorage: function (key) {
       this.localStorage[key] = this[key]
-      localStorage.setItem (this.localStorageKey,
-			    JSON.stringify (this.localStorage))
+      try {
+	localStorage.setItem (this.localStorageKey,
+			      JSON.stringify (this.localStorage))
+      } catch (err) {
+	console.log ('localStorage write error: ', err)
+      }
     },
 
     doReturnLogin: function() {

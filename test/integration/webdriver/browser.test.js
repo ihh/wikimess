@@ -7,14 +7,6 @@ let webdriver = require('selenium-webdriver')
 let By = webdriver.By
 let until = webdriver.until
 
-let firefox = new webdriver.Builder()
-    .forBrowser('firefox')
-    .build()
-
-let chrome = new webdriver.Builder()
-    .forBrowser('chrome')
-    .build()
-
 function testLogin (driver, name, password) {
   it('should navigate to front page', function(done) {
     driver.get('http://localhost:1337/')
@@ -36,6 +28,22 @@ function testLogin (driver, name, password) {
       .catch(error => done(error))
   })
 
+  it('should click on Settings -> Log out', function(done) {
+    driver.findElement(By.className('settings')).click()
+    driver
+      .wait(until.elementLocated(By.xpath("//*[contains(text(), 'Log out')]")))
+      .then(elem => elem.click())
+      .then(() => done())
+      .catch(error => done(error))
+  })
+
+  it('should wait for login page to reappear', function(done) {
+    driver
+      .wait(until.elementLocated(By.xpath("//*[contains(text(), 'Log in')]")))
+      .then(() => done())
+      .catch(error => done(error))
+  })
+
   it('should quit', function(done) {
     driver.quit()
       .then(() => done())
@@ -44,9 +52,27 @@ function testLogin (driver, name, password) {
 }
 
 describe('firefox', function() {
+  let firefox = new webdriver.Builder()
+    .forBrowser('firefox')
+    .build()
+
   testLogin (firefox, 'fred', 'test')
 })
 
 describe('chrome', function() {
+  let chrome = new webdriver.Builder()
+    .forBrowser('chrome')
+    .build()
+
   testLogin (chrome, 'sheila', 'test')
 })
+
+// make the Safari test contingent on presence of safaridriver, for now, since it requires Safari 10 & hence OSX 10.12
+if (fs.existsSync('/usr/bin/safaridriver'))
+  describe('safari', function() {
+    let safari = new webdriver.Builder()
+      .forBrowser('safari')
+      .build()
+    
+    testLogin (safari, 'fred', 'test')
+  })
