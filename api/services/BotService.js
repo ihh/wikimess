@@ -11,6 +11,29 @@ module.exports = {
     return move
   },
 
+  makeRandomMove: function (game, role) {
+    var move = BotService.randomMove (Game.getRoleAttr (game, role, 'text'))
+    var mood = BotService.finalMood (move, role)
+    if (mood)
+      game[Game.roleAttr(role,'mood')] = mood
+    game[Game.roleAttr(role,'move')] = move
+  },
+
+  finalMood: function (exp, role) {
+    var mood
+    if (exp.text) {
+      var match, moodRegex = /<mood([12]?):(happy|sad|surprised|angry)>/g
+      while (match = moodRegex.exec(exp.text))
+	if (match[1] === '' || parseInt(match[1]) === role)
+	  mood = match[2]
+    }
+    if (exp.children)
+      exp.children.forEach (function (child) {
+	mood = BotService.finalMood(child,role) || mood
+      })
+    return mood
+  },
+
   removeParentLinks: function (exp) {
     delete exp.parent
     if (exp.children)

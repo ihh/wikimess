@@ -200,8 +200,16 @@ function makeDDMove (fred, sheila, text1f, text1s, text2) {
   makeMove (sheila, text2, "right")
 }
 
-
 var moodNum = {happy:1, surprised:2, sad:3, angry:4}
+function testMood (sender, recipient, mood) {
+  it('should see '+sender.name+'\'s '+mood+' avatar on '+recipient.name+'\'s page', function(done) {
+    recipient.driver
+      .wait(until.elementLocated(By.xpath("//div[@class='rightmood']/div[@class='moodcontainer mood-"+mood+"']")))
+      .then(() => done())
+      .catch(error => done(error))
+  })
+}
+
 function changeMood (sender, recipient, mood) {
   var n = moodNum[mood]
   it('should change '+sender.name+'\'s mood to '+mood, function(done) {
@@ -210,12 +218,7 @@ function changeMood (sender, recipient, mood) {
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
-  it('should see '+sender.name+'\'s '+mood+' avatar on '+recipient.name+'\'s page', function(done) {
-    recipient.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='rightmood']/div[@class='moodcontainer mood-"+mood+"']")))
-      .then(() => done())
-      .catch(error => done(error))
-  })
+  testMood (sender, recipient, mood)
 }
 
 describe("two-player game", function() {
@@ -248,8 +251,10 @@ describe("two-player game", function() {
   makeMove (sheila, "Shall we go to the beach", "left")
   makeMove (sheila, "mall-rats", "right")
 
-  changeMood (fred, sheila, 'happy')
-  changeMood (sheila, fred, 'happy')
+  waitForCardText (fred, "Party times")
+  waitForCardText (sheila, "Party times")
+  testMood (fred, sheila, 'happy')
+  testMood (sheila, fred, 'happy')
 
   makeMove (fred, "Party times", "right")
   makeMove (sheila, "Party times", "right")
@@ -264,6 +269,9 @@ describe("two-player game", function() {
 
   makeMove (fred, "Here we are on day 3 of school", "right")
   makeMove (sheila, "Here we are on day 3 of school", "right")
+
+  testMood (fred, sheila, 'surprised')
+  testMood (sheila, fred, 'happy')
 
   makeDDMove (fred, sheila, "AGAIN", "AGAIN", "This keeps happening")
 
@@ -294,11 +302,11 @@ describe("two-player game", function() {
   makeMove (fred, "oh no", "right")
   makeMove (fred, "What flavor", "Vanilla", "right")
   makeMove (fred, "Excellent choice", "right")
-  makeMove (fred, "You chose:  chocolate chocolate vanilla", "right")
+  makeMove (fred, "You chose: chocolate, chocolate, and vanilla", "right")
 
   makeMove (sheila, "What flavor", "Strawberry", "right")
   makeMove (sheila, "Good choice", "right")
-  makeMove (sheila, "You chose:  strawberry", "right")
+  makeMove (sheila, "You chose: strawberry", "right")
 
   makeMove (fred, "Here we are on day 5 of school", "right")
   makeMove (sheila, "Here we are on day 5 of school", "right")

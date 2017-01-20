@@ -240,8 +240,7 @@ module.exports = {
 	    var timedOutPlayer = Game.getRoleAttr (game, timedOutRole, 'player')
 	    var moveAttr = Game.roleAttr(timedOutRole,'move')
 	    var text = Game.getRoleAttr(game,timedOutRole,'text')
-	    var queue = Game.getRoleAttr(game,timedOutRole,'queue')
-	    update[moveAttr] = turnUpdate[moveAttr] = BotService.randomMove (text, queue)
+	    update[moveAttr] = turnUpdate[moveAttr] = BotService.randomMove (text)
 	  })
 	  GameService.recordMove ({ game: game,
 				    moveNumber: moveNumber,

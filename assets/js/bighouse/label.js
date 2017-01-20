@@ -94,20 +94,21 @@
   }
 
   function lastNonNullIndex (list) {
-    for (var n = labs.length - 1; n >= 0; --n)
-      if (labs[n] === null)
+    for (var n = list.length - 1; n >= 0; --n)
+      if (list[n] === null)
 	return n + 1
     return 0
   }
   
-  function listExpansionLabels (expansion, label, oxfordComma) {
+  function listExpansionLabels (expansion, label, sep, oxfordComma) {
+    sep = sep || ','
     var labs = flatExpansionLabels (expansion, label)
     labs.splice (0, lastNonNullIndex (labs))
     return labs.length === 1
       ? labs[0]
       : (labs.length === 2
 	 ? (labs[0] + ' and ' + labs[1])
-	 : (labs.slice(0,labs.length-1).join(', ') + (oxfordComma ? ', and ' : ' and ') + labs[labs.length-1]))
+	 : (labs.slice(0,labs.length-1).join(sep+' ') + (oxfordComma ? (sep+' and ') : ' and ') + labs[labs.length-1]))
   }
 
   function baseExpansionLabel (expansion, label) {
@@ -122,7 +123,7 @@
     expansion.labels = function (lab) { return expansionLabels(expansion,lab) }
     expansion.flat = function (lab) { return flatExpansionLabels(expansion,lab) }
     expansion.label = function (lab) { return sumExpansionLabels(expansion,lab) }
-    expansion.list = function (lab) { return listExpansionLabels(expansion,lab) }
+    expansion.list = function (lab,sep,oxford) { return listExpansionLabels(expansion,lab,sep,oxford) }
     expansion.last = function (lab) { return lastExpansionLabel(expansion,lab) }
     expansion.base = function (lab) { return baseExpansionLabel(expansion,lab) }
     expansion.move = function() { return sumExpansionLabels(expansion,moveLabel) }
@@ -135,7 +136,7 @@
     var $labels = function (lab) { return expansionLabels(expansion,lab) }
     var $flat = function (lab) { return flatExpansionLabels(expansion,lab) }
     var $label = function (lab) { return sumExpansionLabels(expansion,lab) }
-    var $list = function (lab) { return listExpansionLabels(expansion,lab) }
+    var $list = function (lab,sep,oxford) { return listExpansionLabels(expansion,lab,sep,oxford) }
     var $last = function (lab) { return lastExpansionLabel(expansion,lab) }
     var $base = function (lab) { return baseExpansionLabel(expansion,lab) }
     

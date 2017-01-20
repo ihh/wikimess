@@ -265,6 +265,14 @@ module.exports = {
         $name1 = $n1,
         $name2 = $n2
 
+    var $1 = GameService.clonedMoveTail(game.move1),
+	$2 = GameService.clonedMoveTail(game.move2)
+
+    if ($1)
+      Label.bindLabelFunctions($1)
+    if ($2)
+      Label.bindLabelFunctions($2)
+
     var $g, $inv, $l, $n, $id,
         $go, $invo, $lo, $no, $ido,
         $p, $po
@@ -299,7 +307,7 @@ module.exports = {
     try {
       val = eval(expr)
     } catch (e) {
-      sails.log.debug ("When evaluating: " + braceMatch[1])
+      sails.log.debug ("When evaluating: " + val)
       sails.log.debug ("Error: " + e)
       // do nothing, ignore undefined values and other errors in eval()
     }
@@ -320,6 +328,9 @@ module.exports = {
       text = GameService.replaceAll (text, '#{', '}#', '#<', '>#', '@#', game, outcome, role, grammar)
       text = text.replace(/\$self/g,Game.getRoleAttr(game,role,'player').displayName)
       text = text.replace(/\$other/g,Game.getOtherRoleAttr(game,role,'player').displayName)
+      text = text.replace(/<mood([12]):(happy|sad|angry|surprised)>/g, function (match, moodRole, mood) {
+	return parseInt(moodRole) === role ? ('<mood:' + mood + '>') : ''
+      })
       text = text.replace(/<(\/?)(happy|sad|angry|surprised|say)([12])>/g, function (match, slash, mood, moodRole) {
         return '<' + slash + mood + (parseInt(moodRole) === role ? 'self' : 'other') + '>'
       })
@@ -1092,9 +1103,9 @@ module.exports = {
   playBotMoves: function (game) {
     if (!game.finished) {
       if (!game.player1.human)
-	game.move1 = BotService.randomMove (game.text1)
+	BotService.makeRandomMove (game, 1)
       if (!game.player2.human)
-	game.move2 = BotService.randomMove (game.text2)
+	BotService.makeRandomMove (game, 2)
     }
   },
 

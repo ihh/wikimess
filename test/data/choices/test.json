@@ -32,7 +32,7 @@
                            next: { goto: "beach" } },
 		   right: { name: "beach",
                             hint: "Beach",
-                            text: "Party times, by the beach...\n++",  // this will be concatenated with the next node
+                            text: "<mood:happy>Party times, by the beach...\n++",  // this will be concatenated with the next node
 			    next: { text: "Co-operation is great!" } } }],
 	  global1:{count:{c:"$_+1||1"}},  // increments global1.count.c
           global2:{count:{c:"$_+1||1"}},  // increments global2.count.c
@@ -57,12 +57,12 @@
 					 menu:
 					 [{
 		                           hint: 'Vanilla',
-					   label: { flavor: ' vanilla' },
+					   label: { flavor: 'vanilla' },
                                            text: 'Excellent choice!'
 					 },
 		                          {
 		                            hint: 'Chocolate',
-					    label: { flavor: ' chocolate' },
+					    label: { flavor: 'chocolate' },
                                             text: "oh no you DIDN'T",
                                             next: {
                                               hint: "Try again",
@@ -72,15 +72,15 @@
 		                          {
 		                            hint: 'Strawberry',
 					    visible: "!$label('flavor')",
-					    label: { flavor: ' strawberry' },
+					    label: { flavor: 'strawberry' },
                                             text: 'Good choice!'
 		                          }] },
-					{ text: "You chose: <label:flavor>" }]
+					{ text: "You chose: <label:flavor,&>" }]
 				     }
                              },
 			     common:{iceCream:true}},
                            { weight: "$1.move() != $2.move()",
-			     outro: { text: "Unfortunately, not everybody loves ice cream." } },
+			     outro: { text: "Unfortunately, not everybody loves ice cream. <mood{{$1.move()==='n'?2:1}}:surprised>" } },
                            { move1: "n",
                              move2: "n",
                              outro: "Right: ice cream sucks."

@@ -2003,12 +2003,12 @@ var BigHouse = (function() {
       text = text.replace(/^\+\+/,'')
       text = text.replace(/\+\+$/,'')
 
-      text = text.replace (/<([Ll])abel:(\S+?)([ ,]?)>/g, function (match, uc, label, sep) {
+      text = text.replace (/<([Ll])abel:(\S+?)([ ,;]?|[,;]&)>/g, function (match, uc, label, sep) {
 	var joined = (sep === ''
 		      ? bighouseLabel.sumExpansionLabels (expansion, label)
-		      : (sep === ','
-			 ? bighouseLabel.listExpansionLabels (expansion, label)
-			 : bighouseLabel.flatExpansionLabels(expansion,label).join(sep)))
+		      : (sep === ''
+			 ? bighouseLabel.flatExpansionLabels(expansion,label).join(sep)
+			 : bighouseLabel.listExpansionLabels (expansion, label, sep.charAt(0), sep.length > 1)))
 	return uc === 'L' ? bighouseLabel.capitalize(joined) : joined
       })
 
@@ -2264,7 +2264,7 @@ var BigHouse = (function() {
 
       // text can override default cardClass, sfx
       var node = expansion.node
-      var sfx, cardClass
+      var sfx, cardClass, newMood
       if (node.wait)
 	cardClass = 'waitcard'
       else if (expansion.isHistory)
@@ -2305,6 +2305,11 @@ var BigHouse = (function() {
 	  : ((expansion.isHistory && !info.firstDealAfterCardsLoaded)
 	     ? "Time passes..."
 	     : ("Waiting for " + bh.opponentName + "..."))
+      })
+
+      text = text.replace (/<mood:(happy|sad|angry|surprised)>/g, function (match, mood) {
+	newMood = mood
+	return ''
       })
 
       var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised|say)(|self|other)>(.*?)<\/\\1\\2>', 'g')
@@ -2400,6 +2405,15 @@ var BigHouse = (function() {
 	  delete bh.throwDisabled
 	  bh.choiceDiv.show()
         }
+
+      // if a mood change was specified, tack it onto the end of the top-card callback
+      if (newMood) {
+	var cb = expansion.topCardCallback
+	expansion.topCardCallback = function() {
+	  cb()
+	  bh.changeMoodFunction (node.move, newMood) ()
+	}
+      }
       
       // create the <li> that sits in the card stack (styled as a card)
       var cardListItem = $('<li>').append(content)
