@@ -474,6 +474,7 @@ var BigHouse = (function() {
               if (possible)
                 button.on ('click', function() {
                   button.off()
+		  bh.selectSound = bh.playSound ('select')
                   bh.REST_postPlayerLocationTrade (bh.playerID, bh.playerLocation, item.name, count)
                     .done (function (result) {
                       if (result.success)
@@ -535,7 +536,7 @@ var BigHouse = (function() {
           } else
             button.attr('name','link-'+link.id).text("Go").on('click', function() {
               bh.playerLocation = link.id
-              bh.selectSound = bh.playSound ('select')  // TODO: custom "Go" sound effect here
+              bh.selectSound = bh.playSound ('select')
               bh.showPlayPage()
             })
           div.append (costDiv, button)
@@ -685,6 +686,7 @@ var BigHouse = (function() {
         event.costDiv.show()
         button.on('click', function() {
           button.off()
+	  bh.selectSound = bh.playSound ('select')
           event.costDiv.hide()
 	  bh.lastStartedEventId = event.id
           bh.REST_getPlayerJoin (bh.playerID, event.id)
@@ -778,7 +780,7 @@ var BigHouse = (function() {
         if (tab.name === currentTab)
           span.addClass('active')
         else
-          span.on ('click', bh[tab.method].bind(bh))
+          span.on ('click', bh.callWithSoundEffect (bh[tab.method]))
         navbar.append (span)
       })
     },
