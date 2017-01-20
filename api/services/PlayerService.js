@@ -199,7 +199,7 @@ module.exports = {
 	else {
 
           var gameUpdate = {}, turnUpdate = {}
-	  var moveAttr = "move" + role
+	  var moveAttr = Game.roleAttr(role,'move')
           gameUpdate[moveAttr] = turnUpdate[moveAttr] = move
 
 	  GameService

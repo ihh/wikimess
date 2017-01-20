@@ -3,6 +3,7 @@
 // from here:
 //  http://markbirbeck.com/2015/12/11/using-selenium-webdriver-with-mocha/
 
+let fs = require('fs')
 let webdriver = require('selenium-webdriver')
 let By = webdriver.By
 let until = webdriver.until
