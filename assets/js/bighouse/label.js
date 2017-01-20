@@ -190,9 +190,12 @@
     return val
   }
 
-  function evalVisible (expansion, node, log) {
-    return typeof(node.visible) !== 'undefined' ? evalExpansionExpr(expansion,node.visible,false,node.id,log) : true
+  function evalPropOrTrue (expansion, node, property, log) {
+    return typeof(node[property]) !== 'undefined' ? evalExpansionExpr(expansion,node[property],false,node.id,log) : true
   }
+
+  function evalUsable (expansion, node, log) { return evalPropOrTrue (expansion, node, 'usable', log) }
+  function evalVisible (expansion, node, log) { return evalPropOrTrue (expansion, node, 'visible', log) }
 
   function evalLabel (expansion, label, labexpr, log) {
     label = label || {}
@@ -324,6 +327,7 @@
     listExpansionLabels: listExpansionLabels,
     baseExpansionLabel: baseExpansionLabel,
     evalExpansionExpr: evalExpansionExpr,
+    evalUsable: evalUsable,
     evalVisible: evalVisible,
     evalLabel: evalLabel,
     capitalize: capitalize

@@ -8,6 +8,7 @@ var intro_node_schema = {
 	    required: ["ref"],
 	    properties: {
               hint: ref_schema('sample_string'),
+	      usable: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
               grammar: { type: "object" },
 	      ref: { type: "string" }
@@ -19,6 +20,7 @@ var intro_node_schema = {
             properties: {
               name: { type: "string" },
               hint: ref_schema('sample_string'),
+	      usable: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
@@ -34,6 +36,7 @@ var intro_node_schema = {
             properties: {
               name: { type: "string" },
               hint: ref_schema('sample_string'),
+	      usable: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
@@ -52,6 +55,7 @@ var intro_node_schema = {
               name: { type: "string" },
               text: ref_schema('sample_string'),
               hint: ref_schema('sample_string'),
+	      usable: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },

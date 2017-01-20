@@ -98,6 +98,7 @@ module.exports = {
 	return undefined
       return { id: node.id,
 	       hint: node.hint,
+               usable: node.usable,
 	       visible: node.visible }
     }
 

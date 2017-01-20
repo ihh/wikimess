@@ -58,7 +58,7 @@ module.exports = {
       else if (node.menu) {
 	var visibleMenuItems = node.menu.filter (function (item, n) {
 	  item.n = n
-	  return Label.evalVisible (exp, item)
+	  return Label.evalVisible (exp, item) && Label.evalUsable (exp, item)
 	})
 	if (visibleMenuItems.length) {
 	  exp.action = visibleMenuItems[Math.floor (Math.random() * visibleMenuItems.length)].n

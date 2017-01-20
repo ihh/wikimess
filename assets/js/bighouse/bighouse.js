@@ -1840,8 +1840,8 @@ var BigHouse = (function() {
 	  else
 	    leftStruck = true
 	} else {
-	  leftStruck = !bighouseLabel.evalVisible (expansion, node.left)
-	  rightStruck = !bighouseLabel.evalVisible (expansion, node.right)
+	  leftStruck = !bighouseLabel.evalUsable (expansion, node.left) || !bighouseLabel.evalVisible (expansion, node.left)
+	  rightStruck = !bighouseLabel.evalUsable (expansion, node.right) || !bighouseLabel.evalVisible (expansion, node.right)
 	}
 
       function makeHint (choiceClass, struck, hint, dir) {
@@ -2071,7 +2071,8 @@ var BigHouse = (function() {
 
       if (node.menu && node.auto)
 	for (action = 0; action < node.menu.length - 1; ++action)
-	  if (bighouseLabel.evalVisible (expansion, node.menu[action]))
+	  if (bighouseLabel.evalVisible (expansion, node.menu[action])
+              && bighouseLabel.evalUsable (expansion, node.menu[action]))
 	    break
       
       if (typeof(action) === 'undefined')
@@ -2366,13 +2367,14 @@ var BigHouse = (function() {
 	    var label = $('<label for="'+id+'" class="cardmenulabel">').append (span)
 	    expansion.menuInput.push (radioInput)
 	    expansion.menuSpan.push (span)
-            var itemStruck = typeof(expansion.action) !== 'undefined' && n != expansion.action
+            var itemStruck = (typeof(expansion.action) !== 'undefined' && n != expansion.action)
+                || !bighouseLabel.evalUsable (expansion, item)
             fieldset
 	      .append (radioInput)
 	      .append (label)
             if (itemStruck) {
               radioInput.attr('disabled',true)
-              span.html ($('<strike>').text(item.hint).addClass('disabled'))
+              span.html ($('<strike>').text(item.hint)).addClass('disabled')
             } else {
               span.text(item.hint)
 	      label.on('click',function() {

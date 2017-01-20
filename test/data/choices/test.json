@@ -31,7 +31,7 @@
 			   hint: "Mall",
                            text: "You scuttle around like a couple of mall-rats exposed to shopping for the [[$ordinal($visits)]] time. Eventually you get bored, and decide to head for the beach.",
                            right: { hint: "OK", goto: "beach" },
-			   left: { hint: "No! More mall!", visible: "$follows < 2", goto: "mall" } },
+			   left: { hint: "No! More mall!", usable: "$follows < 2", goto: "mall" } },
 		   right: { name: "beach",
                             hint: "Beach",
                             text: "<mood:happy>Party times, by the beach...\n++",  // this will be concatenated with the next node
@@ -64,7 +64,7 @@
 					 },
 		                          {
 		                            hint: 'Chocolate',
-					    visible: "$follows < 2",
+					    usable: "$follows < 2",
 					    label: { flavor: 'chocolate' },
                                             text: "oh no you DIDN'T",
                                             next: {
@@ -102,7 +102,8 @@
           outro: { text: "You both chicken out - AGAIN",
 		   auto: true,
 		   menu: [{ visible: "false", text: "This text should not be shown" },
-			  { visible: "true", text: "This keeps happening!" },
+			  { usable: "false", text: "This text should never appear" },
+			  { visible: "true", usable: "true", text: "This keeps happening!" },
 			  { visible: "true", text: "This should not be shown either" }] },
           local1:{count:{d:"$_+1||1"}},
           local2:{count:{d:"$_+1||1"}},
