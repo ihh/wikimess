@@ -1829,14 +1829,18 @@ var BigHouse = (function() {
       leftHint = "← " + leftHint
       rightHint = rightHint + " →"
 
-      // strike if we're history
+      // strike if we're history, or if option is not visible
       var leftStruck, rightStruck
-      if (typeof(expansion.action) !== 'undefined' && bh.nodeIsAsymmetric(expansion.node)) {
-	if (expansion.action === 'left')
-	  rightStruck = true
-	else
-	  leftStruck = true
-      }
+      if (bh.nodeIsAsymmetric(expansion.node))
+	if (typeof(expansion.action) !== 'undefined') {
+	  if (expansion.action === 'left')
+	    rightStruck = true
+	  else
+	    leftStruck = true
+	} else {
+	  leftStruck = !bighouseLabel.evalVisible (expansion, node.left)
+	  rightStruck = !bighouseLabel.evalVisible (expansion, node.right)
+	}
 
       function makeHint (choiceClass, struck, hint, dir) {
 	return $('<div class="'+choiceClass+'">')
@@ -2065,7 +2069,7 @@ var BigHouse = (function() {
 
       if (node.menu && node.auto)
 	for (action = 0; action < node.menu.length - 1; ++action)
-	  if (bighouseLabel.evalVisible (expansion, node.menu[action].visible))
+	  if (bighouseLabel.evalVisible (expansion, node.menu[action]))
 	    break
       
       if (typeof(action) === 'undefined')
@@ -2354,7 +2358,7 @@ var BigHouse = (function() {
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
-	  if (bighouseLabel.evalVisible (expansion, item.visible)) {
+	  if (bighouseLabel.evalVisible (expansion, item)) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
 	    var span = $('<span>')
 	    var label = $('<label for="'+id+'" class="cardmenulabel">').append (span)

@@ -27,9 +27,11 @@
           common:{day:"++"}},  // increments common.day
          {weight:"!$c.iceCream",
 	  outro:[{ text: "Cool, let's skip class together!\nShall we go to the beach, or to the mall?",
-                   left: { hint: "Mall",
-                           text: "You scuttle around like a couple of mall-rats. Eventually you get bored, and decide to head for the beach.",
-                           next: { goto: "beach" } },
+                   left: { name: "mall",
+			   hint: "Mall",
+                           text: "You scuttle around like a couple of mall-rats exposed to shopping for the [[$ordinal($visits)]] time. Eventually you get bored, and decide to head for the beach.",
+                           right: { hint: "OK", goto: "beach" },
+			   left: { hint: "No! More mall!", visible: "$follows < 2", goto: "mall" } },
 		   right: { name: "beach",
                             hint: "Beach",
                             text: "<mood:happy>Party times, by the beach...\n++",  // this will be concatenated with the next node
@@ -53,7 +55,7 @@
 			       next: { hint: "So true!",
 				       sequence:
 				       [{name: "choose_flavor",
-					 text: "What flavor?",
+					 text: "What flavor?[[$visits>1?(' ('+$ordinal($visits)+' try)'):'']]",
 					 menu:
 					 [{
 		                           hint: 'Vanilla',
@@ -62,6 +64,7 @@
 					 },
 		                          {
 		                            hint: 'Chocolate',
+					    visible: "$follows < 2",
 					    label: { flavor: 'chocolate' },
                                             text: "oh no you DIDN'T",
                                             next: {

@@ -21,6 +21,19 @@
     return expansion
   }
 
+  function countNodeVisits (expansion, id) {
+    if (typeof(id) === 'undefined')
+      id = expansion.node.id
+    var count = 0
+    for (var ex = getExpansionRoot(expansion); ex; ex = ex.next) {
+      if (ex.node.id === id)
+	++count
+      if (ex === expansion)
+	break
+    }
+    return count
+  }
+
   function flatten(list) {
     return list.reduce (function (x, y) {
       return x.concat (isArray(y) ? flatten(y) : [y])
@@ -129,9 +142,12 @@
     expansion.move = function() { return sumExpansionLabels(expansion,moveLabel) }
   }
   
-  function evalExpansionExpr (expansion, expr, failureVal, log) {
+  function evalExpansionExpr (expansion, expr, failureVal, id, log) {
     if (typeof(log) === 'undefined')
       log = console.log
+
+    var $visits = countNodeVisits (expansion)
+    var $follows = typeof(id) === 'undefined' ? undefined : countNodeVisits (expansion, id)
 
     var $labels = function (lab) { return expansionLabels(expansion,lab) }
     var $flat = function (lab) { return flatExpansionLabels(expansion,lab) }
@@ -159,6 +175,7 @@
     var $less = lessOrFewer  // $less(noun)
     var $poss = possessiveApostrophe  // $poss(nounPhrase)
     var $comp = makeComparative  // $comp(adjective)
+    var $ordinal = ordinal  // $ordinal(number)
     
     var val
     try {
@@ -173,8 +190,8 @@
     return val
   }
 
-  function evalVisible (expansion, expr, log) {
-    return typeof(expr) !== 'undefined' ? evalExpansionExpr(expansion,expr,false,log) : true
+  function evalVisible (expansion, node, log) {
+    return typeof(node.visible) !== 'undefined' ? evalExpansionExpr(expansion,node.visible,false,node.id,log) : true
   }
 
   function evalLabel (expansion, label, labexpr, log) {
@@ -184,7 +201,7 @@
 	var expr = labexpr[lab]
 	label[lab] = (typeof(expr) === 'object')
 	  ? evalLabel (expansion, label[lab], expr, log) 
-	  : evalExpansionExpr (expansion, expr)
+	  : evalExpansionExpr (expansion, expr, undefined, undefined, log)
       })
     return Object.keys(label).length ? label : undefined
   }
@@ -277,11 +294,28 @@
       .replace (/([\.\!\?]\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
   }
 
+  // ordinal suffices http://stackoverflow.com/a/13627586
+  function ordinal(i) {
+    var j = i % 10,
+    k = i % 100;
+    if (j == 1 && k != 11) {
+      return i + "st";
+    }
+    if (j == 2 && k != 12) {
+      return i + "nd";
+    }
+    if (j == 3 && k != 13) {
+      return i + "rd";
+    }
+    return i + "th";
+  }
+
   // Externally exposed functions
   return {
     moveLabel: moveLabel,
     bindLabelFunctions: bindLabelFunctions,
     getExpansionRoot: getExpansionRoot,
+    countNodeVisits: countNodeVisits,
     addLabel: addLabel,
     expansionLabels: expansionLabels,
     flatExpansionLabels: flatExpansionLabels,

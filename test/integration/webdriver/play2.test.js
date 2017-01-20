@@ -87,16 +87,9 @@ function waitForCardText (obj, cardText) {
   })
 }
 
-function makeMove (obj, cardText, menuText, dir) {
+function waitForThrowToFinish (obj) {
   var driver = obj.driver
   var name = obj.name
-  
-  if (!dir) {
-    dir = menuText
-    menuText = undefined
-  }
-
-  waitForCardText (obj, cardText)
   
   it('should wait until '+name+'\'s thrown-card animation completes', function(done) {
     driver
@@ -108,6 +101,19 @@ function makeMove (obj, cardText, menuText, dir) {
       .then(elem => { done() })
       .catch(error => done(error))
   })
+}
+
+function makeMove (obj, cardText, menuText, dir) {
+  var driver = obj.driver
+  var name = obj.name
+  
+  if (!dir) {
+    dir = menuText
+    menuText = undefined
+  }
+
+  waitForCardText (obj, cardText)
+  waitForThrowToFinish (obj)
 
   if (menuText) {
     it('should have '+name+' click menu item containing "'+menuText+'"', function(done) {
@@ -120,6 +126,18 @@ function makeMove (obj, cardText, menuText, dir) {
   it('should have '+name+' click '+dir, function(done) {
     driver
       .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
+      .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+  })
+}
+
+function testDisabled (obj, cardText, dir) {
+  waitForCardText (obj, cardText)
+  waitForThrowToFinish (obj)
+  var choiceClass = (dir === 'left' ? 'choice1' : 'choice2')
+  it('should find a disabled '+dir+' link on '+obj.name+'\'s page', function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/span[@class='disabled']/strike")))
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
@@ -249,7 +267,9 @@ describe("two-player game", function() {
 
   makeMove (fred, "Shall we go to the beach", "right")
   makeMove (sheila, "Shall we go to the beach", "left")
-  makeMove (sheila, "mall-rats", "right")
+  makeMove (sheila, "mall-rats exposed to shopping for the 1st time", "left")
+  testDisabled (sheila, "mall-rats exposed to shopping for the 2nd time", "left")
+  makeMove (sheila, "mall-rats exposed to shopping for the 2nd time", "right")
 
   waitForCardText (fred, "Party times")
   waitForCardText (sheila, "Party times")
@@ -282,7 +302,7 @@ describe("two-player game", function() {
   makeMove (sheila, "Do you want to play truant", "right")
 
   makeMove (fred, "Shall we go to the beach", "left")
-  makeMove (fred, "mall-rats", "left")
+  makeMove (fred, "mall-rats", "right")
   makeMove (sheila, "Shall we go to the beach", "right")
 
   makeMove (fred, "Party times", "right")
@@ -298,9 +318,10 @@ describe("two-player game", function() {
   makeMove (fred, "oh no", "right")
   checkTextAbsent (fred, "What flavor", "Strawberry")
 
-  makeMove (fred, "What flavor", "Chocolate", "right")
+  makeMove (fred, "What flavor? (2nd try)", "Chocolate", "right")
   makeMove (fred, "oh no", "right")
-  makeMove (fred, "What flavor", "Vanilla", "right")
+  checkTextAbsent (fred, "What flavor", "Chocolate")
+  makeMove (fred, "What flavor? (3rd try)", "Vanilla", "right")
   makeMove (fred, "Excellent choice", "right")
   makeMove (fred, "You chose: chocolate, chocolate, and vanilla", "right")
 
