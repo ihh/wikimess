@@ -12,7 +12,7 @@ module.exports = {
       return
 
     // keys for Choices and Outcomes
-    var asymKeys = ['local', 'global', 'mood', 'verb']
+    var asymKeys = ['local', 'global', 'mood']
 
     function makeText (text) {
       if (typeof(text) === 'undefined')

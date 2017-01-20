@@ -119,9 +119,6 @@
         "mood": {
           "type": "string"
         },
-        "verb": {
-          "type": "string"
-        },
         "common": {
           "type": "object"
         },
@@ -141,12 +138,6 @@
           "type": "string"
         },
         "mood2": {
-          "type": "string"
-        },
-        "verb1": {
-          "type": "string"
-        },
-        "verb2": {
           "type": "string"
         }
       },

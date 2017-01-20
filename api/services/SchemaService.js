@@ -225,16 +225,13 @@ module.exports = {
           local: { type: "object" },
           global: { type: "object" },
           mood: { type: "string" },
-          verb: { type: "string" },
           common: { type: "object" },
           local1: { type: "object" },
           local2: { type: "object" },
           global1: { type: "object" },
           global2: { type: "object" },
           mood1: { type: "string" },
-          mood2: { type: "string" },
-          verb1: { type: "string" },
-          verb2: { type: "string" }
+          mood2: { type: "string" }
         },
         additionalProperties: false
       },

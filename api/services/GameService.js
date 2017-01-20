@@ -445,17 +445,6 @@ module.exports = {
       array[j] = tmp
     }
   },
-  
-  expandOutcomeText: function (text, game, outcome, role) {
-    var outro = GameService.expandText (text, game, outcome, role)
-    var verb = Outcome.outcomeVerb (game, outcome, role)
-    if (verb.length) {
-      if (outro.length == 0)
-        outro.push ({ text: '' })
-      outro[0].text = verb + outro[0].text
-    }
-    return outro
-  },
 
   moveOutcomes: function (game, cb) {
     //	console.log('moveOutcomes')
@@ -658,22 +647,10 @@ module.exports = {
     game.player1.global = p1global
     game.player2.global = p2global
 
-    GameService.expandText (choice.intro, game, null)
-      .then (function (sharedIntro) {
-	return GameService.expandText (sharedIntro, game, null, 1)
-	  .then (function (intro) {
-	    game.tree1.push (intro)
-	    return sharedIntro
-	  })
-      }).then (function (sharedIntro) {
-	if (choice.intro2)
-	  return GameService.expandText (choice.intro2, game, null)
-	else
-	  return Promise.resolve (sharedIntro)
-      }).then (function (sharedIntro2) {
-	return GameService.expandText (sharedIntro2, game, null, 2)
-      }).then (function (intro2) {
-	game.tree2.push (intro2)
+    GameService.expandIntros (game, choice.intro, choice.intro2)
+      .then (function (texts) {
+	game.tree1.push (texts[0])
+	game.tree2.push (texts[1])
 
 	// auto-expand or update
 	if (choice.autoexpand)
@@ -686,6 +663,24 @@ module.exports = {
       })
   },
 
+  expandIntros: function (game, intro, intro2) {
+    return GameService.expandText (intro, game, null)
+      .then (function (sharedIntro) {
+	return GameService.expandText (sharedIntro, game, null, 1)
+	  .then (function (text1) {
+	    var promise2 = intro2
+	      ? GameService.expandText (intro2, game, null)
+	      : Promise.resolve (sharedIntro)
+	    return promise2
+	      .then (function (sharedIntro2) {
+		return GameService.expandText (sharedIntro2, game, null, 2)
+	      }).then (function (text2) {
+		return [text1, text2]
+	      })
+	  })
+      })
+  },
+
   applyRandomOutcomes: function (game, success, error) {
     // find a random outcome
     GameService.randomOutcomes
@@ -695,9 +690,6 @@ module.exports = {
 	 error (err)
        else
 	 Promise.map (outcomes, function (outcome) {
-
-           //		     console.log (outcome)
-
            var future = outcome.next
            if (!outcome.flush)
 	     future = future.concat (game.future)
@@ -719,22 +711,10 @@ module.exports = {
 	   game.player1.global = p1global
 	   game.player2.global = p2global
 
-	   return GameService.expandText (outcome.outro, game, outcome)
-	     .then (function (sharedOutro) {
-	       return GameService.expandOutcomeText (sharedOutro, game, outcome, 1)
-		 .then (function (outro) {
-		   game.tree1.push (outro)
-		   return sharedOutro
-		 })
-	     }).then (function (sharedOutro) {
-	       if (outcome.outro2)
-		 return GameService.expandText (outcome.outro2, game, outcome)
-	       else
-		 return Promise.resolve(sharedOutro)
-	     }).then (function (sharedOutro2) {
-	       return GameService.expandText (sharedOutro2, game, outcome, 2)
-	     }).then (function (outro2) {
-	       game.tree2.push (outro2)
+	   return GameService.expandIntros (game, outcome.outro, outcome.outro2)
+	     .then (function (texts) {
+	       game.tree1.push (texts[0])
+	       game.tree2.push (texts[1])
 	     })
 	 }).then (function() {
 	   game.move1 = game.move2 = null
@@ -1111,19 +1091,15 @@ module.exports = {
   },
 
   forRole: function (game, role) {
-    var text, verb, self, other, selfMood, otherMood, waiting
+    var text, self, other, selfMood, otherMood, waiting
     var current = game.current
     if (role == 1) {
-      if (current)
-        verb = current.verb1
       self = game.player1
       other = game.player2
       selfMood = game.mood1
       otherMood = game.mood2
       text = game.text1
     } else {  // role == 2
-      if (current)
-        verb = current.verb2
       self = game.player2
       other = game.player1
       selfMood = game.mood2
@@ -1134,7 +1110,6 @@ module.exports = {
 	     finished: game.finished,
              waiting: Game.isWaitingForMove (game, role),
              text: text,
-             verb: verb,
              self: { mood: selfMood },
              other: { id: other.id, name: other.displayName, mood: otherMood },
              startline: game.currentStartTime,

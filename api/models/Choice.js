@@ -49,16 +49,6 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false
     },
-
-    verb1: {
-      type: 'string',
-      defaultsTo: 'choose'
-    },
-
-    verb2: {
-      type: 'string',
-      defaultsTo: 'choose'
-    },
     
     outcomes: {
       collection: 'outcome',

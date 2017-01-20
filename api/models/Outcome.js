@@ -60,9 +60,6 @@ module.exports = {
       enum: ['happy', 'sad', 'angry', 'surprised', 'unchanged'],
       defaultsTo: 'unchanged'
     },
-
-    verb1: { type: 'string' },
-    verb2: { type: 'string' },
     
     // the RHS of the CFG rule
     next: {
@@ -89,11 +86,6 @@ module.exports = {
 
   mood2: function (game, outcome) {
     return Outcome.mood (game.mood2, outcome.mood2, game.move2, game.move1)
-  },
-
-  outcomeVerb: function (game, outcome, role) {
-    var verb = role == 1 ? outcome.verb1 : outcome.verb2
-    return verb ? ('<outcome:' + verb + '>') : ''
-  },
+  }
 };
 
