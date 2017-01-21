@@ -449,7 +449,7 @@ module.exports = {
   gameImage: function (game) {
     var img = {}
     var symKeys = ['event','common','current','moves']
-    var asymKeys = ['player','local','global','move']
+    var asymKeys = ['player','local','global','mood','move']
     symKeys.forEach (function (attr) {
       img[attr] = game[attr]
     })

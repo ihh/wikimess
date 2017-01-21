@@ -33,6 +33,7 @@ module.exports.policies = {
 	'create': true,
 	'getMoodAvatar': true,
 	'getMoodAvatarConfig': true,
+	'otherStatus': true,
 //	'*': 'isAuthenticated'
 	'*': true
     },

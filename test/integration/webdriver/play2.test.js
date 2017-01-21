@@ -68,7 +68,7 @@ function startGame (obj, password) {
   navigate('//*[text()="Go"]','standing in the lobby')
   navigate('//*[@class="link" and ./div/text()="Student Union"]/div[@class="button"]','Want to cut class?')
 
-  it('should start ' + name + '\'s game', function(done) {
+  it('should start ' + name + "\'s game", function(done) {
     driver.findElement(By.xpath('//*[text()="Start"]')).click()
 	.then(() => done())
 	.catch(error => done(error))
@@ -76,7 +76,7 @@ function startGame (obj, password) {
 }
 
 function waitForText (obj, text) {
-  it('should wait until '+obj.name+'\'s page contains "'+text+'"', function(done) {
+  it('should wait until '+obj.name+"\'s page contains '"+text+"'", function(done) {
     obj.driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(),'"+text+"')]")))
       .then(() => done())
@@ -88,7 +88,7 @@ function waitForCardText (obj, cardText) {
   var driver = obj.driver
   var name = obj.name
 
-  it('should wait until '+name+'\'s top card contains "'+cardText+'"', function(done) {
+  it('should wait until '+name+"\'s top card contains '"+cardText+"'", function(done) {
     driver
       .wait(until.elementLocated(By.xpath("//li[contains(@class,'topcard')]/span[contains(text(), '"+cardText+"')]")))
       .then(elem => done())
@@ -100,7 +100,7 @@ function waitForThrowToFinish (obj) {
   var driver = obj.driver
   var name = obj.name
   
-  it('should wait until '+name+'\'s thrown-card animation completes', function(done) {
+  it("should wait until "+name+"\'s thrown-card animation completes", function(done) {
     driver
       .wait (function() {
 	return driver.findElements(By.className('thrown')).then (function(elements) {
@@ -143,7 +143,7 @@ function makeMove (obj, cardText, menuText, dir) {
 function testDisabled (obj, cardText, linkText) {
   waitForCardText (obj, cardText)
   waitForThrowToFinish (obj)
-  it('should find a disabled link on '+obj.name+'\'s page containing text "'+linkText+'"', function(done) {
+  it("should find a disabled link on "+obj.name+"\'s page containing text '"+linkText+"'", function(done) {
     obj.driver
       .wait(until.elementLocated(By.xpath("//span[@class='disabled']/strike[contains(text(),'"+linkText+"')]")))
       .then(elem => { elem.click(); done() })
@@ -151,11 +151,10 @@ function testDisabled (obj, cardText, linkText) {
   })
 }
 
-function checkTextAbsent (obj, presentText, absentText) {
+function checkTextAbsent (obj, absentText) {
   var driver = obj.driver
   var name = obj.name
-  waitForCardText (obj, presentText)
-  it('should not find "'+absentText+'" on '+name+'\'s page ', function(done) {
+  it("should not find '"+absentText+"' on "+name+"\'s page ", function(done) {
     driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(),'"+absentText+"')]")), 100)
       .then(() => done(new Error("fail")), () => done())
@@ -163,12 +162,11 @@ function checkTextAbsent (obj, presentText, absentText) {
   })
 }
 
-function roundTripToMenu (obj, cardText, eventNum) {
+function roundTripToMenu (obj, cardText) {
   var driver = obj.driver
   var name = obj.name
-  eventNum = eventNum || 1
   waitForCardText (obj, cardText)
-  it('should have '+name+' click "Back"', function(done) {
+  it('should have '+obj.name+' click "Back"', function(done) {
     obj.driver
       .wait(until.elementLocated(By.xpath("//div[@class='statuslink']/span/a[text()='Back']")))
       .then(elem => { elem.click(); done() })
@@ -183,11 +181,30 @@ function roundTripToMenu (obj, cardText, eventNum) {
   clickExpect(driver,name,'//*[text()="Go"]',cardText)
 }
 
+function testStatus (obj, className, presents, absents) {
+  var driver = obj.driver
+  var name = obj.name
+  it('should have '+name+' click on element $(".'+className+'")', function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.className(className)))
+      .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+	})
+  presents.forEach (function (text) { waitForText (obj, text) })
+  absents.forEach (function (text) { checkTextAbsent (obj, text) })
+  it('should have '+obj.name+' click "Back"', function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.xpath("//div[@class='menubar']/span/a[text()='Back']")))
+      .then(elem => { elem.click(); done() })
+      .catch(error => done(error))
+	})
+}
+  
 function waitForNavBar (obj) {
   var driver = obj.driver
   var name = obj.name
 
-  it('should wait for '+name+'\'s navbar', function(done) {
+  it("should wait for "+name+"\'s navbar", function(done) {
     driver
       .wait(until.elementLocated(By.xpath("//div[@class='navbar']")))
       .then(() => done())
@@ -238,7 +255,7 @@ function testMood (sender, recipient, mood) {
 
 function changeMood (sender, recipient, mood) {
   var n = moodNum[mood]
-  it('should change '+sender.name+'\'s mood to '+mood, function(done) {
+  it("should change "+sender.name+"\'s mood to "+mood, function(done) {
     sender.driver
       .wait(until.elementLocated(By.xpath("//div[@class='moodbutton mood"+n+"']")))
       .then(elem => { elem.click(); done() })
@@ -254,7 +271,10 @@ describe("two-player game", function() {
   startGame (sheila)
   waitForText (sheila, "Starting")
   startGame (fred)
-  
+
+  testMood (fred, sheila, 'happy')
+  testMood (sheila, fred, 'happy')
+
   makeMove (fred, "Here we are, fred and sheila: the first day of school", "left")
   makeMove (sheila, "Here we are, fred and sheila: the first day of school", "left")
 
@@ -325,7 +345,9 @@ describe("two-player game", function() {
 
   makeMove (fred, "What flavor", "Chocolate", "right")
   makeMove (fred, "oh no", "right")
-  checkTextAbsent (fred, "What flavor", "Strawberry")
+
+  waitForCardText (fred, "What flavor")
+  checkTextAbsent (fred, "Strawberry")
 
   makeMove (fred, "What flavor? (2nd try)", "Chocolate", "right")
   makeMove (fred, "oh no", "right")
@@ -340,11 +362,14 @@ describe("two-player game", function() {
 
   makeMove (fred, "Here we are, fred and sheila: day 5 of school", "right")
   makeMove (sheila, "Here we are, fred and sheila: day 5 of school", "right")
-
+  
   makeDDMove (fred, sheila, "AGAIN", "AGAIN", "This keeps happening")
 
   makeMove (fred, "Here we are, sheila and fred: day 6 of school", "right")
   makeMove (sheila, "Here we are, sheila and fred: day 6 of school", "right")
+
+  testStatus (sheila, 'leftmood', ['sheila', '99 credits', 'robe', '5/7'], [])
+  testStatus (sheila, 'rightmood', ['fred', 'robe', '5/7'], ['99 credits'])
 
   makeMove (fred, "remember the ice cream", "left")
   makeMove (sheila, "remember the ice cream", "right")
@@ -403,4 +428,5 @@ describe("two-player game", function() {
   
   quit (fred)
   quit (sheila)
+
 })

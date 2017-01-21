@@ -35,8 +35,16 @@ module.exports = {
   },
 
   findPlayer: function (req, res, makeJson, assocs) {
+    return PlayerService.findPlayerByID (req.params.player, res, makeJson, assocs)
+  },
+
+  findOther: function (req, res, makeJson, assocs) {
+    return PlayerService.findPlayerByID (req.params.other, res, makeJson, assocs)
+  },
+
+  findPlayerByID: function (id, res, makeJson, assocs) {
     var rs = PlayerService.responseSender (res)
-    var query = Player.findById (req.params.player)
+    var query = Player.findById (id)
     if (assocs)
       assocs.forEach (function (assoc) {
         query.populate (assoc)
@@ -45,7 +53,7 @@ module.exports = {
       if (err)
         rs(err)
       else if (players.length != 1)
-        res.status(404).send("Player " + req.params.player + " not found")
+        res.status(404).send("Player " + id + " not found")
       else
         makeJson (players[0], rs)
     })

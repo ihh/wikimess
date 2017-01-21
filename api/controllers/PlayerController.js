@@ -69,6 +69,14 @@ module.exports = {
     })
   },
 
+  otherStatus: function (req, res) {
+    PlayerService.findOther (req, res, function (player, rs) {
+      PlayerService.makeStatus ({ rs: rs,
+                                  player: player,
+                                  isPublic: true })
+    })
+  },
+
   selfGameStatus: function (req, res) {
     PlayerService.findGame (req, res, function (info, rs) {
       PlayerService.makeStatus ({ rs: rs,
