@@ -121,7 +121,7 @@ var BigHouse = (function() {
     },
 
     REST_postPlayer: function (playerName, playerPassword) {
-      return $.post('/player/create', { name: playerName, password: playerPassword })
+      return $.post('/player/new', { name: playerName, password: playerPassword })
     },
 
     REST_postLogin: function (playerName, playerPassword) {
@@ -415,7 +415,7 @@ var BigHouse = (function() {
     },
 
     showModalWebError: function (err, sfx, callback) {
-      this.showModalMessage (err.status + " " + err.statusText, sfx, callback)
+      this.showModalMessage ((err.responseJSON && err.responseJSON.error) || (err.status + " " + err.statusText), sfx, callback)
     },
     
     // play page

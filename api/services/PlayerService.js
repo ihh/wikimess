@@ -28,7 +28,7 @@ module.exports = {
     return function (err, json) {
       if (err) {
         console.log (err)
-        res.send (500, err)
+        res.send (500, typeof(err) === 'object' ? err.toString() : err)
       } else
         res.json (json)
     }

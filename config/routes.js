@@ -58,7 +58,7 @@ module.exports.routes = {
   'GET /icon/:icon/:color':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background': 'IconController.getIcon',
 
-  'POST /player/create':               'PlayerController.createPlayer',
+  'POST /player/new':                  'PlayerController.createPlayer',
 
   'GET /player/id/:name':              'PlayerController.byName',
 
@@ -90,4 +90,8 @@ module.exports.routes = {
   'GET /player/:player/home':                      'PlayerController.viewHome',
   'GET /player/:player/location/:location':        'PlayerController.viewLocation',
   'POST /player/:player/location/:location/trade': 'PlayerController.trade',
+
+  'GET /player/:player/follow':          'PlayerController.listFollowed',
+  'GET /player/:player/follow/:other':   'PlayerController.follow',
+  'GET /player/:player/unfollow/:other': 'PlayerController.unfollow'
 };

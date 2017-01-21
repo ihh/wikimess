@@ -25,7 +25,7 @@ module.exports = {
         else if (player)
           res.json ({ id: player.id })
         else
-          res.status(404).send (new Error ("Player " + name + " not found"))
+          res.status(404).send ({error: "Player " + name + " not found"})
       })
   },
 
@@ -38,7 +38,7 @@ module.exports = {
         if (err)
           res.status(500).send (err)
         else if (players.length)
-          res.status(400).send (new Error ("A player named " + name + " already exists"))
+          res.status(400).send ({error: "A player named " + name + " already exists"})
         else
           Player.findOrCreate ({ name: name,
                                  password: password })
@@ -46,7 +46,7 @@ module.exports = {
             if (err)
               res.status(500).send (err)
             else if (!player)
-              res.status(500).send (new Error ("Player " + name + " not created"))
+              res.status(500).send ({error: "Player " + name + " not created"})
             else
               res.json ({ name: player.name, id: player.id })
           })
@@ -383,7 +383,7 @@ module.exports = {
         if (err)
           res.status(500).send (err)
         else if (!player)
-          res.status(404).send (new Error ("Player " + name + " not found"))
+          res.status(404).send ({error: "Player " + name + " not found"})
         else {
           var imagePath = '/images/avatars/' + playerID
 	  var playerImageDir = process.cwd() + '/assets' + imagePath
@@ -462,7 +462,7 @@ module.exports = {
         if (err)
           res.status(500).send (err)
         else if (!player)
-          res.status(404).send (new Error ("Player " + playerID + " not found"))
+          res.status(404).send ({error: "Player " + playerID + " not found"})
         else
           res.json (player.avatarConfig)
       })
@@ -479,7 +479,7 @@ module.exports = {
         if (err)
           res.status(500).send (err)
         else if (!player)
-          res.status(404).send (new Error ("Player " + name + " not found"))
+          res.status(404).send ({error: "Player " + name + " not found"})
         else
           res.ok()
       })
@@ -509,4 +509,53 @@ module.exports = {
       LocationService.trade (player, req.params.location, req.body, rs)
     })
   },
+
+  // list followers
+  listFollowed: function (req, res) {
+    Follow.find ({ follower: req.params.player })
+      .populate ('followed')
+      .exec (function (err, follows) {
+        if (err)
+          res.status(500).send(err)
+        else
+          res.json ({ id: req.params.player,
+                      follows: follows.map (function (follow) {
+                        return { id: follow.followed.id, name: follow.followed.displayName }
+                      })
+                    })
+      })
+  },
+
+  // add follower
+  follow: function (req, res) {
+    if (req.params.player != req.params.other)  // don't let someone follow themselves
+      PlayerService.findPlayer (req, res, function (player, rs) {
+        PlayerService.findOther (req, res, function (other, rs) {
+          var newFollow = { follower: player.id,
+                            followed: other.id }
+          Follow.findOrCreate (newFollow)
+            .exec (function (err, follow) {
+              if (err)
+                rs(err)
+              else
+                rs(null,newFollow)
+            })
+        })
+      })
+  },
+
+  // remove follower
+  unfollow: function (req, res) {
+    Follow.destroy ({ follower: req.params.player,
+                      followed: req.params.other })
+      .exec (function (err, deleted) {
+        if (err)
+          res.status(500).send(err)
+        else if (deleted.length)
+          res.ok()
+        else
+          res.status(404).send ({error: "Player " + req.params.player + " does not follow player " + req.params.other})
+      })
+  }
+
 };
