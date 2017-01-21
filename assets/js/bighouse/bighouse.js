@@ -270,7 +270,7 @@ var BigHouse = (function() {
       var link = $('<a href="#">')
           .text (text)
           .attr ('title', text)
-          .on ('click', bh.callWithSoundEffect (callback, sfx, link))
+      link.on ('click', bh.callWithSoundEffect (callback, sfx, link))
       return link
     },
 
@@ -279,7 +279,7 @@ var BigHouse = (function() {
       var li = $('<li>')
           .append ($('<span>')
                    .html(text))
-          .on('click', this.callWithSoundEffect (callback, sfx, li))
+      li.on('click', this.callWithSoundEffect (callback, sfx, li))
       return li
     },
 
