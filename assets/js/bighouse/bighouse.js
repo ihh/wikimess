@@ -1467,7 +1467,6 @@ var BigHouse = (function() {
     pushGameStatusPage: function (name, getMethod) {
       var bh = this
       this.pushView ('status')
-      var detail
       this.container
         .append (this.makePageTitle (name))
       this.showGameStatusPage (name, getMethod)
@@ -1478,6 +1477,7 @@ var BigHouse = (function() {
     },
 
     showGameStatusPage: function (name, getMethod) {
+      var detail
       this.container
         .append (detail = $('<div class="detailbar">'))
 
@@ -1565,7 +1565,37 @@ var BigHouse = (function() {
 	.done (function (data) {
 	  if (bh.verbose.messages)
 	    console.log (data)
-          // TODO: write me
+          var avatarDivs = []
+          bh.locBarDiv.append (data.follows.map (function (follow) {
+            var avatarDiv = $('<div class="avatar">')
+            avatarDivs.push ({ follow: follow, div: avatarDiv })
+            var buttonDiv = $('<div class="button">').text ('Unfollow')
+            var doFollow, doUnfollow
+            function makeUnfollowButton() {
+              buttonDiv.text ('Unfollow')
+                .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', buttonDiv))
+            }
+            function makeFollowButton() {
+              buttonDiv.text ('Follow')
+                .on ('click', bh.callWithSoundEffect (doFollow, 'select', buttonDiv))
+            }
+            doFollow = function() {
+              bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
+                .then (makeUnfollowButton)
+            }
+            doUnfollow = function() {
+              bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
+                .then (makeFollowButton)
+            }
+            makeUnfollowButton()
+            return $('<div class="follow">')
+              .append (avatarDiv)
+              .append ($('<div class="name">').text (follow.name))
+              .append (buttonDiv)
+          }))
+          avatarDivs.forEach (function (ad) {
+            bh.showMoodImage (ad.follow.id, ad.follow.mood, ad.div)
+          })
 	}).fail (function (err) {
           bh.showModalWebError (err, bh.showPlayPage.bind(bh))
         })
@@ -2384,12 +2414,7 @@ var BigHouse = (function() {
                 .append (moodDiv)
                 .append (content)
               avatarCallbacks.push (function() {
-                bh.getAvatarConfigPromise(isOther ? bh.opponentID : bh.playerID)
-                  .done (function (avatarConfig) {
-                    var config = {}
-                    $.extend (true, config, avatarConfig)
-                    bh.showFace (config, mood, moodDiv)
-                  })
+                bh.showMoodImage (isOther ? bh.opponentID : bh.playerID, mood, moodDiv)
               })
             } else
 	      span.html(para)

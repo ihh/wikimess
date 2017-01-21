@@ -520,7 +520,9 @@ module.exports = {
         else
           res.json ({ id: req.params.player,
                       follows: follows.map (function (follow) {
-                        return { id: follow.followed.id, name: follow.followed.displayName }
+                        return { id: follow.followed.id,
+                                 name: follow.followed.displayName,
+                                 mood: follow.followed.initialMood }
                       })
                     })
       })
