@@ -91,6 +91,7 @@ var BigHouse = (function() {
     navIcons: { view: 'binoculars',
                 settings: 'cog',
                 status: 'swap-bag',
+                follows: 'relationship-bounds',
                 games: 'card-random' },
 
     eventButtonText: { locked: 'Locked',
@@ -142,6 +143,18 @@ var BigHouse = (function() {
 
     REST_getPlayerGames: function (playerID, eventID) {
       return $.get ('/player/' + playerID + '/games')
+    },
+
+    REST_getPlayerFollow: function (playerID) {
+      return $.get ('/player/' + playerID + '/follow')
+    },
+
+    REST_getPlayerFollowOther: function (playerID, otherID) {
+      return $.get ('/player/' + playerID + '/follow/' + otherID)
+    },
+
+    REST_getPlayerUnfollowOther: function (playerID, otherID) {
+      return $.get ('/player/' + playerID + '/unfollow/' + otherID)
     },
 
     REST_getPlayerStatus: function (playerID) {
@@ -765,6 +778,7 @@ var BigHouse = (function() {
       var tabs = [{ name: 'view', method: 'showPlayPage' },
                   { name: 'status', method: 'showStatusPage' },
                   { name: 'games', method: 'showActiveGamesPage' },
+                  { name: 'follows', method: 'showFollowsPage' },
                   { name: 'settings', method: 'showSettingsPage' }]
 
       var navbar
@@ -1531,6 +1545,32 @@ var BigHouse = (function() {
 			  .css('width',(100*level/max) + '%')))
     },
 
+    // follows
+    showFollowsPage: function() {
+      var bh = this
+      
+      this.setPage ('follows')
+      this.showNavBar ('follows')
+
+      this.eraseEventInfo()
+
+      this.container
+        .append (this.locBarDiv = $('<div class="locbar">')
+		 .append ($('<span>')
+			  .text('This page shows the players you are currently following.')))
+
+      this.restoreScrolling (this.locBarDiv)
+
+      this.REST_getPlayerFollow (this.playerID)
+	.done (function (data) {
+	  if (bh.verbose.messages)
+	    console.log (data)
+          // TODO: write me
+	}).fail (function (err) {
+          bh.showModalWebError (err, bh.showPlayPage.bind(bh))
+        })
+    },
+    
     // game pages
     showGamePage: function() {
       var bh = this
