@@ -121,7 +121,7 @@ var BigHouse = (function() {
     },
 
     REST_postPlayer: function (playerName, playerPassword) {
-      return $.post('/player', { name: playerName, password: playerPassword })
+      return $.post('/player/create', { name: playerName, password: playerPassword })
     },
 
     REST_postLogin: function (playerName, playerPassword) {

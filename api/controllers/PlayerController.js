@@ -29,6 +29,30 @@ module.exports = {
       })
   },
 
+  // create Player
+  createPlayer: function (req, res) {
+    var name = req.body.name
+    var password = req.body.password
+    Player.find ({ name: name })
+      .exec (function (err, players) {
+        if (err)
+          res.status(500).send (err)
+        else if (players.length)
+          res.status(400).send (new Error ("A player named " + name + " already exists"))
+        else
+          Player.findOrCreate ({ name: name,
+                                 password: password })
+          .exec (function (err, player) {
+            if (err)
+              res.status(500).send (err)
+            else if (!player)
+              res.status(500).send (new Error ("Player " + name + " not created"))
+            else
+              res.json ({ name: player.name, id: player.id })
+          })
+      })
+  },
+  
   // get a player's games
   games: function (req, res) {
     var playerID = req.params.player

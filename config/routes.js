@@ -23,69 +23,71 @@
 module.exports.routes = {
 
   /***************************************************************************
-  *                                                                          *
-  * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
-  * etc. depending on your default view engine) your home page.              *
-  *                                                                          *
-  * (Alternatively, remove this and add an `index.html` file in your         *
-  * `assets` directory)                                                      *
-  *                                                                          *
-  ***************************************************************************/
+   *                                                                          *
+   * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
+   * etc. depending on your default view engine) your home page.              *
+   *                                                                          *
+   * (Alternatively, remove this and add an `index.html` file in your         *
+   * `assets` directory)                                                      *
+   *                                                                          *
+   ***************************************************************************/
 
-    '/': 'AuthController.homepage',
+  '/': 'AuthController.homepage',
 
   /***************************************************************************
-  *                                                                          *
-  * Custom routes here...                                                    *
-  *                                                                          *
-  * If a request to a URL doesn't match any of the custom routes above, it   *
-  * is matched against Sails route blueprints. See `config/blueprints.js`    *
-  * for configuration options and examples.                                  *
-  *                                                                          *
-  ***************************************************************************/
+   *                                                                          *
+   * Custom routes here...                                                    *
+   *                                                                          *
+   * If a request to a URL doesn't match any of the custom routes above, it   *
+   * is matched against Sails route blueprints. See `config/blueprints.js`    *
+   * for configuration options and examples.                                  *
+   *                                                                          *
+   ***************************************************************************/
 
-    'POST /login': 'AuthController.login',
-    '/logout':     'AuthController.logout',
+  'POST /login': 'AuthController.login',
+  '/logout':     'AuthController.logout',
 
-    'GET /login/facebook':          'AuthController.facebookLogin',
-    'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
-    
-    'GET /icon/:icon.svg':                    'IconController.getIcon',
-    'GET /icon/:icon/:color.svg':             'IconController.getIcon',
-    'GET /icon/:icon/:color/:background.svg': 'IconController.getIcon',
+  'GET /login/facebook':          'AuthController.facebookLogin',
+  'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
+  
+  'GET /icon/:icon.svg':                    'IconController.getIcon',
+  'GET /icon/:icon/:color.svg':             'IconController.getIcon',
+  'GET /icon/:icon/:color/:background.svg': 'IconController.getIcon',
 
-    'GET /icon/:icon':                    'IconController.getIcon',
-    'GET /icon/:icon/:color':             'IconController.getIcon',
-    'GET /icon/:icon/:color/:background': 'IconController.getIcon',
+  'GET /icon/:icon':                    'IconController.getIcon',
+  'GET /icon/:icon/:color':             'IconController.getIcon',
+  'GET /icon/:icon/:color/:background': 'IconController.getIcon',
 
-    'GET /player/id/:name':              'PlayerController.byName',
+  'POST /player/create':               'PlayerController.createPlayer',
 
-    'GET /player/:player/status':        'PlayerController.selfStatus',
-    'GET /player/:player/status/:other': 'PlayerController.otherStatus',
+  'GET /player/id/:name':              'PlayerController.byName',
 
-    'GET /player/:player/avatar':        'PlayerController.getMoodAvatarConfig',
-    'PUT /player/:player/avatar':        'PlayerController.putMoodAvatarConfig',
-    'PUT /player/:player/avatar/:mood':  'PlayerController.uploadMoodAvatar',
+  'GET /player/:player/status':        'PlayerController.selfStatus',
+  'GET /player/:player/status/:other': 'PlayerController.otherStatus',
 
-    'GET /player/:player/join/:event':          'PlayerController.join',
-    'GET /player/:player/join/:event/cancel':   'PlayerController.cancelJoin',
-    'GET /player/:player/join/:event/bot':      'PlayerController.joinBot',
+  'GET /player/:player/avatar':        'PlayerController.getMoodAvatarConfig',
+  'PUT /player/:player/avatar':        'PlayerController.putMoodAvatarConfig',
+  'PUT /player/:player/avatar/:mood':  'PlayerController.uploadMoodAvatar',
 
-    'GET /player/:player/games':         'PlayerController.games',
+  'GET /player/:player/join/:event':          'PlayerController.join',
+  'GET /player/:player/join/:event/cancel':   'PlayerController.cancelJoin',
+  'GET /player/:player/join/:event/bot':      'PlayerController.joinBot',
 
-    'GET /player/:player/game/:game':                     'PlayerController.gameInfo',
-    'GET /player/:player/game/:game/history':             'PlayerController.gameHistory',
-    'GET /player/:player/game/:game/history/:moveNumber': 'PlayerController.gameHistory',
+  'GET /player/:player/games':         'PlayerController.games',
 
-    'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
-    'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',
+  'GET /player/:player/game/:game':                     'PlayerController.gameInfo',
+  'GET /player/:player/game/:game/history':             'PlayerController.gameHistory',
+  'GET /player/:player/game/:game/history/:moveNumber': 'PlayerController.gameHistory',
 
-    'PUT /player/:player/game/:game/move/:moveNumber':            'PlayerController.makeMove',
-    'GET /player/:player/game/:game/move/:moveNumber/mood/:mood': 'PlayerController.changeMood',
-    'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
-    'GET /player/:player/game/:game/move/:moveNumber/quit':       'PlayerController.quitGame',
+  'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
+  'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',
 
-    'GET /player/:player/home':                      'PlayerController.viewHome',
-    'GET /player/:player/location/:location':        'PlayerController.viewLocation',
-    'POST /player/:player/location/:location/trade': 'PlayerController.trade',
+  'PUT /player/:player/game/:game/move/:moveNumber':            'PlayerController.makeMove',
+  'GET /player/:player/game/:game/move/:moveNumber/mood/:mood': 'PlayerController.changeMood',
+  'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
+  'GET /player/:player/game/:game/move/:moveNumber/quit':       'PlayerController.quitGame',
+
+  'GET /player/:player/home':                      'PlayerController.viewHome',
+  'GET /player/:player/location/:location':        'PlayerController.viewLocation',
+  'POST /player/:player/location/:location/trade': 'PlayerController.trade',
 };
