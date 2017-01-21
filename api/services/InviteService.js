@@ -21,8 +21,8 @@ module.exports = {
 	    var weightedOpponents = potentialOpponents.map (function (opponent) {
 	      return { opponent: opponent,
 		       weight: (event.compatibility
-				? Math.sqrt (evalPlayerExpr (player, opponent, event.compatibility)
-					     * evalPlayerExpr (opponent, player, event.compatibility))
+				? (Math.sqrt (evalPlayerExpr (player, opponent, event.compatibility)
+					      * evalPlayerExpr (opponent, player, event.compatibility)) || 0)
 				: 1) }
 	    })
 	    InviteService
