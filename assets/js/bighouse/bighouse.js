@@ -161,6 +161,10 @@ var BigHouse = (function() {
       return $.get ('/player/' + playerID + '/status')
     },
 
+    REST_getPlayerStatusOther: function (playerID, otherID) {
+      return $.get ('/player/' + playerID + '/status/' + otherID)
+    },
+
     REST_getPlayerGameStatusSelf: function (playerID, gameID) {
       return $.get ('/player/' + playerID + '/game/' + gameID + '/status/self')
     },
@@ -1453,30 +1457,48 @@ var BigHouse = (function() {
     showStatusPage: function() {
       this.setPage ('status')
       this.showNavBar ('status')
-      this.showGameStatusPage (this.playerName, this.REST_getPlayerStatus, this.setPage)
+      this.showGameStatusPage (this.REST_getPlayerStatus)
     },
 
+    showFollowStatusPage: function (follow) {
+      this.locBarDiv.remove()
+      this.makeFollowDiv (follow)
+      this.container.append (follow.followDiv)
+      this.showGameStatusPage (this.REST_getPlayerStatusOther.bind (this, this.playerID, follow.id))
+      this.container
+	.append ($('<div class="menubar">')
+		 .append ($('<span>')
+			  .html (this.makeLink ('Back', this.showFollowsPage))))
+      follow.showAvatar()
+    },
+    
     showPlayerStatusPage: function() {
-      this.pushGameStatusPage (this.playerName, this.REST_getPlayerGameStatusSelf)
+      this.pushGameStatusPage ({name: this.playerName}, this.REST_getPlayerGameStatusSelf)
     },
     
     showOpponentStatusPage: function() {
-      this.pushGameStatusPage (this.opponentName, this.REST_getPlayerGameStatusOther)
+      var info = { id: bh.opponentID, mood: bh.opponentMood, name: bh.opponentName }
+      this.makeFollowDiv (info)
+      this.pushGameStatusPage (info, this.REST_getPlayerGameStatusOther)
+      info.showAvatar()
     },
 
-    pushGameStatusPage: function (name, getMethod) {
+    pushGameStatusPage: function (info, getMethod) {
       var bh = this
       this.pushView ('status')
       this.container
-        .append (this.makePageTitle (name))
-      this.showGameStatusPage (name, getMethod)
+        .append (info.followDiv || this.makePageTitle (info.name))
+      this.showGameStatusPage (getMethod, function (status) {
+        if (info.followDiv && status.following)
+          info.makeUnfollowButton()
+      })
       this.container
 	.append ($('<div class="menubar">')
 		 .append ($('<span>')
 			  .html (this.makeLink ('Back', this.popView))))
     },
 
-    showGameStatusPage: function (name, getMethod) {
+    showGameStatusPage: function (getMethod, callback) {
       var detail
       this.container
         .append (detail = $('<div class="detailbar">'))
@@ -1488,6 +1510,8 @@ var BigHouse = (function() {
 	  if (bh.verbose.messages)
 	    console.log (status)
           bh.addStatusElements (status.element, detail)
+          if (callback)
+            callback (status)
 	})
         .fail (function (err) {
           console.log(err)
@@ -1565,40 +1589,53 @@ var BigHouse = (function() {
 	.done (function (data) {
 	  if (bh.verbose.messages)
 	    console.log (data)
-          var avatarDivs = []
           bh.locBarDiv.append (data.follows.map (function (follow) {
-            var avatarDiv = $('<div class="avatar">')
-            avatarDivs.push ({ follow: follow, div: avatarDiv })
-            var buttonDiv = $('<div class="button">').text ('Unfollow')
-            var doFollow, doUnfollow
-            function makeUnfollowButton() {
-              buttonDiv.text ('Unfollow')
-                .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', buttonDiv))
-            }
-            function makeFollowButton() {
-              buttonDiv.text ('Follow')
-                .on ('click', bh.callWithSoundEffect (doFollow, 'select', buttonDiv))
-            }
-            doFollow = function() {
-              bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
-                .then (makeUnfollowButton)
-            }
-            doUnfollow = function() {
-              bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
-                .then (makeFollowButton)
-            }
-            makeUnfollowButton()
-            return $('<div class="follow">')
-              .append (avatarDiv)
-              .append ($('<div class="name">').text (follow.name))
-              .append (buttonDiv)
+            bh.makeFollowDiv (follow)
+            follow.avatarDiv
+              .on ('click', bh.callWithSoundEffect (bh.showFollowStatusPage.bind (bh, follow)))
+            return follow.followDiv
           }))
-          avatarDivs.forEach (function (ad) {
-            bh.showMoodImage (ad.follow.id, ad.follow.mood, ad.div)
-          })
+          data.follows.forEach (function (follow) { follow.showAvatar() })
 	}).fail (function (err) {
           bh.showModalWebError (err, bh.showPlayPage.bind(bh))
         })
+    },
+
+    makeFollowDiv: function (follow) {
+      var avatarDiv = $('<div class="avatar">')
+      var buttonDiv = $('<div class="button">').text ('Unfollow')
+      var doFollow, doUnfollow
+      function makeUnfollowButton() {
+        buttonDiv.text ('Unfollow')
+          .off()
+          .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', buttonDiv))
+      }
+      function makeFollowButton() {
+        buttonDiv.text ('Follow')
+          .off()
+          .on ('click', bh.callWithSoundEffect (doFollow, 'select', buttonDiv))
+      }
+      doFollow = function() {
+        bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
+          .then (makeUnfollowButton)
+      }
+      doUnfollow = function() {
+        bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
+          .then (makeFollowButton)
+      }
+      if (follow.following)
+        makeUnfollowButton()
+      else
+        makeFollowButton()
+      var followDiv = $('<div class="follow">')
+          .append (avatarDiv)
+          .append ($('<div class="name">').text (follow.name))
+          .append (buttonDiv)
+      $.extend (follow, { followDiv: followDiv,
+                          avatarDiv: avatarDiv,
+                          showAvatar: bh.showMoodImage.bind (bh, follow.id, follow.mood, avatarDiv),
+                          makeFollowButton: makeFollowButton,
+                          makeUnfollowButton: makeUnfollowButton })
     },
     
     // game pages
@@ -2622,7 +2659,7 @@ var BigHouse = (function() {
       var date = new Date (time)
       if (!time || !this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
         if (this.verbose.messages)
-          console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + " at time " + time)
+          console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + (time ? (" at time " + time) : ''))
 	if (time)
           this.lastPlayerMoodTime = date
 	this.playerMood = mood

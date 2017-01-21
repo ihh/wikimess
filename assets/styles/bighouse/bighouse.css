@@ -52,10 +52,10 @@ body {
     font-size: large;
 }
 
+.bighouse .follow,
 .bighouse .locbar .location,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
-.bighouse .locbar .follow,
 .bighouse .locbar .event {
     float: left;
     clear: both;
@@ -63,9 +63,9 @@ body {
     margin: 1vw;
 }
 
+.bighouse .follow,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
-.bighouse .locbar .follow,
 .bighouse .locbar .event {
     position: relative;
     border-style: solid;
@@ -83,14 +83,14 @@ body {
     clear: left;
 }
 
-.bighouse .locbar .follow .button,
+.bighouse .follow .button,
 .bighouse .locbar .link .button {
     position: absolute;
     right: 4px;
     bottom: 4px;
 }
 
-.bighouse .locbar .follow .button,
+.bighouse .follow .button,
 .bighouse .locbar .link .button,
 .bighouse .locbar .trade .button,
 .bighouse .locbar .event .button {
@@ -290,7 +290,7 @@ body {
     cursor: default;
 }
 
-.bighouse .locbar .follow .avatar,
+.bighouse .follow .avatar,
 .bighouse .statusbar .leftmood,
 .bighouse .statusbar .rightmood {
     border-style: solid;
@@ -298,8 +298,8 @@ body {
     border-radius: 4px;
 }
 
-.bighouse .locbar .follow .avatar img,
-.bighouse .locbar .follow .avatar svg,
+.bighouse .follow .avatar img,
+.bighouse .follow .avatar svg,
 .bighouse .statusbar .leftmood img,
 .bighouse .statusbar .leftmood svg,
 .bighouse .statusbar .rightstatus span,
@@ -308,16 +308,16 @@ body {
     cursor: pointer;
 }
 
-.bighouse .locbar .follow {
+.bighouse .follow {
     display: flex;
 }
 
-.bighouse .locbar .follow .avatar {
+.bighouse .follow .avatar {
     width: 64px;
     height: 64px;
 }
 
-.bighouse .locbar .follow .name {
+.bighouse .follow .name {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;

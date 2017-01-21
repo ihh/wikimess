@@ -115,7 +115,7 @@ module.exports = {
   },
 
   makeStatus: function (info) {
-    var rs = info.rs, game = info.game, player = info.player, local = info.local, isPublic = info.isPublic
+    var rs = info.rs, game = info.game, player = info.player, followerID = info.follower, local = info.local, isPublic = info.isPublic
     var state = {}
     if (game)
       extend (state, game.common)
@@ -158,7 +158,15 @@ module.exports = {
         status.element.push ({ type: 'div', element: [{ type: 'header', label: key }].concat (elements[key]) })
     })
 
-    rs (null, status)
+    if (typeof(followerID) !== 'undefined')
+      Follow.find ({ follower: followerID, followed: player.id })
+      .exec (function (err, follows) {
+        if (!err && follows.length)
+          status.following = true
+        rs (null, status)
+      })
+    else
+      rs (null, status)
   },
 
   quitGame: function (req, rs, info) {

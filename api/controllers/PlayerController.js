@@ -94,9 +94,10 @@ module.exports = {
   },
 
   otherStatus: function (req, res) {
-    PlayerService.findOther (req, res, function (player, rs) {
+    PlayerService.findOther (req, res, function (other, rs) {
       PlayerService.makeStatus ({ rs: rs,
-                                  player: player,
+                                  player: other,
+                                  follower: req.params.player,
                                   isPublic: true })
     })
   },
@@ -117,6 +118,7 @@ module.exports = {
       PlayerService.makeStatus ({ rs: rs,
                                   game: info.game,
                                   player: info.opponent,
+                                  follower: info.player.id,
                                   local: info.role == 1 ? info.game.local2 : info.game.local1,
                                   isPublic: true })
     })
@@ -522,7 +524,8 @@ module.exports = {
                       follows: follows.map (function (follow) {
                         return { id: follow.followed.id,
                                  name: follow.followed.displayName,
-                                 mood: follow.followed.initialMood }
+                                 mood: follow.followed.initialMood,
+                                 following: true }
                       })
                     })
       })
