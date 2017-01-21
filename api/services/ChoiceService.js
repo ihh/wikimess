@@ -85,7 +85,7 @@ module.exports = {
     }
 
     // keys for Outcomes
-    var symOutcomeKeys = ['weight', 'next', 'flush', 'common']
+    var symOutcomeKeys = ['weight', 'flush', 'common']
     
     var outcomes = [], nestedChoices = []
     var addOutcome = function (move1, move2, json) {
@@ -150,6 +150,8 @@ module.exports = {
         if (outcome.hasOwnProperty(key+'2'))
           flipped[key+'1'] = outcome[key+'2']
       })
+      if (outcome.next)
+        flipped.next = outcome.next.map (GameService.flipTilde)
       return flipped
     }
 
@@ -279,6 +281,11 @@ module.exports = {
     //        console.log (config)
     //        console.log (outcomes)
 
+    if (config.name.charAt(0) === '~') {
+      errorCallback ("A Choice name cannot begin with ~")
+      return
+    }
+    
     // find or create a Choice with this name
     Choice
       .findOrCreate ({ name: config.name })

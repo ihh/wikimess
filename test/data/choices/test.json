@@ -1,9 +1,9 @@
 [
   {
     name: "root",
-    intro: [{ switch: [{test:"!$c.day",case:{ text: "Here we are on the first day of school." }},
-		       {test:"$c.day == 1",case:{ text: "Here we are on the second day of school." }},
-		       {default:{ text: "Here we are on day {{($c.day||0)+1}} of school." }}] },
+    intro: [{ switch: [{test:"!$c.day",case:{ text: "Here we are, {{$n2}} and {{$n1}}: the first day of school." }},
+		       {test:"$c.day == 1",case:{ text: "Here we are, {{$n2}} and {{$n1}}: the second day of school." }},
+		       {default:{ text: "Here we are, {{$n2}} and {{$n1}}: day {{($c.day||0)+1}} of school." }}] },
 	    {
 	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
@@ -112,6 +112,6 @@
   },
   {
     name: "auto",
-    auto: {next:["root","root"]}
+    auto: {next:["~root","~root"]}
   }
 ]

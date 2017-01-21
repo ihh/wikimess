@@ -446,12 +446,26 @@ module.exports = {
     }
   },
 
+  gameImage: function (game) {
+    var img = {}
+    var symKeys = ['event','common','current','moves']
+    var asymKeys = ['player','local','global','move']
+    symKeys.forEach (function (attr) {
+      img[attr] = game[attr]
+    })
+    for (var role = 1; role <= 2; ++role)
+      asymKeys.forEach (function (attr) {
+        img[Game.roleAttr(role,attr)] = Game.getRoleAttr (game, role, attr, game.flip)
+      })
+    return img
+  },
+
   moveOutcomes: function (game, cb) {
     //	console.log('moveOutcomes')
     //	console.log(game)
     var query = Outcome.find ({ choice: game.current.id })
-    var move1 = GameService.moveString(game.move1)
-    var move2 = GameService.moveString(game.move2)
+    var move1 = GameService.moveString (Game.getRoleAttr(game,1,'move',game.flip))
+    var move2 = GameService.moveString (Game.getRoleAttr(game,2,'move',game.flip))
     if (move1)
       query.where ({ move1: [move1, null] })
     if (move2)
@@ -473,8 +487,9 @@ module.exports = {
         cb (err)
         return
       }
+      var gameImage = GameService.gameImage (game)
       var outcomeWeight = outcomes.map (function (outcome) {
-        return GameService.evalOutcomeWeight (game, outcome)
+        return GameService.evalOutcomeWeight (gameImage, outcome)
       })
       var exclusiveOutcomeWeight = outcomeWeight.filter (function (outcome, n) {
 	return outcomes[n].exclusive ? true : false
@@ -547,6 +562,7 @@ module.exports = {
                         local1: game.local1,
                         local2: game.local2,
 			current: game.current ? game.current.id : null,
+                        flip: game.flip,
 			currentStartTime: game.currentStartTime,
 			future: game.future,
 			finished: game.finished
@@ -603,7 +619,11 @@ module.exports = {
   resolveNextChoice: function (game, success, error) {
     // find the ID of the next scene, if there is one
     if (game.future.length) {
-      var nextChoiceName = game.future[0]
+      var nextChoiceName = game.future[0], flip = false
+      if (nextChoiceName.charAt(0) === '~') {
+        nextChoiceName = nextChoiceName.substr(1)
+        flip = true
+      }
       game.future = game.future.slice(1)
       //	    console.log ("Attempting to resolve "+nextChoiceName)
       Choice.findOne ({ name: nextChoiceName })
@@ -618,6 +638,7 @@ module.exports = {
 	  sails.log.debug ("Updating game #" + game.id + " from " + game.current.name + " (move #" + (game.moves+1) + ") to " + choice.name + " (move #" + (game.moves+2) + ")")
 
 	  game.current = choice
+          game.flip = flip
 	  GameService.expandCurrentChoice (game, success, error)
 	}
       })
@@ -632,25 +653,27 @@ module.exports = {
     var choice = game.current
     
     // evaluate updated vars
-    var p1global = GameService.evalUpdatedState (game, choice, 1, false)
-    var p2global = GameService.evalUpdatedState (game, choice, 2, false)
-    var common = GameService.evalUpdatedState (game, choice, 0, true)
-    var p1local = GameService.evalUpdatedState (game, choice, 1, true)
-    var p2local = GameService.evalUpdatedState (game, choice, 2, true)
+    var gameImage = GameService.gameImage (game)
+    var p1global = GameService.evalUpdatedState (gameImage, choice, 1, false)
+    var p2global = GameService.evalUpdatedState (gameImage, choice, 2, false)
+    var common = GameService.evalUpdatedState (gameImage, choice, 0, true)
+    var p1local = GameService.evalUpdatedState (gameImage, choice, 1, true)
+    var p2local = GameService.evalUpdatedState (gameImage, choice, 2, true)
 
     // update game state
-    game.mood1 = Choice.mood1 (game, choice)
-    game.mood2 = Choice.mood2 (game, choice)
     game.common = common
-    game.local1 = p1local
-    game.local2 = p2local
-    game.player1.global = p1global
-    game.player2.global = p2global
+    Game.setRoleAttr (game, 1, 'mood', Choice.mood1 (gameImage, choice), game.flip)
+    Game.setRoleAttr (game, 2, 'mood', Choice.mood2 (gameImage, choice), game.flip)
+    Game.setRoleAttr (game, 1, 'local', p1local, game.flip)
+    Game.setRoleAttr (game, 2, 'local', p2local, game.flip)
+    Game.getRoleAttr (game, 1, 'player', game.flip).global = p1global
+    Game.getRoleAttr (game, 2, 'player', game.flip).global = p2global
 
-    GameService.expandIntros (game, choice.intro, choice.intro2)
+    var updatedGameImage = GameService.gameImage (game)
+    GameService.expandIntros (updatedGameImage, choice.intro, choice.intro2)
       .then (function (texts) {
-	game.tree1.push (texts[0])
-	game.tree2.push (texts[1])
+	Game.getRoleAttr (game, 1, 'tree', game.flip).push (texts[0])
+	Game.getRoleAttr (game, 2, 'tree', game.flip).push (texts[1])
 
 	// auto-expand or update
 	if (choice.autoexpand)
@@ -681,6 +704,10 @@ module.exports = {
       })
   },
 
+  flipTilde: function (choiceName) {
+    return (choiceName.charAt(0) === '~') ? choiceName.substr(1) : ('~' + choiceName)
+  },
+  
   applyRandomOutcomes: function (game, success, error) {
     // find a random outcome
     GameService.randomOutcomes
@@ -691,30 +718,34 @@ module.exports = {
        else
 	 Promise.map (outcomes, function (outcome) {
            var future = outcome.next
+           if (game.flip)
+             future = future.map (GameService.flipTilde)
            if (!outcome.flush)
 	     future = future.concat (game.future)
 	   game.future = future
 
 	   // evaluate updated vars
-	   var p1global = GameService.evalUpdatedState (game, outcome, 1, false)
-	   var p2global = GameService.evalUpdatedState (game, outcome, 2, false)
-	   var common = GameService.evalUpdatedState (game, outcome, 0, true)
-	   var p1local = GameService.evalUpdatedState (game, outcome, 1, true)
-	   var p2local = GameService.evalUpdatedState (game, outcome, 2, true)
+           var gameImage = GameService.gameImage (game)
+	   var p1global = GameService.evalUpdatedState (gameImage, outcome, 1, false)
+	   var p2global = GameService.evalUpdatedState (gameImage, outcome, 2, false)
+	   var common = GameService.evalUpdatedState (gameImage, outcome, undefined, true)
+	   var p1local = GameService.evalUpdatedState (gameImage, outcome, 1, true)
+	   var p2local = GameService.evalUpdatedState (gameImage, outcome, 2, true)
 
 	   // update game state
-	   game.mood1 = Outcome.mood1 (game, outcome)
-	   game.mood2 = Outcome.mood2 (game, outcome)
 	   game.common = common
-	   game.local1 = p1local
-	   game.local2 = p2local
-	   game.player1.global = p1global
-	   game.player2.global = p2global
+	   Game.setRoleAttr (game, 1, 'mood', Outcome.mood1 (gameImage, outcome), game.flip)
+	   Game.setRoleAttr (game, 2, 'mood', Outcome.mood2 (gameImage, outcome), game.flip)
+	   Game.setRoleAttr (game, 1, 'local', p1local, game.flip)
+	   Game.setRoleAttr (game, 2, 'local', p2local, game.flip)
+	   Game.getRoleAttr (game, 1, 'player', game.flip).global = p1global
+	   Game.getRoleAttr (game, 2, 'player', game.flip).global = p2global
 
-	   return GameService.expandIntros (game, outcome.outro, outcome.outro2)
+           var updatedGameImage = GameService.gameImage (game)
+	   return GameService.expandIntros (updatedGameImage, outcome.outro, outcome.outro2)
 	     .then (function (texts) {
-	       game.tree1.push (texts[0])
-	       game.tree2.push (texts[1])
+	       Game.getRoleAttr (game, 1, 'tree', game.flip).push (texts[0])
+	       Game.getRoleAttr (game, 2, 'tree', game.flip).push (texts[1])
 	     })
 	 }).then (function() {
 	   game.move1 = game.move2 = null
@@ -730,11 +761,7 @@ module.exports = {
     var p2 = { name: game.player2.displayName,
                local: { state: game.local2, expr: scene.local2 || {} },
                global: { state: game.player2.global, expr: scene.global2 || {} } }
-    var info, context = local ? 'local' : 'global'
-    if (role == 1)
-      info = { self: p1, other: p2 }
-    else
-      info = { self: p2, other: p1 }
+    var context = local ? 'local' : 'global'
 
     var $c = game.common,
         $s1 = p1[context].state,
@@ -773,7 +800,13 @@ module.exports = {
       Label.bindLabelFunctions($2)
 
     var $s, $g, $inv, $l, $n, $id, $so, $go, $invo, $lo, $no, $ido, $$, $$o
+    var info
     if (role) {
+      if (role == 1)
+        info = { self: p1, other: p2 }
+      else
+        info = { self: p2, other: p1 }
+
       $s = info.self[context].state
       $g = info.self.global.state
       $inv = info.self.global.state.inv

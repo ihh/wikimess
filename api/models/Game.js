@@ -39,6 +39,11 @@ module.exports = {
       model: 'choice'
     },
 
+    flip: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
     future: {
       type: 'array',
       defaultsTo: []
@@ -175,20 +180,36 @@ module.exports = {
     return role == 1 ? 2 : 1
   },
 
-  roleAttr: function (role, key) {
-    return key + role
+  flipRole: function(role,flip) {
+    return flip ? Game.otherRole(role) : role
   },
 
-  otherRoleAttr: function (role, key) {
-    return key + Game.otherRole(role)
+  flipOtherRole: function(role,flip) {
+    return flip ? role : Game.otherRole(role)
+  },
+  
+  roleAttr: function (role, key, flip) {
+    return key + (flip ? Game.otherRole(role) : role)
   },
 
-  getRoleAttr: function (obj, role, key) {
-    return obj[key + role]
+  otherRoleAttr: function (role, key, flip) {
+    return key + (flip ? role : Game.otherRole(role))
   },
 
-  getOtherRoleAttr: function (obj, role, key) {
-    return obj[key + Game.otherRole(role)]
+  getRoleAttr: function (obj, role, key, flip) {
+    return obj[key + (flip ? Game.otherRole(role) : role)]
   },
+
+  getOtherRoleAttr: function (obj, role, key, flip) {
+    return obj[key + (flip ? role : Game.otherRole(role))]
+  },
+
+  setRoleAttr: function (obj, role, key, val, flip) {
+    obj[key + (flip ? Game.otherRole(role) : role)] = val
+  },
+
+  setOtherRoleAttr: function (obj, role, key, val, flip) {
+    obj[key + (flip ? role : Game.otherRole(role))] = val
+  }
 };
 
