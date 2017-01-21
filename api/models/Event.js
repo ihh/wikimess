@@ -66,10 +66,6 @@ module.exports = {
       // NB this eval is NOT tested inside the lock (it'd be too CPU-intensive, since it's run on all compatible players)
       // So don't make it too critical to game consistency logic
     },
-
-    role1weight: {
-      type: 'string'   // should eval to positive real value probabilistically weighting chance of player being in role 1
-    },
     
     timeout: {
       type: 'integer',

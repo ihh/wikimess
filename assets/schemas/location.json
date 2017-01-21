@@ -128,9 +128,6 @@
           "compatibility": {
             "type": "string"
           },
-          "role1weight": {
-            "type": "string"
-          },
           "timeout": {
             "type": "number"
           },

@@ -75,6 +75,15 @@ function startGame (obj, password) {
   })
 }
 
+function waitForText (obj, text) {
+  it('should wait until '+obj.name+'\'s page contains "'+text+'"', function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.xpath("//*[contains(text(),'"+text+"')]")))
+      .then(() => done())
+      .catch(error => done(error))
+  })
+}
+
 function waitForCardText (obj, cardText) {
   var driver = obj.driver
   var name = obj.name
@@ -242,8 +251,9 @@ describe("two-player game", function() {
   var fred = login (fredDriver, "fred", "test")
   var sheila = login (sheilaDriver, "sheila", "test")
 
-  startGame (fred)
   startGame (sheila)
+  waitForText (sheila, "Starting")
+  startGame (fred)
   
   makeMove (fred, "Here we are, fred and sheila: the first day of school", "left")
   makeMove (sheila, "Here we are, fred and sheila: the first day of school", "left")

@@ -340,7 +340,6 @@ module.exports = {
             opponent: { oneOf: [ { type: "string" },
 				 { type: "array", minItems: 1, items: { type: "string" } }] },
             compatibility: { type: "string" },
-            role1weight: { type: "string" },
             timeout: { type: "number" },
             resetAllowed: { type: "boolean" },
             reset: { type: "number" },

@@ -117,26 +117,12 @@ module.exports = {
                      else if (!choice)
 		       lockedError ("Choice " + event.choice + " not found")
 		     else {
-		       // randomly assign player 1 & player 2
-		       var p1weight, o1weight
-		       if (event.role1weight) {
-			 p1weight = PlayerService.evalPlayerExpr (player, event.role1weight)
-			 o1weight = PlayerService.evalPlayerExpr (opponent, event.role1weight)
-		       } else
-			 p1weight = o1weight = 1
-		       
-		       var p1o2prob = (p1weight || o1weight) ? (p1weight / (p1weight + o1weight)) : 1/2
-		       if (Math.random() < p1o2prob) {
-                         player1 = player
-                         player2 = opponent
-		       } else {
-                         player1 = opponent
-                         player2 = player
-		       }
                        // deduct costs, if not already deducted
                        if (!costsDeducted)
 			 LocationService.deductCost (player, event.cost)
 		       // create the game
+                       var player1 = opponent  // the player who created the Invite table entry is player 1
+                       var player2 = player
 		       var game = { player1: player1,
                                     player2: player2,
 				    event: event,

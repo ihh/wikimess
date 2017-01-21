@@ -8,14 +8,12 @@
 		hint: "Let's do a timeout test!",
 		timeout: 3,
 		reset: 5,
-		role1weight: "$n === 'fred'",
 		choice: "timeout" },
 	      { title: "AI test",
 		hint: "Play a single-player test!",
 		opponent: "ai",
 		timeout: 10,
 		reset: 5,
-		role1weight: "$h",
 		choice: "solo" } ]
   },
   {
@@ -48,7 +46,6 @@
     events: [ { title: "Cut class",
 		hint: "Want to cut class?",
                 cost: { cash: 1 },
-		role1weight: "$n === 'sheila'",
 		choice: "root" } ]
   }
 ]
