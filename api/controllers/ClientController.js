@@ -239,12 +239,13 @@ module.exports = {
       Player.findOne ({ id: req.params.other })
         .then (function (other) {
           // WRITE ME
+          // create a Game with 'pendingAccept' flag set
         }).catch (rs)
       })
   },
 
-  // reject invitation
-  accept: function (req, res) {
+  // cancel invitation that we issued
+  cancelInvite: function (req, res) {
     Game.find ({ player1: req.params.player,
                  player2: req.params.other,
                  event: req.params.event })
@@ -252,20 +253,22 @@ module.exports = {
       .populate ('player2')
       .then (function (game) {
         // WRITE ME
+        // delete the Game, message player2 that it is canceled
       }).catch (function (err) {
         res.status(500).send (err)
       })
   },
 
-  // reject invitation
-  reject: function (req, res) {
-    Game.find ({ player1: req.params.player,
-                 player2: req.params.other,
+  // reject invitation that someone issued to us
+  rejectInvite: function (req, res) {
+    Game.find ({ player1: req.params.other,
+                 player2: req.params.player,
                  event: req.params.event })
       .populate ('player1')
       .populate ('player2')
       .then (function (game) {
         // WRITE ME
+        // delete the Game, message player1 that it is canceled
       }).catch (function (err) {
         res.status(500).send (err)
       })
