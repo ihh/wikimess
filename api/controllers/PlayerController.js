@@ -514,20 +514,53 @@ module.exports = {
 
   // list followers
   listFollowed: function (req, res) {
-    Follow.find ({ follower: req.params.player })
+    var playerID = req.params.player
+    var result = { id: playerID }
+    var following = {}
+    function makeInfo (player) {
+      return { id: player.id,
+               name: player.displayName,
+               mood: player.initialMood,
+               following: following[player.id] }
+    }
+    Follow.find ({ follower: playerID })
       .populate ('followed')
-      .exec (function (err, follows) {
-        if (err)
-          res.status(500).send(err)
-        else
-          res.json ({ id: req.params.player,
-                      follows: follows.map (function (follow) {
-                        return { id: follow.followed.id,
-                                 name: follow.followed.displayName,
-                                 mood: follow.followed.initialMood,
-                                 following: true }
-                      })
-                    })
+      .then (function (follows) {
+        result.followed = follows.map (function (follow) {
+          following[follow.followed.id] = true
+          return makeInfo (follow.followed)
+        })
+        return Follow.find ({ followed: playerID })
+          .populate ('follower')
+      }).then (function (followed) {
+        result.followers = followed.map (function (follow) {
+          return makeInfo (follow.follower)
+        })
+        return Game.find()
+          .where ({ or: [ { player1: playerID },
+			  { player2: playerID } ] })
+          .sort ('updatedAt DESC')
+          .populate ('player1')
+          .populate ('player2')
+          .limit (10) // last 10 Games...
+      }).then (function (games) {
+        var seen = {}, recent = []
+        seen[playerID] = true
+        function addPlayer (player) {
+          if (player.human && !seen[player.id]) {
+            recent.push (makeInfo (player))
+            seen[player.id] = true
+          }
+        }
+        games.forEach (function (game) {
+          addPlayer (game.player1)
+          addPlayer (game.player2)
+        })
+        result.recent = recent
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
       })
   },
 

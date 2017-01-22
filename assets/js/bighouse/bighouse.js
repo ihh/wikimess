@@ -1579,23 +1579,43 @@ var BigHouse = (function() {
       this.eraseEventInfo()
 
       this.container
-        .append (this.locBarDiv = $('<div class="locbar">')
-		 .append ($('<span>')
-			  .text('This page shows the players you are currently following.')))
+        .append (this.locBarDiv = $('<div class="locbar">'))
 
       this.restoreScrolling (this.locBarDiv)
 
-      this.REST_getPlayerFollow (this.playerID)
-	.done (function (data) {
-	  if (bh.verbose.messages)
-	    console.log (data)
-          bh.locBarDiv.append (data.follows.map (function (follow) {
+      function makeFollowDivs (followList, emptyMessage) {
+        return followList.length
+          ? followList.map (function (follow) {
             bh.makeFollowDiv (follow)
             follow.avatarDiv
               .on ('click', bh.callWithSoundEffect (bh.showFollowStatusPage.bind (bh, follow)))
             return follow.followDiv
-          }))
-          data.follows.forEach (function (follow) { follow.showAvatar() })
+          })
+        : $('<span>').text (emptyMessage)
+      }
+      
+      this.REST_getPlayerFollow (this.playerID)
+	.done (function (data) {
+	  if (bh.verbose.messages)
+	    console.log (data)
+          bh.locBarDiv
+            .append ($('<div class="title">').text("Recently played"))
+            .append (makeFollowDivs (data.recent, "Once you have joined some games, recently encountered players will appear here."))
+            .append ($('<div class="title">').text("Following"))
+            .append (makeFollowDivs (data.followed, "You are not following anyone yet."))
+            .append ($('<div class="title">').text("Followers"))
+            .append (makeFollowDivs (data.followers, "You have no followers yet."))
+          var following = {}
+          data.recent.map (function (follow) { follow.showAvatar() })
+          data.followed.map (function (follow) {
+            following[follow.id] = true
+            follow.showAvatar()
+          })
+          data.followers.map (function (follow) {
+            if (!following[follow.id])
+              follow.makeUnfollowButton = bh.showFollowsPage.bind(bh)
+            follow.showAvatar()
+          })
 	}).fail (function (err) {
           bh.showModalWebError (err, bh.showPlayPage.bind(bh))
         })
@@ -1603,25 +1623,26 @@ var BigHouse = (function() {
 
     makeFollowDiv: function (follow) {
       var avatarDiv = $('<div class="avatar">')
-      var buttonDiv = $('<div class="button">').text ('Unfollow')
+      var followClass = 'follow-button-' + follow.id, followSelector = '.' + followClass
+      var buttonDiv = $('<div class="button">').addClass(followClass)
       var doFollow, doUnfollow
       function makeUnfollowButton() {
-        buttonDiv.text ('Unfollow')
+        $(followSelector).add(buttonDiv).text ('Unfollow')
           .off()
-          .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', buttonDiv))
+          .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv)))
       }
       function makeFollowButton() {
-        buttonDiv.text ('Follow')
+        $(followSelector).add(buttonDiv).text ('Follow')
           .off()
-          .on ('click', bh.callWithSoundEffect (doFollow, 'select', buttonDiv))
+          .on ('click', bh.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv)))
       }
       doFollow = function() {
         bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
-          .then (makeUnfollowButton)
+          .then (function() { follow.makeUnfollowButton() })
       }
       doUnfollow = function() {
         bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
-          .then (makeFollowButton)
+          .then (function() { follow.makeFollowButton() })
       }
       if (follow.following)
         makeUnfollowButton()
