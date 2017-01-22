@@ -122,7 +122,7 @@ var BigHouse = (function() {
     },
 
     REST_postPlayer: function (playerName, playerPassword) {
-      return $.post('/player/new', { name: playerName, password: playerPassword })
+      return $.post('/p/new', { name: playerName, password: playerPassword })
     },
 
     REST_postLogin: function (playerName, playerPassword) {
@@ -134,51 +134,51 @@ var BigHouse = (function() {
     },
     
     REST_getPlayerJoin: function (playerID, eventID) {
-      return $.get ('/player/' + playerID + '/join/' + eventID)
+      return $.get ('/p/' + playerID + '/join/' + eventID)
     },
 
     REST_getPlayerJoinBot: function (playerID, eventID) {
-      return $.get ('/player/' + playerID + '/join/' + eventID + '/bot')
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/bot')
     },
 
     REST_getPlayerJoinCancel: function (playerID, eventID) {
-      return $.get ('/player/' + playerID + '/join/' + eventID + '/cancel')
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/cancel')
     },
 
     REST_getPlayerGames: function (playerID, eventID) {
-      return $.get ('/player/' + playerID + '/games')
+      return $.get ('/p/' + playerID + '/games')
     },
 
     REST_getPlayerFollow: function (playerID) {
-      return $.get ('/player/' + playerID + '/follow')
+      return $.get ('/p/' + playerID + '/follow')
     },
 
     REST_getPlayerFollowOther: function (playerID, otherID) {
-      return $.get ('/player/' + playerID + '/follow/' + otherID)
+      return $.get ('/p/' + playerID + '/follow/' + otherID)
     },
 
     REST_getPlayerUnfollowOther: function (playerID, otherID) {
-      return $.get ('/player/' + playerID + '/unfollow/' + otherID)
+      return $.get ('/p/' + playerID + '/unfollow/' + otherID)
     },
 
     REST_getPlayerStatus: function (playerID) {
-      return $.get ('/player/' + playerID + '/status')
+      return $.get ('/p/' + playerID + '/status')
     },
 
     REST_getPlayerStatusOther: function (playerID, otherID) {
-      return $.get ('/player/' + playerID + '/status/' + otherID)
+      return $.get ('/p/' + playerID + '/status/' + otherID)
     },
 
     REST_getPlayerGameStatusSelf: function (playerID, gameID) {
-      return $.get ('/player/' + playerID + '/game/' + gameID + '/status/self')
+      return $.get ('/p/' + playerID + '/game/' + gameID + '/status/self')
     },
 
     REST_getPlayerGameStatusOther: function (playerID, gameID) {
-      return $.get ('/player/' + playerID + '/game/' + gameID + '/status/other')
+      return $.get ('/p/' + playerID + '/game/' + gameID + '/status/other')
     },
 
     REST_putPlayerGameMove: function (playerID, gameID, move, choice) {
-      return $.ajax ({ url: '/player/' + playerID + '/game/' + gameID + '/move/' + move,
+      return $.ajax ({ url: '/p/' + playerID + '/game/' + gameID + '/move/' + move,
                        type: 'PUT',
                        cache: false,
                        contentType: 'application/json',
@@ -187,23 +187,23 @@ var BigHouse = (function() {
     },
 
     REST_getPlayerGameMoveKick: function (playerID, gameID, moveNumber) {
-      return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/kick')
+      return $.get ('/p/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/kick')
     },
 
     REST_getPlayerGameMoveMood: function (playerID, gameID, move, mood) {
-      return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + move + '/mood/' + mood)
+      return $.get ('/p/' + playerID + '/game/' + gameID + '/move/' + move + '/mood/' + mood)
     },
 
     REST_getPlayerGameMoveQuit: function (playerID, gameID, moveNumber) {
-      return $.get ('/player/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/quit')
+      return $.get ('/p/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/quit')
     },
 
     REST_getPlayerAvatarConfig: function (playerID) {
-      return $.get ('/player/' + playerID + '/avatar')
+      return $.get ('/p/' + playerID + '/avatar')
     },
 
     REST_putPlayerAvatarConfig: function (playerID, config) {
-      return $.ajax ({ url: '/player/' + playerID + '/avatar',
+      return $.ajax ({ url: '/p/' + playerID + '/avatar',
                        type: 'PUT',
                        cache: false,
                        contentType: 'application/json',
@@ -212,7 +212,7 @@ var BigHouse = (function() {
     },
 
     REST_putPlayerAvatarMood: function (playerID, mood, blob) {
-      var url = '/player/' + playerID + '/avatar/' + mood
+      var url = '/p/' + playerID + '/avatar/' + mood
       var formData = new FormData()
       formData.append ('avatar', blob)
       return $.ajax ({ url: url,
@@ -224,7 +224,7 @@ var BigHouse = (function() {
     },
 
     REST_postPlayerLocationTrade: function (playerID, locationID, itemName, itemCount) {
-      return $.post('/player/' + playerID + '/location/' + locationID + '/trade', { name: itemName, count: itemCount })
+      return $.post('/p/' + playerID + '/location/' + locationID + '/trade', { name: itemName, count: itemCount })
     },
 
     // WebSockets interface
@@ -233,15 +233,15 @@ var BigHouse = (function() {
     },
 
     socket_getPlayerHome: function (playerID) {
-      return this.socketGetPromise ('/player/' + playerID + '/home')
+      return this.socketGetPromise ('/p/' + playerID + '/home')
     },
 
     socket_getPlayerLocation: function (playerID, location) {
-      return this.socketGetPromise ('/player/' + playerID + '/location/' + location)
+      return this.socketGetPromise ('/p/' + playerID + '/location/' + location)
     },
 
     socket_getPlayerGameHistory: function (playerID, gameID, move) {
-      var url = '/player/' + playerID + '/game/' + gameID + '/history'
+      var url = '/p/' + playerID + '/game/' + gameID + '/history'
       if (typeof(move) !== 'undefined')
 	url += '/' + move
       return this.socketGetPromise (url)

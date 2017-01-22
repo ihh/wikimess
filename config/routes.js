@@ -56,42 +56,42 @@ module.exports.routes = {
 
   'GET /icon/:icon':                    'IconController.getIcon',
   'GET /icon/:icon/:color':             'IconController.getIcon',
-  'GET /icon/:icon/:color/:background': 'IconController.getIcon',
+  'GET /icon/:icon/:color/:background': 'IconController.getIcon', 
 
-  'POST /player/new':                  'PlayerController.createPlayer',
+  'POST /p/new':                  'ClientController.createPlayer',
 
-  'GET /player/id/:name':              'PlayerController.byName',
+  'GET /p/id/:name':              'ClientController.byName',
 
-  'GET /player/:player/status':        'PlayerController.selfStatus',
-  'GET /player/:player/status/:other': 'PlayerController.otherStatus',
+  'GET /p/:player/status':        'ClientController.selfStatus',
+  'GET /p/:player/status/:other': 'ClientController.otherStatus',
 
-  'GET /player/:player/avatar':        'PlayerController.getMoodAvatarConfig',
-  'PUT /player/:player/avatar':        'PlayerController.putMoodAvatarConfig',
-  'PUT /player/:player/avatar/:mood':  'PlayerController.uploadMoodAvatar',
+  'GET /p/:player/avatar':        'ClientController.getMoodAvatarConfig',
+  'PUT /p/:player/avatar':        'ClientController.putMoodAvatarConfig',
+  'PUT /p/:player/avatar/:mood':  'ClientController.uploadMoodAvatar',
 
-  'GET /player/:player/join/:event':          'PlayerController.join',
-  'GET /player/:player/join/:event/cancel':   'PlayerController.cancelJoin',
-  'GET /player/:player/join/:event/bot':      'PlayerController.joinBot',
+  'GET /p/:player/join/:event':          'ClientController.join',
+  'GET /p/:player/join/:event/cancel':   'ClientController.cancelJoin',
+  'GET /p/:player/join/:event/bot':      'ClientController.joinBot',
 
-  'GET /player/:player/games':         'PlayerController.games',
+  'GET /p/:player/games':         'ClientController.games',
 
-  'GET /player/:player/game/:game':                     'PlayerController.gameInfo',
-  'GET /player/:player/game/:game/history':             'PlayerController.gameHistory',
-  'GET /player/:player/game/:game/history/:moveNumber': 'PlayerController.gameHistory',
+  'GET /p/:player/game/:game':                     'ClientController.gameInfo',
+  'GET /p/:player/game/:game/history':             'ClientController.gameHistory',
+  'GET /p/:player/game/:game/history/:moveNumber': 'ClientController.gameHistory',
 
-  'GET /player/:player/game/:game/status/self':  'PlayerController.selfGameStatus',
-  'GET /player/:player/game/:game/status/other': 'PlayerController.otherGameStatus',
+  'GET /p/:player/game/:game/status/self':  'ClientController.selfGameStatus',
+  'GET /p/:player/game/:game/status/other': 'ClientController.otherGameStatus',
 
-  'PUT /player/:player/game/:game/move/:moveNumber':            'PlayerController.makeMove',
-  'GET /player/:player/game/:game/move/:moveNumber/mood/:mood': 'PlayerController.changeMood',
-  'GET /player/:player/game/:game/move/:moveNumber/kick':       'PlayerController.kickTimedOutPlayers',
-  'GET /player/:player/game/:game/move/:moveNumber/quit':       'PlayerController.quitGame',
+  'PUT /p/:player/game/:game/move/:moveNumber':            'ClientController.makeMove',
+  'GET /p/:player/game/:game/move/:moveNumber/mood/:mood': 'ClientController.changeMood',
+  'GET /p/:player/game/:game/move/:moveNumber/kick':       'ClientController.kickTimedOutPlayers',
+  'GET /p/:player/game/:game/move/:moveNumber/quit':       'ClientController.quitGame',
 
-  'GET /player/:player/home':                      'PlayerController.viewHome',
-  'GET /player/:player/location/:location':        'PlayerController.viewLocation',
-  'POST /player/:player/location/:location/trade': 'PlayerController.trade',
+  'GET /p/:player/home':                      'ClientController.viewHome',
+  'GET /p/:player/location/:location':        'ClientController.viewLocation',
+  'POST /p/:player/location/:location/trade': 'ClientController.trade',
 
-  'GET /player/:player/follow':          'PlayerController.listFollowed',
-  'GET /player/:player/follow/:other':   'PlayerController.follow',
-  'GET /player/:player/unfollow/:other': 'PlayerController.unfollow'
+  'GET /p/:player/follow':          'ClientController.listFollowed',
+  'GET /p/:player/follow/:other':   'ClientController.follow',
+  'GET /p/:player/unfollow/:other': 'ClientController.unfollow'
 };

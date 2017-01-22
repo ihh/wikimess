@@ -1,12 +1,12 @@
 var request = require('supertest');
 
-describe('PlayerController', function() {
+describe('ClientController', function() {
 
   describe('#login()', function() {
-    it('should log fred in', function (done) {
+    it('should log admin in', function (done) {
       request(sails.hooks.http.app)
         .post('/login')
-        .send({ name: 'fred', password: 'test' })
+        .send({ name: 'admin', password: 'admin' })
         .expect(200)
         .expect('Content-Type', /json/)
         .expect(function (res) {

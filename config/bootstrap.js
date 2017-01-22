@@ -12,7 +12,8 @@
 module.exports.bootstrap = function(cb) {
 
   // index Items
-  Item.createIndex()
+  Player.initAdmin()
+    .then (Item.createIndex)
     .then (Meter.createIndex)
     .then (Award.createIndex)
     .then (cb)

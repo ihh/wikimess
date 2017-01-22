@@ -10,6 +10,8 @@ var fs = require('fs'),
     jsonschema = require('jsonschema')
 
 var defaultUrlPrefix = "http://localhost:1337"
+var defaultUserName = "admin"
+var defaultPassword = "admin"
 var defaultDataDir = "data"
 var defaultChoiceFilename = "$DATA/choices"
 var defaultTextFilename = "$DATA/texts"
@@ -34,6 +36,8 @@ function schemaPath (schema) {
 
 var opt = getopt.create([
   ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
+  ['u' , 'username=STRING'  , 'admin player name (default="' + defaultUserName + '")'],
+  ['w' , 'password=STRING'  , 'admin player password (default="' + defaultPassword + '")'],
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['c' , 'choices=PATH+'    , 'path to .js, .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
   ['t' , 'texts=PATH+'      , 'path to js/json text file(s) or directories (default=' + defaultPath('Text') + ')'],
@@ -72,6 +76,10 @@ if (opt.options.story) {
 }
 
 var urlPrefix = opt.options.root || defaultUrlPrefix
+
+var adminUser = opt.options.username || defaultUserName
+var adminPass = opt.options.password || defaultPassword
+var jar = request.jar()
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultPath('Choice',opt)]
@@ -136,7 +144,20 @@ callback = processFilenameList ({ path: '/choice',
                                   parsers: [JSON.parse, eval, parseStory],
                                   list: choiceFilenames.reverse() })
 
-callback()
+request.post ({ jar: jar,
+                url: urlPrefix + '/login',
+                json: true,
+                body: { name: adminUser, password: adminPass } },
+              function (err, res, body) {
+                if (err)
+                  throw err
+                else if (!body.player) {
+                  log (0, body.message)
+                } else {
+                  log (1, "Logged in as '" + adminUser + "'")
+                  callback()
+                }
+              })
 
 function processFilenameList (info) {
   return function() {
@@ -260,6 +281,7 @@ function post (info) {
 
   var post_options = {
     url: urlPrefix + path,
+    jar: jar,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -285,6 +307,8 @@ function post (info) {
     var req = request(post_options, function (err, res, body) {
       if (err)
         handler(err)
+      else if (res.statusCode != 200 && res.statusCode != 201 && res.statusCode != 400)
+        handler(JSON.stringify(res))
       else
         handler(null,body)
       post_next()

@@ -17,47 +17,71 @@
  */
 
 
+// Set restPolicy to 'isAdmin' to prevent unauthorized modification of all database tables
+var restPolicy = 'isAdmin'
+
+// Set findPolicy to 'isAdmin' to prevent unauthorized inspection of all database tables
+var findPolicy = true
+// var findPolicy = 'isAdmin'
+
+// Set clientPolicy to 'isAuthenticated' to prevent unauthenticated client operations (gameplay, config, etc)
+var clientPolicy = true
+// var clientPolicy = 'isAuthenticated'
+
 module.exports.policies = {
 
   /***************************************************************************
-  *                                                                          *
-  * Default policy for all controllers and actions (`true` allows public     *
-  * access)                                                                  *
-  *                                                                          *
-  ***************************************************************************/
+   *                                                                          *
+   * Default policy for all controllers and actions (`true` allows public     *
+   * access)                                                                  *
+   *                                                                          *
+   ***************************************************************************/
 
-    '*': true,
+  //  '*': true,
 
-    // non-permissive policy for player controller
-    'PlayerController': {
-	'create': true,
-	'getMoodAvatar': true,
-	'getMoodAvatarConfig': true,
-	'otherStatus': true,
-//	'*': 'isAuthenticated'
-	'*': true
-    },
+  'AwardController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'ChoiceController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'EventController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'FollowController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'GameController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'InviteController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'ItemController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'LocationController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'MeterController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'OutcomeController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'PlayerController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'TextController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'TurnController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+
+  // non-permissive policy for player controller
+  'ClientController': {
+    'create': true,
+    'getMoodAvatar': true,
+    'getMoodAvatarConfig': true,
+    'otherStatus': true,
+    '*': clientPolicy
+  },
 
 
   /***************************************************************************
-  *                                                                          *
-  * Here's an example of mapping some policies to run before a controller    *
-  * and its actions                                                          *
-  *                                                                          *
-  ***************************************************************************/
-	// RabbitController: {
+   *                                                                          *
+   * Here's an example of mapping some policies to run before a controller    *
+   * and its actions                                                          *
+   *                                                                          *
+   ***************************************************************************/
+  // RabbitController: {
 
-		// Apply the `false` policy as the default for all of RabbitController's actions
-		// (`false` prevents all access, which ensures that nothing bad happens to our rabbits)
-		// '*': false,
+  // Apply the `false` policy as the default for all of RabbitController's actions
+  // (`false` prevents all access, which ensures that nothing bad happens to our rabbits)
+  // '*': false,
 
-		// For the action `nurture`, apply the 'isRabbitMother' policy
-		// (this overrides `false` above)
-		// nurture	: 'isRabbitMother',
+  // For the action `nurture`, apply the 'isRabbitMother' policy
+  // (this overrides `false` above)
+  // nurture	: 'isRabbitMother',
 
-		// Apply the `isNiceToAnimals` AND `hasRabbitFood` policies
-		// before letting any users feed our rabbits
-		// feed : ['isNiceToAnimals', 'hasRabbitFood']
-	// }
+  // Apply the `isNiceToAnimals` AND `hasRabbitFood` policies
+  // before letting any users feed our rabbits
+  // feed : ['isNiceToAnimals', 'hasRabbitFood']
+  // }
 
 };
