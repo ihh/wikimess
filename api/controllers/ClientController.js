@@ -79,6 +79,7 @@ module.exports = {
                                 ? "ready"
                                 : "waiting")),
                      other: { id: other.id,
+                              human: other.human,
                               name: other.displayName,
                               mood: Game.getOtherRoleAttr (game, role, 'mood') },
 		     game: { id: game.id,
@@ -146,9 +147,11 @@ module.exports = {
 					       deadline: Game.deadline(game) } }
                      var playerRole = Game.getRole (game, player.id)
                      var playerEventInfo = { other: { id: opponent.id,
+                                                      human: opponent.human,
                                                       name: opponent.displayName,
                                                       mood: Game.getOtherRoleAttr (game, playerRole, 'mood') } }
                      var opponentEventInfo = { other: { id: player.id,
+                                                        human: player.human,
                                                         name: player.displayName,
                                                         mood: Game.getRoleAttr (game, playerRole, 'mood') } }
                      extend (playerEventInfo, eventInfo)
@@ -216,6 +219,7 @@ module.exports = {
                                        player: player.id,
 				       event: eventInfo,
                                        other: { id: opponent.id,
+                                                human: opponent.human,
                                                 name: opponent.displayName,
                                                 mood: Game.getOtherRoleAttr (game, role, 'mood') },
                                        waiting: false }
@@ -534,6 +538,7 @@ module.exports = {
     var following = {}
     function makeInfo (player) {
       return { id: player.id,
+               human: true,
                name: player.displayName,
                mood: player.initialMood,
                following: following[player.id] }

@@ -60,6 +60,7 @@
 .bighouse.cardroom .choicebar a,
 .bighouse.cardroom .detailbar,
 .bighouse.cardroom .statusbar,
+.bighouse.cardroom .backbar,
 .bighouse.cardroom .menubar {
     color: #ccc;
 }
@@ -84,6 +85,7 @@
 
 .bighouse.cardroom .statusbar a,
 .bighouse.cardroom .menubar a,
+.bighouse.cardroom .backbar a,
 .bighouse.cardroom .avatar-exit a,
 .bighouse.cardroom .upload-exit a,
 .bighouse.cardroom .menubar label {
@@ -108,7 +110,6 @@
 }
 
 .bighouse.cardroom .titlebar,
-.bighouse.cardroom .menubar,
 .bighouse.cardroom .moodslugbar {
     color: #ccc;
 }

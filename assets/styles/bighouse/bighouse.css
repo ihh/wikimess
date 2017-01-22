@@ -291,6 +291,7 @@ body {
 }
 
 .bighouse .follow .avatar,
+.bighouse .locbar .avatar,
 .bighouse .statusbar .leftmood,
 .bighouse .statusbar .rightmood {
     border-style: solid;
@@ -300,6 +301,8 @@ body {
 
 .bighouse .follow .avatar img,
 .bighouse .follow .avatar svg,
+.bighouse .locbar .avatar img,
+.bighouse .locbar .avatar svg,
 .bighouse .statusbar .leftmood img,
 .bighouse .statusbar .leftmood svg,
 .bighouse .statusbar .rightstatus span,
@@ -308,16 +311,23 @@ body {
     cursor: pointer;
 }
 
+.bighouse .other,
 .bighouse .follow {
     display: flex;
 }
 
-.bighouse .follow .avatar {
+.bighouse .event .avatar {
+    margin-top: 4px;
+}
+
+.bighouse .follow .avatar,
+.bighouse .locbar .avatar {
     width: 64px;
     height: 64px;
 }
 
-.bighouse .follow .name {
+.bighouse .follow .name,
+.bighouse .locbar .name {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -350,7 +360,18 @@ body {
     cursor: pointer;
 }
 
+.bighouse .backbar {
+    width: 100vw;
+    margin: 12px;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 .bighouse .statusbar a,
+.bighouse .backbar a,
 .bighouse .menubar a,
 .bighouse .avatar-exit a,
 .bighouse .upload-exit a,
@@ -532,6 +553,7 @@ a.unclickable {
 }
 
 .bighouse .detailbar {
+    flex-grow: 1;
     overflow-y: auto;
 }
 

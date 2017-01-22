@@ -88,11 +88,11 @@ var BigHouse = (function() {
     themes: [ {style: 'plain', text: 'Plain'},
               {style: 'cardroom', text: 'Card room'} ],
 
-    navIcons: { view: 'binoculars',
-                settings: 'cog',
-                status: 'swap-bag',
-                follows: 'relationship-bounds',
-                games: 'card-random' },
+    tabs: [{ name: 'view', method: 'showPlayPage', icon: 'binoculars' },
+           { name: 'status', method: 'showStatusPage', icon: 'swap-bag', },
+           { name: 'games', method: 'showActiveGamesPage', icon: 'card-random' },
+           { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
+           { name: 'settings', method: 'showSettingsPage', icon: 'cog' }],
 
     eventButtonText: { locked: 'Locked',
 		       start: 'Start',
@@ -474,7 +474,7 @@ var BigHouse = (function() {
                    .append ($('<div class="description">')
                             .text (data.description)))
 
-	bh.addEvents (data.events)
+	bh.addEvents (data.events, bh.showPlayPage)
 
         data.items.forEach (function (item) {
           var div = $('<div class="trade">')
@@ -648,10 +648,12 @@ var BigHouse = (function() {
                  .append (event.costDiv, event.button))
       
       div.append (event.turnDiv, event.lockDiv, event.tradeRows)
+
       if (event.hint)
         div.append ($('<div class="hint">')
                     .text (event.hint))
 
+      div.append (event.otherDiv = $('<div class="other">'))
       this.locBarDiv.append (div)
 
       this.updateEventButton (event)
@@ -667,6 +669,7 @@ var BigHouse = (function() {
       } else if (this.eventsById) {
 	var event = this.eventsById[eventId]
 	if (event) {
+          event.other = data.event.other
 	  event.game = data.event.game
 	  this.updateEventState (event, data.event.state)
 	} else if (this.page === 'activeGames')
@@ -701,6 +704,15 @@ var BigHouse = (function() {
 	.text (this.eventButtonText[event.state])
 	.off()
 
+      event.otherDiv.empty()
+      if (event.other) {
+        var avatarDiv = $('<div class="avatar">')
+        avatarDiv
+          .on ('click', bh.callWithSoundEffect (bh.showNavStatusPage.bind (bh, event.other)))
+        event.otherDiv.append (avatarDiv, $('<span class="name">').text(event.other.name))
+        bh.showMoodImage (event.other.id, event.other.mood, avatarDiv)
+      }
+      
       switch (event.state) {
       case 'locked':
         event.costDiv.show()
@@ -789,32 +801,31 @@ var BigHouse = (function() {
         event.timerDiv.empty()
     },
     
+    reloadCurrentTab: function() {
+      this[this.currentTab.method] ()
+    },
+    
     showNavBar: function (currentTab) {
       var bh = this
       
-      var tabs = [{ name: 'view', method: 'showPlayPage' },
-                  { name: 'status', method: 'showStatusPage' },
-                  { name: 'games', method: 'showActiveGamesPage' },
-                  { name: 'follows', method: 'showFollowsPage' },
-                  { name: 'settings', method: 'showSettingsPage' }]
-
       var navbar
       this.container
         .empty()
         .append (navbar = $('<div class="navbar">'))
 
-      tabs.map (function (tab) {
+      this.tabs.map (function (tab) {
         var span = $('<span>').addClass(tab.name)
-        bh.getIconPromise(bh.navIcons[tab.name])
+        bh.getIconPromise(tab.icon)
           .done (function (svg) {
             span.append ($(svg).addClass('navicon'))
           })
           .fail (function (err) {
             console.log(err)
           })
-        if (tab.name === currentTab)
+        if (tab.name === currentTab) {
+          bh.currentTab = tab
           span.addClass('active')
-        else
+        } else
           span.on ('click', bh.callWithSoundEffect (bh[tab.method]))
         navbar.append (span)
       })
@@ -1473,15 +1484,20 @@ var BigHouse = (function() {
       this.showGameStatusPage (this.REST_getPlayerStatus)
     },
 
-    showFollowStatusPage: function (follow) {
-      this.locBarDiv.remove()
+    showNavStatusPage: function (follow) {
+      this.container.empty()
       this.makeFollowDiv (follow)
-      this.container.append (follow.followDiv)
-      this.showGameStatusPage (this.REST_getPlayerStatusOther.bind (this, this.playerID, follow.id))
+      if (!follow.human) follow.buttonDiv.hide()
+      this.showGameStatusPage (this.REST_getPlayerStatusOther.bind (this, this.playerID, follow.id),
+                               function (status) {
+                                 if (status.following)
+                                   follow.makeUnfollowButton()
+                               })
+      this.detailBar.prepend (follow.followDiv)
       this.container
-	.append ($('<div class="menubar">')
+	.append ($('<div class="backbar">')
 		 .append ($('<span>')
-			  .html (this.makeLink ('Back', this.showFollowsPage))))
+			  .html (this.makeLink ('Back', bh.reloadCurrentTab))))
       follow.showAvatar()
     },
     
@@ -1511,23 +1527,23 @@ var BigHouse = (function() {
         }
       })
       this.container
-	.append ($('<div class="menubar">')
+	.append ($('<div class="backbar">')
 		 .append ($('<span>')
 			  .html (this.makeLink ('Back', this.popView))))
     },
 
     showGameStatusPage: function (getMethod, callback) {
-      var detail
+      var bh = this
       this.container
-        .append (detail = $('<div class="detailbar">'))
+        .append (this.detailBar = $('<div class="detailbar">'))
 
-      this.restoreScrolling (detail)
+      this.restoreScrolling (this.detailBar)
 
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
 	  if (bh.verbose.messages)
 	    console.log (status)
-          bh.addStatusElements (status.element, detail)
+          bh.addStatusElements (status.element, bh.detailBar)
           if (callback)
             callback (status)
 	})
@@ -1601,12 +1617,18 @@ var BigHouse = (function() {
 
       this.restoreScrolling (this.locBarDiv)
 
+      var followsById = {}
       function makeFollowDivs (followList, emptyMessage) {
         return followList.length
           ? followList.map (function (follow) {
+            followsById[follow.id] = followsById[follow.id] || []
+            followsById[follow.id].push (follow)
             bh.makeFollowDiv (follow)
+            follow.setFollowing = function (flag) {
+              followsById[follow.id].forEach (function (f) { f.following = flag })
+            }
             follow.avatarDiv
-              .on ('click', bh.callWithSoundEffect (bh.showFollowStatusPage.bind (bh, follow)))
+              .on ('click', bh.callWithSoundEffect (bh.showNavStatusPage.bind (bh, follow)))
             return follow.followDiv
           })
         : $('<span>').text (emptyMessage)
@@ -1624,7 +1646,11 @@ var BigHouse = (function() {
             .append ($('<div class="title">').text("Followers"))
             .append (makeFollowDivs (data.followers, "You have no followers yet."))
           var following = {}
-          data.recent.map (function (follow) { follow.showAvatar() })
+          data.recent.map (function (follow) {
+            if (!following[follow.id])
+              follow.makeUnfollowButton = bh.showFollowsPage.bind(bh)
+            follow.showAvatar()
+          })
           data.followed.map (function (follow) {
             following[follow.id] = true
             follow.showAvatar()
@@ -1656,11 +1682,11 @@ var BigHouse = (function() {
       }
       doFollow = function() {
         bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
-          .then (function() { follow.makeUnfollowButton() })
+          .then (function() { follow.setFollowing(true); follow.makeUnfollowButton() })
       }
       doUnfollow = function() {
         bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
-          .then (function() { follow.makeFollowButton() })
+          .then (function() { follow.setFollowing(false); follow.makeFollowButton() })
       }
       if (follow.following)
         makeUnfollowButton()
@@ -1673,6 +1699,7 @@ var BigHouse = (function() {
       $.extend (follow, { followDiv: followDiv,
                           avatarDiv: avatarDiv,
                           buttonDiv: buttonDiv,
+                          setFollowing: function(flag) { follow.following = flag },
                           showAvatar: bh.showMoodImage.bind (bh, follow.id, follow.mood, avatarDiv),
                           makeFollowButton: makeFollowButton,
                           makeUnfollowButton: makeUnfollowButton })

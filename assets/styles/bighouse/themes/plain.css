@@ -58,6 +58,7 @@
 .bighouse.plain .choicebar a,
 .bighouse.plain .detailbar,
 .bighouse.plain .statusbar,
+.bighouse.plain .backbar,
 .bighouse.plain .menubar {
     color: #888;
 }
@@ -107,7 +108,6 @@
 }
 
 .bighouse.plain .titlebar,
-.bighouse.plain .menubar,
 .bighouse.plain .moodslugbar {
     color: #444;
 }

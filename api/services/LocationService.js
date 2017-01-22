@@ -268,6 +268,7 @@ module.exports = {
 		  var event = eventById[game.event]
                   var opponent = Game.getOtherRoleAttr (game, role, 'player')
                   event.other = { id: opponent.id,
+                                  human: opponent.human,
                                   name: opponent.displayName,
                                   mood: Game.getOtherRoleAttr (game, role, 'mood') }
 		  if (Game.getRoleAttr (game,role,'quit')) {

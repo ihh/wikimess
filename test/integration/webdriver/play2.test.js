@@ -194,7 +194,7 @@ function testStatus (obj, className, presents, absents) {
   absents.forEach (function (text) { checkTextAbsent (obj, text) })
   it('should have '+obj.name+' click "Back"', function(done) {
     obj.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='menubar']/span/a[text()='Back']")))
+      .wait(until.elementLocated(By.xpath("//div[@class='backbar']/span/a[text()='Back']")))
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
 	})

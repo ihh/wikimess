@@ -161,6 +161,7 @@
 
     .bighouse .statusbar a,
     .bighouse .menubar a,
+    .bighouse .backbar a,
     .bighouse .avatar-exit a,
     .bighouse .upload-exit a {
 	padding: 4px 8px 4px 8px;
