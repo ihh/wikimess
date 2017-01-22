@@ -19,22 +19,6 @@ module.exports = {
       model: 'location'
     },
 
-    ready: {
-      type: 'string'
-    },
-
-    set: {
-      type: 'string'
-    },
-
-    go: {
-      type: 'string'
-    },
-
-    pitch: {
-      type: 'string'
-    },
-
     choice: {
       type: 'string'
     },

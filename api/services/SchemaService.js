@@ -333,10 +333,6 @@ module.exports = {
           properties: {
             title: { type: "string" },
             hint: { type: "string" },
-            ready: { type: "string" },
-            set: { type: "string" },
-            go: { type: "string" },
-            pitch: { type: "string" },
             opponent: { oneOf: [ { type: "string" },
 				 { type: "array", minItems: 1, items: { type: "string" } }] },
             compatibility: { type: "string" },
