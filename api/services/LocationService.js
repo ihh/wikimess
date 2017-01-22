@@ -257,6 +257,8 @@ module.exports = {
 				event: eventIds },
 		       sort: 'createdAt' })
             .populate ('current')
+            .populate ('player1')
+            .populate ('player2')
 	    .exec (function (err, games) {
 	      if (err) rs(err)
 	      else {
@@ -264,6 +266,10 @@ module.exports = {
 		games.forEach (function (game) {
 		  var role = Game.getRole (game, player.id)
 		  var event = eventById[game.event]
+                  var opponent = Game.getOtherRoleAttr (game, role, 'player')
+                  event.other = { id: opponent.id,
+                                  name: opponent.displayName,
+                                  mood: Game.getOtherRoleAttr (game, role, 'mood') }
 		  if (Game.getRoleAttr (game,role,'quit')) {
 		    if (event.resetAllowed) {
 		      var resetTime = Game.resetTime (game, event)
@@ -336,6 +342,7 @@ module.exports = {
                                    invited: event.invited,
                                    botDefault: event.botDefaultTime,
 				   reset: event.resetTime,
+                                   other: event.other,
 				   game: event.game }
 			})
 		      })

@@ -69,6 +69,7 @@ module.exports = {
 	  res.json (games.map (function (game) {
 	    var role = Game.getRole (game, playerID)
 	    var waiting = Game.isWaitingForMove(game,role)
+            var other = Game.getOtherRoleAttr (game, role, 'player')
 	    return { id: game.event.id,
 		     title: game.event.title,
 		     hint: game.event.hint,
@@ -77,6 +78,9 @@ module.exports = {
                              : (waiting
                                 ? "ready"
                                 : "waiting")),
+                     other: { id: other.id,
+                              name: other.displayName,
+                              mood: Game.getOtherRoleAttr (game, role, 'mood') },
 		     game: { id: game.id,
 			     missed: Game.getRoleAttr (game, role, 'missed'),
 			     deadline: Game.deadline (game) } }
@@ -140,13 +144,22 @@ module.exports = {
 				       state: game.finished ? "finished" : "ready",
 				       game: { id: game.id,
 					       deadline: Game.deadline(game) } }
+                     var playerRole = Game.getRole (game, player.id)
+                     var playerEventInfo = { other: { id: opponent.id,
+                                                      name: opponent.displayName,
+                                                      mood: Game.getOtherRoleAttr (game, playerRole, 'mood') } }
+                     var opponentEventInfo = { other: { id: player.id,
+                                                        name: player.displayName,
+                                                        mood: Game.getRoleAttr (game, playerRole, 'mood') } }
+                     extend (playerEventInfo, eventInfo)
+                     extend (opponentEventInfo, eventInfo)
 		     var playerMsg = { message: "join",
 				       player: player.id,
-				       event: eventInfo,
+				       event: playerEventInfo,
 				       waiting: false }
 		     var opponentMsg = { message: "join",
 					 player: opponent.id,
-					 event: eventInfo,
+					 event: opponentEventInfo,
 					 waiting: false }
 		     if (req.isSocket)
 		       Player.subscribe (req, [player.id])
@@ -159,7 +172,6 @@ module.exports = {
 		     if (req.isSocket)
 		       Player.subscribe (req, [player.id])
 		     rs (null, { player: player.id,
-				 event: event.id,
 				 waiting: true,
 				 botDefault: Event.botDefaultTime (event, Date.now()) })
 		   },
@@ -178,7 +190,6 @@ module.exports = {
 	    rs (err)
           else {
 	    rs (null, { player: player.id,
-			event: event,
                         waiting: false })
           }
 	})
@@ -194,6 +205,7 @@ module.exports = {
                      wantHuman: false },
 		   function (opponent, game) {
                      // game started; return game info
+	             var role = Game.getRole (game, player.id)
 		     var eventInfo = { id: event.id,
 				       title: event.title,
 				       hint: event.hint,
@@ -203,6 +215,9 @@ module.exports = {
                      var playerMsg = { message: "join",
                                        player: player.id,
 				       event: eventInfo,
+                                       other: { id: opponent.id,
+                                                name: opponent.displayName,
+                                                mood: Game.getOtherRoleAttr (game, role, 'mood') },
                                        waiting: false }
                      if (req.isSocket)
                        Player.subscribe (req, [player.id])
