@@ -91,7 +91,7 @@ var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 var callback = function() {}
 
 var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
-callback = processFilenameList ({ path: '/player',
+callback = processFilenameList ({ path: urlPrefix + '/player',
                                   handler: playerHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
@@ -99,32 +99,32 @@ callback = processFilenameList ({ path: '/player',
 
 var locationHandler = makeHandler ('Location', hasName, function (obj) {
   return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
-callback = processFilenameList ({ path: '/location',
+callback = processFilenameList ({ path: urlPrefix + '/location',
                                   schema: schemaPath('location'),
                                   handler: locationHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: locationFilenames.reverse() })
 
-callback = processFilenameList ({ path: '/item',
+callback = processFilenameList ({ path: urlPrefix + '/item',
                                   handler: genericHandler('Item'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: itemFilenames.reverse() })
 
-callback = processFilenameList ({ path: '/award',
+callback = processFilenameList ({ path: urlPrefix + '/award',
                                   handler: genericHandler('Award'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: awardFilenames.reverse() })
 
-callback = processFilenameList ({ path: '/meter',
+callback = processFilenameList ({ path: urlPrefix + '/meter',
                                   handler: genericHandler('Meter'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: meterFilenames.reverse() })
 
-callback = processFilenameList ({ path: '/text',
+callback = processFilenameList ({ path: urlPrefix + '/text',
                                   schema: schemaPath('text'),
                                   handler: genericHandler('Text'),
                                   callback: callback,
@@ -135,7 +135,7 @@ var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
   return ' ' + c.name + '\t(id=' + c.id + ', '
     + plural (c.outcomes && c.outcomes.length, 'outcome')
     + ')' })
-callback = processFilenameList ({ path: '/choice',
+callback = processFilenameList ({ path: urlPrefix + '/choice',
                                   schema: schemaPath('choice'),
                                   handler: choiceHandler,
                                   callback: callback,
