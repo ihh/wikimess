@@ -27,12 +27,17 @@
     border-radius: 4px;
 }
 
+.bighouse .detailbar .icon,
+.bighouse .detailbar .text {
+    float: left;
+    clear: both;
+}
+
 .bighouse .detailbar .icon img,
 .bighouse .detailbar .icon svg {
     width: 10vw;
     height: 10vw;
     border-radius: 4px;
-    float: right;
     background-color: black;
 }
 

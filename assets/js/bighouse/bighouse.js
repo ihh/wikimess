@@ -532,7 +532,6 @@ var BigHouse = (function() {
               console.log(err)
             })
           div.append (iconSpan)
-          div.append (tradeRows)
 
           if (item.hint)
             div.append ($('<div class="hint">')
@@ -542,6 +541,7 @@ var BigHouse = (function() {
             div.append ($('<div class="owned">')
                         .text ("You own " + item.owned + " of these."))
 
+          div.append (tradeRows)
           bh.locBarDiv.append (div)
         })
         
@@ -586,10 +586,9 @@ var BigHouse = (function() {
       this.getIconPromise (price.icon)
         .done (function (svg) {
           svg = bh.colorizeIcon (svg, price.color)
-          div.append ($(svg).addClass('icon'))
-          if (price.amount != 1)
-            div.append ($('<div class="price">')
-                        .text (price.amount))
+          div.append ($(svg).addClass('icon'),
+                      $('<div class="price">')
+                      .text (price.amount))
         })
         .fail (function (err) {
           console.log(err)
@@ -647,13 +646,13 @@ var BigHouse = (function() {
         .append ($('<div class="traderow">')
                  .append (event.costDiv, event.button))
       
-      div.append (event.turnDiv, event.lockDiv, event.tradeRows)
+      div.append (event.turnDiv, event.lockDiv)
 
       if (event.hint)
         div.append ($('<div class="hint">')
                     .text (event.hint))
 
-      div.append (event.otherDiv = $('<div class="other">'))
+      div.append (event.otherDiv = $('<div class="other">'), event.tradeRows)
       this.locBarDiv.append (div)
 
       this.updateEventButton (event)
