@@ -62,16 +62,12 @@ module.exports = {
     itemByCategory: {},
 
     // startup method to create in-memory index (called from config/bootstrap.js)
-    createIndex: function (callback) {
-        Item.find({}).exec (function (err, items) {
-            if (err) throw err
-            else {
-                items.forEach (function (item) {
-                    Item.updateIndex (item)
-                })
-                callback()
-            }
+    createIndex: function() {
+      return Item.find().then (function (items) {
+        items.forEach (function (item) {
+          Item.updateIndex (item)
         })
+      })
     },
 
     // method to update in-memory index

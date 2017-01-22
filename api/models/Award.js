@@ -30,16 +30,12 @@ module.exports = {
     awards: [],
 
     // startup method to create in-memory index (called from config/bootstrap.js)
-    createIndex: function (callback) {
-        Award.find({}).exec (function (err, awards) {
-            if (err) throw err
-            else {
-                awards.forEach (function (award) {
-                    Award.updateIndex (award)
-                })
-                callback()
-            }
+    createIndex: function() {
+      return Award.find().then (function (awards) {
+        awards.forEach (function (award) {
+          Award.updateIndex (award)
         })
+      })
     },
 
     // method to update in-memory index

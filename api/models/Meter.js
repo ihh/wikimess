@@ -29,15 +29,11 @@ module.exports = {
     meters: [],
 
     // startup method to create in-memory index (called from config/bootstrap.js)
-    createIndex: function (callback) {
-        Meter.find({}).exec (function (err, meters) {
-            if (err) throw err
-            else {
-                meters.forEach (function (meter) {
-                    Meter.updateIndex (meter)
-                })
-                callback()
-            }
+    createIndex: function() {
+        return Meter.find().then (function (meters) {
+          meters.forEach (function (meter) {
+            Meter.updateIndex (meter)
+          })
         })
     },
 
