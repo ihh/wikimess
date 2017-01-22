@@ -153,6 +153,7 @@ body {
     display: inline-block;
     float: right;
     clear: right;
+    margin-top: 4px;
 }
 
 .bighouse .locbar .event .hint,

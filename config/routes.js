@@ -73,6 +73,10 @@ module.exports.routes = {
   'GET /p/:player/join/:event/cancel':   'ClientController.cancelJoin',
   'GET /p/:player/join/:event/bot':      'ClientController.joinBot',
 
+  'GET /p/:player/join/:event/invite/:other': 'ClientController.invite',
+  'GET /p/:player/join/:event/accept/:other': 'ClientController.accept',
+  'GET /p/:player/join/:event/reject/:other': 'ClientController.reject',
+
   'GET /p/:player/games':         'ClientController.games',
 
   'GET /p/:player/game/:game':                     'ClientController.gameInfo',

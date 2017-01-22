@@ -170,7 +170,7 @@ module.exports = {
 		     Player.message (player.id, playerMsg)
 		     rs (null, playerMsg)
 		   },
-		   function() {
+		   function (invite) {
 		     // player is waiting
 		     if (req.isSocket)
 		       Player.subscribe (req, [player.id])
@@ -233,6 +233,44 @@ module.exports = {
     })
   },
 
+  // invite player to game
+  invite: function (req, res) {
+    PlayerService.findEvent (req, res, function (player, event, rs) {
+      Player.findOne ({ id: req.params.other })
+        .then (function (other) {
+          // WRITE ME
+        }).catch (rs)
+      })
+  },
+
+  // reject invitation
+  accept: function (req, res) {
+    Game.find ({ player1: req.params.player,
+                 player2: req.params.other,
+                 event: req.params.event })
+      .populate ('player1')
+      .populate ('player2')
+      .then (function (game) {
+        // WRITE ME
+      }).catch (function (err) {
+        res.status(500).send (err)
+      })
+  },
+
+  // reject invitation
+  reject: function (req, res) {
+    Game.find ({ player1: req.params.player,
+                 player2: req.params.other,
+                 event: req.params.event })
+      .populate ('player1')
+      .populate ('player2')
+      .then (function (game) {
+        // WRITE ME
+      }).catch (function (err) {
+        res.status(500).send (err)
+      })
+  },
+  
   // current state of game, filtered for player
   gameInfo: function (req, res) {
     PlayerService.findGame (req, res, function (info, rs) {

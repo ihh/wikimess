@@ -267,10 +267,6 @@ module.exports = {
 		  var role = Game.getRole (game, player.id)
 		  var event = eventById[game.event]
                   var opponent = Game.getOtherRoleAttr (game, role, 'player')
-                  event.other = { id: opponent.id,
-                                  human: opponent.human,
-                                  name: opponent.displayName,
-                                  mood: Game.getOtherRoleAttr (game, role, 'mood') }
 		  if (Game.getRoleAttr (game,role,'quit')) {
 		    if (event.resetAllowed) {
 		      var resetTime = Game.resetTime (game, event)
@@ -278,7 +274,11 @@ module.exports = {
 			event.resetTime = resetTime
 		    } else
 		      event.visible = false
-		  } else
+		  } else {
+                    event.other = { id: opponent.id,
+                                    human: opponent.human,
+                                    name: opponent.displayName,
+                                    mood: Game.getOtherRoleAttr (game, role, 'mood') }
 		    event.game = { id: game.id,
 				   finished: game.finished,
 				   waiting: Game.isWaitingForMove(game,role),
@@ -286,6 +286,7 @@ module.exports = {
 				   running: Game.runningTime(game),
 				   dormant: Game.dormantTime(game),
 				   deadline: Game.deadline(game) }
+                  }
 		})
 		Invite.find ({ event: eventIds,
 			       player: player.id })

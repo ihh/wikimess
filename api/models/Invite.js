@@ -8,13 +8,13 @@
 module.exports = {
 
   attributes: {
-      event: {
-	  model: 'event',
-      },
+    event: {
+      model: 'event',
+    },
 
-      player: {
-	  model: 'player',
-      }
+    player: {
+      model: 'player',
+    }
   }
 };
 

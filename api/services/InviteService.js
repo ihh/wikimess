@@ -88,14 +88,14 @@ module.exports = {
 	   Invite.findOrCreate
 	 ({ player: player.id,
 	    event: event.id })
-	   .exec (function (err, invites) {
+	   .exec (function (err, invite) {
              if (err)
                lockedError (err)
              else {
 	       LocationService.deductCost (player, event.cost)
                Player.update ({ id: player.id },
                               { global: player.global },
-                              lockedSuccess,
+                              function() { lockedSuccess(invite) },
                               lockedError)
              }
            })

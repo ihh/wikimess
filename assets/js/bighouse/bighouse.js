@@ -597,8 +597,8 @@ var BigHouse = (function() {
     },
 
     eraseEventInfo: function() {
-      delete this.lastStartedEventId
-      delete this.eventsById
+      delete this.lastStartedEventKey
+      delete this.eventsByKey
       delete this.currentEvents
     },
 
@@ -616,9 +616,13 @@ var BigHouse = (function() {
       }
     },
 
+    getEventKey: function (event) {
+      return this.page === 'play' ? ('event-' + event.id) : (event.game && ('game-' + event.game.id))
+    },
+    
     addEvents: function (events) {
       var bh = this
-      bh.eventsById = {}
+      bh.eventsByKey = {}
       bh.currentEvents = []
       events.map (function (event) {
 	bh.addEvent (event)
@@ -627,14 +631,15 @@ var BigHouse = (function() {
     },
 
     addEvent: function (event) {
-      this.eventsById[event.id] = event
+      var eventKey = this.getEventKey(event)
+      this.eventsByKey[eventKey] = event
       this.currentEvents.push (event)
       var div = $('<div class="event">')
           .append ($('<div class="title">')
                    .text (event.title))
 
       event.lockDiv = $('<div class="lock">')
-      event.button = $('<div class="button">').attr('name','event-'+event.id)
+      event.button = $('<div class="button">').attr('name',eventKey)
 
       event.missedDiv = $('<div class="missed">')
       event.timerDiv = $('<div class="timer">')
@@ -659,14 +664,14 @@ var BigHouse = (function() {
     },
 
     updateEventFromJoinMessage: function (data) {
-      var eventId = data.event.id
-      if (this.lastStartedEventId && this.lastStartedEventId == eventId) {
+      var eventKey = this.getEventKey (data.event)
+      if (this.lastStartedEventKey && this.lastStartedEventKey == eventKey) {
         if (this.selectSound)
           this.selectSound.stop()
         this.startGame (data.event.game.id)
 
-      } else if (this.eventsById) {
-	var event = this.eventsById[eventId]
+      } else if (this.eventsByKey) {
+	var event = this.eventsByKey[eventKey]
 	if (event) {
           event.other = data.event.other
 	  event.game = data.event.game
@@ -677,9 +682,9 @@ var BigHouse = (function() {
     },
 
     updateEventFromMoveMessage: function (data) {
-      var eventId = data.event
-      if (this.eventsById) {
-	var event = this.eventsById[eventId]
+      var eventKey = this.getEventKey (data.event)
+      if (this.eventsByKey) {
+	var event = this.eventsByKey[eventKey]
 	if (event) {
 	  event.game.missed = data.missed
 	  if (data.nextDeadline)
@@ -724,7 +729,8 @@ var BigHouse = (function() {
           button.off()
 	  bh.selectSound = bh.playSound ('select')
           event.costDiv.hide()
-	  bh.lastStartedEventId = event.id
+          var eventKey = bh.getEventKey(event)
+	  bh.lastStartedEventKey = eventKey
           bh.REST_getPlayerJoin (bh.playerID, event.id)
             .done (function (data) {
               if (data.waiting) {
@@ -2189,9 +2195,9 @@ var BigHouse = (function() {
       text = text.replace (/<([Ll])abel:(\S+?)([ ,;]?|[,;]&)>/g, function (match, uc, label, sep) {
 	var joined = (sep === ''
 		      ? bighouseLabel.sumExpansionLabels (expansion, label)
-		      : (sep === ''
-			 ? bighouseLabel.flatExpansionLabels(expansion,label).join(sep)
-			 : bighouseLabel.listExpansionLabels (expansion, label, sep.charAt(0), sep.length > 1)))
+		      : (sep === ' '
+			 ? bighouseLabel.joinExpansionLabels (expansion, label, ' ')
+			 : bighouseLabel.joinExpansionLabels (expansion, label, sep.charAt(0) + ' ', ' and ', sep.length > 1 && (sep.charAt(0) + ' and '))))
 	return uc === 'L' ? bighouseLabel.capitalize(joined) : joined
       })
 
