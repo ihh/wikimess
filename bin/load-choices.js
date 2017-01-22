@@ -4,14 +4,12 @@ var fs = require('fs'),
     path = require('path'),
     getopt = require('node-getopt'),
     assert = require('assert'),
-    http = require('http'),
+    request = require('request'),
     colors = require('colors'),
     extend = require('extend'),
     jsonschema = require('jsonschema')
 
-var defaultHost = "localhost"
-var defaultPort = "1337"
-var defaultUrlPrefix = ""
+var defaultUrlPrefix = "http://localhost:1337"
 var defaultDataDir = "data"
 var defaultChoiceFilename = "$DATA/choices"
 var defaultTextFilename = "$DATA/texts"
@@ -35,8 +33,6 @@ function schemaPath (schema) {
 }
 
 var opt = getopt.create([
-  ['h' , 'host=STRING'      , 'hostname (default="' + defaultHost + '")'],
-  ['o' , 'port=INT'         , 'port (default=' + defaultPort + ')'],
   ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['c' , 'choices=PATH+'    , 'path to .js, .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
@@ -75,8 +71,6 @@ if (opt.options.story) {
   return
 }
 
-var host = opt.options.host || defaultHost
-var port = opt.options.port || defaultPort
 var urlPrefix = opt.options.root || defaultUrlPrefix
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
@@ -91,7 +85,7 @@ var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 var callback = function() {}
 
 var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
-callback = processFilenameList ({ path: urlPrefix + '/player',
+callback = processFilenameList ({ path: '/player',
                                   handler: playerHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
@@ -99,32 +93,32 @@ callback = processFilenameList ({ path: urlPrefix + '/player',
 
 var locationHandler = makeHandler ('Location', hasName, function (obj) {
   return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
-callback = processFilenameList ({ path: urlPrefix + '/location',
+callback = processFilenameList ({ path: '/location',
                                   schema: schemaPath('location'),
                                   handler: locationHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: locationFilenames.reverse() })
 
-callback = processFilenameList ({ path: urlPrefix + '/item',
+callback = processFilenameList ({ path: '/item',
                                   handler: genericHandler('Item'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: itemFilenames.reverse() })
 
-callback = processFilenameList ({ path: urlPrefix + '/award',
+callback = processFilenameList ({ path: '/award',
                                   handler: genericHandler('Award'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: awardFilenames.reverse() })
 
-callback = processFilenameList ({ path: urlPrefix + '/meter',
+callback = processFilenameList ({ path: '/meter',
                                   handler: genericHandler('Meter'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: meterFilenames.reverse() })
 
-callback = processFilenameList ({ path: urlPrefix + '/text',
+callback = processFilenameList ({ path: '/text',
                                   schema: schemaPath('text'),
                                   handler: genericHandler('Text'),
                                   callback: callback,
@@ -135,7 +129,7 @@ var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
   return ' ' + c.name + '\t(id=' + c.id + ', '
     + plural (c.outcomes && c.outcomes.length, 'outcome')
     + ')' })
-callback = processFilenameList ({ path: urlPrefix + '/choice',
+callback = processFilenameList ({ path: '/choice',
                                   schema: schemaPath('choice'),
                                   handler: choiceHandler,
                                   callback: callback,
@@ -265,9 +259,7 @@ function post (info) {
   var post_data = JSON.stringify (elem)
 
   var post_options = {
-    host: host,
-    port: port,
-    path: path,
+    url: urlPrefix + path,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -290,25 +282,11 @@ function post (info) {
   } else {
     
     // Set up the request
-    var req = http.request(post_options, function(res) {
-      res.setEncoding('utf8')
-      var data = ''
-      res.on('data', function (chunk) {
-	var str = chunk.toString()
-	data += str
-	log (6, '[received ' + str.length + ' bytes]')
-      })
-      res.on('end', function() {
-	log (5, data)
-	log (4, 'Response length: ' + data.length + ' bytes')
-
-	handler (null, data)
-	post_next()
-      })
-    })
-
-    req.on('error', function(err) {
-      handler(err)
+    var req = request(post_options, function (err, res, body) {
+      if (err)
+        handler(err)
+      else
+        handler(null,body)
       post_next()
     })
 
