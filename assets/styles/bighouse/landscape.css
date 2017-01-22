@@ -11,6 +11,7 @@
 
     .bighouse .navbar {
 	height: 18vh;
+	min-height: 18vh;
     }
 
     .bighouse .navbar .navicon {

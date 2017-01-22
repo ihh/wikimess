@@ -3,8 +3,11 @@
   <head>
     <title>test</title>
     <link rel="stylesheet" href="/styles/bighouse/bighouse.css"></link>
+    <link rel="stylesheet" href="/styles/bighouse/aspectratios.css"></link>
     <link rel="stylesheet" href="/styles/bighouse/portrait.css"></link>
     <link rel="stylesheet" href="/styles/bighouse/landscape.css"></link>
+    <link rel="stylesheet" href="/styles/bighouse/large.css"></link>
+    <link rel="stylesheet" href="/styles/bighouse/status.css"></link>
     <link rel="stylesheet" href="/styles/bighouse/themes/plain.css"></link>
     <link rel="stylesheet" href="/styles/bighouse/themes/cardroom.css"></link>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,158 +17,176 @@
     <div class="bighouse plain">
       <div class="navbar">
 	<span class="view active"><img class="navicon" src="/images/icons/binoculars.svg"/></span>
-	<span class="settings"><img class="navicon" src="/images/icons/cog.svg"/></span>
+	<span class="status"><img class="navicon" src="/images/icons/swap-bag.svg"/></span>
 	<span class="games"><img class="navicon" src="/images/icons/card-random.svg"/></span>
+	<span class="follows"><img class="navicon" src="/images/icons/relationship-bounds.svg"/></span>
+	<span class="settings"><img class="navicon" src="/images/icons/cog.svg"/></span>
       </div>
       <div class="locbar">
 	<div class="location">
-	  <div class="title">
-	    The Location
+	  <div class="title">Outside WizCom</div>
+	  <div class="description">Welcome to your first day at Wizard Valley Community College.</div>
+	</div>
+	
+	<div class="event">
+	  <div class="title">Timeout test</div>
+	  <div class="turn">
+	    <div class="missed"></div>
+	    <div class="timer"></div>
 	  </div>
-	  <div class="description">
-	    Brief description of the Location, setting the scene.
+	  <div class="lock"></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost"></div>
+	      <div class="button" name="event-1">Start</div>
+	    </div>
+	  </div>
+	  <div class="hint">Let's do a timeout test!</div>
+	  <div class="other"></div>
+	</div>
+
+	<div class="event">
+	  <div class="title">Timeout test</div>
+	  <div class="turn">
+	    <div class="missed"></div>
+	    <div class="timer">23s</div>
+	  </div>
+	  <div class="lock"></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost" style="display: none;"></div>
+	      <div class="button" name="event-1">Cancel</div>
+	    </div>
+	  </div>
+	  <div class="hint">Let's do a timeout test!</div>
+	  <div class="other"></div>
+	</div>
+
+	<div class="event">
+	  <div class="title">Timeout test</div>
+	  <div class="turn">
+	    <div class="missed"></div>
+	    <div class="timer">23s</div>
+	  </div>
+	  <div class="lock"></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost" style="display: none;"></div>
+	      <div class="button" name="event-1">Cancel</div>
+	    </div>
+	  </div>
+	  <div class="hint">Let's do a timeout test with a really long hint that goes on and on! And gushes as though it's never going to stop! Isn't this awesome?</div>
+	  <div class="other"></div>
+	</div>
+
+	<div class="event">
+	  <div class="title">AI test</div>
+	  <div class="turn">
+	    <div class="missed"></div>
+	    <div class="timer"></div>
+	  </div>
+	  <div class="lock"></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost" style="display: none;"></div>
+	      <div class="button" name="event-2">Go</div>
+	    </div>
+	  </div>
+	  <div class="hint">Play a single-player test!</div>
+	  <div class="other">
+	    <div class="avatar mood-happy"><img src="/images/icons/robe.svg"/></div>
+	    <span class="name">ai</span>
 	  </div>
 	</div>
 
 	<div class="event">
-	  <div class="title">
-	    An Event
+	  <div class="title">Cut class</div>
+	  <div class="turn">
+	    <div class="missed"></div>
+	    <div class="timer"></div>
 	  </div>
-	  <div class="hint">
-	    Some event.
+	  <div class="lock"></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost">
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+	      </div>
+	      <div class="button" name="event-3">Start</div>
+	    </div>
 	  </div>
-	  <div class="timer">
-	    5m 34s
-	  </div>
-	  <div class="button">
-	    Ready
-	  </div>
+	  <div class="hint">Want to cut class?</div>
+	  <div class="other"></div>
+	</div>
+	
+	<div class="link">
+	  <div class="title">Lobby</div>
+	  <div class="hint">Enter!</div>
+	  <div class="cost"></div>
+	  <div class="button" name="link-2">Go</div>
 	</div>
 
-	<div class="event">
-	  <div class="title">
-	    An Event whose title is so long that it will wrap the line
+	<div class="trade">
+	  <div class="title">Robe</div>
+	  <div class="bigicon"><img src="/images/icons/robe.svg"/></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost"></div>
+	      <div class="button" name="buy-robe">Take</div>
+	    </div>
 	  </div>
-	  <div class="hint">
-	    Another event, OK?
-	  </div>
-	  <div class="timer">
-	    10h 20m
-	  </div>
-	  <div class="button">
-	    Starting
-	  </div>
-	</div>
-	<div class="event">
-	  <div class="title">
-	    An Event
-	  </div>
-	  <div class="hint">
-	    This is the best event. Believe me, you'll love it.
-	  </div>
-	  <div class="timer">
-	    3h 7m
-	  </div>
-	  <div class="button">
-	    Waiting
-	  </div>
-	</div>
-	<div class="event">
-	  <div class="title">
-	    An Event
-	  </div>
-	  <div class="hint">
-	    This is the best event. Believe me, you'll love it.
-	  </div>
-	  <div class="button">
-	    Start
-	  </div>
-	</div>
-	<div class="event">
-	  <div class="title">
-	    An Event
-	  </div>
-	  <div class="hint">
-	    This is the best event. Believe me, you'll love it.
-	  </div>
-	  <div class="button">
-	    Start
-	  </div>
+	  <div class="hint">The standard novice's robe. Could just about pass for a red raincoat, not that this looks any less eccentric in Northern California.</div>
 	</div>
 	
-    	<div class="link">
-	  <div class="title">
-	    Another Location
+	<div class="trade">
+	  <div class="title">Robe</div>
+	  <div class="bigicon"><img src="/images/icons/robe.svg"/></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost">
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+	      </div>
+	      <div class="button" name="buy-robe">Buy</div>
+	    </div>
+	    <div class="traderow">
+	      <div class="cost">
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+	      </div>
+	      <div class="button" name="sell-robe">Sell</div>
+	    </div>
 	  </div>
-	  <div class="hint">
-	    The grass is always greener, somewhere else.
-	  </div>
-	  <div class="lock">
-	    Get the seven-league boots to unlock
-	  </div>
-	  <div class="button">
-	    Locked
-	  </div>
+	  <div class="hint">The standard novice's robe. Could just about pass for a red raincoat, not that this looks any less eccentric in Northern California.</div>
 	</div>
-	
-    	<div class="link">
-	  <div class="title">
-	    Another Location
+
+		
+	<div class="trade">
+	  <div class="title">Robe</div>
+	  <div class="bigicon"><img src="/images/icons/robe.svg"/></div>
+	  <div class="traderows">
+	    <div class="traderow">
+	      <div class="cost">
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+		<div class="iconprice">
+		  <img src="/images/icons/coins.svg"/>
+		</div>
+	      </div>
+	      <div class="button" name="sell-robe">Buy</div>
+	    </div>
 	  </div>
-	  <div class="hint">
-	    The grass is always greener, somewhere else.
-	  </div>
-	  <div class="button">
-	    Go
-	  </div>
-	</div>
-	
-    	<div class="link">
-	  <div class="title">
-	    Another Location
-	  </div>
-	  <div class="hint">
-	    The grass is always greener, somewhere else.
-	  </div>
-	  <div class="button">
-	    Go
-	  </div>
-	</div>
-	
-    	<div class="link">
-	  <div class="title">
-	    Another Location
-	  </div>
-	  <div class="hint">
-	    The grass is always greener, somewhere else.
-	  </div>
-	  <div class="button">
-	    Go
-	  </div>
-	</div>
-	
-    	<div class="link">
-	  <div class="title">
-	    Another Location
-	  </div>
-	  <div class="hint">
-	    The grass is always greener, somewhere else.
-	  </div>
-	  <div class="button">
-	    Go
-	  </div>
-	</div>
-	
-    	<div class="link">
-	  <div class="title">
-	    Another Location
-	  </div>
-	  <div class="hint">
-	    The grass is always greener, somewhere else.
-	  </div>
-	  <div class="button">
-	    Go
-	  </div>
+	  <div class="hint">The standard novice's robe. Could just about pass for a red raincoat, not that this looks any less eccentric in Northern California.</div>
 	</div>
 
       </div>
