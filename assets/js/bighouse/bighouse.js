@@ -97,7 +97,7 @@ var BigHouse = (function() {
     eventButtonText: { locked: 'Locked',
 		       start: 'Start',
 		       resetting: 'Locked',
-		       starting: 'Starting',
+		       starting: 'Cancel',
 		       ready: 'Go',
 		       waiting: 'Waiting',
 		       finished: 'Go' },
@@ -139,6 +139,10 @@ var BigHouse = (function() {
 
     REST_getPlayerJoinBot: function (playerID, eventID) {
       return $.get ('/player/' + playerID + '/join/' + eventID + '/bot')
+    },
+
+    REST_getPlayerJoinCancel: function (playerID, eventID) {
+      return $.get ('/player/' + playerID + '/join/' + eventID + '/cancel')
     },
 
     REST_getPlayerGames: function (playerID, eventID) {
@@ -713,7 +717,7 @@ var BigHouse = (function() {
           bh.REST_getPlayerJoin (bh.playerID, event.id)
             .done (function (data) {
               if (data.waiting) {
-                event.invited = data.invited
+                event.botDefault = data.botDefault
 		bh.updateEventState (event, 'starting')
               } else {
                 event.game = data.game
@@ -727,8 +731,17 @@ var BigHouse = (function() {
         break;
 
       case 'resetting':
+        event.costDiv.hide()
+        break;
+
       case 'starting':
         event.costDiv.hide()
+        button.on('click', function() {
+          bh.REST_getPlayerJoinCancel (bh.playerID, event.id)
+            .done (function() {
+	      bh.updateEventState (event, 'start')
+            })
+        })
         break;
 
       case 'ready':
@@ -758,8 +771,8 @@ var BigHouse = (function() {
 	event.missedDiv.text (event.game.missed
 			      ? ("Missed " + this.plural(event.game.missed,"turn"))
 			      : '')
-      } else if (event.invited && event.state === 'starting') {
-        var timeToWait = (new Date(event.invited) - now) / 1000
+      } else if (event.botDefault && event.state === 'starting') {
+        var timeToWait = (new Date(event.botDefault) - now) / 1000
         if (timeToWait <= 0 && !event.invitedBot) {
           event.invitedBot = true
           this.REST_getPlayerJoinBot (this.playerID, event.id)
@@ -1479,6 +1492,7 @@ var BigHouse = (function() {
     showOpponentStatusPage: function() {
       var info = { id: bh.opponentID, mood: bh.opponentMood, name: bh.opponentName }
       this.makeFollowDiv (info)
+      info.buttonDiv.hide()
       this.pushGameStatusPage (info, this.REST_getPlayerGameStatusOther)
       info.showAvatar()
     },
@@ -1489,8 +1503,12 @@ var BigHouse = (function() {
       this.container
         .append (info.followDiv || this.makePageTitle (info.name))
       this.showGameStatusPage (getMethod, function (status) {
-        if (info.followDiv && status.following)
-          info.makeUnfollowButton()
+        if (info.followDiv) {
+          if (status.human)
+            info.buttonDiv.show()
+          if (status.following)
+            info.makeUnfollowButton()
+        }
       })
       this.container
 	.append ($('<div class="menubar">')
@@ -1654,6 +1672,7 @@ var BigHouse = (function() {
           .append (buttonDiv)
       $.extend (follow, { followDiv: followDiv,
                           avatarDiv: avatarDiv,
+                          buttonDiv: buttonDiv,
                           showAvatar: bh.showMoodImage.bind (bh, follow.id, follow.mood, avatarDiv),
                           makeFollowButton: makeFollowButton,
                           makeUnfollowButton: makeUnfollowButton })

@@ -122,10 +122,13 @@
           "resetAllowed": {
             "type": "boolean"
           },
-          "reset": {
+          "resetWait": {
             "type": "number"
           },
-          "wait": {
+          "botDefaultAllowed": {
+            "type": "boolean"
+          },
+          "botDefaultWait": {
             "type": "number"
           },
           "visible": {

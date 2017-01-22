@@ -152,8 +152,12 @@ module.exports = {
 				         label: accomp.label || accomp.name })
     })
 
-    var status = { element: [] };
-    ['Attributes','Inventory','Accomplishments'].forEach (function (key) {
+    var status = { id: player.id,
+                   name: player.displayName,
+                   human: player.human,
+                   element: [] }
+    var sections = ['Attributes','Inventory','Accomplishments']
+    sections.forEach (function (key) {
       if (elements[key].length)
         status.element.push ({ type: 'div', element: [{ type: 'header', label: key }].concat (elements[key]) })
     })
@@ -354,7 +358,7 @@ module.exports = {
     $p = player,
     $id = player.id
 
-    var $go, $invo, $no, $ho, $po, $ido
+    var $go, $invo, $no, $ho, $po, $ido, $follower, $followed
     if (opponent) {
       $go = opponent.global
       $invo = opponent.global.inv
@@ -362,6 +366,8 @@ module.exports = {
       $ho = opponent.human
       $po = opponent
       $ido = opponent.id
+      $follower = player.isFollower || false
+      $followed = opponent.isFollower || false
     }
 
     // handle negation as a special case; if anything is undefined in the negation return true

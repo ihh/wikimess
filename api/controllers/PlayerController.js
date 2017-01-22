@@ -161,7 +161,7 @@ module.exports = {
 		     rs (null, { player: player.id,
 				 event: event.id,
 				 waiting: true,
-				 invited: new Date (Date.now() + 1000*event.wait) })
+				 botDefault: Event.botDefaultTime (event, Date.now()) })
 		   },
 		   rs)
     })

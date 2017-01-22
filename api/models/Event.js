@@ -61,16 +61,27 @@ module.exports = {
       defaultsTo: true
     },
 
-    reset: {
+    resetWait: {
       type: 'integer',
       defaultsTo: 30  // resets 30 seconds after game exited
     },
 
-    wait: {
-      type: 'integer',
-      defaultsTo: 30  // open to bots after 30 seconds
+    botDefaultAllowed: {
+      type: 'boolean',
+      defaultsTo: true
     },
 
+    botDefaultWait: {
+      type: 'integer',
+      defaultsTo: 30  // defaults to bot opponent after 30 seconds
+    },
+
+  },
+
+  botDefaultTime: function (event, inviteTime) {
+    return event.botDefaultAllowed
+      ? new Date (inviteTime + 1000*event.botDefaultWait)
+      : undefined
   }
 };
 

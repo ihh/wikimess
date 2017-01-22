@@ -1,4 +1,7 @@
 // api/services/InviteService.js
+
+var Promise = require('bluebird')
+
 module.exports = {
 
   joinGame: function (info, gameStarted, playerWaiting, error) {
@@ -21,8 +24,8 @@ module.exports = {
 	    var weightedOpponents = potentialOpponents.map (function (opponent) {
 	      return { opponent: opponent,
 		       weight: (event.compatibility
-				? (Math.sqrt (evalPlayerExpr (player, opponent, event.compatibility)
-					      * evalPlayerExpr (opponent, player, event.compatibility)) || 0)
+				? (Math.sqrt (PlayerService.evalPlayerExpr (player, opponent, event.compatibility)
+					      * PlayerService.evalPlayerExpr (opponent, player, event.compatibility)) || 0)
 				: 1) }
 	    })
 	    InviteService
@@ -45,10 +48,22 @@ module.exports = {
 	    Invite.find ({ event: event.id,
 			   player: { '!': player.id } })
 	    .populate ('player')
-	    .exec (function (err, invites) {
-	      if (err) error (err)
-	      else tryOpponents (invites.map (function (invite) { return invite.player }))
-	    })
+            .then (function (invites) {
+              return Promise.map (invites, function (invite) {
+                var opponent = invite.player
+                return Follow.find()
+                  .where ({ or: [{ follower: player.id, followed: opponent.id },
+                                 { follower: opponent.id, followed: player.id }] })
+                  .then (function (follows) {
+                    follows.forEach (function (follow) {
+                      if (follow.follower == player.id) player.isFollower = true
+                      if (follow.follower == opponent.id) opponent.isFollower = true
+                    })
+                    return opponent
+                  })
+              })
+            }).then (tryOpponents)
+            .catch (error)
 	  else
 	    Player.find ({ id: { '!': player.id },
 			   human: false })

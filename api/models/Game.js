@@ -152,7 +152,7 @@ module.exports = {
   resetTime: function (game, event) {
     var reset
     if (game.finished)
-      reset = new Date (game.currentStartTime.getTime() + 1000*event.reset)
+      reset = new Date (game.currentStartTime.getTime() + 1000*event.resetWait)
     return reset
   },
   

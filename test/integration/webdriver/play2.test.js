@@ -269,7 +269,7 @@ describe("two-player game", function() {
   var sheila = login (sheilaDriver, "sheila", "test")
 
   startGame (sheila)
-  waitForText (sheila, "Starting")
+  waitForText (sheila, "Cancel")
   startGame (fred)
 
   testMood (fred, sheila, 'happy')

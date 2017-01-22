@@ -7,13 +7,13 @@
     events: [ { title: "Timeout test",
 		hint: "Let's do a timeout test!",
 		timeout: 3,
-		reset: 5,
+		resetWait: 5,
 		choice: "timeout" },
 	      { title: "AI test",
 		hint: "Play a single-player test!",
 		opponent: "ai",
 		timeout: 10,
-		reset: 5,
+		resetWait: 5,
 		choice: "solo" } ]
   },
   {

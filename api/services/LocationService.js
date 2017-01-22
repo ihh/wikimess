@@ -287,12 +287,13 @@ module.exports = {
 		    else {
 		      invites.forEach (function (invite) {
 			var event = eventById[invite.event]
-			event.invited = new Date (invite.createdAt.getTime() + 1000*event.wait)
+                        event.invited = true
+			event.botDefaultTime = Event.botDefaultTime (event, invite.createdAt.getTime())
 		      })
 
 		      events = events.filter (function (event) {
 			return event.game
-			  || event.invited
+			  || event.botDefaultTime
 			  || !LocationService.invisible (player, event)
 		      })
 
@@ -333,6 +334,7 @@ module.exports = {
                                    cost: event.cost && LocationService.costInfo (player, event.cost),
 				   state: state,
                                    invited: event.invited,
+                                   botDefault: event.botDefaultTime,
 				   reset: event.resetTime,
 				   game: event.game }
 			})
