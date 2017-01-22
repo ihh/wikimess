@@ -38,13 +38,14 @@ module.exports = {
     delete exp.parent
     delete exp.tail
     delete exp.next
+    delete exp.node
     if (exp.children)
       exp.children.map (BotService.removeLinks)
   },
   
   randomExpansion: function (text, id, parent) {
-    var exp = { id: id }
     var node = text[id]
+    var exp = { id: id, node: node }
     if (node) {
       exp.label = Label.evalLabel (exp, node.label, node.labelexpr)
       if (node.sequence) {

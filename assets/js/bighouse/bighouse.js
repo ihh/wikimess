@@ -2364,7 +2364,7 @@ var BigHouse = (function() {
       this.newTopCard (expansion)
       this.refreshPlayerMoodImage()
       this.refreshOpponentMoodImage()
-      if (typeof(expansion.action) !== 'undefined')
+      if (expansion.isHistory)
 	this.hideMoods()
       else
 	this.revealMoods()
