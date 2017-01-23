@@ -1653,7 +1653,7 @@ var BigHouse = (function() {
 	    console.log (data)
           bh.locBarDiv
             .append ($('<div class="title">').text("Recently played"))
-            .append (makeFollowDivs (data.recent, "Once you have joined some games, recently encountered players will appear here."))
+            .append (makeFollowDivs (data.recent, "Once you have played some games, recently encountered (human) players will appear here."))
             .append ($('<div class="title">').text("Following"))
             .append (makeFollowDivs (data.followed, "You are not following anyone yet."))
             .append ($('<div class="title">').text("Followers"))

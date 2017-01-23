@@ -171,12 +171,9 @@
 	   { shuffle: true,
 	     groups:
 	     [{ n: 2,
-		opts: subject_list('s3',prefix_with('your ',['father','mother','brother','sister','husband','wife','girlfriend','boyfriend','spouse']))  // family members
+		opts: subject_list('s3',prefix_with('your ',['father','mother','brother','sister','cousin','grandfather','grandmother','auntie','uncle','husband','wife','girlfriend','boyfriend','spouse']))  // family members
 	      },
-	      { opts: subject_list('p3',prefix_with('your ',['rhymes','words','insults','jibes','slights','barbs']))
-		.concat (subject_list('s3',prefix_with('this ',['conversation','exchange','back-and-forth'])))  // words
-	      },
-	      { opts: subject_list('s3',prefix_with('your ',['doctor','dentist','tailor','stylist','boss','hairdresser']))  // professional relationships
+	      { opts: subject_list('s3',prefix_with('your ',['doctor','dentist','tailor','stylist','boss','hairdresser','professor','driving instructor','therapist','life coach']))  // professional relationships
 	      },
 	      { opts: subject_list('s2',['you']) }] } } },
 
@@ -197,7 +194,8 @@
 	   { shuffle: true,
 	     groups:
 	     [{ opts: abstract_noun_list(['sense of style','taste','education','civility','courtesy','politeness','manners','breeding']) },  // class
-	      { opts: abstract_noun_list(['kindness','honesty','virtue','diligence','industriousness','sexual morality','sobriety','competence','courage','honor']) },  // character
+	      { opts: abstract_noun_list(['kindness','honesty','virtue','diligence','industriousness','sexual morality','sobriety','courage','honor']) },  // character
+	      { opts: abstract_noun_list(['rhymes','words','insults','jibes','slights','barbs','wit','repartee','competence']) },  // intelligence
 	      { opts: abstract_noun_list(['sexual performance','hygiene','cleanliness','attractiveness','prettiness','agility','gait','posture','height','muscles']) }] } } },  // appearance
 
        { name: 'select_negative_abstract_noun',
@@ -208,6 +206,7 @@
 	     groups:
 	     [{ opts: abstract_noun_list(['boorishness','vulgarity','Justin Bieber records']) },  // class
 	      { opts: abstract_noun_list(['indecency','filth','lechery','infamy','indiscretions']) },  // character
+	      { opts: abstract_noun_list(['stupidity','foolishness','idiocy','ineptitude','incompetence']) },  // intelligence
 	      { opts: abstract_noun_list(['flab','stretch-marks','chins','cankles','love-handles','skid marks','halitosis','bad breath','bald patches']) }] } } },  // appearance
 
        { name: 'select_negative_adjective',
@@ -217,7 +216,8 @@
 	   { shuffle: true,
 	     groups:
 	     [{ opts: adjective_list('Too ',['tasteless','unfashionable','dated','incivil','crass','crude','boorish','outmoded','vulgar','jarring','discourteous','impolite','rude','ill-mannered','ill-bred','ignorant','uneducated']) },  // class
-	      { opts: adjective_list('Too ',['indecent','cruel','vicious','mean','nasty','horrible','sadistic','selfish','lazy','spiteful','gossipy','venal','callous','thoughtless','weak','stupid','idiotic','banal','mundane','tedious','boring']) },  // character
+	      { opts: adjective_list('Too ',['indecent','cruel','vicious','mean','nasty','horrible','sadistic','selfish','lazy','spiteful','gossipy','venal','callous','thoughtless','weak']) },  // character
+	      { opts: adjective_list('Too ',['stupid','idiotic','banal','mundane','tedious','boring']) },  // intelligence
 	      { opts: adjective_list('Too ',['ugly','smelly','disgusting','unwashed','filthy','stinky','fat','skinny','short','stunted','gangly']) }] } } }, // appearance
 
        { name: 'select_positive_adjective',
@@ -228,6 +228,7 @@
 	     groups:
 	     [{ opts: adjective_list('Not ',['tasteful','fashionable','current','civil','well-educated','well-informed','well-rounded','well-bred','polite','courteous','genteel'],' enough') },  // class
 	      { opts: adjective_list('Not ',['decent','kind','generous','compassionate','gentle','thoughtful'],' enough') },  // character
+	      { opts: adjective_list('Not ',['smart','clever','witty','sharp','intelligent'],' enough') },  // intelligence
 	      { opts: adjective_list('Not ',['sexy','fragrant','strong','clean','brave','well-toned','muscly','tall','powerful'],' enough') }] } } }, // appearance
 
        // sentence components
