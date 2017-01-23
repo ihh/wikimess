@@ -59,7 +59,7 @@ body {
 .bighouse .locbar .event {
     float: left;
     clear: both;
-    width: 95vw;
+    width: 95%;
     margin: 1vw;
 }
 
@@ -76,7 +76,7 @@ body {
 .bighouse .locbar .link .title,
 .bighouse .locbar .trade .title,
 .bighouse .locbar .event .title {
-    width: 80vw;
+    width: 80%;
     font-weight: bold;
     font-style: italic;
     font-size: large;

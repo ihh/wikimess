@@ -474,7 +474,7 @@ var BigHouse = (function() {
                    .append ($('<div class="description">')
                             .text (data.description)))
 
-	bh.addEvents (data.events, bh.showPlayPage)
+	bh.addEvents (data.events)
 
         data.items.forEach (function (item) {
           var div = $('<div class="trade">')
@@ -617,9 +617,9 @@ var BigHouse = (function() {
     },
 
     getEventKey: function (event) {
-      return this.page === 'play' ? ('event-' + event.id) : (event.game && ('game-' + event.game.id))
+      return this.page === 'games' ? (event.game && ('game-' + event.game.id)) : ('event-' + event.id)
     },
-    
+
     addEvents: function (events) {
       var bh = this
       bh.eventsByKey = {}
@@ -709,7 +709,7 @@ var BigHouse = (function() {
 	.off()
 
       event.otherDiv.empty()
-      if (event.other) {
+      if (event.other&& event.other.id != bh.playerID) {
         var avatarDiv = $('<div class="avatar">')
         avatarDiv
           .on ('click', bh.callWithSoundEffect (bh.showNavStatusPage.bind (bh, event.other)))
@@ -1490,15 +1490,23 @@ var BigHouse = (function() {
     },
 
     showNavStatusPage: function (follow) {
+      var bh = this
+      this.setPage ('otherstatus')
       this.container.empty()
       this.makeFollowDiv (follow)
       if (!follow.human) follow.buttonDiv.hide()
+      this.locBarDiv = $('<div class="locbar">')
+        .append ($('<h1>').text('Games'))
       this.showGameStatusPage (this.REST_getPlayerStatusOther.bind (this, this.playerID, follow.id),
                                function (status) {
                                  if (status.following)
                                    follow.makeUnfollowButton()
+                                 bh.detailBarDiv
+                                   .append ($('<div class="statusdiv">')
+                                            .append (bh.locBarDiv))
+	                         bh.addEvents (status.events)
                                })
-      this.detailBar.prepend (follow.followDiv)
+      this.detailBarDiv.prepend (follow.followDiv)
       this.container
 	.append ($('<div class="backbar">')
 		 .append ($('<span>')
@@ -1540,15 +1548,15 @@ var BigHouse = (function() {
     showGameStatusPage: function (getMethod, callback) {
       var bh = this
       this.container
-        .append (this.detailBar = $('<div class="detailbar">'))
+        .append (this.detailBarDiv = $('<div class="detailbar">'))
 
-      this.restoreScrolling (this.detailBar)
+      this.restoreScrolling (this.detailBarDiv)
 
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
 	  if (bh.verbose.messages)
 	    console.log (status)
-          bh.addStatusElements (status.element, bh.detailBar)
+          bh.addStatusElements (status.element, bh.detailBarDiv)
           if (callback)
             callback (status)
 	})

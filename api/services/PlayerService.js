@@ -162,26 +162,32 @@ module.exports = {
         status.element.push ({ type: 'div', element: [{ type: 'header', label: key }].concat (elements[key]) })
     })
 
-    if (typeof(followerID) !== 'undefined')
+    if (typeof(followerID) !== 'undefined') {
+      var seenEventId = {}
       Follow.find ({ follower: followerID, followed: player.id })
       .then (function (follows) {
         status.following = (follows.length > 0)
-        Game.find ({ where: { or: [ { player1: player.id, player2: followerID, quit2: false },
+        return Game.find ({ where: { or: [ { player1: player.id, player2: followerID, quit2: false },
 				    { player2: player.id, player1: followerID, quit1: false } ] },
                      sort: 'createdAt' })
           .populate ('player1')
           .populate ('player2')
           .populate ('event')
-          .then (function (games) {
-            Event.getChatEvents()
-              .then (function (events) {
-                // WRITE ME: add games, and events not represented in games, to status
-                // TODO: abstract out common code for creating an event descriptor from a game?
-                rs (null, status)
-              })
+      }).then (function (games) {
+        status.events = games.map (function (game) {
+          seenEventId[game.event.id] = true
+          return LocationService.eventDescriptor ({ game: game, player: player })
+        })
+        return Event.getChatEvents()
+      }).then (function (events) {
+        if (events)
+          events.forEach (function (event) {
+            if (!seenEventId[event.id])
+              status.events.push (LocationService.eventDescriptor ({ event: event, player: player }))
           })
+        rs (null, status)
       }).catch (rs)
-    else
+    } else
       rs (null, status)
   },
 
