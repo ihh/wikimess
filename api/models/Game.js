@@ -149,7 +149,7 @@ module.exports = {
 
   deadline: function (game) {
     var deadline
-    if (!game.finished && game.event && game.event.timeout)
+    if (!game.finished && !game.pendingAccept && game.event && game.event.timeout && game.currentStartTime)
       deadline = new Date (game.currentStartTime.getTime() + 1000*game.event.timeout)
     return deadline
   },

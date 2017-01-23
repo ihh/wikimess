@@ -103,7 +103,8 @@ module.exports = {
     }
 
     function recurse (node, stack) {
-      //            console.log("recurse: " + JSON.stringify(node))
+      if (typeof(node) === 'undefined')
+	return undefined
       if (node.hasOwnProperty('id'))  // guard against cycles
         return node
 
@@ -130,19 +131,17 @@ module.exports = {
                          text: node.text }
       nodeList.push (descriptor)
 
-      if (!node.isLeaf) {
-	if (node.sequence)
-          descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child,nextStack)) })
-	else if (node.menu)
-          descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child,nextStack)) })
-	else if (node.next)
-          descriptor.next = linkSummary (recurse(node.next,nextStack))
-        else {
-	  if (!node.left) sails.log.debug("Node is missing left:\n",node,"\nStack:\n",stack)
-	  if (!node.right) sails.log.debug("Node is missing right:\n",node,"\nStack:\n",stack)
-          descriptor.left = linkSummary (recurse(node.left || {}, nextStack))
-          descriptor.right = linkSummary (recurse(node.right || {}, nextStack))
-        }
+      if (node.sequence)
+        descriptor.sequence = node.sequence.map (function (child, n) { return linkSummary (recurse(child,nextStack)) })
+      else if (node.menu)
+        descriptor.menu = node.menu.map (function (child, n) { return linkSummary (recurse(child,nextStack)) })
+      else if (node.next)
+        descriptor.next = linkSummary (recurse(node.next,nextStack))
+      else if (node.left || node.right) {
+	if (!node.left) sails.log.debug("Node is missing left:\n",node,"\nStack:\n",stack)
+	if (!node.right) sails.log.debug("Node is missing right:\n",node,"\nStack:\n",stack)
+        descriptor.left = linkSummary (recurse(node.left || {}, nextStack))
+        descriptor.right = linkSummary (recurse(node.right || {}, nextStack))
       }
       
       return node
@@ -652,6 +651,7 @@ module.exports = {
 
   expandCurrentChoice: function (game, success, error) {
     var choice = game.current
+    console.log('expandCurrentChoice',choice)
     
     // evaluate updated vars
     var gameImage = GameService.gameImage (game)
@@ -987,15 +987,13 @@ module.exports = {
          game.local2 = g.local2
          game.future = g.future
 
-         game.tree1 = []
-         game.tree2 = []
          game.move1 = game.move2 = null
          
          if (game.pendingAccept)
-            GameService.updateGameAndPlayers ({ id: game.id },
-                                              game,
-                                              success,
-                                              error)
+           GameService.updateGameAndPlayers ({ id: game.id },
+                                             game,
+                                             success,
+                                             error)
          else
 	   GameService.startGame (game, success, error)
        }
@@ -1005,6 +1003,9 @@ module.exports = {
   startGame: function (game, success, error) {
     game.currentStartTime = new Date()
     game.pendingAccept = false
+
+    game.tree1 = []
+    game.tree2 = []
     GameService.expandCurrentChoice
     (game,
      function() {
@@ -1123,8 +1124,8 @@ module.exports = {
   },
 
   prepareTextTrees: function (game) {
-    game.text1 = GameService.buildTextTree (game.tree1, game)
-    game.text2 = GameService.buildTextTree (game.tree2, game)
+    game.text1 = GameService.buildTextTree (game.tree1 || [], game)
+    game.text2 = GameService.buildTextTree (game.tree2 || [], game)
   },
   
   playBotMoves: function (game) {

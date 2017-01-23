@@ -60,7 +60,7 @@ module.exports = {
   },
 
   getChatLocation: function() {
-    return Location.findOne('chat')
+    return Location.findOne({name:'chat'})
   }
 };
 

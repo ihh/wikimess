@@ -216,31 +216,50 @@ module.exports = {
     var event = info.event
 
     return new Promise (function (resolve, reject) {
-      InviteService.startGame ({ player1: player,
-                                 player2: other,
-                                 event: event,
-                                 player1CostsDeducted: false,
-                                 player2CostsDeducted: true,   // player 2 does not pay for chat games they're invited to
-                                 testPlayer2CostsDeducted: false,
-                                 successCallback: resolve,
-                                 failureCallback: reject,
-                                 errorCallback: function (error) { throw error }
-                               })
+      // first check if there's a running Game
+      Game.find ({ where: { or: [ { player1: player.id, player2: other.id },
+				  { player1: other.id, player2: player.id } ],
+                            quit1: false,
+                            quit2: false,
+			    event: event.id } })
+        .then (function (games) {
+          if (games.length)
+	    reject (new Error ("Game " + games[0].id + " already in progress"))
+          else
+            return true
+        }).then (function() {
+          InviteService.startGame ({ player1: player,
+                                     player2: other,
+                                     event: event,
+                                     player1CostsDeducted: false,
+                                     player2CostsDeducted: true,   // player 2 does not pay for chat games they're invited to
+                                     testPlayer2CostsDeducted: false,
+                                     pendingAccept: true,
+                                     successCallback: resolve,
+                                     failureCallback: reject,
+                                     errorCallback: function (error) { throw error }
+                                   })
+        })
     })
   },
 
-  cancelInvitation: function (game) {
+  cancelInvitations: function (games) {
+    console.log ('cancelInvitations:', games)
     return new Promise (function (resolve, reject) {
       PlayerService.runWithLock
-      ([ game.player1.id, game.player2.id ],
+      ([ games[0].player1.id, games[0].player2.id ],
        function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-	 LocationService.refundCost (game.player1, game.event.cost)
-	 Game.destroy ({ game: game.id })
-           .then (lockedSuccess)
+         games.forEach (function (game) {
+	   LocationService.refundCost (game.player1, game.event.cost)
+         })
+	 Game.destroy ({ id: games.map (function (game) { return game.id }) })
+           .then (function() {
+	     return Turn.destroy ({ game: games.map (function (game) { return game.id }) })
+           }).then (lockedSuccess)
            .catch (lockedError)
        },
-       function() { game.canceled = true; resolve(game) },
-       function (error) { throw error })
+       function() { resolve (games.map (function (game) { game.canceled = true; return game })) },
+       reject)
     })
   },
 
@@ -249,20 +268,23 @@ module.exports = {
       PlayerService.runWithLock
       ([ game.player1.id, game.player2.id ],
        function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-         return GameService.startGame (game,
-                                       function() { lockedSuccess(true) },
-                                       function () {
-	                                 LocationService.refundCost (game.player1, game.event.cost)
-	                                 Game.destroy ({ game: game.id })
-                                           .then (function() { lockedSuccess(false) })
-                                           .catch (lockedError)
-                                       })
+	 Turn.destroy ({ game: game.id })
+           .then (function() {
+             GameService.startGame (game,
+                                    function() { lockedSuccess(true) },
+                                    function () {
+	                              LocationService.refundCost (game.player1, game.event.cost)
+	                              Game.destroy ({ game: game.id })
+                                        .then (function() { lockedSuccess(false) })
+                                        .catch (lockedError)
+                                          })
+           })
        },
        function (started) {
          if (started) resolve(game)
          else reject()
        },
-       function (error) { throw error })
+       reject)
     })
   },
 

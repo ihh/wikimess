@@ -100,7 +100,10 @@ var BigHouse = (function() {
 		       starting: 'Cancel',
 		       ready: 'Go',
 		       waiting: 'Waiting',
-		       finished: 'Go' },
+		       finished: 'Go',
+                       canceled: 'Canceled',
+                       invited: 'Accept',
+                       pending: 'Cancel' },
     
     verbose: { page: false,
                gameState: true,
@@ -656,6 +659,9 @@ var BigHouse = (function() {
 
       event.lockDiv = $('<div class="lock">')
       event.button = $('<div class="button">').attr('name',eventKey)
+      event.rejectButton = $('<div class="button">').attr('name','decline-'+eventKey)
+        .text('Decline')
+        .hide()
 
       event.missedDiv = $('<div class="missed">')
       event.timerDiv = $('<div class="timer">')
@@ -666,6 +672,8 @@ var BigHouse = (function() {
       event.tradeRows = $('<div class="traderows">')
         .append ($('<div class="traderow">')
                  .append (event.costDiv, event.button))
+        .append ($('<div class="traderow">')
+                 .append (event.rejectButton))
       
       div.append (event.turnDiv, event.lockDiv)
 
@@ -682,7 +690,7 @@ var BigHouse = (function() {
 
     updateEventFromJoinMessage: function (data) {
       var eventKey = this.getEventKey (data.event)
-      if (this.lastStartedEventKey && this.lastStartedEventKey == eventKey) {
+      if (this.lastStartedEventKey && this.lastStartedEventKey == eventKey && data.event.state === 'ready') {
         if (this.selectSound)
           this.selectSound.stop()
         this.startGame (data.event.game.id)
@@ -725,12 +733,25 @@ var BigHouse = (function() {
       button
 	.text (this.eventButtonText[event.state])
 	.off()
+      if (event.state === 'invited')
+        event.rejectButton.show()
+        .off()
+        .on ('click', function() {
+          event.rejectButton.off()
+          bh.REST_getPlayerJoinInviteReject (bh.playerID, event.id, event.other.id)
+            .then (function() { bh.updateEventState(event,'canceled') })
+            .fail (function (err) {
+              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
+            })
+        })
+      else
+        event.rejectButton.hide()
 
       event.otherDiv.empty()
-      if (event.other && event.other.id != bh.playerID) {
+      if (event.other && event.other.id != bh.playerID && bh.page !== 'otherStatus') {
         var avatarDiv = $('<div class="avatar">')
         avatarDiv
-          .on ('click', bh.callWithSoundEffect (bh.showNavStatusPage.bind (bh, event.other)))
+          .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, event.other)))
         event.otherDiv.append (avatarDiv, $('<span class="name">').text(event.other.name))
         bh.showMoodImage (event.other.id, event.other.mood, avatarDiv)
       }
@@ -749,23 +770,27 @@ var BigHouse = (function() {
           event.costDiv.hide()
           var eventKey = bh.getEventKey(event)
 	  bh.lastStartedEventKey = eventKey
-          bh.REST_getPlayerJoin (bh.playerID, event.id)
-            .done (function (data) {
-              if (data.waiting) {
-                event.botDefault = data.botDefault
-		bh.updateEventState (event, 'starting')
-              } else {
-                event.game = data.game
-		bh.updateEventState (event, 'ready')
-              }
-              bh.updateEventTimer (event)
-            }).fail (function (err) {
-              bh.showModalWebError (err, bh.showPlayPage.bind(bh))
-            })
+          var promise = event.invitee
+            ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee.id)
+              : bh.REST_getPlayerJoin (bh.playerID, event.id)
+              .done (function (data) {
+                if (data.waiting) {
+                  event.botDefault = data.botDefault
+		  bh.updateEventState (event, 'starting')
+                } else {
+                  event.game = data.game
+		  bh.updateEventState (event, 'ready')
+                }
+                bh.updateEventTimer (event)
+              })
+          promise.fail (function (err) {
+            bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
+          })
         })
         break;
 
       case 'resetting':
+      case 'canceled':
         event.costDiv.hide()
         break;
 
@@ -775,6 +800,30 @@ var BigHouse = (function() {
           bh.REST_getPlayerJoinCancel (bh.playerID, event.id)
             .done (function() {
 	      bh.updateEventState (event, 'start')
+            }).fail (function (err) {
+              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
+            })
+        })
+        break;
+
+      case 'pending':
+        event.costDiv.hide()
+        button.on('click', function() {
+          bh.REST_getPlayerJoinInviteCancel (bh.playerID, event.id, event.other.id)
+            .done (function() {
+	      bh.updateEventState (event, 'start')
+            }).fail (function (err) {
+              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
+            })
+        })
+        break;
+
+      case 'invited':
+        event.costDiv.hide()
+        button.on('click', function() {
+          bh.REST_getPlayerJoinInviteAccept (bh.playerID, event.id, event.other.id)
+            .fail (function (err) {
+              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
             })
         })
         break;
@@ -1509,7 +1558,7 @@ var BigHouse = (function() {
       this.showGameStatusPage (this.REST_getPlayerStatus)
     },
 
-    showNavStatusPage: function (follow) {
+    showOtherStatusPage: function (follow) {
       var bh = this
       this.setPage ('otherStatus')
       this.otherStatusID = follow.id
@@ -1527,6 +1576,9 @@ var BigHouse = (function() {
                                  bh.detailBarDiv
                                    .append ($('<div class="statusdiv">')
                                             .append (bh.locBarDiv))
+                                 status.events.forEach (function (event) {
+                                   event.invitee = follow
+                                 })
  	                         bh.addEvents (status.events)
                                })
       this.detailBarDiv.prepend (follow.followDiv)
@@ -1537,11 +1589,11 @@ var BigHouse = (function() {
       follow.showAvatar()
     },
     
-    showPlayerStatusPage: function() {
+    showGamePlayerStatusPage: function() {
       this.pushGameStatusPage ({name: this.playerName}, this.REST_getPlayerGameStatusSelf)
     },
     
-    showOpponentStatusPage: function() {
+    showGameOpponentStatusPage: function() {
       var info = { id: bh.opponentID, mood: bh.opponentMood, name: bh.opponentName }
       this.makeFollowDiv (info)
       info.buttonDiv.hide()
@@ -1664,7 +1716,7 @@ var BigHouse = (function() {
               followsById[follow.id].forEach (function (f) { f.following = flag })
             }
             follow.avatarDiv
-              .on ('click', bh.callWithSoundEffect (bh.showNavStatusPage.bind (bh, follow)))
+              .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, follow)))
             return follow.followDiv
           })
         : $('<span>').text (emptyMessage)
@@ -1792,7 +1844,7 @@ var BigHouse = (function() {
       this.statusBar
         .append ($('<div class="rightstatus">')
                  .append (this.opponentNameDiv = $('<span>')
-                          .on ('click', bh.callWithSoundEffect (bh.showOpponentStatusPage))))
+                          .on ('click', bh.callWithSoundEffect (bh.showGameOpponentStatusPage))))
         .append ($('<div class="statuslink">')
                  .append ($('<span>')
                           .html (this.makeLink ('Back', this.exitGamePage))))
@@ -2821,7 +2873,7 @@ var BigHouse = (function() {
     refreshPlayerMoodImage: function() {
       if (this.playerMoodDiv) {
 	var mood = this.currentExpansionNode.isHistory ? this.currentChoiceNode().self.mood : this.playerMood
-	var click = this.currentExpansionNode.isHistory ? this.showHistoryAlert : this.showPlayerStatusPage
+	var click = this.currentExpansionNode.isHistory ? this.showHistoryAlert : this.showGamePlayerStatusPage
 	this.refreshMoodImage (this.playerID, mood, this.playerMoodDiv, click)
       }
     },
@@ -2829,7 +2881,7 @@ var BigHouse = (function() {
     refreshOpponentMoodImage: function() {
       if (this.opponentMoodDiv) {
 	var mood = this.currentExpansionNode.isHistory ? this.currentChoiceNode().other.mood : this.opponentMood
-	var click = this.currentExpansionNode.isHistory ? this.showHistoryAlert : this.showOpponentStatusPage
+	var click = this.currentExpansionNode.isHistory ? this.showHistoryAlert : this.showGameOpponentStatusPage
 	this.refreshMoodImage (this.opponentID, mood, this.opponentMoodDiv, click)
       }
     },
@@ -2958,7 +3010,7 @@ var BigHouse = (function() {
         console.log (msg)
       switch (msg.data.message) {
       case "join":
-        if (this.page === 'play' || this.page === 'activeGames') {
+        if (this.page === 'play' || this.page === 'activeGames' || this.page === 'otherStatus') {
 	  if (this.verbose.messages)
 	    console.log ("Received '" + msg.data.message + "' message for game #" + msg.data.event.game.id)
           this.updateEventFromJoinMessage (msg.data)

@@ -11,6 +11,7 @@ var imagemagick = require('imagemagick-native')
 var extend = require('extend')
 var md5File = require('md5-file')
 var mkdirpSync = require('mkdirp').sync
+var Promise = require('bluebird')
 
 module.exports = {
 
@@ -205,18 +206,24 @@ module.exports = {
   cancelInvite: function (req, res) {
     Game.find ({ player1: req.params.player,
                  player2: req.params.other,
+                 pendingAccept: true,
                  event: req.params.event })
-      .populate('player1')
-      .populate('player2')
-      .then (function (game) {
+      .populate ('player1')
+      .populate ('player2')
+      .populate ('event')
+      .then (function (games) {
         // delete the Game, message player2 that it is canceled
-        return InviteService.cancelInvitation (game)
-      }).then (function (game) {
-        PlayerService.sendJoinMessages ({ game: game,
+        if (games.length)
+          return InviteService.cancelInvitations (games)
+        else
+          throw new Error ("No invitation found")
+      }).then (function (games) {
+        PlayerService.sendJoinMessages ({ game: games[0],  // if somehow we end up with >1 game, only send one reply & set of messages
                                           req: req,
                                           res: res,
                                           playerID: req.params.player })
       }).catch (function (err) {
+        console.log(err)
         res.status(500).send (err)
       })
   },
@@ -225,29 +232,46 @@ module.exports = {
   rejectInvite: function (req, res) {
     Game.find ({ player1: req.params.other,
                  player2: req.params.player,
+                 pendingAccept: true,
                  event: req.params.event })
       .populate ('player1')
       .populate ('player2')
-      .then (function (game) {
+      .populate ('event')
+      .then (function (games) {
         // delete the Game, message player1 that it is canceled
-        return InviteService.cancelInvitation (game)
-      }).then (function (game) {
-        PlayerService.sendJoinMessages ({ game: game,
+        if (games.length)
+          return InviteService.cancelInvitations (games)
+        else
+          throw new Error ("No invitation found")
+      }).then (function (games) {
+        PlayerService.sendJoinMessages ({ game: games[0],  // if somehow we end up with >1 game, only send one reply & set of messages
                                           req: req,
                                           res: res,
                                           playerID: req.params.player })
       }).catch (function (err) {
+        console.log(err)
         res.status(500).send (err)
       })
   },
 
   // accept invitation that someone issued to us
   acceptInvite: function (req, res) {
-    Game.find ({ player1: req.params.other,
+    Game.findOne ({ player1: req.params.other,
                  player2: req.params.player,
+                 pendingAccept: true,
                  event: req.params.event })
+      .populate ('player1')
+      .populate ('player2')
+      .populate ('event')
       .then (function (game) {
-        // clear the Game's 'pendingAccept' flag, notify player1 that invitation is accepted
+        return Choice.findOne ({ id: game.current })
+          .populate ('intro')
+          .populate ('intro2')
+          .then (function (choice) {
+            game.current = choice
+            return game
+          })
+      }).then (function (game) {
         return InviteService.acceptInvitation (game)
       }).then (function (game) {
         PlayerService.sendJoinMessages ({ game: game,
@@ -255,6 +279,7 @@ module.exports = {
                                           res: res,
                                           playerID: req.params.player })
       }).catch (function (err) {
+        console.log(err)
         res.status(500).send (err)
       })
   },

@@ -1,0 +1,9 @@
+[
+  {
+    name: "chat",
+    title: "Chat Events",
+    events: [ { title: "Insult",
+		hint: "Engage in a battle of wits.",
+		choice: "insult" } ]
+  }
+]
