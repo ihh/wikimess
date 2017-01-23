@@ -87,8 +87,8 @@ module.exports = {
   getChatEvents: function() {
     return Location.getChatLocation()
       .populate('events')
-      .then(function (chatLocation) {
-        return chatLocation.events
+      .then (function (chatLocation) {
+        return chatLocation && chatLocation.events
       })
   }
 };

@@ -256,7 +256,7 @@ module.exports = {
 				     { player2: player.id }],
 				event: eventIds },
 		       sort: 'createdAt' })
-            .populate ('current')
+            .populate ('current')  // possibly redundant?
             .populate ('player1')
             .populate ('player2')
 	    .exec (function (err, games) {

@@ -61,7 +61,7 @@ module.exports = {
       .populate ('player1')
       .populate ('player2')
       .populate ('event')
-      .populate ('current')
+      .populate ('current')  // possibly redundant?
       .exec (function (err, games) {
         if (err)
           res.status(500).send (err)

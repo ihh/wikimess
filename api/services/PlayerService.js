@@ -166,7 +166,19 @@ module.exports = {
       Follow.find ({ follower: followerID, followed: player.id })
       .then (function (follows) {
         status.following = (follows.length > 0)
-        rs (null, status)
+        Game.find ({ where: { or: [ { player1: player.id, player2: followerID, quit2: false },
+				    { player2: player.id, player1: followerID, quit1: false } ] } })
+          .populate ('player1')
+          .populate ('player2')
+          .populate ('event')
+          .then (function (games) {
+            Event.getChatEvents()
+              .then (function (events) {
+                // WRITE ME: add games, and events not represented in games, to status
+                // TODO: abstract out common code for creating an event descriptor from a game?
+                rs (null, status)
+              })
+          })
       }).catch (rs)
     else
       rs (null, status)
