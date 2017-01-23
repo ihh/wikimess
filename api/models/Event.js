@@ -82,6 +82,14 @@ module.exports = {
     return event.botDefaultAllowed
       ? new Date (inviteTime + 1000*event.botDefaultWait)
       : undefined
+  },
+
+  getChatEvents: function() {
+    return Location.getChatLocation()
+      .populate('events')
+      .then(function (chatLocation) {
+        return chatLocation.events
+      })
   }
 };
 
