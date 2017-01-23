@@ -54,6 +54,20 @@ module.exports = {
       })
   },
   
+  // number of ready games
+  countReadyGames: function (req, res) {
+    var playerID = req.params.player
+    Game.count ({ where: { or: [ { player1: playerID, quit1: false, move1: null, pendingAccept: false },
+				 { player2: playerID, quit2: false, move2: null } ] } })
+      .exec (function (err, count) {
+        if (err) {
+          console.log (err)
+          res.status(500).send (err)
+        } else
+          res.json ({ count: count })
+      })
+  },
+  
   // get a player's games
   games: function (req, res) {
     var playerID = req.params.player

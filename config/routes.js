@@ -62,6 +62,8 @@ module.exports.routes = {
 
   'GET /p/id/:name':              'ClientController.byName',
 
+  'GET /p/:player/count':         'ClientController.countReadyGames',
+
   'GET /p/:player/status':        'ClientController.selfStatus',
   'GET /p/:player/status/:other': 'ClientController.otherStatus',
 
