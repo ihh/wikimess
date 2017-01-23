@@ -58,5 +58,9 @@ module.exports = {
           type: 'boolean'
       },
   },
+
+  getChatLocation: function() {
+    return Location.findOne('chat')
+  }
 };
 

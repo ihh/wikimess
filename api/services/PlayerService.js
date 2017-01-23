@@ -115,7 +115,7 @@ module.exports = {
   },
 
   makeStatus: function (info) {
-    var rs = info.rs, game = info.game, player = info.player, followerID = info.follower, local = info.local, isPublic = info.isPublic
+    var rs = info.rs, game = info.game, player = info.player, followerID = info.follower, showFollowerGames = info.showFollowerGames, local = info.local, isPublic = info.isPublic
     var state = {}
     if (game)
       extend (state, game.common)
@@ -164,11 +164,10 @@ module.exports = {
 
     if (typeof(followerID) !== 'undefined')
       Follow.find ({ follower: followerID, followed: player.id })
-      .exec (function (err, follows) {
-        if (!err && follows.length)
-          status.following = true
+      .then (function (follows) {
+        status.following = (follows.length > 0)
         rs (null, status)
-      })
+      }).catch (rs)
     else
       rs (null, status)
   },
