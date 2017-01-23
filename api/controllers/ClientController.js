@@ -240,6 +240,19 @@ module.exports = {
         res.status(500).send (err)
       })
   },
+
+  // accept invitation that someone issued to us
+  acceptInvite: function (req, res) {
+    Game.find ({ player1: req.params.other,
+                 player2: req.params.player,
+                 event: req.params.event })
+      .then (function (game) {
+        // WRITE ME
+        // clear the Game's 'pendingAccept' flag, notify player1 that invitation is accepted
+      }).catch (function (err) {
+        res.status(500).send (err)
+      })
+  },
   
   // current state of game, filtered for player
   gameInfo: function (req, res) {
