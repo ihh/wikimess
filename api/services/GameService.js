@@ -530,6 +530,7 @@ module.exports = {
        GameService.updatePlayers
        (game,
 	function() {
+          // create a Turn (unless Game is pending acceptance)
           if (game.pendingAccept)
             success()
           else
