@@ -565,6 +565,7 @@ module.exports = {
                         flip: game.flip,
 			currentStartTime: game.currentStartTime,
 			future: game.future,
+                        pendingAccept: game.pendingAccept,
 			finished: game.finished
 		      }
 
@@ -990,20 +991,32 @@ module.exports = {
          game.tree2 = []
          game.move1 = game.move2 = null
          
-	 GameService.expandCurrentChoice
-	 (game,
-          function() {
-	    game.currentStartTime = new Date()
+         if (game.pendingAccept)
             GameService.updateGameAndPlayers ({ id: game.id },
                                               game,
                                               success,
                                               error)
-          },
-          error)
+         else
+	   GameService.startGame (game, success, error)
        }
      })
   },
 
+  startGame: function (game, success, error) {
+    game.currentStartTime = new Date()
+    game.pendingAccept = false
+    GameService.expandCurrentChoice
+    (game,
+     function() {
+       game.currentStartTime = new Date()
+       GameService.updateGameAndPlayers ({ id: game.id },
+                                         game,
+                                         success,
+                                         error)
+     },
+     error)
+  },
+  
   recordMove: function (info, gotOutcome, playerWaiting, error) {
     var game = info.game
     var moveNumber = info.moveNumber

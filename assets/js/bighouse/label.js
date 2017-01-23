@@ -260,7 +260,7 @@
 
   // Misc.
   function looksLikePlural(noun) {
-    return noun.match(/^[^ ]*[^s][s]\b/i)
+    return noun.match(/[b-hj-np-rtv-z][s]$/i)
   }
   
   function lessOrFewer(noun) {

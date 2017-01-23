@@ -145,6 +145,22 @@ var BigHouse = (function() {
       return $.get ('/p/' + playerID + '/join/' + eventID + '/cancel')
     },
 
+    REST_getPlayerJoinInvite: function (playerID, eventID, otherID) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/invite/' + otherID)
+    },
+
+    REST_getPlayerJoinInviteCancel: function (playerID, eventID, otherID) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/cancel/' + otherID)
+    },
+
+    REST_getPlayerJoinInviteAccept: function (playerID, eventID, otherID) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/accept/' + otherID)
+    },
+
+    REST_getPlayerJoinInviteReject: function (playerID, eventID, otherID) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/reject/' + otherID)
+    },
+
     REST_getPlayerGames: function (playerID, eventID) {
       return $.get ('/p/' + playerID + '/games')
     },
@@ -659,7 +675,8 @@ var BigHouse = (function() {
 
       div.append (event.otherDiv = $('<div class="other">'), event.tradeRows)
       this.locBarDiv.append (div)
-
+        .find('.nogames').hide()
+      
       this.updateEventButton (event)
     },
 
@@ -676,7 +693,8 @@ var BigHouse = (function() {
           event.other = data.event.other
 	  event.game = data.event.game
 	  this.updateEventState (event, data.event.state)
-	} else if (this.page === 'activeGames')
+	} else if (this.page === 'activeGames'
+                   || (this.page === 'otherStatus' && data.event.other.id == this.otherStatusID))
 	  this.addEvent (data.event)
       }
     },
@@ -709,7 +727,7 @@ var BigHouse = (function() {
 	.off()
 
       event.otherDiv.empty()
-      if (event.other&& event.other.id != bh.playerID) {
+      if (event.other && event.other.id != bh.playerID) {
         var avatarDiv = $('<div class="avatar">')
         avatarDiv
           .on ('click', bh.callWithSoundEffect (bh.showNavStatusPage.bind (bh, event.other)))
@@ -1423,7 +1441,9 @@ var BigHouse = (function() {
       this.container
         .append (this.locBarDiv = $('<div class="locbar">')
 		 .append ($('<span>')
-			  .text('This page shows all your currently active games.')))
+			  .text('This page shows all your currently active games.'))
+		 .append ($('<span class="nogames">')
+			  .html('<br/> You have no games at present.')))
 
       this.restoreScrolling (this.locBarDiv)
 
@@ -1491,12 +1511,15 @@ var BigHouse = (function() {
 
     showNavStatusPage: function (follow) {
       var bh = this
-      this.setPage ('otherstatus')
+      this.setPage ('otherStatus')
+      this.otherStatusID = follow.id
       this.container.empty()
       this.makeFollowDiv (follow)
       if (!follow.human) follow.buttonDiv.hide()
       this.locBarDiv = $('<div class="locbar">')
         .append ($('<h1>').text('Games'))
+      	.append ($('<span class="nogames">')
+		 .text('You have no games with ' + follow.name + ' at present.'))
       this.showGameStatusPage (this.REST_getPlayerStatusOther.bind (this, this.playerID, follow.id),
                                function (status) {
                                  if (status.following)
@@ -1504,7 +1527,7 @@ var BigHouse = (function() {
                                  bh.detailBarDiv
                                    .append ($('<div class="statusdiv">')
                                             .append (bh.locBarDiv))
-	                         bh.addEvents (status.events)
+ 	                         bh.addEvents (status.events)
                                })
       this.detailBarDiv.prepend (follow.followDiv)
       this.container

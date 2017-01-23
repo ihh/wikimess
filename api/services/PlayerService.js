@@ -24,6 +24,8 @@ var merge = require('deepmerge');
 module.exports = {
 
   // helpers
+  // this helper (responseSender) is rather pointless, should probably be refactored out
+  // or at least created dynamically when needed and not passed around (inconsistently) as it currently is
   responseSender: function (res) {
     return function (err, json) {
       if (err) {
@@ -115,7 +117,7 @@ module.exports = {
   },
 
   makeStatus: function (info) {
-    var rs = info.rs, game = info.game, player = info.player, followerID = info.follower, local = info.local, isPublic = info.isPublic
+    var rs = info.rs, game = info.game, player = info.player, follower = info.follower, local = info.local, isPublic = info.isPublic
     var state = {}
     if (game)
       extend (state, game.common)
@@ -162,13 +164,13 @@ module.exports = {
         status.element.push ({ type: 'div', element: [{ type: 'header', label: key }].concat (elements[key]) })
     })
 
-    if (typeof(followerID) !== 'undefined') {
+    if (follower) {
       var seenEventId = {}
-      Follow.find ({ follower: followerID, followed: player.id })
+      Follow.find ({ follower: follower.id, followed: player.id })
       .then (function (follows) {
         status.following = (follows.length > 0)
-        return Game.find ({ where: { or: [ { player1: player.id, player2: followerID, quit2: false },
-				    { player2: player.id, player1: followerID, quit1: false } ] },
+        return Game.find ({ where: { or: [ { player1: player.id, player2: follower.id, quit2: false },
+				    { player2: player.id, player1: follower.id, quit1: false } ] },
                      sort: 'createdAt' })
           .populate ('player1')
           .populate ('player2')
@@ -182,7 +184,10 @@ module.exports = {
       }).then (function (events) {
         if (events)
           events.forEach (function (event) {
-            if (!seenEventId[event.id])
+            if (!seenEventId[event.id]
+                && !LocationService.invisibleOrLocked (follower, event)
+                && !LocationService.invisibleOrLocked (player, event, true)
+                && InviteService.compatibility (follower, player, event))
               status.events.push (LocationService.eventDescriptor ({ event: event, player: player }))
           })
         rs (null, status)
@@ -304,6 +309,28 @@ module.exports = {
       Player.message (playerID, msg)
       sails.log.debug ("Sending message " + JSON.stringify(msg) + " to player #" + playerID)
     })
+  },
+
+  sendJoinMessages: function (info) {
+    var game = info.game
+    if (info.req && info.req.isSocket)
+      Player.subscribe (req, [info.playerID])
+    var msg1 = PlayerService.sendJoinMessage (game.player1, game)
+    var msg2 = PlayerService.sendJoinMessage (game.player2, game)
+    if (game.rs || game.res) {
+      var rs = game.rs || PlayerService.responseSender (game.res)
+      var role = Game.getRole (game, info.playerID)
+      rs (null, role === 1 ? msg1 : msg2)
+    }
+  },
+
+  sendJoinMessage: function (player, game) {
+    var playerMsg = { message: "join",
+		      player: player.id,
+		      event: LocationService.eventDescriptor ({ game: game, player: player }),
+		      waiting: false }
+    Player.message (player.id, playerMsg)
+    return playerMsg
   },
 
   // this locking mechanism is pretty crude --

@@ -83,11 +83,13 @@ module.exports = {
   },
 
   otherStatus: function (req, res) {
-    PlayerService.findOther (req, res, function (other, rs) {
-      PlayerService.makeStatus ({ rs: rs,
-                                  player: other,
-                                  follower: req.params.player,
-                                  isPublic: true })
+    PlayerService.findPlayer (req, res, function (player) {
+      PlayerService.findOther (req, res, function (other, rs) {
+        PlayerService.makeStatus ({ rs: rs,
+                                    player: other,
+                                    follower: player,
+                                    isPublic: true })
+      })
     })
   },
 
@@ -122,20 +124,10 @@ module.exports = {
 		     wantHuman: true },
 		   function (opponent, game) {
 		     // game started; return game info
-		     sails.log.debug ("Sending join messages to players #" + player.id + " and #" + opponent.id)
-		     var playerMsg = { message: "join",
-				       player: player.id,
-				       event: LocationService.eventDescriptor ({ game: game, player: player }),
-				       waiting: false }
-		     var opponentMsg = { message: "join",
-					 player: opponent.id,
-				         event: LocationService.eventDescriptor ({ game: game, player: opponent }),
-					 waiting: false }
-		     if (req.isSocket)
-		       Player.subscribe (req, [player.id])
-		     Player.message (opponent.id, opponentMsg)
-		     Player.message (player.id, playerMsg)
-		     rs (null, playerMsg)
+                     PlayerService.sendJoinMessages ({ game: game,
+                                                       req: req,
+                                                       rs: rs,
+                                                       playerID: player.id })
 		   },
 		   function (invite) {
 		     // player is waiting
@@ -176,19 +168,9 @@ module.exports = {
 		   function (opponent, game) {
                      // game started; return game info
 	             var role = Game.getRole (game, player.id)
-		     var eventInfo = { id: event.id,
-				       title: event.title,
-				       hint: event.hint,
-				       state: game.finished ? "finished" : "ready",
-				       game: { id: game.id,
-					       deadline: Game.deadline(game) } }
                      var playerMsg = { message: "join",
                                        player: player.id,
-				       event: eventInfo,
-                                       other: { id: opponent.id,
-                                                human: opponent.human,
-                                                name: opponent.displayName,
-                                                mood: Game.getOtherRoleAttr (game, role, 'mood') },
+				       event: LocationService.eventDescriptor ({ game: game, player: player }),
                                        waiting: false }
                      if (req.isSocket)
                        Player.subscribe (req, [player.id])
@@ -205,8 +187,16 @@ module.exports = {
     PlayerService.findEvent (req, res, function (player, event, rs) {
       Player.findOne ({ id: req.params.other })
         .then (function (other) {
-          // WRITE ME
-          // create a Game with 'pendingAccept' flag set
+          return InviteService.openInvitation ({ player: player,
+                                                 other: other,
+                                                 event: event })
+        }).then (function (game) {
+          PlayerService.sendJoinMessages ({ game: game,
+                                            req: req,
+                                            rs: rs,
+                                            playerID: player.id })
+        }, function() {
+          rs (new Error ("Failed to create invitation"))
         }).catch (rs)
       })
   },
@@ -216,11 +206,16 @@ module.exports = {
     Game.find ({ player1: req.params.player,
                  player2: req.params.other,
                  event: req.params.event })
-      .populate ('player1')
-      .populate ('player2')
+      .populate('player1')
+      .populate('player2')
       .then (function (game) {
-        // WRITE ME
         // delete the Game, message player2 that it is canceled
+        return InviteService.cancelInvitation (game)
+      }).then (function (game) {
+        PlayerService.sendJoinMessages ({ game: game,
+                                          req: req,
+                                          res: res,
+                                          playerID: req.params.player })
       }).catch (function (err) {
         res.status(500).send (err)
       })
@@ -234,8 +229,13 @@ module.exports = {
       .populate ('player1')
       .populate ('player2')
       .then (function (game) {
-        // WRITE ME
         // delete the Game, message player1 that it is canceled
+        return InviteService.cancelInvitation (game)
+      }).then (function (game) {
+        PlayerService.sendJoinMessages ({ game: game,
+                                          req: req,
+                                          res: res,
+                                          playerID: req.params.player })
       }).catch (function (err) {
         res.status(500).send (err)
       })
@@ -247,8 +247,13 @@ module.exports = {
                  player2: req.params.player,
                  event: req.params.event })
       .then (function (game) {
-        // WRITE ME
         // clear the Game's 'pendingAccept' flag, notify player1 that invitation is accepted
+        return InviteService.acceptInvitation (game)
+      }).then (function (game) {
+        PlayerService.sendJoinMessages ({ game: game,
+                                          req: req,
+                                          res: res,
+                                          playerID: req.params.player })
       }).catch (function (err) {
         res.status(500).send (err)
       })

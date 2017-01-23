@@ -4,6 +4,12 @@ var Promise = require('bluebird')
 
 module.exports = {
 
+  compatibility: function (player1, player2, event) {
+    return event.compatibility
+      ? (PlayerService.evalPlayerExpr (player1, player2, event.compatibility) || 0)
+      : 1
+  },
+
   joinGame: function (info, gameStarted, playerWaiting, error) {
     var player = info.player
     var event = info.event
@@ -23,9 +29,7 @@ module.exports = {
 	  function tryOpponents (potentialOpponents) {
 	    var weightedOpponents = potentialOpponents.map (function (opponent) {
 	      return { opponent: opponent,
-		       weight: (event.compatibility
-				? (PlayerService.evalPlayerExpr (opponent, player, event.compatibility) || 0)
-				: 1) }
+		       weight: InviteService.compatibility (opponent, player, event) }
 	    })
 	    InviteService
 	      .tryRandomOpponent (player,
@@ -107,71 +111,159 @@ module.exports = {
       var nOpp = GameService.sampleByWeight (weights)
       var opponent = weightedOpponents[nOpp].opponent
       weightedOpponents.splice (nOpp, 1)  // remove from weightedOpponents
-      // lock player & opponent, test eligibility & if all is OK, start the Game
-      PlayerService.runWithLock
-      ([ player.id, opponent.id ],
+
+      InviteService.startGame ({ player1: opponent,
+                                 player2: player,
+                                 event: event,
+                                 player1CostsDeducted: true,
+                                 testPlayer2CostsDeducted: true,
+                                 successCallback: function (game) {
+                                   gameStarted (opponent, game)
+                                 },
+                                 failureCallback: function() {
+                                   InviteService.tryRandomOpponent (player, event, weightedOpponents, gameStarted, playerWaiting, error)
+                                 },
+                                 errorCallback: error
+                               })
+    }
+  },
+
+  startGame: function (info) {
+    var event = info.event
+    var player1 = info.player1
+    var player2 = info.player2
+    var player1CostsDeducted = info.player1CostsDeducted
+    var testPlayer2CostsDeducted = info.testPlayer2CostsDeducted  // if true, will check Invite table to see if player2 already paid the cost of admission
+    var pendingAccept = info.pendingAccept
+    var successCallback = info.successCallback
+    var failureCallback = info.failureCallback
+    var errorCallback = info.errorCallback
+    
+    // lock player & opponent, test eligibility & if all is OK, start the Game
+    PlayerService.runWithLock
+      ([ player1.id, player2.id ],
        function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-	 // figure out if costs already deducted (i.e. Invite table entry exists)
-         Invite.find ({ player: player.id,
-                        event: event.id })
-           .exec (function (err, invites) {
-             if (err) lockedError(err)
-             else {
-               var costsDeducted = invites.length > 0
-	       if (LocationService.invisibleOrLocked (player, event, costsDeducted)
-		   || LocationService.invisibleOrLocked (opponent, event, true))
-		 lockedSuccess (null)
-	       else {
-		 Choice.findOneByName (event.choice)
-		   .populate('intro')
-		   .populate('intro2')
-		   .exec (function (err, choice) {
-		     if (err)
-		       lockedError (err)
-                     else if (!choice)
-		       lockedError ("Choice " + event.choice + " not found")
-		     else {
-                       // deduct costs, if not already deducted
-                       if (!costsDeducted)
-			 LocationService.deductCost (player, event.cost)
-		       // create the game
-                       var player1 = opponent  // the player who created the Invite table entry is player 1
-                       var player2 = player
-		       var game = { player1: player1,
-                                    player2: player2,
-				    event: event,
-                                    current: choice,
-				    mood1: player1.initialMood || 'happy',
-				    mood2: player2.initialMood || 'happy' }
-		       GameService.createGame
-		       (game,
-			function (err, created) {
-			  if (err) lockedError(err)
-			  else {
-			    Invite.destroy ({ player: [player1.id, player2.id],
-					      event: event.id })
-			      .exec (function (err) {
-				if (err)
-				  lockedError (err)
-				else
-				  lockedSuccess (game)
-			      })
-			  }
-			})
-		     }
-		   })
-               }
-	     }
-           })
+         // figure out if costs already deducted (i.e. Invite table entry exists)
+         var player2CostPromise
+         if (testPlayer2CostsDeducted)
+           player2CostPromise = Invite.find ({ player: player2.id,
+                                               event: event.id })
+           .then (function (invites) {
+             return invites.length > 0
+	   })
+         else
+           player2CostPromise = Promise.resolve (info.player2CostsDeducted)
+
+         player2CostPromise.then (function (player2CostsDeducted) {
+	   if (LocationService.invisibleOrLocked (player1, event, player1CostsDeducted)
+	       || LocationService.invisibleOrLocked (player2, event, player2CostsDeducted))
+	     lockedSuccess (null)
+	   else {
+             Choice.findOneByName (event.choice)
+	       .populate('intro')
+	       .populate('intro2')
+	       .exec (function (err, choice) {
+		 if (err)
+		   lockedError (err)
+                 else if (!choice)
+		   lockedError ("Choice " + event.choice + " not found")
+		 else {
+                   // deduct costs, if not already deducted
+                   if (!player1CostsDeducted)
+		     LocationService.deductCost (player1, event.cost)
+                   if (!player2CostsDeducted)
+		     LocationService.deductCost (player2, event.cost)
+		   // create the game
+		   var game = { player1: player1,
+                                player2: player2,
+				event: event,
+                                current: choice,
+                                pendingAccept: pendingAccept,
+				mood1: player1.initialMood || 'happy',
+				mood2: player2.initialMood || 'happy' }
+		   GameService.createGame
+		   (game,
+		    function (err, created) {
+		      if (err) lockedError(err)
+		      else {
+			Invite.destroy ({ player: [player1.id, player2.id],
+					  event: event.id })
+			  .exec (function (err) {
+			    if (err)
+			      lockedError (err)
+			    else
+			      lockedSuccess (game)
+			  })
+		      }
+		    })
+		 }
+	       })
+           }
+         })
        },
        function (game) {
 	 if (game)
-	   gameStarted (opponent, game)
+	   successCallback (game)
 	 else
-           InviteService.tryRandomOpponent (player, event, weightedOpponents, gameStarted, playerWaiting, error)
+           failureCallback()
        },
-       error)
-    }
+       errorCallback)
   },
-}
+  
+  openInvitation: function (info) {
+    var player = info.player
+    var other = info.other
+    var event = info.event
 
+    return new Promise (function (resolve, reject) {
+      InviteService.startGame ({ player1: player,
+                                 player2: other,
+                                 event: event,
+                                 player1CostsDeducted: false,
+                                 player2CostsDeducted: true,   // player 2 does not pay for chat games they're invited to
+                                 testPlayer2CostsDeducted: false,
+                                 successCallback: resolve,
+                                 failureCallback: reject,
+                                 errorCallback: function (error) { throw error }
+                               })
+    })
+  },
+
+  cancelInvitation: function (game) {
+    return new Promise (function (resolve, reject) {
+      PlayerService.runWithLock
+      ([ game.player1.id, game.player2.id ],
+       function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
+	 LocationService.refundCost (game.player1, game.event.cost)
+	 Game.destroy ({ game: game.id })
+           .then (lockedSuccess)
+           .catch (lockedError)
+       },
+       function() { game.canceled = true; resolve(game) },
+       function (error) { throw error })
+    })
+  },
+
+  acceptInvitation: function (game) {
+    return new Promise (function (resolve, reject) {
+      PlayerService.runWithLock
+      ([ game.player1.id, game.player2.id ],
+       function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
+         return GameService.startGame (game,
+                                       function() { lockedSuccess(true) },
+                                       function () {
+	                                 LocationService.refundCost (game.player1, game.event.cost)
+	                                 Game.destroy ({ game: game.id })
+                                           .then (function() { lockedSuccess(false) })
+                                           .catch (lockedError)
+                                       })
+       },
+       function (started) {
+         if (started) resolve(game)
+         else reject()
+       },
+       function (error) { throw error })
+    })
+  },
+
+}

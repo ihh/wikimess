@@ -30,6 +30,11 @@ module.exports = {
     },
 
     // current state of the game
+    pendingAccept: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+    
     finished: {
       type: 'boolean',
       defaultsTo: false

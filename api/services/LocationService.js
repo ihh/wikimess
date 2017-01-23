@@ -118,6 +118,12 @@ module.exports = {
     })
   },
 
+  refundCost: function (player, cost) {
+    Object.keys(cost).forEach (function(itemName) {
+      player.global.inv[itemName] += cost[itemName]
+    })
+  },
+
   costInfo: function (player, cost) {
     if (!cost) return undefined
     return Object.keys(cost).map (function (itemName) {
@@ -337,10 +343,10 @@ module.exports = {
                  botDefault: event.botDefaultTime,
 		 reset: event.resetTime }
 
-    var waiting
+    var role, other, waiting
     if (game) {
-      var role = Game.getRole (game, player.id)
-      var other = Game.getOtherRoleAttr (game, role, 'player')
+      role = Game.getRole (game, player.id)
+      other = Game.getOtherRoleAttr (game, role, 'player')
       waiting = game && Game.isWaitingForMove (game, role)
 
       desc.game = { id: game.id,
@@ -358,18 +364,24 @@ module.exports = {
     }
 
     desc.state = (game
-		 ? (game.finished
-                    ? "finished"
-                    : (waiting
-                       ? "ready"
-                       : "waiting"))
-		 : (event.invited
-		    ? "starting"
-		    : (event.locked
-                       ? "locked"
-                       : (event.resetTime
-			  ? "resetting"
-			  : "start"))))
+		  ? (game.canceled
+                     ? "canceled"
+                     : (game.finished
+                        ? "finished"
+                        : (game.pendingAccept
+                           ? (role == 1
+                              ? "pending"
+                              : "invited")
+                           : (waiting
+                              ? "ready"
+                              : "waiting"))))
+		  : (event.invited
+		     ? "starting"
+		     : (event.locked
+                        ? "locked"
+                        : (event.resetTime
+			   ? "resetting"
+			   : "start"))))
 
 
     return desc
