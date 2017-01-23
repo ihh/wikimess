@@ -167,7 +167,8 @@ module.exports = {
       .then (function (follows) {
         status.following = (follows.length > 0)
         Game.find ({ where: { or: [ { player1: player.id, player2: followerID, quit2: false },
-				    { player2: player.id, player1: followerID, quit1: false } ] } })
+				    { player2: player.id, player1: followerID, quit1: false } ] },
+                     sort: 'createdAt' })
           .populate ('player1')
           .populate ('player2')
           .populate ('event')

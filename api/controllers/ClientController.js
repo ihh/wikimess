@@ -61,30 +61,14 @@ module.exports = {
       .populate ('player1')
       .populate ('player2')
       .populate ('event')
-      .populate ('current')  // possibly redundant?
       .exec (function (err, games) {
         if (err)
           res.status(500).send (err)
 	else
 	  res.json (games.map (function (game) {
 	    var role = Game.getRole (game, playerID)
-	    var waiting = Game.isWaitingForMove(game,role)
-            var other = Game.getOtherRoleAttr (game, role, 'player')
-	    return { id: game.event.id,
-		     title: game.event.title,
-		     hint: game.event.hint,
-		     state: (game.finished
-                             ? "finished"
-                             : (waiting
-                                ? "ready"
-                                : "waiting")),
-                     other: { id: other.id,
-                              human: other.human,
-                              name: other.displayName,
-                              mood: Game.getOtherRoleAttr (game, role, 'mood') },
-		     game: { id: game.id,
-			     missed: Game.getRoleAttr (game, role, 'missed'),
-			     deadline: Game.deadline (game) } }
+            var player = Game.getRoleAttr (game, role, 'player')
+            return LocationService.eventDescriptor ({ game: game, player: player })
 	  }))
       })
   },
@@ -139,30 +123,13 @@ module.exports = {
 		   function (opponent, game) {
 		     // game started; return game info
 		     sails.log.debug ("Sending join messages to players #" + player.id + " and #" + opponent.id)
-		     var eventInfo = { id: event.id,
-				       title: event.title,
-				       hint: event.hint,
-				       state: game.finished ? "finished" : "ready",
-				       game: { id: game.id,
-					       deadline: Game.deadline(game) } }
-                     var playerRole = Game.getRole (game, player.id)
-                     var playerEventInfo = { other: { id: opponent.id,
-                                                      human: opponent.human,
-                                                      name: opponent.displayName,
-                                                      mood: Game.getOtherRoleAttr (game, playerRole, 'mood') } }
-                     var opponentEventInfo = { other: { id: player.id,
-                                                        human: player.human,
-                                                        name: player.displayName,
-                                                        mood: Game.getRoleAttr (game, playerRole, 'mood') } }
-                     extend (playerEventInfo, eventInfo)
-                     extend (opponentEventInfo, eventInfo)
 		     var playerMsg = { message: "join",
 				       player: player.id,
-				       event: playerEventInfo,
+				       event: LocationService.eventDescriptor ({ game: game, player: player }),
 				       waiting: false }
 		     var opponentMsg = { message: "join",
 					 player: opponent.id,
-					 event: opponentEventInfo,
+				         event: LocationService.eventDescriptor ({ game: game, player: opponent }),
 					 waiting: false }
 		     if (req.isSocket)
 		       Player.subscribe (req, [player.id])
@@ -374,23 +341,6 @@ module.exports = {
       info.moveNumber = moveNumber
       info.move = move
       PlayerService.makeMove (req, rs, info)
-    })
-  },
-
-  // subscribe to socket for next move update
-  listenForMove: function (req, res) {
-    var moveNumber = req.params.moveNumber
-    var move = req.params.move
-    PlayerService.findGame (req, res, function (info, rs) {
-      var player = info.player
-      var game = info.game
-      // waiting for opponent to move
-      if (req.isSocket)
-        Player.subscribe (req, [player.id])
-      rs (null, { game: game.id,
-                  move: moveNumber,
-                  choice: { self: move },
-                  waiting: true })
     })
   },
 

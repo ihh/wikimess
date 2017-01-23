@@ -2156,7 +2156,7 @@ var BigHouse = (function() {
             endTime = end.getTime(),
             nChimes = Math.min (this.nTimeoutChimes, Math.floor (totalTime / 2000)),
             firstChimeTime = endTime - 1000 * nChimes
-	if (nowTime >= firstChimeTime && nowTime < endTime) {
+	if (nowTime >= firstChimeTime && nowTime < endTime && !this.currentExpansionNode.isHistory) {
           var opacity = Math.sqrt (Math.abs ((timeLeft % 1000) / 500 - 1))
           this.timerPulseElement().css ('opacity', opacity)
           if (!this.lastChimeTime || nowTime >= this.lastChimeTime + 1000)

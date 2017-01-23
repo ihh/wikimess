@@ -1122,7 +1122,7 @@ module.exports = {
 	BotService.makeRandomMove (game, 2)
     }
   },
-
+  
   forRole: function (game, role) {
     var text, self, other, selfMood, otherMood, waiting
     var current = game.current

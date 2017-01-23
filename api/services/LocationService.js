@@ -256,7 +256,6 @@ module.exports = {
 				     { player2: player.id }],
 				event: eventIds },
 		       sort: 'createdAt' })
-            .populate ('current')  // possibly redundant?
             .populate ('player1')
             .populate ('player2')
 	    .exec (function (err, games) {
@@ -274,19 +273,8 @@ module.exports = {
 			event.resetTime = resetTime
 		    } else
 		      event.visible = false
-		  } else {
-                    event.other = { id: opponent.id,
-                                    human: opponent.human,
-                                    name: opponent.displayName,
-                                    mood: Game.getOtherRoleAttr (game, role, 'mood') }
-		    event.game = { id: game.id,
-				   finished: game.finished,
-				   waiting: Game.isWaitingForMove(game,role),
-				   missed: Game.getRoleAttr(game,role,'missed'),
-				   running: Game.runningTime(game),
-				   dormant: Game.dormantTime(game),
-				   deadline: Game.deadline(game) }
-                  }
+		  } else
+		    event.game = game
 		})
 		Invite.find ({ event: eventIds,
 			       player: player.id })
@@ -322,30 +310,9 @@ module.exports = {
 				   cost: link.cost && LocationService.costInfo (player, link.cost) }
 			}),
 			events: events.map (function (event) {
-			  var state = (event.game
-				       ? (event.game.finished
-                                          ? "finished"
-                                          : (event.game.waiting
-                                             ? "ready"
-                                             : "waiting"))
-				       : (event.invited
-					  ? "starting"
-					  : (event.locked
-                                             ? "locked"
-                                             : (event.resetTime
-						? "resetting"
-						: "start"))))
-			  return { id: event.id,
-				   title: event.title,
-                                   hint: LocationService.expandText (event.hint, player),
-                                   locked: event.locked,
-                                   cost: event.cost && LocationService.costInfo (player, event.cost),
-				   state: state,
-                                   invited: event.invited,
-                                   botDefault: event.botDefaultTime,
-				   reset: event.resetTime,
-                                   other: event.other,
-				   game: event.game }
+                          return LocationService.eventDescriptor ({ event: event,
+                                                                    game: event.game,
+                                                                    player: player })
 			})
 		      })
 		    }
@@ -354,6 +321,58 @@ module.exports = {
 	    })
 	}
       })
+  },
+
+  eventDescriptor: function (info) {
+    var game = info.game,
+        event = info.event || game.event,
+        player = info.player
+
+    var desc = { id: event.id,
+	         title: event.title,
+	         hint: LocationService.expandText (event.hint, player),
+                 locked: event.locked,
+                 cost: event.cost && LocationService.costInfo (player, event.cost),
+                 invited: event.invited,
+                 botDefault: event.botDefaultTime,
+		 reset: event.resetTime }
+
+    var waiting
+    if (game) {
+      var role = Game.getRole (game, player.id)
+      var other = Game.getOtherRoleAttr (game, role, 'player')
+      waiting = game && Game.isWaitingForMove (game, role)
+
+      desc.game = { id: game.id,
+		    finished: game.finished,
+                    waiting: waiting,
+		    running: Game.runningTime (game),
+		    dormant: Game.dormantTime (game),
+		    missed: Game.getRoleAttr (game, role, 'missed'),
+		    deadline: Game.deadline (game) }
+
+      desc.other = { id: other.id,
+                     human: other.human,
+                     name: other.displayName,
+                     mood: Game.getOtherRoleAttr (game, role, 'mood') }
+    }
+
+    desc.state = (game
+		 ? (game.finished
+                    ? "finished"
+                    : (waiting
+                       ? "ready"
+                       : "waiting"))
+		 : (event.invited
+		    ? "starting"
+		    : (event.locked
+                       ? "locked"
+                       : (event.resetTime
+			  ? "resetting"
+			  : "start"))))
+
+
+    return desc
   },
 
   // based on old code from GameService that has now been cleaned up, leaving this ugly... ugh
