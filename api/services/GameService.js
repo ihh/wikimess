@@ -530,7 +530,10 @@ module.exports = {
        GameService.updatePlayers
        (game,
 	function() {
-	  Turn.create
+          if (game.pendingAccept)
+            success()
+          else
+	    Turn.create
 	  ({ game: game.id,
 	     move: game.moves + 1,
 	     text1: game.text1,
@@ -651,7 +654,6 @@ module.exports = {
 
   expandCurrentChoice: function (game, success, error) {
     var choice = game.current
-    console.log('expandCurrentChoice',choice)
     
     // evaluate updated vars
     var gameImage = GameService.gameImage (game)

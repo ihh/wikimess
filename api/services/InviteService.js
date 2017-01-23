@@ -253,9 +253,7 @@ module.exports = {
 	   LocationService.refundCost (game.player1, game.event.cost)
          })
 	 Game.destroy ({ id: games.map (function (game) { return game.id }) })
-           .then (function() {
-	     return Turn.destroy ({ game: games.map (function (game) { return game.id }) })
-           }).then (lockedSuccess)
+           .then (lockedSuccess)
            .catch (lockedError)
        },
        function() { resolve (games.map (function (game) { game.canceled = true; return game })) },
@@ -268,17 +266,14 @@ module.exports = {
       PlayerService.runWithLock
       ([ game.player1.id, game.player2.id ],
        function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
-	 Turn.destroy ({ game: game.id })
-           .then (function() {
-             GameService.startGame (game,
-                                    function() { lockedSuccess(true) },
-                                    function () {
-	                              LocationService.refundCost (game.player1, game.event.cost)
-	                              Game.destroy ({ game: game.id })
-                                        .then (function() { lockedSuccess(false) })
-                                        .catch (lockedError)
-                                          })
-           })
+         GameService.startGame (game,
+                                function() { lockedSuccess(true) },
+                                function () {
+	                          LocationService.refundCost (game.player1, game.event.cost)
+	                          Game.destroy ({ game: game.id })
+                                    .then (function() { lockedSuccess(false) })
+                                    .catch (lockedError)
+                                      })
        },
        function (started) {
          if (started) resolve(game)
