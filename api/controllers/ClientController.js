@@ -53,7 +53,31 @@ module.exports = {
           })
       })
   },
-  
+
+  // search Players
+  searchDisplayName: function (req, res) {
+    Player.find ({ displayName: { contains: req.body.name },
+		   admin: false,
+		   human: true })
+      .limit(10)
+      .then (function (players) {
+	return Follow.find ({ followed: players.map (function (player) { return player.id }) })
+	  .then (function (follows) {
+	    var following = {}
+            follows.forEach (function (follow) {
+              following[follow.followed] = true
+            })
+	    res.json ({ results: players.map (function (player) {
+	      return PlayerService.makePlayerSummary (player, following[player.id])
+	    })
+		      })
+	  })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send (err)
+      })
+	},
+
   // number of ready games
   countReadyGames: function (req, res) {
     var playerID = req.params.player
@@ -585,11 +609,7 @@ module.exports = {
     var result = { id: playerID }
     var following = {}
     function makeInfo (player) {
-      return { id: player.id,
-               human: true,
-               name: player.displayName,
-               mood: player.initialMood,
-               following: following[player.id] }
+      return PlayerService.makePlayerSummary (player, following[player.id])
     }
     Follow.find ({ follower: playerID })
       .populate ('followed')

@@ -61,6 +61,7 @@ module.exports.routes = {
   'POST /p/new':                  'ClientController.createPlayer',
 
   'GET /p/id/:name':              'ClientController.byName',
+  'POST /p/:player/search':       'ClientController.searchDisplayName',
 
   'GET /p/:player/count':         'ClientController.countReadyGames',
 

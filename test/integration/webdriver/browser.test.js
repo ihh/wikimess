@@ -30,7 +30,7 @@ function testLogin (driver, name, password) {
   })
 
   it('should click on Settings -> Log out', function(done) {
-    driver.findElement(By.className('settings')).click()
+    driver.findElement(By.className('nav-settings')).click()
     driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(), 'Log out')]")))
       .then(elem => elem.click())

@@ -174,7 +174,7 @@ function roundTripToMenu (obj, cardText) {
 	})
   it('should have '+name+' click on "Active games"', function(done) {
     driver
-      .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[@class='games']")))
+      .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[contains(@class,'nav-games')]")))
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })

@@ -434,4 +434,12 @@ module.exports = {
 
     return func (val)
   },
+
+  makePlayerSummary: function (player, following) {
+    return { id: player.id,
+             human: player.human,
+             name: player.displayName,
+             mood: player.initialMood,
+             following: following }
+  }
 }
