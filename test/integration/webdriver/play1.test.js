@@ -7,13 +7,19 @@ let webdriver = require('selenium-webdriver')
 let By = webdriver.By
 let until = webdriver.until
 
-let driver = new webdriver.Builder()
-    .forBrowser('chrome')
-    .build()
-driver.manage().window().setSize(375,667)
-driver.manage().window().setPosition(0,0)
-
 var name = 'fred'
+
+var driver
+function createDriver (driverType) {
+  it('should create a ' + driverType + ' webdriver', function(done) {
+    driver = new webdriver.Builder()
+      .forBrowser(driverType)
+      .build()
+    driver.manage().window().setSize(375,667)
+    driver.manage().window().setPosition(0,0)
+    done()
+  })
+}
 
 function login (name, password) {
   it('should navigate ' + name + ' to front page', function(done) {
@@ -123,6 +129,8 @@ function quit() {
 }
 
 describe("one-player game", function() {
+
+  createDriver('chrome')
   login (name, "test")
   startGame()
   

@@ -7,32 +7,31 @@ let webdriver = require('selenium-webdriver')
 let By = webdriver.By
 let until = webdriver.until
 
-let fredDriver = new webdriver.Builder()
-    .forBrowser('chrome')
-    .build()
-fredDriver.manage().window().setSize(375,667)
-fredDriver.manage().window().setPosition(0,0)
+function login (driverType, xpos, name, password) {
+  var obj = { name: name }
 
-let sheilaDriver = new webdriver.Builder()
-    .forBrowser('chrome')
-    .build()
-sheilaDriver.manage().window().setSize(375,667)
-sheilaDriver.manage().window().setPosition(400,0)
+  it('should create a ' + driverType + ' webdriver for ' + name + ' at ('+xpos+',0)', function(done) {
+    obj.driver = new webdriver.Builder()
+      .forBrowser(driverType)
+      .build()
+    obj.driver.manage().window().setSize(375,667)
+    obj.driver.manage().window().setPosition(xpos,0)
+    done()
+  })
 
-function login (driver, name, password) {
   it('should navigate ' + name + ' to front page', function(done) {
-    driver.get('http://localhost:1337/')
-      .then(() => driver.getTitle())
+    obj.driver.get('http://localhost:1337/')
+      .then(() => obj.driver.getTitle())
       .then(title => title.should.equal('bighouse'))
       .then(() => done())
       .catch(error => done(error))
 	})
 
   it('should log ' + name + ' in', function(done) {
-    driver.findElement(By.name('player')).sendKeys(name)
-    driver.findElement(By.name('password')).sendKeys(password)
-    driver.findElement(By.xpath("//*[contains(text(), 'Log in')]")).click()
-    driver
+    obj.driver.findElement(By.name('player')).sendKeys(name)
+    obj.driver.findElement(By.name('password')).sendKeys(password)
+    obj.driver.findElement(By.xpath("//*[contains(text(), 'Log in')]")).click()
+    obj.driver
       .wait(until.elementLocated(By.className('title')))
       .then(elem => elem.getText())
       .then(text => text.should.equal('Outside WizCom'))
@@ -40,15 +39,15 @@ function login (driver, name, password) {
       .catch(error => done(error))
 	})
 
-  return { name: name, driver: driver }
+  return obj
 }
 
-function clickExpect (driver, name, buttonPath, expectText) {
-  it('should have ' + name + ' click "'+buttonPath+'" and expect "'+expectText+'"', function(done) {
-    driver
+function clickExpect (obj, buttonPath, expectText) {
+  it('should have ' + obj.name + ' click "'+buttonPath+'" and expect "'+expectText+'"', function(done) {
+    obj.driver
       .wait(until.elementLocated(By.xpath(buttonPath)))
       .then(elem => elem.click())
-    driver
+    obj.driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(), '"+expectText+"')]")))
       .then(() => done())
       .catch(error => done(error))
@@ -56,11 +55,8 @@ function clickExpect (driver, name, buttonPath, expectText) {
 }
 
 function startGame (obj, password) {
-  var driver = obj.driver
-  var name = obj.name
-
   function navigate (buttonPath, expectText) {
-    clickExpect(driver,name,buttonPath,expectText)
+    clickExpect(obj,buttonPath,expectText)
   }
 
   navigate('//*[text()="Go"]','self-important porter')
@@ -68,8 +64,8 @@ function startGame (obj, password) {
   navigate('//*[text()="Go"]','standing in the lobby')
   navigate('//*[@class="link" and ./div/text()="Student Union"]/div[@class="button"]','Want to cut class?')
 
-  it('should start ' + name + "\'s game", function(done) {
-    driver.findElement(By.xpath('//*[text()="Start"]')).click()
+  it('should start ' + obj.name + "\'s game", function(done) {
+    obj.driver.findElement(By.xpath('//*[text()="Start"]')).click()
 	.then(() => done())
 	.catch(error => done(error))
   })
@@ -85,11 +81,8 @@ function waitForText (obj, text) {
 }
 
 function waitForCardText (obj, cardText) {
-  var driver = obj.driver
-  var name = obj.name
-
-  it('should wait until '+name+"\'s top card contains '"+cardText+"'", function(done) {
-    driver
+  it('should wait until '+obj.name+"\'s top card contains '"+cardText+"'", function(done) {
+    obj.driver
       .wait(until.elementLocated(By.xpath("//li[contains(@class,'topcard')]/span[contains(text(), '"+cardText+"')]")))
       .then(elem => done())
       .catch(error => done(error))
@@ -97,13 +90,10 @@ function waitForCardText (obj, cardText) {
 }
 
 function waitForThrowToFinish (obj) {
-  var driver = obj.driver
-  var name = obj.name
-  
-  it("should wait until "+name+"\'s thrown-card animation completes", function(done) {
-    driver
+  it("should wait until "+obj.name+"\'s thrown-card animation completes", function(done) {
+    obj.driver
       .wait (function() {
-	return driver.findElements(By.className('thrown')).then (function(elements) {
+	return obj.driver.findElements(By.className('thrown')).then (function(elements) {
           return elements.length === 0
         })
       })
@@ -113,9 +103,6 @@ function waitForThrowToFinish (obj) {
 }
 
 function makeMove (obj, cardText, menuText, dir) {
-  var driver = obj.driver
-  var name = obj.name
-  
   if (!dir) {
     dir = menuText
     menuText = undefined
@@ -125,15 +112,15 @@ function makeMove (obj, cardText, menuText, dir) {
   waitForThrowToFinish (obj)
 
   if (menuText) {
-    it('should have '+name+' click menu item containing "'+menuText+'"', function(done) {
-      driver.findElement(By.xpath("//*[contains(text(), '"+menuText+"')]")).click()
+    it('should have '+obj.name+' click menu item containing "'+menuText+'"', function(done) {
+      obj.driver.findElement(By.xpath("//*[contains(text(), '"+menuText+"')]")).click()
       done()
     })
   }
 
   var choiceClass = (dir === 'left' ? 'choice1' : 'choice2')
-  it('should have '+name+' click '+dir, function(done) {
-    driver
+  it('should have '+obj.name+' click '+dir, function(done) {
+    obj.driver
       .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
@@ -152,10 +139,8 @@ function testDisabled (obj, cardText, linkText) {
 }
 
 function checkTextAbsent (obj, absentText) {
-  var driver = obj.driver
-  var name = obj.name
-  it("should not find '"+absentText+"' on "+name+"\'s page ", function(done) {
-    driver
+  it("should not find '"+absentText+"' on "+obj.name+"\'s page ", function(done) {
+    obj.driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(),'"+absentText+"')]")), 100)
       .then(() => done(new Error("fail")), () => done())
       .catch(error => done(error))
@@ -163,8 +148,6 @@ function checkTextAbsent (obj, absentText) {
 }
 
 function roundTripToMenu (obj, cardText) {
-  var driver = obj.driver
-  var name = obj.name
   waitForCardText (obj, cardText)
   it('should have '+obj.name+' click "Back"', function(done) {
     obj.driver
@@ -172,19 +155,17 @@ function roundTripToMenu (obj, cardText) {
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
 	})
-  it('should have '+name+' click on "Active games"', function(done) {
-    driver
+  it('should have '+obj.name+' click on "Active games"', function(done) {
+    obj.driver
       .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[contains(@class,'nav-games')]")))
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
-  clickExpect(driver,name,'//*[text()="Go"]',cardText)
+  clickExpect(obj,'//*[text()="Go"]',cardText)
 }
 
 function testStatus (obj, className, presents, absents) {
-  var driver = obj.driver
-  var name = obj.name
-  it('should have '+name+' click on element $(".'+className+'")', function(done) {
+  it('should have '+obj.name+' click on element $(".'+className+'")', function(done) {
     obj.driver
       .wait(until.elementLocated(By.className(className)))
       .then(elem => { elem.click(); done() })
@@ -201,11 +182,8 @@ function testStatus (obj, className, presents, absents) {
 }
   
 function waitForNavBar (obj) {
-  var driver = obj.driver
-  var name = obj.name
-
-  it("should wait for "+name+"\'s navbar", function(done) {
-    driver
+  it("should wait for "+obj.name+"\'s navbar", function(done) {
+    obj.driver
       .wait(until.elementLocated(By.xpath("//div[@class='navbar']")))
       .then(() => done())
       .catch(error => done(error))
@@ -213,11 +191,8 @@ function waitForNavBar (obj) {
 }
 
 function quit (obj) {
-  var driver = obj.driver
-  var name = obj.name
-
-  it('should quit ' + name, function(done) {
-    driver.quit()
+  it('should quit ' + obj.name, function(done) {
+    obj.driver.quit()
       .then(() => done())
       .catch(error => done(error))
 	})
@@ -265,8 +240,8 @@ function changeMood (sender, recipient, mood) {
 }
 
 describe("two-player game", function() {
-  var fred = login (fredDriver, "fred", "test")
-  var sheila = login (sheilaDriver, "sheila", "test")
+  var fred = login ('chrome', 0, "fred", "test")
+  var sheila = login ('chrome', 400, "sheila", "test")
 
   startGame (sheila)
   waitForText (sheila, "Cancel")
