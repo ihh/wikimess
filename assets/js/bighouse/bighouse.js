@@ -111,6 +111,7 @@ var BigHouse = (function() {
                gameState: true,
                moveNumber: true,
                messages: true,
+               server: true,
                timer: false,
                errors: true,
                music: false,
@@ -140,6 +141,10 @@ var BigHouse = (function() {
 
     REST_postPlayerSearch: function (playerID, queryText, page) {
       return $.post ('/p/' + playerID + '/search/', { query: queryText, page: page })
+    },
+
+    REST_postPlayerConfig: function (playerID, config) {
+      return $.post ('/p/' + playerID + '/config', config)
     },
 
     REST_getPlayerCount: function (playerID) {
@@ -301,11 +306,14 @@ var BigHouse = (function() {
       sfx = sfx || 'select'
       var bh = this
       return function (evt) {
+        evt.preventDefault()
+        if (elementToDisable) {
+          if (elementToDisable.hasClass('already-clicked'))
+            return
+          elementToDisable.addClass('already-clicked')
+        }
         if (sfx.length)
           bh.selectSound = bh.playSound (sfx)
-        evt.preventDefault()
-	if (elementToDisable)
-	  elementToDisable.off()
         callback.call (bh, evt)
       }
     },
@@ -320,7 +328,7 @@ var BigHouse = (function() {
       var link = $('<a href="#">')
           .text (text)
           .attr ('title', text)
-      link.on ('click', bh.callWithSoundEffect (callback, sfx, link))
+      link.on ('click', this.callWithSoundEffect (callback, sfx, link))
       return link
     },
 
@@ -329,7 +337,7 @@ var BigHouse = (function() {
       var li = $('<li>')
           .append ($('<span>')
                    .html(text))
-      li.on('click', this.callWithSoundEffect (callback, sfx, li))
+      li.on ('click', this.callWithSoundEffect (callback, sfx, li))
       return li
     },
 
@@ -408,13 +416,16 @@ var BigHouse = (function() {
       (function() {
         bh.REST_postLogin (bh.playerLogin, bh.playerPassword)
           .done (function (data) {
+	    if (bh.verbose.server)
+              console.log (data)
 	    if (!data.player)
               bh.showModalMessage (data.message, fail)
 	    else {
               bh.selectSound.stop()
               bh.playSound ('login')
 	      bh.playerID = data.player.id
-              bh.playerName = data.player.name
+              bh.playerLogin = data.player.name
+              bh.playerName = data.player.displayName
               showNextPage.call(bh)
 	    }
           })
@@ -491,7 +502,7 @@ var BigHouse = (function() {
         promise = this.socket_getPlayerHome (this.playerID)
 
       promise.done (function (data) {
-	if (bh.verbose.messages)
+	if (bh.verbose.server)
           console.log(data)
 
         bh.playerLocation = data.id
@@ -1013,13 +1024,39 @@ var BigHouse = (function() {
       this.container
         .append ($('<div class="menubar">')
                  .append ($('<ul>')
-                          .append (this.makeListLink ('Character settings', this.showSettingsUploadPage))
-                          .append (this.makeListLink ('Audio settings', this.showAudioPage))
+                          .append (this.makeListLink ('Name', this.showPlayerConfigPage))
+                          .append (this.makeListLink ('Avatar', this.showSettingsUploadPage))
+                          .append (this.makeListLink ('Audio', this.showAudioPage))
                           .append (this.makeListLink ('Themes', this.showThemesPage))
                           .append (this.makeListLink ('Log out', this.doLogout))))
     },
-
+    
     // settings
+    showPlayerConfigPage: function() {
+      var bh = this
+      this.pushView ('name')
+      var backLink = this.makeLink ('Back', function() {
+        backLink.off()
+        bh.nameInput.prop('disabled',true)
+        var newName = bh.nameInput.val()
+        if (newName.length) {
+          bh.playerName = newName
+          bh.REST_postPlayerConfig (bh.playerID, { displayName: newName })
+        }
+        bh.popView()
+      })
+      this.container
+        .append (this.makePageTitle ("Player details"))
+        .append ($('<div class="menubar">')
+                 .append ($('<div class="inputbar">')
+                          .append ($('<form>')
+                                   .append ($('<span>').text('Full name'))
+                                   .append (this.nameInput = $('<input type="text">')
+                                            .val(this.playerName)
+                                            .attr('maxlength', this.maxNameLength))))
+                 .append (backLink))
+    },
+
     showThemesPage: function() {
       var bh = this
 
@@ -1116,7 +1153,7 @@ var BigHouse = (function() {
 	console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
       this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
       this.container.find(':not(.pushed)').remove()
-      poppedView.elements.find('*').addBack().removeClass('pushed')
+      poppedView.elements.find('*').addBack().removeClass('pushed').removeClass('already-clicked')
       this.setPage (poppedView.page)
       this.pageSuspend = poppedView.pageSuspend
       this.pageResume = poppedView.pageResume
@@ -1538,7 +1575,7 @@ var BigHouse = (function() {
 
       this.REST_getPlayerGames (this.playerID)
 	.done (function (data) {
-	  if (bh.verbose.messages)
+	  if (bh.verbose.server)
 	    console.log (data)
 	  bh.addEvents (data)
 	}).fail (function (err) {
@@ -1670,7 +1707,7 @@ var BigHouse = (function() {
 
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
-	  if (bh.verbose.messages)
+	  if (bh.verbose.server)
 	    console.log (status)
           bh.addStatusElements (status.element, bh.detailBarDiv)
           if (callback)
@@ -1765,13 +1802,13 @@ var BigHouse = (function() {
       
       this.REST_getPlayerFollow (this.playerID)
 	.done (function (data) {
-	  if (bh.verbose.messages)
+	  if (bh.verbose.server)
 	    console.log (data)
           bh.locBarDiv
             .append ($('<div class="title">').text("Recently played"))
-            .append (bh.makeFollowDivs (data.recent, "Once you have played some games, recently encountered (human) players will appear here."))
+            .append (bh.makeFollowDivs (data.recent, "Once you have played some games, recently encountered players will appear here."))
             .append ($('<div class="title">').text("Following"))
-            .append (bh.makeFollowDivs (data.followed, "You are not following anyone yet."))
+            .append (bh.makeFollowDivs (data.followed, "You are not currently following anyone."))
             .append ($('<div class="title">').text("Followers"))
             .append (bh.makeFollowDivs (data.followers, "You have no followers yet."))
           var following = {}
@@ -1854,12 +1891,12 @@ var BigHouse = (function() {
     doSearch: function() {
       var bh = this
       var searchText = this.searchInput.val()
-      if (searchText.length) {
+      if (searchText.length && searchText !== this.lastSearch) {
         this.lastSearch = searchText
         delete this.searchResults
         this.REST_postPlayerSearch (this.playerID, searchText)
           .then (function (ret) {
-	    if (bh.verbose.messages)
+	    if (bh.verbose.server)
               console.log (ret)
             bh.searchResults = ret
             bh.showSearchResults()
@@ -1872,7 +1909,7 @@ var BigHouse = (function() {
       if (this.searchInput.val() === this.lastSearch) {
         this.REST_postPlayerSearch (this.playerID, this.lastSearch, this.searchResults.page + 1)
           .then (function (ret) {
-	    if (bh.verbose.messages)
+	    if (bh.verbose.server)
               console.log (ret)
             bh.searchResults.results = bh.searchResults.results.concat (ret.results)
             bh.searchResults.more = ret.more
@@ -2010,7 +2047,7 @@ var BigHouse = (function() {
       this.socket_getPlayerGameHistory (this.playerID, this.gameID, historyStart)
 	.done (function (data) {
 
-	  if (bh.verbose.messages) {
+	  if (bh.verbose.server) {
 	    console.log("Received game state from server")
 	    console.log(data)
           }
@@ -2319,7 +2356,7 @@ var BigHouse = (function() {
 	this.setKickTimer (triesLeft)
       else {
 	this.setGameState ('sendingKick')
-	if (this.verbose.messages)
+	if (this.verbose.server)
 	  console.log("Sending kick request")
 	var retry = function() {
 	  if (triesLeft > 0)
@@ -2925,7 +2962,7 @@ var BigHouse = (function() {
       var bh = this
       var date = new Date (time)
       if (!time || !this.lastPlayerMoodTime || date > this.lastPlayerMoodTime) {
-        if (this.verbose.messages)
+        if (this.verbose.server)
           console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + (time ? (" at time " + time) : ''))
 	if (time)
           this.lastPlayerMoodTime = date
@@ -3036,7 +3073,7 @@ var BigHouse = (function() {
     makeMove: function (moveNumber) {
       var bh = this
       if (bh.moveNumber == moveNumber && this.gameState === 'ready') {
-	if (this.verbose.messages)
+	if (this.verbose.server)
 	  console.log ("Making move #" + moveNumber + ": " + JSON.stringify(this.jsonMove(moveNumber)))
 	bh.setGameState ('sendingMove')
 	bh.makeMoveOrRetry (moveNumber)
@@ -3056,7 +3093,7 @@ var BigHouse = (function() {
       // expand the remaining parse tree randomly
       bh.expandRandomly (bh.currentExpansionNode)
 
-      if (this.verbose.messages)
+      if (this.verbose.server)
 	console.log ("Making default move #" + this.moveNumber + ": " + JSON.stringify(this.jsonMove(this.moveNumber)))
       this.makeMoveOrRetry (this.moveNumber)
 	.done (bh.startKicking.bind(bh))

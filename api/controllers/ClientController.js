@@ -85,6 +85,21 @@ module.exports = {
       })
 	},
 
+  // configure Player info
+  configurePlayer: function (req, res) {
+    var update = { displayName: req.body.displayName }
+    Player.update ({ id: req.params.player },
+                   update)
+      .then (function() {
+        res.ok()
+      }, function() {
+        res.status(500).send ({ error: "Could not update" })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send (err)
+      })
+  },
+  
   // number of ready games
   countReadyGames: function (req, res) {
     var playerID = req.params.player
