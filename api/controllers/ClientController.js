@@ -56,18 +56,25 @@ module.exports = {
 
   // search Players
   searchDisplayName: function (req, res) {
-    Player.find ({ displayName: { contains: req.body.name },
+    var searcherID = req.params.player, query = req.body.query, page = parseInt(req.body.page) || 0
+    var resultsPerPage = 3
+    Player.find ({ displayName: { contains: query },
+                   id: { '!': searcherID },
 		   admin: false,
 		   human: true })
-      .limit(10)
+      .limit(resultsPerPage + 1)
+      .skip(resultsPerPage * page)
       .then (function (players) {
-	return Follow.find ({ followed: players.map (function (player) { return player.id }) })
+	return Follow.find ({ follower: searcherID,
+                              followed: players.map (function (player) { return player.id }) })
 	  .then (function (follows) {
 	    var following = {}
             follows.forEach (function (follow) {
               following[follow.followed] = true
             })
-	    res.json ({ results: players.map (function (player) {
+	    res.json ({ page: page,
+                        more: players.length > resultsPerPage,
+                        results: players.slice(0,resultsPerPage).map (function (player) {
 	      return PlayerService.makePlayerSummary (player, following[player.id])
 	    })
 		      })

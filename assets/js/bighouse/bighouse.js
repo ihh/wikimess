@@ -94,6 +94,8 @@ var BigHouse = (function() {
            { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
            { name: 'settings', method: 'showSettingsPage', icon: 'cog' }],
 
+    searchIcon: 'magnifying-glass',
+    
     eventButtonText: { locked: 'Locked',
 		       start: 'Start',
 		       resetting: 'Locked',
@@ -134,6 +136,10 @@ var BigHouse = (function() {
 
     REST_getLogout: function() {
       return $.post('/logout')
+    },
+
+    REST_postPlayerSearch: function (playerID, queryText, page) {
+      return $.post ('/p/' + playerID + '/search/', { query: queryText, page: page })
     },
 
     REST_getPlayerCount: function (playerID) {
@@ -991,6 +997,8 @@ var BigHouse = (function() {
     doLogout: function() {
       var bh = this
       delete this.playerLocation
+      delete this.lastSearch
+      delete this.searchResults
       this.gamePosition = {}
       this.REST_getLogout()
       this.showLoginPage()
@@ -1733,27 +1741,27 @@ var BigHouse = (function() {
 
       this.eraseEventInfo()
 
+      this.searchInput = $('<input>')
+      this.searchResultsDiv = $('<div>')
+      var searchButton = $('<span>')
       this.container
-        .append (this.locBarDiv = $('<div class="locbar">'))
-
+        .append (this.locBarDiv = $('<div class="locbar">')
+                 .append ($('<div class="search">')
+                          .append ($('<div class="query">')
+                                   .append (this.searchInput, searchButton),
+                                   this.searchResultsDiv)))
+      this.searchInput.attr ('placeholder', 'Player name')
+      this.getIconPromise (bh.searchIcon)
+        .done (function (svg) {
+          searchButton.html (svg)
+        })
+      searchButton.addClass('button')
+        .on ('click', bh.doSearch.bind(bh))
+      this.showSearchResults()
+      
       this.restoreScrolling (this.locBarDiv)
 
-      var followsById = {}
-      function makeFollowDivs (followList, emptyMessage) {
-        return followList.length
-          ? followList.map (function (follow) {
-            followsById[follow.id] = followsById[follow.id] || []
-            followsById[follow.id].push (follow)
-            bh.makeFollowDiv (follow)
-            follow.setFollowing = function (flag) {
-              followsById[follow.id].forEach (function (f) { f.following = flag })
-            }
-            follow.avatarDiv
-              .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, follow)))
-            return follow.followDiv
-          })
-        : $('<span>').text (emptyMessage)
-      }
+      bh.followsById = {}
       
       this.REST_getPlayerFollow (this.playerID)
 	.done (function (data) {
@@ -1761,11 +1769,11 @@ var BigHouse = (function() {
 	    console.log (data)
           bh.locBarDiv
             .append ($('<div class="title">').text("Recently played"))
-            .append (makeFollowDivs (data.recent, "Once you have played some games, recently encountered (human) players will appear here."))
+            .append (bh.makeFollowDivs (data.recent, "Once you have played some games, recently encountered (human) players will appear here."))
             .append ($('<div class="title">').text("Following"))
-            .append (makeFollowDivs (data.followed, "You are not following anyone yet."))
+            .append (bh.makeFollowDivs (data.followed, "You are not following anyone yet."))
             .append ($('<div class="title">').text("Followers"))
-            .append (makeFollowDivs (data.followers, "You have no followers yet."))
+            .append (bh.makeFollowDivs (data.followers, "You have no followers yet."))
           var following = {}
           data.recent.map (function (follow) {
             if (!following[follow.id])
@@ -1824,6 +1832,77 @@ var BigHouse = (function() {
                           showAvatar: bh.showMoodImage.bind (bh, follow.id, follow.mood, avatarDiv),
                           makeFollowButton: makeFollowButton,
                           makeUnfollowButton: makeUnfollowButton })
+    },
+
+    makeFollowDivs: function (followList, emptyMessage) {
+      var bh = this
+      return followList.length
+        ? followList.map (function (follow) {
+          bh.followsById[follow.id] = bh.followsById[follow.id] || []
+          bh.followsById[follow.id].push (follow)
+          bh.makeFollowDiv (follow)
+          follow.setFollowing = function (flag) {
+            bh.followsById[follow.id].forEach (function (f) { f.following = flag })
+          }
+          follow.avatarDiv
+            .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, follow)))
+          return follow.followDiv
+        })
+      : $('<span>').text (emptyMessage)
+    },
+
+    doSearch: function() {
+      var bh = this
+      var searchText = this.searchInput.val()
+      if (searchText.length) {
+        this.lastSearch = searchText
+        delete this.searchResults
+        this.REST_postPlayerSearch (this.playerID, searchText)
+          .then (function (ret) {
+	    if (bh.verbose.messages)
+              console.log (ret)
+            bh.searchResults = ret
+            bh.showSearchResults()
+          })
+      }
+    },
+
+    continueSearch: function() {
+      var bh = this
+      if (this.searchInput.val() === this.lastSearch) {
+        this.REST_postPlayerSearch (this.playerID, this.lastSearch, this.searchResults.page + 1)
+          .then (function (ret) {
+	    if (bh.verbose.messages)
+              console.log (ret)
+            bh.searchResults.results = bh.searchResults.results.concat (ret.results)
+            bh.searchResults.more = ret.more
+            bh.searchResults.page = ret.page
+            bh.showSearchResults()
+          })
+      } else
+        this.doSearch()
+    },
+
+    showSearchResults: function() {
+      this.searchInput.val (this.lastSearch || '')
+      this.searchResults = this.searchResults || { results: [] }
+      this.searchResultsDiv
+        .empty()
+      if (this.lastSearch && this.lastSearch.length) {
+        this.searchResultsDiv
+        .append ($('<div class="title">').text("Search results"),
+                 this.makeFollowDivs (this.searchResults.results, "There are no players matching '" + this.lastSearch + "'."))
+        if (this.searchResults.more) {
+          var more = $('<div class="more">').text('More')
+              .on ('click', function (evt) {
+                evt.preventDefault()
+                more.remove()
+                bh.continueSearch()
+              })
+          this.searchResultsDiv.append (more)
+        }
+      }
+      this.searchResults.results.forEach (function (follow) { follow.showAvatar() })
     },
     
     // game pages
