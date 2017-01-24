@@ -6,18 +6,11 @@
  */
 
 module.exports = {
-  // override blueprint for create, to allow validation
+  // override blueprint for create, to allow inline specification of events, choices, and nested locations
   create: function (req, res) {
-    if (SchemaService.validateLocation (req.body, res.badRequest)) {
-      Location
-        .findOrCreate ({ name: req.body.name }, req.body)
-        .exec (function (err, location) {
-          if (err)
-            res.badRequest (err)
-          else
-            res.json (location)
-        })
-    }
+    LocationService.createLocation (req.body,
+				    res.send.bind(res),
+                                    res.badRequest.bind(res))
   }
 };
 

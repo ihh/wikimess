@@ -1,10 +1,50 @@
 // api/services/LocationService.js
 
-function isArray (obj) {
-  return Object.prototype.toString.call(obj) === '[object Array]'
-}
+var Promise = require('bluebird')
 
 module.exports = {
+
+  nodeCreateLocation: function (config, nodeStyleCallback) {
+    return LocationService.createLocation (config,
+					   function (result) { nodeStyleCallback(null,result) },
+					   function (err) { nodeStyleCallback(err) })
+  },
+
+  bluebirdCreateLocation: function (config) {
+    return Promise.promisify (LocationService.nodeCreateLocation) (config)
+  },
+
+  createLocation: function (config, successCallback, errorCallback) {
+    // validate against schema
+    if (!SchemaService.validateLocation (config, errorCallback))
+      return
+
+    var promises = []
+    if (config.events)
+      config.events.forEach (function (event, n) {
+	if (typeof(event.choice) === 'object') {
+	  event.choice.name = event.choice.name || (config.name + '-choice-' + (n+1))
+	  promises.push (ChoiceService.bluebirdCreateChoice (event.choice))
+	  event.choice = event.choice.name
+	}
+      })
+    if (config.links)
+      config.links.forEach (function (link, n) {
+	if (typeof(link) === 'object' && typeof(link.to) === 'object') {
+	  link.to.name = link.to.name || (config.name + '-link-' + (n+1))
+	  if (!link.to.links)
+	    link.to.links = [config.name]
+	  promises.push (LocationService.bluebirdCreateLocation (link.to))
+	  link.to = link.to.name
+	}
+      })
+
+    Promise.all(promises)
+      .then (function() {
+	return Location.create(config)
+      }).then (successCallback)
+      .catch (errorCallback)
+  },
 
   itemInfoFields: ['visible','buy','sell','verb','markup','discount'],
   makeItemInfo (item, template) {
@@ -238,12 +278,14 @@ module.exports = {
       .filter (function (link) {
 	return !LocationService.invisible (player, link)
       })
+    var linksByName = {}
+    links.forEach (function (link) { linksByName[link.to] = link })
     Location.find ({ name: links.map (function (link) { return link.to }) })
       .exec (function (err, destLocations) {
 	if (err) rs(err)
 	else if (destLocations.length != links.length) rs("Couldn't find all Locations")
 	else {
-	  destLocations.forEach (function (loc, n) { links[n].location = loc })
+	  destLocations.forEach (function (loc) { linksByName[loc.name].location = loc })
 	  links = links.filter (function (link) {
 	    return !LocationService.invisible (player, link.location)
 	  })
@@ -392,7 +434,7 @@ module.exports = {
     if (!text)
       return []
 
-    if (isArray(text)) {
+    if (GameService.isArray(text)) {
       return text.map (function (t) {
         return LocationService.expandText (t, false)
       })

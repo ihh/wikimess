@@ -90,6 +90,7 @@ var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
 var meterFilenames = opt.options.meters || [defaultPath('Meter',opt)]
 var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 
+// this callback-chain-mangling really, really should be done using promises instead
 var callback = function() {}
 
 var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })

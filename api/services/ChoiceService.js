@@ -1,7 +1,18 @@
 // api/services/ChoiceService.js
 var extend = require('extend');
+var Promise = require('bluebird')
 
 module.exports = {
+
+  nodeCreateChoice: function (config, nodeStyleCallback) {
+    return ChoiceService.createChoice (config,
+				       function (result) { nodeStyleCallback(null,result) },
+				       function (err) { nodeStyleCallback(err) })
+  },
+
+  bluebirdCreateChoice: function (config) {
+    return Promise.promisify (ChoiceService.nodeCreateChoice) (config)
+  },
 
   createChoice: function (config, successCallback, errorCallback) {
     //        console.log ('createChoice')
@@ -115,7 +126,6 @@ module.exports = {
             out.next = out.next.map (function (next) {
               if (typeof(next) === 'object') {
                 var count = nestedChoices.length + 1
-                next.parent = config.name
                 next.name = config.name + '.' + count
                 nestedChoices.push (next)
                 return next.name
@@ -222,59 +232,6 @@ module.exports = {
                                  callback,
                                  errorCallback)
   },
-
-  destroyOutcomesAndChildren: function (choice, callback) {
-    //        console.log('destroyOutcomesAndChildren: ' + choice.name)
-    // delete any Outcomes previously attached to this Choice
-    Outcome.destroy
-    ({ choice: choice.id },
-     function (err) {
-       //             console.log('Outcome.destroy')
-       if (err)
-         callback (err)
-       else {
-         // recursively delete any anonymous Choices descended from this Choice
-         Choice
-           .find ({ parent: choice.name })
-           .exec (function (err, children) {
-             //                         console.log('Choice.find')
-             //                         console.log(children)
-             if (err)
-               callback (err)
-             else {
-               // create a chain of callbacks
-	       // ugh, should use promises for this...
-               var next = callback
-               children.forEach (function (child) {
-                 next = (function(cb) {
-                   return function() {
-                     ChoiceService
-                       .destroyOutcomesAndChildren
-                     (child,
-                      function (err) {
-                        if (err)
-                          callback(err)
-                        else
-                          Choice
-                          .destroy
-                        ({ id: child.id },
-                         function (err) {
-                           if (err)
-                             callback(err)
-                           else
-                             cb()
-                         })
-                      })
-                   }
-                 }) (next)
-               })
-               // call last function in the chain
-               next()
-             }
-           })
-       }
-     })
-  },
   
   createChoiceWithOutcomes: function (config, outcomes, successCallback, errorCallback) {
     //        console.log ('createChoiceWithOutcomes')
@@ -297,48 +254,38 @@ module.exports = {
         else if (!choice)
           errorCallback (new Error("Could not find/create choice"))
         else {
-          // recursively delete any Outcomes and anonymous Choices descended from this Choice
-          ChoiceService
-            .destroyOutcomesAndChildren
-          (choice,
-           function (err) {
+          // update the Choice
+          Choice.update
+          ({ id: choice.id },
+           config,
+           function (err, choices) {
+             //                                  console.log('Choice.update')
+             //                                  console.log(choices)
              if (err)
                errorCallback (err)
+             else if (choices.length != 1)
+               errorCallback (new Error("Could not update choice"))
              else {
-               // update the Choice
-               Choice.update
-               ({ id: choice.id },
-                config,
-                function (err, choices) {
-                  //                                  console.log('Choice.update')
-                  //                                  console.log(choices)
-                  if (err)
-                    errorCallback (err)
-                  else if (choices.length != 1)
-                    errorCallback (new Error("Could not update choice"))
-                  else {
-                    // add the new Outcomes
-                    outcomes.forEach (function (outcome) {
-                      outcome.choice = choice.id
-                    })
-                    Outcome.create(outcomes).exec
-                    (function (err, createdOutcomes) {
-                      //                                          console.log('Outcome.create')
-                      //                                          console.log(createdOutcomes)
-                      if (err)
-                        errorCallback (err)
-                      else {
-                        // return a (single-element) list of created Choices, with Outcomes expanded
-                        // go through some contortions to outwit name collision with virtual attribute for 'outcomes'...
-                        var choiceCopy = {}
-                        Object.keys(choice).forEach (function (key) { choiceCopy[key] = choice[key] })
-                        choiceCopy.outcomes = createdOutcomes
-                        //                                              console.log(choiceCopy)
-                        successCallback ([choiceCopy])
-                      }
-                    })
-                  }
-                })
+               // add the new Outcomes
+               outcomes.forEach (function (outcome) {
+                 outcome.choice = choice.id
+               })
+               Outcome.create(outcomes).exec
+               (function (err, createdOutcomes) {
+                 //                                          console.log('Outcome.create')
+                 //                                          console.log(createdOutcomes)
+                 if (err)
+                   errorCallback (err)
+                 else {
+                   // return a (single-element) list of created Choices, with Outcomes expanded
+                   // go through some contortions to outwit name collision with virtual attribute for 'outcomes'...
+                   var choiceCopy = {}
+                   Object.keys(choice).forEach (function (key) { choiceCopy[key] = choice[key] })
+                   choiceCopy.outcomes = createdOutcomes
+                   //                                              console.log(choiceCopy)
+                   successCallback ([choiceCopy])
+                 }
+               })
              }
            })
         }

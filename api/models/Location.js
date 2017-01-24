@@ -8,55 +8,55 @@
 module.exports = {
 
   attributes: {
-      id: {
-          type: 'integer',
-          autoIncrement: true,
-          unique: true,
-          primaryKey: true
-      },
+    id: {
+      type: 'integer',
+      autoIncrement: true,
+      unique: true,
+      primaryKey: true
+    },
 
-      name: {
-	  type: 'string',
-	  unique: true,
-	  required: true
-      },
+    name: {
+      type: 'string',
+      unique: true,
+      required: true
+    },
 
-      title: {
-	  type: 'string',
-	  required: true
-      },
+    title: {
+      type: 'string',
+      required: true
+    },
 
-      description: {
-	  type: 'string',
-	  defaultsTo: ""
-      },
+    description: {
+      type: 'string',
+      defaultsTo: ""
+    },
 
-      links: {
-	  type: 'json',
-	  defaultsTo: []
-      },
+    links: {
+      type: 'json',
+      defaultsTo: []
+    },
 
-      items: {
-          type: 'json',
-          defaultsTo: []
-      },
-      
-      events: {
-          collection: 'event',
-          via: 'location'
-      },
+    items: {
+      type: 'json',
+      defaultsTo: []
+    },
+    
+    events: {
+      collection: 'event',
+      via: 'location'
+    },
 
-      visible: {
-	  type: 'string'
-      },
+    visible: {
+      type: 'string'
+    },
 
-      locked: {
-	  type: 'string'
-      },
+    locked: {
+      type: 'string'
+    },
 
-      checkpoint: {
-          type: 'boolean'
-      },
+    checkpoint: {
+      type: 'boolean'
+    },
   },
 
   getChatLocation: function() {

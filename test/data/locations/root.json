@@ -3,7 +3,10 @@
     name: "root",
     title: "Outside WizCom",
     description: "Welcome to your first day at Wizard Valley Community College.",
-    links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" }],
+    links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" },
+	    { hint: "You could always escape.",
+	      to: { title: "The Real World",
+		    description: "Frankly, this is boring. Let's go back." } }],
     events: [ { title: "Timeout test",
 		hint: "Let's do a timeout test!",
 		timeout: 3,
@@ -14,7 +17,15 @@
 		opponent: "ai",
 		timeout: 10,
 		resetWait: 5,
-		choice: "solo" } ]
+		choice: "solo" },
+	      { title: "Single scene",
+		hint: "A game with just one choice",
+		timeout: 10,
+		resetWait: 5,
+		choice: {
+		  intro: [{ text: "This is the only card.",
+			    left: { hint: "I doubt it", text: "OK, you were right." },
+			    right: { hint: "I believe you", text: "Sucker!" } }] } } ]
   },
   {
     name: "intro_robe",

@@ -202,6 +202,7 @@ body {
     margin-top: 4px;
 }
 
+.bighouse .locbar .link .hint,
 .bighouse .locbar .event .hint,
 .bighouse .locbar .trade .hint {
     font-size: small;

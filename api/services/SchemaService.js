@@ -1,6 +1,8 @@
 // api/services/SchemaService.js
 
+var extend = require('extend')
 var JsonValidator = require( 'jsonschema' ).Validator;
+var Promise = require('bluebird')
 
 var intro_node_schema = {
   oneOf: [{ type: "string" },
@@ -174,76 +176,77 @@ function ref_schema (type) {
   return { "$ref": "#/definitions/" + type }
 }
 
+var choice_schema_defs = {
+  choice: {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      parent: { type: "string" },
+      intro: ref_schema('intro_or_intro_list'),
+      intro2: ref_schema('intro_or_intro_list'),
+
+      outcome: ref_schema('outcome_or_outcome_list'),
+
+      ll: ref_schema('outcome_or_outcome_list'),
+      lr: ref_schema('outcome_or_outcome_list'),
+      rl: ref_schema('outcome_or_outcome_list'),
+      rr: ref_schema('outcome_or_outcome_list'),
+
+      any: ref_schema('outcome_or_outcome_list'),
+
+      lr2: ref_schema('outcome_or_outcome_list'),
+      rl2: ref_schema('outcome_or_outcome_list'),
+
+      auto: ref_schema('outcome_or_outcome_list'),
+      effect: ref_schema('outcome_or_outcome_list')
+    },
+    additionalProperties: false
+  },
+
+  choice_ref: {
+    oneOf: [{ type: "string" },
+            ref_schema('choice')]
+  },
+  
+  outcome_or_outcome_list: one_or_list_schema(ref_schema('outcome_node')),
+
+  outcome_node: {
+    type: "object",
+    properties: {
+      move1: { type: "string" },
+      move2: { type: "string" },
+      weight: { type: ["string","number"] },
+      exclusive: { type: "boolean" },
+      outro: ref_schema('intro_or_intro_list'),
+      outro2: ref_schema('intro_or_intro_list'),
+      next: one_or_list_schema(ref_schema('choice_ref')),
+      local: { type: "object" },
+      global: { type: "object" },
+      mood: { type: "string" },
+      common: { type: "object" },
+      local1: { type: "object" },
+      local2: { type: "object" },
+      global1: { type: "object" },
+      global2: { type: "object" },
+      mood1: { type: "string" },
+      mood2: { type: "string" }
+    },
+    additionalProperties: false
+  },
+
+  intro_node: intro_node_schema,
+  intro_or_intro_list: one_or_list_schema(ref_schema('intro_node')),
+  intro_node_cases: case_list_schema(ref_schema('intro_node')),
+  intro_node_opts: sample1_opts_schema(ref_schema('intro_node')),
+  sample_intro_nodes: list_or_sample_schema(ref_schema('intro_node')),
+  sample_string: sample1_switch_schema({ type: "string" })
+}
+
 module.exports = {
 
   // Choice schema
   choiceSchema: {
-    definitions: {
-      choice: {
-        type: "object",
-        properties: {
-          name: { type: "string" },
-          parent: { type: "string" },
-          intro: ref_schema('intro_or_intro_list'),
-          intro2: ref_schema('intro_or_intro_list'),
-
-          outcome: ref_schema('outcome_or_outcome_list'),
-
-          ll: ref_schema('outcome_or_outcome_list'),
-          lr: ref_schema('outcome_or_outcome_list'),
-          rl: ref_schema('outcome_or_outcome_list'),
-          rr: ref_schema('outcome_or_outcome_list'),
-
-          any: ref_schema('outcome_or_outcome_list'),
-
-          lr2: ref_schema('outcome_or_outcome_list'),
-          rl2: ref_schema('outcome_or_outcome_list'),
-
-          auto: ref_schema('outcome_or_outcome_list'),
-          effect: ref_schema('outcome_or_outcome_list')
-        },
-        additionalProperties: false
-      },
-
-      choice_ref: {
-        oneOf: [{ type: "string" },
-                ref_schema('choice')]
-      },
-      
-      outcome_or_outcome_list: one_or_list_schema(ref_schema('outcome_node')),
-
-      outcome_node: {
-        type: "object",
-        properties: {
-          move1: { type: "string" },
-          move2: { type: "string" },
-          weight: { type: ["string","number"] },
-          exclusive: { type: "boolean" },
-          outro: ref_schema('intro_or_intro_list'),
-          outro2: ref_schema('intro_or_intro_list'),
-          next: one_or_list_schema(ref_schema('choice_ref')),
-          local: { type: "object" },
-          global: { type: "object" },
-          mood: { type: "string" },
-          common: { type: "object" },
-          local1: { type: "object" },
-          local2: { type: "object" },
-          global1: { type: "object" },
-          global2: { type: "object" },
-          mood1: { type: "string" },
-          mood2: { type: "string" }
-        },
-        additionalProperties: false
-      },
-
-      intro_node: intro_node_schema,
-      intro_or_intro_list: one_or_list_schema(ref_schema('intro_node')),
-      intro_node_cases: case_list_schema(ref_schema('intro_node')),
-      intro_node_opts: sample1_opts_schema(ref_schema('intro_node')),
-      sample_intro_nodes: list_or_sample_schema(ref_schema('intro_node')),
-      sample_string: sample1_switch_schema({ type: "string" })
-    },
-
+    definitions: choice_schema_defs,
     "$ref": "#/definitions/choice"
   },
 
@@ -282,74 +285,83 @@ module.exports = {
 
   // Location schema
   locationSchema: {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-      name: { type: "string" },
-      title: { type: "string" },
-      description: { type: "string" },
-      checkpoint: { type: "boolean" },
-      visible: { type: "string" },
-      locked: { type: "string" },
-      links: {
-        type: "array",
-        items: {
-          oneOf: [
-            { type: "string" },
-            { type: "object",
+    definitions: extend ({
+      location: {
+	type: "object",
+	additionalProperties: false,
+	properties: {
+	  name: { type: "string" },
+	  title: { type: "string" },
+	  description: { type: "string" },
+	  checkpoint: { type: "boolean" },
+	  visible: { type: "string" },
+	  locked: { type: "string" },
+	  links: {
+            type: "array",
+            items: {
+              oneOf: [
+		{ type: "string" },
+		{ type: "object",
+		  additionalProperties: false,
+		  required: ["to"],
+		  properties: {
+                    to: { oneOf: [{ type: "string" },
+				  ref_schema('location')] },
+                    title: { type: "string" },
+                    requires: { type: "object" },
+                    hint: { type: "string" }
+		  }
+		}
+              ]
+            }
+	  },
+	  items: {
+            type: "array",
+            items: {
+              type: "object",
               additionalProperties: false,
               properties: {
-                to: { type: "string" },
-                title: { type: "string" },
-                requires: { type: "object" },
-                hint: { type: "string" }
+		name: { type: "string" },
+		visible: { type: "string" },
+		verb: { type: "object",
+			additionalProperties: false,
+			properties: { buy: { type: "string" },
+                                      sell: { type: "string" } } },
+		buy: { type: ["boolean","object"] },
+		sell: { type: ["boolean","object"] }
               }
             }
-          ]
-        }
-      },
-      items: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            name: { type: "string" },
-            visible: { type: "string" },
-            verb: { type: "object",
-                    additionalProperties: false,
-                    properties: { buy: { type: "string" },
-                                  sell: { type: "string" } } },
-            buy: { type: ["boolean","object"] },
-            sell: { type: ["boolean","object"] }
-          }
-        }
-      },
-      events: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            title: { type: "string" },
-            hint: { type: "string" },
-            opponent: { oneOf: [ { type: "string" },
-				 { type: "array", minItems: 1, items: { type: "string" } }] },
-            compatibility: { type: "string" },
-            timeout: { type: "number" },
-            resetAllowed: { type: "boolean" },
-            resetWait: { type: "number" },
-            botDefaultAllowed: { type: "boolean" },
-            botDefaultWait: { type: "number" },
-            visible: { type: "string" },
-            locked: { type: "string" },
-            cost: { type: "object" },
-            required: { type: "object" },
-            choice: { type: "string" }
-          }
-        }
+	  },
+	  events: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+		title: { type: "string" },
+		hint: { type: "string" },
+		opponent: { oneOf: [ { type: "string" },
+				     { type: "array", minItems: 1, items: { type: "string" } }] },
+		compatibility: { type: "string" },
+		timeout: { type: "number" },
+		resetAllowed: { type: "boolean" },
+		resetWait: { type: "number" },
+		botDefaultAllowed: { type: "boolean" },
+		botDefaultWait: { type: "number" },
+		visible: { type: "string" },
+		locked: { type: "string" },
+		cost: { type: "object" },
+		required: { type: "object" },
+		choice: { oneOf: [{ type: "string" },
+				  ref_schema('choice')] }
+              }
+            }
+	  }
+	}
       }
-    }
+    }, choice_schema_defs),
+
+    "$ref": "#/definitions/location"
   },
   
   

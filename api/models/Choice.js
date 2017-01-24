@@ -20,10 +20,6 @@ module.exports = {
       unique: true
     },
 
-    parent: {
-      type: 'string'  // for anonymously-declared Choices, the parent creator Choice
-    },
-
     common: { type: 'json' },
     local1: { type: 'json' },
     local2: { type: 'json' },
