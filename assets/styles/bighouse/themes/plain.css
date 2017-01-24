@@ -14,6 +14,7 @@
 }
 
 .bighouse.plain .detailbar .statusdiv,
+.bighouse.plain .detailbar .statusdiv .locbar,
 .bighouse.plain .locbar .link,
 .bighouse.plain .locbar .trade,
 .bighouse.plain .locbar .event {
@@ -57,7 +58,6 @@
 
 .bighouse.plain .choicebar a,
 .bighouse.plain .detailbar,
-.bighouse.plain .detailbar .locbar,
 .bighouse.plain .statusbar,
 .bighouse.plain .backbar,
 .bighouse.plain .menubar {
@@ -85,6 +85,7 @@
     border-color: #ddd;
 }
 
+.bighouse.plain .backbar a,
 .bighouse.plain .statusbar a,
 .bighouse.plain .menubar a,
 .bighouse.plain .avatar-exit a,

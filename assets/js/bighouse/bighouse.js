@@ -135,7 +135,11 @@ var BigHouse = (function() {
     REST_getLogout: function() {
       return $.post('/logout')
     },
-    
+
+    REST_getPlayerCount: function (playerID) {
+      return $.get ('/p/' + playerID + '/count')
+    },
+
     REST_getPlayerJoin: function (playerID, eventID) {
       return $.get ('/p/' + playerID + '/join/' + eventID)
     },
@@ -705,6 +709,8 @@ var BigHouse = (function() {
                    || (this.page === 'otherStatus' && data.event.other.id == this.otherStatusID))
 	  this.addEvent (data.event)
       }
+
+      this.updateGameCount()
     },
 
     updateEventFromMoveMessage: function (data) {
@@ -720,6 +726,8 @@ var BigHouse = (function() {
 	  this.updateEventState (event, data.finished ? 'finished' : 'ready')
 	}
       }
+
+      this.updateGameCount()
     },
 
     updateEventState: function (event, state) {
@@ -876,7 +884,7 @@ var BigHouse = (function() {
     reloadCurrentTab: function() {
       this[this.currentTab.method] ()
     },
-    
+
     showNavBar: function (currentTab) {
       var bh = this
       
@@ -885,11 +893,19 @@ var BigHouse = (function() {
         .empty()
         .append (navbar = $('<div class="navbar">'))
 
+      this.gameCountDiv = $('<div class="gamecount">')
+      if (typeof(this.gameCount) === 'undefined')
+	this.updateGameCount()
+      else
+	this.updateGameCountDiv()
+	
       this.tabs.map (function (tab) {
-        var span = $('<span>').addClass(tab.name)
+        var span = $('<span>').addClass('navtab').addClass('nav-'+tab.name)
         bh.getIconPromise(tab.icon)
           .done (function (svg) {
             span.append ($(svg).addClass('navicon'))
+	    if (tab.name === 'games')
+	      span.append (bh.gameCountDiv)
           })
           .fail (function (err) {
             console.log(err)
@@ -918,7 +934,23 @@ var BigHouse = (function() {
         svg = svg.replace(new RegExp("#000", 'g'), bgColor)
       return svg
     },
-    
+
+    updateGameCount: function() {
+      var bh = this
+      this.REST_getPlayerCount (this.playerID)
+	.then (function (result) {
+	  bh.gameCount = result.count
+	  bh.updateGameCountDiv()
+	})
+    },
+
+    updateGameCountDiv: function() {
+      if (this.gameCount)
+	this.gameCountDiv.text(this.gameCount).show()
+      else
+	this.gameCountDiv.hide()
+    },
+
     capitalize: function (text) {
       return text.charAt(0).toUpperCase() + text.substr(1)
     },
@@ -1547,6 +1579,7 @@ var BigHouse = (function() {
 
     exitGamePage: function() {
       delete this.gameID
+      delete this.gameCount
       this.clearMoveTimer()
       this.showPlayPage()
     },
