@@ -38,7 +38,7 @@ function frontpage (obj) {
 function login (obj, name, password) {
   frontpage (obj)
 
-  changeName (obj, name)
+  enterName (obj, name)
   
   it('should log #' + obj.count + ' in as ' + name, function(done) {
     obj.driver.findElement(By.name('password')).sendKeys(password)
@@ -52,28 +52,37 @@ function login (obj, name, password) {
 	})
 }
 
-function changeName (obj, name) {
+function backspaces (text) {
+  return new Array(text.length).fill(Key.BACK_SPACE).join('')
+}
+
+function replaceInputText (obj, path, oldText, newText) {
+  it('should find "'+oldText+'" in '+path+' for #' + obj.count, function(done) {
+    obj.driver.findElement(By.xpath(path))
+      .then(elem => elem.getAttribute('value'))
+      .then(text => text.should.equal(oldText))
+      .then(()=>done())
+      .catch(error => done(error))
+        })
+
+  it('should delete "'+oldText+'" and replace with "' + newText + '"', function(done) {
+    obj.driver.findElement(By.xpath(path))
+      .then (function (input) {
+        input.sendKeys(backspaces(oldText) + newText)
+        obj.driver.wait(function() {
+          return input.getAttribute('value')
+            .then (function (text) {
+              return text === newText
+            })
+        })
+      }).then(()=>done())
+      .catch(error => done(error))
+        })
+}
+
+function enterName (obj, name) {
   (function (lastName) {
-    it('should find "'+lastName+'" in the name field for #' + obj.count, function(done) {
-      obj.driver.findElement(By.name('player'))
-        .then(elem => elem.getAttribute('value'))
-        .then(text => text.should.equal(lastName))
-        .then(()=>done())
-        .catch(error => done(error))
-          })
-
-    var lastNameLen = lastName.length
-    var backspaces = new Array(lastNameLen).fill(Key.BACK_SPACE).join('')
-
-    it('should delete "'+lastName+'" and replace with "' + name + '"', function(done) {
-      obj.driver.findElement(By.name('player')).sendKeys(backspaces + name)
-      obj.driver.findElement(By.name('player'))
-        .then(elem => elem.getAttribute('value'))
-        .then(text => text.should.equal(name))
-        .then(()=>done())
-        .catch(error => done(error))
-          })
-
+    replaceInputText (obj, "//input[@name='player']", lastName, name)
     obj.lastName = name
   }) (obj.lastName)
 }
@@ -81,7 +90,7 @@ function changeName (obj, name) {
 function signup (obj, name, password) {
   frontpage (obj)
 
-  changeName (obj, name)
+  enterName (obj, name)
 
   it('should sign up #' + obj.count + ' as ' + name, function(done) {
     obj.driver.findElement(By.name('password')).sendKeys(password)
@@ -100,6 +109,66 @@ function logout (obj) {
   clickExpect (obj, "//*[contains(text(), 'Log out')]", "Sign up")
 }
 
+function changeDisplayName (obj, oldDisplayName, newDisplayName) {
+  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-settings')]", "Themes")
+  clickExpect (obj, "//*[contains(text(), 'Name')]", "Player details")
+  replaceInputText (obj, "//input", oldDisplayName, newDisplayName)
+  clickExpect (obj, "//*[contains(text(), 'Back')]", "Themes")
+}
+
+function search (obj, lastSearchText, searchText, numResults) {
+  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-follows')]", "Following")
+
+  it('should find "'+lastSearchText+'" in the search field', function(done) {
+      obj.driver.findElement(By.xpath('//input'))
+        .then(elem => elem.getAttribute('value'))
+        .then(text => text.should.equal(lastSearchText))
+        .then(()=>done())
+        .catch(error => done(error))
+          })
+
+  it('should enter "' + searchText + '"', function(done) {
+    obj.driver.findElement(By.xpath('//input')).sendKeys(backspaces(lastSearchText) + searchText)
+    obj.driver.findElement(By.xpath('//input'))
+      .then(elem => elem.getAttribute('value'))
+      .then(text => text.should.equal(searchText))
+      .then(()=>done())
+      .catch(error => done(error))
+        })
+
+  clickExpect (obj,"//div[@class='query']/span[contains(@class,'button')]", "Search results")
+  countSearchResults (obj, numResults)
+}
+
+function countSearchResults (obj, n) {
+  it('should find '+n+' search results', function(done) {
+    obj.driver.findElements(By.xpath("//div[@class='search']/div/div/div[@class='follow']"))
+      .then(elems => elems.length)
+      .then(len => len.should.equal(n))
+      .then(()=>done())
+      .catch(error => done(error))
+    })
+}
+
+function moreSearchResults (obj, n) {
+  it('should have #' + obj.count + ' click "More" and wait for it to go stale', function(done) {
+    obj.driver
+      .findElement(By.xpath("//div[@class='endresults']/span[@class='more']"))
+      .then(elem => {
+        elem.click()
+        return obj.driver.wait(until.stalenessOf(elem))
+      }).then(() => done())
+      .catch(error => done(error))
+    })
+  it('should wait for more search results to appear', function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.xpath("//div[@class='endresults']/span")))
+      .then(() => done())
+      .catch(error => done(error))
+  })
+  countSearchResults (obj, n)
+}
+
 function clickExpect (obj, buttonPath, expectText) {
   it('should have #' + obj.count + ' click "'+buttonPath+'" and expect "'+expectText+'"', function(done) {
     obj.driver
@@ -112,75 +181,11 @@ function clickExpect (obj, buttonPath, expectText) {
 	})
 }
 
-function startGame (obj, password) {
-  function navigate (buttonPath, expectText) {
-    clickExpect(obj,buttonPath,expectText)
-  }
-
-  navigate('//*[@class="link" and ./div/text()="Lobby"]/div[@class="button"]','self-important porter')
-  navigate('//*[text()="Take"]','The porter nods approvingly')
-  navigate('//*[text()="Go"]','standing in the lobby')
-  navigate('//*[@class="link" and ./div/text()="Student Union"]/div[@class="button"]','Want to cut class?')
-
-  it('should start #' + obj.count + "\'s game", function(done) {
-    obj.driver.findElement(By.xpath('//*[text()="Start"]')).click()
-	.then(() => done())
-	.catch(error => done(error))
-  })
-}
-
 function waitForText (obj, text) {
   it('should wait until #'+obj.count+"\'s page contains '"+text+"'", function(done) {
     obj.driver
       .wait(until.elementLocated(By.xpath("//*[contains(text(),'"+text+"')]")))
       .then(() => done())
-      .catch(error => done(error))
-  })
-}
-
-function waitForCardText (obj, cardText) {
-  it('should wait until #'+obj.count+"\'s top card contains '"+cardText+"'", function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//li[contains(@class,'topcard')]/span[contains(text(), '"+cardText+"')]")))
-      .then(elem => done())
-      .catch(error => done(error))
-  })
-}
-
-function waitForThrowToFinish (obj) {
-  it("should wait until #"+obj.count+"\'s thrown-card animation completes", function(done) {
-    obj.driver
-      .wait (function() {
-	return obj.driver.findElements(By.className('thrown')).then (function(elements) {
-          return elements.length === 0
-        })
-      })
-      .then(elem => { done() })
-      .catch(error => done(error))
-  })
-}
-
-function makeMove (obj, cardText, menuText, dir) {
-  if (!dir) {
-    dir = menuText
-    menuText = undefined
-  }
-
-  waitForCardText (obj, cardText)
-  waitForThrowToFinish (obj)
-
-  if (menuText) {
-    it('should have #'+obj.count+' click menu item containing "'+menuText+'"', function(done) {
-      obj.driver.findElement(By.xpath("//*[contains(text(), '"+menuText+"')]")).click()
-      done()
-    })
-  }
-
-  var choiceClass = (dir === 'left' ? 'choice1' : 'choice2')
-  it('should have #'+obj.count+' click '+dir, function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
-      .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
 }
@@ -205,32 +210,6 @@ function checkTextAbsent (obj, absentText) {
   })
 }
 
-function roundTripToMenu (obj, cardText) {
-  waitForCardText (obj, cardText)
-  it('should have #'+obj.count+' click "Back"', function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='statuslink']/span/a[text()='Back']")))
-      .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-	})
-  it('should have #'+obj.count+' click on "Active games"', function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[contains(@class,'nav-games')]")))
-      .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-  })
-  clickExpect(obj,'//*[text()="Go"]',cardText)
-}
-  
-function waitForNavBar (obj) {
-  it("should wait for #"+obj.count+"\'s navbar", function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='navbar']")))
-      .then(() => done())
-      .catch(error => done(error))
-  })
-}
-
 function quit (obj) {
   it('should quit #' + obj.count, function(done) {
     obj.driver.quit()
@@ -239,25 +218,33 @@ function quit (obj) {
 	})
 }
 
-function changeMood (sender, recipient, mood) {
-  var n = moodNum[mood]
-  it("should change "+sender.name+"\'s mood to "+mood, function(done) {
-    sender.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='moodbutton mood"+n+"']")))
-      .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-  })
-  testMood (sender, recipient, mood)
-}
-
 describe("users", function() {
   var d = create ('chrome')
 
   signup (d, 'ted', 'test')
+  changeDisplayName (d, 'ted', 'Teddy')
+  changeDisplayName (d, 'Teddy', 'Theodore')
   logout (d)
 
   signup (d, 'mel', 'test')
   logout (d)
 
+  signup (d, 'pete', 'test')
+  logout (d)
+
+  signup (d, 'jean', 'test')
+  logout (d)
+
+  signup (d, 'ellen', 'test')
+  logout (d)
+
+  signup (d, 'meg', 'test')
+  logout (d)
+
+  login (d, 'fred', 'test')
+  search (d, '', 'e', 3)
+  moreSearchResults (d, 6)
+  moreSearchResults (d, 7)
+  
   quit (d)
 })

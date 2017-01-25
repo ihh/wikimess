@@ -1830,14 +1830,17 @@ var BigHouse = (function() {
       this.eraseEventInfo()
 
       this.searchInput = $('<input>')
-      this.searchResultsDiv = $('<div>')
+      this.searchResultsDiv = $('<div class="results">')
+      this.endSearchResultsDiv = $('<div class="endresults">')
       var searchButton = $('<span>')
       this.container
         .append (this.locBarDiv = $('<div class="locbar">')
                  .append ($('<div class="search">')
                           .append ($('<div class="query">')
                                    .append (this.searchInput, searchButton),
-                                   this.searchResultsDiv)))
+                                   $('<div class="followsection">')
+                                   .append (this.searchResultsDiv,
+                                            this.endSearchResultsDiv))))
       this.searchInput.attr ('placeholder', 'Player name')
       this.getIconPromise (bh.searchIcon)
         .done (function (svg) {
@@ -1856,12 +1859,15 @@ var BigHouse = (function() {
 	  if (bh.verbose.server)
 	    console.log (data)
           bh.locBarDiv
-            .append ($('<div class="title">').text("Recently played"))
-            .append (bh.makeFollowDivs (data.recent, "Once you have played some games, recently encountered players will appear here."))
-            .append ($('<div class="title">').text("Following"))
-            .append (bh.makeFollowDivs (data.followed, "You are not currently following anyone."))
-            .append ($('<div class="title">').text("Followers"))
-            .append (bh.makeFollowDivs (data.followers, "You have no followers yet."))
+            .append ($('<div class="followsection">')
+                     .append ($('<div class="title">').text("Recently played"))
+                     .append (bh.makeFollowDivs (data.recent, "Once you have played some games, recently encountered players will appear here.")))
+            .append ($('<div class="followsection">')
+                     .append ($('<div class="title">').text("Following"))
+                     .append (bh.makeFollowDivs (data.followed, "You are not currently following anyone.")))
+            .append ($('<div class="followsection">')
+                     .append ($('<div class="title">').text("Followers"))
+                     .append (bh.makeFollowDivs (data.followers, "You have no followers yet.")))
           var following = {}
           data.recent.map (function (follow) {
             if (!following[follow.id])
@@ -1974,21 +1980,23 @@ var BigHouse = (function() {
     showSearchResults: function() {
       this.searchInput.val (this.lastSearch || '')
       this.searchResults = this.searchResults || { results: [] }
-      this.searchResultsDiv
-        .empty()
+      this.searchResultsDiv.empty()
+      this.endSearchResultsDiv.empty()
       if (this.lastSearch && this.lastSearch.length) {
         this.searchResultsDiv
         .append ($('<div class="title">').text("Search results"),
                  this.makeFollowDivs (this.searchResults.results, "There are no players matching '" + this.lastSearch + "'."))
-        if (this.searchResults.more) {
-          var more = $('<div class="more">').text('More')
-              .on ('click', function (evt) {
-                evt.preventDefault()
-                more.remove()
-                bh.continueSearch()
-              })
-          this.searchResultsDiv.append (more)
-        }
+        var more = $('<span>')
+        this.endSearchResultsDiv.append(more)
+        if (this.searchResults.more)
+          more.addClass('more').text('More')
+          .on ('click', function (evt) {
+            evt.preventDefault()
+            more.remove()
+            bh.continueSearch()
+          })
+        else
+          more.text('All matching players shown')
       }
       this.searchResults.results.forEach (function (follow) { follow.showAvatar() })
     },

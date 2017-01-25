@@ -72,6 +72,10 @@ body {
     font-size: large;
 }
 
+.bighouse .locbar .followsection {
+    margin-bottom: 12px;
+}
+
 .bighouse .locbar .search .query {
     display: flex;
     width: 100%;
@@ -91,10 +95,13 @@ body {
     color: white;
 }
 
-.bighouse .locbar .search .more {
+.bighouse .locbar .search .endresults {
     width: 100%;
     text-align: center;
     font-style: italic;
+}
+
+.bighouse .locbar .search .more {
     text-decoration: underline;
 }
 
