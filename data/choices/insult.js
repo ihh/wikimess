@@ -118,12 +118,12 @@
     })
   }
 
-  // uncomment 'debug = 1' to show menus instead of sampling
-  var debug = 1
+  // uncomment 'debugMenus = 1' to show menus instead of sampling
+  //  var debugMenus = 1
   function debug_sample1() {
     var args = Array.prototype.slice.call(arguments,0)
-    return typeof(debug) !== 'undefined'
-      ? { text: "<mood1:sad> <mood2:angry> <say1>(DEBUG)</say1> <say2>Select an option:</say2>",
+    return typeof(debugMenus) !== 'undefined'
+      ? { text: "(DEBUG)",
 	  menu: args.map (function(opt) { return extend ({ hint: to_string(opt) }, to_node(opt)) }) }
     : sample1.apply(this,args)
   }
@@ -165,6 +165,9 @@
   // Data
   return {
     name: "insult",
+    effect: {
+      outro: { text: "<angry>#{$$.bh.capitalize($$.join('insult',' '))}#!</angry> <angryother>#{$$o.bh.capitalize($$o.join('insult',' '))}#!</angryother>" }
+    },
     intro:
     extend
     (seq (debug_sample1(['the_subject_has','less_positive_abstract_noun','than_an_object'],
@@ -175,7 +178,7 @@
 			['the_subject_is','less_positive_adjective','than_an_object'],
 			['the_subject_is','more_negative_adjective','than_an_object']
 		       ),
-	  { text: "<angry><Label:insult >!</angry>\nYour score is [[$magnitude()]] with consistency [[$percent($magnitude()/$taxicab())]]" }),
+	  { text: "Your insult is \"<Label:insult >!\"\nYour score is [[$magnitude()]] with consistency [[$percent($magnitude()/$taxicab())]]" }),
      {define:
       // menus
       [{ name: 'select_subject',

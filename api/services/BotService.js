@@ -6,6 +6,7 @@ module.exports = {
 
   randomMove: function (text) {
     var move = BotService.randomExpansion (text, 0)
+    BotService.addLabels (move)
     BotService.removeLinks (move)
     move.bot = true
     return move
@@ -34,20 +35,26 @@ module.exports = {
     return mood
   },
 
+  addLabels: function (exp) {
+    if (exp.node)
+      exp.label = Label.evalLabel (exp, exp.node.label, exp.node.labexpr)
+    if (exp.children)
+      exp.children.forEach (BotService.addLabels)
+  },
+  
   removeLinks: function (exp) {
     delete exp.parent
     delete exp.tail
     delete exp.next
     delete exp.node
     if (exp.children)
-      exp.children.map (BotService.removeLinks)
+      exp.children.forEach (BotService.removeLinks)
   },
   
   randomExpansion: function (text, id, parent) {
     var node = text[id]
-    var exp = { id: id, node: node }
+    var exp = { id: id, node: node, parent: parent }
     if (node) {
-      exp.label = Label.evalLabel (exp, node.label, node.labelexpr)
       if (node.sequence) {
 	exp.children = []
 	node.sequence.forEach (function (child, n) {

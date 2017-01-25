@@ -275,7 +275,8 @@ module.exports = {
 
     var $g, $inv, $l, $n, $id,
         $go, $invo, $lo, $no, $ido,
-        $p, $po
+        $p, $po,
+        $$, $$o
 
     if (typeof(role) !== 'undefined') {
       $p = role == 1 ? $p1 : $p2
@@ -292,6 +293,9 @@ module.exports = {
       $lo = Game.getOtherRoleAttr (game, role, 'local')
       $no = $po.displayName
       $ido = $po.id
+
+      $$ = role === 1 ? $1 : $2
+      $$o = role === 1 ? $2 : $1
     }
 
     var $current, $src, $next, $dest

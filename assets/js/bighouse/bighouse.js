@@ -676,18 +676,25 @@ var BigHouse = (function() {
 
     initEventTimer: function() {
       var bh = this
-      var eventTimer = window.setInterval (function() {
+      this.cancelEventTimer()
+      console.log("Setting event timer")
+      this.eventTimer = window.setInterval (function() {
 	bh.currentEvents.forEach (function (event) {
           bh.updateEventTimer (event)
 	})
       }, 100)
 
-      bh.pageExit = function() {
-	bh.eraseEventInfo()
-	window.clearInterval (eventTimer)
-      }
+      this.pageExit = this.cancelEventTimer.bind (bh)
     },
 
+    cancelEventTimer: function() {
+      if (this.eventTimer) {
+        console.log("Canceling event timer")
+	window.clearInterval (this.eventTimer)
+        delete this.eventTimer
+      }
+    },
+    
     getEventKey: function (event) {
       return this.page === 'games' ? (event.game && ('game-' + event.game.id)) : ('event-' + event.id)
     },
@@ -3178,7 +3185,7 @@ var BigHouse = (function() {
       if (expansion.node) {
         var node = expansion.node
 	jm.id = node.id
-        jm.label = bighouseLabel.evalLabel (expansion, node.label, node.labelexpr)
+        jm.label = bighouseLabel.evalLabel (expansion, node.label, node.labexpr)
       }
       if (expansion.children && expansion.children.length)
 	jm.children = expansion.children.map (function (child) { return bh.jsonExpansion(child) })

@@ -149,6 +149,8 @@
     expansion.magnitude = function (lab) { return magnitude (sumExpansionLabels(expansion,lab || scoreLabel)) }
     expansion.taxicab = function (lab) { return taxicab (sumExpansionLabels(expansion,lab || scoreLabel)) }
     expansion.percent = percent
+
+    expansion.bh = api
   }
   
   function evalExpansionExpr (expansion, expr, failureVal, id, log) {
@@ -349,7 +351,7 @@
   }
   
   // Externally exposed functions
-  return {
+  var api = {
     moveLabel: moveLabel,
     bindLabelFunctions: bindLabelFunctions,
     getExpansionRoot: getExpansionRoot,
@@ -370,4 +372,6 @@
     taxicab: taxicab,
     percent: percent
   }
+
+  return api
 }))

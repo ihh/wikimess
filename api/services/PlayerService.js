@@ -317,8 +317,8 @@ module.exports = {
       Player.subscribe (req, [info.playerID])
     var msg1 = PlayerService.sendJoinMessage (game.player1, game)
     var msg2 = PlayerService.sendJoinMessage (game.player2, game)
-    if (game.rs || game.res) {
-      var rs = game.rs || PlayerService.responseSender (game.res)
+    if (info.rs || info.res) {
+      var rs = info.rs || PlayerService.responseSender (info.res)
       var role = Game.getRole (game, info.playerID)
       rs (null, role === 1 ? msg1 : msg2)
     }
