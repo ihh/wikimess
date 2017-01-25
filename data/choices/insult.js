@@ -105,11 +105,13 @@
   function defseq(name,opts) { return extend ({ name: name }, seq.apply(this,opts)) }
   function sample1() { return { sample1: { opts: Array.prototype.map.call (arguments, to_node) } } }
 
-  function label_list (label, props, list, hintMap) {
+  function label_list (label, propMap, list, hintMap) {
+    propMap = propMap || {}
+    if (typeof(propMap) === 'object') propMap = (function(obj) { return function() { return clone(obj) } }) (propMap)
     hintMap = hintMap || capitalize
     var lpath = label.split('.'), lkey = lpath.pop()
-    return list.map (function (item) {
-      var l = clone(props), obj = { hint: hintMap (item), label: l }
+    return list.map (function (item, n) {
+      var l = propMap(item,n), obj = { hint: hintMap (item,n), label: l }
       lpath.forEach (function(k) { l = l[k] })
       l[lkey] = item
       return obj
@@ -128,6 +130,18 @@
   function to_string(opt) { return typeof(opt) === 'string' ? opt : (isArray(opt) ? opt.map(to_string).join(' ') : JSON.stringify(opt)) }
   
   // Insult helpers
+  function score_prop_map (list, range) {
+    range = range || { generic: [1,1] }
+    return function (item, n) {
+      var score = {}
+      Object.keys(range).forEach (function (type) {
+        var minScore = range[type][0], maxScore = range[type][1]
+        score[type] = Math.round (minScore + (maxScore-minScore) * n / (list.length - 1))
+      })
+      return { score: score }
+    }
+  }
+
   function subject_list (person, list) {
     return label_list ('subject.text', { subject: { person: person } }, list)
   }
@@ -136,12 +150,12 @@
     return label_list ('object', {}, list, hintMap)
   }
 
-  function abstract_noun_list (list) {
-    return label_list('abstract_noun',{},list,(noun) => 'Their '+noun)
+  function abstract_noun_list (list, range) {
+    return label_list ('abstract_noun', score_prop_map(list,range), list, (noun) => 'Their '+noun)
   }
 
-  function adjective_list (prefix,list,suffix) {
-    return label_list('adjective',{},list,(noun) => prefix+noun+(suffix||''))
+  function adjective_list (prefix, list, suffix, range) {
+    return label_list ('adjective', score_prop_map(list,range), list,(noun) => prefix+noun+(suffix||''))
   }
   
   function insult(expr) {
@@ -161,7 +175,7 @@
 			['the_subject_is','less_positive_adjective','than_an_object'],
 			['the_subject_is','more_negative_adjective','than_an_object']
 		       ),
-	  { text: "Your insult is:\n\"<Label:insult >!\"" }),
+	  { text: "<angry><Label:insult >!</angry>\nYour score is [[$magnitude()]] with consistency [[$percent($magnitude()/$taxicab())]]" }),
      {define:
       // menus
       [{ name: 'select_subject',
@@ -193,10 +207,14 @@
 	 { sample:
 	   { shuffle: true,
 	     groups:
-	     [{ opts: abstract_noun_list(['sense of style','taste','education','civility','courtesy','politeness','manners','breeding']) },  // class
-	      { opts: abstract_noun_list(['kindness','honesty','virtue','diligence','industriousness','sexual morality','sobriety','courage','honor']) },  // character
-	      { opts: abstract_noun_list(['rhymes','words','insults','jibes','slights','barbs','wit','repartee','competence']) },  // intelligence
-	      { opts: abstract_noun_list(['sexual performance','hygiene','cleanliness','attractiveness','prettiness','agility','gait','posture','height','muscles']) }] } } },  // appearance
+	     [{ opts: abstract_noun_list(['civility','politeness','courtesy','style','taste','education','manners','breeding'],
+                                         {class:[1,6]}) },  // class
+	      { opts: abstract_noun_list(['sexual morality','diligence','industriousness','sobriety','virtue','courage','honesty','kindness','honor'],
+                                         {character:[1,10]}) },  // character
+	      { opts: abstract_noun_list(['rhymes','words','barbs','insults','jibes','slights','wit','repartee','competence'],
+                                         {intelligence:[1,8]}) },  // intelligence
+	      { opts: abstract_noun_list(['sexual performance','height','cleanliness','prettiness','agility','poise','attractiveness','muscles','hygiene'],
+                                         {appearance:[1,4]}) }] } } },  // appearance
 
        { name: 'select_negative_abstract_noun',
 	 text: "What do you want to insult about them?",
@@ -204,10 +222,14 @@
 	 { sample:
 	   { shuffle: true,
 	     groups:
-	     [{ opts: abstract_noun_list(['boorishness','vulgarity','Justin Bieber records']) },  // class
-	      { opts: abstract_noun_list(['indecency','filth','lechery','infamy','indiscretions']) },  // character
-	      { opts: abstract_noun_list(['stupidity','foolishness','idiocy','ineptitude','incompetence']) },  // intelligence
-	      { opts: abstract_noun_list(['flab','stretch-marks','chins','cankles','love-handles','skid marks','halitosis','bad breath','bald patches']) }] } } },  // appearance
+	     [{ opts: abstract_noun_list(['boorishness','vulgarity'],
+                                         {class:[1,2]}) },  // class
+	      { opts: abstract_noun_list(['indecency','indiscretions','lechery','infamy','filth'],
+                                         {character:[1,3]}) },  // character
+	      { opts: abstract_noun_list(['foolishness','ineptitude','incompetence','idiocy','stupidity'],
+                                          {intelligence:[1,2]}) },  // intelligence
+	      { opts: abstract_noun_list(['cankles','love-handles','skid marks','halitosis','bald patches'],
+                                          {appearance:[1,2]}) }] } } },  // appearance
 
        { name: 'select_negative_adjective',
 	 text: "What's bad about it?",
@@ -215,10 +237,14 @@
 	 { sample:
 	   { shuffle: true,
 	     groups:
-	     [{ opts: adjective_list('Too ',['tasteless','unfashionable','dated','incivil','crass','crude','boorish','outmoded','vulgar','jarring','discourteous','impolite','rude','ill-mannered','ill-bred','ignorant','uneducated']) },  // class
-	      { opts: adjective_list('Too ',['indecent','cruel','vicious','mean','nasty','horrible','sadistic','selfish','lazy','spiteful','gossipy','venal','callous','thoughtless','weak']) },  // character
-	      { opts: adjective_list('Too ',['stupid','idiotic','banal','mundane','tedious','boring']) },  // intelligence
-	      { opts: adjective_list('Too ',['ugly','smelly','disgusting','unwashed','filthy','stinky','fat','skinny','short','stunted','gangly']) }] } } }, // appearance
+	     [{ opts: adjective_list('Too ',['tasteless','unfashionable','dated','incivil','crass','crude','boorish','outmoded','vulgar','jarring','discourteous','impolite','rude','ill-mannered','ill-bred','ignorant','uneducated'],'',
+                                     {class:[1,10]}) },  // class
+	      { opts: adjective_list('Too ',['indecent','cruel','vicious','mean','nasty','horrible','sadistic','selfish','lazy','spiteful','gossipy','venal','callous','thoughtless','weak'],'',
+                                     {character:[1,10]}) },  // character
+	      { opts: adjective_list('Too ',['stupid','idiotic','banal','mundane','tedious','boring'],'',
+                                     {intelligence:[1,10]}) },  // intelligence
+	      { opts: adjective_list('Too ',['ugly','smelly','disgusting','unwashed','filthy','stinky','fat','skinny','short','stunted','gangly'],'',
+                                     {appearance:[1,10]}) }] } } }, // appearance
 
        { name: 'select_positive_adjective',
 	 text: "What's bad about it?",
@@ -226,10 +252,14 @@
 	 { sample:
 	   { shuffle: true,
 	     groups:
-	     [{ opts: adjective_list('Not ',['tasteful','fashionable','current','civil','well-educated','well-informed','well-rounded','well-bred','polite','courteous','genteel'],' enough') },  // class
-	      { opts: adjective_list('Not ',['decent','kind','generous','compassionate','gentle','thoughtful'],' enough') },  // character
-	      { opts: adjective_list('Not ',['smart','clever','witty','sharp','intelligent'],' enough') },  // intelligence
-	      { opts: adjective_list('Not ',['sexy','fragrant','strong','clean','brave','well-toned','muscly','tall','powerful'],' enough') }] } } }, // appearance
+	     [{ opts: adjective_list('Not ',['tasteful','fashionable','current','civil','well-educated','well-informed','well-rounded','well-bred','polite','courteous','genteel'],' enough',
+                                     {class:[1,10]}) },  // class
+	      { opts: adjective_list('Not ',['decent','kind','generous','compassionate','gentle','thoughtful'],' enough',
+                                     {character:[1,10]}) },  // character
+	      { opts: adjective_list('Not ',['smart','clever','witty','sharp','intelligent'],' enough',
+                                     {intelligence:[1,10]}) },  // intelligence
+	      { opts: adjective_list('Not ',['sexy','fragrant','strong','clean','brave','well-toned','muscly','tall','powerful'],' enough',
+                                     {appearance:[1,10]}) }] } } }, // appearance
 
        // sentence components
        defseq('the_subject_has',['select_subject',insult("[$label('subject.text'),$has_p($label('subject.person'))]")]),

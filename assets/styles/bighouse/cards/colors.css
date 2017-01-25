@@ -36,3 +36,9 @@
 .bighouse .cardbar .cardtable .cardmenu label {
     border-color: #aaa;
 }
+
+.bighouse .cardbar .cardtable .speech,
+.bighouse .cardbar .cardtable .leftballoon .avatar,
+.bighouse .cardbar .cardtable .rightballoon .avatar {
+    background: #eee
+}

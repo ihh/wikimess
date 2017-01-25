@@ -114,15 +114,14 @@
 	align-items: center;
     }
 
-    .bighouse .cardbar .cardtable li div,
-    .bighouse .cardbar .cardtable li span {
+    .bighouse .cardtable li .content {
 	flex-grow: 1;
 	display: flex;
 	align-items: center;
     }
 
-    .bighouse .cardbar .cardtable img,
-    .bighouse .cardbar .cardtable .avatar {
+    .bighouse .cardtable img,
+    .bighouse .cardtable .avatar {
 	width: 16vw;
 	height: 16vw;
     }

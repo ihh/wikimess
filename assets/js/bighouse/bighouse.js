@@ -118,8 +118,9 @@ var BigHouse = (function() {
                music: false,
 	       stack: false },
 
-    // uncomment to remove time limit for debugging purposes (or to cheat)
+    // uncomment either of these to remove time limit for debugging purposes (or to cheat)
 //    disableMoveTimer: true,
+    disableMoveTimerWithClick: true,
     
     globalMenuCount: 0,
     
@@ -675,7 +676,7 @@ var BigHouse = (function() {
 
     initEventTimer: function() {
       var bh = this
-      var pageAnimationTimer = window.setInterval (function() {
+      var eventTimer = window.setInterval (function() {
 	bh.currentEvents.forEach (function (event) {
           bh.updateEventTimer (event)
 	})
@@ -683,7 +684,7 @@ var BigHouse = (function() {
 
       bh.pageExit = function() {
 	bh.eraseEventInfo()
-	window.clearInterval (pageAnimationTimer)
+	window.clearInterval (eventTimer)
       }
     },
 
@@ -2030,9 +2031,12 @@ var BigHouse = (function() {
 			  .append (this.stackList = $('<ul class="stack">'))))
         .append (this.moodBar = $('<div class="moodbar">'))
         .append ($('<div class="timebar">')
-		 .append (bh.timerDiv = $('<div class="timer">')
+		 .append (this.timerDiv = $('<div class="timer">')
 			  .width("100%")))
 
+      if (this.disableMoveTimerWithClick)
+        this.timerDiv.on('click',bh.clearMoveTimer.bind(this))
+      
       var throwOutConfidence = function (offset, element) {
         return Math.min(Math.abs(offset) / element.offsetWidth, 1)
       }
@@ -2355,7 +2359,7 @@ var BigHouse = (function() {
 	var card = this.currentExpansionNode.card
 	if (card) {
 	  var elem = $(card.elem)
-          if (!elem.hasClass('thrown') && !elem.hasClass('waitcard'))
+          if (!elem.hasClass('thrown') && !elem.hasClass('waitcard') && !this.currentExpansionNode.isHistory)
 	    elem.addClass('jiggle')
 	}
       }
@@ -2812,13 +2816,13 @@ var BigHouse = (function() {
               var moodDiv = $('<div>').addClass('avatar')
               span.addClass (isSelf ? 'leftballoon' : 'rightballoon')
                 .append (moodDiv)
-		.append ($('<span>').text(content))
+		.append ($('<div>').addClass('speech').text(content))
 	      var showMoodImage = role.charAt(0) === ':'
-		? bh.showNamedMoodImage.bind (bh, role.substr(1), mood, moodDiv)
-		: bh.showMoodImage.bind (bh, isOther ? bh.opponentID : bh.playerID, mood, moodDiv)
+		  ? bh.showNamedMoodImage.bind (bh, role.substr(1), mood, moodDiv)
+		  : bh.showMoodImage.bind (bh, isSelf ? bh.playerID : bh.opponentID, mood, moodDiv)
               avatarCallbacks.push (showMoodImage)
             } else
-	      span.html(para)
+	      span.addClass('content').html(para)
             return span
           })
 
@@ -2885,7 +2889,7 @@ var BigHouse = (function() {
         }
 
       // if a mood change was specified, tack it onto the end of the top-card callback
-      if (newMood) {
+      if (newMood && !expansion.isHistory) {
 	var cb = expansion.topCardCallback
 	expansion.topCardCallback = function() {
 	  cb()

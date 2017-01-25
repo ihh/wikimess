@@ -42,10 +42,12 @@
 
   function addLabel (x, y) {
     if (y === null) return undefined
-    if (typeof(x) === 'object') {
+    if (typeof(x) === 'object' || typeof(y) === 'object') {
       var obj = {}
-      Object.keys(x).forEach (function (kx) { obj[kx] = addLabel (x[kx], y[ky]) })
-      Object.keys(y).forEach (function (ky) { if (typeof(obj[kx]) === 'undefined') obj[ky] = y[ky] })
+      if (typeof(x) === 'object')
+        Object.keys(x).forEach (function (kx) { obj[kx] = typeof(y) === 'object' ? addLabel (x[kx], y[kx]) : x[kx] })
+      if (typeof(y) === 'object')
+        Object.keys(y).forEach (function (ky) { if (typeof(x) !== 'object' || typeof(obj[ky]) === 'undefined') obj[ky] = y[ky] })
       return obj
     }
     return typeof(x) === 'undefined' ? y : (x + y)
@@ -134,6 +136,7 @@
   }
 
   var moveLabel = 'move'
+  var scoreLabel = 'score'
   function bindLabelFunctions (expansion) {
     expansion.labels = function (lab) { return expansionLabels(expansion,lab) }
     expansion.flat = function (lab) { return flatExpansionLabels(expansion,lab) }
@@ -142,6 +145,10 @@
     expansion.last = function (lab) { return lastExpansionLabel(expansion,lab) }
     expansion.base = function (lab) { return baseExpansionLabel(expansion,lab) }
     expansion.move = function() { return sumExpansionLabels(expansion,moveLabel) }
+
+    expansion.magnitude = function (lab) { return magnitude (sumExpansionLabels(expansion,lab || scoreLabel)) }
+    expansion.taxicab = function (lab) { return taxicab (sumExpansionLabels(expansion,lab || scoreLabel)) }
+    expansion.percent = percent
   }
   
   function evalExpansionExpr (expansion, expr, failureVal, id, log) {
@@ -178,6 +185,10 @@
     var $poss = possessiveApostrophe  // $poss(nounPhrase)
     var $comp = makeComparative  // $comp(adjective)
     var $ordinal = ordinal  // $ordinal(number)
+
+    var $magnitude = function (lab) { return magnitude (sumExpansionLabels(expansion,lab || scoreLabel)) }
+    var $taxicab = function (lab) { return taxicab (sumExpansionLabels(expansion,lab || scoreLabel)) }
+    var $percent = percent  // $percent(float)
     
     var val
     try {
@@ -315,6 +326,28 @@
     return i + "th";
   }
 
+  // score/numeric helpers
+  function magnitude(obj) {
+    var sqsum = 0
+    Object.keys(obj).forEach (function (key) {
+      var val = obj[key]
+      sqsum += (val * val) || 0
+    })
+    return Math.sqrt (sqsum)
+  }
+
+  function taxicab(obj) {
+    var sum = 0
+    Object.keys(obj).forEach (function (key) {
+      sum += Math.abs (obj[key] || 0)
+    })
+    return sum
+  }
+
+  function percent(number) {
+    return Math.round (number * 100) + '%'
+  }
+  
   // Externally exposed functions
   return {
     moveLabel: moveLabel,
@@ -332,6 +365,9 @@
     evalUsable: evalUsable,
     evalVisible: evalVisible,
     evalLabel: evalLabel,
-    capitalize: capitalize
+    capitalize: capitalize,
+    magnitude: magnitude,
+    taxicab: taxicab,
+    percent: percent
   }
 }))
