@@ -218,7 +218,7 @@ function quit (obj) {
 	})
 }
 
-describe("users", function() {
+describe("search", function() {
   var d = create ('chrome')
 
   signup (d, 'ted', 'test')
