@@ -38,9 +38,9 @@ function frontpage (obj) {
 function login (obj, name, password) {
   frontpage (obj)
 
+  changeName (obj, name)
+  
   it('should log #' + obj.count + ' in as ' + name, function(done) {
-    obj.driver.findElement(By.name('player')).sendKeys(new Array(obj.lastName.length).fill(Key.BACK_SPACE).join('') + name)
-    obj.lastName = name
     obj.driver.findElement(By.name('password')).sendKeys(password)
     obj.driver.findElement(By.xpath("//*[contains(text(), 'Log in')]")).click()
     obj.driver
@@ -52,12 +52,38 @@ function login (obj, name, password) {
 	})
 }
 
+function changeName (obj, name) {
+  (function (lastName) {
+    it('should find "'+lastName+'" in the name field for #' + obj.count, function(done) {
+      obj.driver.findElement(By.name('player'))
+        .then(elem => elem.getAttribute('value'))
+        .then(text => text.should.equal(lastName))
+        .then(()=>done())
+        .catch(error => done(error))
+          })
+
+    var lastNameLen = lastName.length
+    var backspaces = new Array(lastNameLen).fill(Key.BACK_SPACE).join('')
+
+    it('should delete "'+lastName+'" and replace with "' + name + '"', function(done) {
+      obj.driver.findElement(By.name('player')).sendKeys(backspaces + name)
+      obj.driver.findElement(By.name('player'))
+        .then(elem => elem.getAttribute('value'))
+        .then(text => text.should.equal(name))
+        .then(()=>done())
+        .catch(error => done(error))
+          })
+
+    obj.lastName = name
+  }) (obj.lastName)
+}
+
 function signup (obj, name, password) {
   frontpage (obj)
 
-  it('should sign up #' + obj.count + ' in as ' + name, function(done) {
-    obj.driver.findElement(By.name('player')).sendKeys(new Array(obj.lastName.length).fill(Key.BACK_SPACE).join('') + name)
-    obj.lastName = name
+  changeName (obj, name)
+
+  it('should sign up #' + obj.count + ' as ' + name, function(done) {
     obj.driver.findElement(By.name('password')).sendKeys(password)
     obj.driver.findElement(By.xpath("//*[contains(text(), 'Sign up')]")).click()
     obj.driver
