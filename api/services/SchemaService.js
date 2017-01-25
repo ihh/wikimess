@@ -419,5 +419,21 @@ module.exports = {
 
   validateLocation: function (data, errorCallback) {
     return this.validate (data, this.locationSchema, "Location", errorCallback)
+  },
+
+  validateItem: function (data, errorCallback) {
+    return this.validate (data, this.itemSchema, "Item", errorCallback)
+  },
+
+  validateAward: function (data, errorCallback) {
+    return this.validate (data, this.awardSchema, "Award", errorCallback)
+  },
+
+  validateMeter: function (data, errorCallback) {
+    return this.validate (data, this.meterSchema, "Meter", errorCallback)
+  },
+
+  validatePlayer: function (data, errorCallback) {
+    return this.validate (data, this.playerSchema, "Player", errorCallback)
   }
 };

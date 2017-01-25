@@ -13,4 +13,3 @@ module.exports = {
                                     res.badRequest.bind(res))
   }
 };
-

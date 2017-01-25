@@ -6,5 +6,11 @@
  */
 
 module.exports = {
+  create: function (req, res) {
+    if (SchemaService.validatePlayer (req.body, res.badRequest.bind(res)))
+      Player.create (req.body)
+      .then (res.send.bind(res))
+      .catch (res.badRequest.bind(res))
+  }
 	
 };
