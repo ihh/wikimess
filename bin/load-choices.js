@@ -95,6 +95,7 @@ var callback = function() {}
 
 var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
 callback = processFilenameList ({ path: '/player',
+                                  schema: schemaPath('player'),
                                   handler: playerHandler,
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
@@ -110,18 +111,21 @@ callback = processFilenameList ({ path: '/location',
                                   list: locationFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/item',
+                                  schema: schemaPath('item'),
                                   handler: genericHandler('Item'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: itemFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/award',
+                                  schema: schemaPath('award'),
                                   handler: genericHandler('Award'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],
                                   list: awardFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/meter',
+                                  schema: schemaPath('meter'),
                                   handler: genericHandler('Meter'),
                                   callback: callback,
                                   parsers: [JSON.parse, eval],

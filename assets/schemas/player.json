@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "required": [
+    "name",
+    "password"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "admin": {
+      "type": "boolean"
+    },
+    "human": {
+      "type": "boolean"
+    },
+    "global": {
+      "type": [
+        "number",
+        "string",
+        "object"
+      ]
+    },
+    "home": {
+      "type": "string"
+    },
+    "initialMood": {
+      "type": "string"
+    },
+    "avatarConfig": {
+      "type": [
+        "number",
+        "string",
+        "object"
+      ]
+    },
+    "newSignUp": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/schema#",
+  "id": "http://localhost:1337/schemas/player.json"
+}

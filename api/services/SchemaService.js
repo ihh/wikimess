@@ -4,6 +4,11 @@ var extend = require('extend')
 var JsonValidator = require( 'jsonschema' ).Validator;
 var Promise = require('bluebird')
 
+var Player = require('../models/Player')
+var Item = require('../models/Item')
+var Award = require('../models/Award')
+var Meter = require('../models/Meter')
+
 var intro_node_schema = {
   oneOf: [{ type: "string" },
           { type: "object",
@@ -242,6 +247,23 @@ var choice_schema_defs = {
   sample_string: sample1_switch_schema({ type: "string" })
 }
 
+function autoSchema (model, keys) {
+  var schema = { type: "object",
+                 required: [],
+                 properties: {},
+                 additionalProperties: false }
+  var waterlineToJsonSchema = { json: ['number','string','object'], integer: 'number', float: 'number' }
+  keys.forEach (function (key) {
+    var waterlineType = model.attributes[key].type
+    var jsonSchemaType = waterlineToJsonSchema[waterlineType] || waterlineType
+    schema.properties[key] = { type: jsonSchemaType }
+    if (model.attributes[key].required)
+      schema.required.push (key)
+  })
+  return schema
+}
+
+// SchemaService
 module.exports = {
 
   // Choice schema
@@ -360,10 +382,14 @@ module.exports = {
 	}
       }
     }, choice_schema_defs),
-
+    
     "$ref": "#/definitions/location"
   },
-  
+
+  playerSchema: autoSchema(Player,['name','displayName','password','admin','human','global','home','initialMood','avatarConfig','newSignUp']),
+  awardSchema: autoSchema(Award,['name','init','icon','color','label','public']),
+  meterSchema: autoSchema(Meter,['name','min','max','public','label']),
+  itemSchema: autoSchema(Item,['name','icon','color','noun','pluralNoun','article','hint','category','isDefaultCurrency','buy','sell','markup','discount','verb','init','public','alwaysShow']),
   
   // Validators
   validate: function (data, schema, name, errorCallback) {
