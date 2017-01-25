@@ -59,7 +59,7 @@ function startGame (obj, password) {
     clickExpect(obj,buttonPath,expectText)
   }
 
-  navigate('//*[text()="Go"]','self-important porter')
+  navigate('//*[@class="link" and ./div/text()="Lobby"]/div[@class="button"]','self-important porter')
   navigate('//*[text()="Take"]','The porter nods approvingly')
   navigate('//*[text()="Go"]','standing in the lobby')
   navigate('//*[@class="link" and ./div/text()="Student Union"]/div[@class="button"]','Want to cut class?')
