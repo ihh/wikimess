@@ -65,4 +65,6 @@ function testLogin (driverType, name, password) {
 
 testLogin ('firefox', 'fred', 'test')
 testLogin ('chrome', 'sheila', 'test')
-testLogin ('safari', 'fred', 'test')
+
+if (fs.existsSync('/usr/bin/safaridriver'))
+  testLogin ('safari', 'fred', 'test')
