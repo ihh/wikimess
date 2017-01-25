@@ -18,7 +18,7 @@ module.exports = {
   // actions
   // convert player name to ID
   byName: function (req, res) {
-    var name = req.params.name
+    var name = req.body.name
     Player.findOneByName (name)
       .exec (function (err, player) {
         if (err)
@@ -570,7 +570,7 @@ module.exports = {
   },
 
   // Download mood avatar config for player
-  getMoodAvatarConfig: function (req, res) {
+  getAvatarConfigById: function (req, res) {
     var playerID = req.params.player
     Player.findOneById (playerID)
       .exec (function (err, player) {
@@ -579,7 +579,7 @@ module.exports = {
         else if (!player)
           res.status(404).send ({error: "Player " + playerID + " not found"})
         else
-          res.json (player.avatarConfig)
+          res.json ({ id: player.id, name: player.name, avatarConfig: player.avatarConfig })
       })
   },
 

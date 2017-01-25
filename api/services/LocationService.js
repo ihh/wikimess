@@ -432,7 +432,7 @@ module.exports = {
   // based on old code from GameService that has now been cleaned up, leaving this ugly... ugh
   expandText: function (text, player, allowNonStringEvals) {
     if (!text)
-      return []
+      return ''
 
     if (GameService.isArray(text)) {
       return text.map (function (t) {

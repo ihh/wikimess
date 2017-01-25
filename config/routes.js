@@ -58,9 +58,11 @@ module.exports.routes = {
   'GET /icon/:icon/:color':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background': 'IconController.getIcon', 
 
+  'POST /id':                     'ClientController.byName',
+  'GET /avatar/:player':          'ClientController.getAvatarConfigById',
+
   'POST /p/new':                  'ClientController.createPlayer',
 
-  'GET /p/id/:name':              'ClientController.byName',
   'POST /p/:player/search':       'ClientController.searchDisplayName',
   'POST /p/:player/config':       'ClientController.configurePlayer',
 
@@ -69,7 +71,6 @@ module.exports.routes = {
   'GET /p/:player/status':        'ClientController.selfStatus',
   'GET /p/:player/status/:other': 'ClientController.otherStatus',
 
-  'GET /p/:player/avatar':        'ClientController.getMoodAvatarConfig',
   'PUT /p/:player/avatar':        'ClientController.putMoodAvatarConfig',
   'PUT /p/:player/avatar/:mood':  'ClientController.uploadMoodAvatar',
 

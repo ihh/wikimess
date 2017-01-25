@@ -29,6 +29,7 @@ var BigHouse = (function() {
     this.pushedViews = []
     this.postponedMessages = []
     this.avatarConfigPromise = {}
+    this.namedAvatarConfigPromise = {}
     this.iconPromise = {}
     this.gamePosition = {}
     
@@ -232,8 +233,12 @@ var BigHouse = (function() {
       return $.get ('/p/' + playerID + '/game/' + gameID + '/move/' + moveNumber + '/quit')
     },
 
-    REST_getPlayerAvatarConfig: function (playerID) {
-      return $.get ('/p/' + playerID + '/avatar')
+    REST_postId: function (playerName) {
+      return $.post ('/id', { name: playerName })
+    },
+
+    REST_getAvatar: function (playerID) {
+      return $.get ('/avatar/' + playerID)
     },
 
     REST_putPlayerAvatarConfig: function (playerID, config) {
@@ -507,12 +512,13 @@ var BigHouse = (function() {
 
         bh.playerLocation = data.id
         
+	var descDiv
         bh.locBarDiv
           .append ($('<div class="location">')
                    .append ($('<div class="title">')
                             .text (data.title))
-                   .append ($('<div class="description">')
-                            .text (data.description)))
+                   .append (descDiv = $('<div class="description">')))
+        bh.expandDescription (data.description, descDiv)
 
 	bh.addEvents (data.events)
 
@@ -610,6 +616,31 @@ var BigHouse = (function() {
       })
     },
 
+    expandDescription: function (text, div) {
+      var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised):([^>]+)>(.*?)<\/\\1:\\2>', 'g')
+      text = text.replace (avatarRegExp, function (match) { return '\n' + match + '\n' })
+      
+      // create the <span>'s
+      var callbacks = []
+      div.append (text.split(/\n/)
+	.map (function (para) {
+          var span = $('<span>')
+          avatarRegExp.lastIndex = 0
+          var avatarMatch = avatarRegExp.exec (para)
+          if (avatarMatch) {
+            var mood = avatarMatch[1], name = avatarMatch[2], content = avatarMatch[3]
+            var moodDiv = $('<div>').addClass('avatar')
+            span.addClass('leftballoon')
+	      .append (moodDiv)
+	      .append ($('<span>').text(content))
+	    callbacks.push (bh.showNamedMoodImage.bind (bh, name, mood, moodDiv))
+          } else
+	    span.html(para)
+          return span
+        }))
+      callbacks.forEach (function (callback) { callback() })
+    },
+
     makeCostDiv: function (cost) {
       var costDiv = $('<div class="cost">')
       if (cost) {
@@ -698,15 +729,18 @@ var BigHouse = (function() {
       
       div.append (event.turnDiv, event.lockDiv)
 
+      var hintDiv
       if (event.hint)
-        div.append ($('<div class="hint">')
-                    .text (event.hint))
+        div.append (hintDiv = $('<div class="hint">'))
 
       div.append (event.otherDiv = $('<div class="other">'), event.tradeRows)
       this.locBarDiv.append (div)
         .find('.nogames').hide()
       
       this.updateEventButton (event)
+
+      if (hintDiv)
+        bh.expandDescription (event.hint, hintDiv)
     },
 
     updateEventFromJoinMessage: function (data) {
@@ -1357,13 +1391,30 @@ var BigHouse = (function() {
 
     getAvatarConfigPromise: function(id) {
       if (!this.avatarConfigPromise[id])
-        this.avatarConfigPromise[id] = this.REST_getPlayerAvatarConfig(id)
+        this.avatarConfigPromise[id] = this.REST_getAvatar(id)
       return this.avatarConfigPromise[id]
+	.then (function (result) { return result.avatarConfig })
+    },
+
+    getNamedAvatarConfigPromise: function(name) {
+      var bh = this
+      if (!this.namedAvatarConfigPromise[name])
+        this.namedAvatarConfigPromise[name] = this.REST_postId(name)
+	.then (function (result) { return bh.getAvatarConfigPromise(result.id) })
+      return this.namedAvatarConfigPromise[name]
     },
     
     showMoodImage: function (id, mood, div, callback) {
+      this.showPromisedMoodImage (this.getAvatarConfigPromise(id), mood, div, callback)
+    },
+
+    showNamedMoodImage: function (name, mood, div, callback) {
+      this.showPromisedMoodImage (this.getNamedAvatarConfigPromise(name), mood, div, callback)
+    },
+
+    showPromisedMoodImage: function (promise, mood, div, callback) {
       var bh = this
-      this.getAvatarConfigPromise(id).done (function (avatarConfig) {
+      promise.done (function (avatarConfig) {
 	bh.moods.forEach (function (m) { div.removeClass('mood-'+m) })
 	div.addClass('mood-'+mood)
         if (avatarConfig[mood].url) {
@@ -2734,7 +2785,7 @@ var BigHouse = (function() {
 	return ''
       })
 
-      var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised|say)(|self|other)>(.*?)<\/\\1\\2>', 'g')
+      var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised|say)(|self|other|:[^>]+)>(.*?)<\/\\1\\2>', 'g')
       text = text.replace (avatarRegExp, function (match) { return '\n' + match + '\n' })
       
       // create the <span>'s
@@ -2748,15 +2799,16 @@ var BigHouse = (function() {
             var avatarMatch = avatarRegExp.exec (para)
             if (avatarMatch) {
               var mood = avatarMatch[1], role = avatarMatch[2], content = avatarMatch[3]
-              var isOther = (role === 'other')
-              if (mood === 'say') mood = isOther ? bh.opponentMood : bh.playerMood
+              var isSelf = (role === '' || role === 'self')
+              if (mood === 'say') mood = isSelf ? bh.playerMood : (role === 'other' ? bh.opponentMood : 'happy')
               var moodDiv = $('<div>').addClass('avatar')
-              span.addClass (isOther ? 'rightballoon' : 'leftballoon')
+              span.addClass (isSelf ? 'leftballoon' : 'rightballoon')
                 .append (moodDiv)
-                .append (content)
-              avatarCallbacks.push (function() {
-                bh.showMoodImage (isOther ? bh.opponentID : bh.playerID, mood, moodDiv)
-              })
+		.append ($('<span>').text(content))
+	      var showMoodImage = role.charAt(0) === ':'
+		? bh.showNamedMoodImage.bind (bh, role.substr(1), mood, moodDiv)
+		: bh.showMoodImage.bind (bh, isOther ? bh.opponentID : bh.playerID, mood, moodDiv)
+              avatarCallbacks.push (showMoodImage)
             } else
 	      span.html(para)
             return span
