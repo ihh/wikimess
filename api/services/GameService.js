@@ -16,10 +16,13 @@ module.exports = {
       function connect (node) {
 	if (node.define) {
 	  if (GameService.isArray (node.define))
-	    node.define.map (connect)
+	    node.define.forEach (connect)
 	  else
 	    connect (node.define)
 	}
+
+        if (node.name)
+          nodeByName[node.name] = node
 
         if (node.goto)
           return  // handle named links later
@@ -80,9 +83,6 @@ module.exports = {
               node.right = { isLeaf: true }
 	  }
         }
-
-        if (node.name)
-          nodeByName[node.name] = node
       }
       connect (tree)
     })
