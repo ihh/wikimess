@@ -2636,7 +2636,8 @@ var BigHouse = (function() {
 	var nextExpansion = bh.getNextExpansionTail (expansion, action)
 
 	bh.currentExpansionNode = nextExpansion
-	bh.saveGamePosition()
+        if (!bh.nodeExpansionIsPredictable(node))
+	  bh.saveGamePosition()
 
         if (nextExpansion) {
 	  var nextNode = nextExpansion.node

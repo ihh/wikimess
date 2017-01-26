@@ -147,8 +147,8 @@ function checkTextAbsent (obj, absentText) {
   })
 }
 
-function roundTripToMenu (obj, cardText) {
-  waitForCardText (obj, cardText)
+function roundTripToMenu (obj, startText, endText) {
+  waitForCardText (obj, startText)
   it('should have '+obj.name+' click "Back"', function(done) {
     obj.driver
       .wait(until.elementLocated(By.xpath("//div[@class='statuslink']/span/a[text()='Back']")))
@@ -161,7 +161,7 @@ function roundTripToMenu (obj, cardText) {
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
   })
-  clickExpect(obj,'//*[text()="Go"]',cardText)
+  clickExpect(obj,'//*[text()="Go"]',endText)
 }
 
 function testStatus (obj, className, presents, absents) {
@@ -264,7 +264,10 @@ describe("two-player game", function() {
   changeMood (fred, sheila, 'angry')
   changeMood (sheila, fred, 'angry')
   
-  roundTripToMenu (fred, "truant")
+  roundTripToMenu (fred, "truant", "You and sheila")
+  makeMove (fred, "You and sheila", "right")
+  makeMove (fred, "Too bad", "right")
+  makeMove (fred, "Here we are, sheila and fred: the second day of school", "right")
 
   makeMove (fred, "Do you want to play truant", "right")
   makeMove (sheila, "Do you want to play truant", "right")
