@@ -138,6 +138,8 @@ describe("one-player game", function() {
   makeMove ("Such arrogance", "right")
   makeMove ("You will NEVER beat me", "left")
   makeMove ("Dammit", "right")
+  makeMove ("Just tell me how", "left")
+  makeMove ("DAMMIT", "right")
   makeMove ("Game over", "right")
 
   waitForNavBar()

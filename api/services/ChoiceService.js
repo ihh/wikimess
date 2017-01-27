@@ -141,7 +141,7 @@ module.exports = {
       }
     }
 
-    var flip = function (outcome) {
+    function flip (outcome) {
       var flipped = {}
       var outro = outcome.outro ? ChoiceService.swapTextRoles (outcome.outro) : null
       var outro2 = outcome.outro2 ? ChoiceService.swapTextRoles (outcome.outro2) : null
@@ -305,9 +305,10 @@ module.exports = {
       })
       return swapped
     }
-    return x.replace(/\$player1/g,"$TMP_PLAYER1")  // placeholder
-      .replace(/\$player2/g,"$player1")
-      .replace(/\$TMP_PLAYER1/g,"$player2")
+    return x.replace (/\$([a-z]+)([12])/g,
+		      function (_match, varName, role) {
+			return '$' + varName + (role ^ 3)
+		      })
   }
 
 };

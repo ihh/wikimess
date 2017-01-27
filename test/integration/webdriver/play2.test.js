@@ -362,6 +362,11 @@ describe("two-player game", function() {
   makeMove (fred, "Sorry, sheila...", "right")
   makeMove (sheila, "Sorry, sheila...", "right")
 
+  makeMove (sheila, "How do you feel", "right")
+
+  makeMove (fred, "sheila is OK", "right")
+  makeMove (sheila, "sheila is OK", "right")
+
   makeMove (fred, "Here we are, sheila and fred: day 7 of school", "right")
   makeMove (sheila, "Here we are, sheila and fred: day 7 of school", "right")
 
@@ -382,6 +387,12 @@ describe("two-player game", function() {
 
   makeMove (fred, "Sorry, fred...", "right")
   makeMove (sheila, "Sorry, fred...", "right")
+
+  makeMove (fred, "How do you feel", "left")
+  makeMove (fred, "How mad", "left")
+
+  makeMove (fred, "fred is fuming", "right")
+  makeMove (sheila, "fred is fuming", "right")
 
   makeMove (fred, "Here we are, fred and sheila: day 9 of school", "right")
   makeMove (sheila, "Here we are, fred and sheila: day 9 of school", "right")

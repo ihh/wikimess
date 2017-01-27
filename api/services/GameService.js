@@ -1101,7 +1101,16 @@ module.exports = {
 	    })
         },
         function() {
-	  gotOutcome (game, game.player1, game.player2)
+	  if (GameService.gotBothMoves (game))
+	    GameService.recordMove ({ game: game,
+				      moveNumber: moveNumber + 1,
+				      update: {},
+				      turnUpdate: { move1: game.move1,
+						    move2: game.move2 } },
+				    gotOutcome,
+				    error)
+	  else
+	    gotOutcome (game, game.player1, game.player2)
         },
         error)
     }
@@ -1137,9 +1146,9 @@ module.exports = {
   
   playBotMoves: function (game) {
     if (!game.finished) {
-      if (!game.player1.human)
+      if (!game.player1.human || game.text1[0].wait)
 	BotService.makeRandomMove (game, 1)
-      if (!game.player2.human)
+      if (!game.player2.human || game.text2[0].wait)
 	BotService.makeRandomMove (game, 2)
     }
   },
