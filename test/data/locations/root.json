@@ -15,6 +15,7 @@
 	      { title: "AI test",
 		hint: "Play a single-player test!",
 		opponent: "ai",
+		botDefaultWait: 0,
 		timeout: 10,
 		resetWait: 5,
 		choice: "solo" },

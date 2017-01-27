@@ -26,28 +26,36 @@ module.exports = {
 	} else {
 
 	  // prepare a callback for when we find opponents
-	  function tryOpponents (potentialOpponents) {
+	  function tryOpponents (role, potentialOpponents) {
 	    var weightedOpponents = potentialOpponents.map (function (opponent) {
 	      return { opponent: opponent,
-		       weight: InviteService.compatibility (opponent, player, event) }
+		       weight: InviteService.compatibility (role == 1 ? player : opponent,
+							    role == 1 ? opponent : player,
+							    event) }
 	    })
 	    InviteService
 	      .tryRandomOpponent (player,
 				  event,
 				  weightedOpponents,
+				  role,
 				  gameStarted,
 				  playerWaiting,
 				  error)
 	  }
 
 	  // find eligible opponents
-	  if (event.opponent)
-	    Player.find ({ name: event.opponent })
-	    .exec (function (err, players) {
+	  if (event.botDefaultWait == 0 || !info.wantHuman) {
+	    var query = Player.find()
+	    if (event.opponent)
+	      query = query.where ({ name: event.opponent })
+	    else
+	      query = query.where ({ id: { '!': player.id },
+				     human: false })
+	    query.exec (function (err, players) {
 	      if (err) error (err)
-	      else tryOpponents (players)
+	      else tryOpponents (1, players)
 	    })
-	  else if (info.wantHuman)
+	  } else
 	    Invite.find ({ event: event.id,
 			   player: { '!': player.id } })
 	    .populate ('player')
@@ -65,20 +73,13 @@ module.exports = {
                     return opponent
                   })
               })
-            }).then (tryOpponents)
+            }).then (tryOpponents.bind(null,2))
             .catch (error)
-	  else
-	    Player.find ({ id: { '!': player.id },
-			   human: false })
-	    .exec (function (err, players) {
-	      if (err) error (err)
-	      else tryOpponents (players)
-	    })
-	}
+        }
       })
   },
 
-  tryRandomOpponent: function (player, event, weightedOpponents, gameStarted, playerWaiting, error) {
+  tryRandomOpponent: function (player, event, weightedOpponents, role, gameStarted, playerWaiting, error) {
     if (weightedOpponents.length == 0) {
       // no eligible opponents
       // update the Invite table
@@ -112,93 +113,98 @@ module.exports = {
       var opponent = weightedOpponents[nOpp].opponent
       weightedOpponents.splice (nOpp, 1)  // remove from weightedOpponents
 
-      InviteService.startGame ({ player1: opponent,
-                                 player2: player,
+      InviteService.startGame ({ player1: role == 1 ? player : opponent,
+                                 player2: role == 1 ? opponent : player,
                                  event: event,
-                                 player1CostsDeducted: true,
-                                 testPlayer2CostsDeducted: true,
+                                 player1CostsDeducted: (role == 2),
+                                 player2CostsDeducted: (role == 1),
+                                 testPlayer1CostsDeducted: (role == 1),
+                                 testPlayer2CostsDeducted: (role == 2),
                                  successCallback: function (game) {
                                    gameStarted (opponent, game)
                                  },
                                  failureCallback: function() {
-                                   InviteService.tryRandomOpponent (player, event, weightedOpponents, gameStarted, playerWaiting, error)
+                                   InviteService.tryRandomOpponent (player, event, weightedOpponents, role, gameStarted, playerWaiting, error)
                                  },
                                  errorCallback: error
                                })
     }
   },
 
+  costPromise: function (doTest, defaultValue, playerId, eventId) {
+    return doTest ? Invite.find ({ player: playerId, event: eventId }) : Promise.resolve (defaultValue)
+  },
+
   startGame: function (info) {
     var event = info.event
     var player1 = info.player1
     var player2 = info.player2
-    var player1CostsDeducted = info.player1CostsDeducted
-    var testPlayer2CostsDeducted = info.testPlayer2CostsDeducted  // if true, will check Invite table to see if player2 already paid the cost of admission
     var pendingAccept = info.pendingAccept
     var successCallback = info.successCallback
     var failureCallback = info.failureCallback
     var errorCallback = info.errorCallback
-    
+
     // lock player & opponent, test eligibility & if all is OK, start the Game
     PlayerService.runWithLock
       ([ player1.id, player2.id ],
        function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
          // figure out if costs already deducted (i.e. Invite table entry exists)
-         var player2CostPromise
-         if (testPlayer2CostsDeducted)
-           player2CostPromise = Invite.find ({ player: player2.id,
-                                               event: event.id })
-           .then (function (invites) {
-             return invites.length > 0
-	   })
-         else
-           player2CostPromise = Promise.resolve (info.player2CostsDeducted)
+         var player1CostPromise = InviteService.costPromise (info.testPlayer1CostsDeducted,
+							     info.player1CostsDeducted,
+							     player1.id,
+							     event.id)
+         var player2CostPromise = InviteService.costPromise (info.testPlayer2CostsDeducted,
+							     info.player2CostsDeducted,
+							     player2.id,
+							     event.id)
 
-         player2CostPromise.then (function (player2CostsDeducted) {
-	   if (LocationService.invisibleOrLocked (player1, event, player1CostsDeducted)
-	       || LocationService.invisibleOrLocked (player2, event, player2CostsDeducted))
-	     lockedSuccess (null)
-	   else {
-             Choice.findOneByName (event.choice)
-	       .populate('intro')
-	       .populate('intro2')
-	       .exec (function (err, choice) {
-		 if (err)
-		   lockedError (err)
-                 else if (!choice)
-		   lockedError ("Choice " + event.choice + " not found")
-		 else {
-                   // deduct costs, if not already deducted
-                   if (!player1CostsDeducted)
-		     LocationService.deductCost (player1, event.cost)
-                   if (!player2CostsDeducted)
-		     LocationService.deductCost (player2, event.cost)
-		   // create the game
-		   var game = { player1: player1,
-                                player2: player2,
-				event: event,
-                                current: choice,
-                                pendingAccept: pendingAccept,
-				mood1: player1.initialMood || 'happy',
-				mood2: player2.initialMood || 'happy' }
-		   GameService.createGame
-		   (game,
-		    function (err, created) {
-		      if (err) lockedError(err)
-		      else {
-			Invite.destroy ({ player: [player1.id, player2.id],
-					  event: event.id })
-			  .exec (function (err) {
-			    if (err)
-			      lockedError (err)
-			    else
-			      lockedSuccess (game)
-			  })
-		      }
-		    })
-		 }
-	       })
-           }
+	 player1CostPromise.then (function (player1CostsDeducted) {
+           player2CostPromise.then (function (player2CostsDeducted) {
+	     if (LocationService.invisibleOrLocked (player1, event, player1CostsDeducted)
+		 || LocationService.invisibleOrLocked (player2, event, player2CostsDeducted))
+	       lockedSuccess (null)
+	     else {
+               Choice.findOneByName (event.choice)
+		 .populate('intro')
+		 .populate('intro2')
+		 .exec (function (err, choice) {
+		   if (err)
+		     lockedError (err)
+                   else if (!choice)
+		     lockedError ("Choice " + event.choice + " not found")
+		   else {
+                     // deduct costs, if not already deducted
+                     if (!player1CostsDeducted)
+		       LocationService.deductCost (player1, event.cost)
+                     if (!player2CostsDeducted)
+		       LocationService.deductCost (player2, event.cost)
+		     // create the game
+		     var game = { player1: player1,
+                                  player2: player2,
+				  event: event,
+                                  current: choice,
+                                  pendingAccept: pendingAccept,
+				  mood1: player1.initialMood || 'happy',
+				  mood2: player2.initialMood || 'happy' }
+		     GameService.createGame
+		     (game,
+		      function (err, created) {
+			if (err) lockedError(err)
+			else {
+			  Invite.destroy ({ player: [player1.id, player2.id],
+					    event: event.id })
+			    .exec (function (err) {
+			      if (err)
+				lockedError (err)
+			      else
+				lockedSuccess (game)
+			    })
+			}
+		      })
+		   }
+		 })
+	     }
+           })
          })
        },
        function (game) {
@@ -233,6 +239,7 @@ module.exports = {
                                      event: event,
                                      player1CostsDeducted: false,
                                      player2CostsDeducted: true,   // player 2 does not pay for chat games they're invited to
+                                     testPlayer1CostsDeducted: false,
                                      testPlayer2CostsDeducted: false,
                                      pendingAccept: true,
                                      successCallback: resolve,

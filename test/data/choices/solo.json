@@ -4,8 +4,10 @@
    intro: [{ text: "You will NEVER beat me.",
 	     left: { hint: "Yes I will", text: "Dammit. Alright then, you win" },
 	     right: { hint: "OK then", text: "Yes, cower in fear, MORTAL" } }],
-   outcome: { next: { intro2: {},
-		      intro: { text: "Let me think about this." },  // should never be shown to player
+   outcome: { next: { intro: {},
+		      intro2: { text: "Let me think about this.",  // should never be shown to player
+				left: { text: "Hmmm." },  // should never be shown to player
+				right: { text: "I wonder." } },  // should never be shown to player
 		      outcome: { next: { intro: { text: "Just tell me how you plan to do it.",
 						  next: { hint: "No", text: "DAMMIT!!!!" } } } } } }
  },

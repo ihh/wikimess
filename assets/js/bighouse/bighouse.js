@@ -1905,19 +1905,27 @@ var BigHouse = (function() {
         $(followSelector).add(buttonDiv).text ('Unfollow')
           .off()
           .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv)))
+	  .removeClass('already-clicked')
       }
       function makeFollowButton() {
         $(followSelector).add(buttonDiv).text ('Follow')
           .off()
           .on ('click', bh.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv)))
+	  .removeClass('already-clicked')
       }
       doFollow = function() {
         bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
-          .then (function() { follow.setFollowing(true); follow.makeUnfollowButton() })
+          .then (function() {
+	    follow.setFollowing(true)
+	    follow.makeUnfollowButton()
+	  })
       }
       doUnfollow = function() {
         bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
-          .then (function() { follow.setFollowing(false); follow.makeFollowButton() })
+          .then (function() {
+	    follow.setFollowing(false)
+	    follow.makeFollowButton()
+	  })
       }
       if (follow.following)
         makeUnfollowButton()

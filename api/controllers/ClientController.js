@@ -170,7 +170,7 @@ module.exports = {
       PlayerService.makeStatus ({ rs: rs,
                                   game: info.game,
                                   player: info.opponent,
-                                  follower: info.player.id,
+                                  follower: info.player,
                                   local: info.role == 1 ? info.game.local2 : info.game.local1,
                                   isPublic: true })
     })
