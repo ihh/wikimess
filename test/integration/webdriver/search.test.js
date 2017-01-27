@@ -190,17 +190,6 @@ function waitForText (obj, text) {
   })
 }
 
-function testDisabled (obj, cardText, linkText) {
-  waitForCardText (obj, cardText)
-  waitForThrowToFinish (obj)
-  it("should find a disabled link on #"+obj.count+"\'s page containing text '"+linkText+"'", function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//span[@class='disabled']/strike[contains(text(),'"+linkText+"')]")))
-      .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-  })
-}
-
 function checkTextAbsent (obj, absentText) {
   it("should not find '"+absentText+"' on #"+obj.count+"\'s page ", function(done) {
     obj.driver

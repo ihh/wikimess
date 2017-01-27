@@ -180,7 +180,7 @@ function testStatus (obj, className, presents, absents) {
       .catch(error => done(error))
 	})
 }
-  
+
 function waitForNavBar (obj) {
   it("should wait for "+obj.name+"\'s navbar", function(done) {
     obj.driver
