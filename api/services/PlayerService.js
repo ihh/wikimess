@@ -126,11 +126,11 @@ module.exports = {
     if (local)
       state = merge (state, local)
 
-    var elements = { Attributes: [], Inventory: [], Accomplishments: [] }
+    var elements = { Stats: [], Inventory: [], Accomplishments: [] }
 
     var meters = Meter.meters.concat ((event && event.statusMeters) || [])
     meters.forEach (function (attr) {
-      elements.Attributes.push ({ type: 'meter',
+      elements.Stats.push ({ type: 'meter',
 				  level: state[attr.name] || 0,
                                   log: attr.log,
 				  min: attr.min,
@@ -164,7 +164,7 @@ module.exports = {
                    name: player.displayName,
                    human: player.human,
                    element: [] }
-    var sections = ['Attributes','Inventory','Accomplishments']
+    var sections = ['Stats','Inventory','Accomplishments']
     sections.forEach (function (key) {
       if (elements[key].length)
         status.element.push ({ type: 'div', element: [{ type: 'header', label: key }].concat (elements[key]) })

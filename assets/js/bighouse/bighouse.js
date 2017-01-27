@@ -2826,7 +2826,7 @@ var BigHouse = (function() {
 	  .filter (function (para) {
 	    return /\S/.test(para)
 	  }).map (function (para) {
-            var span = $('<span>')
+            var span = $('<span>').addClass('content')
             avatarRegExp.lastIndex = 0
             var avatarMatch = avatarRegExp.exec (para)
             if (avatarMatch) {
@@ -2834,15 +2834,16 @@ var BigHouse = (function() {
               var isSelf = (role === '' || role === 'self')
               if (mood === 'say') mood = isSelf ? bh.playerMood : (role === 'other' ? bh.opponentMood : 'happy')
               var moodDiv = $('<div>').addClass('avatar')
-              span.addClass (isSelf ? 'leftballoon' : 'rightballoon')
-                .append (moodDiv)
-		.append ($('<div>').addClass('speech').text(content))
+              span.append ($('<span>')
+                           .addClass (isSelf ? 'leftballoon' : 'rightballoon')
+                           .append (moodDiv)
+		           .append ($('<div>').addClass('speech').text(content)))
 	      var showMoodImage = role.charAt(0) === ':'
 		  ? bh.showNamedMoodImage.bind (bh, role.substr(1), mood, moodDiv)
 		  : bh.showMoodImage.bind (bh, isSelf ? bh.playerID : bh.opponentID, mood, moodDiv)
               avatarCallbacks.push (showMoodImage)
             } else
-	      span.addClass('content').html(para)
+	      span.html(para)
             return span
           })
 
