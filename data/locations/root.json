@@ -5,10 +5,13 @@
     description: "Welcome to the Institute of Advanced Invective! Here, you can learn to hurl abuse like a champ.",
     events: [ { title: "Insult a human",
 		hint: "Engage in a battle of wits with another player. (If no human is available, you'll be matched with a computer player.)",
-		choice: "insult" },
+                statusMeters: [{ name: 'score', log: true, min: .1, max: 1000, showRange: false, label: 'Score' }],
+		choice: "3rounds" },
 	      { title: "Insult a machine",
 		hint: "Sharpen your skills by insulting a CPU.",
+                statusMeters: [{ name: 'score', log: true, min: .1, max: 1000, showRange: false, label: 'Score' }],
 		opponent: ["bot"],
-		choice: "insult" } ]
+                botDefaultWait: 0,
+		choice: "3rounds" } ]
   }
 ]

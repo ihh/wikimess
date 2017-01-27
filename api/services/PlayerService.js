@@ -118,6 +118,7 @@ module.exports = {
 
   makeStatus: function (info) {
     var rs = info.rs, game = info.game, player = info.player, follower = info.follower, local = info.local, isPublic = info.isPublic
+    var event = game && game.event
     var state = {}
     if (game)
       extend (state, game.common)
@@ -127,15 +128,19 @@ module.exports = {
 
     var elements = { Attributes: [], Inventory: [], Accomplishments: [] }
 
-    Meter.meters.forEach (function (attr) {
+    var meters = Meter.meters.concat ((event && event.statusMeters) || [])
+    meters.forEach (function (attr) {
       elements.Attributes.push ({ type: 'meter',
 				  level: state[attr.name] || 0,
+                                  log: attr.log,
 				  min: attr.min,
 				  max: attr.max,
+                                  showRange: attr.showRange,
 				  label: attr.label || attr.name })
     })
 
-    Item.items.forEach (function (item) {
+    var items = Item.items.concat ((event && event.statusItems) || [])
+    items.forEach (function (item) {
       if ((item.public || !isPublic)
 	  && (state.inv[item.name] || item.alwaysShow))
 	elements.Inventory.push ({ type: 'icon',
@@ -144,7 +149,8 @@ module.exports = {
 				   label: PlayerService.capitalize (Item.plural (state.inv[item.name] || 0, item)) })
     })
 
-    Award.awards.forEach (function (accomp) {
+    var awards = Award.awards.concat ((event && event.statusAwards) || [])
+    awards.forEach (function (accomp) {
       if ((accomp.public || !isPublic)
 	  && state[accomp.name]
 	  && accomp.icon)

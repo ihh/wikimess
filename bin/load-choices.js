@@ -228,7 +228,7 @@ function processFile (info) {
         log (result.errors.map (function (ve) { return ve.stack }).join("\n"))
         return false
       }
-      log(4, 'Validated array element #' + n + ' '+ (item.name || ''))
+      log(4, 'Validated array element #' + n + ' '+ ((item && item.name) || ''))
       return true
     })
   }

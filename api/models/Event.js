@@ -76,6 +76,21 @@ module.exports = {
       defaultsTo: 30  // defaults to bot opponent after 30 seconds
     },
 
+    statusMeters: {
+      type: 'json',
+      defaultsTo: []
+    },
+
+    statusAwards: {
+      type: 'json',
+      defaultsTo: []
+    },
+
+    statusItems: {
+      type: 'json',
+      defaultsTo: []
+    },
+    
   },
 
   botDefaultTime: function (event, inviteTime) {

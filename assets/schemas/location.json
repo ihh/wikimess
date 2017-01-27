@@ -155,6 +155,24 @@
               "required": {
                 "type": "object"
               },
+              "statusMeters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/meter"
+                }
+              },
+              "statusItems": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/item"
+                }
+              },
+              "statusAwards": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/award"
+                }
+              },
               "choice": {
                 "oneOf": [
                   {
@@ -169,6 +187,140 @@
           }
         }
       }
+    },
+    "meter": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "log": {
+          "type": "boolean"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "showRange": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "item": {
+      "type": "object",
+      "required": [
+        "name",
+        "icon"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "noun": {
+          "type": "string"
+        },
+        "pluralNoun": {
+          "type": "string"
+        },
+        "article": {
+          "type": "string"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "isDefaultCurrency": {
+          "type": "boolean"
+        },
+        "buy": {
+          "type": [
+            "number",
+            "string",
+            "object"
+          ]
+        },
+        "sell": {
+          "type": [
+            "number",
+            "string",
+            "object"
+          ]
+        },
+        "markup": {
+          "type": "number"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "verb": {
+          "type": [
+            "number",
+            "string",
+            "object"
+          ]
+        },
+        "init": {
+          "type": "number"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "alwaysShow": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "award": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "init": {
+          "type": [
+            "number",
+            "string",
+            "object"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "public": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "choice": {
       "type": "object",

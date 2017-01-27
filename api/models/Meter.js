@@ -19,9 +19,11 @@ module.exports = {
           required: true,
           unique: true,
       },
+      log: { type: 'boolean', defaultsTo: false },
       min: { type: 'float', defaultsTo: 0 },
       max: { type: 'float', defaultsTo: 1 },
       public: { type: 'boolean', defaultsTo: true },
+      showRange: { type: 'boolean', defaultsTo: true },
       label: { type: 'string' },
   },
 

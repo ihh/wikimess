@@ -166,7 +166,9 @@
   return {
     name: "insult",
     effect: {
-      outro: { text: "<angry>#{$$.bh.capitalize($$.join('insult',' '))}#!</angry> <angryother>#{$$o.bh.capitalize($$o.join('insult',' '))}#!</angryother>" }
+      local1: { score: "+= $1.magnitude()" },
+      local2: { score: "+= $2.magnitude()" },
+      outro: { text: "<angry>#{$$.bh.capitalize($$.join('insult',' '))}#!</angry> <surprised:judge>Wow! #{$$.magnitude()}# points!</surprised:judge> <angryother>#{$$o.bh.capitalize($$o.join('insult',' '))}#!</angryother> <happy:judge>Oh, snap! #{$$o.magnitude()}# points!</happy:judge>" }
     },
     intro:
     extend
@@ -178,7 +180,7 @@
 			['the_subject_is','less_positive_adjective','than_an_object'],
 			['the_subject_is','more_negative_adjective','than_an_object']
 		       ),
-	  { text: "Your insult is \"<Label:insult >!\"\nYour score is [[$magnitude()]] with consistency [[$percent($magnitude()/$taxicab())]]" }),
+	  { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
      {define:
       // menus
       [{ name: 'select_subject',

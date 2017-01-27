@@ -1792,7 +1792,7 @@ var BigHouse = (function() {
 	  div.append (bh.makeStatusIcon (elt))
 	  break
 	case 'meter':
-	  div.append (bh.makeMeter (elt.label, elt.level, elt.min, elt.max, elt.color))
+	  div.append (bh.makeMeter (elt))
 	  break
 	default:
 	  break
@@ -1816,16 +1816,20 @@ var BigHouse = (function() {
         .append ($('<span class="text">').text(element.label))
     },
 
-    makeMeter: function(label,level,min,max,color) {
+    makeMeter: function (element) {
+      var label = element.label, level = element.level, log = element.log, min = element.min, max = element.max, showRange = element.showRange, color = element.color
+      min = min || 0
+      max = typeof(max) === 'undefined' ? 100 : max
       color = color || 'blue'
+      var lev = log ? (Math.log(Math.max(level,min)/min) / Math.log(max/min)) : (Math.max(level-min,0) / (max-min))
       return $('<div class="meterline">')
 	.append ($('<div class="meterlabel">')
 		 .append ($('<div class="metertext">').text(label))
 		 .append ($('<div class="meternumber">')
-			  .text ('(' + Math.round(level) + '/' + Math.round(max) + ')')))
+                          .text ('(' + (showRange ? (Math.round(level) + '/' + Math.round(max)) : level) + ')')))
 	.append ($('<div class="meter '+color+'">')
 		 .append ($('<span>')
-			  .css('width',(100*level/max) + '%')))
+			  .css('width',(100*lev) + '%')))
     },
 
     // follows

@@ -299,7 +299,7 @@
     var lc = adj.toLowerCase()
     if (irregularComparative[lc]) return irregularComparative[lc]
     switch (countSyllables(adj)) {
-    case 1: return adj + (adj.match(/e$/) ? 'r' : ((adj.match(/[b-df-hj-np-tv-z][aeiou][b-df-hj-np-tv-z]$/) ? adj.charAt(adj.length-1) : '') + 'er'))
+    case 1: return (adj.match(/e$/) ? (adj+'r') : (adj.match(/ed$/) ? ('more '+adj) : (adj+((adj.match(/[b-df-hj-np-tv-z][aeiou][b-df-hj-np-tv-z]$/) ? adj.charAt(adj.length-1) : '') + 'er'))))
     case 2: return adj.match(/y$/) ? adj.replace(/y$/,'ier') : (adj.match(/le$/) ? (adj+'r') : (adj.match(/(er|ow)$/) ? (adj+'er') : ('more '+adj)))
     default: return 'more '+adj
     }
@@ -352,6 +352,7 @@
   
   // Externally exposed functions
   var api = {
+    // BigHouse expansion trees
     moveLabel: moveLabel,
     bindLabelFunctions: bindLabelFunctions,
     getExpansionRoot: getExpansionRoot,
@@ -367,7 +368,15 @@
     evalUsable: evalUsable,
     evalVisible: evalVisible,
     evalLabel: evalLabel,
+    // general grammar
+    possessiveApostrophe: possessiveApostrophe,
+    indefiniteArticle: indefiniteArticle,
+    lessOrFewer: lessOrFewer,
+    makeComparative: makeComparative,
+    ordinal: ordinal,
     capitalize: capitalize,
+    countSyllables: countSyllables,
+    // general numerics
     magnitude: magnitude,
     taxicab: taxicab,
     percent: percent

@@ -859,8 +859,12 @@ module.exports = {
             $_ = $$_
 
           // common shorthands
-          if (expr == '++') expr = '($_||0)+1'
-          if (expr == '--') expr = '($_||0)-1'
+          if (typeof(expr) === 'string') {
+            if (expr == '++') expr = '($_||0)+1'
+            else if (expr == '--') expr = '($_||0)-1'
+            else if (expr.substr(0,2) == '+=') expr = '($_||0)+' + expr.substr(2)
+            else if (expr.substr(0,2) == '-=') expr = '($_||0)-' + expr.substr(2)
+          }
 
           // do the eval
           var val

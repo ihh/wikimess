@@ -9,6 +9,11 @@ var Item = require('../models/Item')
 var Award = require('../models/Award')
 var Meter = require('../models/Meter')
 
+var playerSchema = autoSchema(Player,['name','displayName','password','admin','human','global','home','initialMood','avatarConfig','newSignUp'])
+var awardSchema = autoSchema(Award,['name','init','icon','color','label','public'])
+var meterSchema = autoSchema(Meter,['name','log','min','max','public','showRange','label'])
+var itemSchema = autoSchema(Item,['name','icon','color','noun','pluralNoun','article','hint','category','isDefaultCurrency','buy','sell','markup','discount','verb','init','public','alwaysShow'])
+
 var intro_node_schema = {
   oneOf: [{ type: "string" },
           { type: "object",
@@ -304,7 +309,7 @@ module.exports = {
 
     "$ref": "#/definitions/move"
   },
-
+  
   // Location schema
   locationSchema: {
     definitions: extend ({
@@ -374,22 +379,32 @@ module.exports = {
 		locked: { type: "string" },
 		cost: { type: "object" },
 		required: { type: "object" },
+                statusMeters: { type: "array", items: ref_schema('meter') },
+                statusItems: { type: "array", items: ref_schema('item') },
+                statusAwards: { type: "array", items: ref_schema('award') },
 		choice: { oneOf: [{ type: "string" },
 				  ref_schema('choice')] }
               }
             }
 	  }
 	}
-      }
+      },
+
+      // status schemas
+      meter: meterSchema,
+      item: itemSchema,
+      award: awardSchema,
+
+      // choice schema for locations
     }, choice_schema_defs),
     
     "$ref": "#/definitions/location"
   },
 
-  playerSchema: autoSchema(Player,['name','displayName','password','admin','human','global','home','initialMood','avatarConfig','newSignUp']),
-  awardSchema: autoSchema(Award,['name','init','icon','color','label','public']),
-  meterSchema: autoSchema(Meter,['name','min','max','public','label']),
-  itemSchema: autoSchema(Item,['name','icon','color','noun','pluralNoun','article','hint','category','isDefaultCurrency','buy','sell','markup','discount','verb','init','public','alwaysShow']),
+  playerSchema: playerSchema,
+  awardSchema: awardSchema,
+  meterSchema: meterSchema,
+  itemSchema: itemSchema,
   
   // Validators
   validate: function (data, schema, name, errorCallback) {
