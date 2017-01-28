@@ -165,7 +165,7 @@
     var $labels = function (lab) { return expansionLabels(expansion,lab) }
     var $flat = function (lab) { return flatExpansionLabels(expansion,lab) }
     var $label = function (lab) { return sumExpansionLabels(expansion,lab) }
-    var $join = function (lab,l,p,t) { return joinExpansionLabels(expansion,l,p,t) }
+    var $join = function (lab,l,p,t) { return joinExpansionLabels(expansion,lab,l,p,t) }
     var $last = function (lab) { return lastExpansionLabel(expansion,lab) }
     var $base = function (lab) { return baseExpansionLabel(expansion,lab) }
     
@@ -238,7 +238,7 @@
   // person can be 's1', 's2', 's3', 'p1', 'p2', 'p3'
   //  for singular/plural and 1st/2nd/3rd person
   // gender can be 'm' (Male), 'f' (Female), 'n' (Neuter), 'i' (Inanimate)
-  //  if 'n', will use 'They' form; if 'i', will use 'It' form
+  //  if 'n', will use 'They' form; if 'i' (or blank), will use 'It' form
   var representativePronoun = { s1: 'i', s2: 'you', s3n: 'they', s3: 'it', p1: 'we', p2: 'you', p3: 'they' }
   function makeRepresentativePronoun (person, gender) {
     return representativePronoun[person + (gender || '')] || representativePronoun[person]

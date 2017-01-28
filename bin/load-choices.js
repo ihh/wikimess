@@ -7,7 +7,8 @@ var fs = require('fs'),
     request = require('request'),
     colors = require('colors'),
     extend = require('extend'),
-    jsonschema = require('jsonschema')
+    jsonschema = require('jsonschema'),
+    Label = require('../assets/js/bighouse/label')
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"

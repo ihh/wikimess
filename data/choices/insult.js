@@ -105,6 +105,12 @@
     })
   }
 
+  function set(label,expr) {
+    var obj = {}
+    obj[label] = "[null," + expr + "]"
+    return { labexpr: obj }
+  }
+
   // uncomment 'debugMenus = 1' to show menus instead of sampling
   var debugMenus = 1
   function debug_sample1() {
@@ -130,7 +136,7 @@
   }
 
   function subject_list (person, list) {
-    return label_list ('subject.text', list, { subject: { person: person } })
+    return label_list ('subject.np', list, { subject: { person: person } })
   }
 
   function object_list (list, hintMap) {
@@ -142,15 +148,19 @@
   }
 
   function adjective_list (prefix, list, suffix, range) {
-    return label_list ('adjective', list, score_prop_map(list,range), (noun) => prefix+noun+(suffix||''))
+    return label_list ('adjective', list, score_prop_map(list,range), (adj) => prefix+adj+(suffix||''))
   }
 
   function verb_list (prefix, list, suffix, range) {
-    return label_list ('verb', list, score_prop_map(list,range), (noun) => prefix+noun+(suffix||''))
+    return label_list ('verb', list, score_prop_map(list,range), (verb) => prefix+verb+(suffix||''))
   }
 
   function adverb_list (prefix, list, suffix, range) {
-    return label_list ('adverb', list, score_prop_map(list,range), (noun) => prefix+noun+(suffix||''))
+    return label_list ('adverb', list, score_prop_map(list,range), (adv) => prefix+adv+(suffix||''))
+  }
+
+  function past_participle_list (list, range) {
+    return label_list ('past', list, score_prop_map(list,range), (past) => 'Got '+past)
   }
   
   function insult(expr) {
@@ -295,13 +305,20 @@
 
        defsample ('perception_verb', label_list ('perception_verb', ['smell', 'sound', 'taste', 'feel', 'look', 'seem'])),
 
-       // need passive_verb
-       
+       { name: 'select_passive_past_participle',
+	 text: "What happened to [[$join('passive_verb_object')]]?",
+	 menu:
+	 { sample:
+	   { shuffle: true,
+	     groups:
+	     [{ n: 3,
+                opts: past_participle_list(['eaten','mauled','fondled','licked','kissed','hugged','ravaged','befriended','seduced','cuddled','wooed','courted','dishonored','deflowered']) }] } } },
+
        // sentence components
-       defseq('the_subject_has',['select_subject',insult("[$label('subject.text'),$has_p($label('subject.person'))]")]),
-       defseq('the_subject_is',['select_subject',insult("[$label('subject.text'),$is_p($label('subject.person'))]")]),
-       defseq('the_subjects',['select_subject',insult("$poss($label('subject.text'))")]),
-       defseq('the_subject',['select_subject',insult("$label('subject.text')")]),
+       defseq('the_subject_has',['select_subject',insult("[$label('subject.np'),$has_p($label('subject.person'))]")]),
+       defseq('the_subject_is',['select_subject',insult("[$label('subject.np'),$is_p($label('subject.person'))]")]),
+       defseq('the_subjects',['select_subject',insult("$poss($label('subject.np'))")]),
+       defseq('the_subject',['select_subject',insult("$label('subject.np')")]),
 
        defsample('does_something',['reflexive_verbs','nonreflexive_verbs']),
        defseq('reflexive_verbs',['select_reflexive_verb',insult("[$conj($label('verb'),$label('subject.person')),$themself($label('subject.person'))]")]),
@@ -331,8 +348,8 @@
        defsample('like_an_object_does',['like_an_object','as_adverb_as_an_object','less_positive_adverb_than_an_object','more_negative_adverb_than_an_object']),
        defsample('perception_description',['adjective','like_an_object','passive_verbed',['like_it_was_passive_verbed','by_an_object']]),
 
-       defseq('passive_verbed',['select_passive_verb',insult("[$past_participle($label('verb'))]")]),
-       defseq('like_it_was_passive_verbed',[insult("['like',$they($label('subject.person')),$was($label('subject.person'))]"),'passive_verbed'])
+       defseq('passive_verbed',['select_passive_past_participle',insult("[$label('past')]")]),
+       defseq('like_it_was_passive_verbed',[insult("['like',$they($label('subject.person')),$was($label('subject.person'),'n')]"),set('passive_verb_object',"'them'"),'passive_verbed'])
 
       ]
      })
