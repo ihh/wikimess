@@ -684,7 +684,7 @@ module.exports = {
 	Game.getRoleAttr (game, 2, 'tree', game.flip).push (texts[1])
 
 	// auto-expand or update
-	if (choice.autoexpand)
+	if (choice.autoExpand)
 	  GameService
 	  .applyRandomOutcomes (game,
 				success,

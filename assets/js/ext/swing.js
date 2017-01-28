@@ -1761,6 +1761,7 @@
 	        // to the touchstart event for touch enabled devices and mousedown otherwise.
 	        if (_utilJs2['default'].isTouchDevice()) {
 	            targetElement.addEventListener('touchstart', function () {
+                      if (config.allowMovement(event))
 	                eventEmitter.trigger('panstart');
 	            });
 	
@@ -1778,7 +1779,7 @@
 	                });
 	
 	                global.addEventListener('touchmove', function (e) {
-	                    if (dragging) {
+	                    if (dragging && config.allowMovement(event)) {
 	                        e.preventDefault();
 	                    }
 	                });
@@ -1790,11 +1791,13 @@
 	        }
 	
 	        mc.on('panmove', function (e) {
-	            eventEmitter.trigger('panmove', e);
+	            if (config.allowMovement(event))
+                      eventEmitter.trigger('panmove', e);
 	        });
 	
 	        mc.on('panend', function (e) {
-	            eventEmitter.trigger('panend', e);
+	            if (config.allowMovement(event))
+                      eventEmitter.trigger('panend', e);
 	        });
 	
 	        springThrowIn.addListener({
@@ -1985,7 +1988,8 @@
 	    var defaultConfig = undefined;
 	
 	    defaultConfig = {
-	        isThrowOut: Card.isThrowOut,
+                allowMovement: function() { return true },
+                isThrowOut: Card.isThrowOut,
 	        throwOutConfidence: Card.throwOutConfidence,
 	        throwOutDistance: Card.throwOutDistance,
 	        minThrowOutDistance: 400,

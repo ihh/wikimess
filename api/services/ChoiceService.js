@@ -176,7 +176,7 @@ module.exports = {
 
     var add_flipped_rl = function (outcome) { addOutcome ('r', 'l', flip (outcome)) }
     var add_flipped_lr = function (outcome) { addOutcome ('l', 'r', flip (outcome)) }
-    var add_auto = function (outcome) { addOutcome (undefined, undefined, outcome); config.autoexpand = true }
+    var add_auto = function (outcome) { addOutcome (undefined, undefined, outcome); config.autoExpand = true }
 
     var add_nonexclusive = function (outcome) { outcome.exclusive = false; addOutcome (undefined, undefined, outcome) }
 
@@ -200,8 +200,8 @@ module.exports = {
 	outcomeAdder[key].call()
     })
 
-    if (outcomes.length == 0 && !config.hasOwnProperty('autoexpand'))
-      config.autoexpand = true
+    if (outcomes.length == 0 && !config.hasOwnProperty('autoExpand'))
+      config.autoExpand = true
     
     expandAliases (config)
     config.intro = makeText (config.intro)

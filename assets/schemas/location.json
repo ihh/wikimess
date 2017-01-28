@@ -337,7 +337,7 @@
         "intro2": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
-        "autoexpand": {
+        "autoExpand": {
           "type": "boolean"
         },
         "outcome": {

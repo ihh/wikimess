@@ -2064,6 +2064,9 @@ var BigHouse = (function() {
       }
       this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
 					throwOutDistance: this.throwXOffset,
+                                        allowMovement: function (evt) {
+                                          return $(evt.target).closest('.topcard').length > 0
+                                        },
                                         isThrowOut: isThrowOut })
 
       this.setGameState ('start')
@@ -2312,12 +2315,12 @@ var BigHouse = (function() {
     },
 
     newTopCard: function (expansion) {
+      // call node-specific setup (routines that depend on whether node is a swipe card or a menu card)
+      expansion.topCardCallback()
+
       // set card class
       var card = expansion.card
       $(card.elem).addClass ('topcard')
-
-      // call node-specific setup (routines that depend on whether node is a swipe card or a menu card)
-      expansion.topCardCallback()
 
       // show hints
       var node = expansion.node
@@ -2848,6 +2851,7 @@ var BigHouse = (function() {
           })
 
       // create the menu, if applicable
+      var topCardCallback
       if (node.menu && !node.auto) {
 	var fieldset = $('<fieldset class="cardmenu">')
 	expansion.menuSpan = []
@@ -2893,7 +2897,7 @@ var BigHouse = (function() {
         }
 
         // create the function that will be called when the menu card reaches the top of the pack
-        expansion.topCardCallback = function() {
+        topCardCallback = function() {
           bh.choiceDiv.hide()
           bh.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
           if (typeof(expansion.action) !== 'undefined')
@@ -2904,15 +2908,15 @@ var BigHouse = (function() {
 	  }
         }
       } else  // not a menu card (or an auto-menu)
-        expansion.topCardCallback = function() {
+        topCardCallback = function() {
 	  delete bh.throwDisabled
 	  bh.choiceDiv.show()
         }
 
       // if a mood change was specified, tack it onto the end of the top-card callback
       if (newMood && !expansion.isHistory) {
-	var cb = expansion.topCardCallback
-	expansion.topCardCallback = function() {
+	var cb = topCardCallback
+	topCardCallback = function() {
 	  cb()
 	  bh.changeMoodFunction (node.move, newMood) ()
 	}
@@ -2930,11 +2934,13 @@ var BigHouse = (function() {
 
       // create & deal the card
       var cardDealt = $.Deferred(), allCardsDealt = $.Deferred()
+      var swipeLeft = bh.makeSwipeFunction (expansion, (!node.menu && expansion.action) || 'left')
+      var swipeRight = bh.makeSwipeFunction (expansion, (!node.menu && expansion.action) || 'right')
 
-      var card = this.stack.createCard (cardListItem[0])
+      var card = bh.stack.createCard (cardListItem[0])
       expansion.card = card
-
       card.elem = cardListItem[0]
+
       card.on ('dragstart', function() {
         cardListItem.addClass ('dragging')
       })
@@ -2956,23 +2962,27 @@ var BigHouse = (function() {
 	})
       }
 
-      var swipeLeft = bh.makeSwipeFunction (expansion, (!node.menu && expansion.action) || 'left')
-      var swipeRight = bh.makeSwipeFunction (expansion, (!node.menu && expansion.action) || 'right')
-
       addThrowListener ('throwoutleft', 'swipeleft', swipeLeft)
       addThrowListener ('throwoutright', 'swiperight', swipeRight)
 
+      // create the outermost wrapper for the top card callback
+      expansion.topCardCallback = function() {
+        // can add any generic top-card callbacks here
+        topCardCallback()
+      }
+
+      // temporarily create the card (for the deal animation) then destroy it
       if (info.showDealAnimation) {
-	card.on ('throwinend', function() {
+	expansion.card.on ('throwinend', function() {
 	  cardListItem.attr('style','')
 	  cardDealt.resolve()
 	})
-	card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset() : +this.dealXOffset(), this.dealYOffset())
+	expansion.card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset() : +this.dealXOffset(), this.dealYOffset())
       } else
 	cardDealt.resolve()
 
       avatarCallbacks.forEach (function (f) { f() })
-      
+
       if (!info.dealingAhead)
 	cardDealt.done (function() {
 	  bh.updateGameView()

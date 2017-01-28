@@ -41,7 +41,7 @@ module.exports = {
     intro: { model: 'text' },
     intro2: { model: 'text' },
 
-    autoexpand: {
+    autoExpand: {
       type: 'boolean',
       defaultsTo: false
     },

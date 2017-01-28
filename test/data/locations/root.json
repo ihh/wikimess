@@ -24,6 +24,7 @@
 		timeout: 10,
 		resetWait: 5,
 		choice: {
+                  autoExpand: false,
 		  intro: [{ text: "This is the only card.",
 			    left: { hint: "I doubt it", text: "OK, you were right." },
 			    right: { hint: "I believe you", text: "Sucker!" } }] } } ]
