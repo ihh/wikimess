@@ -170,6 +170,9 @@
     var $base = function (lab) { return baseExpansionLabel(expansion,lab) }
     
     var $conj = conjugate  // $conj(infinitive,person[,gender])
+    var $was = was  // $was(person[,gender])
+    var $past_participle = pastParticiple  // $past_participle(infinitive)
+    var $past_simple = pastSimple  // $past_simple(infinitive)
     var $adverb = makeAdverb  // $adverb(adjective)
     var $is_p = function (person) { return conjugate('be',person) }
     var $has_p = function (person) { return conjugate('have',person) }
@@ -237,17 +240,36 @@
   // gender can be 'm' (Male), 'f' (Female), 'n' (Neuter), 'i' (Inanimate)
   //  if 'n', will use 'They' form; if 'i', will use 'It' form
   var representativePronoun = { s1: 'i', s2: 'you', s3n: 'they', s3: 'it', p1: 'we', p2: 'you', p3: 'they' }
+  function makeRepresentativePronoun (person, gender) {
+    return representativePronoun[person + (gender || '')] || representativePronoun[person]
+  }
+
   function conjugate (infinitive, person, gender) {
     var form
-    var rp = representativePronoun[person + gender] || representativePronoun[person]
+    var rp = makeRepresentativePronoun (person, gender)
     switch (infinitive) {
     case 'have': form = (rp === 'it') ? 'has' : 'have'; break
     case 'be': form = (rp === 'i') ? 'am' : (rp === 'it' ? 'is' : 'are'); break
     case 'do': form = (rp === 'it') ? 'does' : 'do'; break
     case 'go': form = (rp === 'it') ? 'goes' : 'go'; break
-    default: form = (rp === 'it') ? infinitive.replace (/(.)\b/i, function(_m,c){return c + (c === 's' ? 'es' : 's')}) : infinitive; break
+    default: form = (rp === 'it') ? infinitive.replace (/.\b/i, function(c){return c + (c === 's' ? 'es' : 's')}) : infinitive; break
     }
     return form
+  }
+
+  function was (person, gender) {
+    var rp = makeRepresentativePronoun (person, gender)
+    return (rp === 'i' || rp === 'it') ? 'was' : 'were'
+  }
+
+  var irregularPastParticiple = { arise: "arisen", babysit: "babysat", be: "been", beat: "beaten", become: "become", bend: "bent", begin: "begun", bet: "bet", bind: "bound", bite: "bitten", bleed: "bled", blow: "blown", break: "broken", breed: "bred", bring: "brought", broadcast: "broadcast", build: "built", buy: "bought", catch: "caught", choose: "chosen", come: "come", cost: "cost", cut: "cut", deal: "dealt", dig: "dug", do: "done", draw: "drawn", drink: "drunk", drive: "driven", eat: "eaten", fall: "fallen", feed: "fed", feel: "felt", fight: "fought", find: "found", fly: "flown", forbid: "forbidden", forget: "forgotten", forgive: "forgiven", freeze: "frozen", get: "gotten", give: "given", go: "gone", grow: "grown", hang: "hung", have: "had", hear: "heard", hide: "hidden", hit: "hit", hold: "held", hurt: "hurt", keep: "kept", know: "known", lay: "laid", lead: "led", leave: "left", lend: "lent", let: "let", lie: "lain", light: "lit", lose: "lost", make: "made", mean: "meant", meet: "met", pay: "paid", put: "put", quit: "quit", read: "read", ride: "ridden", ring: "rung", rise: "risen", run: "run", say: "said", see: "seen", sell: "sold", send: "sent", set: "set", shake: "shaken", shine: "shone", shoot: "shot", show: "shown", shut: "shut", sing: "sung", sink: "sunk", sit: "sat", sleep: "slept", slide: "slid", speak: "spoken", spend: "spent", spin: "spun", spread: "spread", stand: "stood", steal: "stolen", stick: "stuck", sting: "stung", strike: "struck", swear: "sworn", sweep: "swept", swim: "swum", swing: "swung", take: "taken", teach: "taught", tear: "torn", tell: "told", think: "thought", throw: "thrown", understand: "understood", wake: "woken", wear: "worn", win: "won", withdraw: "withdrawn", write: "written" }
+  function pastParticiple (infinitive) {
+    return irregularPastParticiple[infinitive] || infinitive.replace (/.\b/i, function(c){return c + (c === 'e' ? 'd' : 'ed')})
+  }
+
+  var irregularPastSimple = { arise: "arose", babysit: "babysat", be: "was", beat: "beat", become: "became", bend: "bent", begin: "began", bet: "bet", bind: "bound", bite: "bit", bleed: "bled", blow: "blew", break: "broke", breed: "bred", bring: "brought", broadcast: "broadcast", build: "built", buy: "bought", catch: "caught", choose: "chose", come: "came", cost: "cost", cut: "cut", deal: "dealt", dig: "dug", do: "did", draw: "drew", drink: "drank", drive: "drove", eat: "ate", fall: "fell", feed: "fed", feel: "felt", fight: "fought", find: "found", fly: "flew", forbid: "forbade", forget: "forgot", forgive: "forgave", freeze: "froze", get: "got", give: "gave", go: "went", grow: "grew", hang: "hung", have: "had", hear: "heard", hide: "hid", hit: "hit", hold: "held", hurt: "hurt", keep: "kept", know: "knew", lay: "laid", lead: "led", leave: "left", lend: "lent", let: "let", lie: "lay", light: "lit", lose: "lost", make: "made", mean: "meant", meet: "met", pay: "paid", put: "put", quit: "quit", read: "read", ride: "rode", ring: "rang", rise: "rose", run: "ran", say: "said", see: "saw", sell: "sold", send: "sent", set: "set", shake: "shook", shine: "shone", shoot: "shot", show: "showed", shut: "shut", sing: "sang", sink: "sank", sit: "sat", sleep: "slept", slide: "slid", speak: "spoke", spend: "spent", spin: "spun", spread: "spread", stand: "stood", steal: "stole", stick: "stuck", sting: "stung", strike: "struck", swear: "swore", sweep: "swept", swim: "swam", swing: "swung", take: "took", teach: "taught", tear: "tore", tell: "told", think: "thought", throw: "threw", understand: "understood", wake: "woke", wear: "wore", win: "won", withdraw: "withdrew", write: "wrote" }
+  function pastSimple (infinitive) {
+    return irregularPastParticiple[infinitive] || infinitive.replace (/.\b/i, function(c){return c + (c === 'e' ? 'd' : 'ed')})
   }
   
   // Pronouns
@@ -399,6 +421,10 @@
     evalVisible: evalVisible,
     evalLabel: evalLabel,
     // general grammar
+    conjugate: conjugate,
+    was: was,
+    pastParticiple: pastParticiple,
+    pastSimple: pastSimple,
     possessiveApostrophe: possessiveApostrophe,
     indefiniteArticle: indefiniteArticle,
     lessOrFewer: lessOrFewer,
