@@ -15,6 +15,9 @@
         "intro2": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
+        "autoexpand": {
+          "type": "boolean"
+        },
         "outcome": {
           "$ref": "#/definitions/outcome_or_outcome_list"
         },

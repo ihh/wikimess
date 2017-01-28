@@ -200,7 +200,7 @@ module.exports = {
 	outcomeAdder[key].call()
     })
 
-    if (outcomes.length == 0)
+    if (outcomes.length == 0 && !config.hasOwnProperty('autoexpand'))
       config.autoexpand = true
     
     expandAliases (config)
