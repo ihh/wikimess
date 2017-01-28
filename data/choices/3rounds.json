@@ -1,7 +1,10 @@
 [
   { name: "3rounds",
-    auto: {next:["insult",
+    auto: {next:[{intro:{text:"ROUND ONE!"}},
                  "insult",
+                 {intro:{text:"ROUND TWO!"}},
+                 "insult",
+                 {intro:{text:"ROUND THREE!"}},
                  "insult",
                  {
                    intro: { text: "<happy:judge>Final scores: {{$l1.score}} to {{$n1}}, {{$l2.score}} to {{$n2}}!</happy:judge>" }

@@ -200,6 +200,9 @@ module.exports = {
 	outcomeAdder[key].call()
     })
 
+    if (outcomes.length == 0)
+      config.autoexpand = true
+    
     expandAliases (config)
     config.intro = makeText (config.intro)
     config.intro2 = makeText (config.intro2)

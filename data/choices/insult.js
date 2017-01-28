@@ -6,13 +6,13 @@
 // the_subject_is as adjective as an_object
 // the_subject_is less positive_adjective than an_object
 // the_subject_is more_negative_adjective than an_object
-// the_subject intransitive_verbs like an_object
-// the_subject transitive_verbs material_nouns like an_object
-// the_subject intransitive_verbs as adverb as an_object
-// the_subject transitive_verbs material_nouns as adverb as an_object
-// the_subject intransitive_verbs less positive_adverb than an_object
-// the_subject transitive_verbs material_nouns more negative_adverb than an_object
-// the_subject doesn't intransitive_verb more positive_adverb than an_object
+// the_subject does_something like_an_object_does
+// does_something -> nonreflexive_verbs
+// does_something -> reflexive_verbs themself
+// like_an_object_does -> like an_object
+// like_an_object_does -> as adverb as an_object
+// like_an_object_does -> less positive_adverb than an_object
+// like_an_object_does -> more negative_adverb than an_object
 
 // Attributary insults (sound like, look like, feel like, smell of/like, taste of/like)
 // the_subject attributary_verbs adjective
@@ -56,24 +56,6 @@
 // it_causes_a_reaction -> it makes me want to negative_reaction_verb
 // it_causes_a_reaction -> it makes an_object attributary_verb positive_abstract_noun
 
-// Menu symbols
-// subject
-// object
-// positive_abstract_noun, negative_abstract_noun
-// more_negative_adjective, more_positive_adjective
-// positive_adjective, negative_adjective
-// transitive_verb, intransitive_verb
-// positive_adverb, negative_adverb
-// material_noun, quality_noun, appearance_noun
-// attributary_verb
-// past_tense_negative_passive_verb
-// active_verb
-// affliction_proper_noun, location_proper_noun
-// activity_verb
-
-// Intermediate symbols
-// than_an_object, like_an_object, as_an_object, by_an_object
-
 (function() {
   // JavaScript helpers
   function extend() {
@@ -83,7 +65,12 @@
     })
     return merged
   }
-  function clone(obj) { return extend ({}, obj) }
+  function clone(obj) {
+    if (typeof(obj) !== 'object') return obj
+    var cloned = {}
+    Object.keys(obj).forEach (function(key) { cloned[key] = clone(obj[key]) })
+    return cloned
+  }
   function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
 
   // Grammar helpers
@@ -103,6 +90,7 @@
   function to_node(arg) { return isArray(arg) ? seq.apply(seq,arg) : ((typeof(arg) === 'string') ? goto(arg) : arg) }
   function seq() { return { sequence: Array.prototype.map.call (arguments, to_node) } }
   function defseq(name,opts) { return extend ({ name: name }, seq.apply(this,opts)) }
+  function defsample(name,opts) { return extend ({ name: name }, debug_sample1.apply(null,opts)) }
   function sample1() { return { sample1: { opts: Array.prototype.map.call (arguments, to_node) } } }
 
   function label_list (label, propMap, list, hintMap) {
@@ -110,16 +98,17 @@
     if (typeof(propMap) === 'object') propMap = (function(obj) { return function() { return clone(obj) } }) (propMap)
     hintMap = hintMap || capitalize
     var lpath = label.split('.'), lkey = lpath.pop()
-    return list.map (function (item, n) {
+    var ll = list.map (function (item, n) {
       var l = propMap(item,n), obj = { hint: hintMap (item,n), label: l }
       lpath.forEach (function(k) { l = l[k] })
       l[lkey] = item
       return obj
     })
+    return ll
   }
 
   // uncomment 'debugMenus = 1' to show menus instead of sampling
-  //  var debugMenus = 1
+//  var debugMenus = 1
   function debug_sample1() {
     var args = Array.prototype.slice.call(arguments,0)
     return typeof(debugMenus) !== 'undefined'
@@ -136,7 +125,7 @@
       var score = {}
       Object.keys(range).forEach (function (type) {
         var minScore = range[type][0], maxScore = range[type][1]
-        score[type] = Math.round (minScore + (maxScore-minScore) * n / (list.length - 1))
+        score[type] = Math.round (minScore + (maxScore-minScore) * n / Math.max (1, list.length - 1))
       })
       return { score: score }
     }
@@ -157,6 +146,14 @@
   function adjective_list (prefix, list, suffix, range) {
     return label_list ('adjective', score_prop_map(list,range), list,(noun) => prefix+noun+(suffix||''))
   }
+
+  function verb_list (prefix, list, suffix, range) {
+    return label_list ('verb', score_prop_map(list,range), list,(noun) => prefix+noun+(suffix||''))
+  }
+
+  function adverb_list (prefix, list, suffix, range) {
+    return label_list ('adverb', score_prop_map(list,range), list,(noun) => prefix+noun+(suffix||''))
+  }
   
   function insult(expr) {
     return { labexpr: { insult: expr } }
@@ -168,7 +165,7 @@
     effect: {
       local1: { score: "+= $1.magnitude()" },
       local2: { score: "+= $2.magnitude()" },
-      outro: { text: "<angry>#{$$.bh.capitalize($$.join('insult',' '))}#!</angry> <surprised:judge>Wow! #{$$.magnitude()}# points!</surprised:judge> <angryother>#{$$o.bh.capitalize($$o.join('insult',' '))}#!</angryother> <happy:judge>Oh, snap! #{$$o.magnitude()}# points!</happy:judge>" }
+      outro: { text: "<angry>#{Label.capitalize($$.join('insult',' '))}#!</angry> <surprised:judge>Wow! #{Label.plural($$.magnitude(),'point')}#!</surprised:judge> <angryother>#{Label.capitalize($$o.join('insult',' '))}#!</angryother> <happy:judge>Oh, snap! #{Label.plural($$o.magnitude(),'point')}#!</happy:judge>" }
     },
     intro:
     extend
@@ -178,7 +175,8 @@
 			['the_subjects','abstract_noun_is','less_positive_adjective','than_an_object'],
 			['the_subject_is','as_adjective','as_an_object'],
 			['the_subject_is','less_positive_adjective','than_an_object'],
-			['the_subject_is','more_negative_adjective','than_an_object']
+			['the_subject_is','more_negative_adjective','than_an_object'],
+			['the_subject','does_something','like_an_object_does']
 		       ),
 	  { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
      {define:
@@ -237,7 +235,7 @@
                                           {appearance:[1,2]}) }] } } },  // appearance
 
        { name: 'select_negative_adjective',
-	 text: "What's bad about it?",
+	 text: "Why are they bad?",
 	 menu:
 	 { sample:
 	   { shuffle: true,
@@ -252,7 +250,7 @@
                                      {appearance:[1,10]}) }] } } }, // appearance
 
        { name: 'select_positive_adjective',
-	 text: "What's bad about it?",
+	 text: "Why are they bad?",
 	 menu:
 	 { sample:
 	   { shuffle: true,
@@ -266,23 +264,66 @@
 	      { opts: adjective_list('Not ',['sexy','fragrant','strong','clean','brave','well-toned','muscly','tall','powerful'],' enough',
                                      {appearance:[1,10]}) }] } } }, // appearance
 
+       { name: 'select_nonreflexive_verb',
+	 text: "What's so bad about them?",
+	 menu:
+	 { sample:
+	   { shuffle: true,
+	     groups:
+	     [{ opts: verb_list('The way they ',['behave','wear clothes'],'',
+                                {class:[1,10]}) },  // class
+	      { opts: verb_list('They way they ',['work'],'',
+                                {character:[1,10]}) },  // character
+	      { opts: verb_list('They way they ',['read','read books'],'',
+                                {intelligence:[1,10]}) },  // intelligence
+	      { opts: verb_list('They way they ',['walk'],'',
+                                {appearance:[1,10]}) }] } } }, // appearance
+
+       { name: 'select_reflexive_verb',
+	 text: "What's so bad about them?",
+	 menu:
+	 { sample:
+	   { shuffle: true,
+	     groups:
+	     [{ opts: verb_list('The way they ',['comport','carry'],' themselves',
+                                {class:[1,10]}) },  // class
+	      { opts: verb_list('They way they ',['carry'],' themselves',
+                                {character:[1,10]}) },  // character
+	      { opts: verb_list('They way they ',['preen'],' themselves',
+                                {intelligence:[1,10]}) },  // intelligence
+	      { opts: verb_list('They way they ',['clean'],' themselves',
+                                {appearance:[1,10]}) }] } } }, // appearance
+
        // sentence components
        defseq('the_subject_has',['select_subject',insult("[$label('subject.text'),$has_p($label('subject.person'))]")]),
        defseq('the_subject_is',['select_subject',insult("[$label('subject.text'),$is_p($label('subject.person'))]")]),
        defseq('the_subjects',['select_subject',insult("$poss($label('subject.text'))")]),
+       defseq('the_subject',['select_subject',insult("$label('subject.text')")]),
 
-       extend({name:'select_abstract_noun'},debug_sample1('select_positive_abstract_noun','select_negative_abstract_noun')),
+       defsample('does_something',['reflexive_verbs','nonreflexive_verbs']),
+       defseq('reflexive_verbs',['select_reflexive_verb',insult("[$conj($label('verb'),$label('subject.person')),$themself($label('subject.person'))]")]),
+       defseq('nonreflexive_verbs',['select_nonreflexive_verb',insult("[$conj($label('verb'),$label('subject.person'))]")]),
+
+       defsample('select_abstract_noun',['select_positive_abstract_noun','select_negative_abstract_noun']),
        defseq('less_positive_abstract_noun',['select_positive_abstract_noun',insult("$less($label('abstract_noun'))")]),
        defseq('more_negative_abstract_noun',['select_negative_abstract_noun',insult("['more',$label('abstract_noun')]")]),
        defseq('abstract_noun_is',['select_abstract_noun',insult("$is($label('abstract_noun'))")]),
 
-       extend({name:'select_adjective'},debug_sample1('select_positive_adjective','select_negative_adjective')),
-       defseq('more_negative_adjective',['select_negative_adjective',insult("$comp($label('adjective'))")]),
+       defsample('select_adjective',['select_positive_adjective','select_negative_adjective']),
+       defseq('more_negative_adjective',['select_negative_adjective',insult("$more_adj($label('adjective'))")]),
        defseq('less_positive_adjective',['select_positive_adjective',insult("['less',$label('adjective')]")]),
        defseq('as_adjective',['select_adjective',insult("['as',$label('adjective')]")]),
-       
+
        defseq('than_an_object',['select_object',insult("['than',$a($label('object'))]")]),
-       defseq('as_an_object',['select_object',insult("['as',$a($label('object'))]")])
+       defseq('as_an_object',['select_object',insult("['as',$a($label('object'))]")]),
+
+       defseq('like_an_object',['select_object',insult("['like',$a($label('object'))]")]),
+       defseq('as_adverb_as_an_object',['select_adjective',insult("['as',$adverb($label('adjective'))]"),'as_an_object']),
+       defseq('less_positive_adverb_than_an_object',['select_positive_adjective',insult("['less',$adverb($label('adjective'))]"),'than_an_object']),
+       defseq('more_negative_adverb_than_an_object',['select_negative_adjective',insult("$more_adv($adverb($label('adjective')))"),'than_an_object']),
+
+       defsample('like_an_object_does',['like_an_object','as_adverb_as_an_object','less_positive_adverb_than_an_object','more_negative_adverb_than_an_object'])
+
       ]
      })
   }

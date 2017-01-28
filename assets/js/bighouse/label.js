@@ -50,13 +50,15 @@
         Object.keys(y).forEach (function (ky) { if (typeof(x) !== 'object' || typeof(obj[ky]) === 'undefined') obj[ky] = y[ky] })
       return obj
     }
-    return typeof(x) === 'undefined' ? y : (x + y)
+    return typeof(x) === 'undefined' ? y : (typeof(y) === 'undefined' ? x : (x + y))
   }
 
   function getNestedProperty (obj, key) {
-    var keys = key.split('.')
-    while (obj && keys.length)
-      obj = obj[keys.shift()]
+    if (key) {
+      var keys = key.split('.')
+      while (obj && keys.length)
+        obj = obj[keys.shift()]
+    }
     return obj
   }
 
@@ -168,6 +170,7 @@
     var $base = function (lab) { return baseExpansionLabel(expansion,lab) }
     
     var $conj = conjugate  // $conj(infinitive,person[,gender])
+    var $adverb = makeAdverb  // $adverb(adjective)
     var $is_p = function (person) { return conjugate('be',person) }
     var $has_p = function (person) { return conjugate('have',person) }
     var $is = function (noun) { return [noun,conjugate('be',guessPerson(noun))] }
@@ -185,8 +188,10 @@
     var $a = indefiniteArticle  // $a(nounPhrase)
     var $less = lessOrFewer  // $less(noun)
     var $poss = possessiveApostrophe  // $poss(nounPhrase)
-    var $comp = makeComparative  // $comp(adjective)
+    var $more_adj = makeComparativeAdjective  // $more_adj(adjective)
+    var $more_adv = makeComparativeAdverb  // $more_adv(adverb)
     var $ordinal = ordinal  // $ordinal(number)
+    var $plural = plural  // $plural(n,singular)
 
     var $magnitude = function (lab) { return magnitude (sumExpansionLabels(expansion,lab || scoreLabel)) }
     var $taxicab = function (lab) { return taxicab (sumExpansionLabels(expansion,lab || scoreLabel)) }
@@ -240,11 +245,11 @@
     case 'be': form = (rp === 'i') ? 'am' : (rp === 'it' ? 'is' : 'are'); break
     case 'do': form = (rp === 'it') ? 'does' : 'do'; break
     case 'go': form = (rp === 'it') ? 'goes' : 'go'; break
-    default: form = (rp === 'it') ? (infinitive + (infinitive.match(/s$/i) ? 'es' : 's')) : infinitive; break
+    default: form = (rp === 'it') ? infinitive.replace (/(.)\b/i, function(_m,c){return c + (c === 's' ? 'es' : 's')}) : infinitive; break
     }
     return form
   }
-
+  
   // Pronouns
   var genderedNominative = { s1: 'i', s2: 'you', s3m: 'he', s3f: 'she', s3n: 'they', s3i: 'it', p1: 'we', p2: 'you', p3: 'they' },
       genderedOblique = { s1: 'me', s2: 'you', s3m: 'him', s3f: 'her', s3n: 'them', s3i: 'it', p1: 'us', p2: 'you', p3: 'them' },
@@ -284,6 +289,13 @@
     return looksLikePlural(noun) ? 'p3' : 's3'
   }
 
+  function plural(num,singular) {
+    if (num === 1)
+      return '1 ' + singular
+    var plural = singular.replace (/.\b/, function(c) { return c + (c === 's' ? 'es' : 's') })
+    return num + ' ' + plural
+  }
+  
   // from http://stackoverflow.com/a/8843915
   function countSyllables(word) {
     word = word.toLowerCase()
@@ -293,8 +305,8 @@
     return word.match(/[aeiouy]{1,2}/gi).length
   }
 
-  var irregularComparative = { good: 'better', bad: 'worse', far: 'farther', little: 'less', many: 'more' }
-  function makeComparative(adj) {
+  var irregularComparative = { good: 'better', well: 'better', bad: 'worse', far: 'farther', little: 'less', many: 'more' }
+  function makeComparativeAdjective(adj) {
     if (adj.match(/^[a-z]+\b./i)) return 'more ' + adj  // hyphenated or multiple words
     var lc = adj.toLowerCase()
     if (irregularComparative[lc]) return irregularComparative[lc]
@@ -303,6 +315,24 @@
     case 2: return adj.match(/y$/) ? adj.replace(/y$/,'ier') : (adj.match(/le$/) ? (adj+'r') : (adj.match(/(er|ow)$/) ? (adj+'er') : ('more '+adj)))
     default: return 'more '+adj
     }
+  }
+
+  // Adjective -> Adverb
+  var adj2adv = { 'public': 'publicly' }
+  var adjectivesWithSameAdverb = ['early','fast','hard','high','late','near','straight','wrong','well']
+  adjectivesWithSameAdverb.forEach (function (adj) { adj2adv[adj] = adj })
+  function makeAdverb (adjective) {
+    if (adj2adv[adjective]) return adj2adv[adjective]
+    else if (adjective.match(/ic$/i)) return adjective + 'ally'
+    else if (adjective.match(/le$/i)) return adjective.replace(/e$/i,'y')
+    else if (adjective.match(/y$/i)) return adjective.replace(/y$/i,'ily')
+    return adjective + 'ly'
+  }
+
+  function makeComparativeAdverb (adverb) {
+    if (adj2adv[adverb] === adverb)
+      return adverb + 'er'
+    return 'more ' + adverb
   }
   
   // Capitalization of first letters in sentences
@@ -335,7 +365,7 @@
       var val = obj[key]
       sqsum += (val * val) || 0
     })
-    return Math.sqrt (sqsum)
+    return Math.round (Math.sqrt (sqsum))
   }
 
   function taxicab(obj) {
@@ -372,11 +402,14 @@
     possessiveApostrophe: possessiveApostrophe,
     indefiniteArticle: indefiniteArticle,
     lessOrFewer: lessOrFewer,
-    makeComparative: makeComparative,
-    ordinal: ordinal,
+    makeComparativeAdjective: makeComparativeAdjective,
+    makeComparativeAdverb: makeComparativeAdverb,
+    makeAdverb: makeAdverb,
     capitalize: capitalize,
     countSyllables: countSyllables,
     // general numerics
+    ordinal: ordinal,
+    plural: plural,
     magnitude: magnitude,
     taxicab: taxicab,
     percent: percent
