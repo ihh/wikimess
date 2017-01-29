@@ -18,6 +18,9 @@
         "autoExpand": {
           "type": "boolean"
         },
+        "timeout": {
+          "type": "number"
+        },
         "outcome": {
           "$ref": "#/definitions/outcome_or_outcome_list"
         },

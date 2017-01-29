@@ -121,6 +121,7 @@ module.exports = {
 				{ player2: playerID, quit2: false } ] } })
       .populate ('player1')
       .populate ('player2')
+      .populate ('current')
       .populate ('event')
       .exec (function (err, games) {
         if (err)

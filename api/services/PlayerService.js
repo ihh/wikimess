@@ -180,6 +180,7 @@ module.exports = {
                      sort: 'createdAt' })
           .populate ('player1')
           .populate ('player2')
+          .populate ('current')
           .populate ('event')
       }).then (function (games) {
         status.events = games.map (function (game) {

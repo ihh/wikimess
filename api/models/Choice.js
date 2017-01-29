@@ -40,6 +40,10 @@ module.exports = {
     
     intro: { model: 'text' },
     intro2: { model: 'text' },
+    
+    timeout: {
+      type: 'integer',
+    },
 
     autoExpand: {
       type: 'boolean',

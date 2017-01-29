@@ -306,13 +306,15 @@ module.exports = {
 		       sort: 'createdAt' })
             .populate ('player1')
             .populate ('player2')
+            .populate ('current')
+            .populate ('event')
 	    .exec (function (err, games) {
 	      if (err) rs(err)
 	      else {
 		var now = new Date()
 		games.forEach (function (game) {
 		  var role = Game.getRole (game, player.id)
-		  var event = eventById[game.event]
+		  var event = eventById[game.event.id]
                   var opponent = Game.getOtherRoleAttr (game, role, 'player')
 		  if (Game.getRoleAttr (game,role,'quit')) {
 		    if (event.resetAllowed) {

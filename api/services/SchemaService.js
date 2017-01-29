@@ -196,6 +196,7 @@ var choice_schema_defs = {
       intro2: ref_schema('intro_or_intro_list'),
 
       autoExpand: { type: "boolean" },
+      timeout: { type: "number" },
       outcome: ref_schema('outcome_or_outcome_list'),
 
       ll: ref_schema('outcome_or_outcome_list'),

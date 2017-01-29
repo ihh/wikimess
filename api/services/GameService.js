@@ -1159,7 +1159,6 @@ module.exports = {
   
   forRole: function (game, role) {
     var text, self, other, selfMood, otherMood, waiting
-    var current = game.current
     if (role == 1) {
       self = game.player1
       other = game.player2
