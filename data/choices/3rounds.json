@@ -14,7 +14,7 @@
               menu:[{hint:"Got it, thanks"},
                     {hint:"I'm bored",text:"<sad:judge>We're all bored, sweetie...</sad:judge>"},
                     {hint:"Who are you, anyway?",text:"<surprised:judge>Who am I? Why, I'm the judge, of course.</surprised:judge>"}]}},
-            {text:"<happy:judge>OK. The red bar at the bottom is the move timer. Don't let it run out, or your move will be made for you!</happy:judge>"},
+            {text:"<happy:judge>OK. The shrinking bar at the bottom is the move timer. Don't let it run out, or your move will be made for you!</happy:judge>"},
             {text:"<happy:judge>You can click on the big icons in the top corners for status information on yourself (top left) or on $other (top right), or click on the smaller icons to signal changing your mood.</happy:judge>"}]}},
          {text:"<happy:judge>On to business. This insult duel has three rounds. I'll judge the insults, and award scores at the end. Let's go!</happy:judge>"}]},
        autoExpand: false},
