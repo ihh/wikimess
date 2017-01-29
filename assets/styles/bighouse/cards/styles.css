@@ -83,6 +83,7 @@
     display: none;
 }
 
+.bighouse .cardbar .cardtable .historytag,
 .bighouse .cardbar .cardtable .warnselect {
     font-size: smaller;
     font-style: italic;
@@ -109,18 +110,26 @@
     clear: both;
     flex-grow: 0;
     margin-bottom: 4px;
+
+    border-top-style: solid;
+    border-width: 1px;
+    border-color: #888;
 }
  
 .bighouse .cardbar .cardtable .speech {
     font-style: italic;
-    border-style: dotted;
-    border-width: 1px;
-    padding: 4px;
-    border-radius: 4px;
 }
 
 .bighouse .cardbar .cardtable .leftballoon {
     text-align: left;
+}
+
+.bighouse .cardtable .avatar {
+    border-style: none solid solid solid;
+    border-width: 1px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-color: #888;
 }
 
 .bighouse .cardbar .cardtable .leftballoon .avatar {

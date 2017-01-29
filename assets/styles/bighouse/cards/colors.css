@@ -6,7 +6,7 @@
 }
 
 .bighouse .cardbar .cardtable .history {
-    background-color: lightpink;
+    background-color: #fee;
 }
 
 .bighouse .cardbar .cardtable .waitcard {
@@ -22,12 +22,7 @@
     color: brown;
 }
 
-/* not currently used */
-.bighouse .cardbar .cardtable .verb-choose {
-    background-color: #fffcff;
-    color: #204;
-}
-
+.bighouse .cardbar .cardtable .historytag,
 .bighouse .cardbar .cardtable .warnselect {
     color: darkred;
 }
@@ -35,10 +30,4 @@
 .bighouse .cardbar .cardtable .cardmenu,
 .bighouse .cardbar .cardtable .cardmenu label {
     border-color: #aaa;
-}
-
-.bighouse .cardbar .cardtable .speech,
-.bighouse .cardbar .cardtable .leftballoon .avatar,
-.bighouse .cardbar .cardtable .rightballoon .avatar {
-    background: #eee
 }

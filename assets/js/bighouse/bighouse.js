@@ -2926,6 +2926,8 @@ var BigHouse = (function() {
       var cardListItem = $('<li>').append(content)
       if (cardClass)
         cardListItem.addClass (cardClass)
+      if (expansion.isHistory)
+        cardListItem.append ($('<span class="historytag">').text("Time limit exceeded"))
       this.stackList.append (cardListItem)
       if (this.verbose.stack) {
 	console.log ("Card #" + this.cardIndex(cardListItem[0]) + " added: " + cardListItem[0].innerHTML)
