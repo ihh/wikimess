@@ -251,7 +251,6 @@ module.exports = {
   },
 
   cancelInvitations: function (games) {
-    console.log ('cancelInvitations:', games)
     return new Promise (function (resolve, reject) {
       PlayerService.runWithLock
       ([ games[0].player1.id, games[0].player2.id ],

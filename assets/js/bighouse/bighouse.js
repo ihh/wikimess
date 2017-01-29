@@ -817,6 +817,7 @@ var BigHouse = (function() {
       event.otherDiv.empty()
       if (event.other && event.other.id != bh.playerID && bh.page !== 'otherStatus') {
         var avatarDiv = $('<div class="avatar">')
+        if (event.other.human)
         avatarDiv
           .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, event.other)))
         event.otherDiv.append (avatarDiv, $('<span class="name">').text(event.other.name))
