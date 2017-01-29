@@ -1760,7 +1760,7 @@
 	        // "mousedown" event fires late on touch enabled devices, thus listening
 	        // to the touchstart event for touch enabled devices and mousedown otherwise.
 	        if (_utilJs2['default'].isTouchDevice()) {
-	            targetElement.addEventListener('touchstart', function () {
+	            targetElement.addEventListener('touchstart', function (event) {
                       if (config.allowMovement(event))
 	                eventEmitter.trigger('panstart');
 	            });
@@ -1779,9 +1779,8 @@
 	                });
 	
 	                global.addEventListener('touchmove', function (e) {
-	                    if (dragging && config.allowMovement(event)) {
-	                        e.preventDefault();
-	                    }
+	                  if (dragging && config.allowMovement(e))
+	                    e.preventDefault();
 	                });
 	            })();
 	        } else {
@@ -1791,12 +1790,12 @@
 	        }
 	
 	        mc.on('panmove', function (e) {
-	            if (config.allowMovement(event))
+	            if (config.allowMovement(e))
                       eventEmitter.trigger('panmove', e);
 	        });
 	
 	        mc.on('panend', function (e) {
-	            if (config.allowMovement(event))
+	            if (config.allowMovement(e))
                       eventEmitter.trigger('panend', e);
 	        });
 	
