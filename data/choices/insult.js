@@ -1,24 +1,24 @@
 // Comparison insults (excluding simple variants e.g. "more X" <--> "no less X")
-// the_subject_has less/fewer positive_abstract_noun than a_derogatory_noun
-// the_subject_has more negative_abstract_noun than a_derogatory_noun
-// the_subject's abstract_noun is more_negative_adjective than a_derogatory_noun
-// the_subject's abstract_noun is less positive_adjective than a_derogatory_noun
-// the_subject_is as adjective as a_derogatory_noun
-// the_subject_is less positive_adjective than a_derogatory_noun
-// the_subject_is more_negative_adjective than a_derogatory_noun
-// the_subject does_something like_a_derogatory_noun_does
+// the_subject_has less/fewer positive_abstract_noun than a_derogatory_noun_phrase
+// the_subject_has more negative_abstract_noun than a_derogatory_noun_phrase
+// the_subject's abstract_noun is more_negative_adjective than a_derogatory_noun_phrase
+// the_subject's abstract_noun is less positive_adjective than a_derogatory_noun_phrase
+// the_subject_is as adjective as a_derogatory_noun_phrase
+// the_subject_is less positive_adjective than a_derogatory_noun_phrase
+// the_subject_is more_negative_adjective than a_derogatory_noun_phrase
+// the_subject does_something like_a_derogatory_noun_phrase_does
 // does_something -> nonreflexive_verbs
 // does_something -> reflexive_verbs themself
-// like_a_derogatory_noun_does -> like a_derogatory_noun
-// like_a_derogatory_noun_does -> as adverb as a_derogatory_noun
-// like_a_derogatory_noun_does -> less positive_adverb than a_derogatory_noun
-// like_a_derogatory_noun_does -> more negative_adverb than a_derogatory_noun
+// like_a_derogatory_noun_phrase_does -> like a_derogatory_noun_phrase
+// like_a_derogatory_noun_phrase_does -> as adverb as a_derogatory_noun_phrase
+// like_a_derogatory_noun_phrase_does -> less positive_adverb than a_derogatory_noun_phrase
+// like_a_derogatory_noun_phrase_does -> more negative_adverb than a_derogatory_noun_phrase
 
 // Perception insults (sounds like, looks like, feels like, smells like, tastes like)
 // the_subject perception_verbs adjective
-// the_subject perception_verbs like a_derogatory_noun
+// the_subject perception_verbs like a_derogatory_noun_phrase
 // the_subject perception_verbs past_tense_negative_passive_verb
-// the_subject perception_verbs like subject_it subject_was past_tense_negative_passive_verb by a_derogatory_noun
+// the_subject perception_verbs like subject_it subject_was past_tense_negative_passive_verb by a_derogatory_noun_phrase
 
 // Prefixes and suffixes
 // the_subject -> subject
@@ -27,8 +27,8 @@
 // the_subject_verb -> judging by subject_its appearance_noun, subject looks to verb
 // the_subject_verb -> from the quality_noun of subject_its appearance_noun, subject looks to verb
 
-// a_derogatory_noun -> an [adjective] object [object_qualifier]
-// a_derogatory_noun -> an [adjective] object's object_property_noun [object_qualifier]
+// a_derogatory_noun_phrase -> an [adjective] object [object_qualifier]
+// a_derogatory_noun_phrase -> an [adjective] object's object_property_noun [object_qualifier]
 // object_property_noun -> appearance_noun | quality_noun | material_noun
 // object_qualifier -> with affliction_proper_noun
 // object_qualifier -> from location_proper_noun
@@ -37,11 +37,11 @@
 
 // Threats, taunts, and commands
 // i active_verb subject
-// i active_verb subject with a_derogatory_noun
+// i active_verb subject with a_derogatory_noun_phrase
 // go active_verb subject
-// go active_verb a_derogatory_noun
+// go active_verb a_derogatory_noun_phrase
 // go active_verb subject or i will active_verb subject2
-// go active_verb a_derogatory_noun or i will active_verb subject with a_derogatory_noun2
+// go active_verb a_derogatory_noun_phrase or i will active_verb subject with a_derogatory_noun_phrase2
 
 // Reaction statements
 // the_subject_is_so_something it_causes_a_reaction
@@ -53,7 +53,7 @@
 
 // it_causes_a_reaction -> it makes me negative_reaction_adjective
 // it_causes_a_reaction -> it makes me want to negative_reaction_verb
-// it_causes_a_reaction -> it makes a_derogatory_noun perception_verb positive_abstract_noun
+// it_causes_a_reaction -> it makes a_derogatory_noun_phrase perception_verb positive_abstract_noun
 
 (function() {
   // JavaScript helpers
@@ -105,10 +105,14 @@
     })
   }
 
-  function set(label,expr) {
-    var obj = {}
-    obj[label] = "[null," + expr + "]"
-    return { labexpr: obj }
+  function labexpr (label, expr) {
+    var obj = { labexpr: {} }
+    obj.labexpr[label] = expr
+    return obj
+  }
+  
+  function set (label, expr) {
+    return labexpr (label, "[null," + expr + "]")
   }
 
   // uncomment 'debugMenus = 1' to show menus instead of sampling
@@ -164,7 +168,7 @@
   }
   
   function insult(expr) {
-    return { labexpr: { insult: expr } }
+    return labexpr ('insult', expr)
   }
 
   // Data
@@ -177,14 +181,14 @@
     },
     intro:
     extend
-    (seq (debug_sample1(['the_subject_has','less_positive_abstract_noun','than_a_derogatory_noun'],
-			['the_subject_has','more_negative_abstract_noun','than_a_derogatory_noun'],
-			['the_subjects','abstract_noun_is','more_negative_adjective','than_a_derogatory_noun'],
-			['the_subjects','abstract_noun_is','less_positive_adjective','than_a_derogatory_noun'],
-			['the_subject_is','as_adjective','as_a_derogatory_noun'],
-			['the_subject_is','less_positive_adjective','than_a_derogatory_noun'],
-			['the_subject_is','more_negative_adjective','than_a_derogatory_noun'],
-			['the_subject','does_something','like_a_derogatory_noun_does'],
+    (seq (debug_sample1(['the_subject_has','less_positive_abstract_noun','than_a_derogatory_noun_phrase'],
+			['the_subject_has','more_negative_abstract_noun','than_a_derogatory_noun_phrase'],
+			['the_subjects','abstract_noun_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
+			['the_subjects','abstract_noun_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
+			['the_subject_is','as_adjective','as_a_derogatory_noun_phrase'],
+			['the_subject_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
+			['the_subject_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
+			['the_subject','does_something','like_a_derogatory_noun_phrase_does'],
 			['the_subject','perception_verbs','perception_description']
 		       ),
 	  { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
@@ -346,17 +350,21 @@
        defseq('as_adjective',['select_adjective',insult("['as',$label('adjective')]")]),
        defseq('negative_adjective',['select_negative_adjective',insult("[$label('adjective')]")]),
 
-       defseq('than_a_derogatory_noun',['select_derogatory_object',insult("['than',$a($label('derogatory_noun'))]")]),
-       defseq('as_a_derogatory_noun',['select_derogatory_object',insult("['as',$a($label('derogatory_noun'))]")]),
-       defseq('like_a_derogatory_noun',['select_derogatory_object',insult("['like',$a($label('derogatory_noun'))]")]),
+       defseq('than_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['than',$labels('derogatory_noun_phrase')]")]),
+       defseq('as_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['as',$labels('derogatory_noun_phrase')]")]),
+       defseq('like_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['like',$labels('derogatory_noun_phrase')]")]),
+
+       defsample('derogatory_noun_phrase',['derogatory_object']),
+       defseq('derogatory_object',['select_derogatory_object',labexpr('derogatory_noun_phrase',"[$a($label('derogatory_noun'))]")]),
+       
        defseq('by_a_derogatory_noun',['select_derogatory_passive_verb_subject',insult("['by',$a($label('derogatory_noun'))]")]),
 
-       defseq('as_adverb_as_a_derogatory_noun',['select_adjective',insult("['as',$adverb($label('adjective'))]"),'as_a_derogatory_noun']),
-       defseq('less_positive_adverb_than_a_derogatory_noun',['select_positive_adjective',insult("['less',$adverb($label('adjective'))]"),'than_a_derogatory_noun']),
-       defseq('more_negative_adverb_than_a_derogatory_noun',['select_negative_adjective',insult("$more_adv($adverb($label('adjective')))"),'than_a_derogatory_noun']),
+       defseq('as_adverb_as_a_derogatory_noun_phrase',['select_adjective',insult("['as',$adverb($label('adjective'))]"),'as_a_derogatory_noun_phrase']),
+       defseq('less_positive_adverb_than_a_derogatory_noun_phrase',['select_positive_adjective',insult("['less',$adverb($label('adjective'))]"),'than_a_derogatory_noun_phrase']),
+       defseq('more_negative_adverb_than_a_derogatory_noun_phrase',['select_negative_adjective',insult("$more_adv($adverb($label('adjective')))"),'than_a_derogatory_noun_phrase']),
 
-       defsample('like_a_derogatory_noun_does',['like_a_derogatory_noun','as_adverb_as_a_derogatory_noun','less_positive_adverb_than_a_derogatory_noun','more_negative_adverb_than_a_derogatory_noun']),
-       defsample('perception_description',['negative_adjective','like_a_derogatory_noun','passive_verbed',['like_it_was_passive_verbed','by_a_derogatory_noun']]),
+       defsample('like_a_derogatory_noun_phrase_does',['like_a_derogatory_noun_phrase','as_adverb_as_a_derogatory_noun_phrase','less_positive_adverb_than_a_derogatory_noun_phrase','more_negative_adverb_than_a_derogatory_noun_phrase']),
+       defsample('perception_description',['negative_adjective','like_a_derogatory_noun_phrase','passive_verbed',['like_it_was_passive_verbed','by_a_derogatory_noun']]),
 
        defseq('passive_verbed',['select_what_happened',insult("[$label('past')]")]),
        defseq('like_it_was_passive_verbed',[insult("['like',$they($label('subject.person')),$was($label('subject.person'),'n')]"),'passive_verbed'])
