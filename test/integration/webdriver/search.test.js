@@ -36,8 +36,6 @@ function frontpage (obj) {
 }
 
 function login (obj, name, password) {
-  frontpage (obj)
-
   enterName (obj, name)
   
   it('should log #' + obj.count + ' in as ' + name, function(done) {
@@ -88,8 +86,6 @@ function enterName (obj, name) {
 }
 
 function signup (obj, name, password) {
-  frontpage (obj)
-
   enterName (obj, name)
 
   it('should sign up #' + obj.count + ' as ' + name, function(done) {
@@ -209,6 +205,8 @@ function quit (obj) {
 
 describe("search", function() {
   var d = create ('chrome')
+
+  frontpage (d)
 
   signup (d, 'ted', 'test')
   changeDisplayName (d, 'ted', 'Teddy')
