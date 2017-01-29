@@ -1,13 +1,31 @@
 [
   { name: "3rounds",
-    auto: {next:[{intro:{text:"ROUND ONE!"}},
-                 "insult",
-                 {intro:{text:"ROUND TWO!"}},
-                 "insult",
-                 {intro:{text:"ROUND THREE!"}},
-                 "insult",
-                 {
-                   intro: { text: "<happy:judge>Final scores: {{$l1.score}} to {{$n1}}, {{$l2.score}} to {{$n2}}!</happy:judge>" }
-                 }]}
+    auto:
+    {next:
+     [{intro:
+       {sequence:
+        [{text:"<happy:judge>Welcome to the Grand Slam. Would you like a tutorial?</happy:judge> Swipe right for yes, left for no.",
+          left:{text:"OK, we'll skip the tutorial...++"},
+          right:
+          {sequence:
+           [{text:"<happy:judge>You make choices by swiping cards left or right. Not every card presents a choice, though: for some cards---like this card, for example---it doesn't matter which way you swipe.</happy:judge> Swipe left OR right for the next card.",
+             next:
+             {text:"<happy:judge>Some cards have more than two choices. These are presented in a menu.</happy:judge> Select an option, then swipe left or right to continue.",
+              menu:[{hint:"Got it, thanks"},
+                    {hint:"I'm bored",text:"<sad:judge>We're all bored, sweetie...</sad:judge>"},
+                    {hint:"Who are you, anyway?",text:"<surprised:judge>Who am I? Why, I'm the judge, of course.</surprised:judge>"}]}},
+            {text:"<happy:judge>OK. The red bar at the bottom is the move timer. Don't let it run out, or your move will be made for you!</happy:judge>"},
+            {text:"<happy:judge>You can click on the big icons in the top corners for status information on yourself (top left) or on $other (top right), or click on the smaller icons to signal changing your mood.</happy:judge>"}]}},
+         {text:"<happy:judge>On to business. This insult duel has three rounds. I'll judge the insults, and award scores at the end. Let's go!</happy:judge>"}]},
+       autoExpand: false},
+      {intro:{text:"ROUND ONE!"}},
+      "insult",
+      {intro:{text:"ROUND TWO!"}},
+      "insult",
+      {intro:{text:"ROUND THREE!"}},
+      "insult",
+      {
+        intro: { text: "<happy:judge>Final scores: {{$l1.score}} to {{$n1}}, {{$l2.score}} to {{$n2}}!</happy:judge>" }
+      }]}
   }
 ]
