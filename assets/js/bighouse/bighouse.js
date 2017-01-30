@@ -881,7 +881,7 @@ var BigHouse = (function() {
         button.on('click', function() {
           bh.REST_getPlayerJoinInviteCancel (bh.playerID, event.id, event.other.id)
             .done (function() {
-	      bh.updateEventState (event, 'start')
+	      bh.updateEventState (event, 'invite')
             }).fail (function (err) {
               bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
             })

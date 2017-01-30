@@ -85,9 +85,17 @@ function enterName (obj, name) {
   }) (obj.lastName)
 }
 
-function search (obj, lastSearchText, searchText, numResults) {
-  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-follows')]", "Following")
+function clickActiveGames (obj) {
+  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-games')]", "active games")
+}
 
+function clickFollows (obj) {
+  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-follows')]", "Following")
+}
+
+function search (obj, lastSearchText, searchText, numResults) {
+  clickFollows (obj)
+  
   it('should find "'+lastSearchText+'" in the search field', function(done) {
       obj.driver.findElement(By.xpath('//input'))
         .then(elem => elem.getAttribute('value'))
@@ -227,22 +235,12 @@ function waitForActiveGameCount (obj, n) {
     waitForPath (obj, "//div[@class='gamecount' and text()='"+n+"']")
 }
 
-function clickActiveGames (obj) {
-  it('should have #'+obj.count+' click on "Active games"', function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[contains(@class,'nav-games')]")))
-      .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-  })
-  waitForText (obj, 'active games')
+function clickBack (obj, expectText) {
+  clickExpect (obj, '//a[text()="Back"]', expectText)
 }
 
-function startGame (obj) {
-  it('should start #' + obj.count + "\'s game", function(done) {
-    obj.driver.findElement(By.xpath('//*[@class="event" and ./div/text()="Single scene"]//div[@class="button"]')).click()
-      .then(() => done())
-      .catch(error => done(error))
-  })
+function clickGo (obj, expectText) {
+  clickExpect (obj, '//*[contains(@class,"button") and text()="Go"]', expectText)
 }
 
 function quit (obj) {
@@ -271,15 +269,24 @@ describe("search", function() {
   clickActiveGames (sheila)
   clickEventButton (sheila, 'Chat scene', 'Decline', 'Canceled')
   waitForActiveGameCount (sheila, 0)
-
+  clickFollows (sheila)
+  clickActiveGames (sheila)
+  
   waitForText (fred, 'Canceled')
-  clickExpect (fred, '//a[text()="Back"]', 'Search results')
+  clickBack (fred, 'Search results')
   clickAvatar (fred, 'Search results', 'sheila', 'Games')
-  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
 
+  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
   waitForActiveGameCount (sheila, 1)
+  clickEventButton (fred, 'Chat scene', 'Cancel', 'Invite')
+
+  waitForActiveGameCount (sheila, 0)
+  clickFollows (sheila)
+  clickActiveGames (sheila)
+ 
+  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
   clickEventButton (sheila, 'Chat scene', 'Accept', 'Go')
-  clickExpect (sheila, '//*[contains(@class,"button") and text()="Go"]', 'This is the only card')
+  clickGo (sheila, 'This is the only card')
 
   makeMove (fred, "only card", "right")
   makeMove (sheila, "only card", "left")
