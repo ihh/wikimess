@@ -185,7 +185,7 @@ module.exports = {
       }).then (function (games) {
         status.events = games.map (function (game) {
           seenEventId[game.event.id] = true
-          return LocationService.eventDescriptor ({ game: game, player: player })
+          return LocationService.eventDescriptor ({ game: game, player: follower })
         })
         return Event.getChatEvents()
       }).then (function (events) {

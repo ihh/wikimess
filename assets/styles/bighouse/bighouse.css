@@ -270,6 +270,7 @@ body {
     box-sizing: border-box;
     cursor: pointer;
     padding: 4px;
+    overflow-y: auto;
 }
 
 /* ensure nth-child is less specific than topcard,

@@ -1861,6 +1861,10 @@ var BigHouse = (function() {
         })
       searchButton.addClass('button')
         .on ('click', bh.doSearch.bind(bh))
+      this.searchInput.on ('keypress', function(event) {
+        if (event.keyCode == 13 || event.which == 13)
+          bh.doSearch()
+      })
       this.showSearchResults()
       
       this.restoreScrolling (this.locBarDiv)

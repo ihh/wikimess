@@ -518,7 +518,8 @@ module.exports = {
   updateGameAndPlayers: function (query, game, success, error) {
     game.finished = game.current ? false : true
     GameService.prepareTextTrees (game)
-    GameService.playBotMoves (game)
+    if (!game.pendingAccept)
+      GameService.playBotMoves (game)
     // these database updates (Game, Player 1, Player 2, Turn) should really be wrapped in a transaction,
     // to ensure consistency
     // e.g. see http://stackoverflow.com/questions/25079408/how-to-handle-async-concurrent-requests-correctly/25100188#25100188

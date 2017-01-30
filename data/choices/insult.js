@@ -20,13 +20,6 @@
 // the_subject perception_verbs past_tense_negative_passive_verb
 // the_subject perception_verbs like subject_it subject_was past_tense_negative_passive_verb by a_derogatory_noun_phrase
 
-// Prefixes and suffixes
-// the_subject -> subject
-// the_subject -> judging by subject_its appearance_noun, subject
-// the_subject -> from the quality_noun of subject_its appearance_noun, it looks like subject
-// the_subject_verb -> judging by subject_its appearance_noun, subject looks to verb
-// the_subject_verb -> from the quality_noun of subject_its appearance_noun, subject looks to verb
-
 // a_derogatory_noun_phrase -> an [adjective] object [object_qualifier]
 // a_derogatory_noun_phrase -> an [adjective] object's object_property_noun [object_qualifier]
 // object_property_noun -> appearance_noun | quality_noun | material_noun
@@ -86,7 +79,7 @@
 
   // BigHouse helpers
   function goto(label) { return { 'goto': label } }
-  function to_node(arg) { return isArray(arg) ? seq.apply(seq,arg) : ((typeof(arg) === 'string') ? goto(arg) : arg) }
+  function to_node(arg) { return isArray(arg) ? seq.apply(seq,arg) : (typeof(arg) === 'function' ? x.toString().replace(/^\(\)=>/,'') : ((typeof(arg) === 'string') ? goto(arg) : arg)) }
   function seq() { return { sequence: Array.prototype.map.call (arguments, to_node) } }
   function defseq(name,opts) { return extend ({ name: name }, seq.apply(this,opts)) }
   function defsample(name,opts) { return extend ({ name: name }, debug_sample1.apply(null,opts)) }
