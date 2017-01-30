@@ -99,6 +99,7 @@ var BigHouse = (function() {
     
     eventButtonText: { locked: 'Locked',
 		       start: 'Start',
+		       invite: 'Invite',
 		       resetting: 'Locked',
 		       starting: 'Cancel',
 		       ready: 'Go',
@@ -831,6 +832,7 @@ var BigHouse = (function() {
         break;
 
       case 'start':
+      case 'invite':
         event.costDiv.show()
         button.on('click', function() {
           button.off()
@@ -838,8 +840,8 @@ var BigHouse = (function() {
           event.costDiv.hide()
           var eventKey = bh.getEventKey(event)
 	  bh.lastStartedEventKey = eventKey
-          var promise = event.invitee
-            ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee.id)
+          var promise = event.state == 'invite'
+            ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee)
               : bh.REST_getPlayerJoin (bh.playerID, event.id)
               .done (function (data) {
                 if (data.waiting) {
@@ -1714,9 +1716,6 @@ var BigHouse = (function() {
                                  bh.detailBarDiv
                                    .append ($('<div class="statusdiv">')
                                             .append (bh.locBarDiv))
-                                 status.events.forEach (function (event) {
-                                   event.invitee = follow
-                                 })
  	                         bh.addEvents (status.events)
                                })
       this.detailBarDiv.prepend (follow.followDiv)

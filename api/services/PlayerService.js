@@ -185,7 +185,7 @@ module.exports = {
       }).then (function (games) {
         status.events = games.map (function (game) {
           seenEventId[game.event.id] = true
-          return LocationService.eventDescriptor ({ game: game, player: follower })
+          return LocationService.eventDescriptor ({ game: game, player: follower, invitee: player })
         })
         return Event.getChatEvents()
       }).then (function (events) {
@@ -195,7 +195,7 @@ module.exports = {
                 && !LocationService.invisibleOrLocked (follower, event)
                 && !LocationService.invisibleOrLocked (player, event, true)
                 && InviteService.compatibility (follower, player, event))
-              status.events.push (LocationService.eventDescriptor ({ event: event, player: player }))
+              status.events.push (LocationService.eventDescriptor ({ event: event, player: follower, invitee: player }))
           })
         rs (null, status)
       }).catch (rs)

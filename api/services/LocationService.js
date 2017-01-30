@@ -376,11 +376,13 @@ module.exports = {
   eventDescriptor: function (info) {
     var game = info.game,
         event = info.event || game.event,
-        player = info.player
+        player = info.player,
+        invitee = info.invitee
 
     var desc = { id: event.id,
 	         title: event.title,
 	         hint: LocationService.expandText (event.hint, player),
+                 invitee: invitee && invitee.id,
                  locked: event.locked,
                  cost: event.cost && LocationService.costInfo (player, event.cost),
                  invited: event.invited,
@@ -425,7 +427,9 @@ module.exports = {
                         ? "locked"
                         : (event.resetTime
 			   ? "resetting"
-			   : "start"))))
+			   : (invitee
+                              ? "invite"
+                              : "start")))))
 
 
     return desc

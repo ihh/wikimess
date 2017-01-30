@@ -36,8 +36,6 @@ function frontpage (obj) {
 }
 
 function login (obj, name, password) {
-  frontpage (obj)
-
   enterName (obj, name)
   
   it('should log #' + obj.count + ' in as ' + name, function(done) {
@@ -87,9 +85,38 @@ function enterName (obj, name) {
   }) (obj.lastName)
 }
 
-function logout (obj) {
-  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-settings')]", "Themes")
-  clickExpect (obj, "//*[contains(text(), 'Log out')]", "Sign up")
+function search (obj, lastSearchText, searchText, numResults) {
+  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-follows')]", "Following")
+
+  it('should find "'+lastSearchText+'" in the search field', function(done) {
+      obj.driver.findElement(By.xpath('//input'))
+        .then(elem => elem.getAttribute('value'))
+        .then(text => text.should.equal(lastSearchText))
+        .then(()=>done())
+        .catch(error => done(error))
+          })
+
+  it('should enter "' + searchText + '"', function(done) {
+    obj.driver.findElement(By.xpath('//input')).sendKeys(backspaces(lastSearchText) + searchText)
+    obj.driver.findElement(By.xpath('//input'))
+      .then(elem => elem.getAttribute('value'))
+      .then(text => text.should.equal(searchText))
+      .then(()=>done())
+      .catch(error => done(error))
+        })
+
+  clickExpect (obj,"//div[@class='query']/span[contains(@class,'button')]", "Search results")
+  countSearchResults (obj, numResults)
+}
+
+function countSearchResults (obj, n) {
+  it('should find '+n+' search results', function(done) {
+    obj.driver.findElements(By.xpath("//div[@class='search']/div/div/div[@class='follow']"))
+      .then(elems => elems.length)
+      .then(len => len.should.equal(n))
+      .then(()=>done())
+      .catch(error => done(error))
+    })
 }
 
 function clickExpect (obj, buttonPath, expectText) {
@@ -113,27 +140,20 @@ function waitForText (obj, text) {
   })
 }
 
+function waitForPath (obj, path) {
+  it('should wait until #'+obj.count+"\'s page contains '"+path+"'", function(done) {
+    obj.driver
+      .wait(until.elementLocated(By.xpath(path)))
+      .then(() => done())
+      .catch(error => done(error))
+  })
+}
+
 function checkPathAbsent (obj, absentPath) {
   it("should not find '"+absentPath+"' on #"+obj.count+"\'s page ", function(done) {
     obj.driver
       .wait(until.elementLocated(By.xpath(absentPath)), 100)
       .then(() => done(new Error("fail")), () => done())
-      .catch(error => done(error))
-  })
-}
-
-function quit (obj) {
-  it('should quit #' + obj.count, function(done) {
-    obj.driver.quit()
-      .then(() => done())
-      .catch(error => done(error))
-	})
-}
-
-function startGame (obj) {
-  it('should start #' + obj.count + "\'s game", function(done) {
-    obj.driver.findElement(By.xpath('//*[@class="event" and ./div/text()="Single scene"]//div[@class="button"]')).click()
-      .then(() => done())
       .catch(error => done(error))
   })
 }
@@ -185,98 +205,88 @@ function makeMove (obj, cardText, menuText, dir) {
   })
 }
 
-function clickStatus (obj, className, expect) {
-  it('should have #'+obj.count+' click on element $(".'+className+'")', function(done) {
+function clickAvatar (obj, section, name, expectText) {
+  it('should click avatar for '+name+' in #' + obj.count + "\'s " + section, function(done) {
+    obj.driver.findElement(By.xpath('//div[@class="results" and ./div/text()="'+section+'"]/div[@class="follow" and ./div/text()="'+name+'"]/div[contains(@class,"avatar")]')).click()
+      .then(() => done())
+      .catch(error => done(error))
+        })
+  waitForText (obj, expectText)
+}
+
+function clickEventButton (obj, title, oldButtonText, newButtonText) {
+  var oldButtonPath = "//div[@class='event' and ./div/text()='"+title+"']//div[contains(@class,'button') and not(contains(@style,'display:')) and text()='"+oldButtonText+"']"
+  clickExpect (obj, oldButtonPath, newButtonText)
+  checkPathAbsent (obj, oldButtonPath)
+}
+
+function waitForActiveGameCount (obj, n) {
+  if (n === 0)
+    waitForPath (obj, "//div[@class='gamecount' and contains(@style,'display')]")
+  else
+    waitForPath (obj, "//div[@class='gamecount' and text()='"+n+"']")
+}
+
+function clickActiveGames (obj) {
+  it('should have #'+obj.count+' click on "Active games"', function(done) {
     obj.driver
-      .wait(until.elementLocated(By.className(className)))
+      .wait(until.elementLocated(By.xpath("//div[@class='navbar']/span[contains(@class,'nav-games')]")))
       .then(elem => { elem.click(); done() })
       .catch(error => done(error))
-	})
-  waitForText (obj, expect)
+  })
+  waitForText (obj, 'active games')
 }
 
-function clickFollowButton (obj, oldButtonText, newButtonText) {
-  clickExpect (obj, "//div[contains(@class,'button') and text()='"+oldButtonText+"']", newButtonText)
-  checkFollowButtonAbsent (obj, oldButtonText)
+function startGame (obj) {
+  it('should start #' + obj.count + "\'s game", function(done) {
+    obj.driver.findElement(By.xpath('//*[@class="event" and ./div/text()="Single scene"]//div[@class="button"]')).click()
+      .then(() => done())
+      .catch(error => done(error))
+  })
 }
 
-function checkFollowButtonAbsent (obj, buttonText) {
-  checkPathAbsent (obj, "//div[contains(@class,'button') and text()='"+buttonText+"']")
-}
-
-function exitStatus (obj) {
-  it('should have #'+obj.count+' click "Back"', function(done) {
-    obj.driver
-      .wait(until.elementLocated(By.xpath("//div[@class='backbar']/span/a[text()='Back']")))
-      .then(elem => { elem.click(); done() })
+function quit (obj) {
+  it('should quit #' + obj.count, function(done) {
+    obj.driver.quit()
+      .then(() => done())
       .catch(error => done(error))
 	})
 }
 
-function clickFollowsTab (obj) {
-  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-follows')]", "Recently played")
-}
-
-function clickFollowSectionButton (obj, section, oldButtonText, newButtonText) {
-  clickExpect (obj, "//div[@class='followsection' and ./div/text()='"+section+"']//div[contains(@class,'button') and text()='"+oldButtonText+"']", newButtonText)
-  checkFollowButtonAbsent (obj, oldButtonText)
-}
-
-function countAvatars (obj, n) {
-  it('should find '+n+' avatars on #'+obj.count+"'s page", function(done) {
-    obj.driver.findElements(By.xpath("//div[@class='follow']"))
-      .then(elems => elems.length)
-      .then(len => len.should.equal(n))
-      .then(()=>done())
-      .catch(error => done(error))
-    })
-}
-
-function clickAvatar (obj, section, text) {
-  clickExpect (obj, "//div[@class='followsection' and ./div/text()='"+section+"']//div[contains(@class,'avatar')]", text)
-}
-
-describe("follow", function() {
+describe("search", function() {
   var fred = create ('chrome')
-  login (fred, 'fred', 'test')
-
   var sheila = create ('chrome')
+
+  frontpage (fred)
+  frontpage (sheila)
+
+  login (fred, 'fred', 'test')
   login (sheila, 'sheila', 'test')
 
-  startGame (fred)
-  startGame (sheila)
+  search (fred, '', 'sheila', 1)
+  clickAvatar (fred, 'Search results', 'sheila', 'Games')
+  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
+
+  waitForActiveGameCount (sheila, 1)
+  clickActiveGames (sheila)
+  clickEventButton (sheila, 'Chat scene', 'Decline', 'Canceled')
+  waitForActiveGameCount (sheila, 0)
+
+  waitForText (fred, 'Canceled')
+  clickExpect (fred, '//a[text()="Back"]', 'Search results')
+  clickAvatar (fred, 'Search results', 'sheila', 'Games')
+  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
+
+  waitForActiveGameCount (sheila, 1)
+  clickEventButton (sheila, 'Chat scene', 'Accept', 'Go')
+  clickExpect (sheila, '//*[contains(@class,"button") and text()="Go"]', 'This is the only card')
 
   makeMove (fred, "only card", "right")
   makeMove (sheila, "only card", "left")
 
-  waitForThrowToFinish (sheila)
-  clickStatus (sheila, 'rightmood', 'Days')
-  clickFollowButton (sheila, 'Follow', 'Unfollow')
-  exitStatus (sheila)
-  
-  makeMove (fred, "Sucker", "right")
-  makeMove (sheila, "OK", "left")
-
   makeMove (fred, "Game over", "right")
   makeMove (sheila, "Game over", "left")
 
-  clickFollowsTab (fred)
-  countAvatars (fred, 2)
-
-  clickFollowSectionButton (fred, 'Recently played', 'Follow', 'Unfollow')
-  countAvatars (fred, 3)
-
-  clickFollowsTab (sheila)
-  countAvatars (sheila, 3)
-
-  clickFollowSectionButton (sheila, 'Followers', 'Unfollow', 'Follow')
-  countAvatars (sheila, 3)
-
-  clickAvatar (fred, 'Following', 'Days')
-  clickFollowButton (fred, 'Unfollow', 'Follow')
-  exitStatus (fred)
-  checkFollowButtonAbsent (fred, 'Unfollow')
-
-  quit (fred)
   quit (sheila)
+  quit (fred)
 })

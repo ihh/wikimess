@@ -22,8 +22,7 @@ module.exports = {
     },
 
     title: {
-      type: 'string',
-      required: true
+      type: 'string'
     },
 
     description: {
@@ -57,6 +56,11 @@ module.exports = {
     checkpoint: {
       type: 'boolean'
     },
+  },
+
+  beforeCreate: function(location, cb) {
+    location.title = location.title || location.name
+    cb()
   },
 
   getChatLocation: function() {
