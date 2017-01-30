@@ -10,12 +10,13 @@ let until = webdriver.until
 var name = 'fred'
 
 var driver
+var width = 375, height = 667
 function createDriver (driverType) {
   it('should create a ' + driverType + ' webdriver', function(done) {
     driver = new webdriver.Builder()
       .forBrowser(driverType)
       .build()
-    driver.manage().window().setSize(375,667)
+    driver.manage().window().setSize(width,height)
     driver.manage().window().setPosition(0,0)
     done()
   })
@@ -102,13 +103,20 @@ function makeMove (cardText, menuText, dir) {
     })
   }
 
-  var choiceClass = (dir === 'left' ? 'choice1' : 'choice2')
-  it('should have '+name+' click '+dir, function(done) {
-    driver
-      .wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
-      .then(elem => { elem.click(); done() })
-      .catch(error => done(error))
-  })
+  if (dir.match(/^swipe-/)) {
+    it('should have '+name+' '+dir, function(done) {
+      driver.touchActions().tapAndHold({x:width/2,y:height/2}).move({x:width,y:height/2}).release({x:width,y:height/2})
+      done()
+    })
+  } else {
+    var choiceClass = (dir === 'left' ? 'choice1' : 'choice2')
+    it('should have '+name+' click '+dir, function(done) {
+      driver
+	.wait(until.elementLocated(By.xpath("//*[@class='"+choiceClass+"']/div/a")))
+	.then(elem => { elem.click(); done() })
+	.catch(error => done(error))
+	  })
+  }
 }
 
 function waitForNavBar (obj) {
@@ -135,7 +143,9 @@ describe("one-player game", function() {
   startGame()
   
   makeMove ("So, you think you can beat me", "Easily", "right")
+//  makeMove ("Such arrogance", "swipe-right")
   makeMove ("Such arrogance", "right")
+//  makeMove ("You will NEVER beat me", "swipe-left")
   makeMove ("You will NEVER beat me", "left")
   makeMove ("Dammit", "right")
   makeMove ("Just tell me how", "left")
