@@ -105,8 +105,14 @@ function makeMove (cardText, menuText, dir) {
 
   if (dir.match(/^swipe-/)) {
     it('should have '+name+' '+dir, function(done) {
-      driver.touchActions().tapAndHold({x:width/2,y:height/2}).move({x:width,y:height/2}).release({x:width,y:height/2})
-      done()
+      var xOffset = Math.round ((dir === 'swipe-left') ? (-width/2) : (width/2))
+      var offset = { x: xOffset, y: 0 }
+      driver.findElement(By.className('topcard'))
+        .then (function (topcard) {
+          return driver.actions().mouseDown(topcard).mouseMove(offset).mouseUp()
+            .perform()
+      }).then (() => done())
+	.catch(error => done(error))
     })
   } else {
     var choiceClass = (dir === 'left' ? 'choice1' : 'choice2')
@@ -143,16 +149,15 @@ describe("one-player game", function() {
   startGame()
   
   makeMove ("So, you think you can beat me", "Easily", "right")
-//  makeMove ("Such arrogance", "swipe-right")
-  makeMove ("Such arrogance", "right")
-//  makeMove ("You will NEVER beat me", "swipe-left")
-  makeMove ("You will NEVER beat me", "left")
+  makeMove ("Such arrogance", "swipe-right")
+  makeMove ("So unrepentant", "left")
+  makeMove ("You will NEVER beat me", "swipe-left")
   makeMove ("Dammit", "right")
   makeMove ("Just tell me how", "left")
   makeMove ("DAMMIT", "right")
   makeMove ("Game over", "right")
 
   waitForNavBar()
-  
+
   quit()
 })
