@@ -43,7 +43,7 @@
 			    next: { text: "Co-operation is great!" } } }],
 	  global1:{count:{c:"$_+1||1"}},  // increments global1.count.c
           global2:{count:{c:"$_+1||1"}},  // increments global2.count.c
-          common:{day:"++"},  // increments common.day
+          common:{day:"+=1"},  // increments common.day
           next: {intro: { text: "Want to have an ice cream together?",
 			  left: { hint: "No",
 				  text: "Why - because you don't like ice cream, or just don't feel like it today?",
@@ -96,7 +96,7 @@
     lr2: {outro:"Well, it was a good plan; but $player1 ratted $player2 out.\nTruancy doesn't pay, if you can't trust your friends.;; <sfx:surprised><class:outcome>Sorry, $player2...",
           global1:{count:{c:"$_+1||1"}},
           local2:{count:{d:"$_+1||1"}},
-          common:{day:"++"},
+          common:{day:"$_+1||1"},
 	  next: {intro:{},
 		 intro2: { text:"How do you feel about that?",
 			   left: { hint: "Mad", label: { move: "l" } },
@@ -125,10 +125,10 @@
 			  { usable: "false", text: "This text should never appear" },
 			  { visible: "true", usable: "true", text: "This keeps happening!" },
 			  { visible: "true", text: "This should not be shown either" }] },
-          local1:{count:{d:"$_+1||1"}},
-          local2:{count:{d:"$_+1||1"}},
+          local1:{count:{d:"+=1"}},  // yet another way of writing '++' or '$_+1||1'
+          local2:{count:{d:"+=1"}},
           next:"auto",
-          common:{day:"++"}}]
+          common:{day:"+=1"}}]
   },
   {
     name: "auto",
