@@ -5,7 +5,10 @@
 		       {test:"$c.day == 1",case:{ text: "Here we are, {{$n2}} and {{$n1}}: the second day of school." }},
 		       {default:{ text: "Here we are, {{$n2}} and {{$n1}}: day {{($c.day||0)+1}} of school." }}] },
 	    {
-	      text: "$other suggests skipping class. Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
+	      text: "$other suggests skipping class.",
+	      prepend: true
+	    },
+	    { text: "Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
 	      left: {
 		hint: "Rat them out",
 		label: { move: "l" },
@@ -26,7 +29,9 @@
           global2:{count:{c:"$_+1||1"}},  // this increments global2.count.c
           common:{day:"++"}},  // increments common.day
          {weight:"!$c.iceCream",
-	  outro:[{ text: "Cool, let's skip class together!\nShall we go to the beach, or to the mall?",
+	  outro:[{ text: "Cool, let's skip class together!\n" },
+		 { text: "Shall we go to the beach, or to the mall?",
+		   append: true,
                    left: { name: "mall",
 			   hint: "Mall",
                            text: "You scuttle around like a couple of mall-rats exposed to shopping for the [[$ordinal($visits)]] time. Eventually you get bored, and decide to head for the beach.",

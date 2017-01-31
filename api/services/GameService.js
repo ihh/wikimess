@@ -41,6 +41,8 @@ module.exports = {
               if (head)
                 prev.next = head
               else {
+		// tail node
+		prev.prepend = node.prepend
                 prev.next = node.next
                 prev.left = node.left
                 prev.right = node.right
@@ -49,7 +51,7 @@ module.exports = {
               }
               head = prev
             })
-            delete node.next
+            delete node.prepend
             delete node.left
             delete node.right
 	    delete node.menu
@@ -128,7 +130,9 @@ module.exports = {
       var descriptor = { label: node.label,
                          labexpr: node.labexpr,
 			 auto: node.auto,
-                         text: node.text }
+                         text: node.text,
+			 prepend: node.prepend,
+			 append: node.append }
       nodeList.push (descriptor)
 
       if (node.sequence)

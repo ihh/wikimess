@@ -600,6 +600,12 @@
             "text": {
               "$ref": "#/definitions/sample_string"
             },
+            "append": {
+              "type": "boolean"
+            },
+            "prepend": {
+              "type": "boolean"
+            },
             "hint": {
               "$ref": "#/definitions/sample_string"
             },

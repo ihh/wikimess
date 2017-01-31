@@ -2630,6 +2630,7 @@ var BigHouse = (function() {
 	      var nextText = next.node.text
 	      append = text.match(/\+\+$/) || text === ''
 		|| !nextText || nextText === '' || nextText.match(/^\+\+/)
+		|| tail.node.prepend || next.node.append
 	      if (append)
 		tail = next
 	    }

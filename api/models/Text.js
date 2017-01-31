@@ -20,6 +20,10 @@ module.exports = {
       unique: true
     },
 
+    text: { type: "string" },
+    append: { type: "boolean" },
+    prepend: { type: "boolean" },
+
     hint: { type: "string" },
     visible: { type: "string" },
     expr: { type: "string" },

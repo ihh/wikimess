@@ -66,6 +66,8 @@ var intro_node_schema = {
             properties: {
               name: { type: "string" },
               text: ref_schema('sample_string'),
+              append: { type: "boolean" },
+              prepend: { type: "boolean" },
               hint: ref_schema('sample_string'),
 	      usable: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
