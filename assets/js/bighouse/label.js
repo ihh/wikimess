@@ -228,9 +228,11 @@
       node.menu.forEach (function (item, a) {
 	if (evalVisible (expansion, item)
 	    && evalUsable (expansion, item)) {
-	  weight[a] = evalWeight (expansion, item)
-	  if (weight[a] && item['default'])
-	    isDefault[a] = true
+	  if (item['default'] !== false) {
+	    weight[a] = evalWeight (expansion, item)
+	    if (weight[a] && item['default'])
+	      isDefault[a] = true
+	  }
 	}
 	rank[a] = a
       })
