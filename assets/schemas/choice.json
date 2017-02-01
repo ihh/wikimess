@@ -293,6 +293,12 @@
             "visible": {
               "$ref": "#/definitions/sample_string"
             },
+            "weight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
             "expr": {
               "type": "string"
             },
@@ -334,6 +340,12 @@
               "$ref": "#/definitions/sample_intro_nodes"
             },
             "auto": {
+              "type": "boolean"
+            },
+            "optimal": {
+              "type": "boolean"
+            },
+            "default": {
               "type": "boolean"
             }
           },
@@ -412,7 +424,10 @@
                 ],
                 "properties": {
                   "weight": {
-                    "type": "number"
+                    "type": [
+                      "string",
+                      "number"
+                    ]
                   },
                   "exclusive": {
                     "type": "boolean"
@@ -484,7 +499,10 @@
                               ],
                               "properties": {
                                 "weight": {
-                                  "type": "number"
+                                  "type": [
+                                    "string",
+                                    "number"
+                                  ]
                                 },
                                 "exclusive": {
                                   "type": "boolean"
@@ -589,7 +607,10 @@
                         ],
                         "properties": {
                           "weight": {
-                            "type": "number"
+                            "type": [
+                              "string",
+                              "number"
+                            ]
                           },
                           "exclusive": {
                             "type": "boolean"

@@ -2574,10 +2574,7 @@ var BigHouse = (function() {
       var node = expansion.node
 
       if (node.menu && node.auto)
-	for (action = 0; action < node.menu.length - 1; ++action)
-	  if (bighouseLabel.evalVisible (expansion, node.menu[action])
-              && bighouseLabel.evalUsable (expansion, node.menu[action]))
-	    break
+	action = bighouseLabel.autoAction (expansion)
       
       if (typeof(action) === 'undefined')
 	action = expansion.action
@@ -2725,10 +2722,8 @@ var BigHouse = (function() {
         action = expansion.selectedItem
       else if (typeof(expansion.nextRandomAction) !== 'undefined')
         action = expansion.nextRandomAction
-      else if (expansion.node.menu)
-	action = Math.floor (Math.random() * expansion.node.menu.length)
       else
-	action = Math.random() < .5 ? 'left' : 'right'
+	action = bighouseLabel.autoAction (expansion)
       expansion.nextRandomAction = action
       return action
     },
@@ -2856,26 +2851,29 @@ var BigHouse = (function() {
           })
 
       // create the menu, if applicable
-      var topCardCallback
+      var topCardCallback = function() {
+	delete bh.throwDisabled
+	bh.choiceDiv.show()
+      }
       if (node.menu && !node.auto) {
 	var fieldset = $('<fieldset class="cardmenu">')
 	expansion.menuSpan = []
 	expansion.menuInput = []
+	var menuOpts = []
 	var menuSelectCallback
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
-	  if (bighouseLabel.evalVisible (expansion, item)) {
+	  var visibility = bighouseLabel.evalVisible (expansion, item)
+	  if (visibility) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
 	    var span = $('<span>')
 	    var label = $('<label for="'+id+'" class="cardmenulabel">').append (span)
 	    expansion.menuInput.push (radioInput)
 	    expansion.menuSpan.push (span)
             var itemStruck = (typeof(expansion.action) !== 'undefined' && n != expansion.action)
-                || !bighouseLabel.evalUsable (expansion, item)
-            fieldset
-	      .append (radioInput)
-	      .append (label)
+              || !bighouseLabel.evalUsable (expansion, item)
+	    menuOpts.push ({ input: radioInput, label: label, visibility: visibility, n: n })
             if (itemStruck) {
               radioInput.attr('disabled',true)
               span.html ($('<strike>').text(item.hint)).addClass('disabled')
@@ -2886,14 +2884,21 @@ var BigHouse = (function() {
 		if (menuSelectCallback)
 		  menuSelectCallback.call (bh, item, n)
 	      })
+	      if (item['default'])
+		isDefault[n] = true
 	    }
 	  }
+	})
+	menuOpts.sort (function (a, b) {
+	  return (b.visibility - a.visibility) || (a.n - b.n)
+	}).forEach (function (opt) {
+	  fieldset.append (opt.input, opt.label)
 	})
 	content.push (fieldset)
 
 	var selectWarning = $('<span class="warnselect">')
-	    .text("Please select an option")
-	    .css('visibility','hidden')
+	  .text("Please select an option")
+	  .css('visibility','hidden')
 	content.push (selectWarning)
 	menuSelectCallback = function (menuItem, menuIndex) {
 	  selectWarning.css('visibility','hidden')
@@ -2912,11 +2917,11 @@ var BigHouse = (function() {
 	    menuSelectCallback()
 	  }
         }
-      } else  // not a menu card (or an auto-menu)
-        topCardCallback = function() {
+      } else  // not a menu card, or an auto-menu
+	topCardCallback = function() {
 	  delete bh.throwDisabled
 	  bh.choiceDiv.show()
-        }
+	}
 
       // if a mood change was specified, tack it onto the end of the top-card callback
       if (newMood && !expansion.isHistory) {

@@ -71,6 +71,7 @@ var intro_node_schema = {
               hint: ref_schema('sample_string'),
 	      usable: ref_schema('sample_string'),
 	      visible: ref_schema('sample_string'),
+	      weight: { type: ["string","number"] },
 	      expr: { type: "string" },
 	      symexpr: { type: "string" },
 	      switch: ref_schema('intro_node_cases'),
@@ -83,7 +84,10 @@ var intro_node_schema = {
               right: ref_schema('intro_node'),
               next: ref_schema('intro_node'),
               menu: ref_schema('sample_intro_nodes'),
-	      auto: { type: "boolean" }
+	      auto: { type: "boolean" },
+	      optimal: { type: "boolean" },
+              default: { type: "boolean" },
+	      weight: { type: ["string","number"] }
             },
             additionalProperties: false
           }]
@@ -122,7 +126,7 @@ function sample_opts_schema (itemType) {
 	      { type: "object",
 		required: ["option"],
 		properties:
-		{ weight: { type: "number" },
+		{ weight: { type: ["string","number"] },
 		  exclusive: { type: "boolean" },  // defaults to true
 		  option: itemType },
 		additionalProperties: false }] } }

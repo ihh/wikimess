@@ -6,7 +6,6 @@ module.exports = {
 
   randomMove: function (text) {
     var move = BotService.randomExpansion (text, 0)
-    BotService.addLabels (move)
     BotService.removeLinks (move)
     move.bot = true
     return move
@@ -34,13 +33,6 @@ module.exports = {
       })
     return mood
   },
-
-  addLabels: function (exp) {
-    if (exp.node)
-      exp.label = Label.evalLabel (exp, exp.node.label, exp.node.labexpr)
-    if (exp.children)
-      exp.children.forEach (BotService.addLabels)
-  },
   
   removeLinks: function (exp) {
     delete exp.parent
@@ -51,39 +43,30 @@ module.exports = {
       exp.children.forEach (BotService.removeLinks)
   },
   
-  randomExpansion: function (text, id, parent) {
+  randomExpansion: function (text, id, parent, prev) {
     var node = text[id]
     var exp = { id: id, node: node, parent: parent }
+    if (prev)
+      prev.next = exp
     if (node) {
+      exp.label = Label.evalLabel (exp, node.label, node.labexpr)
       if (node.sequence) {
 	exp.children = []
 	node.sequence.forEach (function (child, n) {
-	  var c = BotService.randomExpansion (text, child.id, exp)
-	  if (n > 0) exp.children[n-1].tail.next = c
-	  exp.children.push (c)
+	  exp.children.push (BotService.randomExpansion (text, child.id, exp, n == 0 ? exp : exp.children[n-1].tail))
 	})
       }
       else if (node.menu) {
-	var visibleMenuItems = node.menu.filter (function (item, n) {
-	  item.n = n
-	  return Label.evalVisible (exp, item) && Label.evalUsable (exp, item)
-	})
-	if (visibleMenuItems.length) {
-	  exp.action = visibleMenuItems[Math.floor (Math.random() * visibleMenuItems.length)].n
-	  exp.children = [BotService.randomExpansion (text, node.menu[exp.action].id, exp)]
-	}
+	exp.action = Label.autoAction (exp)
+	exp.children = [BotService.randomExpansion (text, node.menu[exp.action].id, exp, exp)]
       } else if (node.next)
-	exp.children = [BotService.randomExpansion (text, node.next.id, exp)]
+	exp.children = [BotService.randomExpansion (text, node.next.id, exp, exp)]
       else if (node.left && node.right) {
-	exp.action = Math.random() < .5 ? 'left' : 'right'
-	exp.children = [BotService.randomExpansion (text, node[exp.action].id, exp)]
+	exp.action = Label.autoAction (exp)
+	exp.children = [BotService.randomExpansion (text, node[exp.action].id, exp, exp)]
       }
     }
-    if (exp.children && exp.children.length) {
-      exp.tail = exp.children[exp.children.length-1].tail
-      exp.next = exp.children[0]
-    } else
-      exp.tail = exp
+    exp.tail = (exp.children && exp.children.length) ? exp.children[exp.children.length-1].tail : exp
     return exp
   }
 }

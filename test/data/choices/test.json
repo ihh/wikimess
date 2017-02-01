@@ -5,7 +5,7 @@
 		       {test:"$c.day == 1",case:{ text: "Here we are, {{$n2}} and {{$n1}}: the second day of school." }},
 		       {default:{ text: "Here we are, {{$n2}} and {{$n1}}: day {{($c.day||0)+1}} of school." }}] },
 	    {
-	      text: "$other suggests skipping class.",
+	      text: "$other suggests skipping class. ",
 	      prepend: true
 	    },
 	    { text: "Do you want to play truant, or rat them out{{$c.iceCream && ' (remember the ice cream)'}}?",
@@ -121,8 +121,10 @@
          {weight:"$local1.count.d && $local2.count.d",
           outro: { text: "You both chicken out - AGAIN",
 		   auto: true,
+		   optimal: true,
 		   menu: [{ visible: "false", text: "This text should not be shown" },
 			  { usable: "false", text: "This text should never appear" },
+			  { weight: 0, text: "This text should not appear" },
 			  { visible: "true", usable: "true", text: "This keeps happening!" },
 			  { visible: "true", text: "This should not be shown either" }] },
           local1:{count:{d:"+=1"}},  // yet another way of writing '++' or '$_+1||1'

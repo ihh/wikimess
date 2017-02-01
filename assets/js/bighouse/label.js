@@ -219,6 +219,63 @@
 
   function evalUsable (expansion, node, log) { return evalPropOrTrue (expansion, node, 'usable', log) }
   function evalVisible (expansion, node, log) { return evalPropOrTrue (expansion, node, 'visible', log) }
+  function evalWeight (expansion, node, log) { return evalPropOrTrue (expansion, node, 'weight', log) }
+
+  function autoAction (expansion) {
+    var node = expansion.node
+    var weight = {}, isDefault = {}, rank = {}
+    if (node.menu) {
+      node.menu.forEach (function (item, a) {
+	if (evalVisible (expansion, item)
+	    && evalUsable (expansion, item)) {
+	  weight[a] = evalWeight (expansion, item)
+	  if (weight[a] && item['default'])
+	    isDefault[a] = true
+	}
+	rank[a] = a
+      })
+      if (Object.keys(isDefault).length)
+	Object.keys(weight).forEach (function (a) {
+	  if (!isDefault[a]) delete weight[a]
+	})
+    } else {
+      if (evalVisible(expansion,node.left) && evalUsable(expansion,node.left)
+	  && (node.left.default || !node.right.default))
+	weight.left = evalWeight (expansion, node.left)
+
+      if (evalVisible(expansion,node.right) && evalUsable(expansion,node.right)
+	  && (node.right.default || !node.left.default))
+	weight.right = evalWeight (expansion, node.right)
+
+      rank.left = 1
+      rank.right = 2
+    }
+
+    var action
+    if (node.optimal) {
+      var bestWeight, bestRank
+      Object.keys(weight).forEach (function (a) {
+	if (typeof(bestWeight) === 'undefined'
+	    || weight[a] > bestWeight
+	    || (weight[a] == bestWeight && rank[a] < bestRank)) {
+	  action = a
+	  bestWeight = weight[a]
+	  bestRank = rank[a]
+	}
+      })
+    } else {
+      var actions = Object.keys(weight)
+      var totalWeight = actions.reduce (function (total, a) {
+	return total + weight[a]
+      }, 0)
+      var w = Math.random() * totalWeight
+      for (var n = 0; n < actions.length; ++n)
+	if ((w -= weight[action = actions[n]]) < 0)
+	  break
+    }
+
+    return node.menu ? Number(action) : action
+  }
 
   function evalLabel (expansion, label, labexpr, log) {
     label = label || {}
@@ -420,6 +477,7 @@
     evalUsable: evalUsable,
     evalVisible: evalVisible,
     evalLabel: evalLabel,
+    autoAction: autoAction,
     // general grammar
     conjugate: conjugate,
     was: was,

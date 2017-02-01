@@ -48,6 +48,7 @@ module.exports = {
                 prev.right = node.right
 		prev.menu = node.menu
 		prev.auto = node.auto
+		prev.optimal = node.optimal
               }
               head = prev
             })
@@ -56,6 +57,7 @@ module.exports = {
             delete node.right
 	    delete node.menu
 	    delete node.auto
+	    delete node.optimal
 	    delete node.sequence
             node.next = head
             node.text = split[0]
@@ -101,7 +103,9 @@ module.exports = {
       return { id: node.id,
 	       hint: node.hint,
                usable: node.usable,
-	       visible: node.visible }
+	       visible: node.visible,
+	       default: node.default,
+	       weight: node.weight }
     }
 
     function recurse (node, stack) {
@@ -130,6 +134,7 @@ module.exports = {
       var descriptor = { label: node.label,
                          labexpr: node.labexpr,
 			 auto: node.auto,
+			 optimal: node.optimal,
                          text: node.text,
 			 prepend: node.prepend,
 			 append: node.append }
