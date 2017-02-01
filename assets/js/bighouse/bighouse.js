@@ -78,9 +78,6 @@ var BigHouse = (function() {
 			      sendingKick: { kicking: true, loading: true },
 			      gameOver: { } },
 
-    swingDir: { left: -1,
-		right: +1 },
-
     defaultBackHint: "Back",
     defaultNextHint: "Next",
     defaultWaitText: "<wait>",
@@ -2068,6 +2065,10 @@ var BigHouse = (function() {
       }
       this.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				  throwOutDistance: this.throwXOffset,
+				  allowedDirections: [
+				    swing.Direction.LEFT,
+				    swing.Direction.RIGHT
+				  ],
                                   allowMovement: function (evt) {
                                     return $(evt.target).closest('.topcard').length > 0
                                   },
@@ -2358,8 +2359,8 @@ var BigHouse = (function() {
       }
       
       this.choiceDiv.empty()
-	.append (makeHint ('choice1', leftStruck, leftHint, this.swingDir.left))
-	.append (makeHint ('choice2', rightStruck, rightHint, this.swingDir.right))
+	.append (makeHint ('choice1', leftStruck, leftHint, 'left'))
+	.append (makeHint ('choice2', rightStruck, rightHint, 'right'))
     },
 
     plural: function(n,singular,plural) {
@@ -3250,12 +3251,12 @@ var BigHouse = (function() {
 
     throwCard: function (card, direction) {
       var bh = this
-      direction = direction || this.swingDir[this.lastSwipe] || (Math.random() < .5 ? -1 : +1)
+      direction = direction || this.lastSwipe || (Math.random() < .5 ? 'left' : 'right')
       if (bh.verbose.stack) {
 	console.log ("Throwing card #" + bh.cardIndex(card.elem) + ": " + card.elem.innerHTML)
 	bh.logStack()
       }
-      card.throwOut (direction * this.throwXOffset(), this.throwYOffset())
+      card.throwOut ((direction === 'left' ? -1 : +1) * this.throwXOffset(), this.throwYOffset())
     },
     
     // socket message handler
