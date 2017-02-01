@@ -272,8 +272,8 @@ describe("two-player game", function() {
   makeMove (fred, "Do you want to play truant", "right")
   makeMove (sheila, "Do you want to play truant", "right")
 
-  makeMove (fred, "Shall we go to the beach", "right")
-  makeMove (sheila, "Shall we go to the beach", "left")
+  makeMove (fred, "Shall we go to the beach, or to the mall", "right")
+  makeMove (sheila, "Shall we go to the beach, or to the mall", "left")
   makeMove (sheila, "mall-rats exposed to shopping for the 1st time", "left")
   testDisabled (sheila, "mall-rats exposed to shopping for the 2nd time", "More mall")
   makeMove (sheila, "mall-rats exposed to shopping for the 2nd time", "right")
@@ -308,9 +308,9 @@ describe("two-player game", function() {
   makeMove (fred, "Do you want to play truant", "right")
   makeMove (sheila, "Do you want to play truant", "right")
 
-  makeMove (fred, "Shall we go to the beach", "left")
+  makeMove (fred, "Shall we go to the beach, or to the mall", "left")
   makeMove (fred, "mall-rats", "right")
-  makeMove (sheila, "Shall we go to the beach", "right")
+  makeMove (sheila, "Shall we go to the beach, or to the mall", "right")
 
   makeMove (fred, "Party times", "right")
   makeMove (sheila, "Party times", "right")

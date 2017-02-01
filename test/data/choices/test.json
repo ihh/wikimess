@@ -30,7 +30,7 @@
           common:{day:"++"}},  // increments common.day
          {weight:"!$c.iceCream",
 	  outro:[{ text: "Cool, let's skip class together!\n" },
-		 { text: "Shall we go to the beach, or to the mall?",
+		 { expr: { text: "'Shall we go to the beach,' + ' or to the mall?'" },
 		   append: true,
                    left: { name: "mall",
 			   hint: "Mall",
@@ -122,11 +122,13 @@
           outro: { text: "You both chicken out - AGAIN",
 		   auto: true,
 		   optimal: true,
-		   menu: [{ visible: "false", text: "This text should not be shown" },
-			  { usable: "false", text: "This text should never appear" },
-			  { weight: 0, text: "This text should not appear" },
-			  { visible: "true", usable: "true", text: "This keeps happening!" },
-			  { visible: "true", text: "This should not be shown either" }] },
+		   menu: [{ visible: "false", text: "This text should not be auto-selected because it's not visible" },
+			  { usable: "false", text: "This text should never appear because it's not usable" },
+			  { weight: 0, text: "This text should not appear because it has weight 0" },
+			  { default: false, text: "This should not get shown because it's not a default" },
+			  { weight: 0.5, text: "This is valid but lower-weight so should not be shown" },
+			  { visible: "true", usable: "true", text: "This keeps happening!" },  // this item and the following item are tied with equal weight (1) but this is the first and so it should be the one that gets selected
+			  { visible: "true", text: "This is tied equal weight but appears later in the list and should not be shown" }] },
           local1:{count:{d:"+=1"}},  // yet another way of writing '++' or '$_+1||1'
           local2:{count:{d:"+=1"}},
           next:"auto",

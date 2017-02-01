@@ -197,10 +197,16 @@
               "$ref": "#/definitions/sample_string"
             },
             "expr": {
-              "type": "string"
+              "type": [
+                "string",
+                "object"
+              ]
             },
             "symexpr": {
-              "type": "string"
+              "type": [
+                "string",
+                "object"
+              ]
             },
             "switch": {
               "$ref": "#/definitions/intro_node_cases"
@@ -236,10 +242,16 @@
               "$ref": "#/definitions/sample_string"
             },
             "expr": {
-              "type": "string"
+              "type": [
+                "string",
+                "object"
+              ]
             },
             "symexpr": {
-              "type": "string"
+              "type": [
+                "string",
+                "object"
+              ]
             },
             "switch": {
               "$ref": "#/definitions/intro_node_cases"
@@ -300,10 +312,16 @@
               ]
             },
             "expr": {
-              "type": "string"
+              "type": [
+                "string",
+                "object"
+              ]
             },
             "symexpr": {
-              "type": "string"
+              "type": [
+                "string",
+                "object"
+              ]
             },
             "switch": {
               "$ref": "#/definitions/intro_node_cases"

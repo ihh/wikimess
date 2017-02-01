@@ -252,77 +252,90 @@ module.exports = {
   },
 
   evalTextExpr: function (expr, game, outcome, role) {
-    var $c = game.common,
-        $g1 = game.player1.global,
-        $inv1 = $g1.inv,
-        $l1 = game.local1,
-        $n1 = game.player1.displayName,
-        $id1 = game.player1.id,
-        $p1 = game.player1,
-        $g2 = game.player2.global,
-        $inv2 = $g2.inv,
-        $l2 = game.local2,
-        $n2 = game.player2.displayName,
-        $id2 = game.player2.id,
-        $p2 = game.player2,
-
-        $common = $c,
-        $global1 = $g1,
-        $global2 = $g2,
-        $local1 = $l1,
-        $local2 = $l2,
-        $name1 = $n1,
-        $name2 = $n2
-
-    var $1 = GameService.clonedMoveTail(game.move1),
-	$2 = GameService.clonedMoveTail(game.move2)
-
-    if ($1)
-      Label.bindLabelFunctions($1)
-    if ($2)
-      Label.bindLabelFunctions($2)
-
-    var $g, $inv, $l, $n, $id,
-        $go, $invo, $lo, $no, $ido,
-        $p, $po,
-        $$, $$o
-
-    if (typeof(role) !== 'undefined') {
-      $p = role == 1 ? $p1 : $p2
-      $po = role == 1 ? $p2 : $p1
-
-      $g = $p.global
-      $inv = $g.inv
-      $l = Game.getRoleAttr (game, role, 'local')
-      $n = $p.displayName
-      $id = $p.id
-
-      $go = $po.global
-      $invo = $go.inv
-      $lo = Game.getOtherRoleAttr (game, role, 'local')
-      $no = $po.displayName
-      $ido = $po.id
-
-      $$ = role === 1 ? $1 : $2
-      $$o = role === 1 ? $2 : $1
-    }
-
-    var $current, $src, $next, $dest
-    if (outcome) {
-      $src = outcome.choice.name
-      $next = outcome.next
-      $dest = outcome.next.length == 1 ? outcome.next[0] : undefined
-    } else {
-      $current = game.current.name
-    }
-
     var val
-    try {
-      val = eval(expr)
-    } catch (e) {
-      sails.log.debug ("When evaluating: " + val)
-      sails.log.debug ("Error: " + e)
-      // do nothing, ignore undefined values and other errors in eval()
+
+    if (GameService.isArray(expr))
+      val = expr.map (function (x) { return GameService.evalTextExpr (x, game, outcome, role) })
+
+    else if (typeof(expr) === 'object') {
+      val = {}
+      Object.keys(expr).forEach (function (key) {
+        val[key] = GameService.evalTextExpr (expr[key], game, outcome, role)
+      })
+      
+    } else {
+
+      var $c = game.common,
+          $g1 = game.player1.global,
+          $inv1 = $g1.inv,
+          $l1 = game.local1,
+          $n1 = game.player1.displayName,
+          $id1 = game.player1.id,
+          $p1 = game.player1,
+          $g2 = game.player2.global,
+          $inv2 = $g2.inv,
+          $l2 = game.local2,
+          $n2 = game.player2.displayName,
+          $id2 = game.player2.id,
+          $p2 = game.player2,
+
+          $common = $c,
+          $global1 = $g1,
+          $global2 = $g2,
+          $local1 = $l1,
+          $local2 = $l2,
+          $name1 = $n1,
+          $name2 = $n2
+
+      var $1 = GameService.clonedMoveTail(game.move1),
+	  $2 = GameService.clonedMoveTail(game.move2)
+
+      if ($1)
+        Label.bindLabelFunctions($1)
+      if ($2)
+        Label.bindLabelFunctions($2)
+
+      var $g, $inv, $l, $n, $id,
+          $go, $invo, $lo, $no, $ido,
+          $p, $po,
+          $$, $$o
+
+      if (typeof(role) !== 'undefined') {
+        $p = role == 1 ? $p1 : $p2
+        $po = role == 1 ? $p2 : $p1
+
+        $g = $p.global
+        $inv = $g.inv
+        $l = Game.getRoleAttr (game, role, 'local')
+        $n = $p.displayName
+        $id = $p.id
+
+        $go = $po.global
+        $invo = $go.inv
+        $lo = Game.getOtherRoleAttr (game, role, 'local')
+        $no = $po.displayName
+        $ido = $po.id
+
+        $$ = role === 1 ? $1 : $2
+        $$o = role === 1 ? $2 : $1
+      }
+
+      var $current, $src, $next, $dest
+      if (outcome) {
+        $src = outcome.choice.name
+        $next = outcome.next
+        $dest = outcome.next.length == 1 ? outcome.next[0] : undefined
+      } else {
+        $current = game.current.name
+      }
+
+      try {
+        val = eval(expr)
+      } catch (e) {
+        sails.log.debug ("When evaluating: " + val)
+        sails.log.debug ("Error: " + e)
+        // do nothing, ignore undefined values and other errors in eval()
+      }
     }
 
     return val

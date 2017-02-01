@@ -30,8 +30,8 @@ module.exports = {
     default: { type: "boolean" },
     weight: { type: "string" },
 
-    expr: { type: "string" },
-    symexpr: { type: "string" },
+    expr: { type: "json" },
+    symexpr: { type: "json" },
     label: { type: "json" },
     labelexpr: { type: "json" },
     sequence: { type: "json" },
