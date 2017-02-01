@@ -2884,8 +2884,6 @@ var BigHouse = (function() {
 		if (menuSelectCallback)
 		  menuSelectCallback.call (bh, item, n)
 	      })
-	      if (item['default'])
-		isDefault[n] = true
 	    }
 	  }
 	})

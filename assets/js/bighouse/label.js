@@ -241,16 +241,19 @@
 	  if (!isDefault[a]) delete weight[a]
 	})
     } else {
-      if (evalVisible(expansion,node.left) && evalUsable(expansion,node.left)
-	  && (node.left.default || !node.right.default))
-	weight.left = evalWeight (expansion, node.left)
-
-      if (evalVisible(expansion,node.right) && evalUsable(expansion,node.right)
-	  && (node.right.default || !node.left.default))
-	weight.right = evalWeight (expansion, node.right)
-
       rank.left = 1
       rank.right = 2
+      if (node.left && node.right) {
+        if (evalVisible(expansion,node.left) && evalUsable(expansion,node.left)
+	    && (node.left.default || !node.right.default))
+	  weight.left = evalWeight (expansion, node.left)
+
+        if (evalVisible(expansion,node.right) && evalUsable(expansion,node.right)
+	    && (node.right.default || !node.left.default))
+	  weight.right = evalWeight (expansion, node.right)
+
+      } else
+        weight.left = weight.right = 1
     }
 
     var action
