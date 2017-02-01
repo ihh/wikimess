@@ -2060,18 +2060,18 @@ var BigHouse = (function() {
       if (this.disableMoveTimerWithClick)
         this.timerDiv.on('click',bh.clearMoveTimer.bind(this))
       
-      var throwOutConfidence = function (offset, element) {
-        return Math.min(Math.abs(offset) / element.offsetWidth, 1)
+      var throwOutConfidence = function (xOffset, yOffset, element) {
+        return Math.min(Math.abs(xOffset) / element.offsetWidth, 1)
       }
-      var isThrowOut = function (offset, element, throwOutConfidence) {
+      var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
         return throwOutConfidence > .25 && !(bh.throwDisabled && bh.throwDisabled())
       }
-      this.stack = gajus.Swing.Stack ({ throwOutConfidence: throwOutConfidence,
-					throwOutDistance: this.throwXOffset,
-                                        allowMovement: function (evt) {
-                                          return $(evt.target).closest('.topcard').length > 0
-                                        },
-                                        isThrowOut: isThrowOut })
+      this.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
+				  throwOutDistance: this.throwXOffset,
+                                  allowMovement: function (evt) {
+                                    return $(evt.target).closest('.topcard').length > 0
+                                  },
+                                  isThrowOut: isThrowOut })
 
       this.setGameState ('start')
       this.loadGameCards()
