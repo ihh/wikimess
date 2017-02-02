@@ -308,10 +308,17 @@ module.exports = {
       })
       return swapped
     }
-    return x.replace (/\$([a-z]+)([12])/g,
-		      function (_match, varName, role) {
-			return '$' + varName + (role ^ 3)
-		      })
+    return x
+      .replace (/\$([a-z]+)([12])/g,
+		function (_match, varName, role) {
+		  return '$' + varName + (parseInt(role) ^ 3)
+		})
+      .replace(/<mood([12]):(happy|sad|angry|surprised)>/g, function (match, role, mood) {
+	return '<mood' + (parseInt(role) ^ 3) + ':' + mood + '>'
+      })
+      .replace(/<(\/?)(happy|sad|angry|surprised|say)([12])>/g, function (match, slash, mood, role) {
+        return '<' + slash + mood + (parseInt(role) ^ 3) + '>'
+      })
   }
 
 };
