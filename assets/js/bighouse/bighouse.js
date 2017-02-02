@@ -2,6 +2,8 @@ var BigHouse = (function() {
   var proto = function (config) {
     config = config || {}
     $.extend (this, config)
+    this.Label = bighouseLabel
+
     this.container = $('#'+this.containerID)
       .addClass("bighouse")
 
@@ -2216,7 +2218,7 @@ var BigHouse = (function() {
 	      while (head)
 		head = bh.expansionTail(head).next  // this will automatically add the pointers back to head
 	    } else if (bh.currentExpansionNode && hist.moveNumber == bh.currentChoiceNode().move)
-	      root = bighouseLabel.getExpansionRoot (bh.currentExpansionNode)
+	      root = bh.Label.getExpansionRoot (bh.currentExpansionNode)
 	    else
 	      root = { creator: 'loadGameCards',
 		       node: hist.text[0],
@@ -2228,7 +2230,7 @@ var BigHouse = (function() {
 
 	  if (bh.currentExpansionNode) {
 	    var currentMove = bh.currentChoiceNode().move
-	    var currentRoot = bighouseLabel.getExpansionRoot (bh.currentExpansionNode)
+	    var currentRoot = bh.Label.getExpansionRoot (bh.currentExpansionNode)
 	    if (currentRoot !== newRootForMove[currentMove]) {
 	      // we were part-way through a move when we got sent a fully-expanded move from the server.
 	      // hopefully, this was because we timed out, and sent a default move to the server,
@@ -2345,8 +2347,8 @@ var BigHouse = (function() {
 	  else
 	    leftStruck = true
 	} else {
-	  leftStruck = !bighouseLabel.evalUsable (expansion, node.left) || !bighouseLabel.evalVisible (expansion, node.left)
-	  rightStruck = !bighouseLabel.evalUsable (expansion, node.right) || !bighouseLabel.evalVisible (expansion, node.right)
+	  leftStruck = !bh.Label.evalUsable (expansion, node.left) || !bh.Label.evalVisible (expansion, node.left)
+	  rightStruck = !bh.Label.evalUsable (expansion, node.right) || !bh.Label.evalVisible (expansion, node.right)
 	}
 
       function makeHint (choiceClass, struck, hint, dir) {
@@ -2508,6 +2510,7 @@ var BigHouse = (function() {
     },
 
     getExpansionText: function (expansion) {
+      var bh = this
       var node = expansion.node
       var text = node.text || (node.wait ? this.defaultWaitText : '')
 
@@ -2516,19 +2519,19 @@ var BigHouse = (function() {
 
       text = text.replace (/<([Ll])abel:(\S+?)([ ,;]?|[,;]&)>/g, function (match, uc, label, sep) {
 	var joined = (sep === ''
-		      ? bighouseLabel.sumExpansionLabels (expansion, label)
+		      ? bh.Label.sumExpansionLabels (expansion, label)
 		      : (sep === ' '
-			 ? bighouseLabel.joinExpansionLabels (expansion, label, ' ')
-			 : bighouseLabel.joinExpansionLabels (expansion, label, sep.charAt(0) + ' ', ' and ', sep.length > 1 && (sep.charAt(0) + ' and '))))
-	return uc === 'L' ? bighouseLabel.capitalize(joined) : joined
+			 ? bh.Label.joinExpansionLabels (expansion, label, ' ')
+			 : bh.Label.joinExpansionLabels (expansion, label, sep.charAt(0) + ' ', ' and ', sep.length > 1 && (sep.charAt(0) + ' and '))))
+	return uc === 'L' ? bh.Label.capitalize(joined) : joined
       })
 
       text = text.replace (/<move>/g, function() {
-	return bighouseLabel.sumExpansionLabels (expansion, 'move')
+	return bh.Label.sumExpansionLabels (expansion, 'move')
       })
 
       text = text.replace (/\[\[(.*?)\]\]/g, function (expr) {
-	return bighouseLabel.evalExpansionExpr (expansion, expr, '')
+	return bh.Label.evalExpansionExpr (expansion, expr, '')
       })
 
       return text
@@ -2575,7 +2578,7 @@ var BigHouse = (function() {
       var node = expansion.node
 
       if (node.menu && node.auto)
-	action = bighouseLabel.autoAction (expansion)
+	action = bh.Label.autoAction (expansion)
       
       if (typeof(action) === 'undefined')
 	action = expansion.action
@@ -2716,6 +2719,7 @@ var BigHouse = (function() {
     },
 
     nextRandomAction: function (expansion) {
+      var bh = this
       var action
       if (typeof(expansion.action) !== 'undefined')
         action = expansion.action
@@ -2724,7 +2728,7 @@ var BigHouse = (function() {
       else if (typeof(expansion.nextRandomAction) !== 'undefined')
         action = expansion.nextRandomAction
       else
-	action = bighouseLabel.autoAction (expansion)
+	action = bh.Label.autoAction (expansion)
       expansion.nextRandomAction = action
       return action
     },
@@ -2865,7 +2869,7 @@ var BigHouse = (function() {
 	node.menu.forEach (function (item, n) {
 	  var id = 'cardmenuitem' + (bh.globalMenuCount++)
           item.n = n
-	  var visibility = bighouseLabel.evalVisible (expansion, item)
+	  var visibility = bh.Label.evalVisible (expansion, item)
 	  if (visibility) {
             var radioInput = $('<input type="radio" name="cardmenu" id="'+id+'" value="'+n+'">')
 	    var span = $('<span>')
@@ -2873,7 +2877,7 @@ var BigHouse = (function() {
 	    expansion.menuInput.push (radioInput)
 	    expansion.menuSpan.push (span)
             var itemStruck = (typeof(expansion.action) !== 'undefined' && n != expansion.action)
-              || !bighouseLabel.evalUsable (expansion, item)
+              || !bh.Label.evalUsable (expansion, item)
 	    menuOpts.push ({ input: radioInput, label: label, visibility: visibility, n: n })
             if (itemStruck) {
               radioInput.attr('disabled',true)
@@ -3220,7 +3224,7 @@ var BigHouse = (function() {
       if (expansion.node) {
         var node = expansion.node
 	jm.id = node.id
-        jm.label = bighouseLabel.evalLabel (expansion, node.label, node.labexpr)
+        jm.label = bh.Label.evalLabel (expansion, node.label, node.labexpr)
       }
       if (expansion.children && expansion.children.length)
 	jm.children = expansion.children.map (function (child) { return bh.jsonExpansion(child) })

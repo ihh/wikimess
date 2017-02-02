@@ -49,119 +49,37 @@
 // it_causes_a_reaction -> it makes a_derogatory_noun_phrase perception_verb positive_abstract_noun
 
 (function() {
-  // JavaScript helpers
-  function extend() {
-    var merged = {}
-    Array.prototype.forEach.call (arguments, function (obj) {
-      Object.keys(obj).forEach (function (key) { merged[key] = obj[key] })
-    })
-    return merged
-  }
-  function clone(obj) {
-    if (typeof(obj) !== 'object') return obj
-    var cloned = {}
-    Object.keys(obj).forEach (function(key) { cloned[key] = clone(obj[key]) })
-    return cloned
-  }
-  function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
-
-  // Grammar helpers
-  function capitalize (text) { return text.charAt(0).toUpperCase() + text.substr(1) }
-
-  function prefix_with(prefix,list) {
-    return list.map (function (item) { return prefix + item })
-  }
-
-  function prefix_a(arg) {
-    if (isArray(arg)) return arg.map(prefix_a)
-    return arg.match(/^[aeiouAEIOU]/) ? ('an ' + arg) : ('a ' + arg)
-  }
-
-  // BigHouse helpers
-  function goto(label) { return { 'goto': label } }
-  function to_node(arg) { return isArray(arg) ? seq.apply(seq,arg) : (typeof(arg) === 'function' ? x.toString().replace(/^\(\)=>/,'') : ((typeof(arg) === 'string') ? goto(arg) : arg)) }
-  function seq() { return { sequence: Array.prototype.map.call (arguments, to_node) } }
-  function defseq(name,opts) { return extend ({ name: name }, seq.apply(this,opts)) }
-  function defsample(name,opts) { return extend ({ name: name }, debug_sample1.apply(null,opts)) }
-  function sample1() { return { sample1: { opts: Array.prototype.map.call (arguments, to_node) } } }
-
-  function label_list (label, list, propMap, hintMap) {
-    propMap = propMap || {}
-    if (typeof(propMap) === 'object') propMap = (function(obj) { return function() { return clone(obj) } }) (propMap)
-    hintMap = hintMap || capitalize
-    var lpath = label.split('.'), lkey = lpath.pop()
-    return list.map (function (item, n) {
-      var l = propMap(item,n), obj = { hint: hintMap (item,n), label: l }
-      lpath.forEach (function(k) { l = l[k] })
-      l[lkey] = item
-      return obj
-    })
-  }
-
-  function labexpr (label, expr) {
-    var obj = { labexpr: {} }
-    obj.labexpr[label] = expr
-    return obj
-  }
-  
-  function set (label, expr) {
-    return labexpr (label, "[null," + expr + "]")
-  }
-
-  // uncomment 'debugMenus = 1' to show menus instead of sampling
-  var debugMenus = 1
-  function debug_sample1() {
-    var args = Array.prototype.slice.call(arguments,0)
-    return typeof(debugMenus) !== 'undefined'
-      ? { text: "(DEBUG)",
-	  menu: args.map (function(opt) { return extend ({ hint: to_string(opt) }, to_node(opt)) }) }
-    : sample1.apply(this,args)
-  }
-  function to_string(opt) { return typeof(opt) === 'string' ? opt : (isArray(opt) ? opt.map(to_string).join(' ') : JSON.stringify(opt)) }
-  
   // Insult helpers
-  function score_prop_map (list, range) {
-    range = range || { generic: [1,1] }
-    return function (item, n) {
-      var score = {}
-      Object.keys(range).forEach (function (type) {
-        var minScore = range[type][0], maxScore = range[type][1]
-        score[type] = Math.round (minScore + (maxScore-minScore) * n / Math.max (1, list.length - 1))
-      })
-      return { score: score }
-    }
-  }
-
   function subject_list (person, list) {
-    return label_list ('subject.np', list, { subject: { person: person } })
+    return $.label_list ('subject.np', list, { subject: { person: person } })
   }
 
   function derogatory_noun_list (list, hintMap) {
-    return label_list ('derogatory_noun', list, {}, hintMap)
+    return $.label_list ('derogatory_noun', list, {}, hintMap)
   }
 
   function abstract_noun_list (list, range) {
-    return label_list ('abstract_noun', list, score_prop_map(list,range), (noun) => 'Their '+noun)
+    return $.label_list ('abstract_noun', list, $.score_prop_map(list,range), (noun) => 'Their '+noun)
   }
 
   function adjective_list (prefix, list, suffix, range) {
-    return label_list ('adjective', list, score_prop_map(list,range), (adj) => prefix+adj+(suffix||''))
+    return $.label_list ('adjective', list, $.score_prop_map(list,range), (adj) => prefix+adj+(suffix||''))
   }
 
   function verb_list (prefix, list, suffix, range) {
-    return label_list ('verb', list, score_prop_map(list,range), (verb) => prefix+verb+(suffix||''))
+    return $.label_list ('verb', list, $.score_prop_map(list,range), (verb) => prefix+verb+(suffix||''))
   }
 
   function adverb_list (prefix, list, suffix, range) {
-    return label_list ('adverb', list, score_prop_map(list,range), (adv) => prefix+adv+(suffix||''))
+    return $.label_list ('adverb', list, $.score_prop_map(list,range), (adv) => prefix+adv+(suffix||''))
   }
 
   function past_participle_list (list, range) {
-    return label_list ('past', list, score_prop_map(list,range), (past) => 'Got '+past)
+    return $.label_list ('past', list, $.score_prop_map(list,range), (past) => 'Got '+past)
   }
   
   function insult(expr) {
-    return labexpr ('insult', expr)
+    return $.labexpr ('insult', expr)
   }
 
   // Data
@@ -173,18 +91,18 @@
       outro: { text: "<angry>#{Label.capitalize($$.join('insult',' '))}#!</angry> <surprised:judge>Wow! #{Label.plural($$.magnitude(),'point')}#!</surprised:judge> <angryother>#{Label.capitalize($$o.join('insult',' '))}#!</angryother> <happy:judge>Oh, snap! #{Label.plural($$o.magnitude(),'point')}#!</happy:judge>" }
     },
     intro:
-    extend
-    (seq (debug_sample1(['the_subject_has','less_positive_abstract_noun','than_a_derogatory_noun_phrase'],
-			['the_subject_has','more_negative_abstract_noun','than_a_derogatory_noun_phrase'],
-			['the_subjects','abstract_noun_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
-			['the_subjects','abstract_noun_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
-			['the_subject_is','as_adjective','as_a_derogatory_noun_phrase'],
-			['the_subject_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
-			['the_subject_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
-			['the_subject','does_something','like_a_derogatory_noun_phrase_does'],
-			['the_subject','perception_verbs','perception_description']
-		       ),
-	  { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
+    $.extend
+    ($.seq ($.debug_sample1(['the_subject_has','less_positive_abstract_noun','than_a_derogatory_noun_phrase'],
+			    ['the_subject_has','more_negative_abstract_noun','than_a_derogatory_noun_phrase'],
+			    ['the_subjects','abstract_noun_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
+			    ['the_subjects','abstract_noun_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
+			    ['the_subject_is','as_adjective','as_a_derogatory_noun_phrase'],
+			    ['the_subject_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
+			    ['the_subject_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
+			    ['the_subject','does_something','like_a_derogatory_noun_phrase_does'],
+			    ['the_subject','perception_verbs','perception_description']
+			   ),
+	    { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
      {define:
       // menus
       [{ name: 'select_subject',
@@ -194,9 +112,9 @@
 	   { shuffle: true,
 	     groups:
 	     [{ n: 2,
-		opts: subject_list('s3',prefix_with('your ',['father','mother','brother','sister','cousin','grandfather','grandmother','auntie','uncle','husband','wife','girlfriend','boyfriend','spouse']))  // family members
+		opts: subject_list('s3',$.prefix_with('your ',['father','mother','brother','sister','cousin','grandfather','grandmother','auntie','uncle','husband','wife','girlfriend','boyfriend','spouse']))  // family members
 	      },
-	      { opts: subject_list('s3',prefix_with('your ',['doctor','dentist','tailor','stylist','boss','hairdresser','professor','driving instructor','therapist','life coach']))  // professional relationships
+	      { opts: subject_list('s3',$.prefix_with('your ',['doctor','dentist','tailor','stylist','boss','hairdresser','professor','driving instructor','therapist','life coach']))  // professional relationships
 	      },
 	      { opts: subject_list('s2',['you']) }] } } },
 
@@ -213,9 +131,9 @@
 	 { sample:
 	   { shuffle: true,
 	     groups:
-	     [{ opts: derogatory_noun_list(['pig','cow','dog','turkey','chicken','weasel','monkey','horse','ape','gorilla','baboon','chimp','chimpanzee','lemur','lemming','whale','shrew','ass','donkey','mule','shrimp','cuttlefish','squid','goldfish','mouse','rat','hamster','guinea-pig'],(item)=>capitalize(prefix_a(item))) },  // animals
-	      { opts: derogatory_noun_list(['imbecile','buffoon','idiot','fool','scoundrel','rascal','bastard','jock','punk','nerd','wussy','fop'],(item)=>capitalize(prefix_a(item))) },  // bad personal qualities
-	      { opts: derogatory_noun_list(['anti-vaxer','flat-earther','climate denier','9-11 truther','conspiracy theorist','Luddite','fascist','Nazi','Communist','Socialist','Commie','Green','Environmentalist','Liberal','Conservative','Democrat','Republican'],(item)=>capitalize(prefix_a(item))) }] } } },  // political types
+	     [{ opts: derogatory_noun_list(['pig','cow','dog','turkey','chicken','weasel','monkey','horse','ape','gorilla','baboon','chimp','chimpanzee','lemur','lemming','whale','shrew','ass','donkey','mule','shrimp','cuttlefish','squid','goldfish','mouse','rat','hamster','guinea-pig'],(item)=>$.capitalize($.prefix_a(item))) },  // animals
+	      { opts: derogatory_noun_list(['imbecile','buffoon','idiot','fool','scoundrel','rascal','bastard','jock','punk','nerd','wussy','fop'],(item)=>$.capitalize($.prefix_a(item))) },  // bad personal qualities
+	      { opts: derogatory_noun_list(['anti-vaxer','flat-earther','climate denier','9-11 truther','conspiracy theorist','Luddite','fascist','Nazi','Communist','Socialist','Commie','Green','Environmentalist','Liberal','Conservative','Democrat','Republican'],(item)=>$.capitalize($.prefix_a(item))) }] } } },  // political types
 
        { name: 'select_positive_abstract_noun',
 	 text: "What do you want to insult about them?",
@@ -243,9 +161,9 @@
 	      { opts: abstract_noun_list(['indecency','indiscretions','lechery','infamy','filth'],
                                          {character:[1,3]}) },  // character
 	      { opts: abstract_noun_list(['foolishness','ineptitude','incompetence','idiocy','stupidity'],
-                                          {intelligence:[1,2]}) },  // intelligence
+                                         {intelligence:[1,2]}) },  // intelligence
 	      { opts: abstract_noun_list(['cankles','love-handles','skid marks','halitosis','bald patches'],
-                                          {appearance:[1,2]}) }] } } },  // appearance
+                                         {appearance:[1,2]}) }] } } },  // appearance
 
        { name: 'select_negative_adjective',
 	 text: "Why are they bad?",
@@ -307,7 +225,7 @@
 	      { opts: verb_list('They way they ',['clean'],' themselves',
                                 {appearance:[1,10]}) }] } } }, // appearance
 
-       defsample ('perception_verb', label_list ('perception_verb', ['smell', 'sound', 'taste', 'feel', 'look', 'seem'])),
+       $.defsample ('perception_verb', $.label_list ('perception_verb', ['smell', 'sound', 'taste', 'feel', 'look', 'seem'])),
 
        { name: 'select_what_happened',
          text: "What happened to them?++",
@@ -322,45 +240,45 @@
                 opts: past_participle_list(['eaten','mauled','fondled','licked','kissed','hugged','ravaged','befriended','seduced','cuddled','wooed','courted','dishonored','deflowered']) }] } } },
 
        // sentence components
-       defseq('the_subject_has',['select_subject',insult("[$label('subject.np'),$has_p($label('subject.person'))]")]),
-       defseq('the_subject_is',['select_subject',insult("[$label('subject.np'),$is_p($label('subject.person'))]")]),
-       defseq('the_subjects',['select_subject',insult("$poss($label('subject.np'))")]),
-       defseq('the_subject',['select_subject',insult("$label('subject.np')")]),
+       $.defseq('the_subject_has',['select_subject',insult("[$label('subject.np'),$has_p($label('subject.person'))]")]),
+       $.defseq('the_subject_is',['select_subject',insult("[$label('subject.np'),$is_p($label('subject.person'))]")]),
+       $.defseq('the_subjects',['select_subject',insult("$poss($label('subject.np'))")]),
+       $.defseq('the_subject',['select_subject',insult("$label('subject.np')")]),
 
-       defsample('does_something',['reflexive_verbs','nonreflexive_verbs']),
-       defseq('reflexive_verbs',['select_reflexive_verb',insult("[$conj($label('verb'),$label('subject.person')),$themself($label('subject.person'))]")]),
-       defseq('nonreflexive_verbs',['select_nonreflexive_verb',insult("[$conj($label('verb'),$label('subject.person'))]")]),
-       defseq('perception_verbs',['perception_verb',insult("[$conj($label('perception_verb'),$label('subject.person'))]")]),
+       $.defsample('does_something',['reflexive_verbs','nonreflexive_verbs']),
+       $.defseq('reflexive_verbs',['select_reflexive_verb',insult("[$conj($label('verb'),$label('subject.person')),$themself($label('subject.person'))]")]),
+       $.defseq('nonreflexive_verbs',['select_nonreflexive_verb',insult("[$conj($label('verb'),$label('subject.person'))]")]),
+       $.defseq('perception_verbs',['perception_verb',insult("[$conj($label('perception_verb'),$label('subject.person'))]")]),
 
-       defsample('select_abstract_noun',['select_positive_abstract_noun','select_negative_abstract_noun']),
-       defseq('less_positive_abstract_noun',['select_positive_abstract_noun',insult("$less($label('abstract_noun'))")]),
-       defseq('more_negative_abstract_noun',['select_negative_abstract_noun',insult("['more',$label('abstract_noun')]")]),
-       defseq('abstract_noun_is',['select_abstract_noun',insult("$is($label('abstract_noun'))")]),
+       $.defsample('select_abstract_noun',['select_positive_abstract_noun','select_negative_abstract_noun']),
+       $.defseq('less_positive_abstract_noun',['select_positive_abstract_noun',insult("$less($label('abstract_noun'))")]),
+       $.defseq('more_negative_abstract_noun',['select_negative_abstract_noun',insult("['more',$label('abstract_noun')]")]),
+       $.defseq('abstract_noun_is',['select_abstract_noun',insult("$is($label('abstract_noun'))")]),
 
-       defsample('select_adjective',['select_positive_adjective','select_negative_adjective']),
-       defseq('more_negative_adjective',['select_negative_adjective',insult("$more_adj($label('adjective'))")]),
-       defseq('less_positive_adjective',['select_positive_adjective',insult("['less',$label('adjective')]")]),
-       defseq('as_adjective',['select_adjective',insult("['as',$label('adjective')]")]),
-       defseq('negative_adjective',['select_negative_adjective',insult("[$label('adjective')]")]),
+       $.defsample('select_adjective',['select_positive_adjective','select_negative_adjective']),
+       $.defseq('more_negative_adjective',['select_negative_adjective',insult("$more_adj($label('adjective'))")]),
+       $.defseq('less_positive_adjective',['select_positive_adjective',insult("['less',$label('adjective')]")]),
+       $.defseq('as_adjective',['select_adjective',insult("['as',$label('adjective')]")]),
+       $.defseq('negative_adjective',['select_negative_adjective',insult("[$label('adjective')]")]),
 
-       defseq('than_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['than',$labels('derogatory_noun_phrase')]")]),
-       defseq('as_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['as',$labels('derogatory_noun_phrase')]")]),
-       defseq('like_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['like',$labels('derogatory_noun_phrase')]")]),
+       $.defseq('than_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['than',$labels('derogatory_noun_phrase')]")]),
+       $.defseq('as_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['as',$labels('derogatory_noun_phrase')]")]),
+       $.defseq('like_a_derogatory_noun_phrase',['derogatory_noun_phrase',insult("['like',$labels('derogatory_noun_phrase')]")]),
 
-       defsample('derogatory_noun_phrase',['derogatory_object']),
-       defseq('derogatory_object',['select_derogatory_object',labexpr('derogatory_noun_phrase',"[$a($label('derogatory_noun'))]")]),
+       $.defsample('derogatory_noun_phrase',['derogatory_object']),
+       $.defseq('derogatory_object',['select_derogatory_object',$.labexpr('derogatory_noun_phrase',"[$a($label('derogatory_noun'))]")]),
        
-       defseq('by_a_derogatory_noun',['select_derogatory_passive_verb_subject',insult("['by',$a($label('derogatory_noun'))]")]),
+       $.defseq('by_a_derogatory_noun',['select_derogatory_passive_verb_subject',insult("['by',$a($label('derogatory_noun'))]")]),
 
-       defseq('as_adverb_as_a_derogatory_noun_phrase',['select_adjective',insult("['as',$adverb($label('adjective'))]"),'as_a_derogatory_noun_phrase']),
-       defseq('less_positive_adverb_than_a_derogatory_noun_phrase',['select_positive_adjective',insult("['less',$adverb($label('adjective'))]"),'than_a_derogatory_noun_phrase']),
-       defseq('more_negative_adverb_than_a_derogatory_noun_phrase',['select_negative_adjective',insult("$more_adv($adverb($label('adjective')))"),'than_a_derogatory_noun_phrase']),
+       $.defseq('as_adverb_as_a_derogatory_noun_phrase',['select_adjective',insult("['as',$adverb($label('adjective'))]"),'as_a_derogatory_noun_phrase']),
+       $.defseq('less_positive_adverb_than_a_derogatory_noun_phrase',['select_positive_adjective',insult("['less',$adverb($label('adjective'))]"),'than_a_derogatory_noun_phrase']),
+       $.defseq('more_negative_adverb_than_a_derogatory_noun_phrase',['select_negative_adjective',insult("$more_adv($adverb($label('adjective')))"),'than_a_derogatory_noun_phrase']),
 
-       defsample('like_a_derogatory_noun_phrase_does',['like_a_derogatory_noun_phrase','as_adverb_as_a_derogatory_noun_phrase','less_positive_adverb_than_a_derogatory_noun_phrase','more_negative_adverb_than_a_derogatory_noun_phrase']),
-       defsample('perception_description',['negative_adjective','like_a_derogatory_noun_phrase','passive_verbed',['like_it_was_passive_verbed','by_a_derogatory_noun']]),
+       $.defsample('like_a_derogatory_noun_phrase_does',['like_a_derogatory_noun_phrase','as_adverb_as_a_derogatory_noun_phrase','less_positive_adverb_than_a_derogatory_noun_phrase','more_negative_adverb_than_a_derogatory_noun_phrase']),
+       $.defsample('perception_description',['negative_adjective','like_a_derogatory_noun_phrase','passive_verbed',['like_it_was_passive_verbed','by_a_derogatory_noun']]),
 
-       defseq('passive_verbed',['select_what_happened',insult("[$label('past')]")]),
-       defseq('like_it_was_passive_verbed',[insult("['like',$they($label('subject.person')),$was($label('subject.person'),'n')]"),'passive_verbed'])
+       $.defseq('passive_verbed',['select_what_happened',insult("[$label('past')]")]),
+       $.defseq('like_it_was_passive_verbed',[insult("['like',$they($label('subject.person')),$was($label('subject.person'),'n')]"),'passive_verbed'])
 
       ]
      })
