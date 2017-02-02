@@ -1243,7 +1243,7 @@ var BigHouse = (function() {
     },
 
     showInitialUploadPage: function() {
-      this.showUploadPage ({ uploadText: "Take a selfie for each of the four moods shown below, so other players can see how you feel. Or, pick an avatar.",
+      this.showUploadPage ({ uploadText: "Click on any of the four moods shown below to upload a selfie, so other players can see how you feel. Or, pick an auto-generated avatar on the next screen.",
                              nextPageText: "Later",
                              showNextPage: this.showPlayPage,
                              transitionWhenUploaded: true })
