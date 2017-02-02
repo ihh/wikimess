@@ -1,5 +1,6 @@
 var BigHouse = (function() {
   var proto = function (config) {
+    var bh = this
     config = config || {}
     $.extend (this, config)
     this.Label = bighouseLabel
@@ -20,6 +21,11 @@ var BigHouse = (function() {
     $.extend (this, this.localStorage)
 
     this.socket_onPlayer (this.handlePlayerMessage.bind (this))
+    this.loadSound('error')
+    io.socket.on('disconnect', function() {
+      bh.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
+			   location.reload.bind (location, true))
+    })
 
     // prevent scrolling/viewport bump on iOS Safari
     $(document).on('touchmove',function(e){
@@ -3411,6 +3417,12 @@ var BigHouse = (function() {
       })
       sound.play()
       return sound
+    },
+
+    loadSound: function (type) {
+      this.soundCache = this.soundCache || {}
+      this.soundCache[type] = new Howl ({ src: ['/audio/' + type + '.wav'] })
+      return this.soundCache[type]
     },
     
   })
