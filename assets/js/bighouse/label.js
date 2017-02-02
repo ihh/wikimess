@@ -423,7 +423,7 @@
   function capitalize (text) {
     return text
       .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
-      .replace (/([\.\!\?]\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+      .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
   }
 
   // ordinal suffices http://stackoverflow.com/a/13627586
@@ -501,7 +501,9 @@
     plural: plural,
     magnitude: magnitude,
     taxicab: taxicab,
-    percent: percent
+    percent: percent,
+    // general
+    isArray: isArray
   }
 
   return api

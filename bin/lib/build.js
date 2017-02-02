@@ -1,8 +1,12 @@
 var extend = require('extend')
 var Label = require('../../assets/js/bighouse/label')
 
-// uncomment 'debugMenus = 1' to show menus instead of sampling
-var debugMenus = 1
+// set 'debugMenus = 1' to show menus instead of sampling
+var debugMenus
+function setDebugMenus() { debugMenus = 1 }
+
+var isArray = Label.isArray
+var capitalize = Label.capitalize
 
 function clone(obj) {
   if (typeof(obj) !== 'object') return obj
@@ -10,11 +14,8 @@ function clone(obj) {
   Object.keys(obj).forEach (function(key) { cloned[key] = clone(obj[key]) })
   return cloned
 }
-function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
 
 // Grammar helpers
-function capitalize (text) { return text.charAt(0).toUpperCase() + text.substr(1) }
-
 function prefix_with(prefix,list) {
   return list.map (function (item) { return prefix + item })
 }
@@ -76,30 +77,6 @@ function score_prop_map (list, range) {
   }
 }
 
-var Build =
-  { extend,
-    Label,
-    clone,
-    isArray,
-    capitalize,
-    prefix_with,
-    prefix_a,
-    goto,
-    to_node,
-    seq,
-    defseq,
-    defsample,
-    sample1,
-    label_list,
-    labexpr,
-    set,
-    debug_sample1,
-    to_string,
-    score_prop_map }
-
-Build.$eval = function (arg) {
-  var $ = Build
+module.exports = function (arg) {
   return eval (arg)
 }
-
-module.exports = Build

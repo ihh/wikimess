@@ -99,7 +99,7 @@ callback = processFilenameList ({ path: '/player',
                                   schema: schemaPath('player'),
                                   handler: playerHandler,
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval],
+                                  parsers: [JSON.parse, Build],
                                   list: playerFilenames.reverse() })
 
 var locationHandler = makeHandler ('Location', hasName, function (obj) {
@@ -108,35 +108,35 @@ callback = processFilenameList ({ path: '/location',
                                   schema: schemaPath('location'),
                                   handler: locationHandler,
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval],
+                                  parsers: [JSON.parse, Build],
                                   list: locationFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/item',
                                   schema: schemaPath('item'),
                                   handler: genericHandler('Item'),
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval],
+                                  parsers: [JSON.parse, Build],
                                   list: itemFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/award',
                                   schema: schemaPath('award'),
                                   handler: genericHandler('Award'),
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval],
+                                  parsers: [JSON.parse, Build],
                                   list: awardFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/meter',
                                   schema: schemaPath('meter'),
                                   handler: genericHandler('Meter'),
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval],
+                                  parsers: [JSON.parse, Build],
                                   list: meterFilenames.reverse() })
 
 callback = processFilenameList ({ path: '/text',
                                   schema: schemaPath('text'),
                                   handler: genericHandler('Text'),
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval],
+                                  parsers: [JSON.parse, Build],
                                   list: textFilenames.reverse() })
 
 var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
@@ -147,7 +147,7 @@ callback = processFilenameList ({ path: '/choice',
                                   schema: schemaPath('choice'),
                                   handler: choiceHandler,
                                   callback: callback,
-                                  parsers: [JSON.parse, Build.$eval, parseStory],
+                                  parsers: [JSON.parse, Build, parseStory],
                                   list: choiceFilenames.reverse() })
 
 request.post ({ jar: jar,
