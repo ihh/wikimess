@@ -109,7 +109,8 @@
 			['the_subject','does_something','like_a_derogatory_noun_phrase_does'],
 			['the_subject','perception_verbs','perception_description']
 		       ),
-	  { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
+	  { text: "Your insult is \"<Label:insult >!\"\n"
+	    + "<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
      {define:
       // menus
       [{ name: 'select_subject',
