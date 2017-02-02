@@ -21,7 +21,7 @@ var BigHouse = (function() {
     $.extend (this, this.localStorage)
 
     this.socket_onPlayer (this.handlePlayerMessage.bind (this))
-    this.loadSound('error')
+    this.preloadSounds.forEach (this.loadSound)
     io.socket.on('disconnect', function() {
       bh.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
 			   location.reload.bind (location, true))
@@ -129,6 +129,7 @@ var BigHouse = (function() {
     disableMoveTimerWithClick: true,
     
     globalMenuCount: 0,
+    preloadSounds: ['error','select','login','logout','gamestart'],
     
     // REST interface
     REST_loginFacebook: function() {
