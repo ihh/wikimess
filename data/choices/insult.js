@@ -92,21 +92,24 @@
     effect: {
       local1: { score: "+= $1.magnitude()" },
       local2: { score: "+= $2.magnitude()" },
-      outro: { text: "<angry>#{Label.capitalize($$.join('insult',' '))}#!</angry> <surprised:judge>Wow! #{Label.plural($$.magnitude(),'point')}#!</surprised:judge> <angryother>#{Label.capitalize($$o.join('insult',' '))}#!</angryother> <happy:judge>Oh, snap! #{Label.plural($$o.magnitude(),'point')}#!</happy:judge>" }
+      outro: { text: ["<angry>#{Label.capitalize($$.join('insult',' '))}#!</angry>",
+		      "<surprised:judge>Wow! #{Label.plural($$.magnitude(),'point')}#!</surprised:judge>",
+		      "<angryother>#{Label.capitalize($$o.join('insult',' '))}#!</angryother>",
+		      "<happy:judge>Oh, snap! #{Label.plural($$o.magnitude(),'point')}#!</happy:judge>"].join(" ") }
     },
     intro:
     extend
     (seq (debug_sample1(['the_subject_has','less_positive_abstract_noun','than_a_derogatory_noun_phrase'],
-			    ['the_subject_has','more_negative_abstract_noun','than_a_derogatory_noun_phrase'],
-			    ['the_subjects','abstract_noun_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
-			    ['the_subjects','abstract_noun_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
-			    ['the_subject_is','as_adjective','as_a_derogatory_noun_phrase'],
-			    ['the_subject_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
-			    ['the_subject_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
-			    ['the_subject','does_something','like_a_derogatory_noun_phrase_does'],
-			    ['the_subject','perception_verbs','perception_description']
-			   ),
-	    { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
+			['the_subject_has','more_negative_abstract_noun','than_a_derogatory_noun_phrase'],
+			['the_subjects','abstract_noun_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
+			['the_subjects','abstract_noun_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
+			['the_subject_is','as_adjective','as_a_derogatory_noun_phrase'],
+			['the_subject_is','less_positive_adjective','than_a_derogatory_noun_phrase'],
+			['the_subject_is','more_negative_adjective','than_a_derogatory_noun_phrase'],
+			['the_subject','does_something','like_a_derogatory_noun_phrase_does'],
+			['the_subject','perception_verbs','perception_description']
+		       ),
+	  { text: "Your insult is \"<Label:insult >!\"\n<happy:judge>Hmm, pretty good: I rate the consistency of that insult as [[$percent($magnitude()/$taxicab())]]. Let's see what $other has to offer, before I give the final scores.</happy:judge>" }),
      {define:
       // menus
       [{ name: 'select_subject',
@@ -152,7 +155,7 @@
 	      { opts: abstract_noun_list(['rhymes','words','barbs','insults','jibes','slights','wit','repartee','competence'],
                                          {intelligence:[1,8]}) },  // intelligence
 	      { opts: abstract_noun_list(['sexual performance','height','cleanliness','prettiness','agility','poise','attractiveness','muscles','hygiene'],
-                                         {appearance:[1,4]}) }] } } },  // appearance
+                                         {vigor:[1,4]}) }] } } },  // vigor
 
        { name: 'select_negative_abstract_noun',
 	 text: "What do you want to insult about them?",
@@ -167,7 +170,7 @@
 	      { opts: abstract_noun_list(['foolishness','ineptitude','incompetence','idiocy','stupidity'],
                                          {intelligence:[1,2]}) },  // intelligence
 	      { opts: abstract_noun_list(['cankles','love-handles','skid marks','halitosis','bald patches'],
-                                         {appearance:[1,2]}) }] } } },  // appearance
+                                         {vigor:[1,2]}) }] } } },  // vigor
 
        { name: 'select_negative_adjective',
 	 text: "Why are they bad?",
@@ -182,7 +185,7 @@
 	      { opts: adjective_list('Too ',['stupid','idiotic','banal','mundane','tedious','boring'],'',
                                      {intelligence:[1,10]}) },  // intelligence
 	      { opts: adjective_list('Too ',['ugly','smelly','disgusting','unwashed','filthy','stinky','fat','skinny','short','stunted','gangly'],'',
-                                     {appearance:[1,10]}) }] } } }, // appearance
+                                     {vigor:[1,10]}) }] } } }, // vigor
 
        { name: 'select_positive_adjective',
 	 text: "Why are they bad?",
@@ -197,7 +200,7 @@
 	      { opts: adjective_list('Not ',['smart','clever','witty','sharp','intelligent'],' enough',
                                      {intelligence:[1,10]}) },  // intelligence
 	      { opts: adjective_list('Not ',['sexy','fragrant','strong','clean','brave','well-toned','muscly','tall','powerful'],' enough',
-                                     {appearance:[1,10]}) }] } } }, // appearance
+                                     {vigor:[1,10]}) }] } } }, // vigor
 
        { name: 'select_nonreflexive_verb',
 	 text: "What's so bad about them?",
@@ -212,7 +215,7 @@
 	      { opts: verb_list('They way they ',['read','read books'],'',
                                 {intelligence:[1,10]}) },  // intelligence
 	      { opts: verb_list('They way they ',['walk'],'',
-                                {appearance:[1,10]}) }] } } }, // appearance
+                                {vigor:[1,10]}) }] } } }, // vigor
 
        { name: 'select_reflexive_verb',
 	 text: "What's so bad about them?",
@@ -227,7 +230,7 @@
 	      { opts: verb_list('They way they ',['preen'],' themselves',
                                 {intelligence:[1,10]}) },  // intelligence
 	      { opts: verb_list('They way they ',['clean'],' themselves',
-                                {appearance:[1,10]}) }] } } }, // appearance
+                                {vigor:[1,10]}) }] } } }, // vigor
 
        defsample ('perception_verb', label_list ('perception_verb', ['smell', 'sound', 'taste', 'feel', 'look', 'seem'])),
 
