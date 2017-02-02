@@ -3076,24 +3076,26 @@ var BigHouse = (function() {
           console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + (time ? (" at time " + time) : ''))
 	if (time)
           this.lastPlayerMoodTime = date
-	this.playerMood = mood
-	this.refreshPlayerMoodImage()
-        for (var m = 0; m < this.moods.length; ++m) {
-          var newMood = this.moods[m]
-          this.moodDiv[m].off()
-	  if (newMood == mood)
-	    this.moodDiv[m]
-            .addClass('selected')
-            .removeClass('unselected')
-	  else {
-	    this.moodDiv[m]
-              .addClass('unselected')
-              .removeClass('selected')
-	      .on('click',
-		  ':not(.unclickable)',
-		  bh.changeMoodFunction (bh.moveNumber, newMood))
-	  }
-        }
+	if (this.playerMood != mood) {
+	  this.playerMood = mood
+	  this.refreshPlayerMoodImage()
+          for (var m = 0; m < this.moods.length; ++m) {
+            var newMood = this.moods[m]
+            this.moodDiv[m].off()
+	    if (newMood == mood)
+	      this.moodDiv[m]
+              .addClass('selected')
+              .removeClass('unselected')
+	    else {
+	      this.moodDiv[m]
+		.addClass('unselected')
+		.removeClass('selected')
+		.on('click',
+		    ':not(.unclickable)',
+		    bh.changeMoodFunction (bh.moveNumber, newMood))
+	    }
+          }
+	}
       }
     },
 
@@ -3102,9 +3104,11 @@ var BigHouse = (function() {
       var date = new Date (time)
       if (!this.lastOpponentMoodTime || date > this.lastOpponentMoodTime) {
         this.lastOpponentMoodTime = date
-	this.opponentID = id
-	this.opponentMood = mood
-	this.refreshOpponentMoodImage()
+	if (this.opponentID != id || this.opponentMood != mood) {
+	  this.opponentID = id
+	  this.opponentMood = mood
+	  this.refreshOpponentMoodImage()
+	}
       }
     },
 
