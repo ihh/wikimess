@@ -147,11 +147,20 @@ module.exports = {
     return parseInt ((now - updated) / 1000)
   },
 
+  hasTimeout: function (game) {
+    return !game.finished && !game.pendingAccept && game.currentStartTime
+      && ((game.event && game.event.timeout && !(game.current && typeof(game.current.timeout) !== 'undefined'))
+          || (game.current && game.current.timeout))
+  },
+  
+  timeout: function (game) {
+    return (game.current && game.current.timeout) || game.event.timeout
+  },
+  
   deadline: function (game) {
     var deadline
-    if (!game.finished && !game.pendingAccept && game.currentStartTime
-        && ((game.event && game.event.timeout) || (game.current && game.current.timeout)))
-      deadline = new Date (game.currentStartTime.getTime() + 1000 * ((game.current && game.current.timeout) || game.event.timeout))
+    if (Game.hasTimeout(game))
+      deadline = new Date (game.currentStartTime.getTime() + 1000 * Game.timeout(game))
     return deadline
   },
 
@@ -163,9 +172,7 @@ module.exports = {
   },
   
   isTimedOut: function (game) {
-    return ((game.event && game.event.timeout) || (game.current && game.current.timeout))
-      && game.currentStartTime
-      && ((Date.now() - Date.parse(game.currentStartTime)) / 1000) >= ((game.current && game.current.timeout) || game.event.timeout)
+    return Game.hasTimeout(game) && ((Date.now() - Date.parse(game.currentStartTime)) / 1000) >= Game.timeout(game)
   },
 
   timedOutRoles: function (game) {
