@@ -251,7 +251,7 @@ function quit (obj) {
 	})
 }
 
-describe("search", function() {
+describe("invite", function() {
   var fred = create ('chrome')
   var sheila = create ('chrome')
 

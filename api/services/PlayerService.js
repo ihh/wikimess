@@ -305,9 +305,11 @@ module.exports = {
     var message = info.message
     var roles = [1,2]
     roles.forEach (function (role) {
+      var player = Game.getRoleAttr(game,role,'player')
+      var playerID = player.id
       var msg = { message: message,
 		  game: game.id,
-		  event: game.event.id,
+		  event: LocationService.eventDescriptor ({ event: game.event, game: game, player: player }),
 		  move: moveNumber,
 		  missed: Game.getRoleAttr(game,role,'missed'),
 		  finished: game.finished,

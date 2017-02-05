@@ -20,6 +20,10 @@ module.exports = {
       unique: true
     },
 
+    hide: {
+      type: 'boolean'   // if true, hide the event when waiting for other player's move
+    },
+
     common: { type: 'json' },
     local1: { type: 'json' },
     local2: { type: 'json' },

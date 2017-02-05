@@ -50,6 +50,14 @@ module.exports = {
       // NB this eval is NOT tested inside the lock (it'd be too CPU-intensive, since it's run on all compatible players)
       // So don't make it too critical to game consistency logic
     },
+
+    hide: {
+      type: 'boolean'   // if true, hide the event while waiting for other player's move
+    },
+
+    launch: {
+      type: 'boolean'   // if true, then for chat games, do not wait for player 2 to accept
+    },
     
     timeout: {
       type: 'integer',

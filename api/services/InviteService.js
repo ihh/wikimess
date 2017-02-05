@@ -241,7 +241,7 @@ module.exports = {
                                      player2CostsDeducted: true,   // player 2 does not pay for chat games they're invited to
                                      testPlayer1CostsDeducted: false,
                                      testPlayer2CostsDeducted: false,
-                                     pendingAccept: true,
+                                     pendingAccept: !event.launch,
                                      successCallback: resolve,
                                      failureCallback: reject,
                                      errorCallback: function (error) { throw error }

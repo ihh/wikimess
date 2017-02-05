@@ -10,6 +10,24 @@
 		  intro: [{ text: "This is the only card.",
 			    left: { },
 			    right: { } } ] }
-              }]
+              },
+            { title: "Back-and-forth",
+	      hint: "An interactive conversation",
+              launch: true,
+              hide: true,
+              timeout: 0,  // unlimited time
+	      choice: {
+                name: "yo",
+		intro: [{ text: "Do you want to say YO to $other?",
+			  right: { hint: "Yes", label: { move: 'y' } },
+			  left: { hint: "No", label: { move: 'n' } } } ],
+                intro2: {},
+                outcome: [{
+                  move1: 'y',
+                  outro2: [{ text: "$other says YO.\n++" }],
+                  next: "~yo"
+                }],
+              }
+            }]
   }
 ]

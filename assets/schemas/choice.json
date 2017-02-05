@@ -15,6 +15,39 @@
         "intro2": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
+        "common": {
+          "type": "object"
+        },
+        "local": {
+          "type": "object"
+        },
+        "local1": {
+          "type": "object"
+        },
+        "local2": {
+          "type": "object"
+        },
+        "global": {
+          "type": "object"
+        },
+        "global1": {
+          "type": "object"
+        },
+        "global2": {
+          "type": "object"
+        },
+        "mood": {
+          "type": "string"
+        },
+        "mood1": {
+          "type": "string"
+        },
+        "mood2": {
+          "type": "string"
+        },
+        "hide": {
+          "type": "boolean"
+        },
         "autoExpand": {
           "type": "boolean"
         },
@@ -102,6 +135,9 @@
         "outro2": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
+        "flush": {
+          "type": "boolean"
+        },
         "next": {
           "oneOf": [
             {
@@ -116,16 +152,10 @@
             }
           ]
         },
-        "local": {
-          "type": "object"
-        },
-        "global": {
-          "type": "object"
-        },
-        "mood": {
-          "type": "string"
-        },
         "common": {
+          "type": "object"
+        },
+        "local": {
           "type": "object"
         },
         "local1": {
@@ -134,11 +164,17 @@
         "local2": {
           "type": "object"
         },
+        "global": {
+          "type": "object"
+        },
         "global1": {
           "type": "object"
         },
         "global2": {
           "type": "object"
+        },
+        "mood": {
+          "type": "string"
         },
         "mood1": {
           "type": "string"

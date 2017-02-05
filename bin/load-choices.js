@@ -8,7 +8,9 @@ var fs = require('fs'),
     colors = require('colors'),
     extend = require('extend'),
     jsonschema = require('jsonschema'),
-    Build = require('./lib/build')
+    Promise = require('bluebird'),
+    Sails = require('sails').constructor,
+    Build = require('./build/build')
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"
@@ -23,6 +25,7 @@ var defaultMeterFilename = "$DATA/meters"
 var defaultAwardFilename = "$DATA/awards"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt|story)$'
+var databasePath = '.tmp/localDiskDb.db'
 
 function defaultPath (subdir, opt) {
   var dataDir = (opt && opt.options.data) || defaultDataDir
@@ -49,7 +52,9 @@ var opt = getopt.create([
   ['a' , 'awards=PATH+'     , 'path to js/json award file(s) or directories (default=' + defaultPath('Award') + ')'],
   ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
-  ['s' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
+  ['s' , 'sails'            , 'lift sails before loading data'],
+  ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
+  ['y' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
   ['h' , 'help'             , 'display this help message']
 ])              // create Getopt instance
@@ -70,12 +75,6 @@ function log (v, text) {
   }
 }
 
-if (opt.options.story) {
-  var json = readJsonFileSync (opt.options.story, parseStory)
-  console.log (JSON.stringify(json,null,2))
-  return
-}
-
 var urlPrefix = opt.options.root || defaultUrlPrefix
 
 var adminUser = opt.options.username || defaultUserName
@@ -91,79 +90,103 @@ var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
 var meterFilenames = opt.options.meters || [defaultPath('Meter',opt)]
 var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 
-// this callback-chain-mangling really, really should be done using promises instead
-var callback = function() {}
+var sailsApp, liftPromise
+if (opt.options.sails || opt.options.erase) {
+  if (opt.options.erase && fs.existsSync(databasePath)) {
+    log (1, 'Erasing temporary database in ' + databasePath)
+    if (!dryRun)
+      fs.unlinkSync (databasePath)
+  }
+  log (1, 'Lifting Sails')
+  if (!dryRun) {
+    sailsApp = new Sails()
+    liftPromise = Promise.promisify (sailsApp.lift, {context: sailsApp}) ()
+  }
+}
+liftPromise = liftPromise || Promise.resolve()
 
-var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
-callback = processFilenameList ({ path: '/player',
-                                  schema: schemaPath('player'),
-                                  handler: playerHandler,
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build],
-                                  list: playerFilenames.reverse() })
+liftPromise.then (function() {
 
-var locationHandler = makeHandler ('Location', hasName, function (obj) {
-  return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
-callback = processFilenameList ({ path: '/location',
-                                  schema: schemaPath('location'),
-                                  handler: locationHandler,
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build],
-                                  list: locationFilenames.reverse() })
+  if (opt.options.story) {
+    var json = readJsonFileSync (opt.options.story, parseStory)
+    console.log (JSON.stringify(json,null,2))
+    return
+  }
 
-callback = processFilenameList ({ path: '/item',
-                                  schema: schemaPath('item'),
-                                  handler: genericHandler('Item'),
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build],
-                                  list: itemFilenames.reverse() })
+  // this callback-chain-mangling really, really should be done using promises instead
+  var callback = function() {}
 
-callback = processFilenameList ({ path: '/award',
-                                  schema: schemaPath('award'),
-                                  handler: genericHandler('Award'),
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build],
-                                  list: awardFilenames.reverse() })
+  var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
+  callback = processFilenameList ({ path: '/player',
+                                    schema: schemaPath('player'),
+                                    handler: playerHandler,
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build],
+                                    list: playerFilenames.reverse() })
 
-callback = processFilenameList ({ path: '/meter',
-                                  schema: schemaPath('meter'),
-                                  handler: genericHandler('Meter'),
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build],
-                                  list: meterFilenames.reverse() })
+  var locationHandler = makeHandler ('Location', hasName, function (obj) {
+    return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
+  callback = processFilenameList ({ path: '/location',
+                                    schema: schemaPath('location'),
+                                    handler: locationHandler,
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build],
+                                    list: locationFilenames.reverse() })
 
-callback = processFilenameList ({ path: '/text',
-                                  schema: schemaPath('text'),
-                                  handler: genericHandler('Text'),
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build],
-                                  list: textFilenames.reverse() })
+  callback = processFilenameList ({ path: '/item',
+                                    schema: schemaPath('item'),
+                                    handler: genericHandler('Item'),
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build],
+                                    list: itemFilenames.reverse() })
 
-var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
-  return ' ' + c.name + '\t(id=' + c.id + ', '
-    + plural (c.outcomes && c.outcomes.length, 'outcome')
-    + ')' })
-callback = processFilenameList ({ path: '/choice',
-                                  schema: schemaPath('choice'),
-                                  handler: choiceHandler,
-                                  callback: callback,
-                                  parsers: [JSON.parse, Build, parseStory],
-                                  list: choiceFilenames.reverse() })
+  callback = processFilenameList ({ path: '/award',
+                                    schema: schemaPath('award'),
+                                    handler: genericHandler('Award'),
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build],
+                                    list: awardFilenames.reverse() })
 
-request.post ({ jar: jar,
-                url: urlPrefix + '/login',
-                json: true,
-                body: { name: adminUser, password: adminPass } },
-              function (err, res, body) {
-                if (err)
-                  throw err
-                else if (!body.player) {
-                  log (0, body.message)
-                } else {
-                  log (1, "Logged in as '" + adminUser + "'")
-                  callback()
-                }
-              })
+  callback = processFilenameList ({ path: '/meter',
+                                    schema: schemaPath('meter'),
+                                    handler: genericHandler('Meter'),
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build],
+                                    list: meterFilenames.reverse() })
+
+  callback = processFilenameList ({ path: '/text',
+                                    schema: schemaPath('text'),
+                                    handler: genericHandler('Text'),
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build],
+                                    list: textFilenames.reverse() })
+
+  var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
+    return ' ' + c.name + '\t(id=' + c.id + ', '
+      + plural (c.outcomes && c.outcomes.length, 'outcome')
+      + ')' })
+  callback = processFilenameList ({ path: '/choice',
+                                    schema: schemaPath('choice'),
+                                    handler: choiceHandler,
+                                    callback: callback,
+                                    parsers: [JSON.parse, Build, parseStory],
+                                    list: choiceFilenames.reverse() })
+
+  request.post ({ jar: jar,
+                  url: urlPrefix + '/login',
+                  json: true,
+                  body: { name: adminUser, password: adminPass } },
+                function (err, res, body) {
+                  if (err)
+                    throw err
+                  else if (!body.player) {
+                    log (0, body.message)
+                  } else {
+                    log (1, "Logged in as '" + adminUser + "'")
+                    callback()
+                  }
+                })
+})
 
 function processFilenameList (info) {
   return function() {

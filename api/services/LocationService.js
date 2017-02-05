@@ -382,6 +382,7 @@ module.exports = {
     var desc = { id: event.id,
 	         title: event.title,
 	         hint: LocationService.expandText (event.hint, player),
+                 launch: event.launch,
                  invitee: invitee && invitee.id,
                  locked: event.locked,
                  cost: event.cost && LocationService.costInfo (player, event.cost),
@@ -389,12 +390,13 @@ module.exports = {
                  botDefault: event.botDefaultTime,
 		 reset: event.resetTime }
 
-    var role, other, waiting
+    var role, other, waiting, hide
     if (game) {
       role = Game.getRole (game, player.id)
       other = Game.getOtherRoleAttr (game, role, 'player')
-      waiting = game && Game.isWaitingForMove (game, role)
-
+      waiting = Game.isWaitingForMove (game, role)
+      hide = (game.current && typeof(game.current.hide) !== 'undefined') ? game.current.hide : event.hide
+      
       desc.game = { id: game.id,
 		    finished: game.finished,
                     waiting: waiting,
@@ -413,14 +415,18 @@ module.exports = {
 		  ? (game.canceled
                      ? "canceled"
                      : (game.finished
-                        ? "finished"
+                        ? (waiting
+                           ? "finishing"
+                           : "finished")
                         : (game.pendingAccept
                            ? (role == 1
                               ? "pending"
                               : "invited")
                            : (waiting
                               ? "ready"
-                              : "waiting"))))
+                              : (hide
+                                 ? "hidden"
+                                 : "waiting")))))
 		  : (event.invited
 		     ? "starting"
 		     : (event.locked
@@ -428,7 +434,9 @@ module.exports = {
                         : (event.resetTime
 			   ? "resetting"
 			   : (invitee
-                              ? "invite"
+                              ? (event.launch
+                                 ? "launch"
+                                 : "invite")
                               : "start")))))
 
 

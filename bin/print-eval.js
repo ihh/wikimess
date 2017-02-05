@@ -3,7 +3,7 @@
 var fs = require('fs'),
     extend = require('extend'),
     colors = require('colors'),
-    Build = require('./lib/build')
+    Build = require('./build/build')
 
 var files = process.argv.slice(2)
 files.forEach (function (file) {

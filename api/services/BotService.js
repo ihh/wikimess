@@ -12,11 +12,11 @@ module.exports = {
   },
 
   makeRandomMove: function (game, role) {
-    var move = BotService.randomMove (Game.getRoleAttr (game, role, 'text', game.flip))
-    var mood = BotService.finalMood (move, Game.flipRole (role, game.flip))
+    var move = BotService.randomMove (Game.getRoleAttr (game, role, 'text'))
+    var mood = BotService.finalMood (move, role)
     if (mood)
-      Game.setRoleAttr (game, role, 'mood', mood, game.flip)
-    Game.setRoleAttr (game, role, 'move', move, game.flip)
+      Game.setRoleAttr (game, role, 'mood', mood)
+    Game.setRoleAttr (game, role, 'move', move)
   },
 
   finalMood: function (exp, role) {
