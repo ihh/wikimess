@@ -88,6 +88,11 @@ body {
     border-color: #888;
 }
 
+.bighouse .locbar .search .query .button {
+    height: 32px;
+    width: 32px;
+}
+
 .bighouse .locbar .search .query input {
     background: black;
     flex-grow: 1;
@@ -255,6 +260,28 @@ body {
     display: inline-block;
     position: relative;
     float: right;
+}
+
+.bighouse .locbar .event .selectother {
+    clear: both;
+    font-size: small;
+}
+
+.bighouse .locbar .event .selectotherprompt {
+    font-style: italic;
+    padding-top: 4px;
+}
+
+.bighouse .locbar .event .selectotherlistitem {
+    clear: both;
+    padding-top: 2px;
+}
+
+.bighouse .locbar .event .selectotheravatar {
+    height: 32px;
+    width: 32px;
+    float: left;
+    margin-right: 4px;
 }
 
 .bighouse .cardbar .cardtable {

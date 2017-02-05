@@ -379,6 +379,8 @@ module.exports = {
         player = info.player,
         invitee = info.invitee
 
+    var targetable = event.targetable && !event.opponent
+
     var desc = { id: event.id,
 	         title: event.title,
 	         hint: LocationService.expandText (event.hint, player),
@@ -387,7 +389,8 @@ module.exports = {
                  locked: event.locked,
                  cost: event.cost && LocationService.costInfo (player, event.cost),
                  invited: event.invited,
-                 botDefault: event.botDefaultTime,
+                 botAllowed: (targetable ? event.botDefaultAllowed : undefined),
+                 botDefault: (targetable ? undefined : event.botDefaultTime),
 		 reset: event.resetTime }
 
     var role, other, waiting, hide
@@ -411,6 +414,13 @@ module.exports = {
                      mood: Game.getOtherRoleAttr (game, role, 'mood') }
     }
 
+    var startType = (invitee
+                     ? (event.launch
+                        ? "launch"
+                        : "invite")
+                     : (targetable
+                        ? "target"
+                        : "start"))
     desc.state = (game
 		  ? (game.canceled
                      ? "canceled"
@@ -428,16 +438,14 @@ module.exports = {
                                  ? "hidden"
                                  : "waiting")))))
 		  : (event.invited
-		     ? "starting"
+		     ? (targetable
+                        ? "targeting"
+                        : "starting")
 		     : (event.locked
                         ? "locked"
                         : (event.resetTime
-			   ? "resetting"
-			   : (invitee
-                              ? (event.launch
-                                 ? "launch"
-                                 : "invite")
-                              : "start")))))
+			   ? ("resetting_" + startType)
+			   : startType))))
 
 
     return desc

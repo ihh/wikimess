@@ -97,20 +97,28 @@ var BigHouse = (function() {
     themes: [ {style: 'plain', text: 'Plain'},
               {style: 'cardroom', text: 'Card room'} ],
 
-    tabs: [{ name: 'view', method: 'showPlayPage', icon: 'binoculars' },
-           { name: 'status', method: 'showStatusPage', icon: 'swap-bag', },
-           { name: 'games', method: 'showActiveGamesPage', icon: 'card-random' },
-           { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
-           { name: 'settings', method: 'showSettingsPage', icon: 'cog' }],
+    tabs: [{ name: 'view', method: 'showPlayPage', icon: 'castle' },
+           { name: 'status', method: 'showStatusPage', icon: 'crowned-heart', },
+           { name: 'games', method: 'showActiveGamesPage', icon: 'scroll-unfurled' },
+           { name: 'follows', method: 'showFollowsPage', icon: 'quill-body' },
+           { name: 'settings', method: 'showSettingsPage', icon: 'throne-king' }],
 
     searchIcon: 'magnifying-glass',
+    botOpponentIcon: 'vintage-robot',
+    randomOpponentIcon: 'body',
     
     eventButtonText: { locked: 'Locked',
 		       start: 'Start',
 		       launch: 'Start',
+		       target: 'Start',
 		       invite: 'Invite',
-		       resetting: 'Locked',
+		       resetting_start: 'Locked',
+		       resetting_launch: 'Locked',
+		       resetting_target: 'Locked',
+		       resetting_invite: 'Locked',
+		       untarget: 'Hide',
 		       starting: 'Cancel',
+		       targeting: 'Cancel',
 		       ready: 'Go',
 		       waiting: 'Waiting',
 		       hidden: 'Waiting',
@@ -169,6 +177,10 @@ var BigHouse = (function() {
 
     REST_getPlayerJoin: function (playerID, eventID) {
       return $.get ('/p/' + playerID + '/join/' + eventID)
+    },
+
+    REST_getPlayerJoinWho: function (playerID, eventID) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + '/who')
     },
 
     REST_getPlayerJoinBot: function (playerID, eventID) {
@@ -498,6 +510,13 @@ var BigHouse = (function() {
     showModalWebError: function (err, sfx, callback) {
       this.showModalMessage ((err.responseJSON && err.responseJSON.error) || (err.status + " " + err.statusText), sfx, callback)
     },
+
+    reloadOnFail: function() {
+      var bh = this
+      return function (err) {
+        bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
+      }
+    },
     
     // play page
     showPlayPage: function() {
@@ -748,14 +767,17 @@ var BigHouse = (function() {
                  .append (event.costDiv, event.button))
         .append ($('<div class="traderow">')
                  .append (event.rejectButton))
-      
+
       event.div.append (event.turnDiv, event.lockDiv)
 
       var hintDiv
       if (event.hint)
         event.div.append (hintDiv = $('<div class="hint">'))
 
-      event.div.append (event.otherDiv = $('<div class="other">'), event.tradeRows)
+      event.div.append (event.otherDiv = $('<div class="other">'),
+                        event.selectOtherDiv = $('<div class="selectother">'),
+                        event.tradeRows)
+
       this.locBarDiv.append (event.div)
         .find('.nogames').hide()
       
@@ -819,25 +841,36 @@ var BigHouse = (function() {
         .off()
         .on ('click', function() {
           event.rejectButton.off()
+	  bh.selectSound = bh.playSound ('select')
           bh.REST_getPlayerJoinInviteReject (bh.playerID, event.id, event.other.id)
             .then (function() { bh.updateEventState(event,'canceled') })
-            .fail (function (err) {
-              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
-            })
+            .fail (bh.reloadOnFail())
         })
       else
         event.rejectButton.hide()
 
-      event.otherDiv.empty()
-      if (event.other && event.other.id != bh.playerID && bh.page !== 'otherStatus') {
+      function showOther (other) {
         var avatarDiv = $('<div class="avatar">')
-        if (event.other.human)
+        if (other.human)
         avatarDiv
-          .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, event.other)))
-        event.otherDiv.append (avatarDiv, $('<span class="name">').text(event.other.name))
-        bh.showMoodImage (event.other.id, event.other.mood, avatarDiv)
+          .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, other)))
+        event.otherDiv.append (avatarDiv, $('<span class="name">').text(other.name + (event.state === 'pending' ? ' (invited)' : '')))
+        bh.showMoodImage (other.id, other.mood, avatarDiv)
       }
+      event.otherDiv.empty()
+      if (event.other && event.other.id != bh.playerID && bh.page !== 'otherStatus')
+        showOther (event.other)
 
+      var avatarDivs = []
+      function eventSelected() {
+        button.off()
+        avatarDivs.forEach (function (ad) { ad.off() })
+	bh.selectSound = bh.playSound ('select')
+        event.costDiv.hide()
+        var eventKey = bh.getEventKey(event)
+	bh.lastStartedEventKey = eventKey
+      }
+      
       switch (event.state) {
       case 'locked':
         event.div.show()
@@ -851,46 +884,117 @@ var BigHouse = (function() {
         event.div.show()
         event.costDiv.show()
         button.on('click', function() {
-          button.off()
-	  bh.selectSound = bh.playSound ('select')
-          event.costDiv.hide()
-          var eventKey = bh.getEventKey(event)
-	  bh.lastStartedEventKey = eventKey
-          var promise = (event.state === 'launch' || event.state === 'invite')
-            ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee)
+          eventSelected()
+          var invite = (event.state === 'launch' || event.state === 'invite')
+          var promise = invite
+              ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee)
               : bh.REST_getPlayerJoin (bh.playerID, event.id)
-              .done (function (data) {
-                if (data.waiting) {
-                  event.botDefault = data.botDefault
-		  bh.updateEventState (event, 'starting')
-                } else {
-                  event.game = data.game
-		  bh.updateEventState (event, 'ready')
-                }
-                bh.updateEventTimer (event)
-              })
-          promise.fail (function (err) {
-            bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
-          })
+          promise.done (function (data) {
+            if (data.waiting) {
+              event.botDefault = data.botDefault
+	      bh.updateEventState (event, 'starting')
+            } else {
+              event.game = data.game
+	      bh.updateEventState (event, invite ? 'pending' : 'ready')
+            }
+            bh.updateEventTimer (event)
+          }).fail (bh.reloadOnFail())
         })
         break;
 
-      case 'resetting':
+      case 'target':
+        event.div.show()
+        event.costDiv.show()
+        button.on('click', function() {
+          button.off()
+	  bh.selectSound = bh.playSound ('select')
+          var selectOtherListDiv = $('<div class="selectotherlist">')
+          event.selectOtherDiv.empty()
+            .append ($('<div class="selectotherprompt">').text('Select a player:'), selectOtherListDiv)
+          bh.REST_getPlayerJoinWho (bh.playerID, event.id)
+	    .done (function (data) {
+              data.opponents.forEach (function (follow) {
+                var avatarDiv = $('<div class="selectotheravatar">')
+                var div = $('<div class="selectotherlistitem">')
+                    .append (avatarDiv, $('<span class="selectothername">').text(follow.name))
+                selectOtherListDiv.prepend (div)
+                bh.showMoodImage (follow.id, follow.mood, avatarDiv)
+                avatarDivs.push (avatarDiv)
+                avatarDiv.on ('click', function() {
+                  eventSelected()
+                  bh.REST_getPlayerJoinInvite (bh.playerID, event.id, follow.id)
+                    .done (function (data) {
+                      event.selectOtherDiv.empty()
+                      showOther (follow)
+                      event.game = data.game
+		      bh.updateEventState (event, 'pending')
+                    }).fail (bh.reloadOnFail())
+                })
+              })
+            })
+          var randomOtherAvatarDiv = $('<div class="selectotheravatar">')
+          selectOtherListDiv.append ($('<div class="selectotherlistitem">')
+                                     .append (randomOtherAvatarDiv, $('<span class="selectothername">').text('Random player')))
+          bh.placeIcon (bh.randomOpponentIcon, randomOtherAvatarDiv)
+          randomOtherAvatarDiv.on ('click', function() {
+            eventSelected()
+            bh.REST_getPlayerJoin (bh.playerID, event.id)
+              .done (function (data) {
+                event.selectOtherDiv.empty()
+                if (data.waiting)
+	          bh.updateEventState (event, 'targeting')
+                else {
+                  event.game = data.game
+	          bh.updateEventState (event, 'ready')
+                }
+              }).fail (bh.reloadOnFail())
+          })
+          if (event.botAllowed) {
+            var botAvatarDiv = $('<div class="selectotheravatar">')
+            selectOtherListDiv.append ($('<div class="selectotherlistitem">')
+                                       .append (botAvatarDiv, $('<span class="selectothername">').text('Computer player')))
+            bh.placeIcon (bh.botOpponentIcon, botAvatarDiv)
+            botAvatarDiv.on ('click', function() {
+              eventSelected()
+              bh.REST_getPlayerJoinBot (bh.playerID, event.id)
+                .done (function() { event.selectOtherDiv.empty() })
+                .fail (bh.reloadOnFail())
+            })
+          }
+          bh.updateEventState (event, 'untarget')
+        })
+        break;
+
+      case 'untarget':
+        event.div.show()
+        button.on ('click', function() {
+	  bh.selectSound = bh.playSound ('select')
+          event.selectOtherDiv.empty()
+          bh.updateEventState (event, 'target')
+        })
+        break;
+        
+      case 'resetting_start':
+      case 'resetting_launch':
+      case 'resetting_invite':
+      case 'resetting_target':
       case 'canceled':
         event.div.show()
         event.costDiv.hide()
         break;
 
       case 'starting':
+      case 'targeting':
         event.div.show()
         event.costDiv.hide()
+        event.selectOtherDiv.html ($('<div class="selectotherprompt">').text('Waiting for another player to join...'))
         button.on('click', function() {
+	  bh.selectSound = bh.playSound ('select')
+          event.selectOtherDiv.empty()
           bh.REST_getPlayerJoinCancel (bh.playerID, event.id)
             .done (function() {
-	      bh.updateEventState (event, 'start')
-            }).fail (function (err) {
-              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
-            })
+	      bh.updateEventState (event, event.state.replace('ing',''))
+            }).fail (bh.reloadOnFail())
         })
         break;
 
@@ -898,12 +1002,11 @@ var BigHouse = (function() {
         event.div.show()
         event.costDiv.hide()
         button.on('click', function() {
+	  bh.selectSound = bh.playSound ('select')
           bh.REST_getPlayerJoinInviteCancel (bh.playerID, event.id, event.other.id)
             .done (function() {
 	      bh.updateEventState (event, event.launch ? 'launch' : 'invite')
-            }).fail (function (err) {
-              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
-            })
+            }).fail (bh.reloadOnFail())
         })
         break;
 
@@ -911,10 +1014,9 @@ var BigHouse = (function() {
         event.div.show()
         event.costDiv.hide()
         button.on('click', function() {
+	  bh.selectSound = bh.playSound ('select')
           bh.REST_getPlayerJoinInviteAccept (bh.playerID, event.id, event.other.id)
-            .fail (function (err) {
-              bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
-            })
+            .fail (bh.reloadOnFail())
         })
         break;
 
@@ -959,10 +1061,10 @@ var BigHouse = (function() {
             .fail (function() { delete event.invitedBot })
         }
         event.timerDiv.text (this.shortTimerText (timeToWait))
-      } else if (event.reset && event.state == 'resetting') {
+      } else if (event.reset && event.state.match(/^resetting/)) {
         var timeToWait = (new Date(event.reset) - now) / 1000
 	if (timeToWait <= 0)
-	  this.updateEventState (event, 'start')
+	  this.updateEventState (event, event.state.replace('resetting_',''))
 	else
           event.timerDiv.text (this.shortTimerText (timeToWait))
       } else
@@ -1015,6 +1117,12 @@ var BigHouse = (function() {
       return this.iconPromise[icon]
     },
 
+    placeIcon: function(icon,container) {
+      this.getIconPromise(icon).done (function (svg) {
+        container.html(svg)
+      })
+    },
+    
     colorizeIcon: function(svg,fgColor,bgColor) {
       if (fgColor)
         svg = svg.replace(new RegExp("#fff", 'g'), fgColor)
@@ -1722,6 +1830,7 @@ var BigHouse = (function() {
       this.setPage ('status')
       this.showNavBar ('status')
       this.showGameStatusPage (this.REST_getPlayerStatus)
+      this.detailBarDiv.prepend ($('<div class="locbar">').html($('<h1>').text(this.playerName)))
     },
 
     showOtherStatusPage: function (follow) {
@@ -1794,7 +1903,10 @@ var BigHouse = (function() {
 	.done (function (status) {
 	  if (bh.verbose.server)
 	    console.log (status)
-          bh.addStatusElements (status.element, bh.detailBarDiv)
+          if (status.element.length)
+            bh.addStatusElements (status.element, bh.detailBarDiv)
+          else
+            bh.detailBarDiv.append ($('<span>').text("No status information available"))
           if (callback)
             callback (status)
 	})
@@ -1880,10 +1992,7 @@ var BigHouse = (function() {
                                    .append (this.searchResultsDiv,
                                             this.endSearchResultsDiv))))
       this.searchInput.attr ('placeholder', 'Player name')
-      this.getIconPromise (bh.searchIcon)
-        .done (function (svg) {
-          searchButton.html (svg)
-        })
+      this.placeIcon (this.searchIcon, searchButton)
       searchButton.addClass('button')
         .on ('click', bh.doSearch.bind(bh))
       this.searchInput.on ('keypress', function(event) {

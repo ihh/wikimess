@@ -23,8 +23,13 @@ module.exports = {
       type: 'string'
     },
 
+    targetable: {
+      type: 'boolean',  // if true, client should not select opponent
+      defaultsTo: true
+    },
+    
     opponent: {
-      type: 'json'  // name of opponent, or list of names. Should be bot names. Overrides 'wantHuman'
+      type: 'json'  // name of opponent, or list of names. Should be bot names
     },
 
     visible: {

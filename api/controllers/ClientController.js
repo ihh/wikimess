@@ -247,7 +247,10 @@ module.exports = {
   // invite player to game
   invite: function (req, res) {
     PlayerService.findEvent (req, res, function (player, event, rs) {
-      Player.findOne ({ id: req.params.other })
+      if (event.untargetable)
+        rs (new Error ("Can't select opponent for that event"))
+      else
+        Player.findOne ({ id: req.params.other })
         .then (function (other) {
           return InviteService.openInvitation ({ player: player,
                                                  other: other,
@@ -260,7 +263,7 @@ module.exports = {
         }, function() {
           rs (new Error ("Failed to create invitation"))
         }).catch (rs)
-      })
+          })
   },
 
   // cancel invitation that we issued
@@ -626,6 +629,37 @@ module.exports = {
     })
   },
 
+  // list potential players for an Event
+  listPotentialOpponents: function (req, res) {
+    PlayerService.findEvent (req, res, function (player, event, rs) {
+      var result = { id: player.id, event: event.id, opponents: [] }
+      var seen = {}
+      function addInfo (player, following) {
+        if (!seen[player.id]) {
+          result.opponents.push (PlayerService.makePlayerSummary (player, following))
+          seen[player.id] = true
+        }
+      }
+      Follow.find ({ follower: player.id })
+        .populate ('followed')
+        .then (function (follows) {
+          follows.forEach (function (follow) {
+            addInfo (follow.followed, true)
+          })
+          return Follow.find ({ followed: player.id })
+            .populate ('follower')
+        }).then (function (followed) {
+          followed.forEach (function (follow) {
+            addInfo (follow.follower)
+          })
+          res.json (result)
+        }).catch (function (err) {
+          console.log(err)
+          res.status(500).send(err)
+        })
+    })
+  },
+  
   // list followers
   listFollowed: function (req, res) {
     var playerID = req.params.player

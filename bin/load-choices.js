@@ -131,6 +131,12 @@ promise = promise.then (function() {
   })
 })
 
+promise = promise.then (processFilenameList ({ path: '/item',
+                                               schema: schemaPath('item'),
+                                               handler: genericHandler('Item'),
+                                               parsers: [JSON.parse, Build],
+                                               list: itemFilenames.reverse() }))
+
 var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
 promise = promise.then (processFilenameList ({ path: '/player',
                                                schema: schemaPath('player'),
@@ -145,12 +151,6 @@ promise = promise.then (processFilenameList ({ path: '/location',
                                                handler: locationHandler,
                                                parsers: [JSON.parse, Build],
                                                list: locationFilenames.reverse() }))
-
-promise = promise.then (processFilenameList ({ path: '/item',
-                                               schema: schemaPath('item'),
-                                               handler: genericHandler('Item'),
-                                               parsers: [JSON.parse, Build],
-                                               list: itemFilenames.reverse() }))
 
 promise = promise.then (processFilenameList ({ path: '/award',
                                                schema: schemaPath('award'),

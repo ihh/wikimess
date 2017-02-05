@@ -75,6 +75,7 @@ module.exports.routes = {
   'PUT /p/:player/avatar/:mood':  'ClientController.uploadMoodAvatar',
 
   'GET /p/:player/join/:event':          'ClientController.join',
+  'GET /p/:player/join/:event/who':      'ClientController.listPotentialOpponents',
   'GET /p/:player/join/:event/cancel':   'ClientController.cancelJoin',
   'GET /p/:player/join/:event/bot':      'ClientController.joinBot',
 
