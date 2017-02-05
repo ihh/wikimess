@@ -2281,6 +2281,12 @@ var BigHouse = (function() {
 		  serverNode = newRootForMove[currentMove]
 		}
 	      }
+              // advance through consecutive 'wait' cards at the end
+              // this prevents a ghost wait-card throw when we skip a turn
+              // (it doesn't prevent the timer from re-upping, but we can't do much about that)
+              while (serverNode.wait && serverNode.next && serverNode.next.wait)
+                serverNode = serverNode.next
+              // this is our card
 	      bh.currentExpansionNode = serverNode
 	    }
 	  } else {
