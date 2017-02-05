@@ -114,7 +114,7 @@ liftPromise.then (function() {
   }
 
   // this callback-chain-mangling really, really should be done using promises instead
-  var callback = function() {}
+  var callback = function() { log(1,"Loading complete") }
 
   var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
   callback = processFilenameList ({ path: '/player',
