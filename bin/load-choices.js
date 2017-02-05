@@ -90,7 +90,13 @@ var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
 var meterFilenames = opt.options.meters || [defaultPath('Meter',opt)]
 var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 
-var sailsApp, liftPromise
+if (opt.options.story) {
+  var json = readJsonFileSync (opt.options.story, parseStory)
+  console.log (JSON.stringify(json,null,2))
+  return
+}
+
+var sailsApp, promise = Promise.resolve()
 if (opt.options.sails || opt.options.erase) {
   if (opt.options.erase && fs.existsSync(databasePath)) {
     log (1, 'Erasing temporary database in ' + databasePath)
@@ -100,114 +106,98 @@ if (opt.options.sails || opt.options.erase) {
   log (1, 'Lifting Sails')
   if (!dryRun) {
     sailsApp = new Sails()
-    liftPromise = Promise.promisify (sailsApp.lift, {context: sailsApp}) ()
+    promise = promise.then (function() {
+      return Promise.promisify (sailsApp.lift, {context: sailsApp}) ()
+    })
   }
 }
-liftPromise = liftPromise || Promise.resolve()
 
-liftPromise.then (function() {
-
-  if (opt.options.story) {
-    var json = readJsonFileSync (opt.options.story, parseStory)
-    console.log (JSON.stringify(json,null,2))
-    return
-  }
-
-  // this callback-chain-mangling really, really should be done using promises instead
-  var callback = function() { log(1,"Loading complete") }
-
-  var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
-  callback = processFilenameList ({ path: '/player',
-                                    schema: schemaPath('player'),
-                                    handler: playerHandler,
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build],
-                                    list: playerFilenames.reverse() })
-
-  var locationHandler = makeHandler ('Location', hasName, function (obj) {
-    return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
-  callback = processFilenameList ({ path: '/location',
-                                    schema: schemaPath('location'),
-                                    handler: locationHandler,
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build],
-                                    list: locationFilenames.reverse() })
-
-  callback = processFilenameList ({ path: '/item',
-                                    schema: schemaPath('item'),
-                                    handler: genericHandler('Item'),
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build],
-                                    list: itemFilenames.reverse() })
-
-  callback = processFilenameList ({ path: '/award',
-                                    schema: schemaPath('award'),
-                                    handler: genericHandler('Award'),
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build],
-                                    list: awardFilenames.reverse() })
-
-  callback = processFilenameList ({ path: '/meter',
-                                    schema: schemaPath('meter'),
-                                    handler: genericHandler('Meter'),
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build],
-                                    list: meterFilenames.reverse() })
-
-  callback = processFilenameList ({ path: '/text',
-                                    schema: schemaPath('text'),
-                                    handler: genericHandler('Text'),
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build],
-                                    list: textFilenames.reverse() })
-
-  var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
-    return ' ' + c.name + '\t(id=' + c.id + ', '
-      + plural (c.outcomes && c.outcomes.length, 'outcome')
-      + ')' })
-  callback = processFilenameList ({ path: '/choice',
-                                    schema: schemaPath('choice'),
-                                    handler: choiceHandler,
-                                    callback: callback,
-                                    parsers: [JSON.parse, Build, parseStory],
-                                    list: choiceFilenames.reverse() })
-
-  request.post ({ jar: jar,
-                  url: urlPrefix + '/login',
-                  json: true,
-                  body: { name: adminUser, password: adminPass } },
-                function (err, res, body) {
-                  if (err)
-                    throw err
-                  else if (!body.player) {
+promise = promise.then (function() {
+  return new Promise (function (resolve) {
+    request.post ({ jar: jar,
+                    url: urlPrefix + '/login',
+                    json: true,
+                    body: { name: adminUser, password: adminPass } },
+                  function (err, res, body) {
+                    if (err)
+                      throw err
+                    else if (!body.player) {
                     log (0, body.message)
-                  } else {
-                    log (1, "Logged in as '" + adminUser + "'")
-                    callback()
+                    } else {
+                      log (1, "Logged in as '" + adminUser + "'")
+                      resolve()
                   }
-                })
+                  })
+  })
 })
+
+var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
+promise = promise.then (processFilenameList ({ path: '/player',
+                                               schema: schemaPath('player'),
+                                               handler: playerHandler,
+                                               parsers: [JSON.parse, Build],
+                                               list: playerFilenames.reverse() }))
+
+var locationHandler = makeHandler ('Location', hasName, function (obj) {
+  return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
+promise = promise.then (processFilenameList ({ path: '/location',
+                                               schema: schemaPath('location'),
+                                               handler: locationHandler,
+                                               parsers: [JSON.parse, Build],
+                                               list: locationFilenames.reverse() }))
+
+promise = promise.then (processFilenameList ({ path: '/item',
+                                               schema: schemaPath('item'),
+                                               handler: genericHandler('Item'),
+                                               parsers: [JSON.parse, Build],
+                                               list: itemFilenames.reverse() }))
+
+promise = promise.then (processFilenameList ({ path: '/award',
+                                               schema: schemaPath('award'),
+                                               handler: genericHandler('Award'),
+                                               parsers: [JSON.parse, Build],
+                                               list: awardFilenames.reverse() }))
+
+promise = promise.then (processFilenameList ({ path: '/meter',
+                                               schema: schemaPath('meter'),
+                                               handler: genericHandler('Meter'),
+                                               parsers: [JSON.parse, Build],
+                                               list: meterFilenames.reverse() }))
+
+promise = promise.then (processFilenameList ({ path: '/text',
+                                               schema: schemaPath('text'),
+                                               handler: genericHandler('Text'),
+                                               parsers: [JSON.parse, Build],
+                                               list: textFilenames.reverse() }))
+
+var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
+  return ' ' + c.name + '\t(id=' + c.id + ', '
+    + plural (c.outcomes && c.outcomes.length, 'outcome')
+    + ')' })
+promise = promise.then (processFilenameList ({ path: '/choice',
+                                               schema: schemaPath('choice'),
+                                               handler: choiceHandler,
+                                               parsers: [JSON.parse, Build, parseStory],
+                                               list: choiceFilenames.reverse() }))
+
+promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
 
 function processFilenameList (info) {
   return function() {
-    var callback = info.callback
-    info.list.forEach (function (filename) {
-      callback = process ({ filename: filename,
-                            path: info.path,
-                            schema: info.schema,
-                            handler: info.handler,
-                            parsers: info.parsers,
-                            first: true,
-                            callback: callback })
-    })
-    callback()
+    return Promise.all (info.list.map (function (filename) {
+      return process ({ filename: filename,
+                        path: info.path,
+                        schema: info.schema,
+                        handler: info.handler,
+                        parsers: info.parsers,
+                        first: true })
+    }))
   }
 }
 
 function process (info) {
   var filename = info.filename,
-      first = info.first,
-      callback = info.callback
+      first = info.first
   if (fs.existsSync (filename)) {
     var stats = fs.statSync (filename)
     if (stats.isDirectory())
@@ -215,27 +205,23 @@ function process (info) {
     else if (matchRegex.test(filename) || first)
       return processFile (info)
   }
-  return callback
+  return Promise.resolve()
 }
 
 function processDir (info) {
-  var dir = info.filename,
-      callback = info.callback
+  var dir = info.filename
   log (1, 'Processing ' + dir)
-  fs.readdirSync(dir).forEach (function (filename) {
-    callback = process ({ filename: dir + '/' + filename,
-                          schema: info.schema,
-                          path: info.path,
-                          handler: info.handler,
-                          parsers: info.parsers,
-                          callback: callback })
-  })
-  return callback
+  return Promise.all (fs.readdirSync(dir).map (function (filename) {
+    return process ({ filename: dir + '/' + filename,
+                      schema: info.schema,
+                      path: info.path,
+                      handler: info.handler,
+                      parsers: info.parsers })
+  }))
 }
 
 function processFile (info) {
   var filename = info.filename,
-      callback = info.callback,
       parsers = info.parsers,
       schemaFilename = info.schema
   log (1, 'Processing ' + filename)
@@ -256,18 +242,20 @@ function processFile (info) {
       return true
     })
   }
+  var promise
   if (json)
-    return function() {
+    promise = new Promise (function (resolve) {
       post ({ index: 0,
               array: json,
               filename: filename,
               schema: schema,
               path: info.path,
               handler: info.handler,
-              callback: info.callback })
-    }
+              callback: resolve })
+    })
   else
-    return callback
+    promise = Promise.resolve()
+  return promise
 }
 
 function readJsonFileSync (filename, altParsers) {
