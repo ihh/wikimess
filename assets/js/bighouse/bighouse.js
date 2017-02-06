@@ -35,7 +35,7 @@ var BigHouse = (function() {
       e.preventDefault()
     })
 
-    this.themeSelector(this.theme) ()
+    this.themeSelector(this.theme,{silent:true}) ()
     
     this.pushedViews = []
     this.postponedMessages = []
@@ -97,7 +97,7 @@ var BigHouse = (function() {
     themes: [ {style: 'plain', text: 'Plain'},
               {style: 'cardroom', text: 'Card room'} ],
 
-    tabs: [{ name: 'view', method: 'showPlayPage', icon: 'castle' },
+    tabs: [{ name: 'play', method: 'showPlayPage', icon: 'castle' },
            { name: 'status', method: 'showStatusPage', icon: 'crowned-heart', },
            { name: 'games', method: 'showActiveGamesPage', icon: 'scroll-unfurled' },
            { name: 'follows', method: 'showFollowsPage', icon: 'quill-body' },
@@ -111,14 +111,14 @@ var BigHouse = (function() {
 		       start: 'Start',
 		       launch: 'Start',
 		       target: 'Start',
+		       target_expanded: 'Hide',
 		       invite: 'Invite',
 		       resetting_start: 'Locked',
 		       resetting_launch: 'Locked',
 		       resetting_target: 'Locked',
 		       resetting_invite: 'Locked',
-		       untarget: 'Hide',
-		       starting: 'Cancel',
-		       targeting: 'Cancel',
+		       polling_start: 'Cancel',
+		       polling_target: 'Cancel',
 		       ready: 'Go',
 		       waiting: 'Waiting',
 		       hidden: 'Waiting',
@@ -126,7 +126,8 @@ var BigHouse = (function() {
 		       finished: 'Finished',
                        canceled: 'Canceled',
                        invited: 'Accept',
-                       pending: 'Cancel' },
+                       pending_invite: 'Cancel',
+                       pending_target: 'Cancel' },
     
     verbose: { page: false,
                gameState: true,
@@ -354,22 +355,22 @@ var BigHouse = (function() {
       return this.makeLink (text, callback, '')
     },
 
-    makeLink: function (text, callback, sfx) {
+    makeLink: function (text, callback, sfx, allowMultipleClicks) {
       var bh = this
       sfx = sfx || 'select'
       var link = $('<a href="#">')
           .text (text)
           .attr ('title', text)
-      link.on ('click', this.callWithSoundEffect (callback, sfx, link))
+      link.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && link))
       return link
     },
 
-    makeListLink: function (text, callback, sfx) {
+    makeListLink: function (text, callback, sfx, allowMultipleClicks) {
       sfx = sfx || 'select'
       var li = $('<li>')
           .append ($('<span>')
                    .html(text))
-      li.on ('click', this.callWithSoundEffect (callback, sfx, li))
+      li.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && li))
       return li
     },
 
@@ -528,7 +529,7 @@ var BigHouse = (function() {
 
       this.eraseEventInfo()
 
-      this.showNavBar ('view')
+      this.showNavBar ('play')
       this.container
         .append (this.locBarDiv = $('<div class="locbar">'))
 
@@ -854,7 +855,7 @@ var BigHouse = (function() {
         if (other.human)
         avatarDiv
           .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, other)))
-        event.otherDiv.append (avatarDiv, $('<span class="name">').text(other.name + (event.state === 'pending' ? ' (invited)' : '')))
+        event.otherDiv.append (avatarDiv, $('<span class="name">').text(other.name + (event.state.match(/^pending/) ? ' (invited)' : '')))
         bh.showMoodImage (other.id, other.mood, avatarDiv)
       }
       event.otherDiv.empty()
@@ -892,10 +893,7 @@ var BigHouse = (function() {
           promise.done (function (data) {
             if (data.waiting) {
               event.botDefault = data.botDefault
-	      bh.updateEventState (event, 'starting')
-            } else {
-              event.game = data.game
-	      bh.updateEventState (event, invite ? 'pending' : 'ready')
+	      bh.updateEventState (event, 'polling_start')
             }
             bh.updateEventTimer (event)
           }).fail (bh.reloadOnFail())
@@ -911,61 +909,69 @@ var BigHouse = (function() {
           var selectOtherListDiv = $('<div class="selectotherlist">')
           event.selectOtherDiv.empty()
             .append ($('<div class="selectotherprompt">').text('Select a player:'), selectOtherListDiv)
+
+          function addSelectOtherListItem (name, showIconCallback, clickCallback) {
+            var avatarDiv = $('<div class="selectotheravatar">')
+            var nameSpan = $('<span class="selectothername">').text(name)
+            var div = $('<div class="selectotherlistitem">')
+                .append (avatarDiv, nameSpan)
+            selectOtherListDiv.prepend (div)
+            showIconCallback (avatarDiv)
+            avatarDivs.push (avatarDiv, nameSpan)
+            function avatarClickWrap() {
+              eventSelected()
+              clickCallback()
+            }
+            avatarDiv.on ('click', avatarClickWrap)
+            nameSpan.on ('click', avatarClickWrap)
+          }
+                  
+          if (event.botAllowed)
+            addSelectOtherListItem ('Computer player',
+                                    function (botAvatarDiv) { bh.placeIcon (bh.botOpponentIcon, botAvatarDiv) },
+                                    function() {
+                                      bh.REST_getPlayerJoinBot (bh.playerID, event.id)
+                                        .done (function () { event.selectOtherDiv.empty() })
+                                        .fail (bh.reloadOnFail())
+                                    })
+
+          addSelectOtherListItem ('Random player',
+                                  function (randomOtherAvatarDiv) { bh.placeIcon (bh.randomOpponentIcon, randomOtherAvatarDiv) },
+                                  function() {
+                                    bh.REST_getPlayerJoin (bh.playerID, event.id)
+                                      .done (function (data) {
+                                        event.selectOtherDiv.empty()
+                                        if (data.waiting)
+	                                  bh.updateEventState (event, 'polling_target')
+                                        else {
+                                          event.game = data.game
+	                                  bh.updateEventState (event, 'ready')
+                                        }
+                                      }).fail (bh.reloadOnFail())
+                                  })
+
           bh.REST_getPlayerJoinWho (bh.playerID, event.id)
 	    .done (function (data) {
               data.opponents.forEach (function (follow) {
-                var avatarDiv = $('<div class="selectotheravatar">')
-                var div = $('<div class="selectotherlistitem">')
-                    .append (avatarDiv, $('<span class="selectothername">').text(follow.name))
-                selectOtherListDiv.prepend (div)
-                bh.showMoodImage (follow.id, follow.mood, avatarDiv)
-                avatarDivs.push (avatarDiv)
-                avatarDiv.on ('click', function() {
-                  eventSelected()
-                  bh.REST_getPlayerJoinInvite (bh.playerID, event.id, follow.id)
-                    .done (function (data) {
-                      event.selectOtherDiv.empty()
-                      showOther (follow)
-                      event.game = data.game
-		      bh.updateEventState (event, 'pending')
-                    }).fail (bh.reloadOnFail())
-                })
+                addSelectOtherListItem (follow.name,
+                                        function (avatarDiv) { bh.showMoodImage (follow.id, follow.mood, avatarDiv) },
+                                        function() {
+                                          bh.REST_getPlayerJoinInvite (bh.playerID, event.id, follow.id)
+                                            .done (function (data) {
+                                              event.selectOtherDiv.empty()
+                                              showOther (follow)
+                                              event.game = data.game
+		                              bh.updateEventState (event, 'pending_target')
+                                            }).fail (bh.reloadOnFail())
+                                        })
               })
             })
-          var randomOtherAvatarDiv = $('<div class="selectotheravatar">')
-          selectOtherListDiv.append ($('<div class="selectotherlistitem">')
-                                     .append (randomOtherAvatarDiv, $('<span class="selectothername">').text('Random player')))
-          bh.placeIcon (bh.randomOpponentIcon, randomOtherAvatarDiv)
-          randomOtherAvatarDiv.on ('click', function() {
-            eventSelected()
-            bh.REST_getPlayerJoin (bh.playerID, event.id)
-              .done (function (data) {
-                event.selectOtherDiv.empty()
-                if (data.waiting)
-	          bh.updateEventState (event, 'targeting')
-                else {
-                  event.game = data.game
-	          bh.updateEventState (event, 'ready')
-                }
-              }).fail (bh.reloadOnFail())
-          })
-          if (event.botAllowed) {
-            var botAvatarDiv = $('<div class="selectotheravatar">')
-            selectOtherListDiv.append ($('<div class="selectotherlistitem">')
-                                       .append (botAvatarDiv, $('<span class="selectothername">').text('Computer player')))
-            bh.placeIcon (bh.botOpponentIcon, botAvatarDiv)
-            botAvatarDiv.on ('click', function() {
-              eventSelected()
-              bh.REST_getPlayerJoinBot (bh.playerID, event.id)
-                .done (function() { event.selectOtherDiv.empty() })
-                .fail (bh.reloadOnFail())
-            })
-          }
-          bh.updateEventState (event, 'untarget')
+
+          bh.updateEventState (event, 'target_expanded')
         })
         break;
 
-      case 'untarget':
+      case 'target_expanded':
         event.div.show()
         button.on ('click', function() {
 	  bh.selectSound = bh.playSound ('select')
@@ -983,8 +989,8 @@ var BigHouse = (function() {
         event.costDiv.hide()
         break;
 
-      case 'starting':
-      case 'targeting':
+      case 'polling_start':
+      case 'polling_target':
         event.div.show()
         event.costDiv.hide()
         event.selectOtherDiv.html ($('<div class="selectotherprompt">').text('Waiting for another player to join...'))
@@ -993,20 +999,19 @@ var BigHouse = (function() {
           event.selectOtherDiv.empty()
           bh.REST_getPlayerJoinCancel (bh.playerID, event.id)
             .done (function() {
-	      bh.updateEventState (event, event.state.replace('ing',''))
+	      bh.updateEventState (event, event.state.replace('polling_',''))
             }).fail (bh.reloadOnFail())
         })
         break;
 
-      case 'pending':
+      case 'pending_invite':
+      case 'pending_target':
         event.div.show()
         event.costDiv.hide()
         button.on('click', function() {
 	  bh.selectSound = bh.playSound ('select')
           bh.REST_getPlayerJoinInviteCancel (bh.playerID, event.id, event.other.id)
-            .done (function() {
-	      bh.updateEventState (event, event.launch ? 'launch' : 'invite')
-            }).fail (bh.reloadOnFail())
+            .fail (bh.reloadOnFail())
         })
         break;
 
@@ -1036,7 +1041,7 @@ var BigHouse = (function() {
         break;
         
       default:
-        console.log("unknown event state")
+        console.log("unknown event state: " + event.state)
         break;
       }
 
@@ -1053,7 +1058,7 @@ var BigHouse = (function() {
 	event.missedDiv.text (event.game.missed
 			      ? ("Missed " + this.plural(event.game.missed,"turn"))
 			      : '')
-      } else if (event.botDefault && event.state === 'starting') {
+      } else if (event.botDefault && event.state === 'polling_start') {
         var timeToWait = (new Date(event.botDefault) - now) / 1000
         if (timeToWait <= 0 && !event.invitedBot) {
           event.invitedBot = true
@@ -1248,21 +1253,24 @@ var BigHouse = (function() {
                           .append ($('<legend>').text("Select theme")))
                  .append (this.makeLink ('Back', this.popView)))
 
-      var label = {}
+      var label = {}, config = { silent: true }
       this.themes.forEach (function (theme) {
         var id = 'theme-' + theme.style
         fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
 	  .append (label[theme.style] = $('<label for="'+id+'" class="'+theme.style+'">')
                    .text(theme.text)
-                   .on('click',bh.themeSelector(theme.style)))
+                   .on('click',bh.themeSelector(theme.style,config)))
       })
 
       label[this.theme].click()
+      config.silent = false
     },
 
-    themeSelector: function(theme) {
+    themeSelector: function(theme,config) {
       var bh = this
       return function() {
+        if (!(config && config.silent))
+          bh.playSound ('select')
 	bh.themes.forEach (function (oldTheme) {
           bh.container.removeClass (oldTheme.style)
 	})
@@ -1480,7 +1488,7 @@ var BigHouse = (function() {
                  .append (avatarGrid = $('<div class="avatar-grid">'))
 		 .append ($('<div class="avatar-exit">')
                           .append (this.makeLink ("OK", this.confirmPickAvatar.bind (this, config)))
-                          .append (this.makeLink ("More", randomizeFaces))
+                          .append (this.makeLink ("More", randomizeFaces, undefined, true))
 			  .append (this.makeLink ("Cancel", this.showUploadPage.bind (this, config)))))
         .append (this.moodSlugBar = $('<div class="moodslugbar">'))
         .append (this.moodBar = $('<div class="mooduploadbar">'))
@@ -2154,7 +2162,7 @@ var BigHouse = (function() {
             more.remove()
             bh.continueSearch()
           })
-        else
+        else if (this.searchResults.results.length)
           more.text('All matching players shown')
       }
       this.searchResults.results.forEach (function (follow) { follow.showAvatar() })
@@ -3130,7 +3138,6 @@ var BigHouse = (function() {
         topCardCallback()
       }
 
-      // temporarily create the card (for the deal animation) then destroy it
       if (info.showDealAnimation) {
 	expansion.card.on ('throwinend', function() {
 	  cardListItem.attr('style','')

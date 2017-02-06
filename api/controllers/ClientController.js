@@ -205,18 +205,16 @@ module.exports = {
 
   // cancel a join
   cancelJoin: function (req, res) {
-    var event = req.params.event
-    PlayerService.findPlayer (req, res, function (player, rs) {
-      // update the Invite table
-      Invite.destroy ({ player: player.id, event: event })
-	.exec (function (err) {
-          if (err)
-	    rs (err)
-          else {
-	    rs (null, { player: player.id,
-                        waiting: false })
-          }
-	})
+    PlayerService.findEvent (req, res, function (player, event, rs) {
+      InviteService
+	.cancelJoinGame ({ player: player,
+		           event: event },
+                         function() {
+	                   rs (null, { player: player.id,
+                                       event: event.id,
+                                       waiting: false })
+                         },
+                         rs)
     })
   },
 
@@ -226,7 +224,8 @@ module.exports = {
       InviteService
 	.joinGame ({ player: player,
 		     event: event,
-                     wantHuman: false },
+                     wantHuman: false,
+                     errorCallback: rs },
 		   function (opponent, game) {
                      // game started; return game info
 	             var role = Game.getRole (game, player.id)

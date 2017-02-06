@@ -430,7 +430,7 @@ module.exports = {
                            : "finished")
                         : (game.pendingAccept
                            ? (role == 1
-                              ? "pending"
+                              ? ("pending_" + startType)
                               : "invited")
                            : (waiting
                               ? "ready"
@@ -439,8 +439,8 @@ module.exports = {
                                  : "waiting")))))
 		  : (event.invited
 		     ? (targetable
-                        ? "targeting"
-                        : "starting")
+                        ? "polling_target"
+                        : "polling_start")
 		     : (event.locked
                         ? "locked"
                         : (event.resetTime

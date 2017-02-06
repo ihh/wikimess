@@ -93,6 +93,10 @@ function clickFollows (obj) {
   clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-follows')]", "Following")
 }
 
+function clickPlay (obj) {
+  clickExpect (obj, "//div[@class='navbar']/span[contains(@class,'nav-play')]", "Outside WizCom")
+}
+
 function search (obj, lastSearchText, searchText, numResults) {
   clickFollows (obj)
   
@@ -243,6 +247,19 @@ function clickGo (obj, expectText) {
   clickExpect (obj, '//*[contains(@class,"button") and text()="Go"]', expectText)
 }
 
+function clickSelectOther (obj, text, expectText) {
+  clickExpect (obj, '//*[contains(@class,"selectother")]//*[text()="'+text+'"]', expectText)
+}
+
+function clickFollowSectionButton (obj, section, oldButtonText, newButtonText) {
+  clickExpect (obj, "//div[@class='followsection' and ./div/text()='"+section+"']//div[contains(@class,'button') and text()='"+oldButtonText+"']", newButtonText)
+  checkFollowButtonAbsent (obj, oldButtonText)
+}
+
+function checkFollowButtonAbsent (obj, buttonText) {
+  checkPathAbsent (obj, "//div[contains(@class,'button') and text()='"+buttonText+"']")
+}
+
 function quit (obj) {
   it('should quit #' + obj.count, function(done) {
     obj.driver.quit()
@@ -252,18 +269,18 @@ function quit (obj) {
 }
 
 describe("invite", function() {
-  var fred = create ('chrome')
+  var jim = create ('chrome')
   var sheila = create ('chrome')
 
-  frontpage (fred)
+  frontpage (jim)
   frontpage (sheila)
 
-  login (fred, 'fred', 'test')
+  login (jim, 'jim', 'test')
   login (sheila, 'sheila', 'test')
 
-  search (fred, '', 'sheila', 1)
-  clickAvatar (fred, 'Search results', 'sheila', 'Games')
-  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
+  search (jim, '', 'sheila', 1)
+  clickAvatar (jim, 'Search results', 'sheila', 'Games')
+  clickEventButton (jim, 'Chat scene', 'Invite', 'Cancel')
 
   waitForActiveGameCount (sheila, 1)
   clickActiveGames (sheila)
@@ -272,28 +289,54 @@ describe("invite", function() {
   clickFollows (sheila)
   clickActiveGames (sheila)
   
-  waitForText (fred, 'Canceled')
-  clickBack (fred, 'Search results')
-  clickAvatar (fred, 'Search results', 'sheila', 'Games')
+  waitForText (jim, 'Canceled')
+  clickBack (jim, 'Search results')
+  clickAvatar (jim, 'Search results', 'sheila', 'Games')
 
-  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
+  clickEventButton (jim, 'Chat scene', 'Invite', 'Cancel')
   waitForActiveGameCount (sheila, 1)
-  clickEventButton (fred, 'Chat scene', 'Cancel', 'Invite')
+  clickEventButton (jim, 'Chat scene', 'Cancel', 'Canceled')
 
   waitForActiveGameCount (sheila, 0)
   clickFollows (sheila)
   clickActiveGames (sheila)
- 
-  clickEventButton (fred, 'Chat scene', 'Invite', 'Cancel')
+
+  clickBack (jim, 'Search results')
+  clickAvatar (jim, 'Search results', 'sheila', 'Games')
+
+  clickEventButton (jim, 'Chat scene', 'Invite', 'Cancel')
   clickEventButton (sheila, 'Chat scene', 'Accept', 'Go')
   clickGo (sheila, 'This is the only card')
 
-  makeMove (fred, "only card", "right")
+  makeMove (jim, "only card", "right")
   makeMove (sheila, "only card", "left")
 
-  makeMove (fred, "Game over", "right")
+  makeMove (jim, "Game over", "right")
+  makeMove (sheila, "Game over", "left")
+
+  waitForActiveGameCount (sheila, 0)
+
+  clickFollows (jim)
+  clickFollowSectionButton (jim, 'Recently played', 'Follow', 'Unfollow')
+  clickPlay (jim)
+  
+  clickEventButton (jim, 'Targetable', 'Start', 'Hide')
+  clickSelectOther (jim, 'sheila', 'Cancel')
+  
+  waitForActiveGameCount (sheila, 1)
+  clickActiveGames (sheila)
+  clickEventButton (sheila, 'Targetable', 'Accept', 'Go')
+  clickGo (sheila, 'So nice to see you')
+
+  makeMove (jim, "So nice", "right")
+  makeMove (sheila, "So nice", "left")
+
+  makeMove (jim, "glad you agree", "right")
+  makeMove (sheila, "not very nice", "left")
+
+  makeMove (jim, "Game over", "right")
   makeMove (sheila, "Game over", "left")
 
   quit (sheila)
-  quit (fred)
+  quit (jim)
 })

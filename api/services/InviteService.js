@@ -13,13 +13,13 @@ module.exports = {
   joinGame: function (info, gameStarted, playerWaiting, error) {
     var player = info.player
     var event = info.event
-
+    
     // first check if there's a running Game
     Game.find ({ where: { or: [ { player1: player.id, quit1: false },
 				{ player2: player.id, quit2: false } ],
 			  event: event.id } })
       .exec (function (err, games) {
-	if (err) rs(err)
+	if (err) error(err)
 	else if (games.length) {
 	  var game = games[0]
 	  error (new Error ("Game " + game.id + " already in progress"))
@@ -135,6 +135,28 @@ module.exports = {
     return doTest ? Invite.find ({ player: playerId, event: eventId }) : Promise.resolve (defaultValue)
   },
 
+  cancelJoinGame: function (info, successCallback, errorCallback) {
+    var player = info.player, event = info.event
+    Invite.destroy ({ player: player.id, event: event.id })
+      .exec (function (err, deleted) {
+        if (err)
+	  rs (err)
+        else {
+          if (deleted.length)
+            PlayerService.runWithLock
+          ([ player.id ],
+           function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
+	     LocationService.refundCost (player, event)
+             lockedSuccess()
+           },
+           successCallback,
+           errorCallback)
+          else
+            successCallback()
+        }
+      })
+  },
+  
   startGame: function (info) {
     var event = info.event
     var player1 = info.player1

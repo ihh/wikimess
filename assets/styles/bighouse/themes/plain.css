@@ -42,6 +42,10 @@
     color: red;
 }
 
+.bighouse.plain .locbar .event .selectotheravatar {
+    border-color: black;
+}
+
 .bighouse.plain .cardbar .cardtable {
     border-top-style: solid;
     border-top-width: 1px;
@@ -53,7 +57,7 @@
 }
 
 .bighouse .detailbar .statusline {
-    border-color: #888;
+    border-color: #444;
 }
 
 .bighouse.plain .choicebar a,
@@ -61,7 +65,7 @@
 .bighouse.plain .statusbar,
 .bighouse.plain .backbar,
 .bighouse.plain .menubar {
-    color: #888;
+    color: black;
 }
 
 .bighouse.plain .choicebar span.disabled {
@@ -111,11 +115,11 @@
 
 .bighouse.plain .titlebar,
 .bighouse.plain .moodslugbar {
-    color: #444;
+    color: black;
 }
 
 .bighouse.plain .inputbar {
-    color: #666;
+    color: black;
 }
 
 .bighouse.plain .inputbar input[type=text],
@@ -126,11 +130,11 @@
 }
 
 .bighouse.plain .menubar li {
-    color: #888;
+    color: black;
 }
 
 .bighouse.plain .menubar .card {
-    color: #888;
+    color: black;
     background-color: #ccc;
 }
 
@@ -141,7 +145,7 @@
 .bighouse.plain .detailbar .icon img {
     border-style: solid;
     border-width: 1px;
-    border-color: #888;
+    border-color: #444;
 }
 
 .bighouse.plain .detailbar .statusline {

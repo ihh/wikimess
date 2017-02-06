@@ -5,6 +5,11 @@
         newSignUp: false
     },
     {
+        name: "jim",
+        password: "test",
+        newSignUp: false
+    },
+    {
         name: "sheila",
         password: "test",
         newSignUp: false

@@ -42,6 +42,10 @@
     color: red;
 }
 
+.bighouse.cardroom .locbar .event .selectotheravatar {
+    border-color: white;
+}
+
 .bighouse.cardroom .cardbar .cardtable {
     background-color: darkgreen;  /* old browsers */
     background: linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
@@ -63,7 +67,7 @@
 .bighouse.cardroom .statusbar,
 .bighouse.cardroom .backbar,
 .bighouse.cardroom .menubar {
-    color: #ccc;
+    color: white;
 }
 
 .bighouse.cardroom .veil {
@@ -113,7 +117,7 @@
 
 .bighouse.cardroom .titlebar,
 .bighouse.cardroom .moodslugbar {
-    color: #ccc;
+    color: white;
 }
 
 .bighouse.cardroom .inputbar {
@@ -128,11 +132,11 @@
 }
 
 .bighouse.cardroom .menubar li {
-    color: #888;
+    color: white;
 }
 
 .bighouse.cardroom .menubar .card {
-    color: #888;
+    color: white;
     background-color: #444;
 }
 
