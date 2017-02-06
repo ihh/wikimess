@@ -18771,17 +18771,18 @@ const Card = function (stack, targetElement) {
     // to the touchstart event for touch enabled devices and mousedown otherwise.
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__utilities__["a" /* isTouchDevice */])()) {
       targetElement.addEventListener('touchstart', function (event) {
-        if (config.allowMovement(event, __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__utilities__["a" /* isTouchDevice */])())) {
+        if (config.allowMovement(event, true)) {
           eventEmitter.trigger('panstart');
         }
       });
 
       targetElement.addEventListener('touchend', function () {
-        if (isDraging && !isPanning) {
-          eventEmitter.trigger('dragend', {
-            target: targetElement
-          });
-        }
+	if (config.allowMovement(event, true))
+          if (isDraging && !isPanning) {
+            eventEmitter.trigger('dragend', {
+              target: targetElement
+            });
+          }
       });
 
       // Disable scrolling while dragging the element on the touch enabled devices.
@@ -18798,18 +18799,19 @@ const Card = function (stack, targetElement) {
         });
 
         global.addEventListener('touchmove', function (event) {
-          if (dragging && config.allowMovement(event, __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__utilities__["a" /* isTouchDevice */])())) {
+          if (dragging && config.allowMovement(event, true)) {
             event.preventDefault();
           }
         });
       })();
     } else {
       targetElement.addEventListener('mousedown', function () {
-        eventEmitter.trigger('panstart');
+        if (config.allowMovement(event, false))
+          eventEmitter.trigger('panstart');
       });
 
       targetElement.addEventListener('mouseup', function () {
-        if (isDraging && !isPanning) {
+        if (isDraging && !isPanning && config.allowMovement(event, false)) {
           eventEmitter.trigger('dragend', {
             target: targetElement
           });
@@ -18828,9 +18830,8 @@ const Card = function (stack, targetElement) {
     });
 
     mc.on('panend', function (event) {
-      eventEmitter.trigger('panend', event);
       if (config.allowMovement(event, __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_7__utilities__["a" /* isTouchDevice */])())) {
-      isPanning = false;
+	isPanning = false;
         eventEmitter.trigger('panend', event);
       }
     });

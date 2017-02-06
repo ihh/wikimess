@@ -420,33 +420,35 @@ module.exports = {
 
     var startType = (invitee
                      ? (event.launch
-                        ? "launch"
-                        : "invite")
+                        ? 'launch'
+                        : 'invite')
                      : (targetable
-                        ? "target"
-                        : "start"))
+                        ? 'target'
+                        : 'start'))
     desc.state = (game
 		  ? (game.canceled
-                     ? "canceled"
+                     ? 'canceled'
                      : (game.finished
-                        ? "finished"
+                        ? (waiting
+			   ? 'finishing'
+			   : 'finished')
                         : (game.pendingAccept
                            ? (role == 1
-                              ? ("pending_" + startType)
-                              : "invited")
+                              ? ('pending_' + startType)
+                              : 'invited')
                            : (waiting
-                              ? "ready"
+                              ? 'ready'
                               : (hide
-                                 ? "hidden"
-                                 : "waiting")))))
+                                 ? 'hidden'
+                                 : 'waiting')))))
 		  : (event.invited
 		     ? (targetable
-                        ? "polling_target"
-                        : "polling_start")
+                        ? 'polling_target'
+                        : 'polling_start')
 		     : (event.locked
-                        ? "locked"
+                        ? 'locked'
                         : (event.resetTime
-			   ? ("resetting_" + startType)
+			   ? ('resetting_' + startType)
 			   : startType))))
 
 
