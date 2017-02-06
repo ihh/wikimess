@@ -60,7 +60,7 @@
     border-color: #444;
 }
 
-.bighouse.plain .choicebar a,
+.bighouse.plain .cardbar.dynamic .choicebar a,
 .bighouse.plain .detailbar,
 .bighouse.plain .statusbar,
 .bighouse.plain .backbar,
@@ -68,8 +68,17 @@
     color: black;
 }
 
+.bighouse.plain .cardbar.static .choicebar a {
+    color: white;
+}
+
 .bighouse.plain .choicebar span.disabled {
     color: #ccc;
+}
+
+.bighouse.plain .cardbar.static .choicebar .hint a,
+.bighouse.plain .cardbar.static .choicebar .hint span {
+    background-color: #666;
 }
 
 .bighouse.plain .veil {

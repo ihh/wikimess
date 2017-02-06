@@ -291,37 +291,40 @@ body {
     z-index: 10;
 }
 
-.bighouse .cardbar .cardtable li {
+.bighouse .cardbar.dynamic .cardtable li {
     border-radius: 5px;
-    text-align: center;
-    font-size: 12px;
     border-width: 10px;
     border-style: solid;
+    padding: 4px;
+}
+
+.bighouse .cardbar .cardtable li {
+    text-align: center;
+    font-size: 12px;
     box-sizing: border-box;
     cursor: pointer;
-    padding: 4px;
     overflow-y: auto;
 }
 
 /* ensure nth-child is less specific than topcard,
    which in turn is less specific than jiggle */
-.bighouse .cardtable li:nth-child(4n+3) {
+.bighouse .cardbar.dynamic li:nth-child(4n+3) {
     top: 2px; transform: translate(4px, 3px) rotate(-.8deg);
 }
 
-.bighouse .cardtable li:nth-child(4n+2) {
+.bighouse .cardbar.dynamic li:nth-child(4n+2) {
     top: 3px; transform: translate(2px, 2px) rotate(0.4deg);
 }
 
-.bighouse .cardtable li:nth-child(4n+1) {
+.bighouse .cardbar.dynamic li:nth-child(4n+1) {
     top: 3px; transform: translate(-2px, 2px) rotate(-0.4deg);
 }
 
-.bighouse .cardtable li:nth-child(4n) {
+.bighouse .cardbar.dynamic li:nth-child(4n) {
     top: 4px; transform: translate(-4px, -2px) rotate(.8deg);
 }
 
-.bighouse .cardbar .cardtable li.topcard {
+.bighouse .cardbar.dynamic .cardtable li.topcard {
     transform: translate(0px, 0px) rotate(0deg);
 }
 
@@ -329,7 +332,7 @@ body {
     z-index: 20;
 }
 
-.bighouse .cardbar .cardtable li.jiggle:not(.dragging) {
+.bighouse .cardbar.dynamic .cardtable li.jiggle:not(.dragging) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
     -webkit-animation: jiggle 5s ease 0s infinite;
@@ -359,11 +362,23 @@ body {
     100% { transform: rotate(0deg); }
 }
 
-.bighouse .choicebar .choice1 .hint {
+.bighouse .cardbar.static .choicebar .hint {
+    margin: 8px;
+}
+
+.bighouse .cardbar.static .choicebar .hint a,
+.bighouse .cardbar.static .choicebar .hint span {
+    display: block;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: large;
+}
+
+.bighouse .cardbar.dynamic .choicebar .choice1 .hint {
     padding-left: 4px;
 }
 
-.bighouse .choicebar .choice2 .hint {
+.bighouse .cardbar.dynamic .choicebar .choice2 .hint {
     padding-right: 4px;
 }
 

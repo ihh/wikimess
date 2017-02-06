@@ -74,8 +74,15 @@
 	justify-content: center;
     }
 
-    .bighouse .cardbar .cardtable {
+    .bighouse .cardbar.dynamic .cardtable {
 	width: 98vw;
+    }
+
+    .bighouse .cardbar.static .cardtable {
+	width: 100%;
+    }
+
+    .bighouse .cardbar .cardtable {
 	flex-grow: 1;
 	margin-top: 2vw;
 	margin-bottom: 2vw;
@@ -95,13 +102,22 @@
     .bighouse .cardbar .cardtable ul {
 	padding: 0;
     }
-    
-    .bighouse .cardbar .cardtable li {
+
+    .bighouse .cardbar.dynamic .cardtable li {
 	width: 80%;
 	height: 85%;
 	margin: 6% 10% 6% 10%;
 	padding: 8px;
-	
+    }
+
+    .bighouse .cardbar.static .cardtable li {
+	width: 100%;
+	height: 100%;
+	margin: 0%;
+	padding: 0px 0px 20px 0px;
+    }
+    
+    .bighouse .cardbar .cardtable li {
 	font-size: 12px;
 	line-height: 16px;
 	
@@ -117,7 +133,9 @@
     .bighouse .cardtable li .content {
 	width: 100%;
 	flex-grow: 1;
+/*
 	display: flex;
+*/
 	align-items: center;
 	justify-content: center;
     }
@@ -128,14 +146,14 @@
 	height: 16vw;
     }
 
-    .bighouse .choicebar {
+    .bighouse .cardbar.dynamic .choicebar {
 	width: 100%;
 	height: 10%;
 	position: absolute;
 	bottom: 0;
     }
 
-    .bighouse .choicebar .choice1 {
+    .bighouse .cardbar.dynamic .choicebar .choice1 {
 	width: 50%;
 	float: left;
 	display: flex;
@@ -148,7 +166,7 @@
 	padding-left: 4px;
     }
 
-    .bighouse .choicebar .choice2 {
+    .bighouse .cardbar.dynamic .choicebar .choice2 {
 	width: 50%;
 	float: right;
 	display: flex;

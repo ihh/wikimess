@@ -47,6 +47,7 @@
     border-style: none solid none solid;
     border-width: 1px;
     border-radius: 4px;
+    margin-top: 4px;
     margin-bottom: 10px;
     padding: 0;
     width: 95%;
@@ -83,13 +84,9 @@
     display: none;
 }
 
-.bighouse .cardbar .cardtable .historytag,
 .bighouse .cardbar .cardtable .warnselect {
     font-size: smaller;
     font-style: italic;
-    position: absolute;
-    left: 0;
-    bottom: 0;
     width: 100%;
     display: flex;
     justify-content: center;

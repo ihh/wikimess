@@ -146,6 +146,8 @@ var BigHouse = (function() {
     
     globalMenuCount: 0,
     preloadSounds: ['error','select','login','logout','gamestart'],
+
+    disableSwipeInterface: true,
     
     // REST interface
     REST_loginFacebook: function() {
@@ -352,7 +354,7 @@ var BigHouse = (function() {
     },
 
     makeSilentLink: function (text, callback) {
-      return this.makeLink (text, callback, '')
+      return this.makeLink (text, callback, '', true)
     },
 
     makeLink: function (text, callback, sfx, allowMultipleClicks) {
@@ -2180,21 +2182,26 @@ var BigHouse = (function() {
       this.postponedMessages = []
       this.revealMoods()
 
+      var cardTable = $('<div class="cardtable">')
+          .append ($('<div class="slidebar">')
+                   .append ($('<div class="slidetab">')
+                            .on ('click', function() {
+			      bh.container.toggleClass('bigtable')
+			      bh.refreshPlayerMoodImage()
+			      bh.refreshOpponentMoodImage()
+			    })))
+      this.choiceDiv = $('<div>')
+      if (!this.disableSwipeInterface)
+	cardTable.append ($('<div class="choicebar">')
+                          .append (this.choiceDiv))
+      cardTable.append (this.stackList = $('<ul class="stack">'))
+      
       this.container
         .empty()
         .append (this.statusBar = $('<div class="statusbar">'))
         .append ($('<div class="cardbar">')
-                 .append ($('<div class="cardtable">')
-                          .append ($('<div class="slidebar">')
-                                   .append ($('<div class="slidetab">')
-                                            .on ('click', function() {
-					      bh.container.toggleClass('bigtable')
-					      bh.refreshPlayerMoodImage()
-					      bh.refreshOpponentMoodImage()
-					    })))
-                          .append (this.choiceBar = $('<div class="choicebar">')
-                                   .append (this.choiceDiv = $('<div>')))
-			  .append (this.stackList = $('<ul class="stack">'))))
+		 .addClass (this.disableSwipeInterface ? 'static' : 'dynamic')
+                 .append (cardTable))
         .append (this.moodBar = $('<div class="moodbar">'))
         .append ($('<div class="timebar">')
 		 .append (this.timerDiv = $('<div class="timer">')
@@ -2216,7 +2223,7 @@ var BigHouse = (function() {
 				    swing.Direction.RIGHT
 				  ],
                                   allowMovement: function (evt) {
-                                    return $(evt.target).closest('.topcard').length > 0
+                                    return !bh.disableSwipeInterface && $(evt.target).closest('.topcard').length > 0
                                   },
                                   isThrowOut: isThrowOut })
 
@@ -2480,13 +2487,21 @@ var BigHouse = (function() {
       $(card.elem).addClass ('topcard')
 
       // show hints
+      var lr = this.makeLeftRightLinks (expansion, true)
+      this.choiceDiv.empty()
+	.append (lr.left, lr.right)
+    },
+
+    makeLeftRightLinks: function (expansion, addArrows) {
       var node = expansion.node
       var isFinal = this.expansionIsFinal(expansion)
       var leftHint = isFinal ? this.defaultBackHint : ((node.left && node.left.hint) || this.defaultNextHint)
       var rightHint = isFinal ? this.defaultBackHint : ((node.right && node.right.hint) || this.defaultNextHint)
 
-      leftHint = "← " + leftHint
-      rightHint = rightHint + " →"
+      if (addArrows) {
+	leftHint = "← " + leftHint
+	rightHint = rightHint + " →"
+      }
 
       // strike if we're history, or if option is not visible
       var leftStruck, rightStruck
@@ -2509,12 +2524,15 @@ var BigHouse = (function() {
 			    : bh.makeSilentLink (hint,
 						 bh.nodeThrowFunction (expansion, dir))))
       }
-      
-      this.choiceDiv.empty()
-	.append (makeHint ('choice1', leftStruck, leftHint, 'left'))
-	.append (makeHint ('choice2', rightStruck, rightHint, 'right'))
-    },
 
+      return { left: makeHint ('choice1', leftStruck, leftHint, 'left'),
+	       right: makeHint ('choice2', rightStruck, rightHint, 'right'),
+	       leftHint: leftHint,
+	       rightHint: rightHint,
+	       leftStruck: leftStruck,
+	       rightStruck: rightStruck }
+    },
+    
     plural: function(n,singular,plural) {
       plural = plural || (singular + 's')
       n = typeof(n) === 'undefined' ? 0 : n
@@ -3008,6 +3026,7 @@ var BigHouse = (function() {
           })
 
       // create the menu, if applicable
+      var selectWarning = $('<span class="warnselect">')
       var topCardCallback = function() {
 	delete bh.throwDisabled
 	bh.choiceDiv.show()
@@ -3051,12 +3070,7 @@ var BigHouse = (function() {
 	})
 	content.push (fieldset)
 
-	var selectWarning = $('<span class="warnselect">')
-	  .text("Please select an option")
-	  .css('visibility','hidden')
-	content.push (selectWarning)
 	menuSelectCallback = function (menuItem, menuIndex) {
-	  selectWarning.css('visibility','hidden')
 	  bh.choiceDiv.show()
 	  delete bh.throwDisabled
         }
@@ -3064,7 +3078,7 @@ var BigHouse = (function() {
         // create the function that will be called when the menu card reaches the top of the pack
         topCardCallback = function() {
           bh.choiceDiv.hide()
-          bh.throwDisabled = function() { selectWarning.css('visibility','visible'); return true }
+          bh.throwDisabled = function() { selectWarning.text("Please select an option"); return true }
           if (typeof(expansion.action) !== 'undefined')
             expansion.selectedItem = expansion.action
 	  if (typeof(expansion.selectedItem) !== 'undefined') {
@@ -3077,6 +3091,16 @@ var BigHouse = (function() {
 	  delete bh.throwDisabled
 	  bh.choiceDiv.show()
 	}
+
+      if (bh.disableSwipeInterface) {
+	var lr = bh.makeLeftRightLinks (expansion, false)
+	var choiceBar = $('<div class="choicebar">')
+	if (lr.rightStruck || lr.leftHint !== lr.rightHint)
+	  choiceBar.append (lr.left)
+	choiceBar.append (lr.right)
+	content.push (choiceBar)
+      }
+      content.push (selectWarning)
 
       // if a mood change was specified, tack it onto the end of the top-card callback
       if (newMood && !expansion.isHistory) {
@@ -3092,7 +3116,7 @@ var BigHouse = (function() {
       if (cardClass)
         cardListItem.addClass (cardClass)
       if (expansion.isHistory && !expansion.node.wait)
-        cardListItem.append ($('<span class="historytag">').text("Choice already made"))
+        selectWarning.text("Choice already made")
       this.stackList.append (cardListItem)
       if (this.verbose.stack) {
 	console.log ("Card #" + this.cardIndex(cardListItem[0]) + " added: " + cardListItem[0].innerHTML)
@@ -3138,7 +3162,7 @@ var BigHouse = (function() {
         topCardCallback()
       }
 
-      if (info.showDealAnimation) {
+      if (info.showDealAnimation && !bh.disableSwipeInterface) {
 	expansion.card.on ('throwinend', function() {
 	  cardListItem.attr('style','')
 	  cardDealt.resolve()
@@ -3402,8 +3426,15 @@ var BigHouse = (function() {
     },
 
     nodeThrowFunction: function (expansion, direction) {
+      var bh = this
+      var clicked = false
       return function() {
-	this.throwCard (expansion.card, direction)
+	if (bh.throwDisabled)
+	  bh.throwDisabled()
+	else if (!clicked) {
+	  clicked = true
+	  bh.throwCard (expansion.card, direction)
+	}
       }
     },
 

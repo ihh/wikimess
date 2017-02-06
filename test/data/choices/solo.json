@@ -12,7 +12,7 @@
 						  next: { hint: "No", text: "DAMMIT!!!!" } } } } } }
  },
  { name: "solo_menu",
-   intro: [{ text: "So, you think you can beat me?",
+   intro: [{ text: "So, you think you can beat me? I must say I find it very difficult to believe a human could beat me. I am the best machine in the galaxy! I have the power of a thousand suns! Mere mortals quake in my presence! I could go on and on like this.",
 	     menu: [{ hint: "Easily",
 		      text: "Such arrogance!",
                       left: { hint: "Not really", text: "Such denial!" },
