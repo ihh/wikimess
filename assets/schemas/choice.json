@@ -12,6 +12,9 @@
         "intro": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
+        "intro1": {
+          "$ref": "#/definitions/intro_or_intro_list"
+        },
         "intro2": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
@@ -130,6 +133,9 @@
           "type": "boolean"
         },
         "outro": {
+          "$ref": "#/definitions/intro_or_intro_list"
+        },
+        "outro1": {
           "$ref": "#/definitions/intro_or_intro_list"
         },
         "outro2": {

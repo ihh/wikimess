@@ -117,6 +117,12 @@ module.exports = {
           if (typeof(out) == 'string')
             out = { outro: out }
 	  expandAliases (out)
+          if (out.outro1) {
+            out.outro = out.outro1
+            if (!out.outro2)
+              out.outro2 = {}
+            delete oc.outro1
+          }
 	  out.outro = makeText (out.outro)
 	  out.outro2 = makeText (out.outro2)
 	  expandHints (out, 'outro')
@@ -204,6 +210,12 @@ module.exports = {
       config.autoExpand = true
     
     expandAliases (config)
+    if (config.intro1) {
+      config.intro = config.intro1
+      if (!config.intro2)
+        config.intro2 = {}
+      delete config.intro1
+    }
     config.intro = makeText (config.intro)
     config.intro2 = makeText (config.intro2)
     expandHints (config, 'intro')

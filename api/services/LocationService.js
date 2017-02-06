@@ -22,6 +22,10 @@ module.exports = {
     var promises = []
     if (config.events)
       config.events.forEach (function (event, n) {
+        if (event.mail) {
+          event.launch = event.hide = true
+          event.timeout = 0
+        }
 	if (typeof(event.choice) === 'object') {
 	  event.choice.name = event.choice.name || (config.name + '-choice-' + (n+1))
 	  promises.push (ChoiceService.bluebirdCreateChoice (event.choice))
@@ -425,9 +429,7 @@ module.exports = {
 		  ? (game.canceled
                      ? "canceled"
                      : (game.finished
-                        ? (waiting
-                           ? "finishing"
-                           : "finished")
+                        ? "finished"
                         : (game.pendingAccept
                            ? (role == 1
                               ? ("pending_" + startType)

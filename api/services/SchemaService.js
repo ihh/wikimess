@@ -199,6 +199,7 @@ var choice_schema_defs = {
       name: { type: "string" },
       parent: { type: "string" },
       intro: ref_schema('intro_or_intro_list'),
+      intro1: ref_schema('intro_or_intro_list'),
       intro2: ref_schema('intro_or_intro_list'),
 
       common: { type: "object" },
@@ -248,6 +249,7 @@ var choice_schema_defs = {
       weight: { type: ["string","number"] },
       exclusive: { type: "boolean" },
       outro: ref_schema('intro_or_intro_list'),
+      outro1: ref_schema('intro_or_intro_list'),
       outro2: ref_schema('intro_or_intro_list'),
       flush: { type: "boolean" },
       next: one_or_list_schema(ref_schema('choice_ref')),
@@ -392,6 +394,7 @@ module.exports = {
 				     { type: "array", minItems: 1, items: { type: "string" } }] },
 		compatibility: { type: "string" },
                 targetable: { type: "boolean" },
+                mail: { type: "boolean" },
                 hide: { type: "boolean" },
                 launch: { type: "boolean" },
 		timeout: { type: "number" },

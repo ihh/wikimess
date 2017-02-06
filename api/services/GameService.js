@@ -566,6 +566,8 @@ module.exports = {
   updateGame: function (query, game, success, error) {
     var updateAttrs = { text1: game.text1,
 			text2: game.text2,
+                        quit1: game.quit1,
+                        quit2: game.quit2,
 			moves: game.moves,
 			missed1: game.missed1,
 			missed2: game.missed2,
@@ -1117,7 +1119,8 @@ module.exports = {
 	  if (game.move1 || game.move2)
 	    GameService.recordMove ({ game: game,
 				      moveNumber: moveNumber + 1,
-				      update: {},
+				      update: { quit1: (game.finished && game.move1 ? true : false),
+                                                quit2: (game.finished && game.move2 ? true : false) },
 				      turnUpdate: { move1: game.move1,
 						    move2: game.move2 } },
 				    callback,

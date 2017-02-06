@@ -108,26 +108,26 @@ var BigHouse = (function() {
     randomOpponentIcon: 'body',
     
     eventButtonText: { locked: 'Locked',
+		       resetting_start: 'Locked',
+		       resetting_launch: 'Locked',
+		       resetting_target: 'Locked',
+		       resetting_invite: 'Locked',
 		       start: 'Start',
 		       launch: 'Start',
 		       target: 'Start',
 		       target_expanded: 'Hide',
 		       invite: 'Invite',
-		       resetting_start: 'Locked',
-		       resetting_launch: 'Locked',
-		       resetting_target: 'Locked',
-		       resetting_invite: 'Locked',
-		       polling_start: 'Cancel',
-		       polling_target: 'Cancel',
+                       invited: 'Accept',
 		       ready: 'Go',
-		       waiting: 'Waiting',
-		       hidden: 'Waiting',
 		       finishing: 'Go',
 		       finished: 'Finished',
-                       canceled: 'Canceled',
-                       invited: 'Accept',
+		       waiting: 'Waiting',
+		       hidden: 'Waiting',
+		       polling_start: 'Cancel',
+		       polling_target: 'Cancel',
                        pending_invite: 'Cancel',
-                       pending_target: 'Cancel' },
+                       pending_target: 'Cancel',
+                       canceled: 'Canceled' },
     
     verbose: { page: false,
                gameState: true,
@@ -3092,7 +3092,7 @@ var BigHouse = (function() {
       if (cardClass)
         cardListItem.addClass (cardClass)
       if (expansion.isHistory && !expansion.node.wait)
-        cardListItem.append ($('<span class="historytag">').text("Time limit exceeded"))
+        cardListItem.append ($('<span class="historytag">').text("Choice already made"))
       this.stackList.append (cardListItem)
       if (this.verbose.stack) {
 	console.log ("Card #" + this.cardIndex(cardListItem[0]) + " added: " + cardListItem[0].innerHTML)
@@ -3437,7 +3437,7 @@ var BigHouse = (function() {
 	    console.log ("Received '" + msg.data.message + "' message for move #" + msg.data.move + "; current move #" + this.moveNumber)
           if (msg.data.move >= this.moveNumber)
             this.callOrPostpone (this.loadGameCards.bind (this), msg)
-	} else if (this.page === 'play' || this.page === 'activeGames')
+	} else if (this.page === 'play' || this.page === 'activeGames' || this.page === 'otherStatus')
           this.updateEventFromMoveMessage (msg.data)
         break
       case "mood":
