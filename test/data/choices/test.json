@@ -23,7 +23,8 @@
 	    }],
     rr: [{weight: "$c.iceCream",
 	  outro: [{ text: "Cool, let's skip class together!",
-		    next: { text: "Party times, by the beach...",
+		    next: { role1: { text: "Party times, by the beach..." },
+                            role2: { text: "Sunny day, by the beach..." },
 			    next: { text: "Co-operation is great!" } } }],
 	  global1:{count:{c:"$_+1||1"}},  // increments global1.count.c
           global2:{count:{c:"$_+1||1"}},  // this increments global2.count.c

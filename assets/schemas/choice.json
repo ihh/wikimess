@@ -250,6 +250,12 @@
                 "object"
               ]
             },
+            "role1": {
+              "$ref": "#/definitions/intro_node"
+            },
+            "role2": {
+              "$ref": "#/definitions/intro_node"
+            },
             "switch": {
               "$ref": "#/definitions/intro_node_cases"
             },
@@ -294,6 +300,12 @@
                 "string",
                 "object"
               ]
+            },
+            "role1": {
+              "$ref": "#/definitions/intro_node"
+            },
+            "role2": {
+              "$ref": "#/definitions/intro_node"
             },
             "switch": {
               "$ref": "#/definitions/intro_node_cases"
@@ -364,6 +376,12 @@
                 "string",
                 "object"
               ]
+            },
+            "role1": {
+              "$ref": "#/definitions/intro_node"
+            },
+            "role2": {
+              "$ref": "#/definitions/intro_node"
             },
             "switch": {
               "$ref": "#/definitions/intro_node_cases"

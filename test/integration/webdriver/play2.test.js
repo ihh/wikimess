@@ -403,7 +403,7 @@ describe("two-player game", function() {
   makeMove (fred, "skip class together", "left")
   makeMove (sheila, "skip class together", "right")
 
-  makeMove (fred, "Party times", "right")
+  makeMove (fred, "Sunny day", "right")
   makeMove (sheila, "Party times", "right")
 
   makeMove (fred, "Co-operation is great", "right")

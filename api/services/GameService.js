@@ -209,13 +209,25 @@ module.exports = {
 	  initPromise = Promise.resolve ({})
 
 	// expand all properties & merge with whatever was returned by ref, switch, expr/symexpr
+        var roleKey, otherKey
+        if (role) {
+          roleKey = Game.roleAttr (role, 'role')
+          otherKey = Game.otherRoleAttr (role, 'role')
+        }
 	promise = initPromise
 	  .then (function (expanded) {
+            var roleAttr = expanded[roleKey] || text[roleKey]
+            if (roleAttr) {
+              extend (expanded, roleAttr)
+              delete expanded[roleKey]
+            }
+            delete expanded[otherKey]
 	    if (text.grammar || expanded.grammar)
 	      grammar = extend ({}, text.grammar || {}, expanded.grammar || {}, grammar || {})
 	    return Promise.map (Object.keys(text).filter (function (key) {
 	      return key !== 'id'   // prevent clash of Text attribute 'id' with internally used 'id' passed to client
                 && key !== 'grammar'  // ignore grammar property
+                && key !== roleKey && key !== otherKey
 		&& !expanded.hasOwnProperty(key)  // ref, switch, expr/symexpr can override defaults
 	    }), function (key) {
 	      return GameService.expandText (text[key], game, outcome, role, grammar)
@@ -566,8 +578,8 @@ module.exports = {
   updateGame: function (query, game, success, error) {
     var updateAttrs = { text1: game.text1,
 			text2: game.text2,
-                        quit1: game.quit1,
-                        quit2: game.quit2,
+                        quit1: (game.quit1 ? true : false),
+                        quit2: (game.quit2 ? true : false),
 			moves: game.moves,
 			missed1: game.missed1,
 			missed2: game.missed2,

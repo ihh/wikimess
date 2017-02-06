@@ -23,7 +23,7 @@ module.exports = {
       return
 
     // keys for Choices and Outcomes
-    var asymKeys = ['local', 'global', 'mood']
+    var asymKeys = ['local', 'global', 'mood', 'role']
 
     function makeText (text) {
       if (typeof(text) === 'undefined')
@@ -313,10 +313,11 @@ module.exports = {
     } else if (typeof(x) == 'object') {
       var swapped = {}
       Object.keys(x).forEach (function (key) {
+        var newKey = key.replace(/^(.*)([12])$/, function(_m,k,r) { return k + (parseInt(r) ^ 3) })  // swap role1/role2, and any other keys ending in 1 & 2
 	if (typeof(x[key]) == 'object' || key == 'text')
-	  swapped[key] = ChoiceService.swapTextRoles(x[key])
-	else
-	  swapped[key] = x[key]
+	  swapped[newKey] = ChoiceService.swapTextRoles(x[key])
+        else 
+	  swapped[newKey] = x[key]
       })
       return swapped
     }
