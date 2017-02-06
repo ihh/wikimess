@@ -4,7 +4,7 @@
     events: [ { title: "Chat scene",
 		hint: "A game with just one choice",
 		timeout: 10,
-		resetWait: 5,
+		resetWait: 20,
 		choice: {
                   autoExpand: false,
 		  intro: [{ text: "This is the only card.",

@@ -176,7 +176,7 @@ module.exports = {
       .then (function (follows) {
         status.following = (follows.length > 0)
         return Game.find ({ where: { or: [ { player1: player.id, player2: follower.id, quit2: false },
-				    { player2: player.id, player1: follower.id, quit1: false } ] },
+				           { player2: player.id, player1: follower.id, quit1: false } ] },
                      sort: 'createdAt' })
           .populate ('player1')
           .populate ('player2')
@@ -189,14 +189,34 @@ module.exports = {
         })
         return Event.getChatEvents()
       }).then (function (events) {
-        if (events)
-          events.forEach (function (event) {
-            if (!seenEventId[event.id]
-                && !LocationService.invisibleOrLocked (follower, event)
-                && !LocationService.invisibleOrLocked (player, event, true)
-                && InviteService.compatibility (follower, player, event))
-              status.events.push (LocationService.eventDescriptor ({ event: event, player: follower, invitee: player }))
+        if (events.length === 0) return true
+        var eventById = {}
+        events.forEach (function (event) { eventById[event.id] = event })
+	var now = new Date()
+        return Game.find ({ where: { event: events.map (function (event) { return event.id }),
+                                     or: [ { player1: player.id, player2: follower.id, pendingAccept: false, quit2: true },
+				           { player2: player.id, player1: follower.id, pendingAccept: false, quit1: true } ] },
+                            sort: 'createdAt' })
+          .then (function (oldGames) {
+            oldGames.forEach (function (game) {
+              var event = eventById[game.event]
+	      if (event.resetAllowed) {
+		var resetTime = Game.resetTime (game, event)
+		if (now < resetTime)
+		  event.resetTime = resetTime
+              } else
+                event.visible = false
+            })
+            events.forEach (function (event) {
+              if (!seenEventId[event.id]
+                  && !LocationService.invisibleOrLocked (follower, event)
+                  && !LocationService.invisibleOrLocked (player, event, true)
+                  && InviteService.compatibility (follower, player, event))
+                status.events.push (LocationService.eventDescriptor ({ event: event, player: follower, invitee: player }))
+            })
+            return true
           })
+      }).then (function() {
         rs (null, status)
       }).catch (rs)
     } else

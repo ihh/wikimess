@@ -181,18 +181,18 @@ module.exports = {
 
   invisible: function (player, obj) {
     var invisible = false
-    if (obj.visible)
+    if (typeof(obj.visible) !== 'undefined')
       invisible = invisible || !PlayerService.evalPlayerExpr (player, obj.visible)
-    if (obj.requires)
+    if (typeof(obj.requires) !== 'undefined')
       invisible = invisible || LocationService.unaffordable (player, obj.requires)
     return invisible
   },
 
   locked: function (player, obj, ignoreCost) {
     var locked = false
-    if (obj.locked)
+    if (typeof(obj.locked) !== 'undefined')
       locked = locked || PlayerService.evalPlayerExpr (player, obj.locked)
-    if (obj.cost && !ignoreCost)
+    if (typeof(obj.cost) !== 'undefined' && !ignoreCost)
       locked = locked || LocationService.unaffordable (player, obj.cost)
     return locked
   },
