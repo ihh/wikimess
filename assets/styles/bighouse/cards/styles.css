@@ -90,6 +90,7 @@
     width: 100%;
     display: flex;
     justify-content: center;
+    min-height: 20px;
 }
 
 .bighouse .cardbar .cardtable .outcome {

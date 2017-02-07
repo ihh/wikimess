@@ -184,7 +184,7 @@ function swipeDir (obj, dir) {
 }
 
 function waitForTimeout (obj) {
-  waitForPath (obj, "//*[contains(@class,'topcard')]//span[contains(@class,'historytag') and not(contains(@style,'display:')) and text()='Choice already made']")
+  waitForPath (obj, "//*[contains(@class,'topcard')]//span[contains(@class,'warnselect') and not(contains(@style,'display:')) and text()='Choice already made']")
 }
 
 function waitSeconds (n) {

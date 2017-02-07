@@ -139,7 +139,7 @@ var BigHouse = (function() {
                music: false,
 	       stack: false },
 
-    // uncomment either of these to remove time limit for debugging purposes (or to cheat)
+    // set disableMoveTimer (or disableMoveTimerWithClick) to remove time limit for debugging purposes (or to cheat)
 //    disableMoveTimer: true,
     disableMoveTimerWithClick: true,
     suppressDisconnectWarning: true,
@@ -147,7 +147,8 @@ var BigHouse = (function() {
     globalMenuCount: 0,
     preloadSounds: ['error','select','login','logout','gamestart'],
 
-    disableSwipeInterface: true,
+    // set disableSwipeInterface for big cards (scrolling instead of swiping)
+//    disableSwipeInterface: true,
     
     // REST interface
     REST_loginFacebook: function() {
@@ -3000,30 +3001,31 @@ var BigHouse = (function() {
       
       // create the <span>'s
       var avatarCallbacks = []
-      var content = text.split(/\n/)
-	  .filter (function (para) {
-	    return /\S/.test(para)
-	  }).map (function (para) {
+      var cardListItem = $('<li>').append ($('<span class="content-padding">'))
+      text.split(/\n/)
+	.filter (function (para) {
+	  return /\S/.test(para)
+	}).forEach (function (para) {
             var span = $('<span>').addClass('content')
             avatarRegExp.lastIndex = 0
             var avatarMatch = avatarRegExp.exec (para)
             if (avatarMatch) {
-              var mood = avatarMatch[1], role = avatarMatch[2], content = avatarMatch[3]
+              var mood = avatarMatch[1], role = avatarMatch[2], speech = avatarMatch[3]
               var isSelf = (role === '' || role === 'self')
               if (mood === 'say') mood = isSelf ? bh.playerMood : (role === 'other' ? bh.opponentMood : 'happy')
               var moodDiv = $('<div>').addClass('avatar')
               span.append ($('<span>')
                            .addClass (isSelf ? 'leftballoon' : 'rightballoon')
                            .append (moodDiv)
-		           .append ($('<div>').addClass('speech').text(content)))
+		           .append ($('<div>').addClass('speech').text(speech)))
 	      var showMoodImage = role.charAt(0) === ':'
 		  ? bh.showNamedMoodImage.bind (bh, role.substr(1), mood, moodDiv)
 		  : bh.showMoodImage.bind (bh, isSelf ? bh.playerID : bh.opponentID, mood, moodDiv)
               avatarCallbacks.push (showMoodImage)
             } else
-	      span.html(para)
-            return span
-          })
+	      span.html (para)
+          cardListItem.append (span, $('<span class="content-padding">'))
+        })
 
       // create the menu, if applicable
       var selectWarning = $('<span class="warnselect">')
@@ -3068,7 +3070,7 @@ var BigHouse = (function() {
 	}).forEach (function (opt) {
 	  fieldset.append (opt.input, opt.label)
 	})
-	content.push (fieldset)
+	cardListItem.append (fieldset)
 
 	menuSelectCallback = function (menuItem, menuIndex) {
 	  bh.choiceDiv.show()
@@ -3098,9 +3100,9 @@ var BigHouse = (function() {
 	if (lr.rightStruck || lr.leftHint !== lr.rightHint)
 	  choiceBar.append (lr.left)
 	choiceBar.append (lr.right)
-	content.push (choiceBar)
+	cardListItem.append (choiceBar)
       }
-      content.push (selectWarning)
+      cardListItem.append (selectWarning)
 
       // if a mood change was specified, tack it onto the end of the top-card callback
       if (newMood && !expansion.isHistory) {
@@ -3112,7 +3114,6 @@ var BigHouse = (function() {
       }
       
       // create the <li> that sits in the card stack (styled as a card)
-      var cardListItem = $('<li>').append(content)
       if (cardClass)
         cardListItem.addClass (cardClass)
       if (expansion.isHistory && !expansion.node.wait)

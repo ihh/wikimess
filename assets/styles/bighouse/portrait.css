@@ -114,7 +114,6 @@
 	width: 100%;
 	height: 100%;
 	margin: 0%;
-	padding: 0px 0px 20px 0px;
     }
     
     .bighouse .cardbar .cardtable li {
@@ -132,12 +131,12 @@
 
     .bighouse .cardtable li .content {
 	width: 100%;
-	flex-grow: 1;
-/*
-	display: flex;
-*/
 	align-items: center;
 	justify-content: center;
+    }
+
+    .bighouse .cardtable li .content-padding {
+	flex-grow: 1;
     }
 
     .bighouse .cardtable img,
