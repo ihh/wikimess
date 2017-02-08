@@ -31,9 +31,9 @@ var BigHouse = (function() {
     })
 
     // prevent scrolling/viewport bump on iOS Safari
-    $(document).on('touchmove',function(e){
+    document.addEventListener ('touchmove', function(e){
       e.preventDefault()
-    })
+    }, {passive: false})
 
     this.themeSelector(this.theme,{silent:true}) ()
     
@@ -1418,7 +1418,7 @@ var BigHouse = (function() {
         .append (this.moodSlugBar = $('<div class="moodslugbar">'))
         .append (this.moodBar = $('<div class="mooduploadbar">'))
 	.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
-      
+
       if (typeof(config.moodUploaded) === 'undefined')
         config.moodUploaded = {}
       delete this.avatarConfigPromise[this.playerID]  // force reload of player avatar config
@@ -1496,7 +1496,7 @@ var BigHouse = (function() {
         .append (this.moodSlugBar = $('<div class="moodslugbar">'))
         .append (this.moodBar = $('<div class="mooduploadbar">'))
 	.append (this.moodFileInput = $('<input type="file" style="display:none;">'))
-      
+
       randomizeFaces()
       var pageAnimationTimer = window.setInterval (function() {
         var fs = faceSets[Math.floor(faceSets.length*Math.random())]
@@ -2184,7 +2184,7 @@ var BigHouse = (function() {
       this.revealMoods()
 
       var cardTable = $('<div class="cardtable">')
-          .append ($('<div class="slidebar">')
+          .append (this.slideBar = $('<div class="slidebar">')
                    .append ($('<div class="slidetab">')
                             .on ('click', function() {
 			      bh.container.toggleClass('bigtable')
@@ -2200,13 +2200,18 @@ var BigHouse = (function() {
       this.container
         .empty()
         .append (this.statusBar = $('<div class="statusbar">'))
-        .append ($('<div class="cardbar">')
+        .append (this.cardBar = $('<div class="cardbar">')
 		 .addClass (this.disableSwipeInterface ? 'static' : 'dynamic')
                  .append (cardTable))
         .append (this.moodBar = $('<div class="moodbar">'))
-        .append ($('<div class="timebar">')
+        .append (this.timeBar = $('<div class="timebar">')
 		 .append (this.timerDiv = $('<div class="timer">')
 			  .width("100%")))
+
+      this.statusBar.hide()
+      this.cardBar.hide()
+      this.moodBar.hide()
+      this.timeBar.hide()
 
       if (this.disableMoveTimerWithClick)
         this.timerDiv.on('click',bh.clearMoveTimer.bind(this))
@@ -2290,6 +2295,11 @@ var BigHouse = (function() {
       var historyStart = this.currentExpansionNode ? this.currentExpansionNode.node.move : undefined
       this.socket_getPlayerGameHistory (this.playerID, this.gameID, historyStart)
 	.done (function (data) {
+
+	  bh.statusBar.show()
+	  bh.cardBar.show()
+	  bh.moodBar.show()
+	  bh.timeBar.show()
 
 	  if (bh.verbose.server) {
 	    console.log("Received game state from server")
@@ -3117,7 +3127,7 @@ var BigHouse = (function() {
       if (cardClass)
         cardListItem.addClass (cardClass)
       if (expansion.isHistory && !expansion.node.wait)
-        selectWarning.text("Choice already made")
+        selectWarning.text("Viewing old text")
       this.stackList.append (cardListItem)
       if (this.verbose.stack) {
 	console.log ("Card #" + this.cardIndex(cardListItem[0]) + " added: " + cardListItem[0].innerHTML)
@@ -3305,7 +3315,7 @@ var BigHouse = (function() {
     },
 
     showHistoryAlert: function() {
-      this.showModalMessage ("You are currently viewing old (expired) cards. Swipe through to current cards to access mood and status buttons.", this.gameState === 'gameOver' ? function(){} : this.loadGameCards.bind(this))
+      this.showModalMessage ("You are currently viewing old text. Proceed through to current text to access mood and status buttons.", this.gameState === 'gameOver' ? function(){} : this.loadGameCards.bind(this))
     },
 
     refreshPlayerMoodImage: function() {
