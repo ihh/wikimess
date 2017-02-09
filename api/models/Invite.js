@@ -14,6 +14,10 @@ module.exports = {
 
     player: {
       model: 'player',
+    },
+
+    role: {
+      type: 'integer'
     }
   }
 };

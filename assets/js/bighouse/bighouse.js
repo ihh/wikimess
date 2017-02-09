@@ -2208,10 +2208,7 @@ var BigHouse = (function() {
 		 .append (this.timerDiv = $('<div class="timer">')
 			  .width("100%")))
 
-      this.statusBar.hide()
-      this.cardBar.hide()
-      this.moodBar.hide()
-      this.timeBar.hide()
+      this.hideGameDivs()
 
       if (this.disableMoveTimerWithClick)
         this.timerDiv.on('click',bh.clearMoveTimer.bind(this))
@@ -2285,6 +2282,20 @@ var BigHouse = (function() {
       return this.setGameState.bind (this, state)
     },
 
+    hideGameDivs: function() {
+      this.statusBar.hide()
+      this.cardBar.hide()
+      this.moodBar.hide()
+      this.timeBar.hide()
+    },
+
+    showGameDivs: function() {
+      this.statusBar.show()
+      this.cardBar.show()
+      this.moodBar.show()
+      this.timeBar.show()
+    },
+
     loadGameCards: function() {
       var bh = this
       this.clearMoveTimer()
@@ -2296,10 +2307,7 @@ var BigHouse = (function() {
       this.socket_getPlayerGameHistory (this.playerID, this.gameID, historyStart)
 	.done (function (data) {
 
-	  bh.statusBar.show()
-	  bh.cardBar.show()
-	  bh.moodBar.show()
-	  bh.timeBar.show()
+	  bh.showGameDivs()
 
 	  if (bh.verbose.server) {
 	    console.log("Received game state from server")

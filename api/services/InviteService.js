@@ -13,10 +13,15 @@ module.exports = {
   joinGame: function (info, gameStarted, playerWaiting, error) {
     var player = info.player
     var event = info.event
+    var wantRole = parseInt (info.wantRole)
     
     // first check if there's a running Game
-    Game.find ({ where: { or: [ { player1: player.id, quit1: false },
-				{ player2: player.id, quit2: false } ],
+    var playerIdQuery = []
+    if (wantRole != 2)
+      playerIdQuery.push ({ player1: player.id, quit1: false })
+    if (wantRole != 1)
+      playerIdQuery.push ({ player2: player.id, quit2: false })
+    Game.find ({ where: { or: playerIdQuery,
 			  event: event.id } })
       .exec (function (err, games) {
 	if (err) error(err)
@@ -26,18 +31,19 @@ module.exports = {
 	} else {
 
 	  // prepare a callback for when we find opponents
-	  function tryOpponents (role, potentialOpponents) {
-	    var weightedOpponents = potentialOpponents.map (function (opponent) {
-	      return { opponent: opponent,
-		       weight: InviteService.compatibility (role == 1 ? player : opponent,
-							    role == 1 ? opponent : player,
+	  function tryOpponents (potentialOpponents) {
+	    var weightedOpponents = potentialOpponents.map (function (info) {
+	      return { opponent: info.opponent,
+		       role: info.role,
+		       weight: InviteService.compatibility (info.role == 1 ? player : info.opponent,
+							    info.role == 1 ? info.opponent : player,
 							    event) }
 	    })
 	    InviteService
 	      .tryRandomOpponent (player,
 				  event,
 				  weightedOpponents,
-				  role,
+				  wantRole,
 				  gameStarted,
 				  playerWaiting,
 				  error)
@@ -53,33 +59,42 @@ module.exports = {
 				     human: false })
 	    query.exec (function (err, players) {
 	      if (err) error (err)
-	      else tryOpponents (1, players)
+	      else tryOpponents (players.map (function (player) {
+		return { opponent: player,
+			 role: (wantRole || 1) }
+	      }))
 	    })
-	  } else
-	    Invite.find ({ event: event.id,
-			   player: { '!': player.id } })
-	    .populate ('player')
-            .then (function (invites) {
-              return Promise.map (invites, function (invite) {
-                var opponent = invite.player
-                return Follow.find()
-                  .where ({ or: [{ follower: player.id, followed: opponent.id },
-                                 { follower: opponent.id, followed: player.id }] })
-                  .then (function (follows) {
-                    follows.forEach (function (follow) {
-                      if (follow.follower == player.id) player.isFollower = true
-                      if (follow.follower == opponent.id) opponent.isFollower = true
+	  } else {
+	    var inviteQuery = 
+	      Invite.find ({ event: event.id,
+			     player: { '!': player.id } })
+	    if (wantRole)
+	      inviteQuery.where ({ role: { '!': wantRole } })
+	    inviteQuery
+	      .populate ('player')
+              .then (function (invites) {
+		return Promise.map (invites, function (invite) {
+                  var opponent = invite.player
+                  return Follow.find()
+                    .where ({ or: [{ follower: player.id, followed: opponent.id },
+                                   { follower: opponent.id, followed: player.id }] })
+                    .then (function (follows) {
+                      follows.forEach (function (follow) {
+			if (follow.follower == player.id) player.isFollower = true
+			if (follow.follower == opponent.id) opponent.isFollower = true
+                      })
+                      return { opponent: opponent,
+			       role: (wantRole || (invite.role ? (3 ^ invite.role) : 2)) }
                     })
-                    return opponent
-                  })
-              })
-            }).then (tryOpponents.bind(null,2))
-            .catch (error)
-        }
+		})
+              }).then (tryOpponents)
+              .catch (error)
+	    }
+	}
       })
   },
 
-  tryRandomOpponent: function (player, event, weightedOpponents, role, gameStarted, playerWaiting, error) {
+  tryRandomOpponent: function (player, event, weightedOpponents, inviteRole, gameStarted, playerWaiting, error) {
     if (weightedOpponents.length == 0) {
       // no eligible opponents
       // update the Invite table
@@ -88,21 +103,24 @@ module.exports = {
        function (lockedSuccess, lockedError, lockExpiryTime, lockDuration) {
          if (LocationService.unaffordable (player, event.cost))
            lockedError (new Error("Event unaffordable"))
-         else
-	   Invite.findOrCreate
-	 ({ player: player.id,
-	    event: event.id })
-	   .exec (function (err, invite) {
-             if (err)
-               lockedError (err)
-             else {
-	       LocationService.deductCost (player, event.cost)
-               Player.update ({ id: player.id },
-                              { global: player.global },
-                              function() { lockedSuccess(invite) },
-                              lockedError)
-             }
-           })
+         else {
+	   var inviteDesc = { player: player.id,
+			      event: event.id }
+	   if (inviteRole)
+	     inviteDesc.role = inviteRole
+	   Invite.findOrCreate (inviteDesc)
+	     .exec (function (err, invite) {
+               if (err)
+		 lockedError (err)
+               else {
+		 LocationService.deductCost (player, event.cost)
+		 Player.update ({ id: player.id },
+				{ global: player.global },
+				function() { lockedSuccess(invite) },
+				lockedError)
+               }
+             })
+	 }
        },
        playerWaiting,
        error)
@@ -111,6 +129,7 @@ module.exports = {
       var weights = weightedOpponents.map (function (wo) { return wo.weight })
       var nOpp = GameService.sampleByWeight (weights)
       var opponent = weightedOpponents[nOpp].opponent
+      var role = weightedOpponents[nOpp].role
       weightedOpponents.splice (nOpp, 1)  // remove from weightedOpponents
 
       InviteService.startGame ({ player1: role == 1 ? player : opponent,
@@ -124,7 +143,7 @@ module.exports = {
                                    gameStarted (opponent, game)
                                  },
                                  failureCallback: function() {
-                                   InviteService.tryRandomOpponent (player, event, weightedOpponents, role, gameStarted, playerWaiting, error)
+                                   InviteService.tryRandomOpponent (player, event, weightedOpponents, inviteRole, gameStarted, playerWaiting, error)
                                  },
                                  errorCallback: error
                                })
