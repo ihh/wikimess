@@ -2237,7 +2237,7 @@ var BigHouse = (function() {
     initStatusBar: function() {
       var bh = this
       this.statusBar
-        .append ($('<div class="rightstatus">')
+        .append (this.opponentNameContainer = $('<div class="rightstatus">')
                  .append (this.opponentNameDiv = $('<span>')
                           .on ('click', bh.callWithSoundEffect (bh.showGameOpponentStatusPage))))
         .append ($('<div class="statuslink">')
@@ -2245,7 +2245,7 @@ var BigHouse = (function() {
                           .html (this.makeLink ('Back', this.exitGamePage))))
 	.append ($('<div class="leftmood">')
 		 .append (this.playerMoodDiv = $('<div class="moodcontainer">')))
-        .append ($('<div class="rightmood">')
+        .append (this.opponentMoodContainer = $('<div class="rightmood">')
 		 .append (this.opponentMoodDiv = $('<div class="moodcontainer">')))
       this.moods.forEach (function (mood, m) {
 	var moodClass = "mood" + (m+1)
@@ -2285,17 +2285,22 @@ var BigHouse = (function() {
     hideGameDivs: function() {
       this.statusBar.hide()
       this.cardBar.hide()
-      this.moodBar.hide()
       this.timeBar.hide()
+      this.moodBar.hide()
     },
 
     showGameDivs: function() {
       this.statusBar.show()
       this.cardBar.show()
-      this.moodBar.show()
       this.timeBar.show()
+      if (!this.playingSolo())
+        this.moodBar.show()
     },
 
+    playingSolo: function() {
+      return this.opponentName === 'none'
+    },
+    
     loadGameCards: function() {
       var bh = this
       this.clearMoveTimer()
@@ -2307,19 +2312,19 @@ var BigHouse = (function() {
       this.socket_getPlayerGameHistory (this.playerID, this.gameID, historyStart)
 	.done (function (data) {
 
-	  bh.showGameDivs()
-
 	  if (bh.verbose.server) {
 	    console.log("Received game state from server")
 	    console.log(data)
           }
 
-          delete this.throwDisabled
-
           bh.moveNumber = data.move
           bh.opponentName = data.other.name
           bh.opponentID = data.other.id
           
+	  bh.showGameDivs()
+
+          delete this.throwDisabled
+
           var newRootForMove = {}, nextRoot
 	  data.history.slice(0).reverse().forEach (function (hist, h) {
 	    if (!hist.text.length)
@@ -2441,6 +2446,10 @@ var BigHouse = (function() {
 
           if (isStart)
 	    bh.initStatusBar()
+          if (bh.playingSolo()) {
+            bh.opponentMoodContainer.hide()
+            bh.opponentNameContainer.hide()
+          }
 	  bh.opponentNameDiv.text (bh.opponentName)
 	  bh.updatePlayerMood (data.self.mood, data.startline)
 	  bh.updateOpponentMood (bh.opponentID, data.other.mood, data.startline)
