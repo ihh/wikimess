@@ -364,6 +364,7 @@ module.exports = {
                     to: { oneOf: [{ type: "string" },
 				  ref_schema('location')] },
                     title: { type: "string" },
+                    visible: { type: "string" },
                     requires: { type: "object" },
                     hint: { type: "string" }
 		  }
@@ -399,6 +400,8 @@ module.exports = {
 		   title: { type: "string" },
 		   hint: { type: "string" },
 		   role: { type: "integer" },
+		   visible: { type: "string" },
+		   requires: { type: "object" },
 		   name: { type: "string" } } },
 	       { type: "object",
 		 additionalProperties: false,
@@ -407,6 +410,8 @@ module.exports = {
 		   title: { type: "string" },
 		   hint: { type: "string" },
 		   role: { type: "integer" },
+		   visible: { type: "string" },
+		   requires: { type: "object" },
 		   event: {
 		     type: "object",
 		     additionalProperties: false,
@@ -428,9 +433,9 @@ module.exports = {
 		       botDefaultAllowed: { type: "boolean" },
 		       botDefaultWait: { type: "number" },
 		       visible: { type: "string" },
-		       locked: { type: "string" },
+		       requires: { type: "object" },
 		       cost: { type: "object" },
-		       required: { type: "object" },
+		       locked: { type: "string" },
                        statusMeters: { type: "array", items: ref_schema('meter') },
                        statusItems: { type: "array", items: ref_schema('item') },
                        statusAwards: { type: "array", items: ref_schema('award') },

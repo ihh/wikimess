@@ -49,6 +49,9 @@
                   "title": {
                     "type": "string"
                   },
+                  "visible": {
+                    "type": "string"
+                  },
                   "requires": {
                     "type": "object"
                   },
@@ -119,6 +122,12 @@
                   "role": {
                     "type": "integer"
                   },
+                  "visible": {
+                    "type": "string"
+                  },
+                  "requires": {
+                    "type": "object"
+                  },
                   "name": {
                     "type": "string"
                   }
@@ -139,6 +148,12 @@
                   },
                   "role": {
                     "type": "integer"
+                  },
+                  "visible": {
+                    "type": "string"
+                  },
+                  "requires": {
+                    "type": "object"
                   },
                   "event": {
                     "type": "object",
@@ -205,14 +220,14 @@
                       "visible": {
                         "type": "string"
                       },
-                      "locked": {
-                        "type": "string"
+                      "requires": {
+                        "type": "object"
                       },
                       "cost": {
                         "type": "object"
                       },
-                      "required": {
-                        "type": "object"
+                      "locked": {
+                        "type": "string"
                       },
                       "statusMeters": {
                         "type": "array",

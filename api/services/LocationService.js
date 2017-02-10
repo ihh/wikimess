@@ -280,11 +280,10 @@ module.exports = {
   },
 
   showLocation: function (player, location, rs) {
+    function visibleToPlayer (obj) { return !LocationService.invisible (player, obj) }
     var links = location.links
-      .map (function (link) { return typeof(link) === 'string' ? { to: link } : link })
-      .filter (function (link) {
-	return !LocationService.invisible (player, link)
-      })
+        .map (function (link) { return typeof(link) === 'string' ? { to: link } : link })
+        .filter (visibleToPlayer)
     var linksByName = {}
     links.forEach (function (link) { linksByName[link.to] = link })
     Location.find ({ name: links.map (function (link) { return link.to }) })
@@ -301,7 +300,8 @@ module.exports = {
 	      || LocationService.locked (player, link.location)
 	  })
 
-	  Event.find ({ id: location.tickets.map (function (ticket) { return ticket.event }) })
+          var tickets = location.tickets.filter (visibleToPlayer)
+	  Event.find ({ id: tickets.map (function (ticket) { return ticket.event }) })
 	    .exec (function (err, events) {
 	      if (err) rs(err)
 	      else {
@@ -310,7 +310,7 @@ module.exports = {
 		  event.locked = LocationService.locked (player, event)
 		  eventById[event.id] = event
 		})
-		location.tickets.forEach (function (ticket) {
+		tickets.forEach (function (ticket) {
 		  var event = eventById[ticket.event]
 		  if (event)
 		    event.ticket = ticket

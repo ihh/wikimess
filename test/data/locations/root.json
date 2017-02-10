@@ -8,7 +8,7 @@
 	      to: { title: "The Real World",
 		    description: "Frankly, this is boring. Let's go back.",
 		    tickets: [{ title: "Targetable (role 2)", name: "targetable", role: 2 },
-			      { title: "Single scene (role 2)", name: "single_scene", role: 2 }] } }],
+			      { title: "Single scene (role 2)", name: "single_scene", hint: "Only visible without a robe", visible:"!$inv.robe", role: 2 }] } }],
     tickets: [ { event:
 		 { title: "Timeout test",
 		   hint: "Let's do a timeout test!",
@@ -27,6 +27,7 @@
 	       { event:
 		 { title: "Targetable",
 		   hint: "A targetable game",
+                   name: "targetable",
                    targetable: true,
 		   timeout: 10,
 		   resetWait: 5,
@@ -53,7 +54,7 @@
     title: "Outside WizCom",
     description: "{{$inv.robe ? \"The porter nods approvingly at your robe.\" : \"As you step through the lobby door, you are blocked by a self-important porter. \\\"You can't go in there without a robe!\\\"\"}}",
     items: [{name:'robe',visible:"!$inv.robe",verb:{buy:"take"},buy:{},sell:false}],
-    links: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }]
+    links: [{ to: "lobby", requires: {"robe": 1}, hint: "Enter!" }, { to: "root", title: "Give up" }]
   },
   {
     name: "lobby",

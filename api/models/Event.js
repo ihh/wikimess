@@ -47,7 +47,7 @@ module.exports = {
       defaultsTo: {}
     },
 
-    required: {
+    requires: {
       type: 'json',
       defaultsTo: {}
     },

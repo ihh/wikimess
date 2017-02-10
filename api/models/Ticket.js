@@ -23,6 +23,14 @@ module.exports = {
       type: 'string'
     },
 
+    visible: {
+      type: 'string'
+    },
+
+    requires: {
+      type: 'object'
+    },
+
     role: {
       type: 'integer'
     },
