@@ -388,36 +388,58 @@ module.exports = {
               }
             }
 	  },
-	  events: {
+	  tickets: {
             type: "array",
             items: {
-              type: "object",
-              additionalProperties: false,
-              properties: {
-		title: { type: "string" },
-		hint: { type: "string" },
-		opponent: { oneOf: [ { type: "string" },
-				     { type: "array", minItems: 1, items: { type: "string" } }] },
-		compatibility: { type: "string" },
-                targetable: { type: "boolean" },
-                mail: { type: "boolean" },
-                hide: { type: "boolean" },
-                launch: { type: "boolean" },
-		timeout: { type: "number" },
-		resetAllowed: { type: "boolean" },
-		resetWait: { type: "number" },
-		botDefaultAllowed: { type: "boolean" },
-		botDefaultWait: { type: "number" },
-		visible: { type: "string" },
-		locked: { type: "string" },
-		cost: { type: "object" },
-		required: { type: "object" },
-                statusMeters: { type: "array", items: ref_schema('meter') },
-                statusItems: { type: "array", items: ref_schema('item') },
-                statusAwards: { type: "array", items: ref_schema('award') },
-		choice: { oneOf: [{ type: "string" },
-				  ref_schema('choice')] }
-              }
+	      oneOf:
+	      [{ type: "object",
+		 additionalProperties: false,
+		 required: ["name"],
+		 properties: {
+		   title: { type: "string" },
+		   hint: { type: "string" },
+		   role: { type: "integer" },
+		   name: { type: "string" } } },
+	       { type: "object",
+		 additionalProperties: false,
+		 required: ["event"],
+		 properties: {
+		   title: { type: "string" },
+		   hint: { type: "string" },
+		   role: { type: "integer" },
+		   event: {
+		     type: "object",
+		     additionalProperties: false,
+		     required: ["title","hint","choice"],
+		     properties: {
+		       title: { type: "string" },
+		       hint: { type: "string" },
+		       name: { type: "string" },
+		       opponent: { oneOf: [ { type: "string" },
+					    { type: "array", minItems: 1, items: { type: "string" } }] },
+		       compatibility: { type: "string" },
+                       targetable: { type: "boolean" },
+                       mail: { type: "boolean" },
+                       hide: { type: "boolean" },
+                       launch: { type: "boolean" },
+		       timeout: { type: "number" },
+		       resetAllowed: { type: "boolean" },
+		       resetWait: { type: "number" },
+		       botDefaultAllowed: { type: "boolean" },
+		       botDefaultWait: { type: "number" },
+		       visible: { type: "string" },
+		       locked: { type: "string" },
+		       cost: { type: "object" },
+		       required: { type: "object" },
+                       statusMeters: { type: "array", items: ref_schema('meter') },
+                       statusItems: { type: "array", items: ref_schema('item') },
+                       statusAwards: { type: "array", items: ref_schema('award') },
+		       choice: { oneOf: [{ type: "string" },
+					 ref_schema('choice')] }
+		     }
+		   }
+		 }
+	       }]
             }
 	  }
 	}

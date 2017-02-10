@@ -40,8 +40,8 @@ module.exports = {
       defaultsTo: []
     },
     
-    events: {
-      collection: 'event',
+    tickets: {
+      collection: 'ticket',
       via: 'location'
     },
 

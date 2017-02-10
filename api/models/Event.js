@@ -5,6 +5,8 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+var Promise = require('bluebird')
+
 module.exports = {
 
   attributes: {
@@ -15,8 +17,8 @@ module.exports = {
       primaryKey: true
     },
 
-    location: {
-      model: 'location'
+    name: {
+      type: 'string'
     },
 
     choice: {
@@ -106,6 +108,16 @@ module.exports = {
     
   },
 
+  // lifecycle callback to update any Tickets that refer to this Event by name
+  afterCreate: function (event, callback) {
+    if (event.name)
+      Ticket.update ({ name: event.name },
+		     { event: event.id })
+	.then (callback)
+    else
+      callback()
+  },
+
   botDefaultTime: function (event, inviteTime) {
     return event.botDefaultAllowed
       ? new Date (inviteTime + 1000*event.botDefaultWait)
@@ -114,9 +126,19 @@ module.exports = {
 
   getChatEvents: function() {
     return Location.getChatLocation()
-      .populate('events')
+      .populate('tickets')
       .then (function (chatLocation) {
-        return chatLocation && chatLocation.events
+	return chatLocation && Event.find ({ id: chatLocation.tickets.map (function (ticket) { return ticket.event }) })
+	  .then (function (events) {
+	    var eventsById = {}
+	    events.forEach (function (event) { eventsById[event.id] = event })
+	    chatLocation.tickets.forEach (function (ticket) {
+	      var event = eventsById[ticket.event]
+	      if (event)
+		event.ticket = ticket
+	    })
+	    return events
+	  })
       })
   }
 };

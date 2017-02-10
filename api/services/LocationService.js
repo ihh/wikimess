@@ -20,16 +20,19 @@ module.exports = {
       return
 
     var promises = []
-    if (config.events)
-      config.events.forEach (function (event, n) {
-        if (event.mail) {
-          event.launch = event.hide = true
-          event.timeout = 0
-        }
-	if (typeof(event.choice) === 'object') {
-	  event.choice.name = event.choice.name || (config.name + '-choice-' + (n+1))
-	  promises.push (ChoiceService.bluebirdCreateChoice (event.choice))
-	  event.choice = event.choice.name
+    if (config.tickets)
+      config.tickets.forEach (function (ticket, n) {
+	if (ticket.event) {
+	  var event = ticket.event
+          if (event.mail) {
+            event.launch = event.hide = true
+            event.timeout = 0
+          }
+	  if (typeof(event.choice) === 'object') {
+	    event.choice.name = event.choice.name || (config.name + '-choice-' + (n+1))
+	    promises.push (ChoiceService.bluebirdCreateChoice (event.choice))
+	    event.choice = event.choice.name
+	  }
 	}
       })
     if (config.links)
@@ -207,7 +210,7 @@ module.exports = {
 
   trade: function (player, locationID, body, rs) {
     Location.findOne ({ id: locationID })
-      .populate ('events')
+      .populate ('tickets')
       .exec (function (err, location) {
 	if (err) rs(err)
 	else if (!location) rs(new Error("Couldn't find location " + locationID))
@@ -259,7 +262,7 @@ module.exports = {
   
   getLocation: function (player, locationQuery, rs) {
     Location.findOne (locationQuery)
-      .populate ('events')
+      .populate ('tickets')
       .exec (function (err, location) {
 	if (err) rs(err)
 	else if (!location) rs(new Error("Couldn't find location " + JSON.stringify(locationQuery)))
@@ -298,77 +301,88 @@ module.exports = {
 	      || LocationService.locked (player, link.location)
 	  })
 
-	  var events = location.events, eventById = {}
-	  events.forEach (function (event) {
-	    event.locked = LocationService.locked (player, event)
-	    eventById[event.id] = event
-	  })
-	  var eventIds = events.map (function (event) { return event.id })
-	  Game.find ({ where: { or: [{ player1: player.id },
-				     { player2: player.id }],
-				event: eventIds },
-		       sort: 'createdAt' })
-            .populate ('player1')
-            .populate ('player2')
-            .populate ('current')
-            .populate ('event')
-	    .exec (function (err, games) {
+	  Event.find ({ id: location.tickets.map (function (ticket) { return ticket.event }) })
+	    .exec (function (err, events) {
 	      if (err) rs(err)
 	      else {
-		var now = new Date()
-		games.forEach (function (game) {
-		  var role = Game.getRole (game, player.id)
-		  var event = eventById[game.event.id]
-                  var opponent = Game.getOtherRoleAttr (game, role, 'player')
-		  if (Game.getRoleAttr (game,role,'quit')) {
-		    if (event.resetAllowed) {
-		      var resetTime = Game.resetTime (game, event)
-		      if (now < resetTime)
-			event.resetTime = resetTime
-		    } else
-		      event.visible = false
-		  } else
-		    event.game = game
+		var eventById = {}
+		events.forEach (function (event) {
+		  event.locked = LocationService.locked (player, event)
+		  eventById[event.id] = event
 		})
-		Invite.find ({ event: eventIds,
-			       player: player.id })
-		  .exec (function (err, invites) {
+		location.tickets.forEach (function (ticket) {
+		  var event = eventById[ticket.event]
+		  if (event)
+		    event.ticket = ticket
+		})
+		var eventIds = events.map (function (event) { return event.id })
+		Game.find ({ where: { or: [{ player1: player.id },
+					   { player2: player.id }],
+				      event: eventIds },
+			     sort: 'createdAt' })
+		  .populate ('player1')
+		  .populate ('player2')
+		  .populate ('current')
+		  .populate ('event')
+		  .exec (function (err, games) {
 		    if (err) rs(err)
 		    else {
-		      invites.forEach (function (invite) {
-			var event = eventById[invite.event]
-                        event.invited = true
-			event.botDefaultTime = Event.botDefaultTime (event, invite.createdAt.getTime())
+		      var now = new Date()
+		      games.forEach (function (game) {
+			var role = Game.getRole (game, player.id)
+			var event = eventById[game.event.id]
+			var opponent = Game.getOtherRoleAttr (game, role, 'player')
+			if (Game.getRoleAttr (game,role,'quit')) {
+			  if (event.resetAllowed) {
+			    var resetTime = Game.resetTime (game, event)
+			    if (now < resetTime)
+			      event.resetTime = resetTime
+			  } else
+			    event.visible = false
+			} else
+			  event.game = game
 		      })
+		      Invite.find ({ event: eventIds,
+				     player: player.id })
+			.exec (function (err, invites) {
+			  if (err) rs(err)
+			  else {
+			    invites.forEach (function (invite) {
+			      var event = eventById[invite.event]
+                              event.invited = true
+			      event.botDefaultTime = Event.botDefaultTime (event, invite.createdAt.getTime())
+			    })
 
-		      events = events.filter (function (event) {
-			return event.game
-			  || event.botDefaultTime
-			  || !LocationService.invisible (player, event)
-		      })
+			    events = events.filter (function (event) {
+			      return event.game
+				|| event.botDefaultTime
+				|| !LocationService.invisible (player, event)
+			    })
 
-		      rs (null, {
-			id: location.id,
-			title: location.title,
-			description: LocationService.expandText (location.description, player),
-                        items: LocationService.getItems (location, player).map (function (item) {
-			  item.buy = LocationService.costInfo (player, item.buy)
-			  item.sell = LocationService.costInfo (null, item.sell)
-			  return item
-			}),
-			links: links.map (function (link) {
-			  return { id: link.location.id,
-				   title: link.title || link.location.title,
-				   hint: link.hint && LocationService.expandText (link.hint, player),
-				   locked: link.locked,
-				   cost: link.cost && LocationService.costInfo (player, link.cost) }
-			}),
-			events: events.map (function (event) {
-                          return LocationService.eventDescriptor ({ event: event,
-                                                                    game: event.game,
-                                                                    player: player })
+			    rs (null, {
+			      id: location.id,
+			      title: location.title,
+			      description: LocationService.expandText (location.description, player),
+                              items: LocationService.getItems (location, player).map (function (item) {
+				item.buy = LocationService.costInfo (player, item.buy)
+				item.sell = LocationService.costInfo (null, item.sell)
+				return item
+			      }),
+			      links: links.map (function (link) {
+				return { id: link.location.id,
+					 title: link.title || link.location.title,
+					 hint: link.hint && LocationService.expandText (link.hint, player),
+					 locked: link.locked,
+					 cost: link.cost && LocationService.costInfo (player, link.cost) }
+			      }),
+			      events: events.map (function (event) {
+				return LocationService.eventDescriptor ({ event: event,
+									  game: event.game,
+									  player: player })
+			      })
+			    })
+			  }
 			})
-		      })
 		    }
 		  })
 	      }
@@ -386,8 +400,9 @@ module.exports = {
     var targetable = event.targetable && !event.opponent
 
     var desc = { id: event.id,
-	         title: event.title,
-	         hint: LocationService.expandText (event.hint, player),
+	         title: (event.ticket && event.ticket.title) || event.title,
+	         hint: LocationService.expandText ((event.ticket && event.ticket.hint) || event.hint, player),
+		 role: event.ticket && event.ticket.role,
                  launch: event.launch,
                  invitee: invitee && invitee.id,
                  locked: event.locked,

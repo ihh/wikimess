@@ -2,9 +2,9 @@
   {
     name: "chat",
     title: "Chat Events",
-    events: [ { title: "Insult",
-		hint: "Engage in a battle of wits.",
-                statusMeters: [{ name: 'score', log: true, min: .1, max: 1000, showRange: false, label: 'Score' }],
-		choice: "insult" } ]
+    tickets: [ { event: { title: "Insult",
+			  hint: "Engage in a battle of wits.",
+			  statusMeters: [{ name: 'score', log: true, min: .1, max: 1000, showRange: false, label: 'Score' }],
+			  choice: "insult" } } ]
   }
 ]

@@ -51,6 +51,7 @@ module.exports.policies = {
   'OutcomeController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'PlayerController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'TextController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'TicketController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'TurnController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
 
   // non-permissive policy for player controller
