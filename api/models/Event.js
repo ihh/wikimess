@@ -113,7 +113,7 @@ module.exports = {
     if (event.name)
       Ticket.update ({ name: event.name },
 		     { event: event.id })
-	.then (callback)
+	.exec (callback)
     else
       callback()
   },

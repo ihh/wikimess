@@ -6,7 +6,9 @@
     links: [{ to: "intro_robe", title: "Lobby", hint: "Enter!" },
 	    { hint: "You could always escape.",
 	      to: { title: "The Real World",
-		    description: "Frankly, this is boring. Let's go back." } }],
+		    description: "Frankly, this is boring. Let's go back.",
+		    tickets: [{ title: "Targetable (role 2)", name: "targetable", role: 2 },
+			      { title: "Single scene (role 2)", name: "single_scene", role: 2 }] } }],
     tickets: [ { event:
 		 { title: "Timeout test",
 		   hint: "Let's do a timeout test!",
@@ -36,6 +38,7 @@
 	       { event:
 		 { title: "Single scene",
 		   hint: "A game with just one choice",
+		   name: "single_scene",
                    targetable: false,
 		   timeout: 10,
 		   resetWait: 5,
