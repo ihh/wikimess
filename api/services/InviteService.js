@@ -261,11 +261,17 @@ module.exports = {
     var player = info.player
     var other = info.other
     var event = info.event
-
+    var wantRole = parseInt (info.wantRole)
+    
     return new Promise (function (resolve, reject) {
       // first check if there's a running Game
-      Game.find ({ where: { or: [ { player1: player.id, player2: other.id },
-				  { player1: other.id, player2: player.id } ],
+      var playerIdQuery = []
+      if (wantRole != 2)
+        playerIdQuery.push ({ player1: player.id, player2: other.id })
+      if (wantRole != 1)
+        playerIdQuery.push ({ player2: player.id, player1: other.id })
+      
+      Game.find ({ where: { or: playerIdQuery,
                             quit1: false,
                             quit2: false,
 			    event: event.id } })
@@ -275,11 +281,11 @@ module.exports = {
           else
             return true
         }).then (function() {
-          InviteService.startGame ({ player1: player,
-                                     player2: other,
+          InviteService.startGame ({ player1: (wantRole == 2 ? other : player),
+                                     player2: (wantRole == 1 ? player : other),
                                      event: event,
-                                     player1CostsDeducted: false,
-                                     player2CostsDeducted: true,   // player 2 does not pay for chat games they're invited to
+                                     player1CostsDeducted: (wantRole == 2),   // player 1 does not pay for chat games they're invited to
+                                     player2CostsDeducted: (wantRole != 2),   // player 2 does not pay for chat games they're invited to
                                      testPlayer1CostsDeducted: false,
                                      testPlayer2CostsDeducted: false,
                                      pendingAccept: !event.launch,

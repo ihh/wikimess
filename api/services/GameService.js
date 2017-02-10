@@ -283,7 +283,9 @@ module.exports = {
           $local1 = $l1,
           $local2 = $l2,
           $name1 = $n1,
-          $name2 = $n2
+          $name2 = $n2,
+
+          $role = role
 
       var $1 = GameService.clonedMoveTail(game.move1),
 	  $2 = GameService.clonedMoveTail(game.move2)
@@ -819,7 +821,9 @@ module.exports = {
         $local1 = $l1,
         $local2 = $l2,
         $name1 = $n1,
-        $name2 = $n2
+        $name2 = $n2,
+
+        $role = role
 
     var $1 = GameService.clonedMoveTail(game.move1),
 	$2 = GameService.clonedMoveTail(game.move2)

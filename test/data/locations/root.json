@@ -44,7 +44,7 @@
 		   resetWait: 5,
 		   choice: {
                      autoExpand: false,
-		     intro: [{ text: "This is the only card.",
+		     intro: [{ text: "This is the only card, player #{$role}#.",
 			       left: { hint: "I doubt it", text: "OK, you were right." },
 			       right: { hint: "I believe you", text: "Sucker!" } }] } } } ]
   },

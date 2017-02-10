@@ -179,24 +179,24 @@ var BigHouse = (function() {
       return $.get ('/p/' + playerID + '/count')
     },
 
-    REST_getPlayerJoin: function (playerID, eventID) {
-      return $.get ('/p/' + playerID + '/join/' + eventID)
+    REST_getPlayerJoin: function (playerID, eventID, role) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + (role ? ('/as/' + role) : ''))
     },
 
     REST_getPlayerJoinWho: function (playerID, eventID) {
       return $.get ('/p/' + playerID + '/join/' + eventID + '/who')
     },
 
-    REST_getPlayerJoinBot: function (playerID, eventID) {
-      return $.get ('/p/' + playerID + '/join/' + eventID + '/bot')
+    REST_getPlayerJoinBot: function (playerID, eventID, role) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + (role ? ('/as/' + role) : '') + '/bot')
     },
 
     REST_getPlayerJoinCancel: function (playerID, eventID) {
       return $.get ('/p/' + playerID + '/join/' + eventID + '/cancel')
     },
 
-    REST_getPlayerJoinInvite: function (playerID, eventID, otherID) {
-      return $.get ('/p/' + playerID + '/join/' + eventID + '/invite/' + otherID)
+    REST_getPlayerJoinInvite: function (playerID, eventID, otherID, role) {
+      return $.get ('/p/' + playerID + '/join/' + eventID + (role ? ('/as/' + role) : '') + '/invite/' + otherID)
     },
 
     REST_getPlayerJoinInviteCancel: function (playerID, eventID, otherID) {
@@ -891,8 +891,8 @@ var BigHouse = (function() {
           eventSelected()
           var invite = (event.state === 'launch' || event.state === 'invite')
           var promise = invite
-              ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee)
-              : bh.REST_getPlayerJoin (bh.playerID, event.id)
+              ? bh.REST_getPlayerJoinInvite (bh.playerID, event.id, event.invitee, event.role)
+              : bh.REST_getPlayerJoin (bh.playerID, event.id, event.role)
           promise.done (function (data) {
             if (data.waiting) {
               event.botDefault = data.botDefault
@@ -933,7 +933,7 @@ var BigHouse = (function() {
             addSelectOtherListItem ('Computer player',
                                     function (botAvatarDiv) { bh.placeIcon (bh.botOpponentIcon, botAvatarDiv) },
                                     function() {
-                                      bh.REST_getPlayerJoinBot (bh.playerID, event.id)
+                                      bh.REST_getPlayerJoinBot (bh.playerID, event.id, event.role)
                                         .done (function () { event.selectOtherDiv.empty() })
                                         .fail (bh.reloadOnFail())
                                     })
@@ -941,7 +941,7 @@ var BigHouse = (function() {
           addSelectOtherListItem ('Random player',
                                   function (randomOtherAvatarDiv) { bh.placeIcon (bh.randomOpponentIcon, randomOtherAvatarDiv) },
                                   function() {
-                                    bh.REST_getPlayerJoin (bh.playerID, event.id)
+                                    bh.REST_getPlayerJoin (bh.playerID, event.id, event.role)
                                       .done (function (data) {
                                         event.selectOtherDiv.empty()
                                         if (data.waiting)
@@ -959,7 +959,7 @@ var BigHouse = (function() {
                 addSelectOtherListItem (follow.name,
                                         function (avatarDiv) { bh.showMoodImage (follow.id, follow.mood, avatarDiv) },
                                         function() {
-                                          bh.REST_getPlayerJoinInvite (bh.playerID, event.id, follow.id)
+                                          bh.REST_getPlayerJoinInvite (bh.playerID, event.id, follow.id, event.role)
                                             .done (function (data) {
                                               event.selectOtherDiv.empty()
                                               showOther (follow)
@@ -1065,7 +1065,7 @@ var BigHouse = (function() {
         var timeToWait = (new Date(event.botDefault) - now) / 1000
         if (timeToWait <= 0 && !event.invitedBot) {
           event.invitedBot = true
-          this.REST_getPlayerJoinBot (this.playerID, event.id)
+          this.REST_getPlayerJoinBot (this.playerID, event.id, event.role)
             .fail (function() { delete event.invitedBot })
         }
         event.timerDiv.text (this.shortTimerText (timeToWait))

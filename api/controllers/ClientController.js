@@ -183,6 +183,7 @@ module.exports = {
       InviteService
 	.joinGame ({ player: player,
 		     event: event,
+                     wantRole: req.params.role,
 		     wantHuman: true },
 		   function (opponent, game) {
 		     // game started; return game info
@@ -224,6 +225,7 @@ module.exports = {
       InviteService
 	.joinGame ({ player: player,
 		     event: event,
+                     wantRole: req.params.role,
                      wantHuman: false,
                      errorCallback: rs },
 		   function (opponent, game) {

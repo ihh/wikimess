@@ -24,8 +24,7 @@ module.exports = {
     },
 
     role: {
-      type: 'integer',
-      defaultsTo: 1
+      type: 'integer'
     },
 
     event: {
