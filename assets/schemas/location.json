@@ -57,6 +57,9 @@
                   },
                   "hint": {
                     "type": "string"
+                  },
+                  "button": {
+                    "type": "string"
                   }
                 }
               }

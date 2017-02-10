@@ -643,7 +643,7 @@ var BigHouse = (function() {
             div.append ($('<div class="lock">')
                         .text (link.locked))
           } else
-            button.attr('name','link-'+link.id).text("Go").on('click', function() {
+            button.attr('name','link-'+link.id).text(link.button || "Go").on('click', function() {
               bh.playerLocation = link.id
               bh.selectSound = bh.playSound ('select')
               bh.showPlayPage()

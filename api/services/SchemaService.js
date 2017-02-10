@@ -366,7 +366,8 @@ module.exports = {
                     title: { type: "string" },
                     visible: { type: "string" },
                     requires: { type: "object" },
-                    hint: { type: "string" }
+                    hint: { type: "string" },
+                    button: { type: "string" }
 		  }
 		}
               ]

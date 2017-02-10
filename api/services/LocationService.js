@@ -40,7 +40,7 @@ module.exports = {
 	if (typeof(link) === 'object' && typeof(link.to) === 'object') {
 	  link.to.name = link.to.name || (config.name + '-link-' + (n+1))
 	  if (!link.to.links)
-	    link.to.links = [config.name]
+	    link.to.links = [{to:config.name}]
 	  promises.push (LocationService.bluebirdCreateLocation (link.to))
 	  link.to = link.to.name
 	}
@@ -372,6 +372,7 @@ module.exports = {
 				return { id: link.location.id,
 					 title: link.title || link.location.title,
 					 hint: link.hint && LocationService.expandText (link.hint, player),
+                                         button: link.button,
 					 locked: link.locked,
 					 cost: link.cost && LocationService.costInfo (player, link.cost) }
 			      }),
