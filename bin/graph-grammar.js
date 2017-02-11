@@ -92,7 +92,7 @@ for (var iter = 0; iter < iterations; ++iter) {
   }
   site.rhs.edge.forEach (function (edge) {
     var label = newLabel(site.match,edge[2])
-    console.log ("Adding edge " + edgeDesc(newNodes[edge[0]],newNodes[edge[1]],label,colors.green))
+    console.log ("Adding edge " + edgeDesc(newNodes[edge[0]],newNodes[edge[1]],label,colors.green,colors.green))
     graph.setEdge (newNodes[edge[0]], newNodes[edge[1]], label)
   })
   site.lhs.forEach (function (id) {
@@ -115,7 +115,7 @@ function reattachPredecessors (oldId, newId, newNodes) {
   graph.predecessors(oldId).forEach (function (pred) {
     if (newNodes.indexOf(pred) < 0) {
       var label = graph.edge (pred, oldId)
-      console.log ("Replacing incoming edge " + edgeDesc(pred,oldId,label,colors.red) + " with " + edgeDesc(pred,newId,label,colors.green))
+      console.log ("Replacing incoming edge " + edgeDesc(pred,oldId,label,colors.green,colors.red) + " with " + edgeDesc(pred,newId,label,colors.green,colors.green))
       graph.removeEdge (pred, oldId)
       graph.setEdge (pred, newId, label)
     }
@@ -126,7 +126,7 @@ function reattachSuccessors (oldId, newId, newNodes) {
   graph.successors(oldId).forEach (function (succ) {
     if (newNodes.indexOf(succ) < 0) {
       var label = graph.edge (oldId, succ)
-      console.log ("Replacing outgoing edge " + edgeDesc(oldId,succ,label,colors.red) + " with " + edgeDesc(newId,succ,label,colors.green))
+      console.log ("Replacing outgoing edge " + edgeDesc(oldId,succ,label,colors.red,colors.green) + " with " + edgeDesc(newId,succ,label,colors.green,colors.green))
       graph.removeEdge (oldId, succ)
       graph.setEdge (newId, succ, label)
     }
@@ -145,8 +145,9 @@ function nodeDesc (id) {
   return id + '(' + graph.node(id) + ')'
 }
 
-function edgeDesc (src, dest, label, color) {
-  color = color.bind (colors)
-  var srcDesc = color(nodeDesc(src)), destDesc = color(nodeDesc(dest))
+function edgeDesc (src, dest, label, srcColor, destColor) {
+  srcColor = srcColor.bind (colors)
+  destColor = destColor.bind (colors)
+  var srcDesc = srcColor(nodeDesc(src)), destDesc = destColor(nodeDesc(dest))
   return srcDesc + (label ? (colors.yellow('-') + colors.inverse(colors.yellow(label)) + colors.yellow('->')) : colors.yellow('->')) + destDesc
 }
