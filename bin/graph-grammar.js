@@ -84,11 +84,11 @@ for (var iter = 0; iter < iterations; ++iter) {
   console.log ("Replacing nodes " + colors.red(nodeList(site.lhs)) + " with " + colors.green(nodeList(newNodes)))
   var oldSrc = site.lhs[0], oldDest = site.lhs[site.lhs.length - 1]
   var newSrc = newNodes[0], newDest = newNodes[newNodes.length - 1]
-  reattachPredecessors (oldSrc, newSrc, newNodes)
-  reattachSuccessors (oldDest, newDest, newNodes)
+  reattachPredecessors (oldSrc, newSrc, site.lhs, newNodes)
+  reattachSuccessors (oldDest, newDest, site.lhs, newNodes)
   if (oldSrc !== oldDest) {
-    reattachPredecessors (oldDest, newDest, newNodes)
-    reattachSuccessors (oldSrc, newSrc, newNodes)
+    reattachPredecessors (oldDest, newDest, site.lhs, newNodes)
+    reattachSuccessors (oldSrc, newSrc, site.lhs, newNodes)
   }
   site.rhs.edge.forEach (function (edge) {
     var label = newLabel(site.match,edge[2])
@@ -111,9 +111,9 @@ function addNode (label) {
   return id
 }
 
-function reattachPredecessors (oldId, newId, newNodes) {
+function reattachPredecessors (oldId, newId, oldNodes, newNodes) {
   graph.predecessors(oldId).forEach (function (pred) {
-    if (newNodes.indexOf(pred) < 0) {
+    if (oldNodes.indexOf(pred) < 0 && newNodes.indexOf(pred) < 0) {
       var label = graph.edge (pred, oldId)
       console.log ("Replacing incoming edge " + edgeDesc(pred,oldId,label,colors.green,colors.red) + " with " + edgeDesc(pred,newId,label,colors.green,colors.green))
       graph.removeEdge (pred, oldId)
@@ -122,9 +122,9 @@ function reattachPredecessors (oldId, newId, newNodes) {
   })
 }
 
-function reattachSuccessors (oldId, newId, newNodes) {
+function reattachSuccessors (oldId, newId, oldNodes, newNodes) {
   graph.successors(oldId).forEach (function (succ) {
-    if (newNodes.indexOf(succ) < 0) {
+    if (oldNodes.indexOf(succ) < 0 && newNodes.indexOf(succ) < 0) {
       var label = graph.edge (oldId, succ)
       console.log ("Replacing outgoing edge " + edgeDesc(oldId,succ,label,colors.red,colors.green) + " with " + edgeDesc(newId,succ,label,colors.green,colors.green))
       graph.removeEdge (oldId, succ)
