@@ -85,10 +85,10 @@ if (opt.options.input) {
 var limit = parseInt(opt.options.limit) || grammar.limit
 for (var iter = 0; typeof(limit) === 'undefined' || iter < limit; ++iter) {
   warn(colors.cyan("Iteration " + (iter+1)))
-  var nodes = graph.nodes(), edges = graph.edges()
+  var nodes = graph.nodes(), edges = graph.edges(), context = { iter, graph }
   var sites = []
   function addSite (rule, lhs, rhs, match) {
-    var weight = evalWeight (match, rule, {iter})
+    var weight = evalWeight (match, lhs, rule, context)
     warn ('Found match ' + nodeList(lhs,colors.red) + ' to rule #' + rule.n + ' with weight ' + colors.blue(weight))
     sites.push ({ weight, lhs, rhs, match, rule })
   }
@@ -107,7 +107,7 @@ for (var iter = 0; typeof(limit) === 'undefined' || iter < limit; ++iter) {
       nodes.forEach (function (id) {
         var label = graph.node (id)
         var match = re.exec (label)
-        if (match && evalCond (match, rule, {iter}))
+        if (match && evalCond (match, [id], rule, context))
           addSite (rule, [id], rhs, match)
       })
 
@@ -120,7 +120,7 @@ for (var iter = 0; typeof(limit) === 'undefined' || iter < limit; ++iter) {
         var srcMatch = srcRe.exec(srcLabel), destMatch = destRe.exec(destLabel), edgeMatch = (hasEdgeRe ? edgeRe.exec(edgeLabel) : [edgeLabel])
         if (srcMatch && destMatch && edgeMatch) {
           var match = srcMatch.concat (destMatch, edgeMatch)
-          if (evalCond (match, rule, {iter}))
+          if (evalCond (match, [edge.v, edge.w], rule, context))
             addSite (rule, [edge.v, edge.w], rhs, match)
         }
       })
@@ -139,7 +139,7 @@ for (var iter = 0; typeof(limit) === 'undefined' || iter < limit; ++iter) {
 
   var site = sites[m]
   var newLabels = site.rhs.node.map (function (labelExpr) {
-    return newLabel (site.match, labelExpr)
+    return newLabel (site.match, site.lhs, labelExpr, context)
   })
   var newNodes = newLabels.map (addNode)
   warn ("Replacing nodes " + nodeList(site.lhs,colors.red) + " with " + nodeList(newNodes,colors.green))
@@ -152,7 +152,7 @@ for (var iter = 0; typeof(limit) === 'undefined' || iter < limit; ++iter) {
     reattachSuccessors (oldSrc, newSrc, site.lhs, newNodes)
   }
   site.rhs.edge.forEach (function (edge) {
-    var label = newLabel(site.match,edge[2])
+    var label = newLabel (site.match, site.lhs, edge[2], context)
     warn ("Adding edge " + edgeDesc(newNodes[edge[0]],newNodes[edge[1]],label,colors.green,colors.green))
     graph.setEdge (newNodes[edge[0]], newNodes[edge[1]], label)
   })
@@ -208,28 +208,31 @@ function reattachSuccessors (oldId, newId, oldNodes, newNodes) {
   })
 }
 
-function newLabel (match, expr) {
+function newLabel (match, ids, expr, context) {
   if (!expr) return expr
   if (expr.match(/^=/))
-    return evalMatchExpr (match, expr.replace(/^=/,''), {})
+    return evalMatchExpr (match, ids, expr.replace(/^=/,''), context)
   return expr.replace (/\\(\d+)/g, function (_m, n) { return match[parseInt(n)] })
 }
 
-function evalCond (match, rule, context) {
-  return evalMatchExpr (match, rule.condition, context, true)
+function evalCond (match, ids, rule, context) {
+  return evalMatchExpr (match, ids, rule.condition, context, true)
 }
 
-function evalWeight (match, rule, context) {
-  return evalMatchExpr (match, rule.weight, context, 1)
+function evalWeight (match, ids, rule, context) {
+  return evalMatchExpr (match, ids, rule.weight, context, 1)
 }
 
-function evalMatchExpr (match, expr, context, defaultVal) {
+function evalMatchExpr (match, ids, expr, context, defaultVal) {
   if (typeof(expr) === 'undefined')
     return defaultVal
   if (typeof(expr) !== 'string')
     return expr
-  match.forEach (function (m, n) { eval ('$' + n + '="' + String(m).replace('"','\\"') + '"') })
-  Object.keys(context).forEach (function (key) { eval ('$' + key + '="' + String(context[key]).replace('"','\\"') + '"') })
+  var extendedContext = extend ({}, context)
+  match.forEach (function (match, n) { extendedContext[String(n)] = match })
+  extendedContext.src = ids[0]
+  extendedContext.dest = ids[1]
+  Object.keys(extendedContext).forEach (function (key) { eval ('$' + key + '="' + String(extendedContext[key]).replace('"','\\"') + '"') })
   return eval(expr)
 }
 
