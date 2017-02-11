@@ -1,12 +1,13 @@
 {
-  "start": "S",
-  "iterations": 5,
-  "rules": [
-    { "lhs": "S", "rhs": "X" },
-    { "lhs": "X", "rhs": ["Y","Z"] },
-    { "lhs": ["Y","Z"], "rhs": ["U","V"] },
-    { "lhs": ["U","V"], "rhs": { "node": ["R","S","C","D"], "edge": [[0,1,"rs"],[0,2],[1,3],[2,3]] } },
-    { "lhs": ["R","S","rx"], "rhs": { "node": ["A","B"], "edge": [[0,1,"nope"]] } },
-    { "lhs": ["R","S","rs"], "rhs": { "node": ["A","B"], "edge": [[0,1,"\\2"]] } }
+  start: "S",
+  limit: 5,
+  rules: [
+    { lhs: "S", rhs: "X" },
+    { lhs: "X", rhs: ["F"], weight: 100, condition: "$0 === 'X' && $iter == 0" },
+    { lhs: "X", rhs: ["Y","Z"], weight: "1" },
+    { lhs: ["Y","Z"], rhs: ["='U'+$0","V"] },
+    { lhs: ["UY","V"], rhs: { node: ["R","S","C","D"], edge: [[0,1,"rs"],[0,2],[1,3],[2,3]] } },
+    { lhs: ["R","S","rx"], rhs: { node: ["A","B"], edge: [[0,1,"nope"]] } },
+    { lhs: ["R","S","rs"], rhs: { node: ["A","B"], edge: [[0,1,"\\2"]] } }
   ]
 }
