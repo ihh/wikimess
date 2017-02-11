@@ -3,7 +3,6 @@
 var fs = require('fs'),
     path = require('path'),
     getopt = require('node-getopt'),
-    assert = require('assert'),
     request = require('request'),
     colors = require('colors'),
     extend = require('extend'),
