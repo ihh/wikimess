@@ -34,6 +34,7 @@ for (var iter = 0; iter < iterations; ++iter) {
     console.log ('Found match ' + colors.red(nodeList(lhs)) + ' to rule #' + rule.n + ' with weight ' + colors.blue(weight))
     sites.push ({ weight, lhs, rhs, match })
   }
+
   grammar.rules.forEach (function (rule, n) {
     rule.n = n
     var lhs = rule.lhs, rhs = rule.rhs
@@ -41,21 +42,26 @@ for (var iter = 0; iter < iterations; ++iter) {
       rhs = [rhs]
     if (!rhs.edge)
       rhs = { node: rhs, edge: rhs.slice(1).map (function (_node, n) { return [n,n+1] }) }
+
     if (typeof(lhs) === 'string') {
-      var re = new RegExp(lhs)
+      // node replacement rule
+      var re = new RegExp(lhs,'g')
       nodes.forEach (function (id) {
         var label = graph.node (id)
         var match = re.exec (label)
         if (match)
           addSite (rule, [id], rhs, match)
       })
-    } else if (lhs.length == 2) {
-      var srcRe = new RegExp(lhs[0]), destRe = new RegExp(lhs[1])
+
+    } else if (lhs.length >= 2) {
+      // edge replacement rule
+      var hasEdgeRe = (lhs.length > 2)
+      var srcRe = new RegExp(lhs[0],'g'), destRe = new RegExp(lhs[1],'g'), edgeRe = new RegExp(lhs[2],'g')
       edges.forEach (function (edge) {
-        var srcLabel = graph.node(edge.v), destLabel = graph.node(edge.w)
-        var srcMatch = srcRe.exec(srcLabel), destMatch = destRe.exec(destLabel)
-        if (srcMatch && destMatch)
-          addSite (rule, [edge.v, edge.w], rhs, srcMatch.concat(destMatch))
+        var srcLabel = graph.node(edge.v), destLabel = graph.node(edge.w), edgeLabel = graph.edge(edge)
+        var srcMatch = srcRe.exec(srcLabel), destMatch = destRe.exec(destLabel), edgeMatch = (hasEdgeRe ? edgeRe.exec(edgeLabel) : [edgeLabel])
+        if (srcMatch && destMatch && edgeMatch)
+          addSite (rule, [edge.v, edge.w], rhs, srcMatch.concat(destMatch,edgeMatch))
       })
     } else
       console.log ("Ignoring rule #" + n)
@@ -65,7 +71,7 @@ for (var iter = 0; iter < iterations; ++iter) {
   console.log(colors.blue("Total weight is " + totalWeight))
   if (totalWeight == 0)
     break
-  
+
   var w = Math.random() * totalWeight, m = 0
   while (w > 0 && m < sites.length - 1)
     w -= sites[m++].weight
@@ -85,8 +91,9 @@ for (var iter = 0; iter < iterations; ++iter) {
     reattachSuccessors (oldSrc, newSrc, newNodes)
   }
   site.rhs.edge.forEach (function (edge) {
-    console.log ("Adding edge " + colors.green(nodeList([newNodes[edge[0]],newNodes[edge[1]]])))
-    graph.setEdge (newNodes[edge[0]], newNodes[edge[1]])
+    var label = newLabel(site.match,edge[2])
+    console.log ("Adding edge " + edgeDesc(newNodes[edge[0]],newNodes[edge[1]],label,colors.green))
+    graph.setEdge (newNodes[edge[0]], newNodes[edge[1]], label)
   })
   site.lhs.forEach (function (id) {
     graph.removeNode (id)
@@ -99,33 +106,35 @@ console.log (graphlib.json.write (graph))
 
 
 function addNode (label) {
-  var id = nextId++
+  var id = String (nextId++)
   graph.setNode (id, label)
   return id
 }
 
 function reattachPredecessors (oldId, newId, newNodes) {
   graph.predecessors(oldId).forEach (function (pred) {
-    if (newNodes.indexOf(parseInt(pred)) < 0) {
-      console.log ("Replacing incoming edge " + colors.red(nodeList([pred,oldId])) + " with " + colors.green(nodeList([pred,newId])))
+    if (newNodes.indexOf(pred) < 0) {
+      var label = graph.edge (pred, oldId)
+      console.log ("Replacing incoming edge " + edgeDesc(pred,oldId,label,colors.red) + " with " + edgeDesc(pred,newId,label,colors.green))
       graph.removeEdge (pred, oldId)
-      graph.setEdge (pred, newId)
+      graph.setEdge (pred, newId, label)
     }
   })
 }
 
 function reattachSuccessors (oldId, newId, newNodes) {
   graph.successors(oldId).forEach (function (succ) {
-    if (newNodes.indexOf(parseInt(succ)) < 0) {
-      console.log ("Replacing outgoing edge " + colors.red(nodeList([oldId,succ])) + " with " + colors.green(nodeList([newId,succ])))
+    if (newNodes.indexOf(succ) < 0) {
+      var label = graph.edge (oldId, succ)
+      console.log ("Replacing outgoing edge " + edgeDesc(oldId,succ,label,colors.red) + " with " + edgeDesc(newId,succ,label,colors.green))
       graph.removeEdge (oldId, succ)
-      graph.setEdge (newId, succ)
+      graph.setEdge (newId, succ, label)
     }
   })
 }
 
 function newLabel (match, expr) {
-  return expr.replace (/\\(\d+)/g, function (_m, n) { return match[parseInt(n)] })
+  return expr && expr.replace (/\\(\d+)/g, function (_m, n) { return match[parseInt(n)] })
 }
 
 function nodeList (nodes) {
@@ -134,4 +143,10 @@ function nodeList (nodes) {
 
 function nodeDesc (id) {
   return id + '(' + graph.node(id) + ')'
+}
+
+function edgeDesc (src, dest, label, color) {
+  color = color.bind (colors)
+  var srcDesc = color(nodeDesc(src)), destDesc = color(nodeDesc(dest))
+  return srcDesc + (label ? (colors.yellow('-') + colors.inverse(colors.yellow(label)) + colors.yellow('->')) : colors.yellow('->')) + destDesc
 }
