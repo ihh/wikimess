@@ -9,7 +9,7 @@ var fs = require('fs'),
     colors = require('colors'),
     Grammar = require('../lib/graphgram').Grammar
 
-var defaultGrammarFilename = 'data/grammars/test.json'
+var defaultGrammarFilename = 'data/grammars/sub.json'
 
 var opt = getopt.create([
   ['g' , 'grammar=PATH'    , 'path to grammar file (default="' + defaultGrammarFilename + '")'],
