@@ -1,0 +1,14 @@
+{
+  start: "START",
+  rules: [
+    { lhs: { node: [{id:"S",label:"START"}] }, rhs: { node: [{id:"H",head:["S"],label:"BEGIN"},{id:"T",tail:["S"],label:"END"}],
+                                                      edge: [{v:"H",w:"T"}] } },
+    { lhs: { node: [{id:"B",label:"BEGIN"}] }, rhs: { node: [{id:"B",label:"xBEGIN"}] } },
+    { lhs: { node: [{id:"E",label:"END"}] }, rhs: { node: [{id:"E",label:"xEND"}] } },
+    { lhs: { node: [{id:"E",label:"xEND"}] }, rhs: { node: [{id:"a",head:["E"],label:"a"},{id:"b",label:"b"},{id:"c",tail:["E"],label:"yEND"}],
+                                                     edge: [{v:"a",w:"b"},{v:"b",w:"c"}] } },
+    { lhs: { node: [{id:"x"},{id:"y"},{id:"z"}],
+             edge: [{v:"x",w:"y"},{v:"y",w:"z"}] }, rhs: { node: [{id:"x",label:"x"},{id:"z",label:"z"}],
+                                                           edge: [{v:"x",w:"z"}] } }
+  ]
+}
