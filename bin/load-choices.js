@@ -9,7 +9,7 @@ var fs = require('fs'),
     jsonschema = require('jsonschema'),
     Promise = require('bluebird'),
     Sails = require('sails').constructor,
-    Build = require('./build/build')
+    Build = require('../lib/build')
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"
