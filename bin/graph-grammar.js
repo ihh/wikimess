@@ -27,7 +27,7 @@ var opt = getopt.create([
 var grammarFilename = opt.options.grammar || defaultGrammarFilename
 var grammarText = fs.readFileSync(grammarFilename).toString()
 var grammarJson = eval ('(' + grammarText + ')')
-var grammar = new Grammar (grammarJson, { validationError: function (err) { console.log(err); process.exit() } })
+var grammar = new Grammar (grammarJson)
 
 var graph
 if (opt.options.input)
