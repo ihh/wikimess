@@ -33,7 +33,9 @@
     "extend": "3.0.0",
     "deepmerge": "0.2.10",
     "jsonschema": "~1.1.1",
-    "rimraf": "~2.5.4"
+    "rimraf": "~2.5.4",
+    "graphlib": "~2.1.1",
+    "mersenne-twister": "~1.1.0"
   },
   "devDependencies": {
     "mocha": "~3.2.0",
