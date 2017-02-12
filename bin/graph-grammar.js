@@ -27,6 +27,7 @@ var grammarFilename = opt.options.grammar || defaultGrammarFilename
 var grammarText = fs.readFileSync(grammarFilename).toString()
 var grammarJson = eval ('(' + grammarText + ')')
 var grammar = new Grammar (grammarJson, { verbose: !opt.options.quiet,
+                                          limit: opt.options.limit,
                                           validationError: function (err) { console.log(err); process.exit() } })
 
 var graph
