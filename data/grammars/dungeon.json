@@ -1,0 +1,21 @@
+// https://www.reddit.com/r/DnD/comments/20cges/classic_tropes_of_dd/
+{
+  start: 'START',
+  rules: [
+    { lhs: 'START', rhs: ['entrance', 'x', 'boss'] },
+    { lhs: 'x', rhs: ['x','x'], limit: 3 },
+    { lhs: 'x', rhs: { node: ['fork', 'x', 'die', 'x'], edge: [[0,1],[1,2],[0,3]] }, type: 'ending', limit: 3 },
+    { lhs: 'x', rhs: { node: ['fork', 'x', 'live', 'x'], edge: [[0,1],[1,2],[0,3]] }, type: 'ending', limit: 3 },
+    { lhs: 'x', rhs: { node: ['fork', 'x', 'x', 'x'], edge: [[0,1],[0,2],[1,3],[2,3]] }, type: 'fork', limit: 2, delay: 2 },
+    { lhs: 'x', rhs: { node: ['crossroads', 'x', 'x', 'x', 'x'], edge: [[0,1],[0,2],[0,3],[1,4],[2,4],[3,4]] }, type: 'fork', limit: 1, delay: 2 },
+    { lhs: 'x', rhs: { node: ['door', 'room', 'x'], edge: [[0,1,'enter'],[1,2,'exit'],[0,2,'bypass']] }, limit: 3 },
+    { lhs: 'x', rhs: { node: ['fork', 'x', 'x', 'x', 'rescue', 'x', 'x'], edge: [[0,1],[1,2],[2,3],[0,3],[3,4],[4,5],[5,6],[3,6],[1,4,'rumor']] }, type: 'rescue', limit: 1 },
+    { lhs: 'x', rhs: { node: ['door', 'room', 'x', 'rescue', 'x', 'x'], edge: [[0,1,'enter'],[1,2,'exit'],[0,2,'bypass'],[2,3],[3,4],[4,5],[2,5],[1,3,'rumor']] }, type: 'rescue', limit: 1 },
+    { lhs: 'x', rhs: 'trap', delay: 10 },
+    { lhs: 'x', rhs: 'monster', delay: 10 },
+    { lhs: 'x', rhs: 'weapon', limit: 2, delay: 10 },
+    { lhs: 'x', rhs: 'potion', limit: 2, delay: 10 },
+    { lhs: 'x', rhs: 'treasure', limit: 3, delay: 10 },
+    { lhs: 'x', rhs: 'scenery', weight: 2, delay: 10 }
+  ]
+}
