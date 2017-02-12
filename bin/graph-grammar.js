@@ -17,6 +17,7 @@ var opt = getopt.create([
   ['o' , 'output=PATH'     , 'path to output graphlib JSON file'],
   ['d' , 'dot=PATH'        , 'save graphviz DOT file'],
   ['l' , 'limit=N'         , 'limit number of rule applications'],
+  ['s' , 'seed=N'          , 'seed random number generator'],
   ['q' , 'quiet'           , 'do not print pretty log messages'],
   ['h' , 'help'            , 'display this help message']
 ])              // create Getopt instance
@@ -26,15 +27,16 @@ var opt = getopt.create([
 var grammarFilename = opt.options.grammar || defaultGrammarFilename
 var grammarText = fs.readFileSync(grammarFilename).toString()
 var grammarJson = eval ('(' + grammarText + ')')
-var grammar = new Grammar (grammarJson, { verbose: !opt.options.quiet,
-                                          limit: opt.options.limit,
-                                          validationError: function (err) { console.log(err); process.exit() } })
+var grammar = new Grammar (grammarJson, { validationError: function (err) { console.log(err); process.exit() } })
 
 var graph
 if (opt.options.input)
   graph = graphlib.json.read (JSON.parse (fs.readFileSync (opt.options.input)))
 
-graph = grammar.evolve ({ graph: graph })
+graph = grammar.evolve ({ graph: graph,
+                          verbose: !opt.options.quiet,
+                          limit: opt.options.limit,
+                          seed: opt.options.seed })
 
 var dotFilename = opt.options.dot
 if (dotFilename)
