@@ -84,7 +84,6 @@ Files of interest:
  * [Awards file (JSON)](data/awards/test.json) ... info about accomplishments for player's status page
  * [Meters file (JSON)](data/meters/days.json) ... info about meters for player's status page (stats, scores, etc.)
  * [Players file (JSON)](data/players/players.json) ... test players
-    * [Player file for NPC Dean Wedgwood (JSON)](data/players/players.json) ... slightly (but not much) more complex character info that includes an avatar description
 * Main codebase
  * [Monolithic JavaScript client](assets/js/bighouse/bighouse.js) and [libraries](assets/js/ext)
  * Sails config: [routes](config/routes.js), [policies](config/policies.js)
