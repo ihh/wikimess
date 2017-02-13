@@ -82,7 +82,7 @@ var jar = request.jar()
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
 var choiceFilenames = opt.options.choices || [defaultPath('Choice',opt)]
-var textFilenames = opt.options.choices || [defaultPath('Text',opt)]
+var textFilenames = opt.options.texts || [defaultPath('Text',opt)]
 var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
 var locationFilenames = opt.options.locations || [defaultPath('Location',opt)]
 var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
@@ -90,7 +90,7 @@ var meterFilenames = opt.options.meters || [defaultPath('Meter',opt)]
 var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
 
 if (opt.options.story) {
-  var json = readJsonFileSync (opt.options.story, parseStory)
+  var json = readJsonFileSync (opt.options.story, [parseStory])
   console.log (JSON.stringify(json,null,2))
   return
 }
