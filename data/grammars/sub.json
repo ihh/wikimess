@@ -15,6 +15,6 @@
                                                     edge: [{v:"x",w:"y",label:"${e.label}"},{v:"x",w:"z",label:"xz"}] } },
     { lhs: { node: [{id:"x"},{id:"y"},{id:"z",label:"z.*"}],
              edge: [{v:"x",w:"y",id:"e"},{v:"x",w:"z",id:"f"}] }, rhs: { node: [{id:"x",label:"_${x.label}"},{id:"y",label:"_${y.label}"},{id:"z",label:"_${z.label}"}],
-                                                                         edge: [{v:"x",w:"y",label:"${e.label}"},{v:"y",w:"z",label:"${f.label}"}] } }
+                                                                         edge: [{v:"x",w:"y",label:"${e.label}"},{v:"y",w:"z",label:{".eval":"$f.label"}}] } }
   ]
 }
