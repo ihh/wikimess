@@ -77,7 +77,7 @@ Files of interest:
 
 * Game data
  * [Story file in JSON](data/choices/test.json)
-    * [Story file in .story minilanguage](data/choices/prison.story) ... fewer quotes
+    * [Story file in .story minilanguage](data/sandbox/choices/prison.story) ... fewer quotes
     * [Emacs mode for .story minilanguage](emacs/story-mode.el)
  * [Location file (JSON)](data/locations/root.json)
  * [Items file (JSON)](data/items/cash.json) ... info about objects player can acquire
