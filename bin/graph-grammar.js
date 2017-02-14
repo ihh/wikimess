@@ -13,6 +13,7 @@ var defaultGrammarFilename = 'data/grammars/sub.json'
 
 var opt = getopt.create([
   ['g' , 'grammar=PATH'    , 'read grammar file (default "' + defaultGrammarFilename + '")'],
+  ['c' , 'canonical'       , 'allow only canonical grammar format (no syntactic sugar)'],
   ['i' , 'input=PATH'      , 'read graphlib JSON file'],
   ['o' , 'output=PATH'     , 'write graphlib JSON file'],
   ['d' , 'dot=PATH'        , 'write graphviz DOT file'],
@@ -28,7 +29,7 @@ var opt = getopt.create([
 var grammarFilename = opt.options.grammar || defaultGrammarFilename
 var grammarText = fs.readFileSync(grammarFilename).toString()
 var grammarJson = eval ('(' + grammarText + ')')
-var grammar = new Grammar (grammarJson)
+var grammar = new Grammar (grammarJson, { canonical: opt.options.canonical })
 
 var graph
 if (opt.options.input)
