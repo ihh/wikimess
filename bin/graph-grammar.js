@@ -13,7 +13,9 @@ var defaultGrammarFilename = 'data/grammars/sub.json'
 
 var opt = getopt.create([
   ['g' , 'grammar=PATH'    , 'read grammar file (default "' + defaultGrammarFilename + '")'],
-  ['c' , 'canonical'       , 'allow only canonical grammar format (no syntactic sugar)'],
+  ['c' , 'canonical'       , 'use canonical schema (no syntactic sugar)'],
+  ['j' , 'schema=PATH'     , 'save JSON schema to file'],
+  ['C' , 'canonize=PATH'   , 'save canonical grammar to file'],
   ['i' , 'input=PATH'      , 'read graphlib JSON file'],
   ['o' , 'output=PATH'     , 'write graphlib JSON file'],
   ['d' , 'dot=PATH'        , 'write graphviz DOT file'],
@@ -26,10 +28,18 @@ var opt = getopt.create([
     .bindHelp()     // bind option 'help' to default action
     .parseSystem() // parse command line
 
+var grammarOpts = { canonical: opt.options.canonical }
+
+if (opt.options.schema)
+  fs.writeFileSync (opt.options.schema, JSON.stringify (new Grammar(null,grammarOpts).makeSchema(), null, 2))
+
 var grammarFilename = opt.options.grammar || defaultGrammarFilename
 var grammarText = fs.readFileSync(grammarFilename).toString()
 var grammarJson = eval ('(' + grammarText + ')')
-var grammar = new Grammar (grammarJson, { canonical: opt.options.canonical })
+var grammar = new Grammar (grammarJson, grammarOpts)
+
+if (opt.options.canonize)
+  fs.writeFileSync (opt.options.canonize, JSON.stringify (grammar.canonicalJson(), null, 2))
 
 var graph
 if (opt.options.input)
