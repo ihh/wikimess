@@ -38,7 +38,7 @@
      // Note that this rule drastically slows things down,
      // since it matches every edge in the graph at every iteration;
      // that is why we put these decoration rules in a separate stage.
-     [{ name: 'dot-rumor-edges',
+     [{ name: 'dot-rumor-edge',
 	lhs: { node: [{id:'a'},{id:'b'}], edge: [['a','b','rumor']] },
 	rhs: { node: [{id:'a'},{id:'b'}], edge: [['a','b',{dot:{label:'rumor',style:'dotted'}}]] } },
       // This rule flags endpoints
