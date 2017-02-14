@@ -12,10 +12,10 @@ var fs = require('fs'),
 var defaultGrammarFilename = 'data/grammars/sub.json'
 
 var opt = getopt.create([
-  ['g' , 'grammar=PATH'    , 'path to grammar file (default="' + defaultGrammarFilename + '")'],
-  ['i' , 'input=PATH'      , 'path to input graphlib JSON file'],
-  ['o' , 'output=PATH'     , 'path to output graphlib JSON file'],
-  ['d' , 'dot=PATH'        , 'save graphviz DOT file'],
+  ['g' , 'grammar=PATH'    , 'read grammar file (default "' + defaultGrammarFilename + '")'],
+  ['i' , 'input=PATH'      , 'read graphlib JSON file'],
+  ['o' , 'output=PATH'     , 'write graphlib JSON file'],
+  ['d' , 'dot=PATH'        , 'write graphviz DOT file'],
   ['L' , 'limit=N'         , 'limit number of rule applications'],
   ['S' , 'stage=N'         , 'only run one stage'],
   ['s' , 'seed=N'          , 'seed random number generator'],
