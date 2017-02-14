@@ -33,10 +33,11 @@ var graph
 if (opt.options.input)
   graph = graphlib.json.read (JSON.parse (fs.readFileSync (opt.options.input)))
 
-graph = grammar.evolve ({ graph: graph,
-                          verbose: !opt.options.quiet,
-                          limit: opt.options.limit,
-                          seed: opt.options.seed })
+var info = grammar.evolve ({ graph: graph,
+			     verbose: !opt.options.quiet,
+			     limit: opt.options.limit,
+			     seed: opt.options.seed })
+graph = info.graph
 
 var dotFilename = opt.options.dot
 if (dotFilename)
