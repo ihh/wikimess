@@ -16,7 +16,8 @@ var opt = getopt.create([
   ['i' , 'input=PATH'      , 'path to input graphlib JSON file'],
   ['o' , 'output=PATH'     , 'path to output graphlib JSON file'],
   ['d' , 'dot=PATH'        , 'save graphviz DOT file'],
-  ['l' , 'limit=N'         , 'limit number of rule applications'],
+  ['L' , 'limit=N'         , 'limit number of rule applications'],
+  ['S' , 'stage=N'         , 'only run one stage'],
   ['s' , 'seed=N'          , 'seed random number generator'],
   ['q' , 'quiet'           , 'do not print pretty log messages'],
   ['h' , 'help'            , 'display this help message']
@@ -36,6 +37,7 @@ if (opt.options.input)
 var info = grammar.evolve ({ graph: graph,
 			     verbose: !opt.options.quiet,
 			     limit: opt.options.limit,
+			     stage: opt.options.stage,
 			     seed: opt.options.seed })
 graph = info.graph
 
