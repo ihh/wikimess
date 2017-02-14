@@ -46,9 +46,9 @@
 	lhs: '(die|live|boss)',  // first node on LHS automatically assigned id 'a'
 	rhs: { node: [{ label: { endpoint: '${a.match[1]}' } }] } },
       // This rule gives previously-flagged endpoints a rectangular node-shape styling in graphviz
-      // The '$global: true' ensures that the JSON is an exact match at that level. Not strictly necessary here, just a test
+      // The '$only' ensures that the JSON is an exact match at that level. Not strictly necessary here, just a test
       { name: 'make-endpoints-rectangular',
-	lhs: { node: [{ label: { endpoint: '.*', $global: true } }] },  // automatically assigned id 'a'
+	lhs: { node: [{ label: { $only: { endpoint: '.*' } } }] },  // automatically assigned id 'a'
 	rhs: { node: [{ id: 'a', label: { dot: { label: '${a.match.endpoint[0]}', shape: 'rect' } } }] } }
      ]
    }
