@@ -49,6 +49,7 @@
       // The '$equals' ensures that the JSON is an exact match at that level, and prevents repeat applications
       { name: 'make-endpoints-rectangular',
         lhs: { node: [{ id: 'a', label: { $equals: { endpoint: '.*' } }}] },
+//        lhs: { node: [{ id: 'a', label: { $and: [{ endpoint: '.*' }, {$test:'(label)=>!label.dot'}]}}] },
 	rhs: { node: [{ id: 'a', update: { dot: { label: '${a.match.endpoint[0]}', shape: 'rect' } } }] } }
      ]
    }
