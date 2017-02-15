@@ -17,7 +17,7 @@ module.exports = {
 	  .then (function (botPlayers) {
 	    botPlayers.forEach (function (bot) {
 	      bot.partner = player.id
-	      bot.name = bot.name + '-' + player.id
+	      delete bot.name
 	      delete bot.id
 	    })
 	    return botPlayers
@@ -27,7 +27,7 @@ module.exports = {
 	    return humanPlayers.map (function (human) {
 	      var bot = extend ({}, player)
 	      bot.partner = human.id
-	      bot.name = bot.name + '-' + human.id
+	      delete bot.name
 	      delete bot.id
 	    })
 	    return botPlayers

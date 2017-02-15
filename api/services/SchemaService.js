@@ -9,7 +9,7 @@ var Item = require('../models/Item')
 var Award = require('../models/Award')
 var Meter = require('../models/Meter')
 
-var playerSchema = autoSchema(Player,['name','displayName','password','admin','human','global','home','initialMood','avatarConfig','newSignUp'])
+var playerSchema = autoSchema(Player,['name','displayName','password','admin','human','hidden','global','home','initialMood','avatarConfig','newSignUp'],{name:true})
 var awardSchema = autoSchema(Award,['name','init','icon','color','label','public'])
 var meterSchema = autoSchema(Meter,['name','log','min','max','public','showRange','label'])
 var itemSchema = autoSchema(Item,['name','icon','color','noun','pluralNoun','article','hint','category','isDefaultCurrency','buy','sell','markup','discount','verb','init','public','alwaysShow'])
@@ -281,7 +281,8 @@ var choice_schema_defs = {
   sample_string: sample1_switch_schema({ type: "string" })
 }
 
-function autoSchema (model, keys) {
+function autoSchema (model, keys, isRequired) {
+  isRequired = isRequired || {}
   var schema = { type: "object",
                  required: [],
                  properties: {},
@@ -291,7 +292,7 @@ function autoSchema (model, keys) {
     var waterlineType = model.attributes[key].type
     var jsonSchemaType = waterlineToJsonSchema[waterlineType] || waterlineType
     schema.properties[key] = { type: jsonSchemaType }
-    if (model.attributes[key].required)
+    if (model.attributes[key].required || isRequired[key])
       schema.required.push (key)
   })
   return schema

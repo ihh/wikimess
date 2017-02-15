@@ -20,6 +20,9 @@
     "human": {
       "type": "boolean"
     },
+    "hidden": {
+      "type": "boolean"
+    },
     "global": {
       "type": [
         "number",
