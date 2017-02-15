@@ -50,6 +50,15 @@ module.exports = {
       type: 'boolean',
       defaultsTo: true
     },
+
+    hidden: {
+      type: 'boolean'
+    },
+
+    partner: {
+      model: 'player',
+      defaultsTo: null
+    },
     
     // global stats for this player
     global: {

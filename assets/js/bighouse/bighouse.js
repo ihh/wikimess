@@ -2298,7 +2298,7 @@ var BigHouse = (function() {
     },
 
     playingSolo: function() {
-      return this.opponentName === 'none'
+      return this.opponentHidden
     },
     
     loadGameCards: function() {
@@ -2319,6 +2319,7 @@ var BigHouse = (function() {
 
           bh.moveNumber = data.move
           bh.opponentName = data.other.name
+          bh.opponentHidden = data.other.hidden
           bh.opponentID = data.other.id
           
 	  bh.showGameDivs()

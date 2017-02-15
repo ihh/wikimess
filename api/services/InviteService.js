@@ -53,10 +53,11 @@ module.exports = {
 	  if (event.botDefaultWait == 0 || !info.wantHuman) {
 	    var query = Player.find()
 	    if (event.opponent)
-	      query = query.where ({ name: event.opponent })
+	      query = query.where ({ displayName: event.opponent })
 	    else
 	      query = query.where ({ id: { '!': player.id },
 				     human: false })
+	    query = query.where ({ partner: player.id })
 	    query.exec (function (err, players) {
 	      if (err) error (err)
 	      else tryOpponents (players.map (function (player) {

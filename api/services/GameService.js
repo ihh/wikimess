@@ -1204,7 +1204,7 @@ module.exports = {
              waiting: Game.isWaitingForMove (game, role),
              text: text,
              self: { mood: selfMood },
-             other: { id: other.id, name: other.displayName, mood: otherMood },
+             other: { id: other.id, name: other.displayName, mood: otherMood, hidden: other.hidden },
              startline: game.currentStartTime,
              deadline: Game.deadline(game),
              move: game.moves + 1 }

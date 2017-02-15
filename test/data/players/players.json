@@ -1,5 +1,10 @@
 [
     {
+        name: "ai",
+        password: "test",
+        human: false
+    },
+    {
         name: "fred",
         password: "test",
         newSignUp: false
@@ -13,10 +18,5 @@
         name: "sheila",
         password: "test",
         newSignUp: false
-    },
-    {
-        name: "ai",
-        password: "test",
-        human: false
     }
 ]
