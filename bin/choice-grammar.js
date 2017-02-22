@@ -50,12 +50,19 @@ mapGraph.nodes().forEach (function (nodeId) {
     startGraph.node ({ label: nodeLabel, outgoing: nodeOutgoing })
     fs.writeFileSync (nodeDir + '/start.json', JSON.stringify (graphlib.json.write (startGraph), null, 2))
 
+    var introGrammar = Grammar.fromFile (introDir + '/grammar.json')
     var introInfo = introGrammar.evolve ({ verbose: !opt.options.quiet,
 					   seed: opt.options.seed })
     introGraph = introInfo.graph
 
   } else {
     // create a default intro graph based on nodeLabel and nodeOutgoing
+    introGraph = new graphlib.Graph()
+    var src = introGraph.node ({ bighouse: nodeLabel })
+    nodeOutgoing.forEach (function (edge) {
+      var dest = introGraph.node ({ bighouse: { label: { move: edge.to } } } )
+      introGraph.setEdge (root, dest, { bighouse: edge.label })
+    })
   }
 
   // use introGraph to create intro with EJS templates for text
