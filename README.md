@@ -6,11 +6,13 @@ This works for me on my late-2014 iMac (OS X El Capitan 10.11.16)
 
     git submodule update --init --recursive
     brew install node
-    brew install imagemagick
+    brew install imagemagick@6
     brew install pkg-config
     npm install -g sails
     npm install
     sails lift
+
+(Note that node's imagemagick-native package only works with version 6 of ImageMagick as of April 2017.)
 
 Then from another terminal:
 
