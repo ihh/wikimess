@@ -3280,9 +3280,10 @@ var BigHouse = (function() {
           console.log ("Updating player mood to " + mood + " for move #" + this.moveNumber + (time ? (" at time " + time) : ''))
 	if (time)
           this.lastPlayerMoodTime = date
-	this.playerMood = mood
-	if (this.playerMood != mood)
+	if (this.playerMood != mood) {
+	  this.playerMood = mood
 	  this.refreshPlayerMoodImage()
+	}
         for (var m = 0; m < this.moods.length; ++m) {
           var newMood = this.moods[m]
           this.moodDiv[m].off()
