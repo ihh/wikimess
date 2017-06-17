@@ -1399,7 +1399,7 @@ var BigHouse = (function() {
 
     // avatar upload page
     showSettingsUploadPage: function() {
-      this.showUploadPage ({ uploadText: "Select one of the images below to upload a new photo, or pick an avatar.",
+      this.showUploadPage ({ uploadText: "Tap each of the faces below to upload a mood photo, or randomly generate a new avatar.",
                              nextPageText: "Back",
                              showNextPage: this.showSettingsPage,
                              transitionWhenUploaded: false })
@@ -1430,7 +1430,7 @@ var BigHouse = (function() {
 		 .append ($('<span class="rubric">')
 			  .text(uploadText))
 		 .append ($('<ul>')
-			  .append (this.makeListLink ("Pick avatar", this.pickAvatarPage.bind (this, config)))
+			  .append (this.makeListLink ("New avatar", this.pickAvatarPage.bind (this, config)))
 			  .append (this.makeListLink (nextPageText, showNextPage))))
         .append (this.moodSlugBar = $('<div class="moodslugbar">'))
         .append (this.moodBar = $('<div class="mooduploadbar">'))
