@@ -64,7 +64,9 @@ var BigHouse = (function() {
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
-    maxNameLength: 16,
+    maxPlayerNameLength: 16,
+    maxGrammarTitleLength: 128,
+    grammarAutosaveDelay: 5000,
     moods: ['happy', 'surprised', 'sad', 'angry'],
     musicFadeDelay: 800,
     cardFadeTime: 500,
@@ -101,7 +103,7 @@ var BigHouse = (function() {
            { name: 'status', method: 'showStatusPage', icon: 'scroll-unfurled', },
            { name: 'games', method: 'showActiveGamesPage', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', icon: 'address-book-black' },
-           { name: 'edit', method: 'showEditPage', icon: 'printing-press' },
+           { name: 'grammars', method: 'showGrammarListPage', icon: 'printing-press' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
 
     searchIcon: 'magnifying-glass',
@@ -311,7 +313,7 @@ var BigHouse = (function() {
     },
 
     REST_postPlayerGrammar: function (playerID, grammarID, name, rules) {
-      return $.post ('/p/' + playerID + '/grammar/' + grammarID, { name: name, rules: rules })
+      return $.post ('/p/' + playerID + '/grammar/' + grammarID, { grammar: { name: name, rules: rules } })
     },
 
     // WebSockets interface
@@ -362,7 +364,7 @@ var BigHouse = (function() {
         evt.preventDefault()
         if (elementToDisable) {
           if (elementToDisable.hasClass('already-clicked'))
-            return
+            return;
           elementToDisable.addClass('already-clicked')
         }
         if (sfx.length)
@@ -414,7 +416,7 @@ var BigHouse = (function() {
                           .append ($('<label for="player">')
                                    .text('Player name'))
                           .append (this.nameInput = $('<input name="player" type="text">')
-                                   .attr('maxlength', this.maxNameLength))
+                                   .attr('maxlength', this.maxPlayerNameLength))
                           .append ($('<label for="player">')
                                    .text('Password'))
                           .append (this.passwordInput = $('<input name="password" type="password">'))))
@@ -1257,7 +1259,7 @@ var BigHouse = (function() {
                                    .append ($('<span>').text('Full name'))
                                    .append (this.nameInput = $('<input type="text">')
                                             .val(this.playerName)
-                                            .attr('maxlength', this.maxNameLength))))
+                                            .attr('maxlength', this.maxPlayerNameLength))))
                  .append (backLink))
     },
 
@@ -1999,18 +2001,28 @@ var BigHouse = (function() {
     },
 
     // edit
-    showEditPage: function() {
+    showGrammarListPage: function() {
       var bh = this
       
-      this.setPage ('edit')
-      this.showNavBar ('edit')
+      this.setPage ('grammars')
+      this.showNavBar ('grammars')
 
       var createDiv = $('<div class="newgrammar">')
       var buttonDiv = $('<div class="button">').text ("New")
+      buttonDiv.on ('click',
+                    bh.callWithSoundEffect
+                    (function() {
+                      bh.REST_getPlayerGrammarNew (bh.playerID)
+                        .then (function (result) {
+                          bh.showGrammarEditPage (result.grammar)
+                        })
+                    },
+                     'select',
+                     buttonDiv))
       createDiv.append (buttonDiv)
 
       this.container
-        .append (this.locBarDiv = $('<div class="locbar">')
+        .append (this.locBarDiv = $('<div class="gramlistbar">')
 		 .append ($('<span>')
 			  .text('This page shows the conversation templates you\'ve crafted.'),
 		          $('<span class="nogames">')
@@ -2027,11 +2039,111 @@ var BigHouse = (function() {
             .before (result.grammars.map (function (grammar) {
               var grammarDiv = $('<div class="grammar">')
               var buttonDiv = $('<div class="button">').text ("Edit")
+              buttonDiv.on ('click',
+                            bh.callWithSoundEffect
+                            (function() {
+                              bh.REST_getPlayerGrammar (bh.playerID, grammar.id)
+                                .then (function (result) {
+                                  bh.showGrammarEditPage (result.grammar)
+                                })
+                            },
+                             'select',
+                             buttonDiv))
               grammarDiv.append ($('<span class="title">').text (grammar.name),
                                  buttonDiv)
               return grammarDiv
             }))
         })
+    },
+
+    makeEditableDiv: function (className, text, storeCallback) {
+      var bh = this
+      var div = $('<div>').addClass(className).text(text)
+      var clickCallback = function() {
+        div.off ('click')
+        if (bh.editableDivUnfocusCallback) {
+          bh.editableDivUnfocusCallback()
+          delete bh.editableDivUnfocusCallback
+        }
+        var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
+        var input = $('<textarea>').val(text).attr('rows',divRows)
+        bh.editableDivUnfocusCallback = function() {
+          var newText = input.val()
+          div.text(newText).on('click',clickCallback)
+          if (newText !== text) {
+            bh.currentGrammarUnsaved = true
+            bh.setGrammarAutosaveTimer()
+            storeCallback (newText)
+            text = newText
+          }
+        }
+        div.html(input)
+        input.focus()
+      }
+      div.on ('click', clickCallback)
+      return div
+    },
+
+    clearGrammarAutosaveTimer: function() {
+      if (this.grammarAutosaveTimer) {
+        window.clearTimeout (this.grammarAutosaveTimer)
+        delete this.grammarAutosaveTimer
+      }
+    },
+
+    setGrammarAutosaveTimer: function() {
+      this.clearGrammarAutosaveTimer()
+      this.grammarAutosaveTimer = window.setTimeout (this.autosaveGrammar.bind (this), this.grammarAutosaveDelay)
+    },
+
+    autosaveGrammar: function() {
+      if (this.currentGrammarUnsaved)
+        this.REST_postPlayerGrammar (this.playerID, this.currentGrammar.id, this.currentGrammar.name, this.currentGrammar.rules)
+      delete this.currentGrammarUnsaved
+      this.clearGrammarAutosaveTimer()
+    },
+
+    makeGrammarRuleDiv: function (lhs) {
+      var bh = this
+      var rhsList = bh.currentGrammar.rules[lhs]
+      var ruleDiv = $('<div class="rule">')
+          .append ($('<div class="lhs">').text('@'+lhs),
+                   rhsList.map (function (rhs, n) {
+                     return bh.makeEditableDiv ('rhs',
+                                                rhs,
+                                                function (newRhs) {
+                                                  bh.currentGrammar.rules[lhs][n] = newRhs
+                                                })
+                   }))
+      return ruleDiv
+    },
+    
+    showGrammarEditPage: function (grammar) {
+      var bh = this
+      this.setPage ('edit')
+      
+      this.currentGrammar = grammar
+      delete this.currentGrammarUnsaved
+      this.pageExit = this.autosaveGrammar.bind (this)
+
+      this.container
+        .empty()
+	.append ($('<div class="backbar">')
+		 .append ($('<span>')
+			  .html (this.makeLink ('Back', bh.reloadCurrentTab))),
+                 this.grammarBarDiv = $('<div class="grammarbar">'))
+
+      this.restoreScrolling (this.grammarBarDiv)
+
+      var titleDiv = this.makeEditableDiv ('title',
+                                           grammar.name,
+                                           function (name) {
+                                             bh.currentGrammar.name = name
+                                           })
+
+      this.grammarBarDiv
+        .append (titleDiv,
+                 Object.keys(grammar.rules).map (this.makeGrammarRuleDiv.bind(this)))
     },
     
     // follows
@@ -2048,7 +2160,7 @@ var BigHouse = (function() {
       this.endSearchResultsDiv = $('<div class="endresults">')
       var searchButton = $('<span>')
       this.container
-        .append (this.locBarDiv = $('<div class="locbar">')
+        .append (this.whoBarDiv = $('<div class="whobar">')
                  .append ($('<div class="search">')
                           .append ($('<div class="query">')
                                    .append (this.searchInput, searchButton),
@@ -2065,7 +2177,7 @@ var BigHouse = (function() {
       })
       this.showSearchResults()
       
-      this.restoreScrolling (this.locBarDiv)
+      this.restoreScrolling (this.whoBarDiv)
 
       bh.followsById = {}
       
@@ -2073,7 +2185,7 @@ var BigHouse = (function() {
 	.done (function (data) {
 	  if (bh.verbose.server)
 	    console.log (data)
-          bh.locBarDiv
+          bh.whoBarDiv
             .append ($('<div class="followsection">')
                      .append ($('<div class="title">').text("Recently played"))
                      .append (bh.makeFollowDivs (data.recent, "Once you have played some games, recently encountered players will appear here.")))

@@ -62,21 +62,23 @@ body {
     opacity: 1;
 }
 
+.bighouse .gramlistbar,
 .bighouse .locbar {
     flex-grow: 1;
     overflow-y: auto;
 }
 
+.bighouse .grammarbar .title,
 .bighouse .locbar .title {
     font-weight: bold;
     font-size: large;
 }
 
-.bighouse .locbar .followsection {
+.bighouse .whobar .followsection {
     margin-bottom: 12px;
 }
 
-.bighouse .locbar .search .query {
+.bighouse .whobar .search .query {
     display: flex;
     width: 100%;
     height: 32px;
@@ -88,34 +90,36 @@ body {
     border-color: #888;
 }
 
-.bighouse .locbar .search .query .button {
+.bighouse .whobar .search .query .button {
     height: 32px;
     width: 32px;
 }
 
-.bighouse .locbar .search .query input {
+.bighouse .whobar .search .query input {
     background: black;
     flex-grow: 1;
     border-style: none;
     color: white;
 }
 
-.bighouse .locbar .search .endresults {
+.bighouse .whobar .search .endresults {
     width: 100%;
     text-align: center;
     font-style: italic;
 }
 
-.bighouse .locbar .search .more {
+.bighouse .whobar .search .more {
     text-decoration: underline;
 }
 
 .bighouse .follow,
+.bighouse .gramlistbar .grammar,
+.bighouse .gramlistbar .newgrammar,
+.bighouse .grammarbar .rule,
+.bighouse .grammarbar .rule .rhs,
 .bighouse .locbar .location,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
-.bighouse .locbar .grammar,
-.bighouse .locbar .newgrammar,
 .bighouse .locbar .event {
     clear: both;
     float: left;
@@ -123,28 +127,40 @@ body {
     margin: 1vw;
 }
 
+.bighouse .gramlistbar .grammar,
+.bighouse .gramlistbar .newgrammar,
+.bighouse .grammarbar .rule,
 .bighouse .follow,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
-.bighouse .locbar .grammar,
-.bighouse .locbar .newgrammar,
 .bighouse .locbar .event {
     position: relative;
     padding: 1vw;
 }
 
+.bighouse .grammarbar .rule .rhs {
+    padding: 0.5vw;
+}
+
+.bighouse .grammarbar textarea {
+    width: 99%;
+    height: 100%;
+}
+
+.bighouse .gramlistbar .grammar,
+.bighouse .grammarbar .rule,
 .bighouse .follow,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
-.bighouse .locbar .grammar,
 .bighouse .locbar .event {
     border-style: solid;
     border-width: 1px;
 }
 
+.bighouse .gramlistbar .grammar .title,
+.bighouse .grammarbar .rule .lhs,
 .bighouse .locbar .link .title,
 .bighouse .locbar .trade .title,
-.bighouse .locbar .grammar .title,
 .bighouse .locbar .event .title {
     width: 80%;
     font-weight: bold;
@@ -153,11 +169,12 @@ body {
     clear: left;
 }
 
-.bighouse .newgrammar .button {
+.bighouse .gramlistbar .newgrammar .button {
     float: left;
 }
 
-.bighouse .grammar .button {
+.bighouse .gramlistbar .grammar .button,
+.bighouse .grammarbar .rule .button {
     float: right;
 }
 
@@ -171,8 +188,8 @@ body {
 .bighouse .follow .button,
 .bighouse .locbar .link .button,
 .bighouse .locbar .trade .button,
-.bighouse .locbar .grammar .button,
-.bighouse .locbar .newgrammar .button,
+.bighouse .gramlistbar .grammar .button,
+.bighouse .gramlistbar .newgrammar .button,
 .bighouse .locbar .event .button {
     border-style: solid;
     border-width: 1px;
@@ -677,6 +694,7 @@ a.unclickable {
     opacity: .5;
 }
 
+.bighouse .grammarbar,
 .bighouse .detailbar {
     flex-grow: 1;
     overflow-y: auto;
