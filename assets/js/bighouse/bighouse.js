@@ -150,8 +150,8 @@ var BigHouse = (function() {
 
     // set disableSwipeInterface for big cards (scrolling instead of swiping)
 //    disableSwipeInterface: true,
-    
-    // REST interface
+
+    // REST API
     REST_loginFacebook: function() {
       window.location.replace ('/login/facebook')
     },
@@ -296,6 +296,22 @@ var BigHouse = (function() {
 
     REST_postPlayerLocationTrade: function (playerID, locationID, itemName, itemCount) {
       return $.post('/p/' + playerID + '/location/' + locationID + '/trade', { name: itemName, count: itemCount })
+    },
+
+    REST_getPlayerGrammars: function (playerID) {
+      return $.get ('/p/' + playerID + '/grammars')
+    },
+
+    REST_getPlayerGrammarNew: function (playerID) {
+      return $.get ('/p/' + playerID + '/grammar')
+    },
+
+    REST_getPlayerGrammar: function (playerID, grammarID) {
+      return $.get ('/p/' + playerID + '/grammar/' + grammarID)
+    },
+
+    REST_postPlayerGrammar: function (playerID, grammarID, name, rules) {
+      return $.post ('/p/' + playerID + '/grammar/' + grammarID, { name: name, rules: rules })
     },
 
     // WebSockets interface
@@ -1775,9 +1791,9 @@ var BigHouse = (function() {
       this.container
         .append (this.locBarDiv = $('<div class="locbar">')
 		 .append ($('<span>')
-			  .text('This page shows all your currently active games.'))
+			  .text('This page shows all your currently active conversations.'))
 		 .append ($('<span class="nogames">')
-			  .html('<br/> You have no games at present.')))
+			  .html('<br/> You have no conversations at present.')))
 
       this.restoreScrolling (this.locBarDiv)
 
@@ -1988,6 +2004,35 @@ var BigHouse = (function() {
       
       this.setPage ('edit')
       this.showNavBar ('edit')
+
+      var createDiv = $('<div class="grammar">')
+      var buttonDiv = $('<div class="button">').text ("Create")
+      createDiv.append ($('<span class="title">').text ("New template"),
+                        buttonDiv)
+
+      this.container
+        .append (this.locBarDiv = $('<div class="locbar">')
+		 .append ($('<span>')
+			  .text('This page shows the conversation templates you\'ve crafted.'),
+		          $('<span class="nogames">')
+			  .html('<br/> You have no conversation templates at present.'),
+                         createDiv))
+
+      this.restoreScrolling (this.locBarDiv)
+
+      this.REST_getPlayerGrammars (this.playerID)
+        .then (function (result) {
+          if (result.grammars.length)
+            bh.locBarDiv.find('.nogames')
+            .hide()
+            .before (result.grammars.map (function (grammar) {
+              var grammarDiv = $('<div class="grammar">')
+              var buttonDiv = $('<div class="button">').text ("Edit")
+              grammarDiv.append ($('<span class="title">').text (grammar.name),
+                                 buttonDiv)
+              return grammarDiv
+            }))
+        })
     },
     
     // follows

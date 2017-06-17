@@ -114,6 +114,7 @@ body {
 .bighouse .locbar .location,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
+.bighouse .locbar .grammar,
 .bighouse .locbar .event {
     float: left;
     clear: both;
@@ -124,6 +125,7 @@ body {
 .bighouse .follow,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
+.bighouse .locbar .grammar,
 .bighouse .locbar .event {
     position: relative;
     border-style: solid;
@@ -133,12 +135,17 @@ body {
 
 .bighouse .locbar .link .title,
 .bighouse .locbar .trade .title,
+.bighouse .locbar .grammar .title,
 .bighouse .locbar .event .title {
     width: 80%;
     font-weight: bold;
     font-style: italic;
     font-size: large;
     clear: left;
+}
+
+.bighouse .grammar .button {
+    float: right;
 }
 
 .bighouse .follow .button,
@@ -151,6 +158,7 @@ body {
 .bighouse .follow .button,
 .bighouse .locbar .link .button,
 .bighouse .locbar .trade .button,
+.bighouse .locbar .grammar .button,
 .bighouse .locbar .event .button {
     border-style: solid;
     border-width: 1px;
