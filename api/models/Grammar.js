@@ -28,10 +28,13 @@ module.exports = {
     rules: {
       type: 'json',
       defaultsTo: {
-        'origin': ''
+        'document': ['@beginning @body @ending'],
+        'beginning': ['Esteemed Colleague,', 'Dearest Friend,'],
+        'body': ['I trust you are in good health.', 'May I offer my warmest regards.'],
+        'ending': ['Sincerely, @me.', 'Yours, @me.']
       }
     },
-    
+
   }
 };
 

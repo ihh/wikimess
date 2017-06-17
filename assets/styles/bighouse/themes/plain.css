@@ -8,25 +8,31 @@
     background-color: black;
 }
 
+.bighouse.plain .gramlistbar,
 .bighouse.plain .locbar {
     color: black;
     background-color: white;
 }
 
+.bighouse.plain .gramlistbar .grammar,
+.bighouse.plain .grammarbar .rule,
 .bighouse.plain .detailbar .statusdiv,
 .bighouse.plain .detailbar .statusdiv .locbar,
 .bighouse.plain .locbar .link,
 .bighouse.plain .locbar .trade,
-.bighouse.plain .locbar .grammar,
 .bighouse.plain .locbar .event {
     border-color: black;
     background-color: #f8f8f8;
 }
 
+.bighouse.plain .grammarbar .rule .rhs {
+    background-color: #ccc;
+}
+
+.bighouse.plain .gramlistbar .grammar .button,
+.bighouse.plain .gramlistbar .newgrammar .button,
 .bighouse.plain .locbar .link .button,
 .bighouse.plain .locbar .trade .button,
-.bighouse.plain .locbar .grammar .button,
-.bighouse.plain .locbar .newgrammar .button,
 .bighouse.plain .locbar .event .button {
     border-color: black;
     background-color: #e8e8e8;
@@ -65,6 +71,7 @@
 
 .bighouse.plain .cardbar.dynamic .choicebar a,
 .bighouse.plain .detailbar,
+.bighouse.plain .grammarbar,
 .bighouse.plain .statusbar,
 .bighouse.plain .backbar,
 .bighouse.plain .menubar {
