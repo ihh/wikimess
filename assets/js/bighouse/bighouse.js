@@ -99,9 +99,9 @@ var BigHouse = (function() {
 
     tabs: [{ name: 'play', method: 'showPlayPage', icon: 'castle' },
            { name: 'status', method: 'showStatusPage', icon: 'scroll-unfurled', },
-           { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
            { name: 'games', method: 'showActiveGamesPage', icon: 'envelope' },
-           { name: 'edit', method: 'showEditPage', icon: 'quill-ink' },
+           { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
+           { name: 'edit', method: 'showEditPage', icon: 'printing-press' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
 
     searchIcon: 'magnifying-glass',
