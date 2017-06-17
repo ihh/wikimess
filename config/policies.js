@@ -44,6 +44,7 @@ module.exports.policies = {
   'EventController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'FollowController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'GameController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'GrammarController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'InviteController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'ItemController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'LocationController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },

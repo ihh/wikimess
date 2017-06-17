@@ -740,6 +740,78 @@ module.exports = {
         else
           res.status(404).send ({error: "Player " + req.params.player + " does not follow player " + req.params.other})
       })
-  }
+  },
+
+  // list grammars
+  listGrammars: function (req, res) {
+    var playerID = req.params.player
+    var result = { author: playerID }
+    Grammar.find ({ author: playerID })
+      .then (function (grammars) {
+        result.grammars = grammars.map (function (grammar) {
+          return { id: grammar.id, name: grammar.name }
+        })
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // new grammar
+  newGrammar: function (req, res) {
+    var playerID = req.params.player
+    var result = { author: playerID }
+    Grammar.create ({ author: playerID })
+      .then (function (grammar) {
+        result.grammar = { id: grammar.id,
+                           name: grammar.name,
+                           rules: grammar.rules }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // read grammar
+  readGrammar: function (req, res) {
+    var playerID = req.params.player
+    var grammarID = req.params.grammar
+    var result = { author: playerID }
+    Grammar.findOne ({ author: playerID,
+                    id: grammarID })
+      .then (function (grammar) {
+        if (!grammar)
+          throw new Error ("No grammar found")
+        result.grammar = { id: grammar.id,
+                           name: grammar.name,
+                           rules: grammar.rules }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // write grammar
+  writeGrammar: function (req, res) {
+    var playerID = req.params.player
+    var grammarID = req.params.grammar
+    var data = req.body.grammar
+    var result = { author: playerID }
+    Grammar.update ({ author: playerID,
+                      id: grammarID },
+                    { name: data.name,
+                      rules: data.rules })
+      .then (function (grammar) {
+        result.grammar = { id: grammar.id,
+                           updated: true }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
 
 };

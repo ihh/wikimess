@@ -98,10 +98,11 @@ var BigHouse = (function() {
               {style: 'cardroom', text: 'Card room'} ],
 
     tabs: [{ name: 'play', method: 'showPlayPage', icon: 'castle' },
-           { name: 'status', method: 'showStatusPage', icon: 'crowned-heart', },
-           { name: 'games', method: 'showActiveGamesPage', icon: 'scroll-unfurled' },
-           { name: 'follows', method: 'showFollowsPage', icon: 'quill-body' },
-           { name: 'settings', method: 'showSettingsPage', icon: 'throne-king' }],
+           { name: 'status', method: 'showStatusPage', icon: 'scroll-unfurled', },
+           { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
+           { name: 'games', method: 'showActiveGamesPage', icon: 'envelope' },
+           { name: 'edit', method: 'showEditPage', icon: 'quill-ink' },
+           { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
 
     searchIcon: 'magnifying-glass',
     botOpponentIcon: 'vintage-robot',
@@ -1981,6 +1982,14 @@ var BigHouse = (function() {
 			  .css('width',(100*lev) + '%')))
     },
 
+    // edit
+    showEditPage: function() {
+      var bh = this
+      
+      this.setPage ('edit')
+      this.showNavBar ('edit')
+    },
+    
     // follows
     showFollowsPage: function() {
       var bh = this
