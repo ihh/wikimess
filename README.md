@@ -7,6 +7,7 @@ This works for me on my late-2014 iMac (OS X El Capitan 10.11.16)
     git submodule update --init --recursive
     brew install node
     brew install imagemagick@6
+    brew link --force imagemagick@6
     brew install pkg-config
     npm install -g sails
     npm install
