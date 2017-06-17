@@ -100,7 +100,7 @@ var BigHouse = (function() {
     tabs: [{ name: 'play', method: 'showPlayPage', icon: 'castle' },
            { name: 'status', method: 'showStatusPage', icon: 'scroll-unfurled', },
            { name: 'games', method: 'showActiveGamesPage', icon: 'envelope' },
-           { name: 'follows', method: 'showFollowsPage', icon: 'relationship-bounds' },
+           { name: 'follows', method: 'showFollowsPage', icon: 'address-book-black' },
            { name: 'edit', method: 'showEditPage', icon: 'printing-press' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
 
