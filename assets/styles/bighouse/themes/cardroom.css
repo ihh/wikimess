@@ -26,6 +26,7 @@
 .bighouse.cardroom .locbar .link .button,
 .bighouse.cardroom .locbar .trade .button,
 .bighouse.cardroom .locbar .grammar .button,
+.bighouse.cardroom .locbar .newgrammar .button,
 .bighouse.cardroom .locbar .event .button {
     border-color: green;
     background-color: #333;

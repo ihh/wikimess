@@ -26,6 +26,7 @@
 .bighouse.plain .locbar .link .button,
 .bighouse.plain .locbar .trade .button,
 .bighouse.plain .locbar .grammar .button,
+.bighouse.plain .locbar .newgrammar .button,
 .bighouse.plain .locbar .event .button {
     border-color: black;
     background-color: #e8e8e8;

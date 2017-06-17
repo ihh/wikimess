@@ -115,9 +115,10 @@ body {
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
 .bighouse .locbar .grammar,
+.bighouse .locbar .newgrammar,
 .bighouse .locbar .event {
-    float: left;
     clear: both;
+    float: left;
     width: 95%;
     margin: 1vw;
 }
@@ -126,11 +127,19 @@ body {
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
 .bighouse .locbar .grammar,
+.bighouse .locbar .newgrammar,
 .bighouse .locbar .event {
     position: relative;
+    padding: 1vw;
+}
+
+.bighouse .follow,
+.bighouse .locbar .link,
+.bighouse .locbar .trade,
+.bighouse .locbar .grammar,
+.bighouse .locbar .event {
     border-style: solid;
     border-width: 1px;
-    padding: 1vw;
 }
 
 .bighouse .locbar .link .title,
@@ -142,6 +151,10 @@ body {
     font-style: italic;
     font-size: large;
     clear: left;
+}
+
+.bighouse .newgrammar .button {
+    float: left;
 }
 
 .bighouse .grammar .button {
@@ -159,6 +172,7 @@ body {
 .bighouse .locbar .link .button,
 .bighouse .locbar .trade .button,
 .bighouse .locbar .grammar .button,
+.bighouse .locbar .newgrammar .button,
 .bighouse .locbar .event .button {
     border-style: solid;
     border-width: 1px;

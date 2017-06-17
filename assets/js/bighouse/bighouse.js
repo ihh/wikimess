@@ -2005,10 +2005,9 @@ var BigHouse = (function() {
       this.setPage ('edit')
       this.showNavBar ('edit')
 
-      var createDiv = $('<div class="grammar">')
-      var buttonDiv = $('<div class="button">').text ("Create")
-      createDiv.append ($('<span class="title">').text ("New template"),
-                        buttonDiv)
+      var createDiv = $('<div class="newgrammar">')
+      var buttonDiv = $('<div class="button">').text ("New")
+      createDiv.append (buttonDiv)
 
       this.container
         .append (this.locBarDiv = $('<div class="locbar">')
