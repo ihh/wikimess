@@ -2056,15 +2056,19 @@ var BigHouse = (function() {
         })
     },
 
+    unfocusEditableDiv: function() {
+      if (this.editableDivUnfocusCallback) {
+        this.editableDivUnfocusCallback()
+        delete this.editableDivUnfocusCallback
+      }
+    },
+    
     makeEditableDiv: function (className, text, storeCallback) {
       var bh = this
       var div = $('<div>').addClass(className).text(text)
       var clickCallback = function() {
         div.off ('click')
-        if (bh.editableDivUnfocusCallback) {
-          bh.editableDivUnfocusCallback()
-          delete bh.editableDivUnfocusCallback
-        }
+        bh.unfocusEditableDiv()
         var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
         var input = $('<textarea>').val(text).attr('rows',divRows)
         bh.editableDivUnfocusCallback = function() {
@@ -2124,7 +2128,10 @@ var BigHouse = (function() {
       
       this.currentGrammar = grammar
       delete this.currentGrammarUnsaved
-      this.pageExit = this.autosaveGrammar.bind (this)
+      this.pageExit = function() {
+        bh.unfocusEditableDiv()
+        bh.autosaveGrammar()
+      }
 
       this.container
         .empty()
