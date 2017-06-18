@@ -2103,9 +2103,9 @@ var BigHouse = (function() {
         input.focus()
       }
       div.text(props.text)
+      div.append (bh.makeIconButton ('edit', editCallback))
       if (props.destroyCallback)
         div.append (bh.makeIconButton ('destroy', props.destroyCallback))
-      div.append (bh.makeIconButton ('edit', editCallback))
         .on ('click', editCallback)
     },
 
@@ -2134,13 +2134,13 @@ var BigHouse = (function() {
       this.clearGrammarAutosaveTimer()
     },
 
-    makeGrammarRuleDiv: function (lhs) {
+    makeGrammarRuleDiv: function (lhs, n) {
       var bh = this
       var rhsList = bh.currentGrammar.rules[lhs]
       var ruleDiv = $('<div class="rule">')
           .append ($('<span class="lhs">').text('@'+lhs),
-                   bh.makeIconButton ('destroy'),
                    bh.makeIconButton ('create'),
+                   n === 0 ? $('<span class="button">') : bh.makeIconButton ('destroy'),
                    rhsList.map (function (rhs, n) {
                      return bh.makeEditableSpan ({ className: 'rhs',
                                                    text: rhs,
@@ -2167,8 +2167,10 @@ var BigHouse = (function() {
       this.container
         .empty()
 	.append ($('<div class="backbar">')
-		 .append ($('<span>')
-			  .html (this.makeLink ('Back', bh.reloadCurrentTab))),
+		 .append ($('<span>').html (this.makeLink ('Help', function(){})),
+                          $('<span>').html (this.makeLink ('Test', function(){})),
+                          $('<span>').html (this.makeLink ('Delete', function(){})),
+                          $('<span>').html (this.makeLink ('Back', bh.reloadCurrentTab))),
                  this.grammarBarDiv = $('<div class="grammarbar">'))
 
       this.restoreScrolling (this.grammarBarDiv)
@@ -2183,7 +2185,8 @@ var BigHouse = (function() {
 
       this.grammarBarDiv
         .append (titleSpan,
-                 Object.keys(grammar.rules).map (this.makeGrammarRuleDiv.bind(this)))
+                 Object.keys(grammar.rules).map (this.makeGrammarRuleDiv.bind(this)),
+                 $('<div class="newlhs">').html (bh.makeIconButton ('create')))
     },
     
     // follows

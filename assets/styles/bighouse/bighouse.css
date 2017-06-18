@@ -74,6 +74,11 @@ body {
     height: 1em;
 }
 
+.bighouse .grammarbar .newlhs {
+    float: right;
+    padding: 2vw;
+}
+
 .bighouse .grammarbar .title,
 .bighouse .locbar .title {
     font-weight: bold;
@@ -185,6 +190,7 @@ body {
 .bighouse .gramlistbar .grammar .button,
 .bighouse .grammarbar .rule .button {
     float: right;
+    padding-left: 1vw;
 }
 
 .bighouse .follow .button,
@@ -554,9 +560,13 @@ body {
     margin: 12px;
     
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+}
+
+.bighouse .backbar span {
+    flex-grow: 1;
     justify-content: center;
+    display: flex;
 }
 
 .bighouse .statusbar a,
