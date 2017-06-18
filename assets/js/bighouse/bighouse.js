@@ -2728,36 +2728,38 @@ var BigHouse = (function() {
 
       // add scroll buttons
       if (Math.ceil ($(card.contentElem).height()) < card.contentElem.scrollHeight) {
-        var upButton = bh.makeIconButton ('up', undefined, 'white')
-        var downButton = bh.makeIconButton ('down', undefined, 'white')
-        var scrollButtonsDiv = $('<div class="scrollbuttons">').append (downButton, upButton)
-        function updateButton (button, callback, enabled) {
-          button.off ('click')
-          if (enabled) {
-            button.css ('opacity', 1)
-            button.on ('click', callback)
-          } else
-            button.css ('opacity', .5)
+        function showScrollButton (buttonDiv, enabled) {
+          if (enabled)
+            buttonDiv.show()
+          else
+            buttonDiv.hide()
         }
-        function updateScrollButtons() {
-          scrollButtonsDiv.show()
-          updateButton (upButton, scrollUp, card.contentElem.scrollTop > 0)
-          updateButton (downButton, scrollDown, Math.ceil (card.contentElem.scrollTop + $(card.contentElem).height()) < card.contentElem.scrollHeight)
+        function hideScrollButtons() {
+          scrollUpDiv.hide()
+          scrollDownDiv.hide()
+        }
+        function showScrollButtons() {
+          showScrollButton (scrollUpDiv, card.contentElem.scrollTop > 0)
+          showScrollButton (scrollDownDiv, Math.ceil (card.contentElem.scrollTop + $(card.contentElem).height()) < card.contentElem.scrollHeight)
         }
         function doScroll (dir) {
-          updateButton (upButton)
-          updateButton (downButton)
-          scrollButtonsDiv.hide()
+          hideScrollButtons()
           $(card.contentElem).animate
           ({ scrollTop: card.contentElem.scrollTop + dir * $(card.contentElem).height() * bh.scrollButtonDelta },
-           this.cardScrollTime,
-           'swing',
-           updateScrollButtons)
+           this.cardScrollTime)
         }
         function scrollUp() { doScroll (-1) }
         function scrollDown() { doScroll (+1) }
-        updateScrollButtons()
-        $(card.elem).append ($('<div class="cardcontrols">').append (scrollButtonsDiv))
+        var scrollUpDiv = $('<div class="scrollup">').append (bh.makeIconButton ('up', scrollUp, 'white'))
+        var scrollDownDiv = $('<div class="scrolldown">').append (bh.makeIconButton ('down', scrollDown, 'white'))
+        showScrollButtons()
+        $(card.elem).append ($('<div class="cardcontrols">').append (scrollUpDiv, scrollDownDiv))
+        var scrollButtonTimer
+        $(card.contentElem).on ('scroll', function() {
+          if (scrollButtonTimer)
+            window.clearTimeout (scrollButtonTimer)
+          scrollButtonTimer = window.setTimeout (showScrollButtons, 100)
+        })
       }
     },
 
@@ -3264,7 +3266,8 @@ var BigHouse = (function() {
 	return ''
       })
 
-//      text += 'Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text'
+      // uncomment to debug scroll buttons
+      // text += 'Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text'
       
       var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised|say)(|self|other|:[^>]+)>(.*?)<\/\\1\\2>', 'g')
       text = text.replace (avatarRegExp, function (match) { return '\n' + match + '\n' })
