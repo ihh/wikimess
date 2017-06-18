@@ -67,9 +67,12 @@ var BigHouse = (function() {
     maxPlayerNameLength: 16,
     maxGrammarTitleLength: 128,
     grammarAutosaveDelay: 5000,
+    iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button' },
+    scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     moods: ['happy', 'surprised', 'sad', 'angry'],
     musicFadeDelay: 800,
     cardFadeTime: 500,
+    cardScrollTime: 2000,
     jiggleDelay: 5000,
     avatarSize: 128,
     cardDelimiter: ';;',
@@ -96,8 +99,8 @@ var BigHouse = (function() {
     defaultWaitText: "<wait>",
     defaultAbsentText: "Time passes...",
     
-    themes: [ {style: 'plain', text: 'Plain'},
-              {style: 'cardroom', text: 'Card room'} ],
+    themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
+              {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
 
     tabs: [{ name: 'play', method: 'showPlayPage', icon: 'castle' },
            { name: 'status', method: 'showStatusPage', icon: 'scroll-unfurled', },
@@ -1288,16 +1291,18 @@ var BigHouse = (function() {
       config.silent = false
     },
 
-    themeSelector: function(theme,config) {
+    themeSelector: function(style,config) {
       var bh = this
+      var theme = this.themes.find (function(t) { return t.style === style })
       return function() {
         if (!(config && config.silent))
           bh.playSound ('select')
 	bh.themes.forEach (function (oldTheme) {
           bh.container.removeClass (oldTheme.style)
 	})
-        bh.container.addClass (theme)
-        bh.theme = theme
+        bh.container.addClass (theme.style)
+        bh.theme = theme.style
+        bh.themeInfo = theme
         bh.writeLocalStorage ('theme')
       }
     },
@@ -2024,7 +2029,7 @@ var BigHouse = (function() {
       this.container
         .append (this.locBarDiv = $('<div class="gramlistbar">')
 		 .append ($('<span>')
-			  .text('This page shows the conversation templates you\'ve crafted.'),
+			  .text("This page shows the conversation templates you've crafted."),
 		          $('<span class="nogames">')
 			  .html('<br/> You have no conversation templates at present.'),
                          createDiv))
@@ -2056,36 +2061,58 @@ var BigHouse = (function() {
         })
     },
 
-    unfocusEditableDiv: function() {
+    unfocusEditableSpan: function() {
       if (this.editableDivUnfocusCallback) {
         this.editableDivUnfocusCallback()
         delete this.editableDivUnfocusCallback
       }
     },
-    
-    makeEditableDiv: function (className, text, storeCallback) {
+
+    makeIconButton: function (iconName, callback, color) {
+      var button = $('<span>').addClass('button').text(iconName)
+      this.getIconPromise (this.iconFilename[iconName])
+        .done (function (svg) {
+          svg = bh.colorizeIcon (svg, color || bh.themeInfo.iconColor)
+          button.html ($(svg))
+        })
+      if (callback)
+        button.on ('click', callback)
+      return button
+    },
+
+    populateEditableSpan: function (div, props) {
       var bh = this
-      var div = $('<div>').addClass(className).text(text)
-      var clickCallback = function() {
+      var editCallback = function() {
         div.off ('click')
-        bh.unfocusEditableDiv()
+        bh.unfocusEditableSpan()
         var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
-        var input = $('<textarea>').val(text).attr('rows',divRows)
+        var input = $('<textarea>').val(props.text).attr('rows',divRows)
+        if (props.maxLength)
+          input.attr ('maxlength', props.maxLength)
         bh.editableDivUnfocusCallback = function() {
           var newText = input.val()
-          div.text(newText).on('click',clickCallback)
-          if (newText !== text) {
+          if (newText !== props.text) {
             bh.currentGrammarUnsaved = true
             bh.setGrammarAutosaveTimer()
-            storeCallback (newText)
-            text = newText
+            props.storeCallback (newText)
+            props.text = newText
           }
+          bh.populateEditableSpan (div, props)
         }
         div.html(input)
         input.focus()
       }
-      div.on ('click', clickCallback)
-      return div
+      div.text(props.text)
+      if (props.destroyCallback)
+        div.append (bh.makeIconButton ('destroy', props.destroyCallback))
+      div.append (bh.makeIconButton ('edit', editCallback))
+        .on ('click', editCallback)
+    },
+
+    makeEditableSpan: function (props) {
+      var span = $('<span>').addClass(props.className)
+      this.populateEditableSpan (span, props)
+      return span
     },
 
     clearGrammarAutosaveTimer: function() {
@@ -2111,13 +2138,17 @@ var BigHouse = (function() {
       var bh = this
       var rhsList = bh.currentGrammar.rules[lhs]
       var ruleDiv = $('<div class="rule">')
-          .append ($('<div class="lhs">').text('@'+lhs),
+          .append ($('<span class="lhs">').text('@'+lhs),
+                   bh.makeIconButton ('destroy'),
+                   bh.makeIconButton ('create'),
                    rhsList.map (function (rhs, n) {
-                     return bh.makeEditableDiv ('rhs',
-                                                rhs,
-                                                function (newRhs) {
-                                                  bh.currentGrammar.rules[lhs][n] = newRhs
-                                                })
+                     return bh.makeEditableSpan ({ className: 'rhs',
+                                                   text: rhs,
+                                                   destroyCallback: function() { },
+                                                   storeCallback: function (newRhs) {
+                                                     bh.currentGrammar.rules[lhs][n] = newRhs
+                                                   }
+                                                 })
                    }))
       return ruleDiv
     },
@@ -2129,7 +2160,7 @@ var BigHouse = (function() {
       this.currentGrammar = grammar
       delete this.currentGrammarUnsaved
       this.pageExit = function() {
-        bh.unfocusEditableDiv()
+        bh.unfocusEditableSpan()
         bh.autosaveGrammar()
       }
 
@@ -2142,14 +2173,16 @@ var BigHouse = (function() {
 
       this.restoreScrolling (this.grammarBarDiv)
 
-      var titleDiv = this.makeEditableDiv ('title',
-                                           grammar.name,
-                                           function (name) {
-                                             bh.currentGrammar.name = name
-                                           })
+      var titleSpan = this.makeEditableSpan ({ className: 'title',
+                                               text: grammar.name,
+                                               maxLength: bh.maxGrammarTitleLength,
+                                               storeCallback: function (name) {
+                                                 bh.currentGrammar.name = name
+                                               }
+                                             })
 
       this.grammarBarDiv
-        .append (titleDiv,
+        .append (titleSpan,
                  Object.keys(grammar.rules).map (this.makeGrammarRuleDiv.bind(this)))
     },
     
@@ -2680,6 +2713,7 @@ var BigHouse = (function() {
     },
 
     newTopCard: function (expansion) {
+      var bh = this
       // call node-specific setup (routines that depend on whether node is a swipe card or a menu card)
       expansion.topCardCallback()
 
@@ -2691,6 +2725,40 @@ var BigHouse = (function() {
       var lr = this.makeLeftRightLinks (expansion, true)
       this.choiceDiv.empty()
 	.append (lr.left, lr.right)
+
+      // add scroll buttons
+      if (Math.ceil ($(card.contentElem).height()) < card.contentElem.scrollHeight) {
+        var upButton = bh.makeIconButton ('up', undefined, 'white')
+        var downButton = bh.makeIconButton ('down', undefined, 'white')
+        var scrollButtonsDiv = $('<div class="scrollbuttons">').append (downButton, upButton)
+        function updateButton (button, callback, enabled) {
+          button.off ('click')
+          if (enabled) {
+            button.css ('opacity', 1)
+            button.on ('click', callback)
+          } else
+            button.css ('opacity', .5)
+        }
+        function updateScrollButtons() {
+          scrollButtonsDiv.show()
+          updateButton (upButton, scrollUp, card.contentElem.scrollTop > 0)
+          updateButton (downButton, scrollDown, Math.ceil (card.contentElem.scrollTop + $(card.contentElem).height()) < card.contentElem.scrollHeight)
+        }
+        function doScroll (dir) {
+          updateButton (upButton)
+          updateButton (downButton)
+          scrollButtonsDiv.hide()
+          $(card.contentElem).animate
+          ({ scrollTop: card.contentElem.scrollTop + dir * $(card.contentElem).height() * bh.scrollButtonDelta },
+           this.cardScrollTime,
+           'swing',
+           updateScrollButtons)
+        }
+        function scrollUp() { doScroll (-1) }
+        function scrollDown() { doScroll (+1) }
+        updateScrollButtons()
+        $(card.elem).append ($('<div class="cardcontrols">').append (scrollButtonsDiv))
+      }
     },
 
     makeLeftRightLinks: function (expansion, addArrows) {
@@ -3196,12 +3264,15 @@ var BigHouse = (function() {
 	return ''
       })
 
+//      text += 'Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text Very long padding text'
+      
       var avatarRegExp = new RegExp ('<(happy|sad|angry|surprised|say)(|self|other|:[^>]+)>(.*?)<\/\\1\\2>', 'g')
       text = text.replace (avatarRegExp, function (match) { return '\n' + match + '\n' })
       
       // create the <span>'s
       var avatarCallbacks = []
-      var cardListItem = $('<li>').append ($('<span class="content-padding">'))
+      var cardContent = $('<div class="cardcontent">').append ($('<span class="content-padding">'))
+      var cardListItem = $('<li>').append (cardContent)
       text.split(/\n/)
 	.filter (function (para) {
 	  return /\S/.test(para)
@@ -3224,7 +3295,7 @@ var BigHouse = (function() {
               avatarCallbacks.push (showMoodImage)
             } else
 	      span.html (para)
-          cardListItem.append (span, $('<span class="content-padding">'))
+          cardContent.append (span, $('<span class="content-padding">'))
         })
 
       // create the menu, if applicable
@@ -3270,7 +3341,7 @@ var BigHouse = (function() {
 	}).forEach (function (opt) {
 	  fieldset.append (opt.input, opt.label)
 	})
-	cardListItem.append (fieldset)
+	cardContent.append (fieldset)
 
 	menuSelectCallback = function (menuItem, menuIndex) {
 	  bh.choiceDiv.show()
@@ -3300,9 +3371,9 @@ var BigHouse = (function() {
 	if (lr.rightStruck || lr.leftHint !== lr.rightHint)
 	  choiceBar.append (lr.left)
 	choiceBar.append (lr.right)
-	cardListItem.append (choiceBar)
+	cardContent.append (choiceBar)
       }
-      cardListItem.append (selectWarning)
+      cardContent.append (selectWarning)
 
       // if a mood change was specified, tack it onto the end of the top-card callback
       if (newMood && !expansion.isHistory) {
@@ -3313,7 +3384,7 @@ var BigHouse = (function() {
 	}
       }
       
-      // create the <li> that sits in the card stack (styled as a card)
+      // insert the <li> representing the card into the <ul> representing the card stack
       if (cardClass)
         cardListItem.addClass (cardClass)
       if (expansion.isHistory && !expansion.node.wait)
@@ -3332,6 +3403,7 @@ var BigHouse = (function() {
       var card = bh.stack.createCard (cardListItem[0])
       expansion.card = card
       card.elem = cardListItem[0]
+      card.contentElem = cardContent[0]
 
       card.on ('dragstart', function() {
         cardListItem.addClass ('dragging')
@@ -3369,8 +3441,9 @@ var BigHouse = (function() {
 	  cardDealt.resolve()
 	})
 	expansion.card.throwIn (info.dealDirection == 'left' ? -this.dealXOffset() : +this.dealXOffset(), this.dealYOffset())
-      } else
+      } else {
 	cardDealt.resolve()
+      }
 
       avatarCallbacks.forEach (function (f) { f() })
 

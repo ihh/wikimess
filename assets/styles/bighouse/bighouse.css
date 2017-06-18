@@ -68,6 +68,12 @@ body {
     overflow-y: auto;
 }
 
+.bighouse .grammarbar .button {
+    float: right;
+    width: 1em;
+    height: 1em;
+}
+
 .bighouse .grammarbar .title,
 .bighouse .locbar .title {
     font-weight: bold;
@@ -116,7 +122,6 @@ body {
 .bighouse .gramlistbar .grammar,
 .bighouse .gramlistbar .newgrammar,
 .bighouse .grammarbar .rule,
-.bighouse .grammarbar .rule .rhs,
 .bighouse .locbar .location,
 .bighouse .locbar .link,
 .bighouse .locbar .trade,
@@ -139,6 +144,10 @@ body {
 }
 
 .bighouse .grammarbar .rule .rhs {
+    clear: both;
+    float: left;
+    width: 92vw;
+    margin: 1vw;
     padding: 0.5vw;
 }
 
@@ -342,7 +351,36 @@ body {
     font-size: 12px;
     box-sizing: border-box;
     cursor: pointer;
+}
+
+.bighouse .cardbar .cardtable li .cardcontrols {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    bottom: 8px;
+    right: 0px;
+}
+
+.bighouse .cardbar .cardtable li .cardcontent {
     overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.bighouse .cardbar .cardtable li .scrollbuttons {
+    position: absolute;
+    bottom: 0;
+    right: 16px;
+    background-color: rgba(0,0,0,.5);
+    border-radius: 4px;
+}
+
+.bighouse .cardbar .cardtable li .scrollbuttons .button {
+    width: 16px;
+    height: 16px;
+    float: right;
+    padding: 4px;
 }
 
 /* ensure nth-child is less specific than topcard,
