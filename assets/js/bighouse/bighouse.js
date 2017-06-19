@@ -2119,14 +2119,16 @@ var BigHouse = (function() {
       }
       var text2html = props.text2html || function(x) { return x }
       div.html (text2html (props.text))
-      if (!props.isConstant)
+      if (!props.isConstant) {
         div.on ('click', editCallback)
-        .append (bh.makeIconButton ('edit', editCallback),
-                 bh.makeIconButton ('destroy', function (evt) {
-                   evt.stopPropagation()
-                   if (window.confirm("Delete " + props.description + "?"))
-                     props.destroyCallback()
-                 }))
+        div.append (bh.makeIconButton ('edit', editCallback))
+        if (props.destroyCallback)
+          div.append (bh.makeIconButton ('destroy', function (evt) {
+            evt.stopPropagation()
+            if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
+              props.destroyCallback()
+          }))
+      }
       if (props.otherButtonDivs)
         div.append.apply (div, props.otherButtonDivs)
     },
@@ -2163,11 +2165,39 @@ var BigHouse = (function() {
                                         description: 'this expansion for symbol @' + lhs,
                                         destroyCallback: function() {
                                           bh.currentGrammar.rules[lhs].splice(n,1)
-                                          span.remove()
+                                          bh.populateGrammarRuleDiv (ruleDiv, lhs)
                                           bh.setGrammarAutosaveTimer()
+                                        },
+                                        confirmDestroy: function() {
+                                          return bh.currentGrammar.rules[lhs][n].match (/\S/)
                                         },
                                         storeCallback: function (newRhs) {
                                           bh.currentGrammar.rules[lhs][n] = newRhs
+                                        },
+                                        text2html: function (rhs) {
+                                          var regex = /([^@]*)((@[A-Za-z0-9_]+)|.*)/g, match, elements = []
+                                          while ((match = regex.exec(rhs)) && match[0].length) {
+                                            elements.push ($('<span>').text (match[1]))
+                                            var atLhs = match[3]
+                                            if (atLhs) {
+                                              var lhs = atLhs.substr(1)
+                                              var lhsSpan = $('<span>').text (atLhs)
+                                              if (bh.currentGrammar.rules[lhs])
+                                                lhsSpan.addClass ('lhslink')
+                                                .on ('click', function (evt) {
+                                                  evt.stopPropagation()
+                                                  bh.scrollGrammarTo (lhs)
+                                                })
+                                              else
+                                                lhsSpan.addClass ('lhsbrokenlink')
+                                                .on ('click', function (evt) {
+                                                  evt.stopPropagation()
+                                                  bh.addNewLhs (lhs)
+                                                })
+                                              elements.push (lhsSpan)
+                                            }
+                                          }
+                                          return $('<span>').append (elements)
                                         }
                                       })
       return span
@@ -2191,10 +2221,16 @@ var BigHouse = (function() {
                     },
                     description: 'symbol @' + lhs + ' and all its expansions',
                     isConstant: lhs === bh.grammarRootSymbol,
+                    confirmDestroy: function() {
+                      return bh.lhsIsReferredTo(lhs) || bh.currentGrammar.rules[lhs].find (function (rhs) {
+                        return rhs.match (/\S/)
+                      })
+                    },
                     destroyCallback: function() {
                       delete bh.currentGrammar.rules[lhs]
                       delete bh.ruleDiv[lhs]
                       ruleDiv.remove()
+                      bh.redrawReferers (lhs)
                       bh.setGrammarAutosaveTimer()
                     },
                     storeCallback: function (atNewLhs) {
@@ -2219,7 +2255,7 @@ var BigHouse = (function() {
                           bh.populateGrammarRuleDiv (bh.ruleDiv[otherLhs], otherLhs)
                       })
                       ruleDiv.remove()
-                      bh.placeGrammarRuleDiv (newLhs, bh.makeGrammarRuleDiv (newLhs))
+                      bh.placeGrammarRuleDiv (newLhs)
                     },
                     otherButtonDivs: [
                       bh.makeIconButton ('create', function (evt) {
@@ -2242,17 +2278,57 @@ var BigHouse = (function() {
       return ruleDiv
     },
 
-    placeGrammarRuleDiv: function (lhs, ruleDiv) {
+    placeGrammarRuleDiv: function (lhs) {
+      var ruleDiv = bh.makeGrammarRuleDiv (lhs)
       var syms = this.currentGrammarSymbolsExcludingRoot()
       var sym = syms.find (function (sym) { return sym > lhs })
       if (typeof(sym) === 'undefined')
         this.grammarBarDiv.append (ruleDiv)
       else
         ruleDiv.insertBefore (this.ruleDiv[sym])
+      this.scrollGrammarTo (lhs)
+    },
+
+    scrollGrammarTo: function (lhs) {
+      var ruleDiv = this.ruleDiv[lhs]
       this.grammarBarDiv.animate ({
         // Scroll parent to the new element. This arcane formula can probably be simplified
         scrollTop: this.grammarBarDiv.scrollTop() + ruleDiv.position().top - this.grammarBarDiv.position().top
       })
+    },
+
+    lhsRefersTo: function (lhs, refLhs) {
+      return this.currentGrammar.rules[lhs].find (function (rhs) {
+        return rhs.match ('@' + refLhs)
+      })
+    },
+
+    lhsIsReferredTo: function (lhs) {
+      var bh = this
+      return Object.keys(this.currentGrammar.rules).find (function (otherLhs) {
+        return bh.lhsRefersTo (otherLhs, lhs)
+      })
+    },
+
+    lhsExists: function (lhs) {
+      return this.currentGrammar.rules[lhs] || this.lhsIsReferredTo(lhs)
+    },
+
+    redrawReferers: function (lhs) {
+      var bh = this
+      Object.keys (this.currentGrammar.rules).forEach (function (otherLhs) {
+        if (bh.lhsRefersTo (otherLhs, lhs))
+          bh.populateGrammarRuleDiv (bh.ruleDiv[otherLhs], otherLhs)
+      })
+    },
+
+    addNewLhs: function (lhs, renameFlag) {
+      this.currentGrammar.rules[lhs] = ['']
+      this.placeGrammarRuleDiv (lhs)
+      this.redrawReferers (lhs)
+      var focusElement = this.ruleDiv[lhs].find (renameFlag ? '.lhs' : '.rhs').first()
+      window.setTimeout (function() { focusElement.trigger ('click') }, 0)
+      this.setGrammarAutosaveTimer()
     },
 
     currentGrammarSymbolsExcludingRoot: function() {
@@ -2298,11 +2374,8 @@ var BigHouse = (function() {
                    var nSection = Object.keys(bh.currentGrammar.rules).length, lhs
                    do {
                      lhs = 'section' + (++nSection)
-                   } while (lhs in bh.currentGrammar.rules)
-                   bh.currentGrammar.rules[lhs] = ['']
-                   var ruleDiv = bh.makeGrammarRuleDiv (lhs)
-                   bh.placeGrammarRuleDiv (lhs, ruleDiv)
-                   bh.setGrammarAutosaveTimer()
+                   } while (bh.lhsExists(lhs))
+                   bh.addNewLhs (lhs, true)
                  })).on ('click', this.unfocusEditableSpan.bind(this)))
 
       this.restoreScrolling (this.grammarBarDiv)
