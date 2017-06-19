@@ -68,18 +68,21 @@ body {
     overflow-y: auto;
 }
 
+.bighouse .grammartitle .button,
+.bighouse .newlhs .button,
 .bighouse .grammarbar .button {
     float: right;
     width: 1em;
     height: 1em;
+    cursor: pointer;
 }
 
-.bighouse .grammarbar .newlhs {
+.bighouse .newlhs {
     float: right;
     padding: 2vw;
 }
 
-.bighouse .grammarbar .title,
+.bighouse .grammartitle,
 .bighouse .locbar .title {
     font-weight: bold;
     font-size: large;
@@ -156,6 +159,7 @@ body {
     padding: 0.5vw;
 }
 
+.bighouse .grammartitle textarea,
 .bighouse .grammarbar textarea {
     width: 99%;
     height: 100%;
@@ -185,12 +189,14 @@ body {
 
 .bighouse .gramlistbar .newgrammar .button {
     float: left;
+    cursor: pointer;
 }
 
 .bighouse .gramlistbar .grammar .button,
 .bighouse .grammarbar .rule .button {
     float: right;
     padding-left: 1vw;
+    cursor: pointer;
 }
 
 .bighouse .follow .button,
@@ -554,6 +560,13 @@ body {
     border-left-color: transparent;
     border-right-color: transparent;
     cursor: pointer;
+}
+
+.bighouse .topbar {
+    width: 100vw;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
 }
 
 .bighouse .backbar {

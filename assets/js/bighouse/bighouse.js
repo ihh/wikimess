@@ -67,6 +67,7 @@ var BigHouse = (function() {
     maxPlayerNameLength: 16,
     maxGrammarTitleLength: 128,
     grammarAutosaveDelay: 5000,
+    grammarRootSymbol: 'document',
     iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button' },
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     moods: ['happy', 'surprised', 'sad', 'angry'],
@@ -365,6 +366,7 @@ var BigHouse = (function() {
       var bh = this
       return function (evt) {
         evt.preventDefault()
+        evt.stopPropagation()
         if (elementToDisable) {
           if (elementToDisable.hasClass('already-clicked'))
             return;
@@ -1890,9 +1892,10 @@ var BigHouse = (function() {
                                })
       this.detailBarDiv.prepend (follow.followDiv)
       this.container
-	.append ($('<div class="backbar">')
-		 .append ($('<span>')
-			  .html (this.makeLink ('Back', bh.reloadCurrentTab))))
+	.append ($('<div class="topbar">')
+                 .append ($('<div class="backbar">')
+		          .append ($('<span>')
+			           .html (this.makeLink ('Back', bh.reloadCurrentTab)))))
       follow.showAvatar()
     },
     
@@ -1922,9 +1925,10 @@ var BigHouse = (function() {
         }
       })
       this.container
-	.append ($('<div class="backbar">')
-		 .append ($('<span>')
-			  .html (this.makeLink ('Back', this.popView))))
+	.append ($('<div class="topbar">')
+                 .append ($('<div class="backbar">')
+		          .append ($('<span>')
+			           .html (this.makeLink ('Back', this.popView)))))
     },
 
     showGameStatusPage: function (getMethod, callback) {
@@ -2082,31 +2086,49 @@ var BigHouse = (function() {
 
     populateEditableSpan: function (div, props) {
       var bh = this
-      var editCallback = function() {
-        div.off ('click')
+      var sanitize = props.sanitize || function(x) { return x }
+      var editCallback = function (evt) {
         bh.unfocusEditableSpan()
+        evt.stopPropagation()
+        div.off ('click')
         var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
         var input = $('<textarea>').val(props.text).attr('rows',divRows)
+        function sanitizeInput() { input.val (sanitize (input.val())) }
+        input
+          .on('keyup',sanitizeInput)
+          .on('change',sanitizeInput)
+          .on('click',function(evt){evt.stopPropagation()})
+        if (props.keycodeFilter)
+          input.on ('keydown', function (evt) {
+            if (!props.keycodeFilter (evt.keyCode))
+                evt.preventDefault()
+          })
         if (props.maxLength)
           input.attr ('maxlength', props.maxLength)
         bh.editableDivUnfocusCallback = function() {
           var newText = input.val()
           if (newText !== props.text) {
-            bh.currentGrammarUnsaved = true
             bh.setGrammarAutosaveTimer()
-            props.storeCallback (newText)
+            newText = props.storeCallback(newText) || newText
             props.text = newText
           }
           bh.populateEditableSpan (div, props)
         }
-        div.html(input)
+        div.html (input)
         input.focus()
       }
-      div.text(props.text)
-      div.append (bh.makeIconButton ('edit', editCallback))
-      if (props.destroyCallback)
-        div.append (bh.makeIconButton ('destroy', props.destroyCallback))
-        .on ('click', editCallback)
+      var text2html = props.text2html || function(x) { return x }
+      div.html (text2html (props.text))
+      if (!props.isConstant)
+        div.on ('click', editCallback)
+        .append (bh.makeIconButton ('edit', editCallback),
+                 bh.makeIconButton ('destroy', function (evt) {
+                   evt.stopPropagation()
+                   if (window.confirm("Delete " + props.description + "?"))
+                     props.destroyCallback()
+                 }))
+      if (props.otherButtonDivs)
+        div.append.apply (div, props.otherButtonDivs)
     },
 
     makeEditableSpan: function (props) {
@@ -2124,6 +2146,7 @@ var BigHouse = (function() {
 
     setGrammarAutosaveTimer: function() {
       this.clearGrammarAutosaveTimer()
+      this.currentGrammarUnsaved = true
       this.grammarAutosaveTimer = window.setTimeout (this.autosaveGrammar.bind (this), this.grammarAutosaveDelay)
     },
 
@@ -2134,25 +2157,110 @@ var BigHouse = (function() {
       this.clearGrammarAutosaveTimer()
     },
 
-    makeGrammarRuleDiv: function (lhs, n) {
+    makeGrammarRhsDiv: function (lhs, ruleDiv, rhs, n) {
+      var span = bh.makeEditableSpan ({ className: 'rhs',
+                                        text: rhs,
+                                        description: 'this expansion for symbol @' + lhs,
+                                        destroyCallback: function() {
+                                          bh.currentGrammar.rules[lhs].splice(n,1)
+                                          span.remove()
+                                          bh.setGrammarAutosaveTimer()
+                                        },
+                                        storeCallback: function (newRhs) {
+                                          bh.currentGrammar.rules[lhs][n] = newRhs
+                                        }
+                                      })
+      return span
+    },
+
+    populateGrammarRuleDiv: function (ruleDiv, lhs) {
       var bh = this
       var rhsList = bh.currentGrammar.rules[lhs]
+      function sanitize (text) { return '@' + text.replace (/[^A-Za-z0-9_]/g, '') }
+      ruleDiv.empty()
+        .append (this.makeEditableSpan
+                 ({ className: 'lhs',
+                    text: '@' + lhs,
+                    sanitize: sanitize,
+                    keycodeFilter: function (keycode) {
+                      return (keycode >= 65 && keycode <= 90)   // a...z
+                        || (keycode >= 48 && keycode <= 57)  // 0...9
+                        || (keycode === 189)   // -
+                        || (keycode === 37 || keycode === 39)  // left, right arrow
+                        || (keycode === 8)  // backspace/delete
+                    },
+                    description: 'symbol @' + lhs + ' and all its expansions',
+                    isConstant: lhs === bh.grammarRootSymbol,
+                    destroyCallback: function() {
+                      delete bh.currentGrammar.rules[lhs]
+                      delete bh.ruleDiv[lhs]
+                      ruleDiv.remove()
+                      bh.setGrammarAutosaveTimer()
+                    },
+                    storeCallback: function (atNewLhs) {
+                      atNewLhs = sanitize(atNewLhs)
+                      var oldLhs = lhs, atOldLhs = '@' + oldLhs, newLhs = atNewLhs.substr(1)
+                      if (newLhs.length === 0)
+                        return atOldLhs
+                      if (newLhs in bh.currentGrammar.rules) {
+                        alert ("The symbol @" + newLhs + " is already in use. Please choose another symbol")
+                        return atOldLhs
+                      }
+                      var rhsList = bh.currentGrammar.rules[oldLhs]
+                      bh.currentGrammar.rules[newLhs] = rhsList
+                      delete bh.currentGrammar.rules[oldLhs]
+                      delete bh.ruleDiv[oldLhs]
+                      var regex = new RegExp (atOldLhs, 'g')
+                      Object.keys(bh.currentGrammar.rules).forEach (function (otherLhs) {
+                        bh.currentGrammar.rules[otherLhs] = bh.currentGrammar.rules[otherLhs].map (function (rhs) {
+                          return rhs.replace (regex, atNewLhs)
+                        })
+                        if (otherLhs !== newLhs)
+                          bh.populateGrammarRuleDiv (bh.ruleDiv[otherLhs], otherLhs)
+                      })
+                      ruleDiv.remove()
+                      bh.placeGrammarRuleDiv (newLhs, bh.makeGrammarRuleDiv (newLhs))
+                    },
+                    otherButtonDivs: [
+                      bh.makeIconButton ('create', function (evt) {
+                        evt.stopPropagation()
+                        var newRhs = rhsList.length ? rhsList[rhsList.length-1] : ''
+                        ruleDiv.append (bh.makeGrammarRhsDiv (lhs, ruleDiv, newRhs, rhsList.length))
+                        rhsList.push (newRhs)
+                        bh.setGrammarAutosaveTimer()
+                      })
+                    ]}),
+                 rhsList.map (function (rhs, n) {
+                   return bh.makeGrammarRhsDiv (lhs, ruleDiv, rhs, n)
+                 }))
+    },
+
+    makeGrammarRuleDiv: function (lhs) {
       var ruleDiv = $('<div class="rule">')
-          .append ($('<span class="lhs">').text('@'+lhs),
-                   bh.makeIconButton ('create'),
-                   n === 0 ? $('<span class="button">') : bh.makeIconButton ('destroy'),
-                   rhsList.map (function (rhs, n) {
-                     return bh.makeEditableSpan ({ className: 'rhs',
-                                                   text: rhs,
-                                                   destroyCallback: function() { },
-                                                   storeCallback: function (newRhs) {
-                                                     bh.currentGrammar.rules[lhs][n] = newRhs
-                                                   }
-                                                 })
-                   }))
+      this.populateGrammarRuleDiv (ruleDiv, lhs)
+      this.ruleDiv[lhs] = ruleDiv
       return ruleDiv
     },
-    
+
+    placeGrammarRuleDiv: function (lhs, ruleDiv) {
+      var syms = this.currentGrammarSymbolsExcludingRoot()
+      var sym = syms.find (function (sym) { return sym > lhs })
+      if (typeof(sym) === 'undefined')
+        this.grammarBarDiv.append (ruleDiv)
+      else
+        ruleDiv.insertBefore (this.ruleDiv[sym])
+      this.grammarBarDiv.animate ({
+        // Scroll parent to the new element. This arcane formula can probably be simplified
+        scrollTop: this.grammarBarDiv.scrollTop() + ruleDiv.position().top - this.grammarBarDiv.position().top
+      })
+    },
+
+    currentGrammarSymbolsExcludingRoot: function() {
+      return Object.keys(this.currentGrammar.rules).filter (function (lhs) {
+        return lhs !== bh.grammarRootSymbol
+      }).sort()
+    },
+
     showGrammarEditPage: function (grammar) {
       var bh = this
       this.setPage ('edit')
@@ -2164,18 +2272,10 @@ var BigHouse = (function() {
         bh.autosaveGrammar()
       }
 
-      this.container
-        .empty()
-	.append ($('<div class="backbar">')
-		 .append ($('<span>').html (this.makeLink ('Help', function(){})),
-                          $('<span>').html (this.makeLink ('Test', function(){})),
-                          $('<span>').html (this.makeLink ('Delete', function(){})),
-                          $('<span>').html (this.makeLink ('Back', bh.reloadCurrentTab))),
-                 this.grammarBarDiv = $('<div class="grammarbar">'))
+      this.grammarBarDiv = $('<div class="grammarbar">')
+        .on ('click', this.unfocusEditableSpan.bind(this))
 
-      this.restoreScrolling (this.grammarBarDiv)
-
-      var titleSpan = this.makeEditableSpan ({ className: 'title',
+      var titleSpan = this.makeEditableSpan ({ className: 'grammartitle',
                                                text: grammar.name,
                                                maxLength: bh.maxGrammarTitleLength,
                                                storeCallback: function (name) {
@@ -2183,10 +2283,34 @@ var BigHouse = (function() {
                                                }
                                              })
 
+      this.container
+        .empty()
+	.append ($('<div class="topbar">')
+                 .append ($('<div class="backbar">')
+                          .on ('click', this.unfocusEditableSpan.bind(this))
+		          .append ($('<span>').html (this.makeLink ('Help', function(){})),
+                                   $('<span>').html (this.makeLink ('Test', function(){})),
+                                   $('<span>').html (this.makeLink ('Delete', function(){})),
+                                   $('<span>').html (this.makeLink ('Back', bh.reloadCurrentTab)))),
+                 titleSpan,
+                 this.grammarBarDiv,
+                 $('<div class="newlhs">').html (this.makeIconButton ('create', function() {
+                   var nSection = Object.keys(bh.currentGrammar.rules).length, lhs
+                   do {
+                     lhs = 'section' + (++nSection)
+                   } while (lhs in bh.currentGrammar.rules)
+                   bh.currentGrammar.rules[lhs] = ['']
+                   var ruleDiv = bh.makeGrammarRuleDiv (lhs)
+                   bh.placeGrammarRuleDiv (lhs, ruleDiv)
+                   bh.setGrammarAutosaveTimer()
+                 })).on ('click', this.unfocusEditableSpan.bind(this)))
+
+      this.restoreScrolling (this.grammarBarDiv)
+
+      this.ruleDiv = {}
+      var lhsSyms = [this.grammarRootSymbol].concat (this.currentGrammarSymbolsExcludingRoot())
       this.grammarBarDiv
-        .append (titleSpan,
-                 Object.keys(grammar.rules).map (this.makeGrammarRuleDiv.bind(this)),
-                 $('<div class="newlhs">').html (bh.makeIconButton ('create')))
+        .append (lhsSyms.map (this.makeGrammarRuleDiv.bind (this)))
     },
     
     // follows
