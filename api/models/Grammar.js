@@ -35,6 +35,28 @@ module.exports = {
       }
     },
 
-  }
-};
+    // links to automatically created objects
+    choices: {
+      collection: 'choice',
+      via: 'grammar'
+    },
 
+    outcomes: {
+      collection: 'outcome',
+      via: 'grammar'
+    },
+
+    events: {
+      collection: 'event',
+      via: 'grammar'
+    },
+
+    tickets: {
+      collection: 'ticket',
+      via: 'grammar'
+    }
+  },
+
+  rootSymbol: 'document',
+  choiceNamePrefix: '_grammar'
+};

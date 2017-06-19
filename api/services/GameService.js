@@ -222,8 +222,8 @@ module.exports = {
               delete expanded[roleKey]
             }
             delete expanded[otherKey]
-	    if (text.grammar || expanded.grammar)
-	      grammar = extend ({}, text.grammar || {}, expanded.grammar || {}, grammar || {})
+	    if (text.rules || expanded.rules)
+	      grammar = extend ({}, text.rules || {}, expanded.rules || {}, grammar || {})
 	    return Promise.map (Object.keys(text).filter (function (key) {
 	      return key !== 'id'   // prevent clash of Text attribute 'id' with internally used 'id' passed to client
                 && key !== 'grammar'  // ignore grammar property
@@ -494,7 +494,7 @@ module.exports = {
     if (move2)
       query.where ({ move2: [move2, null] })
 //    sails.log.debug("move1="+move1+" move2="+move2)
-    query.populate('outro').populate('outro2')
+    query.populate('grammar')
     query.exec (function (err, outcomes) {
 //      sails.log.debug("outcomes:\n",outcomes)
       if (err)
@@ -659,8 +659,7 @@ module.exports = {
       game.future = game.future.slice(1)
       //	    console.log ("Attempting to resolve "+nextChoiceName)
       Choice.findOne ({ name: nextChoiceName })
-	.populate('intro')
-	.populate('intro2')
+	.populate('grammar')
 	.exec (function (err, choice) {
 	if (err)
 	  error (err)
@@ -691,6 +690,16 @@ module.exports = {
     var common = GameService.evalUpdatedState (gameImage, choice, 0, true)
     var p1local = GameService.evalUpdatedState (gameImage, choice, 1, true)
     var p2local = GameService.evalUpdatedState (gameImage, choice, 2, true)
+
+    // grammar expansions
+    if (choice.grammar) {
+      var rules = extend ({ me: game.player1.displayName,
+                            you: game.player2.displayName },
+                          choice.grammar.rules)
+      var root = Grammar.rootSymbol
+      p1local[root] = GameService.expandTextString ('@' + root, game, undefined, undefined, rules)
+      console.log(root,p1local[root])
+    }
 
     // update game state
     game.common = common

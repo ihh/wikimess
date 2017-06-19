@@ -124,6 +124,7 @@ module.exports = {
             delete oc.outro1
           }
 	  out.outro = makeText (out.outro)
+	  out.outro1 = makeText (out.outro1)
 	  out.outro2 = makeText (out.outro2)
 	  expandHints (out, 'outro')
           if (out.next) {
@@ -217,6 +218,7 @@ module.exports = {
       delete config.intro1
     }
     config.intro = makeText (config.intro)
+    config.intro1 = makeText (config.intro1)
     config.intro2 = makeText (config.intro2)
     expandHints (config, 'intro')
     

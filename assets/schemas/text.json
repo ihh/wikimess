@@ -20,7 +20,7 @@
             "visible": {
               "$ref": "#/definitions/sample_string"
             },
-            "grammar": {
+            "rules": {
               "type": "object"
             },
             "ref": {
@@ -71,7 +71,7 @@
             "sample1": {
               "$ref": "#/definitions/intro_node_opts"
             },
-            "grammar": {
+            "rules": {
               "type": "object"
             },
             "goto": {
@@ -122,7 +122,7 @@
             "sample1": {
               "$ref": "#/definitions/intro_node_opts"
             },
-            "grammar": {
+            "rules": {
               "type": "object"
             },
             "label": {
@@ -198,7 +198,7 @@
             "sample1": {
               "$ref": "#/definitions/intro_node_opts"
             },
-            "grammar": {
+            "rules": {
               "type": "object"
             },
             "label": {

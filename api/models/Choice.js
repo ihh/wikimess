@@ -15,6 +15,10 @@ module.exports = {
       primaryKey: true
     },
 
+    grammar: {
+      model: 'grammar'
+    },
+
     name: {
       type: 'string',
       unique: true
@@ -23,7 +27,7 @@ module.exports = {
     hide: {
       type: 'boolean'   // if true, hide the event when waiting for other player's move
     },
-
+    
     common: { type: 'json' },
     local1: { type: 'json' },
     local2: { type: 'json' },
@@ -42,8 +46,9 @@ module.exports = {
       defaultsTo: 'unchanged'
     },
     
-    intro: { model: 'text' },
-    intro2: { model: 'text' },
+    intro: { type: 'json' },
+    intro1: { type: 'json' },
+    intro2: { type: 'json' },
     
     timeout: {
       type: 'integer',

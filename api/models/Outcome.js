@@ -19,6 +19,10 @@ module.exports = {
       model: 'choice'
     },
 
+    grammar: {
+      model: 'grammar'
+    },
+
     move1: {
       type: 'string',
       defaultsTo: null
@@ -39,8 +43,9 @@ module.exports = {
       defaultsTo: true
     },
 
-    outro: { model: 'text' },
-    outro2: { model: 'text' },
+    outro: { type: 'json' },
+    outro1: { type: 'json' },
+    outro2: { type: 'json' },
 
     // game & player state updates
     common: { type: 'json' },

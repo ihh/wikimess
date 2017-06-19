@@ -42,7 +42,8 @@ module.exports = {
     right: { type: "json" },
     next: { type: "json" },
     menu: { type: "json" },
-    randmenu: { type: "json" }
+    randmenu: { type: "json" },
+    rules: { type: "json" }
   }
 };
 

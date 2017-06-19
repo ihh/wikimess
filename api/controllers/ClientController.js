@@ -330,8 +330,6 @@ module.exports = {
       .populate ('event')
       .then (function (game) {
         return Choice.findOne ({ id: game.current })
-          .populate ('intro')
-          .populate ('intro2')
           .then (function (choice) {
             game.current = choice
             return game
@@ -767,6 +765,45 @@ module.exports = {
         result.grammar = { id: grammar.id,
                            name: grammar.name,
                            rules: grammar.rules }
+        return Choice.create ({ grammar: grammar,
+                                name: Grammar.choiceNamePrefix + grammar.id + '.draft',
+                                intro1: {
+                                  text: "{{$local1.document}} \n Accept?",
+                                  left: {
+                                    hint: "No",
+                                    label: { move: 'reject' }
+                                  },
+                                  right: {
+                                    hint: "Yes",
+                                    label: { move: 'accept' }
+                                  }
+                                }
+                              })
+          .then (function (choice) {
+            return Outcome.create ({ grammar: grammar,
+                                     choice: choice,
+                                     move1: 'accept',
+                                     outro2: { text: "{{$common.document}}" } })
+              .then (function() {
+                return Event.create ({ grammar: grammar,
+                                       name: grammar.name,
+                                       choice: choice.name,
+                                       hide: true,
+                                       launch: true,
+                                       targetable: true })
+              })
+          }).then (function (event) {
+            Location.getChatLocation()
+              .then (function (chatLocation) {
+                return Ticket.create ({ grammar: grammar,
+                                        title: grammar.name,
+                                        event: event,
+                                        role: 1,
+                                        location: chatLocation
+                                      })
+              })
+          })
+      }).then (function() {
         res.json (result)
       }).catch (function (err) {
         console.log(err)

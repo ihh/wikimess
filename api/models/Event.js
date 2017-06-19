@@ -17,6 +17,10 @@ module.exports = {
       primaryKey: true
     },
 
+    grammar: {
+      model: 'grammar'
+    },
+
     name: {
       type: 'string'
     },
