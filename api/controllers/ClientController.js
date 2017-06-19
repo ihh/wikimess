@@ -767,7 +767,7 @@ module.exports = {
                            rules: grammar.rules }
         return Choice.create ({ grammar: grammar,
                                 name: Grammar.choiceNamePrefix + grammar.id + '.draft',
-                                intro1: {
+                                intro: {
                                   text: "{{$local1.document}} \n Accept?",
                                   left: {
                                     hint: "No",
@@ -777,7 +777,8 @@ module.exports = {
                                     hint: "Yes",
                                     label: { move: 'accept' }
                                   }
-                                }
+                                },
+                                intro2: {}
                               })
           .then (function (choice) {
             return Outcome.create ({ grammar: grammar,
