@@ -320,6 +320,11 @@ var BigHouse = (function() {
       return $.post ('/p/' + playerID + '/grammar/' + grammarID, { grammar: { name: name, rules: rules } })
     },
 
+    REST_deletePlayerGrammar: function (playerID, grammarID) {
+      return $.ajax ({ url: '/p/' + playerID + '/grammar/' + grammarID,
+		       method: 'DELETE' })
+    },
+
     // WebSockets interface
     socket_onPlayer: function (callback) {
       io.socket.on ('player', callback)
@@ -2155,10 +2160,17 @@ var BigHouse = (function() {
     },
 
     autosaveGrammar: function() {
+      var def
       if (this.currentGrammarUnsaved)
-        this.REST_postPlayerGrammar (this.playerID, this.currentGrammar.id, this.currentGrammar.name, this.currentGrammar.rules)
+        def = this.REST_postPlayerGrammar (this.playerID, this.currentGrammar.id, this.currentGrammar.name, this.currentGrammar.rules)
+      else {
+	console.log ('already saved')
+	def = $.Deferred()
+	def.resolve()
+      }
       delete this.currentGrammarUnsaved
       this.clearGrammarAutosaveTimer()
+      return def
     },
 
     makeGrammarRhsDiv: function (lhs, ruleDiv, rhs, n) {
@@ -2355,11 +2367,11 @@ var BigHouse = (function() {
       delete this.currentGrammarUnsaved
       this.pageExit = function() {
         bh.unfocusEditableSpan()
-        bh.autosaveGrammar()
+	this.container.off ('click')
       }
 
+      this.container.on ('click', this.unfocusEditableSpan.bind(this))
       this.grammarBarDiv = $('<div class="grammarbar">')
-        .on ('click', this.unfocusEditableSpan.bind(this))
 
       var titleSpan = this.makeEditableSpan ({ className: 'grammartitle',
                                                text: grammar.name,
@@ -2369,26 +2381,58 @@ var BigHouse = (function() {
                                                }
                                              })
 
+      var infoPane = $('<div class="grammarinfopane">')
+      var infoPaneContent = $('<div class="content">')
+      var infoPaneTitle = $('<div class="title">')
+      infoPane.append ($('<span class="closebutton">').text('x')
+		       .on ('click', function() { infoPane.hide() }),
+		       infoPaneTitle,
+		       infoPaneContent)
+      
       this.container
         .empty()
-	.append ($('<div class="backbar">')
-                 .on ('click', this.unfocusEditableSpan.bind(this))
-		 .append ($('<div>').html (this.makeLink ('Help', function(){})),
-                          $('<div>').html (this.makeLink ('Test', function(){})),
-                          $('<div>').html (this.makeLink ('Delete', function(){})),
-                          $('<div>').html (this.makeLink ('Back', bh.reloadCurrentTab))),
+	.append ($('<div class="backbar">').append
+		 ($('<div>').html (this.makeLink ('Help', function() {
+		   $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
+		     bh.unfocusEditableSpan()
+		     infoPaneTitle.text ('Help')
+		     infoPaneContent.html (helpHtml)
+		     infoPane.show()
+		   })
+		 }, undefined, true)),
+                  $('<div>').html (this.makeLink ('Test', function() {
+		    bh.unfocusEditableSpan()
+		    infoPaneTitle.text ('Example: ' + bh.currentGrammar.name)
+		    infoPaneContent.text (bh.Label.expandGrammar (bh.currentGrammar))
+		    infoPane.show()
+		  }, undefined, true)),
+                  $('<div>').html (this.makeLink ('Delete', function() {
+		    bh.unfocusEditableSpan()
+		    if (window.confirm ("Delete " + bh.currentGrammar.name + "?")) {
+		      delete bh.currentGrammarUnsaved
+		      bh.container.empty()
+		      bh.REST_deletePlayerGrammar (bh.playerID, bh.currentGrammar.id)
+			.then (bh.reloadCurrentTab.bind (bh))
+		    }
+		  }, undefined, true)),
+                  $('<div>').html (this.makeLink ('Back', function() {
+		    bh.unfocusEditableSpan()
+		    bh.container.empty()
+		    bh.autosaveGrammar().then (bh.reloadCurrentTab.bind (bh))
+		  }))),
+		 infoPane.hide(),
                  titleSpan,
                  this.grammarBarDiv,
                  $('<div class="newlhs">').html (this.makeIconButton ('create', function() {
-                   bh.unfocusEditableSpan()
                    var nSection = Object.keys(bh.currentGrammar.rules).length, lhs
                    do {
                      lhs = 'section' + (++nSection)
                    } while (bh.lhsExists(lhs))
                    bh.addNewLhs (lhs, true)
-                 })).on ('click', this.unfocusEditableSpan.bind(this)))
+                 })))
 
       this.restoreScrolling (this.grammarBarDiv)
+      this.restoreScrolling (infoPaneContent)
 
       this.ruleDiv = {}
       var lhsSyms = [this.grammarRootSymbol].concat (this.currentGrammarSymbolsExcludingRoot())

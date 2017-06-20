@@ -811,6 +811,33 @@ module.exports = {
         res.status(500).send(err)
       })
   },
+  
+  // delete grammar
+  deleteGrammar: function (req, res) {
+    var playerID = req.params.player
+    var grammarID = req.params.grammar
+    var data = req.body.grammar
+    var result = { author: playerID }
+    Grammar.destroy ({ author: playerID,
+                       id: grammarID })
+      .then (function (grammars) {
+	if (!grammars || grammars.length !== 1)
+	  throw new Error ("Couldn't find grammar with ID " + grammarID + " and author " + authorID)
+      }).then (function() {
+	Choice.destroy ({ grammar: grammarID })
+      }).then (function() {
+	Outcome.destroy ({ grammar: grammarID })
+      }).then (function() {
+	Event.destroy ({ grammar: grammarID })
+      }).then (function() {
+	Ticket.destroy ({ grammar: grammarID })
+      }).then (function() {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
 
   // read grammar
   readGrammar: function (req, res) {
@@ -818,7 +845,7 @@ module.exports = {
     var grammarID = req.params.grammar
     var result = { author: playerID }
     Grammar.findOne ({ author: playerID,
-                    id: grammarID })
+                       id: grammarID })
       .then (function (grammar) {
         if (!grammar)
           throw new Error ("No grammar found")

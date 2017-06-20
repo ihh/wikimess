@@ -466,21 +466,22 @@
 
   // grammars
   var defaultGrammarConfig = { maxRecurse: 3,
-                               rnd: Math.rnd,
+                               random: Math.random,
+			       debug: true,
                                root: 'document' }
   
-  function expandGrammar (grammmar, config, lhs, symDepth) {
+  function expandGrammar (grammar, config, lhs, symDepth) {
     config = extend (defaultGrammarConfig, config || {})
     lhs = lhs || config.root
     symDepth = symDepth || {}
     var rhsList = grammar.rules[lhs]
-    var rhs = rhsList ? rhsList[Math.floor (config.rnd() * rhsList.length)] : ''
+    var rhs = rhsList ? rhsList[Math.floor (config.random() * rhsList.length)] : (config.debug ? ('@' + lhs) : '')
     return rhs.replace (/@([A-Za-z0-9_]+)/g, function (atSymbol, symbol) {
       if (symDepth[symbol] >= config.maxRecurse)
-        return ''
+        return config.debug ? ('@' + symbol) : ''
       var nestedSymDepth = extend ({}, symDepth)
       nestedSymDepth[symbol] = (symDepth[symbol] || 0) + 1
-      return expandGrammar (symbol, nestedSymDepth, grammar, config)
+      return expandGrammar (grammar, config, symbol, nestedSymDepth)
     })
   }
 

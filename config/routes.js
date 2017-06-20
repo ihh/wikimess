@@ -112,9 +112,10 @@ module.exports.routes = {
   'GET /p/:player/follow/:other':   'ClientController.follow',
   'GET /p/:player/unfollow/:other': 'ClientController.unfollow',
 
-  'GET /p/:player/grammars':          'ClientController.listGrammars',
-  'GET /p/:player/grammar':           'ClientController.newGrammar',
-  'GET /p/:player/grammar/:grammar':  'ClientController.readGrammar',
-  'POST /p/:player/grammar/:grammar': 'ClientController.writeGrammar'
+  'GET /p/:player/grammars':            'ClientController.listGrammars',
+  'GET /p/:player/grammar':             'ClientController.newGrammar',
+  'GET /p/:player/grammar/:grammar':    'ClientController.readGrammar',
+  'POST /p/:player/grammar/:grammar':   'ClientController.writeGrammar',
+  'DELETE /p/:player/grammar/:grammar': 'ClientController.deleteGrammar'
 
 };
