@@ -2126,6 +2126,7 @@ var BigHouse = (function() {
         if (props.destroyCallback)
           buttonsDiv.append (bh.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
+            bh.unfocusEditableSpan()
             if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
               props.destroyCallback()
           }))
@@ -2261,6 +2262,7 @@ var BigHouse = (function() {
                     otherButtonDivs: [
                       bh.makeIconButton ('create', function (evt) {
                         evt.stopPropagation()
+                        bh.unfocusEditableSpan()
                         var newRhs = rhsList.length ? rhsList[rhsList.length-1] : ''
                         ruleDiv.append (bh.makeGrammarRhsDiv (lhs, ruleDiv, newRhs, rhsList.length))
                         rhsList.push (newRhs)
@@ -2378,6 +2380,7 @@ var BigHouse = (function() {
                  titleSpan,
                  this.grammarBarDiv,
                  $('<div class="newlhs">').html (this.makeIconButton ('create', function() {
+                   bh.unfocusEditableSpan()
                    var nSection = Object.keys(bh.currentGrammar.rules).length, lhs
                    do {
                      lhs = 'section' + (++nSection)
