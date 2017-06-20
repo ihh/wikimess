@@ -159,15 +159,9 @@ body {
     padding: 0.5vw;
 }
 
-.bighouse .grammarbar .rule .lhslink {
-    text-decoration: underline;
-    color: lightblue;
-    cursor: pointer;
-}
-
+.bighouse .grammarbar .rule .lhslink,
 .bighouse .grammarbar .rule .lhsbrokenlink {
     text-decoration: underline;
-    color: red;
     cursor: pointer;
 }
 

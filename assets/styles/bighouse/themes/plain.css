@@ -29,6 +29,14 @@
     background-color: #ccc;
 }
 
+.bighouse.plain .grammarbar .rule .lhslink {
+    color: blue;
+}
+
+.bighouse.plain .grammarbar .rule .lhsbrokenlink {
+    color: red;
+}
+
 .bighouse.plain .gramlistbar .grammar .button,
 .bighouse.plain .gramlistbar .newgrammar .button,
 .bighouse.plain .locbar .link .button,

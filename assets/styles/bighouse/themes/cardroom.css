@@ -29,6 +29,14 @@
     background-color: #444;
 }
 
+.bighouse.cardroom .grammarbar .rule .lhslink {
+    color: lightblue;
+}
+
+.bighouse.cardroom .grammarbar .rule .lhsbrokenlink {
+    color: red;
+}
+
 .bighouse.cardroom .gramlistbar .grammar .button,
 .bighouse.cardroom .gramlistbar .newgrammar .button,
 .bighouse.cardroom .locbar .link .button,
