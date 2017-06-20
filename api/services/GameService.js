@@ -693,12 +693,10 @@ module.exports = {
 
     // grammar expansions
     if (choice.grammar) {
-      var rules = extend ({ me: game.player1.displayName,
-                            you: game.player2.displayName },
+      var rules = extend ({ me: [game.player1.displayName],
+                            you: [game.player2.displayName] },
                           choice.grammar.rules)
-      var root = Grammar.rootSymbol
-      p1local[root] = GameService.expandTextString ('@' + root, game, undefined, undefined, rules)
-      console.log(root,p1local[root])
+      p1local[Label.defaultGrammarConfig.root] = Label.expandGrammar ({ rules: rules })
     }
 
     // update game state
@@ -754,6 +752,7 @@ module.exports = {
     GameService.randomOutcomes
     (game,
      function (err, outcomes) {
+//       sails.log.debug ('outcomes: ', outcomes)
        if (err)
 	 error (err)
        else
@@ -783,8 +782,11 @@ module.exports = {
 	   Game.getRoleAttr (game, 2, 'player', game.flip).global = p2global
 
            var updatedGameImage = GameService.gameImage (game)
+//	   sails.log.debug ('expanding:', outcome.outro, outcome.outro2)
+//	   sails.log.debug ('common:', common)
 	   return GameService.expandIntros (updatedGameImage, outcome.outro, outcome.outro2)
 	     .then (function (texts) {
+//	       sails.log.debug ('texts:', texts)
 	       Game.getRoleAttr (game, 1, 'tree', game.flip).push (texts[0])
 	       Game.getRoleAttr (game, 2, 'tree', game.flip).push (texts[1])
 	     })

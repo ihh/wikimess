@@ -784,7 +784,7 @@ module.exports = {
             return Outcome.create ({ grammar: grammar,
                                      choice: choice,
                                      move1: 'accept',
-                                     outro2: { text: "{{$common.document}}" } })
+                                     outro2: { text: "{{$local1.document}}" } })
               .then (function() {
                 return Event.create ({ grammar: grammar,
                                        name: grammar.name,
