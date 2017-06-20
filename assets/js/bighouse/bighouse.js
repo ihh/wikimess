@@ -1892,10 +1892,9 @@ var BigHouse = (function() {
                                })
       this.detailBarDiv.prepend (follow.followDiv)
       this.container
-	.append ($('<div class="topbar">')
-                 .append ($('<div class="backbar">')
-		          .append ($('<span>')
-			           .html (this.makeLink ('Back', bh.reloadCurrentTab)))))
+	.append ($('<div class="backbar">')
+		 .append ($('<span>')
+			  .html (this.makeLink ('Back', bh.reloadCurrentTab))))
       follow.showAvatar()
     },
     
@@ -1925,10 +1924,9 @@ var BigHouse = (function() {
         }
       })
       this.container
-	.append ($('<div class="topbar">')
-                 .append ($('<div class="backbar">')
-		          .append ($('<span>')
-			           .html (this.makeLink ('Back', this.popView)))))
+	.append ($('<div class="backbar">')
+		 .append ($('<span>')
+			  .html (this.makeLink ('Back', this.popView))))
     },
 
     showGameStatusPage: function (getMethod, callback) {
@@ -2117,20 +2115,23 @@ var BigHouse = (function() {
         div.html (input)
         input.focus()
       }
+      
       var text2html = props.text2html || function(x) { return x }
-      div.html (text2html (props.text))
+      var buttonsDiv = $('<span class="buttons">')
+      div.empty().append (text2html (props.text), buttonsDiv)
+      
       if (!props.isConstant) {
         div.on ('click', editCallback)
-        div.append (bh.makeIconButton ('edit', editCallback))
+        buttonsDiv.append (bh.makeIconButton ('edit', editCallback))
         if (props.destroyCallback)
-          div.append (bh.makeIconButton ('destroy', function (evt) {
+          buttonsDiv.append (bh.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
             if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
               props.destroyCallback()
           }))
       }
       if (props.otherButtonDivs)
-        div.append.apply (div, props.otherButtonDivs)
+        buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs)
     },
 
     makeEditableSpan: function (props) {
@@ -2263,6 +2264,7 @@ var BigHouse = (function() {
                         var newRhs = rhsList.length ? rhsList[rhsList.length-1] : ''
                         ruleDiv.append (bh.makeGrammarRhsDiv (lhs, ruleDiv, newRhs, rhsList.length))
                         rhsList.push (newRhs)
+                        bh.selectGrammarRule (lhs)
                         bh.setGrammarAutosaveTimer()
                       })
                     ]}),
@@ -2295,8 +2297,14 @@ var BigHouse = (function() {
         // Scroll parent to the new element. This arcane formula can probably be simplified
         scrollTop: this.grammarBarDiv.scrollTop() + ruleDiv.position().top - this.grammarBarDiv.position().top
       })
+      this.selectGrammarRule (lhs)
     },
 
+    selectGrammarRule: function (lhs) {
+      $('.selected').removeClass('selected')
+      this.ruleDiv[lhs].addClass('selected')
+    },
+    
     lhsRefersTo: function (lhs, refLhs) {
       return this.currentGrammar.rules[lhs].find (function (rhs) {
         return rhs.match ('@' + refLhs)
@@ -2361,13 +2369,12 @@ var BigHouse = (function() {
 
       this.container
         .empty()
-	.append ($('<div class="topbar">')
-                 .append ($('<div class="backbar">')
-                          .on ('click', this.unfocusEditableSpan.bind(this))
-		          .append ($('<span>').html (this.makeLink ('Help', function(){})),
-                                   $('<span>').html (this.makeLink ('Test', function(){})),
-                                   $('<span>').html (this.makeLink ('Delete', function(){})),
-                                   $('<span>').html (this.makeLink ('Back', bh.reloadCurrentTab)))),
+	.append ($('<div class="backbar">')
+                 .on ('click', this.unfocusEditableSpan.bind(this))
+		 .append ($('<div>').html (this.makeLink ('Help', function(){})),
+                          $('<div>').html (this.makeLink ('Test', function(){})),
+                          $('<div>').html (this.makeLink ('Delete', function(){})),
+                          $('<div>').html (this.makeLink ('Back', bh.reloadCurrentTab))),
                  titleSpan,
                  this.grammarBarDiv,
                  $('<div class="newlhs">').html (this.makeIconButton ('create', function() {

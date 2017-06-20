@@ -68,6 +68,12 @@ body {
     overflow-y: auto;
 }
 
+.bighouse .grammartitle .buttons,
+.bighouse .grammarbar .buttons,
+.bighouse .newlhs .buttons {
+    float: right;
+}
+
 .bighouse .grammartitle .button,
 .bighouse .newlhs .button,
 .bighouse .grammarbar .button {
@@ -158,6 +164,18 @@ body {
     margin: 1vw;
     padding: 0.5vw;
 }
+
+.bighouse .grammarbar .rule.selected {
+    -webkit-animation: 500ms linear 0s 1 normal pulse_rule;
+    -moz-animation: 500ms linear 0s 1 normal pulse_rule;
+    -o-animation: 500ms linear 0s 1 normal pulse_rule;
+    animation: 500ms linear 0s 1 normal pulse_rule;
+}
+
+@-webkit-keyframes pulse_rule { from { background-color:gray; } }
+   @-moz-keyframes pulse_rule { from { background-color:gray; } }
+     @-o-keyframes pulse_rule { from { background-color:gray; } }
+        @keyframes pulse_rule { from { background-color:gray; } }
 
 .bighouse .grammarbar .rule .lhslink,
 .bighouse .grammarbar .rule .lhsbrokenlink {
@@ -576,11 +594,11 @@ body {
 }
 
 .bighouse .backbar {
-    width: 100vw;
+    min-height: 32px;
     margin: 12px;
-    
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
 }
 
 .bighouse .backbar span {

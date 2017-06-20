@@ -13,6 +13,8 @@
   }
 }(this, function () {
   "use strict";
+  var moveLabel = 'move'
+  var scoreLabel = 'score'
 
   function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
 
@@ -137,8 +139,6 @@
     return l
   }
 
-  var moveLabel = 'move'
-  var scoreLabel = 'score'
   function bindLabelFunctions (expansion) {
     expansion.labels = function (lab) { return expansionLabels(expansion,lab) }
     expansion.flat = function (lab) { return flatExpansionLabels(expansion,lab) }
@@ -463,7 +463,32 @@
   function percent(number) {
     return Math.round (number * 100) + '%'
   }
+
+  // grammars
+  var defaultGrammarConfig = { maxRecurse: 3,
+                               rnd: Math.rnd,
+                               root: 'document' }
   
+  function expandGrammar (grammmar, config, lhs, symDepth) {
+    config = extend (defaultGrammarConfig, config || {})
+    lhs = lhs || config.root
+    symDepth = symDepth || {}
+    var rhsList = grammar.rules[lhs]
+    var rhs = rhsList ? rhsList[Math.floor (config.rnd() * rhsList.length)] : ''
+    return rhs.replace (/@([A-Za-z0-9_]+)/g, function (atSymbol, symbol) {
+      if (symDepth[symbol] >= config.maxRecurse)
+        return ''
+      var nestedSymDepth = extend ({}, symDepth)
+      nestedSymDepth[symbol] = (symDepth[symbol] || 0) + 1
+      return expandGrammar (symbol, nestedSymDepth, grammar, config)
+    })
+  }
+
+  function extend (a, b) {
+    Object.keys(b).forEach (function (k) { a[k] = b[k] })
+    return a
+  }
+
   // Externally exposed functions
   var api = {
     // BigHouse expansion trees
@@ -503,7 +528,10 @@
     taxicab: taxicab,
     percent: percent,
     // general
-    isArray: isArray
+    isArray: isArray,
+    // generative grammars
+    defaultGrammarConfig: defaultGrammarConfig,
+    expandGrammar: expandGrammar
   }
 
   return api
