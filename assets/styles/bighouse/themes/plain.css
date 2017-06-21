@@ -8,19 +8,14 @@
     background-color: black;
 }
 
-.bighouse.plain .gramlistbar,
-.bighouse.plain .locbar {
+.bighouse.plain .gramlistbar {
     color: black;
     background-color: white;
 }
 
 .bighouse.plain .gramlistbar .grammar,
 .bighouse.plain .grammarbar .rule,
-.bighouse.plain .detailbar .statusdiv,
-.bighouse.plain .detailbar .statusdiv .locbar,
-.bighouse.plain .locbar .link,
-.bighouse.plain .locbar .trade,
-.bighouse.plain .locbar .event {
+.bighouse.plain .detailbar .statusdiv {
     border-color: black;
     background-color: #f8f8f8;
 }
@@ -38,110 +33,28 @@
 }
 
 .bighouse.plain .gramlistbar .grammar .button,
-.bighouse.plain .gramlistbar .newgrammar .button,
-.bighouse.plain .locbar .link .button,
-.bighouse.plain .locbar .trade .button,
-.bighouse.plain .locbar .event .button {
+.bighouse.plain .gramlistbar .newgrammar .button {
     border-color: black;
     background-color: #e8e8e8;
     color: #222;
 }
 
-.bighouse.plain .locbar .link .lock,
-.bighouse.plain .locbar .event .lock,
-.bighouse.plain .locbar .link .timer,
-.bighouse.plain .locbar .event .timer {
-    color: #666;
-}
-
-.bighouse.plain .locbar .link .missed,
-.bighouse.plain .locbar .event .missed {
-    color: red;
-}
-
-.bighouse.plain .locbar .event .selectotheravatar {
-    border-color: black;
-}
-
-.bighouse.plain .cardbar .cardtable {
-    border-top-style: solid;
-    border-top-width: 1px;
-    border-top-color: #222;
-}
-
-.bighouse.plain .slidebar .slidetab {
-    border-bottom-color: #888;
-}
-
-.bighouse .detailbar .statusline {
-    border-color: #444;
-}
-
-.bighouse.plain .cardbar.dynamic .choicebar a,
 .bighouse.plain .detailbar,
 .bighouse.plain .grammarbar,
-.bighouse.plain .statusbar,
 .bighouse.plain .backbar,
 .bighouse.plain .menubar {
     color: black;
 }
 
-.bighouse.plain .cardbar.static .choicebar a {
-    color: white;
-}
-
-.bighouse.plain .choicebar span.disabled {
-    color: #ccc;
-}
-
-.bighouse.plain .cardbar.static .choicebar .hint a,
-.bighouse.plain .cardbar.static .choicebar .hint span {
-    background-color: #666;
-}
-
-.bighouse.plain .veil {
-    background-color: #eee;
-}
-
-.bighouse.history.plain .veil .cyloneye {
-    background-color: #ccd;
-    background-image: -webkit-linear-gradient(    left, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
-    background-image:    -moz-linear-gradient(    left, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
-    background-image:      -o-linear-gradient(    left, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
-    background-image:         linear-gradient(to right, rgba( 238,238,238,0.9 ) 25%, rgba( 238,238,238,0.1 ) 50%, rgba( 238,238,238,0.9 ) 75%);
-}
-
-.bighouse.plain .statusbar .leftmood,
-.bighouse.plain .statusbar .rightmood {
-    border-color: #ddd;
-}
-
-.bighouse.plain .backbar a,
 .bighouse.plain .statusbar a,
 .bighouse.plain .menubar a,
-.bighouse.plain .avatar-exit a,
-.bighouse.plain .upload-exit a,
+.bighouse.plain .backbar a,
 .bighouse.plain .menubar label {
     color: #888;
     border-color: #888;
 }
 
-.bighouse.plain .moodbar .moodbutton {
-    border-color: #bbb;
-}
-
-.bighouse.plain .moodbar .selected {
-}
-
-.bighouse.plain .moodbar .unselected {
-}
-
-.bighouse.plain .timebar .timer {
-    background-color: #ccc;
-}
-
-.bighouse.plain .titlebar,
-.bighouse.plain .moodslugbar {
+.bighouse.plain .titlebar {
     color: black;
 }
 
@@ -177,8 +90,4 @@
 
 .bighouse.plain .detailbar .statusline {
     background: #eee;
-}
-
-.bighouse.plain .cardbar .cardtable input:checked + label {
-    background: rgba(0,0,0,.1);
 }

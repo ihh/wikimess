@@ -8,19 +8,14 @@
     background-color: black;
 }
 
-.bighouse.cardroom .gramlistbar,
-.bighouse.cardroom .locbar {
+.bighouse.cardroom .gramlistbar {
     color: white;
     background-color: black;
 }
 
 .bighouse.cardroom .gramlistbar .grammar,
 .bighouse.cardroom .grammarbar .rule,
-.bighouse.cardroom .detailbar .statusdiv,
-.bighouse.cardroom .detailbar .statusdiv .locbar,
-.bighouse.cardroom .locbar .link,
-.bighouse.cardroom .locbar .trade,
-.bighouse.cardroom .locbar .event {
+.bighouse.cardroom .detailbar .statusdiv {
     border-color: #ccc;
     background-color: #111;
 }
@@ -38,108 +33,28 @@
 }
 
 .bighouse.cardroom .gramlistbar .grammar .button,
-.bighouse.cardroom .gramlistbar .newgrammar .button,
-.bighouse.cardroom .locbar .link .button,
-.bighouse.cardroom .locbar .trade .button,
-.bighouse.cardroom .locbar .event .button {
+.bighouse.cardroom .gramlistbar .newgrammar .button {
     border-color: green;
     background-color: #333;
     color: green;
 }
 
-.bighouse.cardroom .locbar .link .lock,
-.bighouse.cardroom .locbar .event .lock,
-.bighouse.cardroom .locbar .link .timer,
-.bighouse.cardroom .locbar .event .timer {
-    color: #ddd;
-}
-
-.bighouse.cardroom .locbar .link .missed,
-.bighouse.cardroom .locbar .event .missed {
-    color: red;
-}
-
-.bighouse.cardroom .locbar .event .selectotheravatar {
-    border-color: white;
-}
-
-.bighouse.cardroom .cardbar .cardtable {
-    background-color: darkgreen;  /* old browsers */
-    background: linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
-    background: -webkit-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
-    background: -moz-linear-gradient(-45deg, #107400 0%,#006400 28%,#004400 100%);
-    box-shadow: 2px 2px 1px 1px #003200;
-}
-
-.bighouse.cardroom .slidebar .slidetab {
-    border-bottom-color: #030;
-}
-
-.bighouse.cardroom .choicebar span.disabled {
-    color: #787;
-}
-
-.bighouse.cardroom .cardbar.static .choicebar .hint a,
-.bighouse.cardroom .cardbar.static .choicebar .hint span {
-    background-color: #666;
-}
-
-.bighouse.cardroom .choicebar a,
 .bighouse.cardroom .detailbar,
 .bighouse.cardroom .grammarbar,
-.bighouse.cardroom .statusbar,
 .bighouse.cardroom .backbar,
 .bighouse.cardroom .menubar {
     color: white;
 }
 
-.bighouse.cardroom .veil {
-    background-color: black;
-}
-
-.bighouse.history.cardroom .veil .cyloneye {
-    background-color: #223;
-    background-image: -webkit-linear-gradient(    left, rgba( 0,0,0,0.9 ) 25%, rgba( 0,0,0,0.1 ) 50%, rgba( 0,0,0,0.9 ) 75%);
-    background-image:    -moz-linear-gradient(    left, rgba( 0,0,0,0.9 ) 25%, rgba( 0,0,0,0.1 ) 50%, rgba( 0,0,0,0.9 ) 75%);
-    background-image:      -o-linear-gradient(    left, rgba( 0,0,0,0.9 ) 25%, rgba( 0,0,0,0.1 ) 50%, rgba( 0,0,0,0.9 ) 75%);
-    background-image:         linear-gradient(to right, rgba( 0,0,0,0.9 ) 25%, rgba( 0,0,0,0.1 ) 50%, rgba( 0,0,0,0.9 ) 75%);
-}
-
-.bighouse.cardroom .statusbar .leftmood,
-.bighouse.cardroom .statusbar .rightmood {
-    border-color: #222;
-    background-color: #333;
-}
-
-.bighouse.cardroom .backbar a,
 .bighouse.cardroom .statusbar a,
 .bighouse.cardroom .menubar a,
 .bighouse.cardroom .backbar a,
-.bighouse.cardroom .avatar-exit a,
-.bighouse.cardroom .upload-exit a,
 .bighouse.cardroom .menubar label {
     color: #888;
     border-color: #888;
 }
 
-.bighouse.cardroom .moodbar .moodbutton {
-    border-color: #222;
-}
-
-.bighouse.cardroom .moodbar .selected {
-    background-color: #222;
-}
-
-.bighouse.cardroom .moodbar .unselected {
-    background-color: black;
-}
-
-.bighouse.cardroom .timebar .timer {
-    background-color: #444;
-}
-
-.bighouse.cardroom .titlebar,
-.bighouse.cardroom .moodslugbar {
+.bighouse.cardroom .titlebar {
     color: white;
 }
 
@@ -169,8 +84,4 @@
 
 .bighouse.cardroom .detailbar .statusline {
     background: #111;
-}
-
-.bighouse.cardroom .cardbar .cardtable input:checked + label {
-    background: rgba(0,0,0,.1);
 }

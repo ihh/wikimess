@@ -34,27 +34,6 @@ module.exports = {
         'ending': ['Sincerely, @me.', 'Yours, @me.']
       }
     },
-
-    // links to automatically created objects
-    choices: {
-      collection: 'choice',
-      via: 'grammar'
-    },
-
-    outcomes: {
-      collection: 'outcome',
-      via: 'grammar'
-    },
-
-    events: {
-      collection: 'event',
-      via: 'grammar'
-    },
-
-    tickets: {
-      collection: 'ticket',
-      via: 'grammar'
-    }
   },
 
   rootSymbol: 'document',

@@ -135,11 +135,7 @@ body {
 .bighouse .follow,
 .bighouse .gramlistbar .grammar,
 .bighouse .gramlistbar .newgrammar,
-.bighouse .grammarbar .rule,
-.bighouse .locbar .location,
-.bighouse .locbar .link,
-.bighouse .locbar .trade,
-.bighouse .locbar .event {
+.bighouse .grammarbar .rule {
     clear: both;
     float: left;
     width: 95%;
@@ -149,10 +145,7 @@ body {
 .bighouse .gramlistbar .grammar,
 .bighouse .gramlistbar .newgrammar,
 .bighouse .grammarbar .rule,
-.bighouse .follow,
-.bighouse .locbar .link,
-.bighouse .locbar .trade,
-.bighouse .locbar .event {
+.bighouse .follow {
     position: relative;
     padding: 1vw;
 }
@@ -221,19 +214,13 @@ body {
 
 .bighouse .gramlistbar .grammar,
 .bighouse .grammarbar .rule,
-.bighouse .follow,
-.bighouse .locbar .link,
-.bighouse .locbar .trade,
-.bighouse .locbar .event {
+.bighouse .follow {
     border-style: solid;
     border-width: 1px;
 }
 
 .bighouse .gramlistbar .grammar .title,
-.bighouse .grammarbar .rule .lhs,
-.bighouse .locbar .link .title,
-.bighouse .locbar .trade .title,
-.bighouse .locbar .event .title {
+.bighouse .grammarbar .rule .lhs {
     width: 80%;
     font-weight: bold;
     font-style: italic;
@@ -253,367 +240,34 @@ body {
     cursor: pointer;
 }
 
-.bighouse .follow .button,
-.bighouse .locbar .link .button {
+.bighouse .follow .button {
     position: absolute;
     right: 4px;
     bottom: 4px;
 }
 
 .bighouse .follow .button,
-.bighouse .locbar .link .button,
-.bighouse .locbar .trade .button,
 .bighouse .gramlistbar .grammar .button,
-.bighouse .gramlistbar .newgrammar .button,
-.bighouse .locbar .event .button {
+.bighouse .gramlistbar .newgrammar .button {
     border-style: solid;
     border-width: 1px;
     padding: 1px 3px;
     cursor: pointer;
 }
 
-.bighouse .locbar .link .lock,
-.bighouse .locbar .event .lock,
-.bighouse .locbar .trade .owned,
-.bighouse .locbar .event .turn {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 1vw;
-    font-size: x-small;
-}
-
-.bighouse .locbar .event .turn .timer,
-.bighouse .locbar .event .turn .missed {
-    float: right;
-    clear: right;
-}
-
-.bighouse .locbar .link .cost {
-    height: 36px;
-}
-
-.bighouse .locbar .trade .iconprice,
-.bighouse .locbar .link .iconprice,
-.bighouse .locbar .event .iconprice {
-    position: relative;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    display: inline-block;
-}
-
-.bighouse .locbar .link .iconprice {
-    margin: 4px 4px 4px 0px;
-}
-
-.bighouse .locbar .event .traderow .iconprice,
-.bighouse .locbar .trade .traderow .iconprice {
-    margin: 4px 0px 4px 4px;
-}
-
-.bighouse .locbar .trade .traderow .icon,
-.bighouse .locbar .link .icon,
-.bighouse .locbar .event .icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-}
-
-.bighouse .locbar .event .traderows,
-.bighouse .locbar .trade .traderows {
-    display: inline-block;
-    float: right;
-    clear: right;
-    margin-top: 4px;
-}
-
-.bighouse .locbar .link .hint,
-.bighouse .locbar .event .hint,
-.bighouse .locbar .trade .hint {
-    font-size: small;
-}
-
-.bighouse .locbar .trade .bigicon {
-    display: inline-block;
-    width: 64px;
-    height: 64px;
-    border-radius: 4px;
-    float: left;
-    margin-right: 4px;
-}
-
-.bighouse .locbar .trade .bigicon svg {
-    border-radius: 4px;
-}
-
-.bighouse .locbar .trade .price,
-.bighouse .locbar .link .price,
-.bighouse .locbar .event .price {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    font-size: xx-small;
-    background: black;
-    color: white;
-    border-radius: 2px;
-    margin: 1px;
-}
-
-.bighouse .locbar .event .traderow,
-.bighouse .locbar .trade .traderow {
-    position: relative;
-    display: inline-block;
-    float: right;
-    text-align: right;
-    margin-left: 4px;
-}
-
-.bighouse .locbar .event .traderow .button,
-.bighouse .locbar .trade .traderow .button {
-    display: inline-block;
-    position: relative;
-    float: right;
-}
-
-.bighouse .locbar .event .selectother {
-    clear: both;
-    font-size: small;
-}
-
-.bighouse .locbar .event .selectotherprompt {
-    font-style: italic;
-    padding-top: 4px;
-}
-
-.bighouse .locbar .event .selectotherlistitem {
-    clear: both;
-    padding-top: 2px;
-}
-
-.bighouse .locbar .event .selectotheravatar {
-    height: 32px;
-    width: 32px;
-    float: left;
-    margin-right: 4px;
-    border-style: solid;
-    border-width: 1px;
-    border-radius: 2px;
-}
-
-.bighouse .cardbar .cardtable {
-    z-index: 10;
-}
-
-.bighouse .cardbar.dynamic .cardtable li {
-    border-radius: 5px;
-    border-width: 10px;
-    border-style: solid;
-    padding: 4px;
-}
-
-.bighouse .cardbar .cardtable li {
-    text-align: center;
-    font-size: 12px;
-    box-sizing: border-box;
-    cursor: pointer;
-}
-
-.bighouse .cardbar .cardtable li .cardcontent {
-    width: 100%;
-    overflow-y: auto;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.bighouse .cardbar .cardtable li .cardcontrols {
-    position: absolute;
-    top: 0;
-    height: 100%;
-}
-
-.bighouse .cardbar .cardtable li .scrollup,
-.bighouse .cardbar .cardtable li .scrolldown {
-    position: absolute;
-    background-color: rgba(0,0,0,.5);
-    border-radius: 4px;
-    width: 20px;
-    height: 20px;
-    padding: 2px;
-}
-
-.bighouse .cardbar .cardtable li .scrollup {
-    top: 0;
-}
-
-.bighouse .cardbar .cardtable li .scrolldown {
-    bottom: 0;
-}
-
-.bighouse .cardbar .cardtable li .scrollup .button svg,
-.bighouse .cardbar .cardtable li .scrolldown .button svg {
-/*
-    width: 16px;
-    height: 16px;
-*/
-}
-
-/* ensure nth-child is less specific than topcard,
-   which in turn is less specific than jiggle */
-.bighouse .cardbar.dynamic li:nth-child(4n+3) {
-    top: 2px; transform: translate(4px, 3px) rotate(-.8deg);
-}
-
-.bighouse .cardbar.dynamic li:nth-child(4n+2) {
-    top: 3px; transform: translate(2px, 2px) rotate(0.4deg);
-}
-
-.bighouse .cardbar.dynamic li:nth-child(4n+1) {
-    top: 3px; transform: translate(-2px, 2px) rotate(-0.4deg);
-}
-
-.bighouse .cardbar.dynamic li:nth-child(4n) {
-    top: 4px; transform: translate(-4px, -2px) rotate(.8deg);
-}
-
-.bighouse .cardbar.dynamic .cardtable li.topcard {
-    transform: translate(0px, 0px) rotate(0deg);
-}
-
-.bighouse .cardbar .cardtable li.thrown {
-    z-index: 20;
-}
-
-.bighouse .cardbar.dynamic .cardtable li.jiggle:not(.dragging) {
-    animation: jiggle 5s ease 0s infinite;
-    -moz-animation: jiggle 5s ease 0s infinite;
-    -webkit-animation: jiggle 5s ease 0s infinite;
-}
-
-@-webkit-keyframes jiggle {
-    0% { transform: rotate(0deg); }
-    95% { transform: rotate(0deg); }
-    97% { transform: rotate(1deg); }
-    99% { transform: rotate(-0.5deg); }
-    100% { transform: rotate(0deg); }
-}
-
-@-moz-keyframes jiggle {
-    0% { transform: rotate(0deg); }
-    95% { transform: rotate(0deg); }
-    97% { transform: rotate(1deg); }
-    99% { transform: rotate(-0.5deg); }
-    100% { transform: rotate(0deg); }
-}
-
-@keyframes jiggle {
-    0% { transform: rotate(0deg); }
-    95% { transform: rotate(0deg); }
-    97% { transform: rotate(1deg); }
-    99% { transform: rotate(-0.5deg); }
-    100% { transform: rotate(0deg); }
-}
-
-.bighouse .cardbar.static .choicebar .hint {
-    margin: 8px;
-}
-
-.bighouse .cardbar.static .choicebar .hint a,
-.bighouse .cardbar.static .choicebar .hint span {
-    display: block;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: large;
-}
-
-.bighouse .cardbar.dynamic .choicebar .choice1 .hint {
-    padding-left: 4px;
-}
-
-.bighouse .cardbar.dynamic .choicebar .choice2 .hint {
-    padding-right: 4px;
-}
-
-.bighouse .choicebar a {
-    text-decoration: none;
-}
-
-.bighouse .choicebar span.disabled,
-.bighouse .statusbar span {
-    cursor: default;
-}
-
-.bighouse .follow .avatar,
-.bighouse .locbar .avatar,
-.bighouse .statusbar .leftmood,
-.bighouse .statusbar .rightmood {
-    border-style: solid;
-    border-width: 1px;
-    border-radius: 4px;
-}
-
-.bighouse .follow .avatar img,
-.bighouse .follow .avatar svg,
-.bighouse .locbar .avatar img,
-.bighouse .locbar .avatar svg,
-.bighouse .statusbar .leftmood img,
-.bighouse .statusbar .leftmood svg,
-.bighouse .statusbar .rightstatus span,
-.bighouse .statusbar .rightmood img,
-.bighouse .statusbar .rightmood svg {
-    cursor: pointer;
-}
 
 .bighouse .other,
 .bighouse .follow {
     display: flex;
 }
 
-.bighouse .event .avatar {
-    margin-top: 4px;
-}
-
-.bighouse .follow .avatar,
-.bighouse .locbar .avatar {
-    width: 64px;
-    height: 64px;
-}
-
-.bighouse .follow .name,
-.bighouse .locbar .name {
+.bighouse .follow .name {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     padding: 4px;
     max-width: 50vw;
     word-break: break-all;
-}
-
-.bighouse .statusbar .rightstatus span {
-    font-size: small;
-    word-wrap: break-word;  /* moz */
-    overflow-wrap: break-word;  /* webkit */
-    width: 100%;
-    max-height: 100%;
-    text-align: right;
-}
-
-.bighouse .cardtable .slidebar {
-    position: relative;
-    left: 0;
-    width: 100%;
-    height: 0;
-    display: flex;
-    justify-content: center;
-}
-
-.bighouse .cardtable .slidebar .slidetab {
-    height: 0;
-    border-style: none solid solid solid;
-    border-left-color: transparent;
-    border-right-color: transparent;
-    cursor: pointer;
 }
 
 .bighouse .topbar {
@@ -637,98 +291,13 @@ body {
     display: flex;
 }
 
-.bighouse .statusbar a,
 .bighouse .backbar a,
 .bighouse .menubar a,
-.bighouse .avatar-exit a,
-.bighouse .upload-exit a,
 .bighouse .menubar label {
     text-decoration: none;
     border-width: 1px;
     border-style: solid;
     cursor: pointer;
-}
-
-.bighouse .menubar .avatar-grid {
-    text-align: center;
-    margin-top: 2vw;
-    margin-bottom: 2vw;
-}
-
-.bighouse .menubar .avatar-grid-row {
-    white-space: nowrap;
-}
-
-.bighouse img.mood,
-.bighouse svg.mood {
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-}
-
-.bighouse.history .veil,
-.bighouse .moodcontainer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-}
-
-.bighouse .veil {
-    display: none;
-    z-index: 1;
-}
-
-.bighouse.history .veil {
-    display: block;
-    overflow: hidden;
-}
-
-.bighouse.history .veil .cyloneye {
-    height: 100%;
-    width: 20%;
-    -webkit-animation: 4s linear 0s infinite alternate move_eye;
-    -moz-animation: 4s linear 0s infinite alternate move_eye;
-    -o-animation: 4s linear 0s infinite alternate move_eye;
-    animation: 4s linear 0s infinite alternate move_eye;
-}
-
-@-webkit-keyframes move_eye { from { margin-left:-20%; } to { margin-left:100%; }  }
-   @-moz-keyframes move_eye { from { margin-left:-20%; } to { margin-left:100%; }  }
-     @-o-keyframes move_eye { from { margin-left:-20%; } to { margin-left:100%; }  }
-        @keyframes move_eye { from { margin-left:-20%; } to { margin-left:100%; }  }
-
-.bighouse .moodbar .moodbutton {
-    border-style: solid;
-    border-width: 1px;
-    border-radius: 4px;
-}
-
-.bighouse .moodbar .selected {
-    opacity: 1;
-    -webkit-transition: background-color 100ms linear, opacity 100ms linear;
-    -moz-transition: background-color 100ms linear, opacity 100ms linear;
-    -o-transition: background-color 100ms linear, opacity 100ms linear;
-    transition: background-color 100ms linear, opacity 100ms linear;
-}
-
-.bighouse .moodbar .unselected {
-    opacity: .5;
-    -webkit-transition: background-color 500ms linear, opacity 500ms linear;
-    -moz-transition: background-color 500ms linear, opacity 500ms linear;
-    -o-transition: background-color 500ms linear, opacity 500ms linear;
-    transition: background-color 500ms linear, opacity 500ms linear;
-}
-
-.bighouse .timebar {
-    width: 100%;
-    height: 9px;
-    margin: 1px 0 1px 0;
-    display: flex;
-    justify-content: center;
-    position: relative;
 }
 
 .bighouse .inputbar {
@@ -799,24 +368,6 @@ body {
 
 .bighouse .menubar .rubric {
     text-align: center;
-}
-
-.bighouse .moodslugbar div,
-.bighouse .moodbar div img,
-.bighouse .moodbar div svg,
-.bighouse .mooduploadbar div img,
-.bighouse .mooduploadbar div svg,
-.bighouse .avatar-exit span,
-.bighouse .upload-exit span {
-    cursor: pointer;
-}
-
-.bighouse .mooduploadbar .unclickable,
-.bighouse .moodslugbar .unclickable,
-.bighouse .avatar-exit .unclickable,
-.bighouse .upload-exit .unclickable,
-a.unclickable {
-    opacity: .5;
 }
 
 .bighouse .grammarbar,

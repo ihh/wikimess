@@ -59,54 +59,14 @@ module.exports.routes = {
   'GET /icon/:icon/:color/:background': 'IconController.getIcon', 
 
   'POST /id':                     'ClientController.byName',
-  'GET /avatar/:player':          'ClientController.getAvatarConfigById',
 
   'POST /p/new':                  'ClientController.createPlayer',
 
   'POST /p/:player/search':       'ClientController.searchDisplayName',
   'POST /p/:player/config':       'ClientController.configurePlayer',
 
-  'GET /p/:player/count':         'ClientController.countReadyGames',
-
   'GET /p/:player/status':        'ClientController.selfStatus',
   'GET /p/:player/status/:other': 'ClientController.otherStatus',
-
-  'PUT /p/:player/avatar':        'ClientController.putMoodAvatarConfig',
-  'PUT /p/:player/avatar/:mood':  'ClientController.uploadMoodAvatar',
-
-  'GET /p/:player/join/:event':              'ClientController.join',
-  'GET /p/:player/join/:event/as/:role':     'ClientController.join',
-
-  'GET /p/:player/join/:event/bot':          'ClientController.joinBot',
-  'GET /p/:player/join/:event/as/:role/bot': 'ClientController.joinBot',
-
-  'GET /p/:player/join/:event/who':      'ClientController.listPotentialOpponents',
-  'GET /p/:player/join/:event/cancel':   'ClientController.cancelJoin',
-
-  'GET /p/:player/join/:event/invite/:other':          'ClientController.invite',
-  'GET /p/:player/join/:event/as/:role/invite/:other': 'ClientController.invite',
-
-  'GET /p/:player/join/:event/cancel/:other': 'ClientController.cancelInvite',
-  'GET /p/:player/join/:event/reject/:other': 'ClientController.rejectInvite',
-  'GET /p/:player/join/:event/accept/:other': 'ClientController.acceptInvite',
-
-  'GET /p/:player/games':         'ClientController.games',
-
-  'GET /p/:player/game/:game':                     'ClientController.gameInfo',
-  'GET /p/:player/game/:game/history':             'ClientController.gameHistory',
-  'GET /p/:player/game/:game/history/:moveNumber': 'ClientController.gameHistory',
-
-  'GET /p/:player/game/:game/status/self':  'ClientController.selfGameStatus',
-  'GET /p/:player/game/:game/status/other': 'ClientController.otherGameStatus',
-
-  'PUT /p/:player/game/:game/move/:moveNumber':            'ClientController.makeMove',
-  'GET /p/:player/game/:game/move/:moveNumber/mood/:mood': 'ClientController.changeMood',
-  'GET /p/:player/game/:game/move/:moveNumber/kick':       'ClientController.kickTimedOutPlayers',
-  'GET /p/:player/game/:game/move/:moveNumber/quit':       'ClientController.quitGame',
-
-  'GET /p/:player/home':                      'ClientController.viewHome',
-  'GET /p/:player/location/:location':        'ClientController.viewLocation',
-  'POST /p/:player/location/:location/trade': 'ClientController.trade',
 
   'GET /p/:player/follow':          'ClientController.listFollowed',
   'GET /p/:player/follow/:other':   'ClientController.follow',

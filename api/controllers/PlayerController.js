@@ -8,37 +8,4 @@
 var extend = require('extend')
 
 module.exports = {
-  create: function (req, res) {
-    if (SchemaService.validatePlayer (req.body, res.badRequest.bind(res)))
-      Player.create (req.body)
-      .then (function (player) {
-	var botPromise = player.human
-	  ? Player.find ({ human: false, partner: null })
-	  .then (function (botPlayers) {
-	    botPlayers.forEach (function (bot) {
-	      bot.partner = player.id
-	      delete bot.name
-	      delete bot.id
-	    })
-	    return botPlayers
-	  })
-	: Player.find ({ human: true })
-	  .then (function (humanPlayers) {
-	    return humanPlayers.map (function (human) {
-	      var bot = extend ({}, player)
-	      bot.partner = human.id
-	      delete bot.name
-	      delete bot.id
-	    })
-	    return botPlayers
-	  })
-	return botPromise.then (function (newBotPlayers) {
-	    return Player.create (newBotPlayers)
-	    .then (function (bots) {
-	      return player
-	    })
-	})
-      }).then (res.send.bind(res))
-      .catch (res.badRequest.bind(res))
-  }
 };

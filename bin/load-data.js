@@ -15,15 +15,9 @@ var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"
 var defaultPassword = "admin"
 var defaultDataDir = "data"
-var defaultChoiceFilename = "$DATA/choices"
-var defaultTextFilename = "$DATA/texts"
 var defaultPlayerFilename = "$DATA/players"
-var defaultLocationFilename = "$DATA/locations"
-var defaultItemFilename = "$DATA/items"
-var defaultMeterFilename = "$DATA/meters"
-var defaultAwardFilename = "$DATA/awards"
 var defaultVerbosity = 3
-var defaultMatchRegex = '\\.(js|json|txt|story)$'
+var defaultMatchRegex = '\\.(js|json|txt)$'
 var databasePath = '.tmp/localDiskDb.db'
 
 function defaultPath (subdir, opt) {
@@ -42,18 +36,11 @@ var opt = getopt.create([
   ['u' , 'username=STRING'  , 'admin player name (default="' + defaultUserName + '")'],
   ['w' , 'password=STRING'  , 'admin player password (default="' + defaultPassword + '")'],
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
-  ['c' , 'choices=PATH+'    , 'path to .js, .json or .story file(s) or directories (default=' + defaultPath('Choice') + ')'],
-  ['t' , 'texts=PATH+'      , 'path to js/json text file(s) or directories (default=' + defaultPath('Text') + ')'],
   ['p' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
-  ['l' , 'locations=PATH+'  , 'path to js/json location file(s) or directories (default=' + defaultPath('Location') + ')'],
-  ['i' , 'items=PATH+'      , 'path to js/json item file(s) or directories (default=' + defaultPath('Item') + ')'],
-  ['m' , 'meters=PATH+'     , 'path to js/json meter file(s) or directories (default=' + defaultPath('Meter') + ')'],
-  ['a' , 'awards=PATH+'     , 'path to js/json award file(s) or directories (default=' + defaultPath('Award') + ')'],
   ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'sails'            , 'lift sails before loading data'],
   ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
-  ['y' , 'story=PATH'       , 'parse the given .story file, output its JSON equivalent and do nothing else'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
   ['h' , 'help'             , 'display this help message']
 ])              // create Getopt instance
@@ -81,19 +68,7 @@ var adminPass = opt.options.password || defaultPassword
 var jar = request.jar()
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
-var choiceFilenames = opt.options.choices || [defaultPath('Choice',opt)]
-var textFilenames = opt.options.texts || [defaultPath('Text',opt)]
 var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
-var locationFilenames = opt.options.locations || [defaultPath('Location',opt)]
-var itemFilenames = opt.options.items || [defaultPath('Item',opt)]
-var meterFilenames = opt.options.meters || [defaultPath('Meter',opt)]
-var awardFilenames = opt.options.awards || [defaultPath('Award',opt)]
-
-if (opt.options.story) {
-  var json = readJsonFileSync (opt.options.story, [parseStory])
-  console.log (JSON.stringify(json,null,2))
-  return
-}
 
 var sailsApp, promise = Promise.resolve()
 if (opt.options.sails || opt.options.erase) {
@@ -130,54 +105,12 @@ promise = promise.then (function() {
   })
 })
 
-promise = promise.then (processFilenameList ({ path: '/item',
-                                               schema: schemaPath('item'),
-                                               handler: genericHandler('Item'),
-                                               parsers: [JSON.parse, Build],
-                                               list: itemFilenames.reverse() }))
-
 var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
 promise = promise.then (processFilenameList ({ path: '/player',
                                                schema: schemaPath('player'),
                                                handler: playerHandler,
                                                parsers: [JSON.parse, Build],
                                                list: playerFilenames.reverse() }))
-
-var locationHandler = makeHandler ('Location', hasName, function (obj) {
-  return obj.name + ' -> ' + (obj.links ? obj.links.map(function (link) { return typeof(link) === 'string' ? link : link.to }).join(', ') : 'no links!') })
-promise = promise.then (processFilenameList ({ path: '/location',
-                                               schema: schemaPath('location'),
-                                               handler: locationHandler,
-                                               parsers: [JSON.parse, Build],
-                                               list: locationFilenames.reverse() }))
-
-promise = promise.then (processFilenameList ({ path: '/award',
-                                               schema: schemaPath('award'),
-                                               handler: genericHandler('Award'),
-                                               parsers: [JSON.parse, Build],
-                                               list: awardFilenames.reverse() }))
-
-promise = promise.then (processFilenameList ({ path: '/meter',
-                                               schema: schemaPath('meter'),
-                                               handler: genericHandler('Meter'),
-                                               parsers: [JSON.parse, Build],
-                                               list: meterFilenames.reverse() }))
-
-promise = promise.then (processFilenameList ({ path: '/text',
-                                               schema: schemaPath('text'),
-                                               handler: genericHandler('Text'),
-                                               parsers: [JSON.parse, Build],
-                                               list: textFilenames.reverse() }))
-
-var choiceHandler = makeHandler ('Choice', hasNameAndID, function (c) {
-  return ' ' + c.name + '\t(id=' + c.id + ', '
-    + plural (c.outcomes && c.outcomes.length, 'outcome')
-    + ')' })
-promise = promise.then (processFilenameList ({ path: '/choice',
-                                               schema: schemaPath('choice'),
-                                               handler: choiceHandler,
-                                               parsers: [JSON.parse, Build, parseStory],
-                                               list: choiceFilenames.reverse() }))
 
 promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
 
@@ -411,128 +344,4 @@ function playerHandler (err, data) {
 
 function isArray(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]'
-}
-
-function parseStory (text) {
-  try {
-    var context = 'choice'
-    var currentObj, currentList = []
-    var stack = []
-    var hashReg = /^ *# *([a-z0-9]+) *(.*?) *$/;
-    var jsArrayReg = /^\[/;
-    var jsObjReg = /^\{/;
-    var closingBraceReg = /^ *\} *$/;
-    var nonwhiteReg = /\S/;
-    var textField = { choice: 'intro',
-		      next: 'intro',
-		      outcome: 'outro',
-		      intro: 'text',
-		      outro: 'text' }
-    var outcomeKeys = ['rr','rl','lr','ll','any','lr2','rl2','auto','outcome','effect']
-    var innerContext = { choice: { intro: 'intro' },
-			 next: { intro: 'intro' },
-			 outcome: { outro: 'outro', next: 'next' },
-			 intro: { left: 'intro', right: 'intro', next: 'intro', menu: 'intro' },
-			 outro: { left: 'outro', right: 'outro', next: 'outro' } }
-    var isArrayAttr = { choice: { intro: true },
-			next: { intro: true },
-			outcome: { next: true, outro: true },
-			intro: { menu: true },
-			outro: { menu: true } }
-    outcomeKeys.forEach (function (key) {
-      innerContext.choice[key] = innerContext.next[key] = 'outcome'
-      isArrayAttr.choice[key] = isArrayAttr.next[key] = true
-    })
-    text.split(/\n/).forEach (function (line) {
-      //	    console.log("\nparseStory inner loop")
-      //	    console.log("line: "+line)
-      var tf = textField[context]
-      function append (txt, obj, f) {
-	obj = obj || currentObj
-        if (!obj) {
-          if (/\S/.test(txt))
-            console.log ("Warning: discarding " + txt)
-          return
-        }
-	f = f || tf
-	if (typeof(obj[f]) == 'undefined' || typeof(obj[f]) == 'string') {
-	  obj[f] = (obj[f] || '') + txt
-	  obj[f] = obj[f].replace(/^ +/,'')
-	  obj[f] = obj[f].replace(/ +$/,'')
-	  obj[f] = obj[f].replace(/ +/g,' ')
-	  obj[f] = obj[f].replace(/\n+/g,'\n')
-	  obj[f] = obj[f].replace(/\s*;;\s*/g,';;')
-	} else
-	  append (txt, obj[f], 'text')
-      }
-      var hashMatch = hashReg.exec (line)
-      if (hashMatch) {
-	var cmd = hashMatch[1], arg = hashMatch[2]
-	if (arg == '{') {
-	  var inner = innerContext[context][cmd]
-	  if (!inner)
-	    throw new Error ("Can't nest #" + cmd + " in " + context + " context")
-	  stack.push ({ obj: currentObj,
-			list: currentList,
-			context: context,
-			cmd: cmd })
-	  var obj = {}
-	  if (currentObj[cmd]) {
-	    if (typeof (currentObj[cmd]) == 'string') {
-	      currentList = []
-	      obj[textField[inner]] = currentObj[cmd]
-	    } else
-	      currentList = currentObj[cmd]
-	  } else
-	    currentList = []
-	  currentList.push (obj)
-	  currentObj = obj
-	  context = inner
-	} else if (arg.length) {
-	  if (cmd == 'name' && context == 'choice')
-	    currentList.push (currentObj = {})
-	  try {
-	    if (jsArrayReg.test(arg)) {
-	      var val = eval(arg)
-	      if (isArrayAttr[context][arg] && !isArray(val))
-		val = [val]
-	      currentObj[cmd] = (currentObj[cmd] || []).concat (val)
-	    } else if (jsObjReg.test(arg)) {
-	      currentObj[cmd] = eval ('['+arg+'][0]')  // horrible hack
-	    } else if (innerContext[context][cmd]) {
-	      var val = {}
-	      val[textField[innerContext[context][cmd]]] = arg
-	      currentObj[cmd] = (currentObj[cmd] || []).concat ([val])
-	    } else
-	      currentObj[cmd] = arg
-	  } catch (e) {
-	    currentObj[cmd] = arg
-	  }
-	}
-      } else if (closingBraceReg.test (line)) {
-	if (stack.length == 0)
-	  throw "Too many closing braces"
-	var info = stack.pop()
-	info.obj[info.cmd] = isArrayAttr[info.context][info.cmd] ? currentList : currentList[0]
-	info.list.pop()
-	info.list.push (currentObj = info.obj)
-	currentList = info.list
-	context = info.context
-      } else if (nonwhiteReg.test (line)) {
-	append (' ' + line)
-      } else {
-	append ('\n')
-      }
-      //	    console.log("context: "+context)
-      //	    console.log("currentObj: "+JSON.stringify(currentObj))
-      //	    console.log("currentList: "+JSON.stringify(currentList))
-      //	    console.log("stack: "+JSON.stringify(stack))
-      //	    console.log("stack size: "+stack.length)
-
-    })
-    if (stack.length)
-      throw "Too few closing braces"
-    log(5,"Parsed text file and generated the following JSON:\n" + JSON.stringify(currentList,null,2))
-    return currentList
-  } catch(e) { console.log(e) }
 }

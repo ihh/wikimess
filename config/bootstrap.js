@@ -11,12 +11,10 @@
 
 module.exports.bootstrap = function(cb) {
 
-  // index Items
+  // initialize admin Player
   Player.initAdmin()
-    .then (Item.createIndex)
-    .then (Meter.createIndex)
-    .then (Award.createIndex)
-    .then (cb)
-    .catch (function (err) { throw(err) })
+    .then (function (admin) {
+      cb()
+    }).catch (function (err) { throw(err) })
 
 };

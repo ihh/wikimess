@@ -39,27 +39,12 @@ module.exports.policies = {
 
   //  '*': true,
 
-  'AwardController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'ChoiceController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'EventController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'FollowController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'GameController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'GrammarController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'InviteController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'ItemController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'LocationController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'MeterController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'OutcomeController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
   'PlayerController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'TextController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'TicketController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'TurnController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
 
   // non-permissive policy for player controller
   'ClientController': {
     'create': true,
-    'getMoodAvatar': true,
-    'getMoodAvatarConfig': true,
     'otherStatus': true,
     '*': clientPolicy
   },
