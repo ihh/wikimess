@@ -163,7 +163,10 @@ var BigHouse = (function() {
     },
 
     REST_putPlayerSymbol: function (playerID, symbolID, name, rules) {
-      return $.get ('/p/' + playerID + '/symbol/' + symbolID, { name: name, rules: rules })
+      return $.ajax ({ url: '/p/' + playerID + '/symbol/' + symbolID,
+                       method: 'PUT',
+                       contentType: 'application/json',
+                       data: JSON.stringify ({ name: name, rules: rules }) })
     },
     
     // WebSockets interface
@@ -177,6 +180,10 @@ var BigHouse = (function() {
 
     socket_getPlayerSubscribe: function (playerID) {
       return this.socketGetPromise ('/p/' + playerID + '/subscribe')
+    },
+
+    socket_getPlayerSymbolNew: function (playerID) {
+      return this.socketGetPromise ('/p/' + playerID + '/symbol')
     },
 
     socket_getPlayerSymbols: function (playerID) {
@@ -420,7 +427,7 @@ var BigHouse = (function() {
         .empty()
         .append (navbar = $('<div class="navbar">'))
 
-      this.messageCountDiv = $('<div class="gamecount">').hide()
+      this.messageCountDiv = $('<div class="messagecount">').hide()
       if (typeof(this.messageCount) === 'undefined')
 	this.updateMessageCount()
       else
@@ -431,8 +438,8 @@ var BigHouse = (function() {
         bh.getIconPromise(tab.icon)
           .done (function (svg) {
             span.append ($(svg).addClass('navicon'))
-	    if (tab.name === 'games')
-	      span.append (bh.gameCountDiv)
+	    if (tab.name === 'inbox')
+	      span.append (bh.messageCountDiv)
           })
           .fail (function (err) {
             console.log(err)
@@ -720,9 +727,6 @@ var BigHouse = (function() {
           bh.makeFollowDiv (follow)
           if (!follow.human) follow.buttonDiv.hide()
           bh.locBarDiv = $('<div class="locbar">')
-            .append ($('<h1>').text('Games'))
-      	    .append ($('<span class="nogames">')
-		     .text('You have no games with ' + follow.name + ' at present.'))
           bh.showGameStatusPage (bh.REST_getPlayerStatusOther.bind (bh, bh.playerID, follow.id),
                                    function (status) {
                                      if (status.following)
@@ -783,8 +787,7 @@ var BigHouse = (function() {
     },
 
     // edit
-    unfocusEditableSpan: function() {
-      var bh = this
+    finishLastSave: function() {
       var lastSavePromise
       if (this.lastSavePromise)
         lastSavePromise = this.lastSavePromise
@@ -792,18 +795,24 @@ var BigHouse = (function() {
         lastSavePromise = $.Deferred()
         lastSavePromise.resolve()
       }
-      return lastSavePromise.then (function() {
-        var def
-        if (this.editableDivUnfocusCallback) {
-          def = this.editableDivUnfocusCallback()
-          delete this.editableDivUnfocusCallback
-        } else {
-          def = $.Deferred()
-          def.resolve()
-        }
-        bh.lastSavePromise = def
-        return def
-      })
+      return lastSavePromise
+    },
+    
+    saveCurrentEdit: function() {
+      var bh = this
+      return this.finishLastSave()
+        .then (function() {
+          var def
+          if (bh.unfocusAndSave) {
+            def = bh.unfocusAndSave()
+            delete bh.unfocusAndSave
+          } else {
+            def = $.Deferred()
+            def.resolve()
+          }
+          bh.lastSavePromise = def
+          return def
+        })
     },
 
     makeIconButton: function (iconName, callback, color) {
@@ -821,14 +830,14 @@ var BigHouse = (function() {
     populateEditableSpan: function (div, props) {
       var bh = this
       var sanitize = props.sanitize || function(x) { return x }
+      var parse = props.parse || sanitize
       var renderText = props.renderText || function(x) { return x }
-      var renderHtml = props.renderHtml || function(x) { return x }
-      var parse = props.parse || function(x) { return x }
+      var renderHtml = props.renderHtml || renderText
       var oldText = renderText(props.content)
       var editCallback = function (evt) {
         evt.stopPropagation()
         div.off ('click')
-        bh.unfocusEditableSpan()
+        bh.saveCurrentEdit()
           .then (function() {
             var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
             var input = $('<textarea>').val(oldText).attr('rows',divRows)
@@ -844,13 +853,23 @@ var BigHouse = (function() {
               })
             if (props.maxLength)
               input.attr ('maxlength', props.maxLength)
-            bh.editableDivUnfocusCallback = function() {
+            bh.unfocusAndSave = function() {
+              var def
               var newText = input.val()
               if (newText !== oldText) {
                 var newContent = parse (newText)
-                props.content = props.storeCallback(newContent) || newContent
+                def = props.storeCallback (newContent)
+                  .then (function (modifiedNewContent) {
+                    props.content = modifiedNewContent || newContent
+                  })
+              } else {
+                def = $.Deferred()
+                def.resolve()
               }
-              bh.populateEditableSpan (div, props)
+              return def
+                .then (function() {
+                  bh.populateEditableSpan (div, props)
+                })
             }
             div.html (input)
             input.focus()
@@ -866,7 +885,7 @@ var BigHouse = (function() {
         if (props.destroyCallback)
           buttonsDiv.append (bh.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
-            bh.unfocusEditableSpan()
+            bh.saveCurrentEdit()
               .then (function() {
                 if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
                   props.destroyCallback()
@@ -884,7 +903,11 @@ var BigHouse = (function() {
     },
 
     saveSymbol: function (symbol) {
-      return this.putPlayerSymbol (this.playerID, symbol.id, symbol.name, symbol.rules)
+      var bh = this
+      return bh.finishLastSave()
+        .then (function() {
+          bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, symbol.name, symbol.rules)
+        })
     },
 
     parseRhs: function (rhs) {
@@ -921,6 +944,15 @@ var BigHouse = (function() {
                                         },
                                         storeCallback: function (newRhs) {
                                           symbol.rules[n] = newRhs
+                                          return bh.saveSymbol (symbol)
+                                        },
+                                        parse: bh.parseRhs,
+                                        renderText: function (rhs) {
+                                          return rhs.map (function (rhsSym) {
+                                            return (typeof(rhsSym) === 'object'
+                                                    ? ('#' + bh.symbolCache[rhsSym.id].name)
+                                                    : rhsSym)
+                                          }).join('')
                                         },
                                         renderHtml: function (rhs) {
                                           return $('<span>')
@@ -937,12 +969,15 @@ var BigHouse = (function() {
 
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
       var bh = this
+      var lhs = bh.symbolName[symbol.id]
       function sanitize (text) { return '#' + text.replace (/[^A-Za-z0-9_]/g, '') }
       ruleDiv.empty()
         .append (this.makeEditableSpan
                  ({ className: 'lhs',
-                    text: '#' + lhs,
+                    content: lhs,
+                    renderText: function(lhs) { return '#' + lhs },
                     sanitize: sanitize,
+                    parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
                       return (keycode >= 65 && keycode <= 90)   // a...z
                         || (keycode >= 48 && keycode <= 57)  // 0...9
@@ -957,20 +992,22 @@ var BigHouse = (function() {
                     destroyCallback: function() {
                       // WRITE ME
                     },
-                    storeCallback: function (hashNewLhs) {
-                      hashNewLhs = sanitize(hashNewLhs)
+                    storeCallback: function (newLhs) {
                       // WRITE ME
                     },
                     otherButtonDivs: [
                       bh.makeIconButton ('create', function (evt) {
                         evt.stopPropagation()
-                        bh.unfocusEditableSpan()
+                        bh.saveCurrentEdit()
                           .then (function() {
-                            var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                            ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
-                            rhsList.push (newRhs)
-                            bh.selectGrammarRule (symbol)
-                            bh.saveSymbol()  // should probably give focus to new RHS instead, here
+                            bh.finishLastSave()
+                              .then (function() {
+                                var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                                ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
+                                symbol.rules.push (newRhs)
+                                bh.selectGrammarRule (symbol)
+                                bh.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                              })
                           })
                       })
                     ]}),
@@ -989,12 +1026,12 @@ var BigHouse = (function() {
     placeGrammarRuleDiv: function (symbol) {
       var ruleDiv = bh.makeGrammarRuleDiv (symbol)
       var syms = this.currentGrammarSymbols()
-      var sym = syms.find (function (sym) { return sym.name > symbol.name })
-      if (typeof(sym) === 'undefined')
+      var nextSym = syms.find (function (s) { return s.name > symbol.name })
+      if (typeof(nextSym) === 'undefined')
         this.grammarBarDiv.append (ruleDiv)
       else
-        ruleDiv.insertBefore (this.ruleDiv[sym.id])
-      this.scrollGrammarTo (lhs)
+        ruleDiv.insertBefore (this.ruleDiv[nextSym.id])
+      this.scrollGrammarTo (symbol)
     },
 
     scrollGrammarTo: function (symbol) {
@@ -1015,7 +1052,7 @@ var BigHouse = (function() {
       var bh = this
       return Object.keys(this.symbolCache).map (function (id) {
         return bh.symbolCache[id]
-      }).sort (function (a, b) { return a.name < b.name })
+      }).sort (function (a, b) { return bh.symbolName[a.id] < bh.symbolName[b.id] })
     },
 
     showGrammarEditPage: function() {
@@ -1035,6 +1072,7 @@ var BigHouse = (function() {
                 result.symbols.forEach (function (symbol) {
                   bh.symbolCache[symbol.id] = symbol
                 })
+                bh.symbolName = result.name
               })
           }
 
@@ -1042,10 +1080,10 @@ var BigHouse = (function() {
             
             bh.pageExit = function() {
 	      bh.container.off ('click')
-              return bh.unfocusEditableSpan()
+              return bh.saveCurrentEdit()
             }
 
-            bh.container.on ('click', bh.unfocusEditableSpan.bind(bh))
+            bh.container.on ('click', bh.saveCurrentEdit.bind(bh))
             bh.grammarBarDiv = $('<div class="grammarbar">')
 
             var infoPane = $('<div class="grammarinfopane">')
@@ -1060,23 +1098,34 @@ var BigHouse = (function() {
 	      .append ($('<div class="backbar">').append
 		       ($('<div>').html (bh.makeLink ('Help', function() {
 		         $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
-		           bh.unfocusEditableSpan()
-		           infoPaneTitle.text ('Help')
-		           infoPaneContent.html (helpHtml)
-		           infoPane.show()
+		           bh.saveCurrentEdit()
+                             .then (function() {
+		               infoPaneTitle.text ('Help')
+		               infoPaneContent.html (helpHtml)
+		               infoPane.show()
+                             })
 		         })
 		       }, undefined, true)),
                         $('<div>').html (bh.makeLink ('Test', function() {
-		          bh.unfocusEditableSpan()
-                          // WRITE ME
-		          infoPaneTitle.text()
-		          infoPaneContent.text()
-		          infoPane.show()
+		          bh.saveCurrentEdit()
+                             .then (function() {
+                               // WRITE ME
+		               infoPaneTitle.text()
+		               infoPaneContent.text()
+		               infoPane.show()
+                             })
 		        }, undefined, true))),
 		       infoPane.hide(),
                        bh.grammarBarDiv,
                        $('<div class="newlhs">').html (bh.makeIconButton ('create', function() {
-                         // WRITE ME: add new symbol
+		          bh.saveCurrentEdit()
+                             .then (function() {
+                               return bh.socket_getPlayerSymbolNew (bh.playerID)
+                             }).then (function (result) {
+                               bh.symbolCache[result.symbol.id] = result.symbol
+                               bh.symbolName[result.symbol.id] = result.name[result.symbol.id]
+                               bh.placeGrammarRuleDiv (result.symbol)
+                             })
                        })))
             
             bh.restoreScrolling (bh.grammarBarDiv)

@@ -51,7 +51,7 @@ module.exports = {
 
   // search Players
   searchDisplayName: function (req, res) {
-    var searcherID = req.params.player, query = req.body.query, page = parseInt(req.body.page) || 0
+    var searcherID = parseInt(req.params.player), query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = 3
     Player.find ({ displayName: { contains: query },
                    id: { '!': searcherID },
@@ -117,7 +117,7 @@ module.exports = {
   
   // list followers
   listFollowed: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var result = { id: playerID }
     var following = {}
     function makeInfo (player) {
@@ -177,14 +177,14 @@ module.exports = {
 
   // subscribe
   subscribePlayer: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     Player.subscribe (req, playerID)
     res.ok()
   },
   
   // inbox
   getInbox: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var result = { player: playerID }
     Message.find ({ recipient: playerID,
                     recipientDeleted: false })
@@ -203,7 +203,7 @@ module.exports = {
 
   // inbox count
   getInboxCount: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var result = { player: playerID }
     Message.count ({ recipient: playerID,
                      read: false })
@@ -217,7 +217,7 @@ module.exports = {
   
   // outbox
   getOutbox: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var result = { player: playerID }
     Message.find ({ sender: playerID,
                     senderDeleted: false })
@@ -235,8 +235,8 @@ module.exports = {
 
   // get message
   getMessage: function (req, res) {
-    var playerID = req.params.player
-    var messageID = req.params.message
+    var playerID = parseInt (req.params.player)
+    var messageID = parseInt (req.params.message)
     var result = {}
     Message.update ({ recipient: playerID,
                       id: messageID },
@@ -259,9 +259,9 @@ module.exports = {
 
   // send message
   sendMessage: function (req, res) {
-    var playerID = req.params.player
-    var recipientID = req.body.recipient
-    var symbolID = req.body.symbol
+    var playerID = parseInt (req.params.player)
+    var recipientID = parseInt (req.body.recipient)
+    var symbolID = parseInt (req.body.symbol)
     var title = req.body.title
     var body = req.body.body
     Message.create ({ sender: playerID,
@@ -283,8 +283,8 @@ module.exports = {
 
   // delete message
   deleteMessage: function (req, res) {
-    var playerID = req.params.player
-    var messageID = req.params.message
+    var playerID = parseInt (req.params.player)
+    var messageID = parseInt (req.params.message)
     Message.findOne ({ id: messageID,
                        or: [ { sender: playerID },
                              { recipient: playerID } ] })
@@ -311,7 +311,7 @@ module.exports = {
 
   // get all symbols owned by a player
   getSymbolsByOwner: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var result = { owner: playerID }
     Symbol.find ({ owner: playerID })
       .then (function (symbols) {
@@ -332,16 +332,15 @@ module.exports = {
 
   // create a new symbol
   newSymbol: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var result = {}
     Symbol.create ({ owner: playerID })
       .then (function (symbol) {
         result.symbol = { id: symbol.id,
                           rules: symbol.rules }
-        return SymbolService.resolveReferences ([symbol])
-      }).then (function (names) {
-        result.name = names
-        Symbol.subscribe (req, symbolID)
+        result.name = {}
+        result.name[symbol.id] = symbol.name
+        Symbol.subscribe (req, symbol.id)
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -351,8 +350,8 @@ module.exports = {
 
   // get a particular symbol
   getSymbol: function (req, res) {
-    var playerID = req.params.player
-    var symbolID = req.params.symid
+    var playerID = parseInt (req.params.player)
+    var symbolID = parseInt (req.params.symid)
     var result = {}
     Symbol.findOne ({ id: symbolID })
       .then (function (symbol) {
@@ -371,8 +370,8 @@ module.exports = {
 
   // store a particular symbol
   putSymbol: function (req, res) {
-    var playerID = req.params.player
-    var symbolID = req.params.symid
+    var playerID = parseInt (req.params.player)
+    var symbolID = parseInt (req.params.symid)
     var name = req.body.name
     var rules = req.body.rules
     var update = { owner: playerID,
@@ -382,10 +381,11 @@ module.exports = {
 
     SymbolService.createReferences (update.rules)
       .then (function (refSymbols) {
-        Symbol.update ({ id: symbolID,
-                         owner: [ playerID, null ] },
-                       update)
+        return Symbol.update ({ id: symbolID,
+                                owner: [ playerID, null ] },
+                              update)
       }).then (function (symbol) {
+        console.log(symbol)
         Symbol.message (symbolID, { message: "update", update: update })
         res.json (update)
       }).catch (function (err) {
@@ -396,8 +396,8 @@ module.exports = {
 
   // release ownership of a symbol
   releaseSymbol: function (req, res) {
-    var playerID = req.params.player
-    var symbolID = req.params.symid
+    var playerID = parseInt (req.params.player)
+    var symbolID = parseInt (req.params.symid)
     Symbol.update ({ id: symbolID,
                      owner: playerID },
                    { owner: null })
@@ -411,16 +411,16 @@ module.exports = {
 
   // unsubscribe from notifications for a symbol
   unsubscribeSymbol: function (req, res) {
-    var playerID = req.params.player
-    var symbolID = req.params.symid
+    var playerID = parseInt (req.params.player)
+    var symbolID = parseInt (req.params.symid)
     Symbol.unsubscribe (req, symbolID)
     res.ok()
   },
 
   // expand a symbol using the grammar
   expandSymbol: function (req, res) {
-    var playerID = req.params.player
-    var symbolID = req.params.symid
+    var playerID = parseInt (req.params.player)
+    var symbolID = parseInt (req.params.symid)
     SymbolService.expandSymbol (symbolID)
       .then (function (expansion) {
         res.json ({ expansion: expansion })

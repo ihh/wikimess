@@ -14,7 +14,10 @@ module.exports = {
         }
       })
     })
-    return Symbol.findOrCreate ({ name: Object.keys(gotName) })
+    var promise
+    var refNames = Object.keys(refs)
+    if (refNames.length)
+      promise = Symbol.findOrCreate ({ name: Object.keys(refs) })
       .then (function (refSymbols) {
         refSymbols.forEach (function (refSymbol) {
           refs[refSymbol.name].forEach (function (rhsSym) {
@@ -23,6 +26,9 @@ module.exports = {
         })
         return refSymbols
       })
+    else
+      promise = new Promise (function (resolve, reject) { resolve([])} )
+    return promise
   },
 
   resolveReferences: function (symbols) {
