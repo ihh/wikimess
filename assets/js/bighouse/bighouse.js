@@ -249,36 +249,49 @@ var BigHouse = (function() {
     },
 
     setPage: function (page) {
-      if (this.pageExit)
-        this.pageExit()
-      
+      var bh = this
       if (this.verbose.page)
 	console.log ("Changing view from " + this.page + " to " + page)
-      this.page = page
+      
+      var def
+      if (this.pageExit)
+        def = this.pageExit()
+      else {
+        def = $.Deferred()
+        def.resolve()
+      }
+
+      return def
+        .then (function() {
+          bh.page = page
+        })
     },
 
     // login menu
     showLoginPage: function() {
+      var bh = this
       this.setPage ('login')
-      this.container
-        .empty()
-        .append ($('<div class="inputbar">')
-                 .append ($('<form>')
-                          .append ($('<label for="player">')
-                                   .text('Player name'))
-                          .append (this.nameInput = $('<input name="player" type="text">')
-                                   .attr('maxlength', this.maxPlayerNameLength))
-                          .append ($('<label for="player">')
-                                   .text('Password'))
-                          .append (this.passwordInput = $('<input name="password" type="password">'))))
-        .append ($('<div class="menubar">')
-                 .append ($('<ul>')
-                          .append (this.makeListLink ('Log in', this.doReturnLogin))
-                          .append (this.makeListLink ('Sign up', this.createPlayer))
-                          .append (this.makeListLink ($('<img>').attr('src',this.facebookButtonImageUrl), this.REST_loginFacebook)
-                                   .addClass("noborder"))))
-      if (this.playerLogin)
-        this.nameInput.val (this.playerLogin)
+        .then (function() {
+          bh.container
+            .empty()
+            .append ($('<div class="inputbar">')
+                     .append ($('<form>')
+                              .append ($('<label for="player">')
+                                       .text('Player name'))
+                              .append (bh.nameInput = $('<input name="player" type="text">')
+                                       .attr('maxlength', bh.maxPlayerNameLength))
+                              .append ($('<label for="player">')
+                                       .text('Password'))
+                              .append (bh.passwordInput = $('<input name="password" type="password">'))))
+            .append ($('<div class="menubar">')
+                     .append ($('<ul>')
+                              .append (bh.makeListLink ('Log in', bh.doReturnLogin))
+                              .append (bh.makeListLink ('Sign up', bh.createPlayer))
+                              .append (bh.makeListLink ($('<img>').attr('src',bh.facebookButtonImageUrl), bh.REST_loginFacebook)
+                                       .addClass("noborder"))))
+          if (bh.playerLogin)
+            bh.nameInput.val (bh.playerLogin)
+        })
     },
 
     validatePlayerName: function (success, failure) {
@@ -501,40 +514,44 @@ var BigHouse = (function() {
       var bh = this
 
       this.setPage ('settings')
-      this.showNavBar ('settings')
-      this.container
-        .append ($('<div class="menubar">')
-                 .append ($('<ul>')
-                          .append (this.makeListLink ('Name', this.showPlayerConfigPage))
-                          .append (this.makeListLink ('Audio', this.showAudioPage))
-                          .append (this.makeListLink ('Themes', this.showThemesPage))
-                          .append (this.makeListLink ('Log out', this.doLogout))))
+        .then (function() {
+          bh.showNavBar ('settings')
+          bh.container
+            .append ($('<div class="menubar">')
+                     .append ($('<ul>')
+                              .append (bh.makeListLink ('Name', bh.showPlayerConfigPage))
+                              .append (bh.makeListLink ('Audio', bh.showAudioPage))
+                              .append (bh.makeListLink ('Themes', bh.showThemesPage))
+                              .append (bh.makeListLink ('Log out', bh.doLogout))))
+        })
     },
     
     // settings
     showPlayerConfigPage: function() {
       var bh = this
       this.pushView ('name')
-      var backLink = this.makeLink ('Back', function() {
-        backLink.off()
-        bh.nameInput.prop('disabled',true)
-        var newName = bh.nameInput.val()
-        if (newName.length) {
-          bh.playerName = newName
-          bh.REST_postPlayerConfig (bh.playerID, { displayName: newName })
-        }
-        bh.popView()
-      })
-      this.container
-        .append (this.makePageTitle ("Player details"))
-        .append ($('<div class="menubar">')
-                 .append ($('<div class="inputbar">')
-                          .append ($('<form>')
-                                   .append ($('<span>').text('Full name'))
-                                   .append (this.nameInput = $('<input type="text">')
-                                            .val(this.playerName)
-                                            .attr('maxlength', this.maxPlayerNameLength))))
-                 .append (backLink))
+        .then (function() {
+          var backLink = bh.makeLink ('Back', function() {
+            backLink.off()
+            bh.nameInput.prop('disabled',true)
+            var newName = bh.nameInput.val()
+            if (newName.length) {
+              bh.playerName = newName
+              bh.REST_postPlayerConfig (bh.playerID, { displayName: newName })
+            }
+            bh.popView()
+          })
+          bh.container
+            .append (bh.makePageTitle ("Player details"))
+            .append ($('<div class="menubar">')
+                     .append ($('<div class="inputbar">')
+                              .append ($('<form>')
+                                       .append ($('<span>').text('Full name'))
+                                       .append (bh.nameInput = $('<input type="text">')
+                                                .val(bh.playerName)
+                                                .attr('maxlength', bh.maxPlayerNameLength))))
+                     .append (backLink))
+        })
     },
 
     showThemesPage: function() {
@@ -542,29 +559,31 @@ var BigHouse = (function() {
 
       var fieldset
       this.pushView ('theme')
-      this.container
-        .append (this.makePageTitle ("Themes"))
-        .append ($('<div class="menubar">')
-                 .append (fieldset = $('<fieldset class="themegroup">')
-                          .append ($('<legend>').text("Select theme")))
-                 .append (this.makeLink ('Back', this.popView)))
+        .then (function() {
+          bh.container
+            .append (bh.makePageTitle ("Themes"))
+            .append ($('<div class="menubar">')
+                     .append (fieldset = $('<fieldset class="themegroup">')
+                              .append ($('<legend>').text("Select theme")))
+                     .append (bh.makeLink ('Back', bh.popView)))
 
-      var label = {}, config = { silent: true }
-      this.themes.forEach (function (theme) {
-        var id = 'theme-' + theme.style
-        fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
-	  .append (label[theme.style] = $('<label for="'+id+'" class="'+theme.style+'">')
-                   .text(theme.text)
-                   .on('click',bh.themeSelector(theme.style,config)))
-      })
+          var label = {}, config = { silent: true }
+          bh.themes.forEach (function (theme) {
+            var id = 'theme-' + theme.style
+            fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
+	      .append (label[theme.style] = $('<label for="'+id+'" class="'+theme.style+'">')
+                       .text(theme.text)
+                       .on('click',bh.themeSelector(theme.style,config)))
+          })
 
-      label[this.theme].click()
-      config.silent = false
+          label[bh.theme].click()
+          config.silent = false
+        })
     },
 
     themeSelector: function(style,config) {
       var bh = this
-      var theme = this.themes.find (function(t) { return t.style === style })
+      var theme = bh.themes.find (function(t) { return t.style === style })
       return function() {
         if (!(config && config.silent))
           bh.playSound ('select')
@@ -582,25 +601,27 @@ var BigHouse = (function() {
       var bh = this
 
       this.pushView ('audio')
-      var soundInput
-      this.container
-        .append (this.makePageTitle ("Audio settings"))
-        .append ($('<div class="menubar">')
-                 .append ($('<div class="card">')
-                          .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
-                          .append ($('<span>').text("Sound FX volume")))
-                 .append ($('<ul>')
-                          .append (this.makeListLink ('Back', this.popView))))
+        .then (function() {
+          var soundInput
+          bh.container
+            .append (bh.makePageTitle ("Audio settings"))
+            .append ($('<div class="menubar">')
+                     .append ($('<div class="card">')
+                              .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
+                              .append ($('<span>').text("Sound FX volume")))
+                     .append ($('<ul>')
+                              .append (bh.makeListLink ('Back', bh.popView))))
 
-      soundInput.val (this.soundVolume * 100)
-      soundInput.on ('change', function() {
-        bh.soundVolume = soundInput.val() / 100
-        bh.playSound ('select')
-        bh.writeLocalStorage ('soundVolume')
-      })
+          soundInput.val (bh.soundVolume * 100)
+          soundInput.on ('change', function() {
+            bh.soundVolume = soundInput.val() / 100
+            bh.playSound ('select')
+            bh.writeLocalStorage ('soundVolume')
+          })
 
-      // restore disabled slide events for these controls
-      soundInput.on('touchmove',function(e){e.stopPropagation()})
+          // restore disabled slide events for these controls
+          soundInput.on('touchmove',function(e){e.stopPropagation()})
+        })
     },
 
     pushView: function (newPage) {
@@ -617,7 +638,7 @@ var BigHouse = (function() {
         this.pageSuspend()
       this.pageSuspend = this.pageResume = this.pageExit = undefined
       elements.addClass('pushed')
-      this.setPage (newPage)
+      return this.setPage (newPage)
     },
 
     popView: function() {
@@ -628,12 +649,14 @@ var BigHouse = (function() {
       this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
       this.container.find(':not(.pushed)').remove()
       poppedView.elements.find('*').addBack().removeClass('pushed').removeClass('already-clicked')
-      this.setPage (poppedView.page)
-      this.pageSuspend = poppedView.pageSuspend
-      this.pageResume = poppedView.pageResume
-      this.pageExit = poppedView.pageExit
-      if (this.pageResume)
-        this.pageResume()
+      return this.setPage (poppedView.page)
+        .then (function() {
+          bh.pageSuspend = poppedView.pageSuspend
+          bh.pageResume = poppedView.pageResume
+          bh.pageExit = poppedView.pageExit
+          if (bh.pageResume)
+            bh.pageResume()
+        })
     },
 
     // compose message
@@ -641,7 +664,9 @@ var BigHouse = (function() {
       var bh = this
 
       this.setPage ('compose')
-      this.showNavBar ('compose')
+        .then (function() {
+          bh.showNavBar ('compose')
+        })
     },
 
     // inbox
@@ -649,7 +674,9 @@ var BigHouse = (function() {
       var bh = this
 
       this.setPage ('inbox')
-      this.showNavBar ('inbox')
+        .then (function() {
+          bh.showNavBar ('inbox')
+        })
     },
 
     restoreScrolling: function (elem) {
@@ -675,57 +702,64 @@ var BigHouse = (function() {
 
     // status
     showStatusPage: function() {
+      var bh = this
       this.setPage ('status')
-      this.showNavBar ('status')
-      this.showGameStatusPage (this.REST_getPlayerStatus)
-      this.detailBarDiv.prepend ($('<div class="locbar">').html($('<h1>').text(this.playerName)))
+        .then (function() {
+          bh.showNavBar ('status')
+          bh.showGameStatusPage (bh.REST_getPlayerStatus)
+          bh.detailBarDiv.prepend ($('<div class="locbar">').html($('<h1>').text(bh.playerName)))
+        })
     },
 
     showOtherStatusPage: function (follow) {
       var bh = this
       this.setPage ('otherStatus')
-      this.otherStatusID = follow.id
-      this.container.empty()
-      this.makeFollowDiv (follow)
-      if (!follow.human) follow.buttonDiv.hide()
-      this.locBarDiv = $('<div class="locbar">')
-        .append ($('<h1>').text('Games'))
-      	.append ($('<span class="nogames">')
-		 .text('You have no games with ' + follow.name + ' at present.'))
-      this.showGameStatusPage (this.REST_getPlayerStatusOther.bind (this, this.playerID, follow.id),
-                               function (status) {
-                                 if (status.following)
-                                   follow.makeUnfollowButton()
-                                 bh.detailBarDiv
-                                   .append ($('<div class="statusdiv">')
-                                            .append (bh.locBarDiv))
- 	                         bh.addEvents (status.events)
-                               })
-      this.detailBarDiv.prepend (follow.followDiv)
-      this.container
-	.append ($('<div class="backbar">')
-		 .append ($('<span>')
-			  .html (this.makeLink ('Back', bh.reloadCurrentTab))))
-//      follow.showAvatar()
+        .then (function() {
+          bh.otherStatusID = follow.id
+          bh.container.empty()
+          bh.makeFollowDiv (follow)
+          if (!follow.human) follow.buttonDiv.hide()
+          bh.locBarDiv = $('<div class="locbar">')
+            .append ($('<h1>').text('Games'))
+      	    .append ($('<span class="nogames">')
+		     .text('You have no games with ' + follow.name + ' at present.'))
+          bh.showGameStatusPage (bh.REST_getPlayerStatusOther.bind (bh, bh.playerID, follow.id),
+                                   function (status) {
+                                     if (status.following)
+                                       follow.makeUnfollowButton()
+                                     bh.detailBarDiv
+                                       .append ($('<div class="statusdiv">')
+                                                .append (bh.locBarDiv))
+ 	                             bh.addEvents (status.events)
+                                   })
+          bh.detailBarDiv.prepend (follow.followDiv)
+          bh.container
+	    .append ($('<div class="backbar">')
+		     .append ($('<span>')
+			      .html (bh.makeLink ('Back', bh.reloadCurrentTab))))
+          //      follow.showAvatar()
+        })
     },
 
     pushGameStatusPage: function (info, getMethod) {
       var bh = this
       this.pushView ('status')
-      this.container
-        .append (info.followDiv || this.makePageTitle (info.name))
-      this.showGameStatusPage (getMethod, function (status) {
-        if (info.followDiv) {
-          if (status.human)
-            info.buttonDiv.show()
-          if (status.following)
-            info.makeUnfollowButton()
-        }
-      })
-      this.container
-	.append ($('<div class="backbar">')
-		 .append ($('<span>')
-			  .html (this.makeLink ('Back', this.popView))))
+        .then (function() {
+          bh.container
+            .append (info.followDiv || bh.makePageTitle (info.name))
+          bh.showGameStatusPage (getMethod, function (status) {
+            if (info.followDiv) {
+              if (status.human)
+                info.buttonDiv.show()
+              if (status.following)
+                info.makeUnfollowButton()
+            }
+          })
+          bh.container
+	    .append ($('<div class="backbar">')
+		     .append ($('<span>')
+			      .html (bh.makeLink ('Back', bh.popView))))
+        })
     },
 
     showGameStatusPage: function (getMethod, callback) {
@@ -750,10 +784,15 @@ var BigHouse = (function() {
 
     // edit
     unfocusEditableSpan: function() {
+      var def
       if (this.editableDivUnfocusCallback) {
-        this.editableDivUnfocusCallback()
+        def = this.editableDivUnfocusCallback()
         delete this.editableDivUnfocusCallback
+      } else {
+        def = $.Deferred()
+        def.resolve()
       }
+      return def
     },
 
     makeIconButton: function (iconName, callback, color) {
@@ -776,33 +815,35 @@ var BigHouse = (function() {
       var parse = props.parse || function(x) { return x }
       var oldText = renderText(props.content)
       var editCallback = function (evt) {
-        bh.unfocusEditableSpan()
         evt.stopPropagation()
         div.off ('click')
-        var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
-        var input = $('<textarea>').val(oldText).attr('rows',divRows)
-        function sanitizeInput() { input.val (sanitize (input.val())) }
-        input
-          .on('keyup',sanitizeInput)
-          .on('change',sanitizeInput)
-          .on('click',function(evt){evt.stopPropagation()})
-        if (props.keycodeFilter)
-          input.on ('keydown', function (evt) {
-            if (!props.keycodeFilter (evt.keyCode))
-                evt.preventDefault()
+        bh.unfocusEditableSpan()
+          .then (function() {
+            var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
+            var input = $('<textarea>').val(oldText).attr('rows',divRows)
+            function sanitizeInput() { input.val (sanitize (input.val())) }
+            input
+              .on('keyup',sanitizeInput)
+              .on('change',sanitizeInput)
+              .on('click',function(evt){evt.stopPropagation()})
+            if (props.keycodeFilter)
+              input.on ('keydown', function (evt) {
+                if (!props.keycodeFilter (evt.keyCode))
+                  evt.preventDefault()
+              })
+            if (props.maxLength)
+              input.attr ('maxlength', props.maxLength)
+            bh.editableDivUnfocusCallback = function() {
+              var newText = input.val()
+              if (newText !== oldText) {
+                var newContent = parse (newText)
+                props.content = props.storeCallback(newContent) || newContent
+              }
+              bh.populateEditableSpan (div, props)
+            }
+            div.html (input)
+            input.focus()
           })
-        if (props.maxLength)
-          input.attr ('maxlength', props.maxLength)
-        bh.editableDivUnfocusCallback = function() {
-          var newText = input.val()
-          if (newText !== oldText) {
-            var newContent = parse (newText)
-            props.content = props.storeCallback(newContent) || newContent
-          }
-          bh.populateEditableSpan (div, props)
-        }
-        div.html (input)
-        input.focus()
       }
       
       var buttonsDiv = $('<span class="buttons">')
@@ -815,8 +856,10 @@ var BigHouse = (function() {
           buttonsDiv.append (bh.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
             bh.unfocusEditableSpan()
-            if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
-              props.destroyCallback()
+              .then (function() {
+                if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
+                  props.destroyCallback()
+              })
           }))
       }
       if (props.otherButtonDivs)
@@ -911,11 +954,13 @@ var BigHouse = (function() {
                       bh.makeIconButton ('create', function (evt) {
                         evt.stopPropagation()
                         bh.unfocusEditableSpan()
-                        var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                        ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
-                        rhsList.push (newRhs)
-                        bh.selectGrammarRule (symbol)
-                        bh.saveSymbol()  // should probably give focus to new RHS instead, here
+                          .then (function() {
+                            var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                            ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
+                            rhsList.push (newRhs)
+                            bh.selectGrammarRule (symbol)
+                            bh.saveSymbol()  // should probably give focus to new RHS instead, here
+                          })
                       })
                     ]}),
                  symbol.rules.map (function (rhs, n) {
@@ -965,70 +1010,72 @@ var BigHouse = (function() {
     showGrammarEditPage: function() {
       var bh = this
       this.setPage ('grammar')
-      this.showNavBar ('grammar')
+        .then (function() {
+          bh.showNavBar ('grammar')
 
-      var def
-      if (this.symbolCache) {
-        def = $.Deferred()
-        def.resolve()
-      } else {
-        def = this.socket_getPlayerSymbols (this.playerID)
-          .then (function (result) {
-            bh.symbolCache = {}
-            result.symbols.forEach (function (symbol) {
-              bh.symbolCache[symbol.id] = symbol
-            })
+          var def
+          if (bh.symbolCache) {
+            def = $.Deferred()
+            def.resolve()
+          } else {
+            def = bh.socket_getPlayerSymbols (bh.playerID)
+              .then (function (result) {
+                bh.symbolCache = {}
+                result.symbols.forEach (function (symbol) {
+                  bh.symbolCache[symbol.id] = symbol
+                })
+              })
+          }
+
+          def.then (function() {
+            
+            bh.pageExit = function() {
+	      bh.container.off ('click')
+              return bh.unfocusEditableSpan()
+            }
+
+            bh.container.on ('click', bh.unfocusEditableSpan.bind(bh))
+            bh.grammarBarDiv = $('<div class="grammarbar">')
+
+            var infoPane = $('<div class="grammarinfopane">')
+            var infoPaneContent = $('<div class="content">')
+            var infoPaneTitle = $('<div class="title">')
+            infoPane.append ($('<span class="closebutton">').text('x')
+		             .on ('click', function() { infoPane.hide() }),
+		             infoPaneTitle,
+		             infoPaneContent)
+            
+            bh.container
+	      .append ($('<div class="backbar">').append
+		       ($('<div>').html (bh.makeLink ('Help', function() {
+		         $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
+		           bh.unfocusEditableSpan()
+		           infoPaneTitle.text ('Help')
+		           infoPaneContent.html (helpHtml)
+		           infoPane.show()
+		         })
+		       }, undefined, true)),
+                        $('<div>').html (bh.makeLink ('Test', function() {
+		          bh.unfocusEditableSpan()
+                          // WRITE ME
+		          infoPaneTitle.text()
+		          infoPaneContent.text()
+		          infoPane.show()
+		        }, undefined, true))),
+		       infoPane.hide(),
+                       bh.grammarBarDiv,
+                       $('<div class="newlhs">').html (bh.makeIconButton ('create', function() {
+                         // WRITE ME: add new symbol
+                       })))
+            
+            bh.restoreScrolling (bh.grammarBarDiv)
+            bh.restoreScrolling (infoPaneContent)
+
+            bh.ruleDiv = {}
+            bh.grammarBarDiv
+              .append (bh.currentGrammarSymbols().map (bh.makeGrammarRuleDiv.bind (bh)))
           })
-      }
-
-      def.then (function() {
-        
-        bh.pageExit = function() {
-          bh.unfocusEditableSpan()
-	  bh.container.off ('click')
-        }
-
-        bh.container.on ('click', bh.unfocusEditableSpan.bind(bh))
-        bh.grammarBarDiv = $('<div class="grammarbar">')
-
-        var infoPane = $('<div class="grammarinfopane">')
-        var infoPaneContent = $('<div class="content">')
-        var infoPaneTitle = $('<div class="title">')
-        infoPane.append ($('<span class="closebutton">').text('x')
-		         .on ('click', function() { infoPane.hide() }),
-		         infoPaneTitle,
-		         infoPaneContent)
-      
-        bh.container
-	  .append ($('<div class="backbar">').append
-		   ($('<div>').html (bh.makeLink ('Help', function() {
-		     $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
-		       bh.unfocusEditableSpan()
-		       infoPaneTitle.text ('Help')
-		       infoPaneContent.html (helpHtml)
-		       infoPane.show()
-		     })
-		   }, undefined, true)),
-                    $('<div>').html (bh.makeLink ('Test', function() {
-		      bh.unfocusEditableSpan()
-                      // WRITE ME
-		      infoPaneTitle.text()
-		      infoPaneContent.text()
-		      infoPane.show()
-		    }, undefined, true))),
-		   infoPane.hide(),
-                   bh.grammarBarDiv,
-                   $('<div class="newlhs">').html (bh.makeIconButton ('create', function() {
-                     // WRITE ME: add new symbol
-                   })))
-        
-        bh.restoreScrolling (bh.grammarBarDiv)
-        bh.restoreScrolling (infoPaneContent)
-
-        bh.ruleDiv = {}
-        bh.grammarBarDiv
-          .append (bh.currentGrammarSymbols().map (bh.makeGrammarRuleDiv.bind (bh)))
-      })
+        })
     },
     
     // follows
@@ -1036,49 +1083,51 @@ var BigHouse = (function() {
       var bh = this
       
       this.setPage ('follows')
-      this.showNavBar ('follows')
+        .then (function() {
+          bh.showNavBar ('follows')
 
-      this.searchInput = $('<input>')
-      this.searchResultsDiv = $('<div class="results">')
-      this.endSearchResultsDiv = $('<div class="endresults">')
-      var searchButton = $('<span>')
-      this.container
-        .append (this.whoBarDiv = $('<div class="whobar">')
-                 .append ($('<div class="search">')
-                          .append ($('<div class="query">')
-                                   .append (this.searchInput, searchButton),
-                                   $('<div class="followsection">')
-                                   .append (this.searchResultsDiv,
-                                            this.endSearchResultsDiv))))
-      this.searchInput.attr ('placeholder', 'Player name')
-      this.placeIcon (this.searchIcon, searchButton)
-      searchButton.addClass('button')
-        .on ('click', bh.doSearch.bind(bh))
-      this.searchInput.on ('keypress', function(event) {
-        if (event.keyCode == 13 || event.which == 13)
-          bh.doSearch()
-      })
-      this.showSearchResults()
-      
-      this.restoreScrolling (this.whoBarDiv)
-
-      bh.followsById = {}
-      
-      this.REST_getPlayerFollow (this.playerID)
-	.done (function (data) {
-	  if (bh.verbose.server)
-	    console.log (data)
-          bh.whoBarDiv
-            .append ($('<div class="followsection">')
-                     .append ($('<div class="title">').text("Following"))
-                     .append (bh.makeFollowDivs (data.followed, "You are not currently following anyone.")))
-          var following = {}
-          data.followed.map (function (follow) {
-            following[follow.id] = true
-//            follow.showAvatar()
+          bh.searchInput = $('<input>')
+          bh.searchResultsDiv = $('<div class="results">')
+          bh.endSearchResultsDiv = $('<div class="endresults">')
+          var searchButton = $('<span>')
+          bh.container
+            .append (bh.whoBarDiv = $('<div class="whobar">')
+                     .append ($('<div class="search">')
+                              .append ($('<div class="query">')
+                                       .append (bh.searchInput, searchButton),
+                                       $('<div class="followsection">')
+                                       .append (bh.searchResultsDiv,
+                                                bh.endSearchResultsDiv))))
+          bh.searchInput.attr ('placeholder', 'Player name')
+          bh.placeIcon (bh.searchIcon, searchButton)
+          searchButton.addClass('button')
+            .on ('click', bh.doSearch.bind(bh))
+          bh.searchInput.on ('keypress', function(event) {
+            if (event.keyCode == 13 || event.which == 13)
+              bh.doSearch()
           })
-	}).fail (function (err) {
-          bh.showModalWebError (err, bh.showInboxPage.bind(bh))
+          bh.showSearchResults()
+          
+          bh.restoreScrolling (bh.whoBarDiv)
+
+          bh.followsById = {}
+          
+          bh.REST_getPlayerFollow (bh.playerID)
+	    .done (function (data) {
+	      if (bh.verbose.server)
+	        console.log (data)
+              bh.whoBarDiv
+                .append ($('<div class="followsection">')
+                         .append ($('<div class="title">').text("Following"))
+                         .append (bh.makeFollowDivs (data.followed, "You are not currently following anyone.")))
+              var following = {}
+              data.followed.map (function (follow) {
+                following[follow.id] = true
+                //            follow.showAvatar()
+              })
+	    }).fail (function (err) {
+              bh.showModalWebError (err, bh.showInboxPage.bind(bh))
+            })
         })
     },
 
