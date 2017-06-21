@@ -5,6 +5,9 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+var Promise = require('bluebird')
+var extend = require('extend')
+
 module.exports = {
 
   // actions
@@ -172,14 +175,24 @@ module.exports = {
       })
   },
 
-  // list grammars
-  listGrammars: function (req, res) {
+  // subscribe
+  subscribePlayer: function (req, res) {
     var playerID = req.params.player
-    var result = { author: playerID }
-    Grammar.find ({ author: playerID })
-      .then (function (grammars) {
-        result.grammars = grammars.map (function (grammar) {
-          return { id: grammar.id, name: grammar.name }
+    Player.subscribe (req, playerID)
+    res.ok()
+  },
+  
+  // inbox
+  getInbox: function (req, res) {
+    var playerID = req.params.player
+    var result = { player: playerID }
+    Message.find ({ recipient: playerID,
+                    recipientDeleted: false })
+      .then (function (messages) {
+        result.messages = messages.map (function (message) {
+          return { id: message.id,
+                   title: message.title,
+                   read: message.read }
         })
         res.json (result)
       }).catch (function (err) {
@@ -188,34 +201,31 @@ module.exports = {
       })
   },
 
-  // new grammar
-  newGrammar: function (req, res) {
+  // inbox count
+  getInboxCount: function (req, res) {
     var playerID = req.params.player
-    var result = { author: playerID }
-    Grammar.create ({ author: playerID })
-      .then (function (grammar) {
-        result.grammar = { id: grammar.id,
-                           name: grammar.name,
-                           rules: grammar.rules }
-        res.json (result)
+    var result = { player: playerID }
+    Message.count ({ recipient: playerID,
+                     read: false })
+      .then (function (count) {
+        res.json ({ count: count })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)
       })
   },
   
-  // delete grammar
-  deleteGrammar: function (req, res) {
+  // outbox
+  getOutbox: function (req, res) {
     var playerID = req.params.player
-    var grammarID = req.params.grammar
-    var data = req.body.grammar
-    var result = { author: playerID }
-    Grammar.destroy ({ author: playerID,
-                       id: grammarID })
-      .then (function (grammars) {
-	if (!grammars || grammars.length !== 1)
-	  throw new Error ("Couldn't find grammar with ID " + grammarID + " and author " + authorID)
-      }).then (function() {
+    var result = { player: playerID }
+    Message.find ({ sender: playerID,
+                    senderDeleted: false })
+      .then (function (messages) {
+        result.messages = messages.map (function (message) {
+          return { id: message.id,
+                   title: message.title }
+        })
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -223,19 +233,23 @@ module.exports = {
       })
   },
 
-  // read grammar
-  readGrammar: function (req, res) {
+  // get message
+  getMessage: function (req, res) {
     var playerID = req.params.player
-    var grammarID = req.params.grammar
-    var result = { author: playerID }
-    Grammar.findOne ({ author: playerID,
-                       id: grammarID })
-      .then (function (grammar) {
-        if (!grammar)
-          throw new Error ("No grammar found")
-        result.grammar = { id: grammar.id,
-                           name: grammar.name,
-                           rules: grammar.rules }
+    var messageID = req.params.message
+    var result = {}
+    Message.update ({ recipient: playerID,
+                      id: messageID },
+                    { read: true })
+      .then (function (message) {
+        Message.findOne ({ id: messageID })
+      }).then (function (message) {
+        result.message = { id: message.id,
+                           sender: { id: message.sender.id,
+                                     name: message.sender.displayName },
+                           symbol: { id: message.symbol.id },
+                           title: message.title,
+                           body: message.body }
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -243,20 +257,173 @@ module.exports = {
       })
   },
 
-  // write grammar
-  writeGrammar: function (req, res) {
+  // send message
+  sendMessage: function (req, res) {
     var playerID = req.params.player
-    var grammarID = req.params.grammar
-    var data = req.body.grammar
-    var result = { author: playerID }
-    Grammar.update ({ author: playerID,
-                      id: grammarID },
-                    { name: data.name,
-                      rules: data.rules })
-      .then (function (grammar) {
-        result.grammar = { id: grammar.id,
-                           updated: true }
+    var recipientID = req.body.recipient
+    var symbolID = req.body.symbol
+    var title = req.body.title
+    var body = req.body.body
+    Message.create ({ sender: playerID,
+                      recipient: recipientID,
+                      symbol: symbolID,
+                      title: title,
+                      body: body })
+      .then (function (message) {
+        result.message = { id: message.id }
+        Player.message (recipientID, { message: "incoming",
+                                       id: message.id,
+                                       title: message.title })
         res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // delete message
+  deleteMessage: function (req, res) {
+    var playerID = req.params.player
+    var messageID = req.params.message
+    Message.findOne ({ id: messageID,
+                       or: [ { sender: playerID },
+                             { recipient: playerID } ] })
+      .then (function (message) {
+        var update = {}, destroy = false
+        if (message.sender === playerID) {
+          update.senderDeleted = true
+          destroy = message.recipientDeleted
+        }
+        if (message.recipient === playerID) {
+          update.recipientDeleted = true
+          destroy = message.senderDeleted
+        }
+        return (destroy
+                ? Message.destroy ({ id: messageID })
+                : Message.update ({ id: messageID }, update))
+      }).then (function (message) {
+        res.ok()
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // get all symbols owned by a player
+  getSymbolsByOwner: function (req, res) {
+    var playerID = req.params.player
+    var result = { owner: playerID }
+    Symbol.find ({ owner: playerID })
+      .then (function (symbols) {
+        result.symbols = symbols.map (function (symbol) {
+          return { id: symbol.id,
+                   rules: symbol.rules }
+        })
+        Symbol.subscribe (req, symbols.map (function (symbol) { return symbol.id }))
+        return SymbolService.resolveReferences (symbols)
+      }).then (function (names) {
+        result.name = names
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // create a new symbol
+  newSymbol: function (req, res) {
+    var playerID = req.params.player
+    var result = {}
+    Symbol.create ({ owner: playerID })
+      .then (function (symbol) {
+        result.symbol = { id: symbol.id,
+                          rules: symbol.rules }
+        return SymbolService.resolveReferences ([symbol])
+      }).then (function (names) {
+        result.name = names
+        Symbol.subscribe (req, symbolID)
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // get a particular symbol
+  getSymbol: function (req, res) {
+    var playerID = req.params.player
+    var symbolID = req.params.symid
+    var result = {}
+    Symbol.findOne ({ id: symbolID })
+      .then (function (symbol) {
+        result.symbol = { id: symbol.id,
+                          rules: symbol.rules }
+        return SymbolService.resolveReferences ([symbol])
+      }).then (function (names) {
+        result.name = names
+        Symbol.subscribe (req, symbolID)
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // store a particular symbol
+  putSymbol: function (req, res) {
+    var playerID = req.params.player
+    var symbolID = req.params.symid
+    var name = req.body.name
+    var rules = req.body.rules
+    var update = { owner: playerID,
+                   name: name,
+                   rules: rules,
+                   initialized: true }
+
+    SymbolService.createReferences (update.rules)
+      .then (function (refSymbols) {
+        Symbol.update ({ id: symbolID,
+                         owner: [ playerID, null ] },
+                       update)
+      }).then (function (symbol) {
+        Symbol.message (symbolID, { message: "update", update: update })
+        res.json (update)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // release ownership of a symbol
+  releaseSymbol: function (req, res) {
+    var playerID = req.params.player
+    var symbolID = req.params.symid
+    Symbol.update ({ id: symbolID,
+                     owner: playerID },
+                   { owner: null })
+      .then (function (symbol) {
+        res.ok()
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // unsubscribe from notifications for a symbol
+  unsubscribeSymbol: function (req, res) {
+    var playerID = req.params.player
+    var symbolID = req.params.symid
+    Symbol.unsubscribe (req, symbolID)
+    res.ok()
+  },
+
+  // expand a symbol using the grammar
+  expandSymbol: function (req, res) {
+    var playerID = req.params.player
+    var symbolID = req.params.symid
+    SymbolService.expandSymbol (symbolID)
+      .then (function (expansion) {
+        res.json ({ expansion: expansion })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)

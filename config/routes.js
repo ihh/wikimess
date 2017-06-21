@@ -49,7 +49,7 @@ module.exports.routes = {
 
   'GET /login/facebook':          'AuthController.facebookLogin',
   'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
-  
+
   'GET /icon/:icon.svg':                    'IconController.getIcon',
   'GET /icon/:icon/:color.svg':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background.svg': 'IconController.getIcon',
@@ -65,6 +65,8 @@ module.exports.routes = {
   'POST /p/:player/search':       'ClientController.searchDisplayName',
   'POST /p/:player/config':       'ClientController.configurePlayer',
 
+  'GET /p/:player/subscribe':     'ClientController.subscribePlayer',
+
   'GET /p/:player/status':        'ClientController.selfStatus',
   'GET /p/:player/status/:other': 'ClientController.otherStatus',
 
@@ -72,10 +74,21 @@ module.exports.routes = {
   'GET /p/:player/follow/:other':   'ClientController.follow',
   'GET /p/:player/unfollow/:other': 'ClientController.unfollow',
 
-  'GET /p/:player/grammars':            'ClientController.listGrammars',
-  'GET /p/:player/grammar':             'ClientController.newGrammar',
-  'GET /p/:player/grammar/:grammar':    'ClientController.readGrammar',
-  'POST /p/:player/grammar/:grammar':   'ClientController.writeGrammar',
-  'DELETE /p/:player/grammar/:grammar': 'ClientController.deleteGrammar'
+  'GET /p/:player/inbox':           'ClientController.getInbox',
+  'GET /p/:player/inbox/count':     'ClientController.getInboxCount',
+  'GET /p/:player/outbox':          'ClientController.getOutbox',
 
+  'GET /p/:player/message/:message':    'ClientController.getMessage',
+  'POST /p/:player/message':            'ClientController.sendMessage',
+  'DELETE /p/:player/message/:message': 'ClientController.deleteMessage',
+
+  'GET /p/:player/symbols':         'ClientController.getSymbolsByOwner',
+  'GET /p/:player/symbol':          'ClientController.newSymbol',
+  'GET /p/:player/symbol/:symid':   'ClientController.getSymbol',
+  'PUT /p/:player/symbol/:symid':   'ClientController.putSymbol',
+  'GET /p/:player/release/:symid':  'ClientController.releaseSymbol',
+
+  'GET /p/:player/symbol/:symid/unsubscribe': 'ClientController.unsubscribeSymbol',
+
+  'GET /p/:player/expand/:symid': 'ClientController.expandSymbol',
 };

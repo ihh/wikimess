@@ -19,7 +19,9 @@ var BigHouse = (function() {
     }
     $.extend (this, this.localStorage)
 
-//    this.socket_onPlayer (this.handlePlayerMessage.bind (this))
+    this.socket_onPlayer (this.handlePlayerMessage.bind (this))
+    this.socket_onSymbol (this.handleSymbolMessage.bind (this))
+
     this.preloadSounds.forEach (this.loadSound)
     io.socket.on('disconnect', function() {
       if (bh.suppressDisconnectWarning)
@@ -38,7 +40,7 @@ var BigHouse = (function() {
     
     this.pushedViews = []
     this.iconPromise = {}
-    
+
     if (config.playerID) {
       this.playerID = config.playerID
       this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
@@ -59,7 +61,6 @@ var BigHouse = (function() {
     maxPlayerNameLength: 16,
     maxGrammarTitleLength: 128,
     grammarAutosaveDelay: 5000,
-    grammarRootSymbol: 'document',
     iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
@@ -69,7 +70,7 @@ var BigHouse = (function() {
            { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
            { name: 'inbox', method: 'showInboxPage', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', icon: 'address-book-black' },
-           { name: 'grammars', method: 'showGrammarListPage', icon: 'printing-press' },
+           { name: 'grammar', method: 'showGrammarEditPage', icon: 'printing-press' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
 
     searchIcon: 'magnifying-glass',
@@ -133,25 +134,57 @@ var BigHouse = (function() {
       return $.post ('/id', { name: playerName })
     },
 
-    REST_getPlayerGrammars: function (playerID) {
-      return $.get ('/p/' + playerID + '/grammars')
+    REST_getPlayerInbox: function (playerID) {
+      return $.get ('/p/' + playerID + '/inbox')
     },
 
-    REST_getPlayerGrammarNew: function (playerID) {
-      return $.get ('/p/' + playerID + '/grammar')
+    REST_getPlayerInboxCount: function (playerID) {
+      return $.get ('/p/' + playerID + '/inbox/count')
     },
 
-    REST_getPlayerGrammar: function (playerID, grammarID) {
-      return $.get ('/p/' + playerID + '/grammar/' + grammarID)
+    REST_getPlayerOutbox: function (playerID) {
+      return $.get ('/p/' + playerID + '/outbox')
     },
 
-    REST_postPlayerGrammar: function (playerID, grammarID, name, rules) {
-      return $.post ('/p/' + playerID + '/grammar/' + grammarID, { grammar: { name: name, rules: rules } })
+    REST_getPlayerMessage: function (playerID, messageID) {
+      return $.get ('/p/' + playerID + '/message/' + messageID)
     },
 
-    REST_deletePlayerGrammar: function (playerID, grammarID) {
-      return $.ajax ({ url: '/p/' + playerID + '/grammar/' + grammarID,
+    REST_postPlayerMessage: function (playerID, recipientID, symbolID, title, body) {
+      return $.post ('/p/' + playerID + '/message', { recipient: recipientID,
+                                                      symbol: symbolID,
+                                                      title: title,
+                                                      body: body })
+    },
+
+    REST_deletePlayerMessage: function (playerID, messageID) {
+      return $.ajax ({ url: '/p/' + playerID + '/message/' + messageID,
 		       method: 'DELETE' })
+    },
+
+    REST_putPlayerSymbol: function (playerID, symbolID, name, rules) {
+      return $.get ('/p/' + playerID + '/symbol/' + symbolID, { name: name, rules: rules })
+    },
+    
+    // WebSockets interface
+    socket_onPlayer: function (callback) {
+      io.socket.on ('player', callback)
+    },
+
+    socket_onSymbol: function (callback) {
+      io.socket.on ('symbol', callback)
+    },
+
+    socket_getPlayerSubscribe: function (playerID) {
+      return this.socketGetPromise ('/p/' + playerID + '/subscribe')
+    },
+
+    socket_getPlayerSymbols: function (playerID) {
+      return this.socketGetPromise ('/p/' + playerID + '/symbols')
+    },
+
+    socket_getPlayerSymbol: function (playerID, symbolID) {
+      return this.socketGetPromise ('/p/' + playerID + '/symbol/' + symbolID)
     },
 
     // helpers to convert socket callbacks to promises
@@ -247,7 +280,7 @@ var BigHouse = (function() {
       if (this.playerLogin)
         this.nameInput.val (this.playerLogin)
     },
-    
+
     validatePlayerName: function (success, failure) {
       this.playerLogin = this.nameInput.val()
       this.playerPassword = this.passwordInput.val()
@@ -299,7 +332,10 @@ var BigHouse = (function() {
 	      bh.playerID = data.player.id
               bh.playerLogin = data.player.name
               bh.playerName = data.player.displayName
-              showNextPage.call(bh)
+              bh.socket_getPlayerSubscribe (bh.playerID)
+                .then (function() {
+                  showNextPage.call(bh)
+                })
 	    }
           })
           .fail (function (err) {
@@ -371,8 +407,8 @@ var BigHouse = (function() {
         .empty()
         .append (navbar = $('<div class="navbar">'))
 
-      this.gameCountDiv = $('<div class="gamecount">').hide()
-      if (typeof(this.gameCount) === 'undefined')
+      this.messageCountDiv = $('<div class="gamecount">').hide()
+      if (typeof(this.messageCount) === 'undefined')
 	this.updateMessageCount()
       else
 	this.updateMessageCountDiv()
@@ -421,13 +457,11 @@ var BigHouse = (function() {
 
     updateMessageCount: function() {
       var bh = this
-/*
-      this.REST_getPlayerCount (this.playerID)
+      this.REST_getPlayerInboxCount (this.playerID)
 	.then (function (result) {
 	  bh.messageCount = result.count
 	  bh.updateMessageCountDiv()
 	})
-*/
     },
 
     updateMessageCountDiv: function() {
@@ -454,7 +488,7 @@ var BigHouse = (function() {
     // log out
     doLogout: function() {
       var bh = this
-      delete this.playerLocation
+      delete this.symbolCache
       delete this.lastSearch
       delete this.searchResults
       this.gamePosition = {}
@@ -715,61 +749,6 @@ var BigHouse = (function() {
     },
 
     // edit
-    showGrammarListPage: function() {
-      var bh = this
-      
-      this.setPage ('grammars')
-      this.showNavBar ('grammars')
-
-      var createDiv = $('<div class="newgrammar">')
-      var buttonDiv = $('<div class="button">').text ("New")
-      buttonDiv.on ('click',
-                    bh.callWithSoundEffect
-                    (function() {
-                      bh.REST_getPlayerGrammarNew (bh.playerID)
-                        .then (function (result) {
-                          bh.showGrammarEditPage (result.grammar)
-                        })
-                    },
-                     'select',
-                     buttonDiv))
-      createDiv.append (buttonDiv)
-
-      this.container
-        .append (this.locBarDiv = $('<div class="gramlistbar">')
-		 .append ($('<span>')
-			  .text("This page shows the conversation templates you've crafted."),
-		          $('<span class="nogames">')
-			  .html('<br/> You have no conversation templates at present.'),
-                         createDiv))
-
-      this.restoreScrolling (this.locBarDiv)
-
-      this.REST_getPlayerGrammars (this.playerID)
-        .then (function (result) {
-          if (result.grammars.length)
-            bh.locBarDiv.find('.nogames')
-            .hide()
-            .before (result.grammars.map (function (grammar) {
-              var grammarDiv = $('<div class="grammar">')
-              var buttonDiv = $('<div class="button">').text ("Edit")
-              buttonDiv.on ('click',
-                            bh.callWithSoundEffect
-                            (function() {
-                              bh.REST_getPlayerGrammar (bh.playerID, grammar.id)
-                                .then (function (result) {
-                                  bh.showGrammarEditPage (result.grammar)
-                                })
-                            },
-                             'select',
-                             buttonDiv))
-              grammarDiv.append ($('<span class="title">').text (grammar.name),
-                                 buttonDiv)
-              return grammarDiv
-            }))
-        })
-    },
-
     unfocusEditableSpan: function() {
       if (this.editableDivUnfocusCallback) {
         this.editableDivUnfocusCallback()
@@ -792,12 +771,16 @@ var BigHouse = (function() {
     populateEditableSpan: function (div, props) {
       var bh = this
       var sanitize = props.sanitize || function(x) { return x }
+      var renderText = props.renderText || function(x) { return x }
+      var renderHtml = props.renderHtml || function(x) { return x }
+      var parse = props.parse || function(x) { return x }
+      var oldText = renderText(props.content)
       var editCallback = function (evt) {
         bh.unfocusEditableSpan()
         evt.stopPropagation()
         div.off ('click')
         var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
-        var input = $('<textarea>').val(props.text).attr('rows',divRows)
+        var input = $('<textarea>').val(oldText).attr('rows',divRows)
         function sanitizeInput() { input.val (sanitize (input.val())) }
         input
           .on('keyup',sanitizeInput)
@@ -812,10 +795,9 @@ var BigHouse = (function() {
           input.attr ('maxlength', props.maxLength)
         bh.editableDivUnfocusCallback = function() {
           var newText = input.val()
-          if (newText !== props.text) {
-            bh.setGrammarAutosaveTimer()
-            newText = props.storeCallback(newText) || newText
-            props.text = newText
+          if (newText !== oldText) {
+            var newContent = parse (newText)
+            props.content = props.storeCallback(newContent) || newContent
           }
           bh.populateEditableSpan (div, props)
         }
@@ -823,9 +805,8 @@ var BigHouse = (function() {
         input.focus()
       }
       
-      var text2html = props.text2html || function(x) { return x }
       var buttonsDiv = $('<span class="buttons">')
-      div.empty().append (text2html (props.text), buttonsDiv)
+      div.empty().append (renderHtml (props.content), buttonsDiv)
       
       if (!props.isConstant) {
         div.on ('click', editCallback)
@@ -848,85 +829,65 @@ var BigHouse = (function() {
       return span
     },
 
-    clearGrammarAutosaveTimer: function() {
-      if (this.grammarAutosaveTimer) {
-        window.clearTimeout (this.grammarAutosaveTimer)
-        delete this.grammarAutosaveTimer
+    saveSymbol: function (symbol) {
+      return this.putPlayerSymbol (this.playerID, symbol.id, symbol.name, symbol.rules)
+    },
+
+    parseRhs: function (rhs) {
+      var regex = /([^#]*)((#[A-Za-z0-9_]+)|.*)/g, match
+      var parsed = []
+      var syms = this.currentGrammarSymbols()
+      while ((match = regex.exec(rhs)) && match[0].length) {
+        if (match[1].length)
+          parsed.push (match[1])
+        var hashLhs = match[3]
+        if (hashLhs) {
+          var lhsName = hashLhs.substr(1)
+          var lhsRef = { name: lhsName }
+          var lhsSym = syms.find (function (sym) { return sym.name === lhsName })
+          if (lhsSym)
+            lhsRef.id = lhsSym.id
+          parsed.push (lhsRef)
+        }
       }
+      return parsed
     },
-
-    setGrammarAutosaveTimer: function() {
-      this.clearGrammarAutosaveTimer()
-      this.currentGrammarUnsaved = true
-      this.grammarAutosaveTimer = window.setTimeout (this.autosaveGrammar.bind (this), this.grammarAutosaveDelay)
-    },
-
-    autosaveGrammar: function() {
-      var def
-      if (this.currentGrammarUnsaved)
-        def = this.REST_postPlayerGrammar (this.playerID, this.currentGrammar.id, this.currentGrammar.name, this.currentGrammar.rules)
-      else {
-	console.log ('already saved')
-	def = $.Deferred()
-	def.resolve()
-      }
-      delete this.currentGrammarUnsaved
-      this.clearGrammarAutosaveTimer()
-      return def
-    },
-
-    makeGrammarRhsDiv: function (lhs, ruleDiv, rhs, n) {
+    
+    makeGrammarRhsDiv: function (symbol, ruleDiv, rhs, n) {
       var span = bh.makeEditableSpan ({ className: 'rhs',
-                                        text: rhs,
-                                        description: 'this expansion for symbol @' + lhs,
+                                        content: rhs,
+                                        description: 'this expansion for symbol #' + symbol.name,
                                         destroyCallback: function() {
-                                          bh.currentGrammar.rules[lhs].splice(n,1)
-                                          bh.populateGrammarRuleDiv (ruleDiv, lhs)
-                                          bh.setGrammarAutosaveTimer()
+                                          symbol.rules.splice(n,1)
+                                          bh.populateGrammarRuleDiv (ruleDiv, symbol)
+                                          bh.saveSymbol()
                                         },
                                         confirmDestroy: function() {
-                                          return bh.currentGrammar.rules[lhs][n].match (/\S/)
+                                          return symbol.rules[n].length
                                         },
                                         storeCallback: function (newRhs) {
-                                          bh.currentGrammar.rules[lhs][n] = newRhs
+                                          symbol.rules[n] = newRhs
                                         },
-                                        text2html: function (rhs) {
-                                          var regex = /([^@]*)((@[A-Za-z0-9_]+)|.*)/g, match, elements = []
-                                          while ((match = regex.exec(rhs)) && match[0].length) {
-                                            elements.push ($('<span>').text (match[1]))
-                                            var atLhs = match[3]
-                                            if (atLhs) {
-                                              var lhs = atLhs.substr(1)
-                                              var lhsSpan = $('<span>').text (atLhs)
-                                              if (bh.currentGrammar.rules[lhs])
-                                                lhsSpan.addClass ('lhslink')
-                                                .on ('click', function (evt) {
-                                                  evt.stopPropagation()
-                                                  bh.scrollGrammarTo (lhs)
-                                                })
-                                              else
-                                                lhsSpan.addClass ('lhsbrokenlink')
-                                                .on ('click', function (evt) {
-                                                  evt.stopPropagation()
-                                                  bh.addNewLhs (lhs)
-                                                })
-                                              elements.push (lhsSpan)
-                                            }
-                                          }
-                                          return $('<span>').append (elements)
+                                        renderHtml: function (rhs) {
+                                          return $('<span>')
+                                            .append (rhs.map (function (rhsSym) {
+                                              return $('<span>')
+                                                .text (typeof(rhsSym) === 'object'
+                                                       ? ('#' + bh.symbolCache[rhsSym.id].name)
+                                                       : rhsSym)
+                                            }))
                                         }
                                       })
       return span
     },
 
-    populateGrammarRuleDiv: function (ruleDiv, lhs) {
+    populateGrammarRuleDiv: function (ruleDiv, symbol) {
       var bh = this
-      var rhsList = bh.currentGrammar.rules[lhs]
-      function sanitize (text) { return '@' + text.replace (/[^A-Za-z0-9_]/g, '') }
+      function sanitize (text) { return '#' + text.replace (/[^A-Za-z0-9_]/g, '') }
       ruleDiv.empty()
         .append (this.makeEditableSpan
                  ({ className: 'lhs',
-                    text: '@' + lhs,
+                    text: '#' + lhs,
                     sanitize: sanitize,
                     keycodeFilter: function (keycode) {
                       return (keycode >= 65 && keycode <= 90)   // a...z
@@ -935,211 +896,139 @@ var BigHouse = (function() {
                         || (keycode === 37 || keycode === 39)  // left, right arrow
                         || (keycode === 8)  // backspace/delete
                     },
-                    description: 'symbol @' + lhs + ' and all its expansions',
-                    isConstant: lhs === bh.grammarRootSymbol,
+                    description: 'symbol #' + lhs + ' and all its expansions',
                     confirmDestroy: function() {
-                      return bh.lhsIsReferredTo(lhs) || bh.currentGrammar.rules[lhs].find (function (rhs) {
-                        return rhs.match (/\S/)
-                      })
+                      return true
                     },
                     destroyCallback: function() {
-                      delete bh.currentGrammar.rules[lhs]
-                      delete bh.ruleDiv[lhs]
-                      ruleDiv.remove()
-                      bh.redrawReferers (lhs)
-                      bh.setGrammarAutosaveTimer()
+                      // WRITE ME
                     },
-                    storeCallback: function (atNewLhs) {
-                      atNewLhs = sanitize(atNewLhs)
-                      var oldLhs = lhs, atOldLhs = '@' + oldLhs, newLhs = atNewLhs.substr(1)
-                      if (newLhs.length === 0)
-                        return atOldLhs
-                      if (newLhs in bh.currentGrammar.rules) {
-                        alert ("The symbol @" + newLhs + " is already in use. Please choose another symbol")
-                        return atOldLhs
-                      }
-                      var rhsList = bh.currentGrammar.rules[oldLhs]
-                      bh.currentGrammar.rules[newLhs] = rhsList
-                      delete bh.currentGrammar.rules[oldLhs]
-                      delete bh.ruleDiv[oldLhs]
-                      var regex = new RegExp (atOldLhs, 'g')
-                      Object.keys(bh.currentGrammar.rules).forEach (function (otherLhs) {
-                        bh.currentGrammar.rules[otherLhs] = bh.currentGrammar.rules[otherLhs].map (function (rhs) {
-                          return rhs.replace (regex, atNewLhs)
-                        })
-                        if (otherLhs !== newLhs)
-                          bh.populateGrammarRuleDiv (bh.ruleDiv[otherLhs], otherLhs)
-                      })
-                      ruleDiv.remove()
-                      bh.placeGrammarRuleDiv (newLhs)
+                    storeCallback: function (hashNewLhs) {
+                      hashNewLhs = sanitize(hashNewLhs)
+                      // WRITE ME
                     },
                     otherButtonDivs: [
                       bh.makeIconButton ('create', function (evt) {
                         evt.stopPropagation()
                         bh.unfocusEditableSpan()
-                        var newRhs = rhsList.length ? rhsList[rhsList.length-1] : ''
-                        ruleDiv.append (bh.makeGrammarRhsDiv (lhs, ruleDiv, newRhs, rhsList.length))
+                        var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                        ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
                         rhsList.push (newRhs)
-                        bh.selectGrammarRule (lhs)
-                        bh.setGrammarAutosaveTimer()
+                        bh.selectGrammarRule (symbol)
+                        bh.saveSymbol()  // should probably give focus to new RHS instead, here
                       })
                     ]}),
-                 rhsList.map (function (rhs, n) {
-                   return bh.makeGrammarRhsDiv (lhs, ruleDiv, rhs, n)
+                 symbol.rules.map (function (rhs, n) {
+                   return bh.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
                  }))
     },
 
-    makeGrammarRuleDiv: function (lhs) {
+    makeGrammarRuleDiv: function (symbol) {
       var ruleDiv = $('<div class="rule">')
-      this.populateGrammarRuleDiv (ruleDiv, lhs)
-      this.ruleDiv[lhs] = ruleDiv
+      this.populateGrammarRuleDiv (ruleDiv, symbol)
+      this.ruleDiv[symbol.id] = ruleDiv
       return ruleDiv
     },
 
-    placeGrammarRuleDiv: function (lhs) {
-      var ruleDiv = bh.makeGrammarRuleDiv (lhs)
-      var syms = this.currentGrammarSymbolsExcludingRoot()
-      var sym = syms.find (function (sym) { return sym > lhs })
+    placeGrammarRuleDiv: function (symbol) {
+      var ruleDiv = bh.makeGrammarRuleDiv (symbol)
+      var syms = this.currentGrammarSymbols()
+      var sym = syms.find (function (sym) { return sym.name > symbol.name })
       if (typeof(sym) === 'undefined')
         this.grammarBarDiv.append (ruleDiv)
       else
-        ruleDiv.insertBefore (this.ruleDiv[sym])
+        ruleDiv.insertBefore (this.ruleDiv[sym.id])
       this.scrollGrammarTo (lhs)
     },
 
-    scrollGrammarTo: function (lhs) {
-      var ruleDiv = this.ruleDiv[lhs]
+    scrollGrammarTo: function (symbol) {
+      var ruleDiv = this.ruleDiv[symbol.id]
       this.grammarBarDiv.animate ({
         // Scroll parent to the new element. This arcane formula can probably be simplified
         scrollTop: this.grammarBarDiv.scrollTop() + ruleDiv.position().top - this.grammarBarDiv.position().top
       })
-      this.selectGrammarRule (lhs)
+      this.selectGrammarRule (symbol)
     },
 
-    selectGrammarRule: function (lhs) {
+    selectGrammarRule: function (symbol) {
       $('.selected').removeClass('selected')
-      this.ruleDiv[lhs].addClass('selected')
+      this.ruleDiv[symbol.id].addClass('selected')
     },
     
-    lhsRefersTo: function (lhs, refLhs) {
-      return this.currentGrammar.rules[lhs].find (function (rhs) {
-        return rhs.match ('@' + refLhs)
-      })
-    },
-
-    lhsIsReferredTo: function (lhs) {
+    currentGrammarSymbols: function() {
       var bh = this
-      return Object.keys(this.currentGrammar.rules).find (function (otherLhs) {
-        return bh.lhsRefersTo (otherLhs, lhs)
-      })
+      return Object.keys(this.symbolCache).map (function (id) {
+        return bh.symbolCache[id]
+      }).sort (function (a, b) { return a.name < b.name })
     },
 
-    lhsExists: function (lhs) {
-      return this.currentGrammar.rules[lhs] || this.lhsIsReferredTo(lhs)
-    },
-
-    redrawReferers: function (lhs) {
+    showGrammarEditPage: function() {
       var bh = this
-      Object.keys (this.currentGrammar.rules).forEach (function (otherLhs) {
-        if (bh.lhsRefersTo (otherLhs, lhs))
-          bh.populateGrammarRuleDiv (bh.ruleDiv[otherLhs], otherLhs)
-      })
-    },
+      this.setPage ('grammar')
+      this.showNavBar ('grammar')
 
-    addNewLhs: function (lhs, renameFlag) {
-      this.currentGrammar.rules[lhs] = ['']
-      this.placeGrammarRuleDiv (lhs)
-      this.redrawReferers (lhs)
-      var focusElement = this.ruleDiv[lhs].find (renameFlag ? '.lhs' : '.rhs').first()
-      window.setTimeout (function() { focusElement.trigger ('click') }, 0)
-      this.setGrammarAutosaveTimer()
-    },
-
-    currentGrammarSymbolsExcludingRoot: function() {
-      return Object.keys(this.currentGrammar.rules).filter (function (lhs) {
-        return lhs !== bh.grammarRootSymbol
-      }).sort()
-    },
-
-    showGrammarEditPage: function (grammar) {
-      var bh = this
-      this.setPage ('edit')
-      
-      this.currentGrammar = grammar
-      delete this.currentGrammarUnsaved
-      this.pageExit = function() {
-        bh.unfocusEditableSpan()
-	this.container.off ('click')
+      var def
+      if (this.symbolCache) {
+        def = $.Deferred()
+        def.resolve()
+      } else {
+        def = this.socket_getPlayerSymbols (this.playerID)
+          .then (function (result) {
+            bh.symbolCache = {}
+            result.symbols.forEach (function (symbol) {
+              bh.symbolCache[symbol.id] = symbol
+            })
+          })
       }
 
-      this.container.on ('click', this.unfocusEditableSpan.bind(this))
-      this.grammarBarDiv = $('<div class="grammarbar">')
+      def.then (function() {
+        
+        bh.pageExit = function() {
+          bh.unfocusEditableSpan()
+	  bh.container.off ('click')
+        }
 
-      var titleSpan = this.makeEditableSpan ({ className: 'grammartitle',
-                                               text: grammar.name,
-                                               maxLength: bh.maxGrammarTitleLength,
-                                               storeCallback: function (name) {
-                                                 bh.currentGrammar.name = name
-                                               }
-                                             })
+        bh.container.on ('click', bh.unfocusEditableSpan.bind(bh))
+        bh.grammarBarDiv = $('<div class="grammarbar">')
 
-      var infoPane = $('<div class="grammarinfopane">')
-      var infoPaneContent = $('<div class="content">')
-      var infoPaneTitle = $('<div class="title">')
-      infoPane.append ($('<span class="closebutton">').text('x')
-		       .on ('click', function() { infoPane.hide() }),
-		       infoPaneTitle,
-		       infoPaneContent)
+        var infoPane = $('<div class="grammarinfopane">')
+        var infoPaneContent = $('<div class="content">')
+        var infoPaneTitle = $('<div class="title">')
+        infoPane.append ($('<span class="closebutton">').text('x')
+		         .on ('click', function() { infoPane.hide() }),
+		         infoPaneTitle,
+		         infoPaneContent)
       
-      this.container
-        .empty()
-	.append ($('<div class="backbar">').append
-		 ($('<div>').html (this.makeLink ('Help', function() {
-		   $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
-		     bh.unfocusEditableSpan()
-		     infoPaneTitle.text ('Help')
-		     infoPaneContent.html (helpHtml)
-		     infoPane.show()
-		   })
-		 }, undefined, true)),
-                  $('<div>').html (this.makeLink ('Test', function() {
-		    bh.unfocusEditableSpan()
-		    infoPaneTitle.text ('Example: ' + bh.currentGrammar.name)
-		    infoPaneContent.text (bh.Label.expandGrammar (bh.currentGrammar))
-		    infoPane.show()
-		  }, undefined, true)),
-                  $('<div>').html (this.makeLink ('Delete', function() {
-		    bh.unfocusEditableSpan()
-		    if (window.confirm ("Delete " + bh.currentGrammar.name + "?")) {
-		      delete bh.currentGrammarUnsaved
-		      bh.container.empty()
-		      bh.REST_deletePlayerGrammar (bh.playerID, bh.currentGrammar.id)
-			.then (bh.reloadCurrentTab.bind (bh))
-		    }
-		  }, undefined, true)),
-                  $('<div>').html (this.makeLink ('Back', function() {
-		    bh.unfocusEditableSpan()
-		    bh.container.empty()
-		    bh.autosaveGrammar().then (bh.reloadCurrentTab.bind (bh))
-		  }))),
-		 infoPane.hide(),
-                 titleSpan,
-                 this.grammarBarDiv,
-                 $('<div class="newlhs">').html (this.makeIconButton ('create', function() {
-                   var nSection = Object.keys(bh.currentGrammar.rules).length, lhs
-                   do {
-                     lhs = 'section' + (++nSection)
-                   } while (bh.lhsExists(lhs))
-                   bh.addNewLhs (lhs, true)
-                 })))
+        bh.container
+	  .append ($('<div class="backbar">').append
+		   ($('<div>').html (bh.makeLink ('Help', function() {
+		     $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
+		       bh.unfocusEditableSpan()
+		       infoPaneTitle.text ('Help')
+		       infoPaneContent.html (helpHtml)
+		       infoPane.show()
+		     })
+		   }, undefined, true)),
+                    $('<div>').html (bh.makeLink ('Test', function() {
+		      bh.unfocusEditableSpan()
+                      // WRITE ME
+		      infoPaneTitle.text()
+		      infoPaneContent.text()
+		      infoPane.show()
+		    }, undefined, true))),
+		   infoPane.hide(),
+                   bh.grammarBarDiv,
+                   $('<div class="newlhs">').html (bh.makeIconButton ('create', function() {
+                     // WRITE ME: add new symbol
+                   })))
+        
+        bh.restoreScrolling (bh.grammarBarDiv)
+        bh.restoreScrolling (infoPaneContent)
 
-      this.restoreScrolling (this.grammarBarDiv)
-      this.restoreScrolling (infoPaneContent)
-
-      this.ruleDiv = {}
-      var lhsSyms = [this.grammarRootSymbol].concat (this.currentGrammarSymbolsExcludingRoot())
-      this.grammarBarDiv
-        .append (lhsSyms.map (this.makeGrammarRuleDiv.bind (this)))
+        bh.ruleDiv = {}
+        bh.grammarBarDiv
+          .append (bh.currentGrammarSymbols().map (bh.makeGrammarRuleDiv.bind (bh)))
+      })
     },
     
     // follows
@@ -1314,6 +1203,38 @@ var BigHouse = (function() {
 //      this.searchResults.results.forEach (function (follow) { follow.showAvatar() })
     },
     
+    // socket message handlers
+    handlePlayerMessage: function (msg) {
+      if (this.verbose.messages)
+        console.log (msg)
+      switch (msg.data.message) {
+      case "incoming":
+        // incoming message
+        break
+      default:
+        if (this.verbose.messages) {
+          console.log ("Unknown message")
+          console.log (msg)
+        }
+        break
+      }
+    },
+
+    handleSymbolMessage: function (msg) {
+      if (this.verbose.messages)
+        console.log (msg)
+      switch (msg.data.message) {
+      case "update":
+        // Symbol updated
+        break
+      default:
+        if (this.verbose.messages) {
+          console.log ("Unknown message")
+          console.log (msg)
+        }
+        break
+      }
+    },
 
     // audio
     playSound: function (type, volume) {
