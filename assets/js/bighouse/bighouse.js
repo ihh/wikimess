@@ -784,15 +784,26 @@ var BigHouse = (function() {
 
     // edit
     unfocusEditableSpan: function() {
-      var def
-      if (this.editableDivUnfocusCallback) {
-        def = this.editableDivUnfocusCallback()
-        delete this.editableDivUnfocusCallback
-      } else {
-        def = $.Deferred()
-        def.resolve()
+      var bh = this
+      var lastSavePromise
+      if (this.lastSavePromise)
+        lastSavePromise = this.lastSavePromise
+      else {
+        lastSavePromise = $.Deferred()
+        lastSavePromise.resolve()
       }
-      return def
+      return lastSavePromise.then (function() {
+        var def
+        if (this.editableDivUnfocusCallback) {
+          def = this.editableDivUnfocusCallback()
+          delete this.editableDivUnfocusCallback
+        } else {
+          def = $.Deferred()
+          def.resolve()
+        }
+        bh.lastSavePromise = def
+        return def
+      })
     },
 
     makeIconButton: function (iconName, callback, color) {
