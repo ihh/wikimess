@@ -374,11 +374,11 @@ module.exports = {
     var symbolID = parseInt (req.params.symid)
     var name = req.body.name
     var rules = req.body.rules
-    var update = { owner: playerID,
-                   name: name,
-                   rules: rules,
-                   initialized: true }
-
+    var update = extend ({ owner: playerID,
+                           initialized: true },
+                         { name: name,
+                           rules: rules })
+                         
     SymbolService.createReferences (update.rules)
       .then (function (refSymbols) {
         return Symbol.update ({ id: symbolID,
