@@ -383,7 +383,7 @@ var BigHouse = (function() {
         bh.REST_postLogin (bh.playerLogin, bh.playerPassword)
           .done (function (data) {
 	    if (bh.verbose.server)
-              console.log (data)
+              console.log ('doLogin:', data)
 	    if (!data.player)
               bh.showModalMessage (data.message, fail)
 	    else {
@@ -723,8 +723,21 @@ var BigHouse = (function() {
           bh.symbolSearchInput = $('<textarea class="symbol">')
           bh.symbolSearchResultsDiv = $('<div class="results">')
 
+          function sanitizeInput() {
+            var text = bh.symbolSearchInput.val()
+            bh.symbolSearchInput.val (text === '' || text === '#' ? '' : bh.sanitizeSymbolName (text))
+          }
+          bh.symbolSearchInput
+            .on('keyup',sanitizeInput)
+            .on('change',sanitizeInput)
+
           bh.messageTitleInput = $('<textarea class="title">')
+            .val (bh.lastMessageTitleInputText)
+            .on ('keyup', function() {
+              bh.lastMessageTitleInputText = bh.messageTitleInput.val()
+            })
           bh.messageBodyDiv = $('<div class="messagebody">')
+            .text (bh.lastMessageBody)
           bh.messageControlsDiv = $('<div class="messagecontrols">')
 
           bh.container
@@ -732,19 +745,20 @@ var BigHouse = (function() {
                      .append ($('<div class="messageheader">')
                               .append ($('<div class="row">')
                                        .append ($('<span class="label">').text ('To:'),
-                                                $('<span class="input">').html (bh.playerSearchInput)),
-                                       bh.playerSearchResultsDiv,
+                                                $('<span class="input">').append (bh.playerSearchInput,
+                                                                                  bh.playerSearchResultsDiv)),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Source:'),
-                                                $('<span class="input">').html (bh.symbolSearchInput)),
-                                       bh.symbolSearchResultsDiv,
+                                                $('<span class="input">').append (bh.symbolSearchInput,
+                                                                                 bh.symbolSearchResultsDiv)),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
-                                                $('<span class="input">').html (bh.messageTitleInput))),
+                                                $('<span class="input">').append (bh.messageTitleInput))),
                               bh.messageBodyDiv,
                               bh.messageControlsDiv.append
                               ($('<span>').html
                                (bh.makeIconButton ('randomize', function() {
+                                 bh.generateMessageBody()
                                })),
                                ($('<span>').html
                                 (bh.makeIconButton ('message', function() {
@@ -757,7 +771,124 @@ var BigHouse = (function() {
                                 }))))))
 
           bh.restoreScrolling (bh.messageBodyDiv)
+
+          bh.playerSearchInput.attr ('placeholder', 'Player name')
+            .val (bh.lastComposePlayerSearchText)
+          bh.playerSearchInput
+            .on ('keyup', bh.doComposePlayerSearch.bind(bh))
+            .on ('click', bh.doComposePlayerSearch.bind(bh,true))
+          if (!bh.composeRecipient) {
+            delete bh.lastComposePlayerSearchText
+            bh.doComposePlayerSearch()
+          }
+
+          // just in case the symbol was renamed...
+          if (bh.composeSymbol && bh.symbolName[bh.composeSymbol.id])
+            bh.lastComposeSymbolSearchText = bh.symbolName[bh.composeSymbol.id]
           
+          bh.symbolSearchInput.attr ('placeholder', 'Symbol name')
+            .val (bh.lastComposeSymbolSearchText ? ('#' + bh.lastComposeSymbolSearchText) : undefined)
+          bh.symbolSearchInput
+            .on ('keyup', bh.doComposeSymbolSearch.bind(bh))
+            .on ('click', bh.doComposeSymbolSearch.bind(bh,true))
+          if (!bh.composeSymbol) {
+            delete bh.lastComposeSymbolSearchText
+            bh.doComposeSymbolSearch()
+          }
+        })
+    },
+
+    doComposePlayerSearch: function (forceNewSearch) {
+      var bh = this
+      var searchText = this.playerSearchInput.val()
+      delete bh.composeRecipient
+      if (forceNewSearch || searchText !== this.lastComposePlayerSearchText) {
+        this.lastComposePlayerSearchText = searchText
+        if (searchText.length)
+          this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText)
+          .then (function (result) {
+	    if (bh.verbose.server)
+              console.log ('doComposePlayerSearch:', result)
+            bh.showComposePlayerSearchResults (result.results)
+          })
+        else
+          bh.showComposePlayerSearchResults()
+      }
+    },
+    
+    showComposePlayerSearchResults: function (results) {
+      var bh = this
+      this.playerSearchResultsDiv
+        .empty()
+      if (results) {
+        if (results.length)
+          this.playerSearchResultsDiv
+          .append (results.map (function (player) {
+            return $('<span class="name">').text (player.name)
+              .on ('click', function() {
+                bh.playerSearchResultsDiv.empty()
+                bh.composeRecipient = player
+                bh.playerSearchInput.val (bh.lastComposePlayerSearchText = player.name)
+              })
+          }))
+        else
+          this.playerSearchResultsDiv.append ($('<span class="warning">').text ("No matching players found"))
+      }
+    },
+    
+    doComposeSymbolSearch: function (forceNewSearch) {
+      var bh = this
+      var searchText = this.symbolSearchInput.val().substr(1)
+      delete bh.composeSymbol
+      if (forceNewSearch || searchText !== this.lastComposeSymbolSearchText) {
+        this.lastComposeSymbolSearchText = searchText
+        if (searchText.length)
+          this.REST_postPlayerSearchSymbolsOwned (this.playerID, searchText)
+          .then (function (result) {
+	    if (bh.verbose.server)
+              console.log ('doComposeSymbolSearch:', result)
+            bh.showComposeSymbolSearchResults (result.results)
+          })
+        else
+          bh.showComposeSymbolSearchResults()
+      }
+    },
+    
+    showComposeSymbolSearchResults: function (results) {
+      var bh = this
+      this.symbolSearchResultsDiv
+        .empty()
+      if (results) {
+        if (results.length)
+          this.symbolSearchResultsDiv
+          .append (results.map (function (symbol) {
+            return $('<span class="lhslink">')
+              .append ('#', $('<span class="name">').text (symbol.name))
+              .on ('click', function() {
+                bh.symbolSearchResultsDiv.empty()
+                bh.composeSymbol = symbol
+                bh.symbolSearchInput.val ('#' + (bh.lastComposeSymbolSearchText = symbol.name))
+                if (!bh.messageTitleInput.val().length)
+                  bh.messageTitleInput.val (symbol.name.replace (/_/g, ' '))
+                bh.generateMessageBody()
+              })
+          }))
+        else
+          this.symbolSearchResultsDiv.append ($('<span class="warning">').text ("No matching symbols found"))
+      }
+    },
+    
+    generateMessageBody: function() {
+      var bh = this
+      bh.messageBodyDiv.empty()
+      bh.lastMessageBody = ''
+      if (bh.composeSymbol)
+        bh.REST_expandPlayerSymbol (bh.playerID, bh.composeSymbol.id)
+        .then (function (result) {
+          if (bh.verbose.server)
+            console.log ('generateMessageBody:', result)
+          if (result.expansion)
+            bh.messageBodyDiv.text (bh.lastMessageBody = result.expansion)
         })
     },
 
@@ -859,7 +990,7 @@ var BigHouse = (function() {
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
 	  if (bh.verbose.server)
-	    console.log (status)
+	    console.log ('showGameStatusPage:', status)
           // render status
           if (callback)
             callback (status)
@@ -994,7 +1125,8 @@ var BigHouse = (function() {
         .then (function() {
           bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, bh.symbolName[symbol.id], symbol.rules)
             .then (function (result) {
-              if (bh.verbose.server) console.log('putPlayerSymbol:',result)
+              if (bh.verbose.server)
+                console.log('putPlayerSymbol:',result)
               $.extend (bh.symbolName, result.name)
               return result.symbol
             })
@@ -1008,7 +1140,8 @@ var BigHouse = (function() {
         .then (function() {
           bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, newName, symbol.rules)
             .then (function (result) {
-              if (bh.verbose.server) console.log('putPlayerSymbol:',result)
+              if (bh.verbose.server)
+                console.log('putPlayerSymbol:',result)
               bh.updateSymbolCache (result)
             }).fail (function (err) {
               var reload = bh.reloadCurrentTab.bind(bh)
@@ -1134,7 +1267,6 @@ var BigHouse = (function() {
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
       var bh = this
       var lhs = bh.symbolName[symbol.id]
-      function sanitize (text) { return '#' + text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'') }
       var editable = bh.symbolEditableByPlayer (symbol)
       var owned = bh.symbolOwnedByPlayer (symbol)
       ruleDiv.empty()
@@ -1142,7 +1274,7 @@ var BigHouse = (function() {
                  ({ className: 'lhs',
                     content: lhs,
                     renderText: function(lhs) { return '#' + lhs },
-                    sanitize: sanitize,
+                    sanitize: bh.sanitizeSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
                       return (keycode >= 65 && keycode <= 90)   // a...z
@@ -1183,6 +1315,9 @@ var BigHouse = (function() {
                                       .then (function() {
                                         bh.REST_expandPlayerSymbol (bh.playerID, symbol.id)
                                           .then (function (result) {
+                                            if (bh.verbose.server)
+                                              console.log ('populateGrammarRuleDiv:', result)
+                                            bh.showingHelp = false
 		                            bh.infoPaneTitle.text ('#' + bh.symbolName[symbol.id])
 		                            bh.infoPaneContent.text (result.expansion)
 		                            bh.infoPane.show()
@@ -1210,6 +1345,10 @@ var BigHouse = (function() {
                  }))
     },
 
+    sanitizeSymbolName: function (text) {
+      return '#' + text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'')
+    },
+
     loadGrammarSymbol: function (symbol) {
       var bh = this
       bh.saveCurrentEdit()
@@ -1219,7 +1358,8 @@ var BigHouse = (function() {
           else
             bh.socket_getPlayerSymbol (bh.playerID, symbol.id)
             .then (function (result) {
-              if (bh.verbose.server) console.log('getPlayerSymbol:',result)
+              if (bh.verbose.server)
+                console.log('getPlayerSymbol:',result)
               $.extend (bh.symbolName, result.name)
               bh.symbolCache[result.symbol.id] = result.symbol
               bh.placeGrammarRuleDiv (result.symbol)
@@ -1317,7 +1457,8 @@ var BigHouse = (function() {
           } else {
             def = bh.socket_getPlayerSymbols (bh.playerID)
               .then (function (result) {
-                if (bh.verbose.server) console.log('getPlayerSymbols:',result)
+                if (bh.verbose.server)
+                  console.log('getPlayerSymbols:',result)
                 bh.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
                   bh.symbolCache[symbol.id] = symbol
@@ -1340,9 +1481,14 @@ var BigHouse = (function() {
             bh.infoPaneContent = $('<div class="content">')
             bh.infoPaneTitle = $('<div class="title">')
             bh.infoPane.append ($('<span class="closebutton">').html
-                                (bh.makeIconButton ('close', function() { bh.infoPane.hide() })),
+                                (bh.makeIconButton ('close', function() {
+                                  bh.infoPane.hide()
+                                  bh.showingHelp = false
+                                })),
 		                bh.infoPaneTitle,
 		                bh.infoPaneContent)
+
+            bh.showingHelp = false
 
             bh.searchInput = $('<input>')
             bh.symbolSearchResultsDiv = $('<div class="results">')
@@ -1362,14 +1508,19 @@ var BigHouse = (function() {
                        $('<div class="grammareditbuttons">').append
                        ($('<div class="help">').html
                         (bh.makeIconButton ('help', function() {
-		          bh.REST_getHelpHtml().then (function (helpHtml) {
-		            bh.saveCurrentEdit()
-                              .then (function() {
-		                bh.infoPaneTitle.text ('Help')
-		                bh.infoPaneContent.html (helpHtml)
-		                bh.infoPane.show()
-                              })
-		          })
+                          if (bh.showingHelp) {
+                            bh.infoPane.hide()
+                            bh.showingHelp = false
+                          } else                            
+		            bh.REST_getHelpHtml().then (function (helpHtml) {
+		              bh.saveCurrentEdit()
+                                .then (function() {
+                                  bh.showingHelp = true
+		                  bh.infoPaneTitle.text ('Help')
+		                  bh.infoPaneContent.html (helpHtml)
+		                  bh.infoPane.show()
+                                })
+		            })
                         })),
                         ($('<div class="newlhs">').html
                          (bh.makeIconButton ('create', function() {
@@ -1377,7 +1528,8 @@ var BigHouse = (function() {
                              .then (function() {
                                return bh.socket_getPlayerSymbolNew (bh.playerID)
                              }).then (function (result) {
-                               if (bh.verbose.server) console.log('getPlayerSymbolNew:',result)
+                               if (bh.verbose.server)
+                                 console.log('getPlayerSymbolNew:',result)
                                bh.symbolCache[result.symbol.id] = result.symbol
                                $.extend (bh.symbolName, result.name)
                                bh.placeGrammarRuleDiv (result.symbol)
@@ -1421,7 +1573,7 @@ var BigHouse = (function() {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
           .then (function (ret) {
 	    if (bh.verbose.server)
-              console.log (ret)
+              console.log ('doSymbolSearch:', ret)
             bh.symbolSearchResults = ret
             bh.showSymbolSearchResults()
           })
@@ -1434,7 +1586,7 @@ var BigHouse = (function() {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
           .then (function (ret) {
 	    if (bh.verbose.server)
-              console.log (ret)
+              console.log ('continueSymbolSearch:', ret)
             bh.symbolSearchResults.results = bh.symbolSearchResults.results.concat (ret.results)
             bh.symbolSearchResults.more = ret.more
             bh.symbolSearchResults.page = ret.page
@@ -1523,7 +1675,7 @@ var BigHouse = (function() {
           bh.REST_getPlayerFollow (bh.playerID)
 	    .done (function (data) {
 	      if (bh.verbose.server)
-	        console.log (data)
+	        console.log ('showFollowsPage:', data)
               bh.whoBarDiv
                 .append ($('<div class="followsection">')
                          .append ($('<div class="title">').text("Address book"))
@@ -1614,7 +1766,7 @@ var BigHouse = (function() {
         this.REST_postPlayerSearchPlayersAll (this.playerID, searchText)
           .then (function (ret) {
 	    if (bh.verbose.server)
-              console.log (ret)
+              console.log ('doPlayerSearch:', ret)
             bh.playerSearchResults = ret
             bh.showPlayerSearchResults()
           })
@@ -1627,7 +1779,7 @@ var BigHouse = (function() {
         this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
 	    if (bh.verbose.server)
-              console.log (ret)
+              console.log ('continuePlayerSearch:', ret)
             bh.playerSearchResults.results = bh.playerSearchResults.results.concat (ret.results)
             bh.playerSearchResults.more = ret.more
             bh.playerSearchResults.page = ret.page

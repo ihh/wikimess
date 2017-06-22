@@ -88,11 +88,11 @@ module.exports = {
       .populate ('followed')
       .then (function (follows) {
         var lowerCaseQuery = query.toLowerCase()
-        var matchingFollows = follows
+        var matchingFollowed = follows
             .filter (function (follow) { return follow.followed.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0})
             .map (function (follow) { return follow.followed })
         var playerPromise
-        if (matchingFollows.length >= maxResults)
+        if (matchingFollowed.length >= maxResults)
           playerPromise = new Promise (function (resolve, reject) { resolve([]) })
         else
           playerPromise = Player
@@ -100,7 +100,7 @@ module.exports = {
                    id: { '!': searcherID },
 		   admin: false,
 		   human: true })
-          .limit (maxResults - matchingFollows.length)
+          .limit (maxResults - matchingFollowed.length)
         playerPromise.then (function (matchingUnfollowed) {
           res.json ({ results: matchingFollowed.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
                       .concat (matchingUnfollowed.map (function (player) { return PlayerService.makePlayerSummary (player, false) }))
@@ -114,8 +114,7 @@ module.exports = {
   searchOwnedSymbols: function (req, res) {
     var searcherID = parseInt(req.params.player), query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
-    Symbol.find ({ displayName: { contains: query },
-                   initialized: true,
+    Symbol.find ({ name: { contains: query },
                    owner: searcherID })
       .populate ('owner')
       .then (function (ownedSymbols) {
@@ -124,8 +123,7 @@ module.exports = {
           symbolPromise = new Promise (function (resolve, reject) { resolve([]) })
         else
           symbolPromise = Symbol
-          .find ({ displayName: { contains: query },
-                   initialized: true,
+          .find ({ name: { contains: query },
                    owner: { '!': searcherID } })
           .limit (maxResults - ownedSymbols.length)
           .populate ('owner')

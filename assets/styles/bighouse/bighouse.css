@@ -424,15 +424,12 @@ body {
     overflow: hidden;
 }
 
-.bighouse .compose .messageheader textarea {
-    width: 100%;
-}
-
 .bighouse .compose .messageheader textarea.recipient {
     resize: none;
 }
 
 .bighouse .compose .messageheader textarea {
+    width: 100%;
     height: 1em;
 }
 
