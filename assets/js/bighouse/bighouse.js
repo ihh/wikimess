@@ -61,7 +61,7 @@ var BigHouse = (function() {
     maxPlayerNameLength: 16,
     maxGrammarTitleLength: 128,
     grammarAutosaveDelay: 5000,
-    iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button' },
+    iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button', help: 'help' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
@@ -168,7 +168,11 @@ var BigHouse = (function() {
                        contentType: 'application/json',
                        data: JSON.stringify ({ name: name, rules: rules }) })
     },
-    
+
+    REST_getHelpHtml: function() {
+      return $.get ('/html/grammar-editor-help.html')
+    },
+
     // WebSockets interface
     socket_onPlayer: function (callback) {
       io.socket.on ('player', callback)
@@ -416,6 +420,7 @@ var BigHouse = (function() {
     },
     
     reloadCurrentTab: function() {
+      delete this.lastSavePromise  // prevent stalling on error
       this[this.currentTab.method] ()
     },
 
@@ -906,7 +911,26 @@ var BigHouse = (function() {
       var bh = this
       return bh.finishLastSave()
         .then (function() {
-          bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, symbol.name, symbol.rules)
+          bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, bh.symbolName[symbol.id], symbol.rules)
+        })
+    },
+
+    renameSymbol: function (symbol, newName) {
+      var bh = this
+      return bh.finishLastSave()
+        .then (function() {
+          bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, newName, symbol.rules)
+            .then (function() {
+              bh.symbolName[symbol.id] = newName
+              bh.ruleDiv[symbol.id].remove()
+              bh.placeGrammarRuleDiv (symbol)
+            }).fail (function (err) {
+              var reload = bh.reloadCurrentTab.bind(bh)
+	      if (err.status == 400)
+                bh.showModalMessage ("A symbol with that name already exists", reload)
+              else
+                bh.showModalWebError (err, reload)
+            })
         })
     },
 
@@ -933,11 +957,11 @@ var BigHouse = (function() {
     makeGrammarRhsDiv: function (symbol, ruleDiv, rhs, n) {
       var span = bh.makeEditableSpan ({ className: 'rhs',
                                         content: rhs,
-                                        description: 'this expansion for symbol #' + symbol.name,
+                                        description: 'this expansion for symbol #' + this.symbolName[symbol.id],
                                         destroyCallback: function() {
                                           symbol.rules.splice(n,1)
                                           bh.populateGrammarRuleDiv (ruleDiv, symbol)
-                                          bh.saveSymbol()
+                                          bh.saveSymbol (symbol)
                                         },
                                         confirmDestroy: function() {
                                           return symbol.rules[n].length
@@ -946,7 +970,7 @@ var BigHouse = (function() {
                                           symbol.rules[n] = newRhs
                                           return bh.saveSymbol (symbol)
                                         },
-                                        parse: bh.parseRhs,
+                                        parse: bh.parseRhs.bind(bh),
                                         renderText: function (rhs) {
                                           return rhs.map (function (rhsSym) {
                                             return (typeof(rhsSym) === 'object'
@@ -993,7 +1017,7 @@ var BigHouse = (function() {
                       // WRITE ME
                     },
                     storeCallback: function (newLhs) {
-                      // WRITE ME
+                      return bh.renameSymbol (symbol, newLhs)
                     },
                     otherButtonDivs: [
                       bh.makeIconButton ('create', function (evt) {
@@ -1024,9 +1048,10 @@ var BigHouse = (function() {
     },
 
     placeGrammarRuleDiv: function (symbol) {
-      var ruleDiv = bh.makeGrammarRuleDiv (symbol)
+      var ruleDiv = this.makeGrammarRuleDiv (symbol)
       var syms = this.currentGrammarSymbols()
-      var nextSym = syms.find (function (s) { return s.name > symbol.name })
+      var name = bh.symbolName[symbol.id]
+      var nextSym = syms.find (function (s) { return bh.symbolName[s.id] > name })
       if (typeof(nextSym) === 'undefined')
         this.grammarBarDiv.append (ruleDiv)
       else
@@ -1052,9 +1077,9 @@ var BigHouse = (function() {
       var bh = this
       return Object.keys(this.symbolCache).map (function (id) {
         return bh.symbolCache[id]
-      }).sort (function (a, b) { return bh.symbolName[a.id] < bh.symbolName[b.id] })
+      }).sort (function (a, b) { return bh.symbolName[a.id] < bh.symbolName[b.id] ? -1 : +1 })
     },
-
+    
     showGrammarEditPage: function() {
       var bh = this
       this.setPage ('grammar')
@@ -1095,38 +1120,31 @@ var BigHouse = (function() {
 		             infoPaneContent)
             
             bh.container
-	      .append ($('<div class="backbar">').append
-		       ($('<div>').html (bh.makeLink ('Help', function() {
-		         $.get ('/html/grammar-editor-help.html').then (function (helpHtml) {
+	      .append (bh.grammarBarDiv,
+                       infoPane.hide(),
+                       $('<div class="grammareditbuttons">').append
+                       ($('<div class="help">').html
+                        (bh.makeIconButton ('help', function() {
+		          bh.REST_getHelpHtml().then (function (helpHtml) {
+		            bh.saveCurrentEdit()
+                              .then (function() {
+		                infoPaneTitle.text ('Help')
+		                infoPaneContent.html (helpHtml)
+		                infoPane.show()
+                              })
+		          })
+                        })),
+                        ($('<div class="newlhs">').html
+                         (bh.makeIconButton ('create', function() {
 		           bh.saveCurrentEdit()
-                             .then (function() {
-		               infoPaneTitle.text ('Help')
-		               infoPaneContent.html (helpHtml)
-		               infoPane.show()
-                             })
-		         })
-		       }, undefined, true)),
-                        $('<div>').html (bh.makeLink ('Test', function() {
-		          bh.saveCurrentEdit()
-                             .then (function() {
-                               // WRITE ME
-		               infoPaneTitle.text()
-		               infoPaneContent.text()
-		               infoPane.show()
-                             })
-		        }, undefined, true))),
-		       infoPane.hide(),
-                       bh.grammarBarDiv,
-                       $('<div class="newlhs">').html (bh.makeIconButton ('create', function() {
-		          bh.saveCurrentEdit()
                              .then (function() {
                                return bh.socket_getPlayerSymbolNew (bh.playerID)
                              }).then (function (result) {
                                bh.symbolCache[result.symbol.id] = result.symbol
                                bh.symbolName[result.symbol.id] = result.name[result.symbol.id]
-                               bh.placeGrammarRuleDiv (result.symbol)
+                              bh.placeGrammarRuleDiv (result.symbol)
                              })
-                       })))
+                         })))))
             
             bh.restoreScrolling (bh.grammarBarDiv)
             bh.restoreScrolling (infoPaneContent)
@@ -1185,9 +1203,7 @@ var BigHouse = (function() {
                 following[follow.id] = true
                 //            follow.showAvatar()
               })
-	    }).fail (function (err) {
-              bh.showModalWebError (err, bh.showInboxPage.bind(bh))
-            })
+	    }).fail (bh.reloadOnFail())
         })
     },
 

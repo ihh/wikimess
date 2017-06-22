@@ -378,16 +378,23 @@ module.exports = {
                            initialized: true },
                          { name: name,
                            rules: rules })
-                         
-    SymbolService.createReferences (update.rules)
-      .then (function (refSymbols) {
-        return Symbol.update ({ id: symbolID,
-                                owner: [ playerID, null ] },
-                              update)
-      }).then (function (symbol) {
-        console.log(symbol)
-        Symbol.message (symbolID, { message: "update", update: update })
-        res.json (update)
+
+    Symbol.find ({ not: { id: symbolID },
+                   name: name })
+      .then (function (eponSyms) {
+        if (eponSyms.length)
+          res.status(400).send ({error: "A symbol named " + name + " already exists"})
+        else
+          SymbolService.createReferences (update.rules)
+          .then (function (refSymbols) {
+            return Symbol.update ({ id: symbolID,
+                                    owner: [ playerID, null ] },
+                                  update)
+          }).then (function (symbol) {
+            console.log(symbol)
+            Symbol.message (symbolID, { message: "update", update: update })
+            res.json (update)
+          })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)

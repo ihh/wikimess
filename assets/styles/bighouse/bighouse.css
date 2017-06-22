@@ -69,23 +69,37 @@ body {
 }
 
 .bighouse .grammartitle .buttons,
-.bighouse .grammarbar .buttons,
-.bighouse .newlhs .buttons {
+.bighouse .grammarbar .buttons {
     float: right;
 }
 
-.bighouse .grammartitle .button,
-.bighouse .newlhs .button,
-.bighouse .grammarbar .button {
+.bighouse .grammareditbuttons .newlhs,
+.bighouse .grammareditbuttons .help {
+    padding: 2vw;
+    width: 1em;
+    height: 1em;
+}
+
+.bighouse .grammareditbuttons .newlhs {
     float: right;
+}
+
+.bighouse .grammareditbuttons .help {
+    float: left;
+}
+
+.bighouse .newlhs .button,
+.bighouse .help .button,
+.bighouse .grammartitle .button,
+.bighouse .grammarbar .button {
     width: 1em;
     height: 1em;
     cursor: pointer;
 }
 
-.bighouse .newlhs {
+.bighouse .grammartitle .button,
+.bighouse .grammarbar .button {
     float: right;
-    padding: 2vw;
 }
 
 .bighouse .grammartitle,

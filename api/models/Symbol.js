@@ -39,7 +39,7 @@ module.exports = {
   // lifecycle callbacks to autogenerate names
   autonamePrefix: 'symbol',
   autonameCount: 1,
-  autonameRegex: /^symbol\d+$/,
+  autonameRegex: /^symbol(\d+)$/,
   beforeCreate: function (symbol, callback) {
     if (!symbol.name)
       symbol.name = Symbol.autonamePrefix + (Symbol.autonameCount++)
@@ -48,7 +48,7 @@ module.exports = {
   afterUpdate: function (symbol, callback) {
     var match = Symbol.autonameRegex.exec (symbol.name)
     if (match)
-      Symbol.autonameCount = parseInt(match[1]) + 1
+      Symbol.autonameCount = Math.max (Symbol.autonameCount, parseInt(match[1]) + 1)
     callback()
   },
 };
