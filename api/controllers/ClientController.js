@@ -49,16 +49,16 @@ module.exports = {
       })
   },
 
-  // search Players
-  searchDisplayName: function (req, res) {
+  // search all Players, with pagination
+  searchAllPlayers: function (req, res) {
     var searcherID = parseInt(req.params.player), query = req.body.query, page = parseInt(req.body.page) || 0
-    var resultsPerPage = 3
+    var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
     Player.find ({ displayName: { contains: query },
                    id: { '!': searcherID },
 		   admin: false,
 		   human: true })
-      .limit(resultsPerPage + 1)
-      .skip(resultsPerPage * page)
+      .limit (resultsPerPage + 1)
+      .skip (resultsPerPage * page)
       .then (function (players) {
 	return Follow.find ({ follower: searcherID,
                               followed: players.map (function (player) { return player.id }) })
@@ -79,6 +79,87 @@ module.exports = {
         res.status(500).send (err)
       })
 	},
+
+  // search Players, preferentially followed, with no pagination
+  searchFollowedPlayers: function (req, res) {
+    var searcherID = parseInt(req.params.player), query = req.body.query
+    var maxResults = req.body.n ? parseInt(req.body.n) : 3
+    Follow.find ({ follower: searcherID })
+      .populate ('followed')
+      .then (function (follows) {
+        var lowerCaseQuery = query.toLowerCase()
+        var matchingFollows = follows
+            .filter (function (follow) { return follow.followed.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0})
+            .map (function (follow) { return follow.followed })
+        var playerPromise
+        if (matchingFollows.length >= maxResults)
+          playerPromise = new Promise (function (resolve, reject) { resolve([]) })
+        else
+          playerPromise = Player
+          .find ({ displayName: { contains: query },
+                   id: { '!': searcherID },
+		   admin: false,
+		   human: true })
+          .limit (maxResults - matchingFollows.length)
+        playerPromise.then (function (matchingUnfollowed) {
+          res.json ({ results: matchingFollowed.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
+                      .concat (matchingUnfollowed.map (function (player) { return PlayerService.makePlayerSummary (player, false) }))
+                      .slice (0, maxResults)
+                    })
+        })
+      })
+  },
+
+  // search Symbols, preferentially owned, with no pagination
+  searchOwnedSymbols: function (req, res) {
+    var searcherID = parseInt(req.params.player), query = req.body.query
+    var maxResults = req.body.n ? parseInt(req.body.n) : 3
+    Symbol.find ({ displayName: { contains: query },
+                   initialized: true,
+                   owner: searcherID })
+      .populate ('owner')
+      .then (function (ownedSymbols) {
+        var symbolPromise
+        if (ownedSymbols.length >= maxResults)
+          symbolPromise = new Promise (function (resolve, reject) { resolve([]) })
+        else
+          symbolPromise = Symbol
+          .find ({ displayName: { contains: query },
+                   initialized: true,
+                   owner: { '!': searcherID } })
+          .limit (maxResults - ownedSymbols.length)
+          .populate ('owner')
+        symbolPromise.then (function (unownedSymbols) {
+          res.json ({ results: ownedSymbols.concat(unownedSymbols).map (function (symbol) {
+            return { id: symbol.id,
+                     name: symbol.name,
+                     owner: { id: symbol.owner.id,
+                              name: symbol.owner.displayName } } })
+                    })
+        })
+      })
+  },
+
+  // search all Symbols, with pagination
+  searchAllSymbols: function (req, res) {
+    var searcherID = parseInt(req.params.player), query = req.body.query, page = parseInt(req.body.page) || 0
+    var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
+    Symbol.find ({ name: { contains: query } })
+      .limit (resultsPerPage + 1)
+      .skip (resultsPerPage * page)
+      .then (function (symbols) {
+        res.json ({ page: page,
+                    more: symbols.length > resultsPerPage,
+                    results: symbols.slice(0,resultsPerPage).map (function (symbol) {
+                      return { id: symbol.id,
+                               name: symbol.name,
+                               owner: symbol.owner
+                               ? { id: symbol.owner.id,
+                                   name: symbol.owner.displayName }
+                               : null } })
+                  })
+      })
+  },
 
   // configure Player info
   configurePlayer: function (req, res) {

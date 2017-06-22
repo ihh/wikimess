@@ -62,7 +62,11 @@ module.exports.routes = {
 
   'POST /p/new':                  'ClientController.createPlayer',
 
-  'POST /p/:player/search':       'ClientController.searchDisplayName',
+  'POST /p/:player/search/players/all':      'ClientController.searchAllPlayers',
+  'POST /p/:player/search/players/followed': 'ClientController.searchFollowedPlayers',
+  'POST /p/:player/search/symbols/all':      'ClientController.searchAllSymbols',
+  'POST /p/:player/search/symbols/owned':    'ClientController.searchOwnedSymbols',
+
   'POST /p/:player/config':       'ClientController.configurePlayer',
 
   'GET /p/:player/subscribe':     'ClientController.subscribePlayer',

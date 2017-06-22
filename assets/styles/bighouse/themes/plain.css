@@ -24,12 +24,8 @@
     background-color: #ccc;
 }
 
-.bighouse.plain .grammarbar .rule .lhslink {
+.bighouse.plain .lhslink {
     color: blue;
-}
-
-.bighouse.plain .grammarbar .rule .lhsbrokenlink {
-    color: red;
 }
 
 .bighouse.plain .gramlistbar .grammar .button,

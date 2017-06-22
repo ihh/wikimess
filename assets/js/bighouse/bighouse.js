@@ -71,19 +71,23 @@ var BigHouse = (function() {
                     hide: 'hide',
                     randomize: 'rolling-die',
                     close: 'close',
-                    send: 'send' },
+                    send: 'send',
+                    inbox: 'inbox',
+                    outbox: 'outbox',
+                    message: 'document',
+                    follow: 'circle-plus',
+                    unfollow: 'trash-can',
+                    search: 'magnifying-glass' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
 
-    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'scroll-unfurled', },
-           { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
+    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'take-my-money', },
+           { name: 'compose', method: 'showComposePage', icon: 'typewriter-icon' },
            { name: 'inbox', method: 'showInboxPage', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', icon: 'address-book-black' },
            { name: 'grammar', method: 'showGrammarEditPage', icon: 'printing-press' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
-
-    searchIcon: 'magnifying-glass',
     
     verbose: { page: false,
                server: true,
@@ -113,8 +117,20 @@ var BigHouse = (function() {
       return $.post('/logout')
     },
 
-    REST_postPlayerSearch: function (playerID, queryText, page) {
-      return $.post ('/p/' + playerID + '/search/', { query: queryText, page: page })
+    REST_postPlayerSearchPlayersAll: function (playerID, queryText, page) {
+      return $.post ('/p/' + playerID + '/search/players/all', { query: queryText, page: page })
+    },
+
+    REST_postPlayerSearchPlayersFollowed: function (playerID, queryText) {
+      return $.post ('/p/' + playerID + '/search/players/followed', { query: queryText })
+    },
+
+    REST_postPlayerSearchSymbolsAll: function (playerID, queryText, page) {
+      return $.post ('/p/' + playerID + '/search/symbols/all', { query: queryText, page: page })
+    },
+
+    REST_postPlayerSearchSymbolsOwned: function (playerID, queryText) {
+      return $.post ('/p/' + playerID + '/search/symbols/owned', { query: queryText })
     },
 
     REST_postPlayerConfig: function (playerID, config) {
@@ -534,8 +550,10 @@ var BigHouse = (function() {
     doLogout: function() {
       var bh = this
       delete this.symbolCache
-      delete this.lastSearch
-      delete this.searchResults
+      delete this.lastPlayerSearch
+      delete this.playerSearchResults
+      delete this.lastSymbolSearch
+      delete this.symbolSearchResults
       this.gamePosition = {}
       this.REST_getLogout()
       this.showLoginPage()
@@ -698,6 +716,48 @@ var BigHouse = (function() {
       this.setPage ('compose')
         .then (function() {
           bh.showNavBar ('compose')
+
+          bh.playerSearchInput = $('<textarea class="recipient">')
+          bh.playerSearchResultsDiv = $('<div class="results">')
+
+          bh.symbolSearchInput = $('<textarea class="symbol">')
+          bh.symbolSearchResultsDiv = $('<div class="results">')
+
+          bh.messageTitleInput = $('<textarea class="title">')
+          bh.messageBodyDiv = $('<div class="messagebody">')
+          bh.messageControlsDiv = $('<div class="messagecontrols">')
+
+          bh.container
+            .append ($('<div class="compose">')
+                     .append ($('<div class="messageheader">')
+                              .append ($('<div class="row">')
+                                       .append ($('<span class="label">').text ('To:'),
+                                                $('<span class="input">').html (bh.playerSearchInput)),
+                                       bh.playerSearchResultsDiv,
+                                       $('<div class="row">')
+                                       .append ($('<span class="label">').text ('Source:'),
+                                                $('<span class="input">').html (bh.symbolSearchInput)),
+                                       bh.symbolSearchResultsDiv,
+                                       $('<div class="row">')
+                                       .append ($('<span class="label">').text ('Subject:'),
+                                                $('<span class="input">').html (bh.messageTitleInput))),
+                              bh.messageBodyDiv,
+                              bh.messageControlsDiv.append
+                              ($('<span>').html
+                               (bh.makeIconButton ('randomize', function() {
+                               })),
+                               ($('<span>').html
+                                (bh.makeIconButton ('message', function() {
+                                }))),
+                               ($('<span>').html
+                                (bh.makeIconButton ('outbox', function() {
+                                }))),
+                               ($('<span>').html
+                                (bh.makeIconButton ('send', function() {
+                                }))))))
+
+          bh.restoreScrolling (bh.messageBodyDiv)
+          
         })
     },
 
@@ -759,7 +819,6 @@ var BigHouse = (function() {
                                      bh.detailBarDiv
                                        .append ($('<div class="statusdiv">')
                                                 .append (bh.locBarDiv))
- 	                             bh.addEvents (status.events)
                                    })
           bh.detailBarDiv.prepend (follow.followDiv)
           bh.container
@@ -1057,19 +1116,7 @@ var BigHouse = (function() {
                                                   name.text (bh.symbolName[rhsSym.id])
                                                   .on ('click', function (evt) {
                                                     evt.stopPropagation()
-                                                    bh.saveCurrentEdit()
-                                                      .then (function() {
-                                                        if (bh.symbolCache[rhsSym.id])
-                                                          bh.scrollGrammarTo (bh.symbolCache[rhsSym.id])
-                                                        else
-                                                          bh.socket_getPlayerSymbol (bh.playerID, rhsSym.id)
-                                                          .then (function (result) {
-                                                            if (bh.verbose.server) console.log('getPlayerSymbol:',result)
-                                                            bh.symbolCache[rhsSym.id] = result.symbol
-                                                            bh.placeGrammarRuleDiv (result.symbol)
-                                                            bh.scrollGrammarTo (result.symbol)
-                                                          })
-                                                      })
+                                                    bh.loadGrammarSymbol (rhsSym)
                                                   })
                                                 else {
                                                   console.log('renderHtml: using placeholder for '+rhsSym.name)
@@ -1087,8 +1134,9 @@ var BigHouse = (function() {
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
       var bh = this
       var lhs = bh.symbolName[symbol.id]
-      function sanitize (text) { return '#' + text.replace (/[^A-Za-z0-9_]/g, '') }
+      function sanitize (text) { return '#' + text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'') }
       var editable = bh.symbolEditableByPlayer (symbol)
+      var owned = bh.symbolOwnedByPlayer (symbol)
       ruleDiv.empty()
         .append (this.makeEditableSpan
                  ({ className: 'lhs',
@@ -1100,6 +1148,7 @@ var BigHouse = (function() {
                       return (keycode >= 65 && keycode <= 90)   // a...z
                         || (keycode >= 48 && keycode <= 57)  // 0...9
                         || (keycode === 189)   // -
+                        || (keycode === 32)  // space
                         || (keycode === 37 || keycode === 39)  // left, right arrow
                         || (keycode === 8)  // backspace/delete
                     },
@@ -1108,30 +1157,14 @@ var BigHouse = (function() {
                     confirmDestroy: function() {
                       return window.confirm('Relinquish ownership of symbol #' + bh.symbolName[symbol.id] + '?')
                     },
-                    destroyCallback: function() {
+                    destroyCallback: owned && function() {
                       bh.removeGrammarRule (symbol)
                       return bh.REST_deletePlayerSymbol (bh.playerID, symbol.id)
                     },
                     storeCallback: function (newLhs) {
                       return bh.renameSymbol (symbol, newLhs)
                     },
-                    otherButtonDivs: [bh.makeIconButton
-                                      ('randomize', function (evt) {
-                                        evt.stopPropagation()
-                                        bh.saveCurrentEdit()
-                                          .then (function() {
-                                            bh.saveCurrentEdit()
-                                              .then (function() {
-                                                bh.REST_expandPlayerSymbol (bh.playerID, symbol.id)
-                                                  .then (function (result) {
-		                                    bh.infoPaneTitle.text ('#' + bh.symbolName[symbol.id])
-		                                    bh.infoPaneContent.text (result.expansion)
-		                                    bh.infoPane.show()
-                                                  })
-                                              })
-                                          })
-                                      })]
-                    .concat (bh.symbolOwnedByPlayer(symbol)
+                    otherButtonDivs: (owned
                              ? []
                              : [ bh.makeIconButton
                                  ('hide', function (evt) {
@@ -1141,6 +1174,22 @@ var BigHouse = (function() {
                                        bh.removeGrammarRule (symbol)
                                      })
                                  })])
+                    .concat ([bh.makeIconButton
+                              ('randomize', function (evt) {
+                                evt.stopPropagation()
+                                bh.saveCurrentEdit()
+                                  .then (function() {
+                                    bh.saveCurrentEdit()
+                                      .then (function() {
+                                        bh.REST_expandPlayerSymbol (bh.playerID, symbol.id)
+                                          .then (function (result) {
+		                            bh.infoPaneTitle.text ('#' + bh.symbolName[symbol.id])
+		                            bh.infoPaneContent.text (result.expansion)
+		                            bh.infoPane.show()
+                                          })
+                                      })
+                                  })
+                              })])
                     .concat (editable
                              ? [ bh.makeIconButton
                                  ('create', function (evt) {
@@ -1161,6 +1210,24 @@ var BigHouse = (function() {
                  }))
     },
 
+    loadGrammarSymbol: function (symbol) {
+      var bh = this
+      bh.saveCurrentEdit()
+        .then (function() {
+          if (bh.symbolCache[symbol.id])
+            bh.scrollGrammarTo (bh.symbolCache[symbol.id])
+          else
+            bh.socket_getPlayerSymbol (bh.playerID, symbol.id)
+            .then (function (result) {
+              if (bh.verbose.server) console.log('getPlayerSymbol:',result)
+              $.extend (bh.symbolName, result.name)
+              bh.symbolCache[result.symbol.id] = result.symbol
+              bh.placeGrammarRuleDiv (result.symbol)
+              bh.scrollGrammarTo (result.symbol)
+            })
+        })
+    },
+    
     removeGrammarRule: function (symbol) {
       this.ruleDiv[symbol.id].remove()
       delete this.ruleDiv[symbol.id]
@@ -1276,9 +1343,21 @@ var BigHouse = (function() {
                                 (bh.makeIconButton ('close', function() { bh.infoPane.hide() })),
 		                bh.infoPaneTitle,
 		                bh.infoPaneContent)
-            
+
+            bh.searchInput = $('<input>')
+            bh.symbolSearchResultsDiv = $('<div class="results">')
+            bh.endSearchResultsDiv = $('<div class="endresults">')
+            var searchButton = $('<span>'), closeButton = $('<span>')
+
             bh.container
-	      .append (bh.grammarBarDiv,
+	      .append ($('<div class="search">')
+                       .append ($('<div class="query">')
+                                .append (searchButton, bh.searchInput, closeButton)),
+                       bh.symbolSearchDiv = $('<div class="symbolsearch">')
+                       .append (bh.symbolSearchResultsDiv,
+                                bh.endSearchResultsDiv)
+                       .hide(),
+                       bh.grammarBarDiv,
                        bh.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
                        ($('<div class="help">').html
@@ -1301,10 +1380,23 @@ var BigHouse = (function() {
                                if (bh.verbose.server) console.log('getPlayerSymbolNew:',result)
                                bh.symbolCache[result.symbol.id] = result.symbol
                                $.extend (bh.symbolName, result.name)
-                              bh.placeGrammarRuleDiv (result.symbol)
+                               bh.placeGrammarRuleDiv (result.symbol)
                              })
                          })))))
-            
+
+            bh.searchInput.attr ('placeholder', 'Search symbols')
+            bh.placeIcon (bh.iconFilename.search, searchButton)
+            bh.placeIcon (bh.iconFilename.close, closeButton)
+            searchButton.addClass('button')
+              .on ('click', bh.doSymbolSearch.bind(bh))
+            closeButton.addClass('button')
+              .on ('click', bh.clearSymbolSearch.bind(bh))
+            bh.searchInput.on ('keyup', function(event) {
+              bh.doSymbolSearch()
+            })
+            bh.showSymbolSearchResults()
+
+            bh.restoreScrolling (bh.symbolSearchResultsDiv)
             bh.restoreScrolling (bh.grammarBarDiv)
             bh.restoreScrolling (bh.infoPaneContent)
 
@@ -1314,7 +1406,84 @@ var BigHouse = (function() {
           })
         })
     },
+
+    clearSymbolSearch: function() {
+      this.searchInput.val('')
+      this.doSymbolSearch()
+    },
     
+    doSymbolSearch: function() {
+      var bh = this
+      var searchText = this.searchInput.val()
+      if (searchText !== this.lastSymbolSearch) {
+        this.lastSymbolSearch = searchText
+        delete this.symbolSearchResults
+        this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
+          .then (function (ret) {
+	    if (bh.verbose.server)
+              console.log (ret)
+            bh.symbolSearchResults = ret
+            bh.showSymbolSearchResults()
+          })
+      }
+    },
+
+    continueSymbolSearch: function() {
+      var bh = this
+      if (this.searchInput.val() === this.lastSymbolSearch) {
+        this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
+          .then (function (ret) {
+	    if (bh.verbose.server)
+              console.log (ret)
+            bh.symbolSearchResults.results = bh.symbolSearchResults.results.concat (ret.results)
+            bh.symbolSearchResults.more = ret.more
+            bh.symbolSearchResults.page = ret.page
+            bh.showSymbolSearchResults()
+          })
+      } else
+        this.doSymbolSearch()
+    },
+
+    showSymbolSearchResults: function() {
+      this.searchInput.val (this.lastSymbolSearch || '')
+      this.symbolSearchResults = this.symbolSearchResults || { results: [] }
+      this.symbolSearchResultsDiv.empty()
+      this.endSearchResultsDiv.empty()
+      this.symbolSearchDiv.hide()
+      if (this.lastSymbolSearch && this.lastSymbolSearch.length) {
+        this.symbolSearchDiv.show()
+        this.symbolSearchResultsDiv
+          .append ($('<div class="searchtitle">').text("Search results"),
+                   this.makeSymbolDivs (this.symbolSearchResults.results, "There are no symbols matching '" + this.lastSymbolSearch + "'."))
+        var more = $('<span>')
+        this.endSearchResultsDiv.append(more)
+        if (this.symbolSearchResults.more)
+          more.addClass('more').text('More')
+          .on ('click', function (evt) {
+            evt.preventDefault()
+            more.remove()
+            bh.continueSymbolSearch()
+          })
+        else if (this.symbolSearchResults.results.length)
+          more.text('All matching symbols shown')
+      }
+    },
+
+    makeSymbolDivs: function (symbols, emptyMessage) {
+      var bh = this
+      return symbols.length
+        ? symbols.map (function (symbol) {
+          return $('<div class="symbol">')
+            .append ($('<span class="lhslink">').append ('#', $('<span class="name">').text (symbol.name))
+                     .on ('click', function (evt) {
+                       evt.stopPropagation()
+                       bh.loadGrammarSymbol (symbol)
+                     })
+                    )
+        })
+      : $('<span>').text (emptyMessage)
+    },
+
     // follows
     showFollowsPage: function() {
       var bh = this
@@ -1324,26 +1493,28 @@ var BigHouse = (function() {
           bh.showNavBar ('follows')
 
           bh.searchInput = $('<input>')
-          bh.searchResultsDiv = $('<div class="results">')
+          bh.playerSearchResultsDiv = $('<div class="results">')
           bh.endSearchResultsDiv = $('<div class="endresults">')
-          var searchButton = $('<span>')
+          var searchButton = $('<span>'), closeButton = $('<span>')
           bh.container
             .append (bh.whoBarDiv = $('<div class="whobar">')
                      .append ($('<div class="search">')
                               .append ($('<div class="query">')
-                                       .append (bh.searchInput, searchButton),
+                                       .append (searchButton, bh.searchInput, closeButton),
                                        $('<div class="followsection">')
-                                       .append (bh.searchResultsDiv,
+                                       .append (bh.playerSearchResultsDiv,
                                                 bh.endSearchResultsDiv))))
-          bh.searchInput.attr ('placeholder', 'Player name')
-          bh.placeIcon (bh.searchIcon, searchButton)
+          bh.searchInput.attr ('placeholder', 'Search players')
+          bh.placeIcon (bh.iconFilename.search, searchButton)
+          bh.placeIcon (bh.iconFilename.close, closeButton)
           searchButton.addClass('button')
-            .on ('click', bh.doSearch.bind(bh))
-          bh.searchInput.on ('keypress', function(event) {
-            if (event.keyCode == 13 || event.which == 13)
-              bh.doSearch()
+            .on ('click', bh.doPlayerSearch.bind(bh))
+          closeButton.addClass('button')
+            .on ('click', bh.clearPlayerSearch.bind(bh))
+          bh.searchInput.on ('keyup', function(event) {
+              bh.doPlayerSearch()
           })
-          bh.showSearchResults()
+          bh.showPlayerSearchResults()
           
           bh.restoreScrolling (bh.whoBarDiv)
 
@@ -1355,8 +1526,8 @@ var BigHouse = (function() {
 	        console.log (data)
               bh.whoBarDiv
                 .append ($('<div class="followsection">')
-                         .append ($('<div class="title">').text("Following"))
-                         .append (bh.makeFollowDivs (data.followed, "You are not currently following anyone.")))
+                         .append ($('<div class="title">').text("Address book"))
+                         .append (bh.makeFollowDivs (data.followed, "Your address book is empty.")))
               var following = {}
               data.followed.map (function (follow) {
                 following[follow.id] = true
@@ -1366,19 +1537,21 @@ var BigHouse = (function() {
     },
 
     makeFollowDiv: function (follow) {
-      var followClass = 'follow-button-' + follow.id, followSelector = '.' + followClass
-      var buttonDiv = $('<div class="button">').addClass(followClass)
+      var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
+      var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
       var doFollow, doUnfollow
       function makeUnfollowButton() {
-        $(followSelector).add(buttonDiv).text ('Unfollow')
+        $(followSelector).add(buttonDiv)
           .off()
-          .on ('click', bh.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv)))
+          .html (bh.makeIconButton ('unfollow',
+                                    bh.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       function makeFollowButton() {
-        $(followSelector).add(buttonDiv).text ('Follow')
+        $(followSelector).add(buttonDiv)
           .off()
-          .on ('click', bh.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv)))
+          .html (bh.makeIconButton ('follow',
+                                    bh.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       doFollow = function() {
@@ -1399,7 +1572,7 @@ var BigHouse = (function() {
         makeUnfollowButton()
       else
         makeFollowButton()
-      var nameDiv = $('<div class="name">').text (follow.name)
+      var nameDiv = $('<span class="name">').text (follow.name)
       var followDiv = $('<div class="follow">')
           .append (nameDiv, buttonDiv)
       $.extend (follow, { followDiv: followDiv,
@@ -1420,64 +1593,69 @@ var BigHouse = (function() {
           follow.setFollowing = function (flag) {
             bh.followsById[follow.id].forEach (function (f) { f.following = flag })
           }
-          follow.nameDiv
+          follow.followDiv
             .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, follow)))
           return follow.followDiv
         })
       : $('<span>').text (emptyMessage)
     },
 
-    doSearch: function() {
+    clearPlayerSearch: function() {
+      this.searchInput.val('')
+      this.doPlayerSearch()
+    },
+
+    doPlayerSearch: function() {
       var bh = this
       var searchText = this.searchInput.val()
-      if (searchText.length && searchText !== this.lastSearch) {
-        this.lastSearch = searchText
-        delete this.searchResults
-        this.REST_postPlayerSearch (this.playerID, searchText)
+      if (searchText !== this.lastPlayerSearch) {
+        this.lastPlayerSearch = searchText
+        delete this.playerSearchResults
+        this.REST_postPlayerSearchPlayersAll (this.playerID, searchText)
           .then (function (ret) {
 	    if (bh.verbose.server)
               console.log (ret)
-            bh.searchResults = ret
-            bh.showSearchResults()
+            bh.playerSearchResults = ret
+            bh.showPlayerSearchResults()
           })
       }
     },
 
-    continueSearch: function() {
+    continuePlayerSearch: function() {
       var bh = this
-      if (this.searchInput.val() === this.lastSearch) {
-        this.REST_postPlayerSearch (this.playerID, this.lastSearch, this.searchResults.page + 1)
+      if (this.searchInput.val() === this.lastPlayerSearch) {
+        this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
 	    if (bh.verbose.server)
               console.log (ret)
-            bh.searchResults.results = bh.searchResults.results.concat (ret.results)
-            bh.searchResults.more = ret.more
-            bh.searchResults.page = ret.page
-            bh.showSearchResults()
+            bh.playerSearchResults.results = bh.playerSearchResults.results.concat (ret.results)
+            bh.playerSearchResults.more = ret.more
+            bh.playerSearchResults.page = ret.page
+            bh.showPlayerSearchResults()
           })
       } else
-        this.doSearch()
+        this.doPlayerSearch()
     },
 
-    showSearchResults: function() {
-      this.searchInput.val (this.lastSearch || '')
-      this.searchResults = this.searchResults || { results: [] }
-      this.searchResultsDiv.empty()
+    showPlayerSearchResults: function() {
+      this.searchInput.val (this.lastPlayerSearch || '')
+      this.playerSearchResults = this.playerSearchResults || { results: [] }
+      this.playerSearchResultsDiv.empty()
       this.endSearchResultsDiv.empty()
-      if (this.lastSearch && this.lastSearch.length) {
-        this.searchResultsDiv
-        .append ($('<div class="title">').text("Search results"),
-                 this.makeFollowDivs (this.searchResults.results, "There are no players matching '" + this.lastSearch + "'."))
+      if (this.lastPlayerSearch && this.lastPlayerSearch.length) {
+        this.playerSearchResultsDiv
+        .append ($('<div class="searchtitle">').text("Search results"),
+                 this.makeFollowDivs (this.playerSearchResults.results, "There are no players matching '" + this.lastPlayerSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
-        if (this.searchResults.more)
+        if (this.playerSearchResults.more)
           more.addClass('more').text('More')
           .on ('click', function (evt) {
             evt.preventDefault()
             more.remove()
-            bh.continueSearch()
+            bh.continuePlayerSearch()
           })
-        else if (this.searchResults.results.length)
+        else if (this.playerSearchResults.results.length)
           more.text('All matching players shown')
       }
     },

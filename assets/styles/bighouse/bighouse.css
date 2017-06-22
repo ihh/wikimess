@@ -88,6 +88,8 @@ body {
 }
 
 .bighouse .grammartitle,
+.bighouse .searchtitle,
+.bighouse .whobar .followsection .title,
 .bighouse .locbar .title {
     font-weight: bold;
     font-size: large;
@@ -97,7 +99,7 @@ body {
     margin-bottom: 12px;
 }
 
-.bighouse .whobar .search .query {
+.bighouse .search .query {
     display: flex;
     width: 100%;
     height: 32px;
@@ -109,26 +111,33 @@ body {
     border-color: #888;
 }
 
-.bighouse .whobar .search .query .button {
+.bighouse .search .query .button {
     height: 32px;
     width: 32px;
 }
 
-.bighouse .whobar .search .query input {
+.bighouse .search .query input {
     background: black;
     flex-grow: 1;
     border-style: none;
     color: white;
 }
 
-.bighouse .whobar .search .endresults {
+.bighouse .endresults {
     width: 100%;
     text-align: center;
     font-style: italic;
 }
 
-.bighouse .whobar .search .more {
+.bighouse .more {
     text-decoration: underline;
+}
+
+.bighouse .symbolsearch {
+    min-height: 20vh;
+    overflow-y: auto;
+    border-bottom-style: solid;
+    border-width: 1px;
 }
 
 .bighouse .follow,
@@ -170,11 +179,8 @@ body {
      @-o-keyframes pulse_rule { from { background-color:gray; } }
         @keyframes pulse_rule { from { background-color:gray; } }
 
-.bighouse .grammarbar .rule .lhslink .name {
+.bighouse .lhslink .name {
     cursor: pointer;
-}
-
-.bighouse .grammarbar .rule .lhslink .name {
     text-decoration: underline;
 }
 
@@ -182,6 +188,7 @@ body {
 .bighouse .grammareditbuttons {
     border-top-style: solid;
     border-width: 1px;
+    z-index: 1;
 }
 
 .bighouse .grammareditbuttons .newlhs,
@@ -257,33 +264,25 @@ body {
     cursor: pointer;
 }
 
-.bighouse .follow .button {
-    position: absolute;
-    right: 4px;
-    bottom: 4px;
-}
-
-.bighouse .follow .button,
+.bighouse .follow .followcontrol,
 .bighouse .gramlistbar .grammar .button,
 .bighouse .gramlistbar .newgrammar .button {
-    border-style: solid;
-    border-width: 1px;
-    padding: 1px 3px;
+    padding: 2px;
     cursor: pointer;
+    width: 1em;
+    height: 1em;
 }
 
-
-.bighouse .other,
-.bighouse .follow {
+.bighouse .other {
     display: flex;
+}
+
+.bighouse .follow .followcontrol {
+    float: right;
 }
 
 .bighouse .follow .name {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
     padding: 4px;
-    max-width: 50vw;
     word-break: break-all;
 }
 
@@ -401,4 +400,60 @@ body {
 
 .bighouse .menubar input[type="radio"] {
     display: none;
+}
+
+.bighouse .compose .messageheader .row {
+    width: 100%;
+}
+
+.bighouse .compose .messageheader .label {
+    float: left;
+    width: 20vw;
+    text-align: right;
+    vertical-align: top;
+}
+
+.bighouse .compose {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.bighouse .compose .messageheader .input {
+    display: block;
+    overflow: hidden;
+}
+
+.bighouse .compose .messageheader textarea {
+    width: 100%;
+}
+
+.bighouse .compose .messageheader textarea.recipient {
+    resize: none;
+}
+
+.bighouse .compose .messageheader textarea {
+    height: 1em;
+}
+
+.bighouse .compose .messagebody {
+    flex-grow: 1;
+    overflow-y: auto;
+    border-style: solid none;
+    border-width: 1px;
+    margin: 2px;
+}
+
+.bighouse .messagecontrols {
+    display: flex;
+    justify-content: space-between;
+}
+
+.bighouse .messagecontrols span {
+    padding: 2vw;
+}
+
+.bighouse .messagecontrols svg {
+    width: 1em;
+    height: 1em;
 }
