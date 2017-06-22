@@ -1,5 +1,5 @@
 {
-  "name": "bighouse",
+  "name": "grambot",
   "private": true,
   "version": "0.0.0",
   "description": "a Sails application",
@@ -54,7 +54,7 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/yam/bighouse.git"
+    "url": "git://github.com/yam/grammy.git"
   },
   "author": "yam",
   "license": ""

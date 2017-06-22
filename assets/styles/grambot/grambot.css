@@ -27,17 +27,17 @@ body {
     width: 0  !important;
 }
 
-.bighouse .navbar {
+.grambot .navbar {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-.bighouse .navbar .navtab {
+.grambot .navbar .navtab {
     position: relative;
 }
 
-.bighouse .navbar .navtab .messagecount {
+.grambot .navbar .navtab .messagecount {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -53,58 +53,58 @@ body {
     border-color: black;
 }
 
-.bighouse .navbar .navicon {
+.grambot .navbar .navicon {
     opacity: .6;
     cursor: pointer;
 }
 
-.bighouse .navbar .active .navicon {
+.grambot .navbar .active .navicon {
     opacity: 1;
 }
 
-.bighouse .gramlistbar,
-.bighouse .locbar {
+.grambot .gramlistbar,
+.grambot .locbar {
     flex-grow: 1;
     overflow-y: auto;
 }
 
-.bighouse .grammarbar .buttons {
+.grambot .grammarbar .buttons {
     font-size: medium;
     float: right;
 }
 
-.bighouse .newlhs .button,
-.bighouse .help .button,
-.bighouse .grammartitle .button,
-.bighouse .grammarbar .button {
+.grambot .newlhs .button,
+.grambot .help .button,
+.grambot .grammartitle .button,
+.grambot .grammarbar .button {
     width: 1em;
     height: 1em;
     cursor: pointer;
 }
 
-.bighouse .grammartitle .button,
-.bighouse .grammarbar .button {
+.grambot .grammartitle .button,
+.grambot .grammarbar .button {
     float: right;
 }
 
-.bighouse .grammartitle,
-.bighouse .searchtitle,
-.bighouse .whobar .followsection .title,
-.bighouse .locbar .title {
+.grambot .grammartitle,
+.grambot .searchtitle,
+.grambot .whobar .followsection .title,
+.grambot .locbar .title {
     font-weight: bold;
     font-size: large;
 }
 
-.bighouse .whobar .search .followsection {
+.grambot .whobar .search .followsection {
     border-bottom-style: solid;
     border-width: 1px;
 }
 
-.bighouse .whobar .followsection {
+.grambot .whobar .followsection {
     margin-bottom: 12px;
 }
 
-.bighouse .search .query {
+.grambot .search .query {
     display: flex;
     width: 100%;
     height: 32px;
@@ -116,54 +116,54 @@ body {
     border-color: #888;
 }
 
-.bighouse .search .query .button {
+.grambot .search .query .button {
     height: 32px;
     width: 32px;
 }
 
-.bighouse .search .query input {
+.grambot .search .query input {
     background: black;
     flex-grow: 1;
     border-style: none;
     color: white;
 }
 
-.bighouse .endresults {
+.grambot .endresults {
     width: 100%;
     text-align: center;
     font-style: italic;
 }
 
-.bighouse .more {
+.grambot .more {
     text-decoration: underline;
 }
 
-.bighouse .symbolsearch {
+.grambot .symbolsearch {
     min-height: 20vh;
     overflow-y: auto;
     border-bottom-style: solid;
     border-width: 1px;
 }
 
-.bighouse .follow,
-.bighouse .gramlistbar .grammar,
-.bighouse .gramlistbar .newgrammar,
-.bighouse .grammarbar .rule {
+.grambot .follow,
+.grambot .gramlistbar .grammar,
+.grambot .gramlistbar .newgrammar,
+.grambot .grammarbar .rule {
     clear: both;
     float: left;
     width: 95%;
     margin: 1vw;
 }
 
-.bighouse .gramlistbar .grammar,
-.bighouse .gramlistbar .newgrammar,
-.bighouse .grammarbar .rule,
-.bighouse .follow {
+.grambot .gramlistbar .grammar,
+.grambot .gramlistbar .newgrammar,
+.grambot .grammarbar .rule,
+.grambot .follow {
     position: relative;
     padding: 1vw;
 }
 
-.bighouse .grammarbar .rule .rhs {
+.grambot .grammarbar .rule .rhs {
     clear: both;
     float: left;
     width: 90vw;
@@ -172,7 +172,7 @@ body {
     overflow-wrap: break-word;
 }
 
-.bighouse .grammarbar .rule.selected {
+.grambot .grammarbar .rule.selected {
     -webkit-animation: 500ms linear 0s 1 normal pulse_rule;
     -moz-animation: 500ms linear 0s 1 normal pulse_rule;
     -o-animation: 500ms linear 0s 1 normal pulse_rule;
@@ -184,40 +184,40 @@ body {
      @-o-keyframes pulse_rule { from { background-color:gray; } }
         @keyframes pulse_rule { from { background-color:gray; } }
 
-.bighouse .lhslink .name {
+.grambot .lhslink .name {
     cursor: pointer;
     text-decoration: underline;
 }
 
-.bighouse .grammarinfopane,
-.bighouse .grammareditbuttons {
+.grambot .grammarinfopane,
+.grambot .grammareditbuttons {
     border-top-style: solid;
     border-width: 1px;
     z-index: 1;
 }
 
-.bighouse .grammareditbuttons .newlhs,
-.bighouse .grammareditbuttons .help {
+.grambot .grammareditbuttons .newlhs,
+.grambot .grammareditbuttons .help {
     padding: 2vw;
     width: 1em;
     height: 1em;
 }
 
-.bighouse .grammareditbuttons .newlhs {
+.grambot .grammareditbuttons .newlhs {
     float: right;
 }
 
-.bighouse .grammareditbuttons .help {
+.grambot .grammareditbuttons .help {
     float: left;
 }
 
-.bighouse .grammarinfopane .title {
+.grambot .grammarinfopane .title {
     font-weight: bold;
     font-size: large;
     font-style: italic;
 }
 
-.bighouse .grammarinfopane .content {
+.grambot .grammarinfopane .content {
     clear: both;
     max-height: 40vw;
     min-height: 40vw;
@@ -226,10 +226,10 @@ body {
     font-style: italic;
 }
 
-.bighouse .grammarinfopane .controls {
+.grambot .grammarinfopane .controls {
 }
 
-.bighouse .grammarinfopane .controls .button {
+.grambot .grammarinfopane .controls .button {
     float: right;
     font-size: small;
     width: 1em;
@@ -238,7 +238,7 @@ body {
     cursor: pointer;
 }
 
-.bighouse .closebutton {
+.grambot .closebutton {
     float: right;
     font-size: small;
     width: 1em;
@@ -247,20 +247,20 @@ body {
     cursor: pointer;
 }
 
-.bighouse .grammartitle textarea,
-.bighouse .grammarbar textarea {
+.grambot .grammartitle textarea,
+.grambot .grammarbar textarea {
     width: 99%;
     height: 100%;
 }
 
-.bighouse .gramlistbar .grammar,
-.bighouse .grammarbar .rule,
-.bighouse .follow {
+.grambot .gramlistbar .grammar,
+.grambot .grammarbar .rule,
+.grambot .follow {
     border-style: solid;
     border-width: 1px;
 }
 
-.bighouse .grammarbar .rule .lhs {
+.grambot .grammarbar .rule .lhs {
     width: 80%;
     font-weight: bold;
     font-style: italic;
@@ -269,48 +269,48 @@ body {
     overflow-wrap: break-word;
 }
 
-.bighouse .gramlistbar .newgrammar .button {
+.grambot .gramlistbar .newgrammar .button {
     float: left;
     cursor: pointer;
 }
 
-.bighouse .gramlistbar .grammar .button,
-.bighouse .grammarbar .rule .button {
+.grambot .gramlistbar .grammar .button,
+.grambot .grammarbar .rule .button {
     float: right;
     padding-left: 1vw;
     cursor: pointer;
 }
 
-.bighouse .follow .followcontrol,
-.bighouse .gramlistbar .grammar .button,
-.bighouse .gramlistbar .newgrammar .button {
+.grambot .follow .followcontrol,
+.grambot .gramlistbar .grammar .button,
+.grambot .gramlistbar .newgrammar .button {
     padding: 2px;
     cursor: pointer;
     width: 1em;
     height: 1em;
 }
 
-.bighouse .other {
+.grambot .other {
     display: flex;
 }
 
-.bighouse .follow .followcontrol {
+.grambot .follow .followcontrol {
     float: right;
 }
 
-.bighouse .follow .name {
+.grambot .follow .name {
     padding: 4px;
     word-break: break-all;
 }
 
-.bighouse .topbar {
+.grambot .topbar {
     width: 100vw;
     min-height: 64px;
     display: flex;
     flex-direction: column;
 }
 
-.bighouse .backbar {
+.grambot .backbar {
     min-height: 32px;
     margin: 12px;
     display: flex;
@@ -318,33 +318,33 @@ body {
     justify-content: space-between;
 }
 
-.bighouse .backbar span {
+.grambot .backbar span {
     flex-grow: 1;
     justify-content: center;
     display: flex;
 }
 
-.bighouse .backbar a,
-.bighouse .menubar a,
-.bighouse .menubar label {
+.grambot .backbar a,
+.grambot .menubar a,
+.grambot .menubar label {
     text-decoration: none;
     border-width: 1px;
     border-style: solid;
     cursor: pointer;
 }
 
-.bighouse .inputbar {
+.grambot .inputbar {
     line-height: 32px;
 }
 
-.bighouse .titlebar {
+.grambot .titlebar {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.bighouse .inputbar input[type=text],
-.bighouse .inputbar input[type=password] {
+.grambot .inputbar input[type=text],
+.grambot .inputbar input[type=password] {
     -webkit-appearance: none;
     -moz-appearance: none;
     display: block;
@@ -360,97 +360,97 @@ body {
     width: 100%;
 }
 
-.bighouse .menubar input {
+.grambot .menubar input {
     width: 100%;
 }
 
-.bighouse .menubar li {
+.grambot .menubar li {
     list-style: none;
 }
 
-.bighouse .menubar li,
-.bighouse .menubar label {
+.grambot .menubar li,
+.grambot .menubar label {
     padding: 8px;
 }
 
-.bighouse .menubar .card {
+.grambot .menubar .card {
     padding: 16px;
 }
 
-.bighouse .menubar li,
-.bighouse .menubar .card {
+.grambot .menubar li,
+.grambot .menubar .card {
     margin: 4vh;
     border: 1px solid #888;
     box-sizing: border-box;
     text-align: center;
 }
 
-.bighouse .menubar li.noborder {
+.grambot .menubar li.noborder {
     border-style: none;
 }
 
-.bighouse .menubar .card {
+.grambot .menubar .card {
     cursor: default;
     width: 80vw;
 }
 
-.bighouse .menubar li,
-.bighouse .menubar .card input {
+.grambot .menubar li,
+.grambot .menubar .card input {
     cursor: pointer;
 }
 
-.bighouse .menubar .rubric {
+.grambot .menubar .rubric {
     text-align: center;
 }
 
-.bighouse .grammarbar,
-.bighouse .detailbar {
+.grambot .grammarbar,
+.grambot .detailbar {
     flex-grow: 1;
     overflow-y: auto;
 }
 
-.bighouse .menubar label {
+.grambot .menubar label {
     display: block;
     margin: 8px;
     text-align: center;
 }
 
-.bighouse .menubar input[type="radio"] {
+.grambot .menubar input[type="radio"] {
     display: none;
 }
 
-.bighouse .compose .messageheader .row {
+.grambot .compose .messageheader .row {
     width: 100%;
 }
 
-.bighouse .compose .messageheader .label {
+.grambot .compose .messageheader .label {
     float: left;
     width: 20vw;
     text-align: right;
     vertical-align: top;
 }
 
-.bighouse .compose {
+.grambot .compose {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
 
-.bighouse .compose .messageheader .input {
+.grambot .compose .messageheader .input {
     display: block;
     overflow: hidden;
 }
 
-.bighouse .compose .messageheader textarea.recipient {
+.grambot .compose .messageheader textarea.recipient {
     resize: none;
 }
 
-.bighouse .compose .messageheader textarea {
+.grambot .compose .messageheader textarea {
     width: 100%;
     height: 1em;
 }
 
-.bighouse .compose .messagebody {
+.grambot .compose .messagebody {
     flex-grow: 1;
     overflow-y: auto;
     border-style: solid none;
@@ -458,16 +458,16 @@ body {
     margin: 2px;
 }
 
-.bighouse .messagecontrols {
+.grambot .messagecontrols {
     display: flex;
     justify-content: space-between;
 }
 
-.bighouse .messagecontrols span {
+.grambot .messagecontrols span {
     padding: 2vw;
 }
 
-.bighouse .messagecontrols svg {
+.grambot .messagecontrols svg {
     width: 1em;
     height: 1em;
 }

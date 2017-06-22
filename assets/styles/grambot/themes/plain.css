@@ -1,0 +1,89 @@
+/* Colors, plain theme */
+.grambot.plain {
+    background-color: #f8f8f8;
+    color: black;
+}
+
+.grambot.plain .navbar {
+    background-color: black;
+}
+
+.grambot.plain .gramlistbar {
+    color: black;
+    background-color: white;
+}
+
+.grambot.plain .gramlistbar .grammar,
+.grambot.plain .grammarbar .rule,
+.grambot.plain .detailbar .statusdiv {
+    border-color: black;
+    background-color: #f8f8f8;
+}
+
+.grambot.plain .grammarbar .rule .rhs {
+    background-color: #ccc;
+}
+
+.grambot.plain .lhslink {
+    color: blue;
+}
+
+.grambot.plain .gramlistbar .grammar .button,
+.grambot.plain .gramlistbar .newgrammar .button {
+    border-color: black;
+    background-color: #e8e8e8;
+    color: #222;
+}
+
+.grambot.plain .detailbar,
+.grambot.plain .grammarbar,
+.grambot.plain .backbar,
+.grambot.plain .menubar {
+    color: black;
+}
+
+.grambot.plain .statusbar a,
+.grambot.plain .menubar a,
+.grambot.plain .backbar a,
+.grambot.plain .menubar label {
+    color: #888;
+    border-color: #888;
+}
+
+.grambot.plain .titlebar {
+    color: black;
+}
+
+.grambot.plain .inputbar {
+    color: black;
+}
+
+.grambot.plain .inputbar input[type=text],
+.grambot.plain .inputbar input[type=password] {
+    border-color: #ccc;
+    background-color: #ddd;
+    color: black;
+}
+
+.grambot.plain .menubar li {
+    color: black;
+}
+
+.grambot.plain .menubar .card {
+    color: black;
+    background-color: #ccc;
+}
+
+.grambot .menubar .themegroup label.plain {
+    color: white;
+}
+
+.grambot.plain .detailbar .icon img {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #444;
+}
+
+.grambot.plain .detailbar .statusline {
+    background: #eee;
+}

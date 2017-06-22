@@ -2,30 +2,30 @@
 /* Portrait view */
 @media all and (orientation:portrait) {
     /* Game view */
-    .bighouse {
+    .grambot {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 	height: 100%;
     }
 
-    .bighouse .navbar {
+    .grambot .navbar {
 	height: 15vw;
 	min-height: 15vw;
     }
 
-    .bighouse .navbar .navicon {
+    .grambot .navbar .navicon {
 	width: 15vw;
 	height: 15vw;
     }
 
-    .bighouse .menubar a,
-    .bighouse .backbar a {
+    .grambot .menubar a,
+    .grambot .backbar a {
 	padding: 4px 8px 4px 8px;
     }
 
     /* Menu views */
-    .bighouse .inputbar {
+    .grambot .inputbar {
 	width: 100vw;
 	height: 33vh;
 
@@ -33,22 +33,22 @@
 	justify-content: center;
     }
 
-    .bighouse .inputbar form {
+    .grambot .inputbar form {
 	width: 60vw;
     }
 
-    .bighouse .titlebar {
+    .grambot .titlebar {
 	width: 100vw;
 	height: 6vh;
 	text-align: center;
     }
 
-    .bighouse .menucontainer {
+    .grambot .menucontainer {
 	display: flex;
 	flex-direction: column;
     }
 
-    .bighouse .menubar {
+    .grambot .menubar {
 	width: 100vw;
 	flex-grow: 1;
 
@@ -58,16 +58,16 @@
 	justify-content: center;
     }
 
-    .bighouse .menubar li,
-    .bighouse .menubar .card {
+    .grambot .menubar li,
+    .grambot .menubar .card {
 	font-size: 18px;
     }
 
-    .bighouse .menubar .rubric {
+    .grambot .menubar .rubric {
 	width: 80vw;
     }
 
-    .bighouse .menubar fieldset {
+    .grambot .menubar fieldset {
 	margin: 4vh;
     }
 }

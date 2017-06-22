@@ -1,12 +1,12 @@
 /* Specific aspect ratios... */
 @media screen and (orientation:landscape) and (min-aspect-ratio: 7/5) {
-    .bighouse .statusbar .statuslink {
+    .grambot .statusbar .statuslink {
 	height: 18vh;
     }
 }
 
 @media screen and (orientation:landscape) and (max-aspect-ratio: 7/5) {
-    .bighouse .statusbar .statuslink {
+    .grambot .statusbar .statuslink {
 	height: 12vh;
     }
 }

@@ -9,7 +9,7 @@
     module.exports = factory();
   } else {
     // Browser globals (root is window)
-    root.bighouseLabel = factory();
+    root.grambotLabel = factory();
   }
 }(this, function () {
   "use strict";

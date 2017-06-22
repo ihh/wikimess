@@ -1,12 +1,12 @@
-var BigHouse = (function() {
+var GramBot = (function() {
   var proto = function (config) {
-    var bh = this
+    var gb = this
     config = config || {}
     $.extend (this, config)
-    this.Label = bighouseLabel
+    this.Label = grambotLabel
 
     this.container = $('#'+this.containerID)
-      .addClass("bighouse")
+      .addClass("grambot")
 
     this.localStorage = { playerLogin: undefined,
                           soundVolume: .5,
@@ -24,10 +24,10 @@ var BigHouse = (function() {
 
     this.preloadSounds.forEach (this.loadSound)
     io.socket.on('disconnect', function() {
-      if (bh.suppressDisconnectWarning)
+      if (gb.suppressDisconnectWarning)
         location.reload()
       else
-        bh.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
+        gb.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
 			     location.reload.bind (location, true))
     })
 
@@ -52,8 +52,8 @@ var BigHouse = (function() {
 
   $.extend (proto.prototype, {
     // default constants
-    containerID: 'bighouse',
-    localStorageKey: 'bighouse',
+    containerID: 'grambot',
+    localStorageKey: 'grambot',
     iconPrefix: '/images/icons/',
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
@@ -258,7 +258,7 @@ var BigHouse = (function() {
 
     callWithSoundEffect: function (callback, sfx, elementToDisable) {
       sfx = sfx || 'select'
-      var bh = this
+      var gb = this
       return function (evt) {
         evt.preventDefault()
         evt.stopPropagation()
@@ -268,8 +268,8 @@ var BigHouse = (function() {
           elementToDisable.addClass('already-clicked')
         }
         if (sfx.length)
-          bh.selectSound = bh.playSound (sfx)
-        callback.call (bh, evt)
+          gb.selectSound = gb.playSound (sfx)
+        callback.call (gb, evt)
       }
     },
 
@@ -278,7 +278,7 @@ var BigHouse = (function() {
     },
 
     makeLink: function (text, callback, sfx, allowMultipleClicks) {
-      var bh = this
+      var gb = this
       sfx = sfx || 'select'
       var link = $('<a href="#">')
           .text (text)
@@ -297,7 +297,7 @@ var BigHouse = (function() {
     },
 
     setPage: function (page) {
-      var bh = this
+      var gb = this
       if (this.verbose.page)
 	console.log ("Changing view from " + this.page + " to " + page)
       
@@ -311,34 +311,34 @@ var BigHouse = (function() {
 
       return def
         .then (function() {
-          bh.page = page
+          gb.page = page
         })
     },
 
     // login menu
     showLoginPage: function() {
-      var bh = this
+      var gb = this
       this.setPage ('login')
         .then (function() {
-          bh.container
+          gb.container
             .empty()
             .append ($('<div class="inputbar">')
                      .append ($('<form>')
                               .append ($('<label for="player">')
                                        .text('Player name'))
-                              .append (bh.nameInput = $('<input name="player" type="text">')
-                                       .attr('maxlength', bh.maxPlayerNameLength))
+                              .append (gb.nameInput = $('<input name="player" type="text">')
+                                       .attr('maxlength', gb.maxPlayerNameLength))
                               .append ($('<label for="player">')
                                        .text('Password'))
-                              .append (bh.passwordInput = $('<input name="password" type="password">'))))
+                              .append (gb.passwordInput = $('<input name="password" type="password">'))))
             .append ($('<div class="menubar">')
                      .append ($('<ul>')
-                              .append (bh.makeListLink ('Log in', bh.doReturnLogin))
-                              .append (bh.makeListLink ('Sign up', bh.createPlayer))
-                              .append (bh.makeListLink ($('<img>').attr('src',bh.facebookButtonImageUrl), bh.REST_loginFacebook)
+                              .append (gb.makeListLink ('Log in', gb.doReturnLogin))
+                              .append (gb.makeListLink ('Sign up', gb.createPlayer))
+                              .append (gb.makeListLink ($('<img>').attr('src',gb.facebookButtonImageUrl), gb.REST_loginFacebook)
                                        .addClass("noborder"))))
-          if (bh.playerLogin)
-            bh.nameInput.val (bh.playerLogin)
+          if (gb.playerLogin)
+            gb.nameInput.val (gb.playerLogin)
         })
     },
 
@@ -377,50 +377,50 @@ var BigHouse = (function() {
     },
 
     doLogin: function (showNextPage) {
-      var bh = this
+      var gb = this
       var fail = this.showLoginPage.bind (this)
       this.validatePlayerName
       (function() {
-        bh.REST_postLogin (bh.playerLogin, bh.playerPassword)
+        gb.REST_postLogin (gb.playerLogin, gb.playerPassword)
           .done (function (data) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('doLogin:', data)
 	    if (!data.player)
-              bh.showModalMessage (data.message, fail)
+              gb.showModalMessage (data.message, fail)
 	    else {
-              bh.selectSound.stop()
-              bh.playSound ('login')
-	      bh.playerID = data.player.id
-              bh.playerLogin = data.player.name
-              bh.playerName = data.player.displayName
-              bh.socket_getPlayerSubscribe (bh.playerID)
+              gb.selectSound.stop()
+              gb.playSound ('login')
+	      gb.playerID = data.player.id
+              gb.playerLogin = data.player.name
+              gb.playerName = data.player.displayName
+              gb.socket_getPlayerSubscribe (gb.playerID)
                 .then (function() {
-                  showNextPage.call(bh)
+                  showNextPage.call(gb)
                 })
 	    }
           })
           .fail (function (err) {
-	    bh.showModalWebError (err, fail)
+	    gb.showModalWebError (err, fail)
           })
       }, fail)
     },
 
     createPlayer: function() {
-      var bh = this
+      var gb = this
       var fail = this.showLoginPage.bind (this)
       this.validatePlayerName
       (function() {
-        bh.REST_postPlayer (bh.playerLogin, bh.playerPassword)
+        gb.REST_postPlayer (gb.playerLogin, gb.playerPassword)
           .done (function (data) {
-	    bh.selectSound.stop()
-	    bh.playSound ('login')
-	    bh.doInitialLogin()
+	    gb.selectSound.stop()
+	    gb.playSound ('login')
+	    gb.doInitialLogin()
           })
           .fail (function (err) {
 	    if (err.status == 400)
-              bh.showModalMessage ("A player with that name already exists", fail)
+              gb.showModalMessage ("A player with that name already exists", fail)
 	    else
-              bh.showModalWebError (err, fail)
+              gb.showModalWebError (err, fail)
           })
       }, fail)
     },
@@ -450,9 +450,9 @@ var BigHouse = (function() {
     },
 
     reloadOnFail: function() {
-      var bh = this
+      var gb = this
       return function (err) {
-        bh.showModalWebError (err, bh.reloadCurrentTab.bind(bh))
+        gb.showModalWebError (err, gb.reloadCurrentTab.bind(gb))
       }
     },
     
@@ -462,7 +462,7 @@ var BigHouse = (function() {
     },
 
     showNavBar: function (currentTab) {
-      var bh = this
+      var gb = this
       
       var navbar
       this.container
@@ -477,20 +477,20 @@ var BigHouse = (function() {
 	
       this.tabs.map (function (tab) {
         var span = $('<span>').addClass('navtab').addClass('nav-'+tab.name)
-        bh.getIconPromise(tab.icon)
+        gb.getIconPromise(tab.icon)
           .done (function (svg) {
             span.append ($(svg).addClass('navicon'))
 	    if (tab.name === 'inbox')
-	      span.append (bh.messageCountDiv)
+	      span.append (gb.messageCountDiv)
           })
           .fail (function (err) {
             console.log(err)
           })
         if (tab.name === currentTab) {
-          bh.currentTab = tab
+          gb.currentTab = tab
           span.addClass('active')
         } else
-          span.on ('click', bh.callWithSoundEffect (bh[tab.method]))
+          span.on ('click', gb.callWithSoundEffect (gb[tab.method]))
         navbar.append (span)
       })
     },
@@ -518,11 +518,11 @@ var BigHouse = (function() {
     },
 
     updateMessageCount: function() {
-      var bh = this
+      var gb = this
       this.REST_getPlayerInboxCount (this.playerID)
 	.then (function (result) {
-	  bh.messageCount = result.count
-	  bh.updateMessageCountDiv()
+	  gb.messageCount = result.count
+	  gb.updateMessageCountDiv()
 	})
     },
 
@@ -549,7 +549,7 @@ var BigHouse = (function() {
     
     // log out
     doLogout: function() {
-      var bh = this
+      var gb = this
       delete this.symbolCache
       delete this.lastPlayerSearch
       delete this.playerSearchResults
@@ -562,112 +562,112 @@ var BigHouse = (function() {
     
     // settings menu
     showSettingsPage: function() {
-      var bh = this
+      var gb = this
 
       this.setPage ('settings')
         .then (function() {
-          bh.showNavBar ('settings')
-          bh.container
+          gb.showNavBar ('settings')
+          gb.container
             .append ($('<div class="menubar">')
                      .append ($('<ul>')
-                              .append (bh.makeListLink ('Name', bh.showPlayerConfigPage))
-                              .append (bh.makeListLink ('Audio', bh.showAudioPage))
-                              .append (bh.makeListLink ('Themes', bh.showThemesPage))
-                              .append (bh.makeListLink ('Log out', bh.doLogout))))
+                              .append (gb.makeListLink ('Name', gb.showPlayerConfigPage))
+                              .append (gb.makeListLink ('Audio', gb.showAudioPage))
+                              .append (gb.makeListLink ('Themes', gb.showThemesPage))
+                              .append (gb.makeListLink ('Log out', gb.doLogout))))
         })
     },
     
     // settings
     showPlayerConfigPage: function() {
-      var bh = this
+      var gb = this
       this.pushView ('name')
         .then (function() {
-          var backLink = bh.makeLink ('Back', function() {
+          var backLink = gb.makeLink ('Back', function() {
             backLink.off()
-            bh.nameInput.prop('disabled',true)
-            var newName = bh.nameInput.val()
+            gb.nameInput.prop('disabled',true)
+            var newName = gb.nameInput.val()
             if (newName.length) {
-              bh.playerName = newName
-              bh.REST_postPlayerConfig (bh.playerID, { displayName: newName })
+              gb.playerName = newName
+              gb.REST_postPlayerConfig (gb.playerID, { displayName: newName })
             }
-            bh.popView()
+            gb.popView()
           })
-          bh.container
-            .append (bh.makePageTitle ("Player details"))
+          gb.container
+            .append (gb.makePageTitle ("Player details"))
             .append ($('<div class="menubar">')
                      .append ($('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Full name'))
-                                       .append (bh.nameInput = $('<input type="text">')
-                                                .val(bh.playerName)
-                                                .attr('maxlength', bh.maxPlayerNameLength))))
+                                       .append (gb.nameInput = $('<input type="text">')
+                                                .val(gb.playerName)
+                                                .attr('maxlength', gb.maxPlayerNameLength))))
                      .append (backLink))
         })
     },
 
     showThemesPage: function() {
-      var bh = this
+      var gb = this
 
       var fieldset
       this.pushView ('theme')
         .then (function() {
-          bh.container
-            .append (bh.makePageTitle ("Themes"))
+          gb.container
+            .append (gb.makePageTitle ("Themes"))
             .append ($('<div class="menubar">')
                      .append (fieldset = $('<fieldset class="themegroup">')
                               .append ($('<legend>').text("Select theme")))
-                     .append (bh.makeLink ('Back', bh.popView)))
+                     .append (gb.makeLink ('Back', gb.popView)))
 
           var label = {}, config = { silent: true }
-          bh.themes.forEach (function (theme) {
+          gb.themes.forEach (function (theme) {
             var id = 'theme-' + theme.style
             fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
 	      .append (label[theme.style] = $('<label for="'+id+'" class="'+theme.style+'">')
                        .text(theme.text)
-                       .on('click',bh.themeSelector(theme.style,config)))
+                       .on('click',gb.themeSelector(theme.style,config)))
           })
 
-          label[bh.theme].click()
+          label[gb.theme].click()
           config.silent = false
         })
     },
 
     themeSelector: function(style,config) {
-      var bh = this
-      var theme = bh.themes.find (function(t) { return t.style === style })
+      var gb = this
+      var theme = gb.themes.find (function(t) { return t.style === style })
       return function() {
         if (!(config && config.silent))
-          bh.playSound ('select')
-	bh.themes.forEach (function (oldTheme) {
-          bh.container.removeClass (oldTheme.style)
+          gb.playSound ('select')
+	gb.themes.forEach (function (oldTheme) {
+          gb.container.removeClass (oldTheme.style)
 	})
-        bh.container.addClass (theme.style)
-        bh.theme = theme.style
-        bh.themeInfo = theme
-        bh.writeLocalStorage ('theme')
+        gb.container.addClass (theme.style)
+        gb.theme = theme.style
+        gb.themeInfo = theme
+        gb.writeLocalStorage ('theme')
       }
     },
 
     showAudioPage: function() {
-      var bh = this
+      var gb = this
 
       this.pushView ('audio')
         .then (function() {
           var soundInput
-          bh.container
-            .append (bh.makePageTitle ("Audio settings"))
+          gb.container
+            .append (gb.makePageTitle ("Audio settings"))
             .append ($('<div class="menubar">')
                      .append ($('<div class="card">')
                               .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
                               .append ($('<span>').text("Sound FX volume")))
                      .append ($('<ul>')
-                              .append (bh.makeListLink ('Back', bh.popView))))
+                              .append (gb.makeListLink ('Back', gb.popView))))
 
-          soundInput.val (bh.soundVolume * 100)
+          soundInput.val (gb.soundVolume * 100)
           soundInput.on ('change', function() {
-            bh.soundVolume = soundInput.val() / 100
-            bh.playSound ('select')
-            bh.writeLocalStorage ('soundVolume')
+            gb.soundVolume = soundInput.val() / 100
+            gb.playSound ('select')
+            gb.writeLocalStorage ('soundVolume')
           })
 
           // restore disabled slide events for these controls
@@ -693,7 +693,7 @@ var BigHouse = (function() {
     },
 
     popView: function() {
-      var bh = this
+      var gb = this
       var poppedView = this.pushedViews.pop()
       if (this.verbose.page)
 	console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
@@ -702,137 +702,137 @@ var BigHouse = (function() {
       poppedView.elements.find('*').addBack().removeClass('pushed').removeClass('already-clicked')
       return this.setPage (poppedView.page)
         .then (function() {
-          bh.pageSuspend = poppedView.pageSuspend
-          bh.pageResume = poppedView.pageResume
-          bh.pageExit = poppedView.pageExit
-          if (bh.pageResume)
-            bh.pageResume()
+          gb.pageSuspend = poppedView.pageSuspend
+          gb.pageResume = poppedView.pageResume
+          gb.pageExit = poppedView.pageExit
+          if (gb.pageResume)
+            gb.pageResume()
         })
     },
 
     // compose message
     showComposePage: function (config) {
-      var bh = this
+      var gb = this
 
       this.setPage ('compose')
         .then (function() {
-          bh.showNavBar ('compose')
+          gb.showNavBar ('compose')
 
-          bh.playerSearchInput = $('<textarea class="recipient">')
-          bh.playerSearchResultsDiv = $('<div class="results">')
+          gb.playerSearchInput = $('<textarea class="recipient">')
+          gb.playerSearchResultsDiv = $('<div class="results">')
 
-          bh.symbolSearchInput = $('<textarea class="symbol">')
-          bh.symbolSearchResultsDiv = $('<div class="results">')
+          gb.symbolSearchInput = $('<textarea class="symbol">')
+          gb.symbolSearchResultsDiv = $('<div class="results">')
 
           function sanitizeInput() {
-            var text = bh.symbolSearchInput.val()
-            bh.symbolSearchInput.val (text === '' || text === '#' ? '' : bh.sanitizeSymbolName (text))
+            var text = gb.symbolSearchInput.val()
+            gb.symbolSearchInput.val (text === '' || text === '#' ? '' : gb.sanitizeSymbolName (text))
           }
-          bh.symbolSearchInput
+          gb.symbolSearchInput
             .on('keyup',sanitizeInput)
             .on('change',sanitizeInput)
 
           if (config.title)
-            bh.lastMessageTitleInputText = config.title
+            gb.lastMessageTitleInputText = config.title
           
-          bh.messageTitleInput = $('<textarea class="title">')
-            .val (bh.lastMessageTitleInputText)
+          gb.messageTitleInput = $('<textarea class="title">')
+            .val (gb.lastMessageTitleInputText)
             .on ('keyup', function() {
-              bh.lastMessageTitleInputText = bh.messageTitleInput.val()
+              gb.lastMessageTitleInputText = gb.messageTitleInput.val()
             })
 
           if (config.body)
-            bh.lastMessageBody = config.body
+            gb.lastMessageBody = config.body
 
-          bh.messageBodyDiv = $('<div class="messagebody">')
-            .text (bh.lastMessageBody)
-          bh.messageControlsDiv = $('<div class="messagecontrols">')
+          gb.messageBodyDiv = $('<div class="messagebody">')
+            .text (gb.lastMessageBody)
+          gb.messageControlsDiv = $('<div class="messagecontrols">')
 
-          bh.container
+          gb.container
             .append ($('<div class="compose">')
                      .append ($('<div class="messageheader">')
                               .append ($('<div class="row">')
                                        .append ($('<span class="label">').text ('To:'),
-                                                $('<span class="input">').append (bh.playerSearchInput,
-                                                                                  bh.playerSearchResultsDiv)),
+                                                $('<span class="input">').append (gb.playerSearchInput,
+                                                                                  gb.playerSearchResultsDiv)),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Source:'),
-                                                $('<span class="input">').append (bh.symbolSearchInput,
-                                                                                 bh.symbolSearchResultsDiv)),
+                                                $('<span class="input">').append (gb.symbolSearchInput,
+                                                                                 gb.symbolSearchResultsDiv)),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
-                                                $('<span class="input">').append (bh.messageTitleInput))),
-                              bh.messageBodyDiv,
-                              bh.messageControlsDiv.append
+                                                $('<span class="input">').append (gb.messageTitleInput))),
+                              gb.messageBodyDiv,
+                              gb.messageControlsDiv.append
                               ($('<span>').html
-                               (bh.makeIconButton ('randomize', function() {
-                                 bh.generateMessageBody()
+                               (gb.makeIconButton ('randomize', function() {
+                                 gb.generateMessageBody()
                                })),
                                ($('<span>').html
-                                (bh.makeIconButton ('message', function() {
+                                (gb.makeIconButton ('message', function() {
                                 }))),
                                ($('<span>').html
-                                (bh.makeIconButton ('outbox', function() {
+                                (gb.makeIconButton ('outbox', function() {
                                 }))),
                                ($('<span>').html
-                                (bh.makeIconButton ('send', function() {
+                                (gb.makeIconButton ('send', function() {
                                 }))))))
 
-          bh.restoreScrolling (bh.messageBodyDiv)
+          gb.restoreScrolling (gb.messageBodyDiv)
 
           if (config.recipient) {
-            bh.composeRecipient = config.recipient
-            bh.lastComposePlayerSearchText = config.recipient.name
+            gb.composeRecipient = config.recipient
+            gb.lastComposePlayerSearchText = config.recipient.name
           }
 
-          bh.playerSearchInput.attr ('placeholder', 'Player name')
-            .val (bh.lastComposePlayerSearchText)
-          bh.playerSearchInput
-            .on ('keyup', bh.doComposePlayerSearch.bind(bh))
-            .on ('click', bh.doComposePlayerSearch.bind(bh,true))
-          if (!bh.composeRecipient) {
-            delete bh.lastComposePlayerSearchText
-            bh.doComposePlayerSearch()
+          gb.playerSearchInput.attr ('placeholder', 'Player name')
+            .val (gb.lastComposePlayerSearchText)
+          gb.playerSearchInput
+            .on ('keyup', gb.doComposePlayerSearch.bind(gb))
+            .on ('click', gb.doComposePlayerSearch.bind(gb,true))
+          if (!gb.composeRecipient) {
+            delete gb.lastComposePlayerSearchText
+            gb.doComposePlayerSearch()
           }
 
           if (config.symbol)
-            bh.composeSymbol = config.symbol
+            gb.composeSymbol = config.symbol
           // doing the following test separately of config.symbol guards against symbol being renamed
-          if (bh.composeSymbol && bh.symbolName[bh.composeSymbol.id])
-            bh.lastComposeSymbolSearchText = bh.symbolName[bh.composeSymbol.id]
+          if (gb.composeSymbol && gb.symbolName[gb.composeSymbol.id])
+            gb.lastComposeSymbolSearchText = gb.symbolName[gb.composeSymbol.id]
           
-          bh.symbolSearchInput.attr ('placeholder', 'Symbol name')
-            .val (bh.lastComposeSymbolSearchText ? ('#' + bh.lastComposeSymbolSearchText) : undefined)
-          bh.symbolSearchInput
-            .on ('keyup', bh.doComposeSymbolSearch.bind(bh))
-            .on ('click', bh.doComposeSymbolSearch.bind(bh,true))
-          if (!bh.composeSymbol) {
-            delete bh.lastComposeSymbolSearchText
-            bh.doComposeSymbolSearch()
+          gb.symbolSearchInput.attr ('placeholder', 'Symbol name')
+            .val (gb.lastComposeSymbolSearchText ? ('#' + gb.lastComposeSymbolSearchText) : undefined)
+          gb.symbolSearchInput
+            .on ('keyup', gb.doComposeSymbolSearch.bind(gb))
+            .on ('click', gb.doComposeSymbolSearch.bind(gb,true))
+          if (!gb.composeSymbol) {
+            delete gb.lastComposeSymbolSearchText
+            gb.doComposeSymbolSearch()
           }
         })
     },
 
     doComposePlayerSearch: function (forceNewSearch) {
-      var bh = this
+      var gb = this
       var searchText = this.playerSearchInput.val()
-      delete bh.composeRecipient
+      delete gb.composeRecipient
       if (forceNewSearch || searchText !== this.lastComposePlayerSearchText) {
         this.lastComposePlayerSearchText = searchText
         if (searchText.length)
           this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText)
           .then (function (result) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('doComposePlayerSearch:', result)
-            bh.showComposePlayerSearchResults (result.results)
+            gb.showComposePlayerSearchResults (result.results)
           })
         else
-          bh.showComposePlayerSearchResults()
+          gb.showComposePlayerSearchResults()
       }
     },
     
     showComposePlayerSearchResults: function (results) {
-      var bh = this
+      var gb = this
       this.playerSearchResultsDiv
         .empty()
       if (results) {
@@ -841,9 +841,9 @@ var BigHouse = (function() {
           .append (results.map (function (player) {
             return $('<span class="name">').text (player.name)
               .on ('click', function() {
-                bh.playerSearchResultsDiv.empty()
-                bh.composeRecipient = player
-                bh.playerSearchInput.val (bh.lastComposePlayerSearchText = player.name)
+                gb.playerSearchResultsDiv.empty()
+                gb.composeRecipient = player
+                gb.playerSearchInput.val (gb.lastComposePlayerSearchText = player.name)
               })
           }))
         else
@@ -852,25 +852,25 @@ var BigHouse = (function() {
     },
     
     doComposeSymbolSearch: function (forceNewSearch) {
-      var bh = this
+      var gb = this
       var searchText = this.symbolSearchInput.val().substr(1)
-      delete bh.composeSymbol
+      delete gb.composeSymbol
       if (forceNewSearch || searchText !== this.lastComposeSymbolSearchText) {
         this.lastComposeSymbolSearchText = searchText
         if (searchText.length)
           this.REST_postPlayerSearchSymbolsOwned (this.playerID, searchText)
           .then (function (result) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('doComposeSymbolSearch:', result)
-            bh.showComposeSymbolSearchResults (result.results)
+            gb.showComposeSymbolSearchResults (result.results)
           })
         else
-          bh.showComposeSymbolSearchResults()
+          gb.showComposeSymbolSearchResults()
       }
     },
     
     showComposeSymbolSearchResults: function (results) {
-      var bh = this
+      var gb = this
       this.symbolSearchResultsDiv
         .empty()
       if (results) {
@@ -880,12 +880,12 @@ var BigHouse = (function() {
             return $('<span class="lhslink">')
               .append ('#', $('<span class="name">').text (symbol.name))
               .on ('click', function() {
-                bh.symbolSearchResultsDiv.empty()
-                bh.composeSymbol = symbol
-                bh.symbolSearchInput.val ('#' + (bh.lastComposeSymbolSearchText = symbol.name))
-                if (!bh.messageTitleInput.val().length)
-                  bh.messageTitleInput.val (symbol.name.replace (/_/g, ' '))
-                bh.generateMessageBody()
+                gb.symbolSearchResultsDiv.empty()
+                gb.composeSymbol = symbol
+                gb.symbolSearchInput.val ('#' + (gb.lastComposeSymbolSearchText = symbol.name))
+                if (!gb.messageTitleInput.val().length)
+                  gb.messageTitleInput.val (symbol.name.replace (/_/g, ' '))
+                gb.generateMessageBody()
               })
           }))
         else
@@ -894,26 +894,26 @@ var BigHouse = (function() {
     },
     
     generateMessageBody: function() {
-      var bh = this
-      bh.messageBodyDiv.empty()
-      bh.lastMessageBody = ''
-      if (bh.composeSymbol)
-        bh.REST_expandPlayerSymbol (bh.playerID, bh.composeSymbol.id)
+      var gb = this
+      gb.messageBodyDiv.empty()
+      gb.lastMessageBody = ''
+      if (gb.composeSymbol)
+        gb.REST_expandPlayerSymbol (gb.playerID, gb.composeSymbol.id)
         .then (function (result) {
-          if (bh.verbose.server)
+          if (gb.verbose.server)
             console.log ('generateMessageBody:', result)
           if (result.expansion)
-            bh.messageBodyDiv.text (bh.lastMessageBody = result.expansion)
+            gb.messageBodyDiv.text (gb.lastMessageBody = result.expansion)
         })
     },
 
     // inbox
     showInboxPage: function() {
-      var bh = this
+      var gb = this
 
       this.setPage ('inbox')
         .then (function() {
-          bh.showNavBar ('inbox')
+          gb.showNavBar ('inbox')
         })
     },
 
@@ -940,42 +940,42 @@ var BigHouse = (function() {
 
     // status
     showStatusPage: function() {
-      var bh = this
+      var gb = this
       this.setPage ('status')
         .then (function() {
-          bh.showNavBar ('status')
-          bh.showGameStatusPage (bh.REST_getPlayerStatus)
-          bh.detailBarDiv.prepend ($('<div class="locbar">').html($('<h1>').text(bh.playerName)))
+          gb.showNavBar ('status')
+          gb.showGameStatusPage (gb.REST_getPlayerStatus)
+          gb.detailBarDiv.prepend ($('<div class="locbar">').html($('<h1>').text(gb.playerName)))
         })
     },
 
     showOtherStatusPage: function (follow) {
-      var bh = this
+      var gb = this
       this.setPage ('otherStatus')
         .then (function() {
-          bh.otherStatusID = follow.id
-          bh.container.empty()
-          bh.makeFollowDiv (follow)
+          gb.otherStatusID = follow.id
+          gb.container.empty()
+          gb.makeFollowDiv (follow)
           if (!follow.human) follow.buttonDiv.hide()
-          bh.locBarDiv = $('<div class="locbar">')
-          bh.showGameStatusPage (bh.REST_getPlayerStatusOther.bind (bh, bh.playerID, follow.id),
+          gb.locBarDiv = $('<div class="locbar">')
+          gb.showGameStatusPage (gb.REST_getPlayerStatusOther.bind (gb, gb.playerID, follow.id),
                                    function (status) {
                                      if (status.following)
                                        follow.makeUnfollowButton()
-                                     bh.detailBarDiv
+                                     gb.detailBarDiv
                                        .append ($('<div class="statusdiv">')
-                                                .append (bh.locBarDiv))
+                                                .append (gb.locBarDiv))
                                    })
-          bh.detailBarDiv.prepend (follow.followDiv)
-          bh.container
+          gb.detailBarDiv.prepend (follow.followDiv)
+          gb.container
 	    .append ($('<div class="backbar">')
 		     .append ($('<span>')
-			      .html (bh.makeLink ('Back', bh.reloadCurrentTab))))
+			      .html (gb.makeLink ('Back', gb.reloadCurrentTab))))
         })
     },
 
     showGameStatusPage: function (getMethod, callback) {
-      var bh = this
+      var gb = this
       this.container
         .append (this.detailBarDiv = $('<div class="detailbar">'))
 
@@ -983,7 +983,7 @@ var BigHouse = (function() {
 
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
-	  if (bh.verbose.server)
+	  if (gb.verbose.server)
 	    console.log ('showGameStatusPage:', status)
           // render status
           if (callback)
@@ -1007,18 +1007,18 @@ var BigHouse = (function() {
     },
     
     saveCurrentEdit: function() {
-      var bh = this
+      var gb = this
       return this.finishLastSave()
         .then (function() {
           var def
-          if (bh.unfocusAndSave) {
-            def = bh.unfocusAndSave()
-            delete bh.unfocusAndSave
+          if (gb.unfocusAndSave) {
+            def = gb.unfocusAndSave()
+            delete gb.unfocusAndSave
           } else {
             def = $.Deferred()
             def.resolve()
           }
-          bh.lastSavePromise = def
+          gb.lastSavePromise = def
           return def
         })
     },
@@ -1027,7 +1027,7 @@ var BigHouse = (function() {
       var button = $('<span>').addClass('button').text(iconName)
       this.getIconPromise (this.iconFilename[iconName])
         .done (function (svg) {
-          svg = bh.colorizeIcon (svg, color || bh.themeInfo.iconColor)
+          svg = gb.colorizeIcon (svg, color || gb.themeInfo.iconColor)
           button.html ($(svg))
         })
       if (callback)
@@ -1036,7 +1036,7 @@ var BigHouse = (function() {
     },
 
     populateEditableSpan: function (div, props) {
-      var bh = this
+      var gb = this
       var sanitize = props.sanitize || function(x) { return x }
       var parse = props.parse || sanitize
       var renderText = props.renderText || function(x) { return x }
@@ -1045,7 +1045,7 @@ var BigHouse = (function() {
       var editCallback = function (evt) {
         evt.stopPropagation()
         div.off ('click')
-        bh.saveCurrentEdit()
+        gb.saveCurrentEdit()
           .then (function() {
             var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
             var input = $('<textarea>').val(oldText).attr('rows',divRows)
@@ -1061,7 +1061,7 @@ var BigHouse = (function() {
               })
             if (props.maxLength)
               input.attr ('maxlength', props.maxLength)
-            bh.unfocusAndSave = function() {
+            gb.unfocusAndSave = function() {
               var def
               var newText = input.val()
               if (newText !== oldText) {
@@ -1076,7 +1076,7 @@ var BigHouse = (function() {
               }
               return def
                 .then (function() {
-                  bh.populateEditableSpan (div, props)
+                  gb.populateEditableSpan (div, props)
                 })
             }
             div.html (input)
@@ -1088,18 +1088,18 @@ var BigHouse = (function() {
       div.empty().append (renderHtml (props.content), buttonsDiv)
       
       if (props.isConstant)
-        buttonsDiv.append (bh.makeIconButton ('locked'))
+        buttonsDiv.append (gb.makeIconButton ('locked'))
       else {
         div.on ('click', editCallback)
-        buttonsDiv.append (bh.makeIconButton ('edit', editCallback))
+        buttonsDiv.append (gb.makeIconButton ('edit', editCallback))
         if (props.destroyCallback)
-          buttonsDiv.append (bh.makeIconButton ('destroy', function (evt) {
+          buttonsDiv.append (gb.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
-            bh.saveCurrentEdit()
+            gb.saveCurrentEdit()
               .then (function() {
                 
                 if (props.confirmDestroy())
-                  bh.lastSavePromise = props.destroyCallback()
+                  gb.lastSavePromise = props.destroyCallback()
               })
           }))
       }
@@ -1114,52 +1114,52 @@ var BigHouse = (function() {
     },
 
     saveSymbol: function (symbol) {
-      var bh = this
-      return bh.finishLastSave()
+      var gb = this
+      return gb.finishLastSave()
         .then (function() {
-          bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, bh.symbolName[symbol.id], symbol.rules)
+          gb.lastSavePromise = gb.REST_putPlayerSymbol (gb.playerID, symbol.id, gb.symbolName[symbol.id], symbol.rules)
             .then (function (result) {
-              if (bh.verbose.server)
+              if (gb.verbose.server)
                 console.log('putPlayerSymbol:',result)
-              $.extend (bh.symbolName, result.name)
+              $.extend (gb.symbolName, result.name)
               return result.symbol
             })
-          return bh.lastSavePromise
+          return gb.lastSavePromise
         })
     },
 
     renameSymbol: function (symbol, newName) {
-      var bh = this
-      return bh.finishLastSave()
+      var gb = this
+      return gb.finishLastSave()
         .then (function() {
-          bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, newName, symbol.rules)
+          gb.lastSavePromise = gb.REST_putPlayerSymbol (gb.playerID, symbol.id, newName, symbol.rules)
             .then (function (result) {
-              if (bh.verbose.server)
+              if (gb.verbose.server)
                 console.log('putPlayerSymbol:',result)
-              bh.updateSymbolCache (result)
+              gb.updateSymbolCache (result)
             }).fail (function (err) {
-              var reload = bh.reloadCurrentTab.bind(bh)
+              var reload = gb.reloadCurrentTab.bind(gb)
 	      if (err.status == 400)
-                bh.showModalMessage ("A symbol with that name already exists", reload)
+                gb.showModalMessage ("A symbol with that name already exists", reload)
               else
-                bh.showModalWebError (err, reload)
+                gb.showModalWebError (err, reload)
             })
         })
     },
 
     updateSymbolCache: function (result) {
-      var bh = this
+      var gb = this
       var symbol = result.symbol
       var oldName = this.symbolName[symbol.id]
       $.extend (this.symbolName, result.name)
       if (oldName) {
         if (oldName !== symbol.name) {
-          bh.symbolName[symbol.id] = symbol.name
-          bh.ruleDiv[symbol.id].remove()
-          bh.placeGrammarRuleDiv (symbol)
-          bh.referringSymbols(symbol).forEach (function (lhsSymbol) {
+          gb.symbolName[symbol.id] = symbol.name
+          gb.ruleDiv[symbol.id].remove()
+          gb.placeGrammarRuleDiv (symbol)
+          gb.referringSymbols(symbol).forEach (function (lhsSymbol) {
             if (lhsSymbol.id !== symbol.id)
-              bh.populateGrammarRuleDiv (bh.ruleDiv[lhsSymbol.id], lhsSymbol)
+              gb.populateGrammarRuleDiv (gb.ruleDiv[lhsSymbol.id], lhsSymbol)
           })
         } else if (this.symbolCache[symbol.id]) {
           this.symbolCache[symbol.id] = symbol
@@ -1170,7 +1170,7 @@ var BigHouse = (function() {
     },
 
     parseRhs: function (rhs) {
-      var bh = this
+      var gb = this
       var regex = /((.*?)#([A-Za-z0-9_]+)|(.+))/g, match
       var parsed = []
       var name2id = this.symbolNameToID()
@@ -1203,29 +1203,29 @@ var BigHouse = (function() {
     },
     
     makeGrammarRhsDiv: function (symbol, ruleDiv, rhs, n) {
-      var span = bh.makeEditableSpan ({ className: 'rhs',
+      var span = gb.makeEditableSpan ({ className: 'rhs',
                                         content: rhs,
-                                        isConstant: !bh.symbolEditableByPlayer (symbol),
+                                        isConstant: !gb.symbolEditableByPlayer (symbol),
                                         confirmDestroy: function() {
-                                          return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + bh.symbolName[symbol.id] + '?')
+                                          return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + gb.symbolName[symbol.id] + '?')
                                         },
                                         destroyCallback: function() {
                                           symbol.rules.splice(n,1)
-                                          bh.populateGrammarRuleDiv (ruleDiv, symbol)
-                                          return bh.saveSymbol (symbol)
+                                          gb.populateGrammarRuleDiv (ruleDiv, symbol)
+                                          return gb.saveSymbol (symbol)
                                         },
                                         storeCallback: function (newRhs) {
                                           symbol.rules[n] = newRhs
-                                          return bh.saveSymbol (symbol)
+                                          return gb.saveSymbol (symbol)
                                             .then (function (newSymbol) {
                                               return newSymbol.rules[n]
                                             })
                                         },
-                                        parse: bh.parseRhs.bind(bh),
+                                        parse: gb.parseRhs.bind(gb),
                                         renderText: function (rhs) {
                                           return rhs.map (function (rhsSym) {
                                             return (typeof(rhsSym) === 'object'
-                                                    ? ('#' + (bh.symbolName[rhsSym.id] || rhsSym.name))
+                                                    ? ('#' + (gb.symbolName[rhsSym.id] || rhsSym.name))
                                                     : rhsSym)
                                           }).join('')
                                         },
@@ -1236,14 +1236,14 @@ var BigHouse = (function() {
                                               if (typeof(rhsSym) === 'object') {
                                                 var name = $('<span class="name">')
                                                 span.addClass('lhslink').append ('#', name)
-                                                if (typeof(rhsSym.id) !== 'undefined' && !bh.symbolName[rhsSym.id]) {
+                                                if (typeof(rhsSym.id) !== 'undefined' && !gb.symbolName[rhsSym.id]) {
                                                   console.log('oops; empty symbol name')
                                                 }
                                                 if (typeof(rhsSym.id) !== 'undefined')
-                                                  name.text (bh.symbolName[rhsSym.id])
+                                                  name.text (gb.symbolName[rhsSym.id])
                                                   .on ('click', function (evt) {
                                                     evt.stopPropagation()
-                                                    bh.loadGrammarSymbol (rhsSym)
+                                                    gb.loadGrammarSymbol (rhsSym)
                                                   })
                                                 else {
                                                   console.log('renderHtml: using placeholder for '+rhsSym.name)
@@ -1259,16 +1259,16 @@ var BigHouse = (function() {
     },
     
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
-      var bh = this
-      var lhs = bh.symbolName[symbol.id]
-      var editable = bh.symbolEditableByPlayer (symbol)
-      var owned = bh.symbolOwnedByPlayer (symbol)
+      var gb = this
+      var lhs = gb.symbolName[symbol.id]
+      var editable = gb.symbolEditableByPlayer (symbol)
+      var owned = gb.symbolOwnedByPlayer (symbol)
       ruleDiv.empty()
         .append (this.makeEditableSpan
                  ({ className: 'lhs',
                     content: lhs,
                     renderText: function(lhs) { return '#' + lhs },
-                    sanitize: bh.sanitizeSymbolName,
+                    sanitize: gb.sanitizeSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
                       return (keycode >= 65 && keycode <= 90)   // a...z
@@ -1281,74 +1281,74 @@ var BigHouse = (function() {
                     description: 'symbol #' + lhs + ' and all its expansions',
                     isConstant: !editable,
                     confirmDestroy: function() {
-                      return window.confirm('Relinquish ownership of symbol #' + bh.symbolName[symbol.id] + '?')
+                      return window.confirm('Relinquish ownership of symbol #' + gb.symbolName[symbol.id] + '?')
                     },
                     destroyCallback: owned && function() {
-                      bh.removeGrammarRule (symbol)
-                      return bh.REST_deletePlayerSymbol (bh.playerID, symbol.id)
+                      gb.removeGrammarRule (symbol)
+                      return gb.REST_deletePlayerSymbol (gb.playerID, symbol.id)
                     },
                     storeCallback: function (newLhs) {
-                      return bh.renameSymbol (symbol, newLhs)
+                      return gb.renameSymbol (symbol, newLhs)
                     },
                     otherButtonDivs: (owned
                              ? []
-                             : [ bh.makeIconButton
+                             : [ gb.makeIconButton
                                  ('hide', function (evt) {
                                    evt.stopPropagation()
-                                   bh.saveCurrentEdit()
+                                   gb.saveCurrentEdit()
                                      .then (function() {
-                                       bh.removeGrammarRule (symbol)
+                                       gb.removeGrammarRule (symbol)
                                      })
                                  })])
-                    .concat ([bh.makeIconButton
+                    .concat ([gb.makeIconButton
                               ('randomize', function (evt) {
                                 evt.stopPropagation()
-                                bh.saveCurrentEdit()
+                                gb.saveCurrentEdit()
                                   .then (function() {
-                                    bh.saveCurrentEdit()
+                                    gb.saveCurrentEdit()
                                       .then (function() {
-                                        bh.REST_expandPlayerSymbol (bh.playerID, symbol.id)
+                                        gb.REST_expandPlayerSymbol (gb.playerID, symbol.id)
                                           .then (function (result) {
-                                            if (bh.verbose.server)
+                                            if (gb.verbose.server)
                                               console.log ('populateGrammarRuleDiv:', result)
-                                            bh.showingHelp = false
-		                            bh.infoPaneTitle.text ('#' + bh.symbolName[symbol.id])
-		                            bh.infoPaneContent.text (result.expansion)
-                                            bh.infoPaneControls
-                                              .html (bh.makeIconButton
+                                            gb.showingHelp = false
+		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
+		                            gb.infoPaneContent.text (result.expansion)
+                                            gb.infoPaneControls
+                                              .html (gb.makeIconButton
                                                      ('compose',
                                                       function (evt) {
                                                         evt.stopPropagation()
-                                                        bh.saveCurrentEdit()
+                                                        gb.saveCurrentEdit()
                                                           .then (function() {
-                                                            bh.showComposePage
+                                                            gb.showComposePage
                                                             ({ symbol: symbol,
-                                                               title: bh.symbolName[symbol.id].replace(/_/g,' '),
+                                                               title: gb.symbolName[symbol.id].replace(/_/g,' '),
                                                                body: result.expansion })
                                                           })
                                                       }))
-		                            bh.infoPane.show()
+		                            gb.infoPane.show()
                                           })
                                       })
                                   })
                               })])
                     .concat (editable
-                             ? [ bh.makeIconButton
+                             ? [ gb.makeIconButton
                                  ('create', function (evt) {
                                    evt.stopPropagation()
-                                   bh.saveCurrentEdit()
+                                   gb.saveCurrentEdit()
                                      .then (function() {
                                        var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                                       ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
+                                       ruleDiv.append (gb.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
                                        symbol.rules.push (newRhs)
-                                       bh.selectGrammarRule (symbol)
-                                       bh.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                                       gb.selectGrammarRule (symbol)
+                                       gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
                                      })
                                  }) ]
                              : [])
                   }),
                  symbol.rules.map (function (rhs, n) {
-                   return bh.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
+                   return gb.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
                  }))
     },
 
@@ -1357,20 +1357,20 @@ var BigHouse = (function() {
     },
 
     loadGrammarSymbol: function (symbol) {
-      var bh = this
-      bh.saveCurrentEdit()
+      var gb = this
+      gb.saveCurrentEdit()
         .then (function() {
-          if (bh.symbolCache[symbol.id])
-            bh.scrollGrammarTo (bh.symbolCache[symbol.id])
+          if (gb.symbolCache[symbol.id])
+            gb.scrollGrammarTo (gb.symbolCache[symbol.id])
           else
-            bh.socket_getPlayerSymbol (bh.playerID, symbol.id)
+            gb.socket_getPlayerSymbol (gb.playerID, symbol.id)
             .then (function (result) {
-              if (bh.verbose.server)
+              if (gb.verbose.server)
                 console.log('getPlayerSymbol:',result)
-              $.extend (bh.symbolName, result.name)
-              bh.symbolCache[result.symbol.id] = result.symbol
-              bh.placeGrammarRuleDiv (result.symbol)
-              bh.scrollGrammarTo (result.symbol)
+              $.extend (gb.symbolName, result.name)
+              gb.symbolCache[result.symbol.id] = result.symbol
+              gb.placeGrammarRuleDiv (result.symbol)
+              gb.scrollGrammarTo (result.symbol)
             })
         })
     },
@@ -1391,8 +1391,8 @@ var BigHouse = (function() {
     placeGrammarRuleDiv: function (symbol) {
       var ruleDiv = this.makeGrammarRuleDiv (symbol)
       var syms = this.cachedSymbols()
-      var name = bh.symbolName[symbol.id]
-      var nextSym = syms.find (function (s) { return bh.symbolName[s.id] > name })
+      var name = gb.symbolName[symbol.id]
+      var nextSym = syms.find (function (s) { return gb.symbolName[s.id] > name })
       if (typeof(nextSym) === 'undefined')
         this.grammarBarDiv.append (ruleDiv)
       else
@@ -1410,30 +1410,30 @@ var BigHouse = (function() {
     },
 
     selectGrammarRule: function (symbol) {
-      var bh = this
+      var gb = this
       $('.selected').removeClass('selected')
-      bh.ruleDiv[symbol.id].addClass('selected')
+      gb.ruleDiv[symbol.id].addClass('selected')
     },
     
     cachedSymbols: function() {
-      var bh = this
+      var gb = this
       return Object.keys(this.symbolCache).map (function (id) {
-        return bh.symbolCache[id]
-      }).sort (function (a, b) { return bh.symbolName[a.id] < bh.symbolName[b.id] ? -1 : +1 })
+        return gb.symbolCache[id]
+      }).sort (function (a, b) { return gb.symbolName[a.id] < gb.symbolName[b.id] ? -1 : +1 })
     },
 
     symbolNameToID: function() {
-      var bh = this
+      var gb = this
       var name2id = {}
       Object.keys(this.symbolName).forEach (function (id) {
-        name2id[bh.symbolName[id]] = parseInt (id)
+        name2id[gb.symbolName[id]] = parseInt (id)
       })
       return name2id
     },
 
     getSymbol: function (symbolName) {
-      var bh = this
-      return this.symbolCache[Object.keys(this.symbolName).find (function (id) { return bh.symbolName[id] === symbolName })]
+      var gb = this
+      return this.symbolCache[Object.keys(this.symbolName).find (function (id) { return gb.symbolName[id] === symbolName })]
     },
     
     lhsRefersTo: function (lhsSymbol, rhsSymbol) {
@@ -1445,123 +1445,123 @@ var BigHouse = (function() {
     },
 
     referringSymbols: function (rhsSymbol) {
-      var bh = this
+      var gb = this
       return this.cachedSymbols().filter (function (lhsSymbol) {
-        return bh.lhsRefersTo (lhsSymbol, rhsSymbol)
+        return gb.lhsRefersTo (lhsSymbol, rhsSymbol)
       })
     },
 
     showGrammarEditPage: function() {
-      var bh = this
+      var gb = this
       this.setPage ('grammar')
         .then (function() {
-          bh.showNavBar ('grammar')
+          gb.showNavBar ('grammar')
 
           var def
-          if (bh.symbolCache) {
+          if (gb.symbolCache) {
             def = $.Deferred()
             def.resolve()
           } else {
-            def = bh.socket_getPlayerSymbols (bh.playerID)
+            def = gb.socket_getPlayerSymbols (gb.playerID)
               .then (function (result) {
-                if (bh.verbose.server)
+                if (gb.verbose.server)
                   console.log('getPlayerSymbols:',result)
-                bh.symbolCache = {}
+                gb.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
-                  bh.symbolCache[symbol.id] = symbol
+                  gb.symbolCache[symbol.id] = symbol
                 })
-                bh.symbolName = result.name
+                gb.symbolName = result.name
               })
           }
 
           def.then (function() {
             
-            bh.pageExit = function() {
-	      bh.container.off ('click')
-              return bh.saveCurrentEdit()
+            gb.pageExit = function() {
+	      gb.container.off ('click')
+              return gb.saveCurrentEdit()
             }
 
-            bh.container.on ('click', bh.saveCurrentEdit.bind(bh))
-            bh.grammarBarDiv = $('<div class="grammarbar">')
+            gb.container.on ('click', gb.saveCurrentEdit.bind(gb))
+            gb.grammarBarDiv = $('<div class="grammarbar">')
 
-            bh.infoPane = $('<div class="grammarinfopane">')
-            bh.infoPaneContent = $('<div class="content">')
-            bh.infoPaneTitle = $('<div class="title">')
-            bh.infoPane.append ($('<div class="buttons">')
+            gb.infoPane = $('<div class="grammarinfopane">')
+            gb.infoPaneContent = $('<div class="content">')
+            gb.infoPaneTitle = $('<div class="title">')
+            gb.infoPane.append ($('<div class="buttons">')
                                 .append ($('<span class="closebutton">').html
-                                         (bh.makeIconButton ('close', function() {
-                                           bh.infoPane.hide()
-                                           bh.showingHelp = false
+                                         (gb.makeIconButton ('close', function() {
+                                           gb.infoPane.hide()
+                                           gb.showingHelp = false
                                          })),
-                                         bh.infoPaneControls = $('<span class="controls">')),
-		                bh.infoPaneTitle,
-		                bh.infoPaneContent)
+                                         gb.infoPaneControls = $('<span class="controls">')),
+		                gb.infoPaneTitle,
+		                gb.infoPaneContent)
 
-            bh.showingHelp = false
+            gb.showingHelp = false
 
-            bh.searchInput = $('<input>')
-            bh.symbolSearchResultsDiv = $('<div class="results">')
-            bh.endSearchResultsDiv = $('<div class="endresults">')
+            gb.searchInput = $('<input>')
+            gb.symbolSearchResultsDiv = $('<div class="results">')
+            gb.endSearchResultsDiv = $('<div class="endresults">')
             var searchButton = $('<span>')
 
-            bh.container
+            gb.container
 	      .append ($('<div class="search">')
                        .append ($('<div class="query">')
-                                .append (searchButton, bh.searchInput)),
-                       bh.symbolSearchDiv = $('<div class="symbolsearch">')
-                       .append (bh.symbolSearchResultsDiv,
-                                bh.endSearchResultsDiv)
+                                .append (searchButton, gb.searchInput)),
+                       gb.symbolSearchDiv = $('<div class="symbolsearch">')
+                       .append (gb.symbolSearchResultsDiv,
+                                gb.endSearchResultsDiv)
                        .hide(),
-                       bh.grammarBarDiv,
-                       bh.infoPane.hide(),
+                       gb.grammarBarDiv,
+                       gb.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
                        ($('<div class="help">').html
-                        (bh.makeIconButton ('help', function() {
-                          if (bh.showingHelp) {
-                            bh.infoPane.hide()
-                            bh.showingHelp = false
+                        (gb.makeIconButton ('help', function() {
+                          if (gb.showingHelp) {
+                            gb.infoPane.hide()
+                            gb.showingHelp = false
                           } else                            
-		            bh.REST_getHelpHtml().then (function (helpHtml) {
-		              bh.saveCurrentEdit()
+		            gb.REST_getHelpHtml().then (function (helpHtml) {
+		              gb.saveCurrentEdit()
                                 .then (function() {
-                                  bh.showingHelp = true
-		                  bh.infoPaneTitle.text ('Help')
-		                  bh.infoPaneContent.html (helpHtml)
-                                  bh.infoPaneControls.empty()
-		                  bh.infoPane.show()
+                                  gb.showingHelp = true
+		                  gb.infoPaneTitle.text ('Help')
+		                  gb.infoPaneContent.html (helpHtml)
+                                  gb.infoPaneControls.empty()
+		                  gb.infoPane.show()
                                 })
 		            })
                         })),
                         ($('<div class="newlhs">').html
-                         (bh.makeIconButton ('create', function() {
-		           bh.saveCurrentEdit()
+                         (gb.makeIconButton ('create', function() {
+		           gb.saveCurrentEdit()
                              .then (function() {
-                               return bh.socket_getPlayerSymbolNew (bh.playerID)
+                               return gb.socket_getPlayerSymbolNew (gb.playerID)
                              }).then (function (result) {
-                               if (bh.verbose.server)
+                               if (gb.verbose.server)
                                  console.log('getPlayerSymbolNew:',result)
-                               bh.symbolCache[result.symbol.id] = result.symbol
-                               $.extend (bh.symbolName, result.name)
-                               bh.placeGrammarRuleDiv (result.symbol)
+                               gb.symbolCache[result.symbol.id] = result.symbol
+                               $.extend (gb.symbolName, result.name)
+                               gb.placeGrammarRuleDiv (result.symbol)
                              })
                          })))))
 
-            bh.searchInput.attr ('placeholder', 'Search symbols')
-            bh.placeIcon (bh.iconFilename.search, searchButton)
+            gb.searchInput.attr ('placeholder', 'Search symbols')
+            gb.placeIcon (gb.iconFilename.search, searchButton)
             searchButton.addClass('button')
-              .on ('click', bh.doSymbolSearch.bind(bh))
-            bh.searchInput.on ('keyup', function(event) {
-              bh.doSymbolSearch()
+              .on ('click', gb.doSymbolSearch.bind(gb))
+            gb.searchInput.on ('keyup', function(event) {
+              gb.doSymbolSearch()
             })
-            bh.showSymbolSearchResults()
+            gb.showSymbolSearchResults()
 
-            bh.restoreScrolling (bh.symbolSearchResultsDiv)
-            bh.restoreScrolling (bh.grammarBarDiv)
-            bh.restoreScrolling (bh.infoPaneContent)
+            gb.restoreScrolling (gb.symbolSearchResultsDiv)
+            gb.restoreScrolling (gb.grammarBarDiv)
+            gb.restoreScrolling (gb.infoPaneContent)
 
-            bh.ruleDiv = {}
-            bh.grammarBarDiv
-              .append (bh.cachedSymbols().map (bh.makeGrammarRuleDiv.bind (bh)))
+            gb.ruleDiv = {}
+            gb.grammarBarDiv
+              .append (gb.cachedSymbols().map (gb.makeGrammarRuleDiv.bind (gb)))
           })
         })
     },
@@ -1572,32 +1572,32 @@ var BigHouse = (function() {
     },
     
     doSymbolSearch: function() {
-      var bh = this
+      var gb = this
       var searchText = this.searchInput.val()
       if (searchText !== this.lastSymbolSearch) {
         this.lastSymbolSearch = searchText
         delete this.symbolSearchResults
         this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
           .then (function (ret) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('doSymbolSearch:', ret)
-            bh.symbolSearchResults = ret
-            bh.showSymbolSearchResults()
+            gb.symbolSearchResults = ret
+            gb.showSymbolSearchResults()
           })
       }
     },
 
     continueSymbolSearch: function() {
-      var bh = this
+      var gb = this
       if (this.searchInput.val() === this.lastSymbolSearch) {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
           .then (function (ret) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('continueSymbolSearch:', ret)
-            bh.symbolSearchResults.results = bh.symbolSearchResults.results.concat (ret.results)
-            bh.symbolSearchResults.more = ret.more
-            bh.symbolSearchResults.page = ret.page
-            bh.showSymbolSearchResults()
+            gb.symbolSearchResults.results = gb.symbolSearchResults.results.concat (ret.results)
+            gb.symbolSearchResults.more = ret.more
+            gb.symbolSearchResults.page = ret.page
+            gb.showSymbolSearchResults()
           })
       } else
         this.doSymbolSearch()
@@ -1613,7 +1613,7 @@ var BigHouse = (function() {
         this.symbolSearchDiv.show()
         this.symbolSearchResultsDiv
           .append ($('<span class="closebutton">').html
-                   (bh.makeIconButton ('close', bh.clearSymbolSearch.bind(bh))),
+                   (gb.makeIconButton ('close', gb.clearSymbolSearch.bind(gb))),
                    $('<div class="searchtitle">').text("Search results"),
                    this.makeSymbolDivs (this.symbolSearchResults.results, "There are no symbols matching '" + this.lastSymbolSearch + "'."))
         var more = $('<span>')
@@ -1623,7 +1623,7 @@ var BigHouse = (function() {
           .on ('click', function (evt) {
             evt.preventDefault()
             more.remove()
-            bh.continueSymbolSearch()
+            gb.continueSymbolSearch()
           })
         else if (this.symbolSearchResults.results.length)
           more.text('All matching symbols shown')
@@ -1631,14 +1631,14 @@ var BigHouse = (function() {
     },
 
     makeSymbolDivs: function (symbols, emptyMessage) {
-      var bh = this
+      var gb = this
       return symbols.length
         ? symbols.map (function (symbol) {
           return $('<div class="symbol">')
             .append ($('<span class="lhslink">').append ('#', $('<span class="name">').text (symbol.name))
                      .on ('click', function (evt) {
                        evt.stopPropagation()
-                       bh.loadGrammarSymbol (symbol)
+                       gb.loadGrammarSymbol (symbol)
                      })
                     )
         })
@@ -1647,98 +1647,98 @@ var BigHouse = (function() {
 
     // follows
     showFollowsPage: function() {
-      var bh = this
+      var gb = this
       
       this.setPage ('follows')
         .then (function() {
-          bh.showNavBar ('follows')
+          gb.showNavBar ('follows')
 
-          bh.searchInput = $('<input>')
-          bh.playerSearchResultsDiv = $('<div class="results">')
-          bh.endSearchResultsDiv = $('<div class="endresults">')
+          gb.searchInput = $('<input>')
+          gb.playerSearchResultsDiv = $('<div class="results">')
+          gb.endSearchResultsDiv = $('<div class="endresults">')
           var searchButton = $('<span>')
-          bh.container
-            .append (bh.whoBarDiv = $('<div class="whobar">')
+          gb.container
+            .append (gb.whoBarDiv = $('<div class="whobar">')
                      .append ($('<div class="search">')
                               .append ($('<div class="query">')
-                                       .append (searchButton, bh.searchInput),
+                                       .append (searchButton, gb.searchInput),
                                        $('<div class="followsection">')
-                                       .append (bh.playerSearchResultsDiv,
-                                                bh.endSearchResultsDiv))))
-          bh.searchInput.attr ('placeholder', 'Search players')
-          bh.placeIcon (bh.iconFilename.search, searchButton)
+                                       .append (gb.playerSearchResultsDiv,
+                                                gb.endSearchResultsDiv))))
+          gb.searchInput.attr ('placeholder', 'Search players')
+          gb.placeIcon (gb.iconFilename.search, searchButton)
           searchButton.addClass('button')
-            .on ('click', bh.doPlayerSearch.bind(bh))
-          bh.searchInput.on ('keyup', function(event) {
-              bh.doPlayerSearch()
+            .on ('click', gb.doPlayerSearch.bind(gb))
+          gb.searchInput.on ('keyup', function(event) {
+              gb.doPlayerSearch()
           })
           
-          bh.restoreScrolling (bh.whoBarDiv)
+          gb.restoreScrolling (gb.whoBarDiv)
 
-          bh.followsById = {}
-          bh.whoBarDiv.append (bh.addressBookDiv = $('<div>'))
+          gb.followsById = {}
+          gb.whoBarDiv.append (gb.addressBookDiv = $('<div>'))
 
-          bh.showPlayerSearchResults()
-          bh.updateAddressBook()
+          gb.showPlayerSearchResults()
+          gb.updateAddressBook()
         })
     },
 
     updateAddressBook: function() {
-      var bh = this
-      bh.REST_getPlayerFollow (bh.playerID)
+      var gb = this
+      gb.REST_getPlayerFollow (gb.playerID)
 	.done (function (data) {
-	  if (bh.verbose.server)
+	  if (gb.verbose.server)
 	    console.log ('showFollowsPage:', data)
-          bh.addressBookDiv
+          gb.addressBookDiv
             .empty()
             .append ($('<div class="followsection">')
                      .append ($('<div class="title">').text("Address book"))
-                     .append (bh.makeFollowDivs (data.followed, "Your address book is empty.")))
+                     .append (gb.makeFollowDivs (data.followed, "Your address book is empty.")))
           var following = {}
           data.followed.map (function (follow) {
             following[follow.id] = true
           })
-	}).fail (bh.reloadOnFail())
+	}).fail (gb.reloadOnFail())
     },
     
     makeFollowDiv: function (follow) {
       var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
       var composeDiv =  $('<span class="followcontrol">')
-          .html (bh.makeIconButton ('compose',
+          .html (gb.makeIconButton ('compose',
                                     function (evt) {
                                       evt.stopPropagation()
-                                      bh.showComposePage ({ recipient: follow })
+                                      gb.showComposePage ({ recipient: follow })
                                     }))
       var doFollow, doUnfollow
       function makeUnfollowButton() {
         $(followSelector).add(buttonDiv)
           .off()
-          .html (bh.makeIconButton ('unfollow',
-                                    bh.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv))))
+          .html (gb.makeIconButton ('unfollow',
+                                    gb.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       function makeFollowButton() {
         $(followSelector).add(buttonDiv)
           .off()
-          .html (bh.makeIconButton ('follow',
-                                    bh.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv))))
+          .html (gb.makeIconButton ('follow',
+                                    gb.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       doFollow = function() {
-        bh.REST_getPlayerFollowOther (bh.playerID, follow.id)
+        gb.REST_getPlayerFollowOther (gb.playerID, follow.id)
           .then (function() {
 	    follow.setFollowing(true)
 	    follow.makeUnfollowButton()
-            bh.updateAddressBook()
+            gb.updateAddressBook()
 	  })
       }
       doUnfollow = function() {
-        bh.REST_getPlayerUnfollowOther (bh.playerID, follow.id)
+        gb.REST_getPlayerUnfollowOther (gb.playerID, follow.id)
           .then (function() {
 	    follow.setFollowing(false)
 	    follow.makeFollowButton()
-            bh.updateAddressBook()
+            gb.updateAddressBook()
 	  })
       }
       if (follow.following)
@@ -1757,17 +1757,17 @@ var BigHouse = (function() {
     },
 
     makeFollowDivs: function (followList, emptyMessage) {
-      var bh = this
+      var gb = this
       return followList.length
         ? followList.map (function (follow) {
-          bh.followsById[follow.id] = bh.followsById[follow.id] || []
-          bh.followsById[follow.id].push (follow)
-          bh.makeFollowDiv (follow)
+          gb.followsById[follow.id] = gb.followsById[follow.id] || []
+          gb.followsById[follow.id].push (follow)
+          gb.makeFollowDiv (follow)
           follow.setFollowing = function (flag) {
-            bh.followsById[follow.id].forEach (function (f) { f.following = flag })
+            gb.followsById[follow.id].forEach (function (f) { f.following = flag })
           }
           follow.followDiv
-            .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, follow)))
+            .on ('click', gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, follow)))
           return follow.followDiv
         })
       : $('<span>').text (emptyMessage)
@@ -1779,32 +1779,32 @@ var BigHouse = (function() {
     },
 
     doPlayerSearch: function() {
-      var bh = this
+      var gb = this
       var searchText = this.searchInput.val()
       if (searchText !== this.lastPlayerSearch) {
         this.lastPlayerSearch = searchText
         delete this.playerSearchResults
         this.REST_postPlayerSearchPlayersAll (this.playerID, searchText)
           .then (function (ret) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('doPlayerSearch:', ret)
-            bh.playerSearchResults = ret
-            bh.showPlayerSearchResults()
+            gb.playerSearchResults = ret
+            gb.showPlayerSearchResults()
           })
       }
     },
 
     continuePlayerSearch: function() {
-      var bh = this
+      var gb = this
       if (this.searchInput.val() === this.lastPlayerSearch) {
         this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
-	    if (bh.verbose.server)
+	    if (gb.verbose.server)
               console.log ('continuePlayerSearch:', ret)
-            bh.playerSearchResults.results = bh.playerSearchResults.results.concat (ret.results)
-            bh.playerSearchResults.more = ret.more
-            bh.playerSearchResults.page = ret.page
-            bh.showPlayerSearchResults()
+            gb.playerSearchResults.results = gb.playerSearchResults.results.concat (ret.results)
+            gb.playerSearchResults.more = ret.more
+            gb.playerSearchResults.page = ret.page
+            gb.showPlayerSearchResults()
           })
       } else
         this.doPlayerSearch()
@@ -1820,9 +1820,9 @@ var BigHouse = (function() {
         this.playerSearchResultsDiv
           .show()
           .append ($('<span class="closebutton">').html
-                   (bh.makeIconButton ('close', bh.clearPlayerSearch.bind(bh))),
+                   (gb.makeIconButton ('close', gb.clearPlayerSearch.bind(gb))),
                    $('<div class="searchtitle">').text("Search results"),
-                   this.makeFollowDivs (this.playerSearchResults.results, "There a/re no players matching '" + this.lastPlayerSearch + "'."))
+                   this.makeFollowDivs (this.playerSearchResults.results, "There are no players matching '" + this.lastPlayerSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
         if (this.playerSearchResults.more)
@@ -1830,7 +1830,7 @@ var BigHouse = (function() {
           .on ('click', function (evt) {
             evt.preventDefault()
             more.remove()
-            bh.continuePlayerSearch()
+            gb.continuePlayerSearch()
           })
         else if (this.playerSearchResults.results.length)
           more.text('All matching players shown')

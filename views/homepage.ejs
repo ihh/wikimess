@@ -1,11 +1,11 @@
 <body>
-  <div id="bighouse"></div>
+  <div id="grambot"></div>
 </body>
 
 <script type="text/javascript">
-  var bh
+  var gb
   $(function() {
-    bh = new BigHouse(<%- (loggedIn ? '{playerID:'+playerID+',playerName:"'+playerName+'",playerDisplayName:"'+playerDisplayName+'",newSignUp:'+newSignUp+'}' : '') -%>)
+    gb = new GramBot(<%- (loggedIn ? '{playerID:'+playerID+',playerName:"'+playerName+'",playerDisplayName:"'+playerDisplayName+'",newSignUp:'+newSignUp+'}' : '') -%>)
   
   })
 </script>

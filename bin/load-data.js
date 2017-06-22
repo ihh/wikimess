@@ -8,8 +8,7 @@ var fs = require('fs'),
     extend = require('extend'),
     jsonschema = require('jsonschema'),
     Promise = require('bluebird'),
-    Sails = require('sails').constructor,
-    Build = require('../lib/build')
+    Sails = require('sails').constructor
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"
@@ -109,7 +108,7 @@ var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return
 promise = promise.then (processFilenameList ({ path: '/player',
                                                schema: schemaPath('player'),
                                                handler: playerHandler,
-                                               parsers: [JSON.parse, Build],
+                                               parsers: [JSON.parse, eval],
                                                list: playerFilenames.reverse() }))
 
 promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
