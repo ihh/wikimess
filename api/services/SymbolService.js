@@ -15,16 +15,16 @@ module.exports = {
       })
     })
     var promise
-    var refNames = Object.keys(refs)
+    var refNames = Object.keys(refs), refSymbols = {}
     if (refNames.length)
-      promise = Symbol.findOrCreate ({ name: Object.keys(refs) })
-      .then (function (refSymbols) {
-        refSymbols.forEach (function (refSymbol) {
-          refs[refSymbol.name].forEach (function (rhsSym) {
-            rhsSym.id = refSymbol.id
+      promise = Promise.map (refNames, function (refName) {
+        return Symbol.findOrCreate ({ name: refName })
+          .then (function (refSymbol) {
+            refs[refName].forEach (function (rhsSym) {
+              rhsSym.id = refSymbol.id
+            })
+            return refSymbol
           })
-        })
-        return refSymbols
       })
     else
       promise = new Promise (function (resolve, reject) { resolve([])} )

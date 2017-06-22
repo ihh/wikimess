@@ -378,7 +378,10 @@ module.exports = {
                            initialized: true },
                          { name: name,
                            rules: rules })
-
+    var result = { symbol: { name: name,
+                             rules: rules },
+                   name: {} }
+    
     Symbol.find ({ not: { id: symbolID },
                    name: name })
       .then (function (eponSyms) {
@@ -386,14 +389,23 @@ module.exports = {
           res.status(400).send ({error: "A symbol named " + name + " already exists"})
         else
           SymbolService.createReferences (update.rules)
-          .then (function (refSymbols) {
+          .then (function (rhsSymbols) {
+            rhsSymbols.forEach (function (rhsSymbol) {
+              result.name[rhsSymbol.id] = rhsSymbol.name
+            })
             return Symbol.update ({ id: symbolID,
                                     owner: [ playerID, null ] },
                                   update)
           }).then (function (symbol) {
-            console.log(symbol)
-            Symbol.message (symbolID, { message: "update", update: update })
-            res.json (update)
+            result.name[symbolID] = symbol.name
+            Symbol.message (symbolID, { message: "update",
+                                        symbol: { id: symbolID,
+                                                  name: name,
+                                                  owner: playerID,
+                                                  rules: rules,
+                                                  initialized: true },
+                                        name: result.name })
+            res.json (result)
           })
       }).catch (function (err) {
         console.log(err)

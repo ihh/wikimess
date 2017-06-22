@@ -184,10 +184,12 @@ body {
      @-o-keyframes pulse_rule { from { background-color:gray; } }
         @keyframes pulse_rule { from { background-color:gray; } }
 
-.bighouse .grammarbar .rule .lhslink,
-.bighouse .grammarbar .rule .lhsbrokenlink {
-    text-decoration: underline;
+.bighouse .grammarbar .rule .lhslink .name {
     cursor: pointer;
+}
+
+.bighouse .grammarbar .rule .lhslink .name {
+    text-decoration: underline;
 }
 
 .bighouse .grammarinfopane {

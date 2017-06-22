@@ -77,6 +77,7 @@ var BigHouse = (function() {
     
     verbose: { page: false,
                server: true,
+               messages: true,
                timer: false,
                errors: true,
 	       stack: false },
@@ -912,6 +913,12 @@ var BigHouse = (function() {
       return bh.finishLastSave()
         .then (function() {
           bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, bh.symbolName[symbol.id], symbol.rules)
+            .then (function (result) {
+              if (bh.verbose.server) console.log('putPlayerSymbol:',result)
+              $.extend (bh.symbolName, result.name)
+              return result.symbol
+            })
+          return bh.lastSavePromise
         })
     },
 
@@ -920,10 +927,9 @@ var BigHouse = (function() {
       return bh.finishLastSave()
         .then (function() {
           bh.lastSavePromise = bh.REST_putPlayerSymbol (bh.playerID, symbol.id, newName, symbol.rules)
-            .then (function() {
-              bh.symbolName[symbol.id] = newName
-              bh.ruleDiv[symbol.id].remove()
-              bh.placeGrammarRuleDiv (symbol)
+            .then (function (result) {
+              if (bh.verbose.server) console.log('putPlayerSymbol:',result)
+              bh.updateSymbolCache (result)
             }).fail (function (err) {
               var reload = bh.reloadCurrentTab.bind(bh)
 	      if (err.status == 400)
@@ -934,23 +940,50 @@ var BigHouse = (function() {
         })
     },
 
-    parseRhs: function (rhs) {
-      var regex = /([^#]*)((#[A-Za-z0-9_]+)|.*)/g, match
-      var parsed = []
-      var syms = this.currentGrammarSymbols()
-      while ((match = regex.exec(rhs)) && match[0].length) {
-        if (match[1].length)
-          parsed.push (match[1])
-        var hashLhs = match[3]
-        if (hashLhs) {
-          var lhsName = hashLhs.substr(1)
-          var lhsRef = { name: lhsName }
-          var lhsSym = syms.find (function (sym) { return sym.name === lhsName })
-          if (lhsSym)
-            lhsRef.id = lhsSym.id
-          parsed.push (lhsRef)
+    updateSymbolCache: function (result) {
+      var bh = this
+      var symbol = result.symbol
+      var oldName = this.symbolName[symbol.id]
+      $.extend (this.symbolName, result.name)
+      if (oldName) {
+        if (oldName !== symbol.name) {
+          bh.symbolName[symbol.id] = symbol.name
+          bh.ruleDiv[symbol.id].remove()
+          bh.placeGrammarRuleDiv (symbol)
+          bh.referringSymbols(symbol).forEach (function (lhsSymbol) {
+            if (lhsSymbol.id !== symbol.id)
+              bh.populateGrammarRuleDiv (bh.ruleDiv[lhsSymbol.id], lhsSymbol)
+          })
+        } else if (this.symbolCache[symbol.id]) {
+          this.symbolCache[symbol.id] = symbol
+          if (this.ruleDiv[symbol.id])
+            this.populateGrammarRuleDiv (this.ruleDiv[symbol.id], symbol)
         }
       }
+    },
+
+    parseRhs: function (rhs) {
+      var bh = this
+      var regex = /((.*?)#([A-Za-z0-9_]+)|(.+))/g, match
+      var parsed = []
+      var name2id = this.symbolNameToID()
+      while ((match = regex.exec(rhs))) {
+        if (match[4] && match[4].length)
+          parsed.push (match[4])
+        else {
+          if (match[2].length)
+            parsed.push (match[2])
+          var lhsName = match[3]
+          if (lhsName) {
+            var lhsRef = { name: lhsName }
+            var lhsID = name2id[lhsName]
+          if (lhsID)
+            lhsRef.id = lhsID
+            parsed.push (lhsRef)
+          }
+        }
+      }
+      console.log('parseRhs:',parsed)
       return parsed
     },
     
@@ -969,22 +1002,53 @@ var BigHouse = (function() {
                                         storeCallback: function (newRhs) {
                                           symbol.rules[n] = newRhs
                                           return bh.saveSymbol (symbol)
+                                            .then (function (newSymbol) {
+                                              return newSymbol.rules[n]
+                                            })
                                         },
                                         parse: bh.parseRhs.bind(bh),
                                         renderText: function (rhs) {
                                           return rhs.map (function (rhsSym) {
                                             return (typeof(rhsSym) === 'object'
-                                                    ? ('#' + bh.symbolCache[rhsSym.id].name)
+                                                    ? ('#' + (bh.symbolName[rhsSym.id] || rhsSym.name))
                                                     : rhsSym)
                                           }).join('')
                                         },
                                         renderHtml: function (rhs) {
                                           return $('<span>')
                                             .append (rhs.map (function (rhsSym) {
-                                              return $('<span>')
-                                                .text (typeof(rhsSym) === 'object'
-                                                       ? ('#' + bh.symbolCache[rhsSym.id].name)
-                                                       : rhsSym)
+                                              var span = $('<span>')
+                                              if (typeof(rhsSym) === 'object') {
+                                                var name = $('<span class="name">')
+                                                span.addClass('lhslink').append ('#', name)
+                                                if (typeof(rhsSym.id) !== 'undefined' && !bh.symbolName[rhsSym.id]) {
+                                                  console.log('oops; empty symbol name')
+                                                }
+                                                if (typeof(rhsSym.id) !== 'undefined')
+                                                  name.text (bh.symbolName[rhsSym.id])
+                                                  .on ('click', function (evt) {
+                                                    evt.stopPropagation()
+                                                    bh.saveCurrentEdit()
+                                                      .then (function() {
+                                                        if (bh.symbolCache[rhsSym.id])
+                                                          bh.scrollGrammarTo (bh.symbolCache[rhsSym.id])
+                                                        else
+                                                          bh.socket_getPlayerSymbol (bh.playerID, rhsSym.id)
+                                                          .then (function (result) {
+                                                            if (bh.verbose.server) console.log('getPlayerSymbol:',result)
+                                                            bh.symbolCache[rhsSym.id] = result.symbol
+                                                            bh.placeGrammarRuleDiv (result.symbol)
+                                                            bh.scrollGrammarTo (result.symbol)
+                                                          })
+                                                      })
+                                                  })
+                                                else {
+                                                  console.log('renderHtml: using placeholder for '+rhsSym.name)
+                                                  name.text (rhsSym.name)
+                                                }
+                                              } else
+                                                span.text (rhsSym)
+                                              return span
                                             }))
                                         }
                                       })
@@ -1049,7 +1113,7 @@ var BigHouse = (function() {
 
     placeGrammarRuleDiv: function (symbol) {
       var ruleDiv = this.makeGrammarRuleDiv (symbol)
-      var syms = this.currentGrammarSymbols()
+      var syms = this.cachedSymbols()
       var name = bh.symbolName[symbol.id]
       var nextSym = syms.find (function (s) { return bh.symbolName[s.id] > name })
       if (typeof(nextSym) === 'undefined')
@@ -1073,13 +1137,42 @@ var BigHouse = (function() {
       this.ruleDiv[symbol.id].addClass('selected')
     },
     
-    currentGrammarSymbols: function() {
+    cachedSymbols: function() {
       var bh = this
       return Object.keys(this.symbolCache).map (function (id) {
         return bh.symbolCache[id]
       }).sort (function (a, b) { return bh.symbolName[a.id] < bh.symbolName[b.id] ? -1 : +1 })
     },
+
+    symbolNameToID: function() {
+      var bh = this
+      var name2id = {}
+      Object.keys(this.symbolName).forEach (function (id) {
+        name2id[bh.symbolName[id]] = parseInt (id)
+      })
+      return name2id
+    },
+
+    getSymbol: function (symbolName) {
+      var bh = this
+      return this.symbolCache[Object.keys(this.symbolName).find (function (id) { return bh.symbolName[id] === symbolName })]
+    },
     
+    lhsRefersTo: function (lhsSymbol, rhsSymbol) {
+      return lhsSymbol.rules.find (function (rhs) {
+        return rhs.find (function (rhsSym) {
+          return typeof(rhsSym) === 'object' && rhsSym.id === rhsSymbol.id
+        })
+      })
+    },
+
+    referringSymbols: function (rhsSymbol) {
+      var bh = this
+      return this.cachedSymbols().filter (function (lhsSymbol) {
+        return bh.lhsRefersTo (lhsSymbol, rhsSymbol)
+      })
+    },
+
     showGrammarEditPage: function() {
       var bh = this
       this.setPage ('grammar')
@@ -1093,6 +1186,7 @@ var BigHouse = (function() {
           } else {
             def = bh.socket_getPlayerSymbols (bh.playerID)
               .then (function (result) {
+                if (bh.verbose.server) console.log('getPlayerSymbols:',result)
                 bh.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
                   bh.symbolCache[symbol.id] = symbol
@@ -1140,8 +1234,9 @@ var BigHouse = (function() {
                              .then (function() {
                                return bh.socket_getPlayerSymbolNew (bh.playerID)
                              }).then (function (result) {
+                               if (bh.verbose.server) console.log('getPlayerSymbolNew:',result)
                                bh.symbolCache[result.symbol.id] = result.symbol
-                               bh.symbolName[result.symbol.id] = result.name[result.symbol.id]
+                               $.extend (bh.symbolName, result.name)
                               bh.placeGrammarRuleDiv (result.symbol)
                              })
                          })))))
@@ -1151,7 +1246,7 @@ var BigHouse = (function() {
 
             bh.ruleDiv = {}
             bh.grammarBarDiv
-              .append (bh.currentGrammarSymbols().map (bh.makeGrammarRuleDiv.bind (bh)))
+              .append (bh.cachedSymbols().map (bh.makeGrammarRuleDiv.bind (bh)))
           })
         })
     },
@@ -1351,6 +1446,7 @@ var BigHouse = (function() {
       switch (msg.data.message) {
       case "update":
         // Symbol updated
+        this.updateSymbolCache (msg.data)
         break
       default:
         if (this.verbose.messages) {
