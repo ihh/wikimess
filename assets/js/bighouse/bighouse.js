@@ -61,7 +61,7 @@ var BigHouse = (function() {
     maxPlayerNameLength: 16,
     maxGrammarTitleLength: 128,
     grammarAutosaveDelay: 5000,
-    iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button', help: 'help' },
+    iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button', help: 'help', locked: 'padlock', hide: 'hide' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
