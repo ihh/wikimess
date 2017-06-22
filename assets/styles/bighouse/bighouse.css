@@ -208,6 +208,7 @@ body {
 .bighouse .grammarinfopane .content {
     clear: both;
     max-height: 40vw;
+    min-height: 40vw;
     overflow-y: auto;
     padding: 1px;
     font-style: italic;

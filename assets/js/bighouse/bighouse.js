@@ -70,7 +70,8 @@ var BigHouse = (function() {
                     locked: 'padlock',
                     hide: 'hide',
                     randomize: 'rolling-die',
-                    close: 'close' },
+                    close: 'close',
+                    send: 'send' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
@@ -765,7 +766,6 @@ var BigHouse = (function() {
 	    .append ($('<div class="backbar">')
 		     .append ($('<span>')
 			      .html (bh.makeLink ('Back', bh.reloadCurrentTab))))
-          //      follow.showAvatar()
         })
     },
 
@@ -1360,14 +1360,12 @@ var BigHouse = (function() {
               var following = {}
               data.followed.map (function (follow) {
                 following[follow.id] = true
-                //            follow.showAvatar()
               })
 	    }).fail (bh.reloadOnFail())
         })
     },
 
     makeFollowDiv: function (follow) {
-      var avatarDiv = $('<div class="avatar">')
       var followClass = 'follow-button-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<div class="button">').addClass(followClass)
       var doFollow, doUnfollow
@@ -1401,15 +1399,13 @@ var BigHouse = (function() {
         makeUnfollowButton()
       else
         makeFollowButton()
+      var nameDiv = $('<div class="name">').text (follow.name)
       var followDiv = $('<div class="follow">')
-          .append (avatarDiv)
-          .append ($('<div class="name">').text (follow.name))
-          .append (buttonDiv)
+          .append (nameDiv, buttonDiv)
       $.extend (follow, { followDiv: followDiv,
-                          avatarDiv: avatarDiv,
+                          nameDiv: nameDiv,
                           buttonDiv: buttonDiv,
                           setFollowing: function(flag) { follow.following = flag },
-//                          showAvatar: bh.showMoodImage.bind (bh, follow.id, follow.mood, avatarDiv),
                           makeFollowButton: makeFollowButton,
                           makeUnfollowButton: makeUnfollowButton })
     },
@@ -1424,7 +1420,7 @@ var BigHouse = (function() {
           follow.setFollowing = function (flag) {
             bh.followsById[follow.id].forEach (function (f) { f.following = flag })
           }
-          follow.avatarDiv
+          follow.nameDiv
             .on ('click', bh.callWithSoundEffect (bh.showOtherStatusPage.bind (bh, follow)))
           return follow.followDiv
         })
@@ -1484,7 +1480,6 @@ var BigHouse = (function() {
         else if (this.searchResults.results.length)
           more.text('All matching players shown')
       }
-//      this.searchResults.results.forEach (function (follow) { follow.showAvatar() })
     },
     
     // socket message handlers
