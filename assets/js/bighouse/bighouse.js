@@ -61,7 +61,16 @@ var BigHouse = (function() {
     maxPlayerNameLength: 16,
     maxGrammarTitleLength: 128,
     grammarAutosaveDelay: 5000,
-    iconFilename: { edit: 'pencil', create: 'circle-plus', destroy: 'trash-can', up: 'up-arrow-button', down: 'down-arrow-button', help: 'help', locked: 'padlock', hide: 'hide', randomize: 'rolling-dice' },
+    iconFilename: { edit: 'pencil',
+                    create: 'circle-plus',
+                    destroy: 'trash-can',
+                    up: 'up-arrow-button',
+                    down: 'down-arrow-button',
+                    help: 'help',
+                    locked: 'padlock',
+                    hide: 'hide',
+                    randomize: 'rolling-die',
+                    close: 'close' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
@@ -1187,8 +1196,9 @@ var BigHouse = (function() {
     },
 
     selectGrammarRule: function (symbol) {
+      var bh = this
       $('.selected').removeClass('selected')
-      this.ruleDiv[symbol.id].addClass('selected')
+      bh.ruleDiv[symbol.id].addClass('selected')
     },
     
     cachedSymbols: function() {
@@ -1262,8 +1272,8 @@ var BigHouse = (function() {
             bh.infoPane = $('<div class="grammarinfopane">')
             bh.infoPaneContent = $('<div class="content">')
             bh.infoPaneTitle = $('<div class="title">')
-            bh.infoPane.append ($('<span class="closebutton">').text('x')
-		                .on ('click', function() { bh.infoPane.hide() }),
+            bh.infoPane.append ($('<span class="closebutton">').html
+                                (bh.makeIconButton ('close', function() { bh.infoPane.hide() })),
 		                bh.infoPaneTitle,
 		                bh.infoPaneContent)
             

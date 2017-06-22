@@ -68,24 +68,9 @@ body {
     overflow-y: auto;
 }
 
-.bighouse .grammartitle .buttons,
 .bighouse .grammarbar .buttons {
+    font-size: medium;
     float: right;
-}
-
-.bighouse .grammareditbuttons .newlhs,
-.bighouse .grammareditbuttons .help {
-    padding: 2vw;
-    width: 1em;
-    height: 1em;
-}
-
-.bighouse .grammareditbuttons .newlhs {
-    float: right;
-}
-
-.bighouse .grammareditbuttons .help {
-    float: left;
 }
 
 .bighouse .newlhs .button,
@@ -170,6 +155,7 @@ body {
     width: 90vw;
     margin: 1vw;
     padding: 0.5vw;
+    overflow-wrap: break-word;
 }
 
 .bighouse .grammarbar .rule.selected {
@@ -192,10 +178,25 @@ body {
     text-decoration: underline;
 }
 
-.bighouse .grammarinfopane {
+.bighouse .grammarinfopane,
+.bighouse .grammareditbuttons {
     border-top-style: solid;
-    border-bottom-style: solid;
     border-width: 1px;
+}
+
+.bighouse .grammareditbuttons .newlhs,
+.bighouse .grammareditbuttons .help {
+    padding: 2vw;
+    width: 1em;
+    height: 1em;
+}
+
+.bighouse .grammareditbuttons .newlhs {
+    float: right;
+}
+
+.bighouse .grammareditbuttons .help {
+    float: left;
 }
 
 .bighouse .grammarinfopane .title {
@@ -214,11 +215,10 @@ body {
 
 .bighouse .grammarinfopane .closebutton {
     float: right;
-    font-size: x-small;
-    border-left-style: solid;
-    border-bottom-style: solid;
-    border-width: 1px;
-    padding: 0px 1px;
+    font-size: small;
+    width: 1em;
+    height: 1em;
+    padding: 1px;
     cursor: pointer;
 }
 
