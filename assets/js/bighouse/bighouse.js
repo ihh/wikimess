@@ -77,7 +77,8 @@ var BigHouse = (function() {
                     message: 'document',
                     follow: 'circle-plus',
                     unfollow: 'trash-can',
-                    search: 'magnifying-glass' },
+                    search: 'magnifying-glass',
+                    compose: 'typewriter-icon' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
@@ -710,7 +711,7 @@ var BigHouse = (function() {
     },
 
     // compose message
-    showComposePage: function() {
+    showComposePage: function (config) {
       var bh = this
 
       this.setPage ('compose')
@@ -731,11 +732,18 @@ var BigHouse = (function() {
             .on('keyup',sanitizeInput)
             .on('change',sanitizeInput)
 
+          if (config.title)
+            bh.lastMessageTitleInputText = config.title
+          
           bh.messageTitleInput = $('<textarea class="title">')
             .val (bh.lastMessageTitleInputText)
             .on ('keyup', function() {
               bh.lastMessageTitleInputText = bh.messageTitleInput.val()
             })
+
+          if (config.body)
+            bh.lastMessageBody = config.body
+
           bh.messageBodyDiv = $('<div class="messagebody">')
             .text (bh.lastMessageBody)
           bh.messageControlsDiv = $('<div class="messagecontrols">')
@@ -772,6 +780,11 @@ var BigHouse = (function() {
 
           bh.restoreScrolling (bh.messageBodyDiv)
 
+          if (config.recipient) {
+            bh.composeRecipient = config.recipient
+            bh.lastComposePlayerSearchText = config.recipient.name
+          }
+
           bh.playerSearchInput.attr ('placeholder', 'Player name')
             .val (bh.lastComposePlayerSearchText)
           bh.playerSearchInput
@@ -782,7 +795,9 @@ var BigHouse = (function() {
             bh.doComposePlayerSearch()
           }
 
-          // just in case the symbol was renamed...
+          if (config.symbol)
+            bh.composeSymbol = config.symbol
+          // doing the following test separately of config.symbol guards against symbol being renamed
           if (bh.composeSymbol && bh.symbolName[bh.composeSymbol.id])
             bh.lastComposeSymbolSearchText = bh.symbolName[bh.composeSymbol.id]
           
@@ -956,27 +971,6 @@ var BigHouse = (function() {
 	    .append ($('<div class="backbar">')
 		     .append ($('<span>')
 			      .html (bh.makeLink ('Back', bh.reloadCurrentTab))))
-        })
-    },
-
-    pushGameStatusPage: function (info, getMethod) {
-      var bh = this
-      this.pushView ('status')
-        .then (function() {
-          bh.container
-            .append (info.followDiv || bh.makePageTitle (info.name))
-          bh.showGameStatusPage (getMethod, function (status) {
-            if (info.followDiv) {
-              if (status.human)
-                info.buttonDiv.show()
-              if (status.following)
-                info.makeUnfollowButton()
-            }
-          })
-          bh.container
-	    .append ($('<div class="backbar">')
-		     .append ($('<span>')
-			      .html (bh.makeLink ('Back', bh.popView))))
         })
     },
 
@@ -1320,6 +1314,19 @@ var BigHouse = (function() {
                                             bh.showingHelp = false
 		                            bh.infoPaneTitle.text ('#' + bh.symbolName[symbol.id])
 		                            bh.infoPaneContent.text (result.expansion)
+                                            bh.infoPaneControls
+                                              .html (bh.makeIconButton
+                                                     ('compose',
+                                                      function (evt) {
+                                                        evt.stopPropagation()
+                                                        bh.saveCurrentEdit()
+                                                          .then (function() {
+                                                            bh.showComposePage
+                                                            ({ symbol: symbol,
+                                                               title: bh.symbolName[symbol.id].replace(/_/g,' '),
+                                                               body: result.expansion })
+                                                          })
+                                                      }))
 		                            bh.infoPane.show()
                                           })
                                       })
@@ -1480,11 +1487,13 @@ var BigHouse = (function() {
             bh.infoPane = $('<div class="grammarinfopane">')
             bh.infoPaneContent = $('<div class="content">')
             bh.infoPaneTitle = $('<div class="title">')
-            bh.infoPane.append ($('<span class="closebutton">').html
-                                (bh.makeIconButton ('close', function() {
-                                  bh.infoPane.hide()
-                                  bh.showingHelp = false
-                                })),
+            bh.infoPane.append ($('<div class="buttons">')
+                                .append ($('<span class="closebutton">').html
+                                         (bh.makeIconButton ('close', function() {
+                                           bh.infoPane.hide()
+                                           bh.showingHelp = false
+                                         })),
+                                         bh.infoPaneControls = $('<span class="controls">')),
 		                bh.infoPaneTitle,
 		                bh.infoPaneContent)
 
@@ -1493,12 +1502,12 @@ var BigHouse = (function() {
             bh.searchInput = $('<input>')
             bh.symbolSearchResultsDiv = $('<div class="results">')
             bh.endSearchResultsDiv = $('<div class="endresults">')
-            var searchButton = $('<span>'), closeButton = $('<span>')
+            var searchButton = $('<span>')
 
             bh.container
 	      .append ($('<div class="search">')
                        .append ($('<div class="query">')
-                                .append (searchButton, bh.searchInput, closeButton)),
+                                .append (searchButton, bh.searchInput)),
                        bh.symbolSearchDiv = $('<div class="symbolsearch">')
                        .append (bh.symbolSearchResultsDiv,
                                 bh.endSearchResultsDiv)
@@ -1518,6 +1527,7 @@ var BigHouse = (function() {
                                   bh.showingHelp = true
 		                  bh.infoPaneTitle.text ('Help')
 		                  bh.infoPaneContent.html (helpHtml)
+                                  bh.infoPaneControls.empty()
 		                  bh.infoPane.show()
                                 })
 		            })
@@ -1538,11 +1548,8 @@ var BigHouse = (function() {
 
             bh.searchInput.attr ('placeholder', 'Search symbols')
             bh.placeIcon (bh.iconFilename.search, searchButton)
-            bh.placeIcon (bh.iconFilename.close, closeButton)
             searchButton.addClass('button')
               .on ('click', bh.doSymbolSearch.bind(bh))
-            closeButton.addClass('button')
-              .on ('click', bh.clearSymbolSearch.bind(bh))
             bh.searchInput.on ('keyup', function(event) {
               bh.doSymbolSearch()
             })
@@ -1605,7 +1612,9 @@ var BigHouse = (function() {
       if (this.lastSymbolSearch && this.lastSymbolSearch.length) {
         this.symbolSearchDiv.show()
         this.symbolSearchResultsDiv
-          .append ($('<div class="searchtitle">').text("Search results"),
+          .append ($('<span class="closebutton">').html
+                   (bh.makeIconButton ('close', bh.clearSymbolSearch.bind(bh))),
+                   $('<div class="searchtitle">').text("Search results"),
                    this.makeSymbolDivs (this.symbolSearchResults.results, "There are no symbols matching '" + this.lastSymbolSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
@@ -1647,50 +1656,60 @@ var BigHouse = (function() {
           bh.searchInput = $('<input>')
           bh.playerSearchResultsDiv = $('<div class="results">')
           bh.endSearchResultsDiv = $('<div class="endresults">')
-          var searchButton = $('<span>'), closeButton = $('<span>')
+          var searchButton = $('<span>')
           bh.container
             .append (bh.whoBarDiv = $('<div class="whobar">')
                      .append ($('<div class="search">')
                               .append ($('<div class="query">')
-                                       .append (searchButton, bh.searchInput, closeButton),
+                                       .append (searchButton, bh.searchInput),
                                        $('<div class="followsection">')
                                        .append (bh.playerSearchResultsDiv,
                                                 bh.endSearchResultsDiv))))
           bh.searchInput.attr ('placeholder', 'Search players')
           bh.placeIcon (bh.iconFilename.search, searchButton)
-          bh.placeIcon (bh.iconFilename.close, closeButton)
           searchButton.addClass('button')
             .on ('click', bh.doPlayerSearch.bind(bh))
-          closeButton.addClass('button')
-            .on ('click', bh.clearPlayerSearch.bind(bh))
           bh.searchInput.on ('keyup', function(event) {
               bh.doPlayerSearch()
           })
-          bh.showPlayerSearchResults()
           
           bh.restoreScrolling (bh.whoBarDiv)
 
           bh.followsById = {}
-          
-          bh.REST_getPlayerFollow (bh.playerID)
-	    .done (function (data) {
-	      if (bh.verbose.server)
-	        console.log ('showFollowsPage:', data)
-              bh.whoBarDiv
-                .append ($('<div class="followsection">')
-                         .append ($('<div class="title">').text("Address book"))
-                         .append (bh.makeFollowDivs (data.followed, "Your address book is empty.")))
-              var following = {}
-              data.followed.map (function (follow) {
-                following[follow.id] = true
-              })
-	    }).fail (bh.reloadOnFail())
+          bh.whoBarDiv.append (bh.addressBookDiv = $('<div>'))
+
+          bh.showPlayerSearchResults()
+          bh.updateAddressBook()
         })
     },
 
+    updateAddressBook: function() {
+      var bh = this
+      bh.REST_getPlayerFollow (bh.playerID)
+	.done (function (data) {
+	  if (bh.verbose.server)
+	    console.log ('showFollowsPage:', data)
+          bh.addressBookDiv
+            .empty()
+            .append ($('<div class="followsection">')
+                     .append ($('<div class="title">').text("Address book"))
+                     .append (bh.makeFollowDivs (data.followed, "Your address book is empty.")))
+          var following = {}
+          data.followed.map (function (follow) {
+            following[follow.id] = true
+          })
+	}).fail (bh.reloadOnFail())
+    },
+    
     makeFollowDiv: function (follow) {
       var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
+      var composeDiv =  $('<span class="followcontrol">')
+          .html (bh.makeIconButton ('compose',
+                                    function (evt) {
+                                      evt.stopPropagation()
+                                      bh.showComposePage ({ recipient: follow })
+                                    }))
       var doFollow, doUnfollow
       function makeUnfollowButton() {
         $(followSelector).add(buttonDiv)
@@ -1711,6 +1730,7 @@ var BigHouse = (function() {
           .then (function() {
 	    follow.setFollowing(true)
 	    follow.makeUnfollowButton()
+            bh.updateAddressBook()
 	  })
       }
       doUnfollow = function() {
@@ -1718,6 +1738,7 @@ var BigHouse = (function() {
           .then (function() {
 	    follow.setFollowing(false)
 	    follow.makeFollowButton()
+            bh.updateAddressBook()
 	  })
       }
       if (follow.following)
@@ -1726,7 +1747,7 @@ var BigHouse = (function() {
         makeFollowButton()
       var nameDiv = $('<span class="name">').text (follow.name)
       var followDiv = $('<div class="follow">')
-          .append (nameDiv, buttonDiv)
+          .append (nameDiv, composeDiv, buttonDiv)
       $.extend (follow, { followDiv: followDiv,
                           nameDiv: nameDiv,
                           buttonDiv: buttonDiv,
@@ -1794,10 +1815,14 @@ var BigHouse = (function() {
       this.playerSearchResults = this.playerSearchResults || { results: [] }
       this.playerSearchResultsDiv.empty()
       this.endSearchResultsDiv.empty()
+      this.playerSearchResultsDiv.hide()
       if (this.lastPlayerSearch && this.lastPlayerSearch.length) {
         this.playerSearchResultsDiv
-        .append ($('<div class="searchtitle">').text("Search results"),
-                 this.makeFollowDivs (this.playerSearchResults.results, "There are no players matching '" + this.lastPlayerSearch + "'."))
+          .show()
+          .append ($('<span class="closebutton">').html
+                   (bh.makeIconButton ('close', bh.clearPlayerSearch.bind(bh))),
+                   $('<div class="searchtitle">').text("Search results"),
+                   this.makeFollowDivs (this.playerSearchResults.results, "There a/re no players matching '" + this.lastPlayerSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
         if (this.playerSearchResults.more)

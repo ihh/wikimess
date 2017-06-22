@@ -95,6 +95,11 @@ body {
     font-size: large;
 }
 
+.bighouse .whobar .search .followsection {
+    border-bottom-style: solid;
+    border-width: 1px;
+}
+
 .bighouse .whobar .followsection {
     margin-bottom: 12px;
 }
@@ -221,7 +226,19 @@ body {
     font-style: italic;
 }
 
-.bighouse .grammarinfopane .closebutton {
+.bighouse .grammarinfopane .controls {
+}
+
+.bighouse .grammarinfopane .controls .button {
+    float: right;
+    font-size: small;
+    width: 1em;
+    height: 1em;
+    padding: 1px;
+    cursor: pointer;
+}
+
+.bighouse .closebutton {
     float: right;
     font-size: small;
     width: 1em;
