@@ -40,15 +40,29 @@ module.exports = {
   autonamePrefix: 'symbol',
   autonameCount: 1,
   autonameRegex: /^symbol(\d+)$/,
+
+  initAutonameCount() {
+    return Symbol.find().then (function (symbols) {
+      symbols.forEach (function (symbol) {
+        Symbol.updateAutonameCount (symbol)
+      })
+    })
+  },
+  
+  updateAutonameCount (symbol) {
+    var match = Symbol.autonameRegex.exec (symbol.name)
+    if (match)
+      Symbol.autonameCount = Math.max (Symbol.autonameCount, parseInt(match[1]) + 1)
+  },
+  
   beforeCreate: function (symbol, callback) {
     if (!symbol.name)
       symbol.name = Symbol.autonamePrefix + (Symbol.autonameCount++)
     callback()
   },
+
   afterUpdate: function (symbol, callback) {
-    var match = Symbol.autonameRegex.exec (symbol.name)
-    if (match)
-      Symbol.autonameCount = Math.max (Symbol.autonameCount, parseInt(match[1]) + 1)
+    Symbol.updateAutonameCount (symbol)
     callback()
   },
 };

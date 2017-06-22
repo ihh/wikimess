@@ -14,6 +14,9 @@ module.exports.bootstrap = function(cb) {
   // initialize admin Player
   Player.initAdmin()
     .then (function (admin) {
+      // initialize Symbol autonaming
+      return Symbol.initAutonameCount()
+    }).then (function() {
       cb()
     }).catch (function (err) { throw(err) })
 

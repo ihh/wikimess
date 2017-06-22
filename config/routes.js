@@ -82,11 +82,11 @@ module.exports.routes = {
   'POST /p/:player/message':            'ClientController.sendMessage',
   'DELETE /p/:player/message/:message': 'ClientController.deleteMessage',
 
-  'GET /p/:player/symbols':         'ClientController.getSymbolsByOwner',
-  'GET /p/:player/symbol':          'ClientController.newSymbol',
-  'GET /p/:player/symbol/:symid':   'ClientController.getSymbol',
-  'PUT /p/:player/symbol/:symid':   'ClientController.putSymbol',
-  'GET /p/:player/release/:symid':  'ClientController.releaseSymbol',
+  'GET /p/:player/symbols':          'ClientController.getSymbolsByOwner',
+  'GET /p/:player/symbol':           'ClientController.newSymbol',
+  'GET /p/:player/symbol/:symid':    'ClientController.getSymbol',
+  'PUT /p/:player/symbol/:symid':    'ClientController.putSymbol',
+  'DELETE /p/:player/symbol/:symid': 'ClientController.releaseSymbol',
 
   'GET /p/:player/symbol/:symid/unsubscribe': 'ClientController.unsubscribeSymbol',
 

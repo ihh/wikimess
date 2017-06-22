@@ -235,13 +235,13 @@ body {
     border-width: 1px;
 }
 
-.bighouse .gramlistbar .grammar .title,
 .bighouse .grammarbar .rule .lhs {
     width: 80%;
     font-weight: bold;
     font-style: italic;
     font-size: large;
     clear: left;
+    overflow-wrap: break-word;
 }
 
 .bighouse .gramlistbar .newgrammar .button {

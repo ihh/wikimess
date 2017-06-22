@@ -170,6 +170,11 @@ var BigHouse = (function() {
                        data: JSON.stringify ({ name: name, rules: rules }) })
     },
 
+    REST_deletePlayerSymbol: function (playerID, symbolID) {
+      return $.ajax ({ url: '/p/' + playerID + '/symbol/' + symbolID,
+                       method: 'DELETE' })
+    },
+
     REST_getHelpHtml: function() {
       return $.get ('/html/grammar-editor-help.html')
     },
@@ -885,7 +890,9 @@ var BigHouse = (function() {
       var buttonsDiv = $('<span class="buttons">')
       div.empty().append (renderHtml (props.content), buttonsDiv)
       
-      if (!props.isConstant) {
+      if (props.isConstant)
+        buttonsDiv.append (bh.makeIconButton ('locked'))
+      else {
         div.on ('click', editCallback)
         buttonsDiv.append (bh.makeIconButton ('edit', editCallback))
         if (props.destroyCallback)
@@ -893,8 +900,9 @@ var BigHouse = (function() {
             evt.stopPropagation()
             bh.saveCurrentEdit()
               .then (function() {
-                if (!props.confirmDestroy() || window.confirm("Delete " + props.description + "?"))
-                  props.destroyCallback()
+                
+                if (props.confirmDestroy())
+                  bh.lastSavePromise = props.destroyCallback()
               })
           }))
       }
@@ -986,18 +994,26 @@ var BigHouse = (function() {
       console.log('parseRhs:',parsed)
       return parsed
     },
+
+    symbolOwnedByPlayer: function (symbol) {
+      return symbol.owner.id === this.playerID
+    },
+
+    symbolEditableByPlayer: function (symbol) {
+      return this.symbolOwnedByPlayer(symbol) || typeof(symbol.owner.id) === 'undefined' || symbol.owner.id === null
+    },
     
     makeGrammarRhsDiv: function (symbol, ruleDiv, rhs, n) {
       var span = bh.makeEditableSpan ({ className: 'rhs',
                                         content: rhs,
-                                        description: 'this expansion for symbol #' + this.symbolName[symbol.id],
+                                        isConstant: !bh.symbolEditableByPlayer (symbol),
+                                        confirmDestroy: function() {
+                                          return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + bh.symbolName[symbol.id] + '?')
+                                        },
                                         destroyCallback: function() {
                                           symbol.rules.splice(n,1)
                                           bh.populateGrammarRuleDiv (ruleDiv, symbol)
-                                          bh.saveSymbol (symbol)
-                                        },
-                                        confirmDestroy: function() {
-                                          return symbol.rules[n].length
+                                          return bh.saveSymbol (symbol)
                                         },
                                         storeCallback: function (newRhs) {
                                           symbol.rules[n] = newRhs
@@ -1054,11 +1070,12 @@ var BigHouse = (function() {
                                       })
       return span
     },
-
+    
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
       var bh = this
       var lhs = bh.symbolName[symbol.id]
       function sanitize (text) { return '#' + text.replace (/[^A-Za-z0-9_]/g, '') }
+      var editable = bh.symbolEditableByPlayer (symbol)
       ruleDiv.empty()
         .append (this.makeEditableSpan
                  ({ className: 'lhs',
@@ -1074,34 +1091,50 @@ var BigHouse = (function() {
                         || (keycode === 8)  // backspace/delete
                     },
                     description: 'symbol #' + lhs + ' and all its expansions',
+                    isConstant: !editable,
                     confirmDestroy: function() {
-                      return true
+                      return window.confirm('Relinquish ownership of symbol #' + bh.symbolName[symbol.id] + '?')
                     },
                     destroyCallback: function() {
-                      // WRITE ME
+                      bh.removeGrammarRule (symbol)
+                      return bh.REST_deletePlayerSymbol (bh.playerID, symbol.id)
                     },
                     storeCallback: function (newLhs) {
                       return bh.renameSymbol (symbol, newLhs)
                     },
-                    otherButtonDivs: [
-                      bh.makeIconButton ('create', function (evt) {
-                        evt.stopPropagation()
-                        bh.saveCurrentEdit()
-                          .then (function() {
-                            bh.finishLastSave()
-                              .then (function() {
-                                var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                                ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
-                                symbol.rules.push (newRhs)
-                                bh.selectGrammarRule (symbol)
-                                bh.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                              })
-                          })
-                      })
-                    ]}),
+                    otherButtonDivs: (bh.symbolOwnedByPlayer(symbol)
+                                      ? []
+                                      : [ bh.makeIconButton
+                                          ('hide', function (evt) {
+                                            evt.stopPropagation()
+                                            bh.saveCurrentEdit()
+                                              .then (function() {
+                                                bh.removeGrammarRule (symbol)
+                                           })
+                                          })]).concat (editable
+                                                       ? [ bh.makeIconButton
+                                                           ('create', function (evt) {
+                                                             evt.stopPropagation()
+                                                             bh.saveCurrentEdit()
+                                                               .then (function() {
+                                                                 var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                                                                 ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
+                                                                 symbol.rules.push (newRhs)
+                                                                 bh.selectGrammarRule (symbol)
+                                                                 bh.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                                                               })
+                                                           }) ]
+                                                       : [])
+                  }),
                  symbol.rules.map (function (rhs, n) {
                    return bh.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
                  }))
+    },
+
+    removeGrammarRule: function (symbol) {
+      this.ruleDiv[symbol.id].remove()
+      delete this.ruleDiv[symbol.id]
+      delete this.symbolCache[symbol.id]
     },
 
     makeGrammarRuleDiv: function (symbol) {

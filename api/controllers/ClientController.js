@@ -317,6 +317,7 @@ module.exports = {
       .then (function (symbols) {
         result.symbols = symbols.map (function (symbol) {
           return { id: symbol.id,
+                   owner: { id: playerID },
                    rules: symbol.rules }
         })
         Symbol.subscribe (req, symbols.map (function (symbol) { return symbol.id }))
@@ -337,6 +338,7 @@ module.exports = {
     Symbol.create ({ owner: playerID })
       .then (function (symbol) {
         result.symbol = { id: symbol.id,
+                          owner: { id: playerID },
                           rules: symbol.rules }
         result.name = {}
         result.name[symbol.id] = symbol.name
@@ -356,6 +358,7 @@ module.exports = {
     Symbol.findOne ({ id: symbolID })
       .then (function (symbol) {
         result.symbol = { id: symbol.id,
+                          owner: { id: symbol.owner },
                           rules: symbol.rules }
         return SymbolService.resolveReferences ([symbol])
       }).then (function (names) {
@@ -378,8 +381,11 @@ module.exports = {
                            initialized: true },
                          { name: name,
                            rules: rules })
-    var result = { symbol: { name: name,
-                             rules: rules },
+    var result = { symbol: { id: symbolID,
+                             name: name,
+                             owner: { id: playerID },
+                             rules: rules,
+                             initialized: true },
                    name: {} }
     
     Symbol.find ({ not: { id: symbolID },
@@ -398,13 +404,8 @@ module.exports = {
                                   update)
           }).then (function (symbol) {
             result.name[symbolID] = symbol.name
-            Symbol.message (symbolID, { message: "update",
-                                        symbol: { id: symbolID,
-                                                  name: name,
-                                                  owner: playerID,
-                                                  rules: rules,
-                                                  initialized: true },
-                                        name: result.name })
+            Symbol.message (symbolID, extend ({ message: "update" },
+                                              result))
             res.json (result)
           })
       }).catch (function (err) {
@@ -420,8 +421,21 @@ module.exports = {
     Symbol.update ({ id: symbolID,
                      owner: playerID },
                    { owner: null })
-      .then (function (symbol) {
-        res.ok()
+      .then (function (symbols) {
+        if (symbols && symbols.length === 1)
+          SymbolService.resolveReferences (symbols)
+          .then (function (names) {
+            var symbol = symbols[0]
+            Symbol.message (symbolID,
+                            { message: "update",
+                              symbol: { id: symbolID,
+                                        name: symbol.name,
+                                        owner: {},
+                                        rules: symbol.rules,
+                                        initialized: symbol.initialized },
+                              name: names })
+            res.ok()
+          })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)
