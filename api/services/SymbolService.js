@@ -1,6 +1,7 @@
 // api/services/SymbolService.js
 
 var Promise = require('bluebird')
+var extend = require('extend')
 
 module.exports = {
 
@@ -52,15 +53,22 @@ module.exports = {
       })
   },
 
-  expandSymbol: function (symbolID, rng) {
+  expandSymbol: function (symbolID, rng, depth) {
     rng = rng || Math.random
+    depth = depth || {}
     return Symbol.findOne ({ id: symbolID })
       .then (function (symbol) {
+        if (!symbol)
+          throw new Error ('Symbol ' + symbolID + ' not found')
         var rhsSyms = symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : []
         return Promise.map (rhsSyms, function (rhsSym) {
-          return (typeof(rhsSym) === 'string'
-                  ? rhsSym
-                  : SymbolService.expandSymbol (rhsSym.id, rng))
+          if (typeof(rhsSym) === 'string')
+            return rhsSym
+          if (depth[rhsSym] >= Symbol.maxDepth)
+            return ''
+          var nextDepth = extend ({}, depth)
+          nextDepth[rhsSym] = (nextDepth[rhsSym] || 0) + 1
+          return SymbolService.expandSymbol (rhsSym.id, rng, nextDepth)
         })
       }).then (function (rhsVals) {
         return rhsVals.join('')

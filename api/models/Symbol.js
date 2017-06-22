@@ -36,6 +36,9 @@ module.exports = {
     },
   },
 
+  // max depth for expansions
+  maxDepth: 3,
+  
   // lifecycle callbacks to autogenerate names
   autonamePrefix: 'symbol',
   autonameCount: 1,

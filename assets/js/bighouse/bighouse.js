@@ -175,6 +175,10 @@ var BigHouse = (function() {
                        method: 'DELETE' })
     },
 
+    REST_expandPlayerSymbol: function (playerID, symbolID) {
+      return $.get ('/p/' + playerID + '/expand/' + symbolID)
+    },
+
     REST_getHelpHtml: function() {
       return $.get ('/html/grammar-editor-help.html')
     },
@@ -1102,29 +1106,46 @@ var BigHouse = (function() {
                     storeCallback: function (newLhs) {
                       return bh.renameSymbol (symbol, newLhs)
                     },
-                    otherButtonDivs: (bh.symbolOwnedByPlayer(symbol)
-                                      ? []
-                                      : [ bh.makeIconButton
-                                          ('hide', function (evt) {
-                                            evt.stopPropagation()
+                    otherButtonDivs: [bh.makeIconButton
+                                      ('randomize', function (evt) {
+                                        evt.stopPropagation()
+                                        bh.saveCurrentEdit()
+                                          .then (function() {
                                             bh.saveCurrentEdit()
                                               .then (function() {
-                                                bh.removeGrammarRule (symbol)
-                                           })
-                                          })]).concat (editable
-                                                       ? [ bh.makeIconButton
-                                                           ('create', function (evt) {
-                                                             evt.stopPropagation()
-                                                             bh.saveCurrentEdit()
-                                                               .then (function() {
-                                                                 var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                                                                 ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
-                                                                 symbol.rules.push (newRhs)
-                                                                 bh.selectGrammarRule (symbol)
-                                                                 bh.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                                                               })
-                                                           }) ]
-                                                       : [])
+                                                bh.REST_expandPlayerSymbol (bh.playerID, symbol.id)
+                                                  .then (function (result) {
+		                                    bh.infoPaneTitle.text ('#' + bh.symbolName[symbol.id])
+		                                    bh.infoPaneContent.text (result.expansion)
+		                                    bh.infoPane.show()
+                                                  })
+                                              })
+                                          })
+                                      })]
+                    .concat (bh.symbolOwnedByPlayer(symbol)
+                             ? []
+                             : [ bh.makeIconButton
+                                 ('hide', function (evt) {
+                                   evt.stopPropagation()
+                                   bh.saveCurrentEdit()
+                                     .then (function() {
+                                       bh.removeGrammarRule (symbol)
+                                     })
+                                 })])
+                    .concat (editable
+                             ? [ bh.makeIconButton
+                                 ('create', function (evt) {
+                                   evt.stopPropagation()
+                                   bh.saveCurrentEdit()
+                                     .then (function() {
+                                       var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                                       ruleDiv.append (bh.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
+                                       symbol.rules.push (newRhs)
+                                       bh.selectGrammarRule (symbol)
+                                       bh.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                                     })
+                                 }) ]
+                             : [])
                   }),
                  symbol.rules.map (function (rhs, n) {
                    return bh.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
@@ -1238,26 +1259,26 @@ var BigHouse = (function() {
             bh.container.on ('click', bh.saveCurrentEdit.bind(bh))
             bh.grammarBarDiv = $('<div class="grammarbar">')
 
-            var infoPane = $('<div class="grammarinfopane">')
-            var infoPaneContent = $('<div class="content">')
-            var infoPaneTitle = $('<div class="title">')
-            infoPane.append ($('<span class="closebutton">').text('x')
-		             .on ('click', function() { infoPane.hide() }),
-		             infoPaneTitle,
-		             infoPaneContent)
+            bh.infoPane = $('<div class="grammarinfopane">')
+            bh.infoPaneContent = $('<div class="content">')
+            bh.infoPaneTitle = $('<div class="title">')
+            bh.infoPane.append ($('<span class="closebutton">').text('x')
+		                .on ('click', function() { bh.infoPane.hide() }),
+		                bh.infoPaneTitle,
+		                bh.infoPaneContent)
             
             bh.container
 	      .append (bh.grammarBarDiv,
-                       infoPane.hide(),
+                       bh.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
                        ($('<div class="help">').html
                         (bh.makeIconButton ('help', function() {
 		          bh.REST_getHelpHtml().then (function (helpHtml) {
 		            bh.saveCurrentEdit()
                               .then (function() {
-		                infoPaneTitle.text ('Help')
-		                infoPaneContent.html (helpHtml)
-		                infoPane.show()
+		                bh.infoPaneTitle.text ('Help')
+		                bh.infoPaneContent.html (helpHtml)
+		                bh.infoPane.show()
                               })
 		          })
                         })),
@@ -1275,7 +1296,7 @@ var BigHouse = (function() {
                          })))))
             
             bh.restoreScrolling (bh.grammarBarDiv)
-            bh.restoreScrolling (infoPaneContent)
+            bh.restoreScrolling (bh.infoPaneContent)
 
             bh.ruleDiv = {}
             bh.grammarBarDiv
