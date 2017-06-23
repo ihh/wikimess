@@ -1844,7 +1844,7 @@ var GramBot = (function() {
                      .append ($('<div class="search">')
                               .append ($('<div class="query">')
                                        .append (searchButton, gb.searchInput),
-                                       $('<div class="followsection">')
+                                       gb.playerSearchDiv = $('<div class="followsection">')
                                        .append (gb.playerSearchResultsDiv,
                                                 gb.endSearchResultsDiv))))
           gb.searchInput.attr ('placeholder', 'Search players')
@@ -1997,10 +1997,10 @@ var GramBot = (function() {
       this.playerSearchResults = this.playerSearchResults || { results: [] }
       this.playerSearchResultsDiv.empty()
       this.endSearchResultsDiv.empty()
-      this.playerSearchResultsDiv.hide()
+      this.playerSearchDiv.hide()
       if (this.lastPlayerSearch && this.lastPlayerSearch.length) {
+        this.playerSearchDiv.show()
         this.playerSearchResultsDiv
-          .show()
           .append ($('<span class="closebutton">').html
                    (gb.makeIconButton ('close', gb.clearPlayerSearch.bind(gb))),
                    $('<div class="searchtitle">').text("Search results"),
