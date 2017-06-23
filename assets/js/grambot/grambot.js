@@ -22,7 +22,15 @@ var GramBot = (function() {
     this.socket_onPlayer (this.handlePlayerMessage.bind (this))
     this.socket_onSymbol (this.handleSymbolMessage.bind (this))
 
+    // preload sounds
     this.preloadSounds.forEach (this.loadSound)
+
+    // preload icons
+    this.iconPromise = {}
+    Object.keys(this.iconFilename).forEach (function (icon) { gb.getIconPromise (gb.iconFilename[icon]) })
+    this.tabs.forEach (function (tab) { gb.getIconPromise (tab.icon) })
+
+    // monitor connection
     io.socket.on('disconnect', function() {
       if (gb.suppressDisconnectWarning)
         location.reload()
@@ -36,14 +44,15 @@ var GramBot = (function() {
       e.preventDefault()
     }, {passive: false})
 
+    // initialize
     this.themeSelector(this.theme,{silent:true}) ()
     
     this.pushedViews = []
-    this.iconPromise = {}
 
     this.symbolName = {}
     this.composition = {}
 
+    // log in
     if (config.playerID) {
       this.playerID = config.playerID
       this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
