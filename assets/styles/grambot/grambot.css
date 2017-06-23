@@ -96,7 +96,7 @@ body {
     border-bottom-style: solid;
     border-width: 1px;
 
-    width: 98vw;
+    width: 97vw;
     margin-left: 1px;
     box-shadow: 1vw 1vw 1vw 0px gray;
     border-left-style: solid;
@@ -148,7 +148,7 @@ body {
     border-bottom-style: solid;
     border-width: 1px;
 
-    width: 98vw;
+    width: 97vw;
     margin-left: 1px;
     box-shadow: 1vw 1vw 1vw 0px gray;
     border-left-style: solid;
@@ -200,35 +200,16 @@ body {
     text-decoration: underline;
 }
 
-.grambot .grammarinfopane,
-.grambot .grammareditbuttons {
-    border-top-style: solid;
-    border-width: 1px;
-    z-index: 1;
-}
-
 .grambot .grammarinfopane {
-    width: 98vw;
-    margin-left: 1px;
-    box-shadow: 1vw -1vw 1vw 0px gray;
+    border-top-style: solid;
     border-left-style: solid;
     border-right-style: solid;
+    border-width: 1px;
+    z-index: 1;
+    width: 97vw;
+    margin-left: 1px;
+    box-shadow: 1vw -1vw 1vw 0px gray;
     padding: 2px;
-}
-    
-.grambot .grammareditbuttons .newlhs,
-.grambot .grammareditbuttons .help {
-    padding: 2vw;
-    width: 1em;
-    height: 1em;
-}
-
-.grambot .grammareditbuttons .newlhs {
-    float: right;
-}
-
-.grambot .grammareditbuttons .help {
-    float: left;
 }
 
 .grambot .grammarinfopane .title {
@@ -496,7 +477,7 @@ body {
 .grambot .messagebody {
     flex-grow: 1;
     overflow-y: auto;
-    border-style: solid none;
+    border-top-style: solid;
     border-width: 1px;
     margin: 2px;
 }
@@ -518,15 +499,20 @@ body {
     font-style: italic;
 }
 
+.grambot .grammareditbuttons,
 .grambot .messagecontrols {
     display: flex;
     justify-content: space-between;
+    border-top-style: solid;
+    border-width: 1px;
 }
 
+.grambot .grammareditbuttons span,
 .grambot .messagecontrols span {
     padding: 2vw;
 }
 
+.grambot .grammareditbuttons svg,
 .grambot .messagecontrols svg {
     width: 1em;
     height: 1em;

@@ -1821,7 +1821,7 @@ var GramBot = (function() {
                        gb.grammarBarDiv,
                        gb.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
-                       ($('<div class="help">').html
+                       ($('<span class="help">').html
                         (gb.makeIconButton ('help', function() {
                           if (gb.showingHelp) {
                             gb.infoPane.hide()
@@ -1838,7 +1838,7 @@ var GramBot = (function() {
                                 })
 		            })
                         })),
-                        ($('<div class="newlhs">').html
+                        ($('<span class="newlhs">').html
                          (gb.makeIconButton ('create', function() {
 		           gb.saveCurrentEdit()
                              .then (function() {
