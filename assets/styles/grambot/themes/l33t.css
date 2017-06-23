@@ -1,0 +1,83 @@
+/* Colors, l33t theme */
+.grambot.l33t {
+    background-color: black;
+    color: white;
+}
+
+.grambot.l33t .navbar {
+    background-color: black;
+}
+
+.grambot.l33t .gramlistbar {
+    color: white;
+    background-color: black;
+}
+
+.grambot.l33t .gramlistbar .grammar,
+.grambot.l33t .grammarbar .rule,
+.grambot.l33t .detailbar .statusdiv {
+    border-color: #ccc;
+    background-color: #111;
+}
+
+.grambot.l33t .grammarbar .rule .rhs {
+    background-color: #444;
+}
+
+.grambot.l33t .lhslink {
+    color: lightblue;
+}
+
+.grambot.l33t .gramlistbar .grammar .button,
+.grambot.l33t .gramlistbar .newgrammar .button {
+    border-color: green;
+    background-color: #333;
+    color: green;
+}
+
+.grambot.l33t .detailbar,
+.grambot.l33t .grammarbar,
+.grambot.l33t .backbar,
+.grambot.l33t .menubar {
+    color: white;
+}
+
+.grambot.l33t .statusbar a,
+.grambot.l33t .menubar a,
+.grambot.l33t .backbar a,
+.grambot.l33t .menubar label {
+    color: #888;
+    border-color: #888;
+}
+
+.grambot.l33t .titlebar {
+    color: white;
+}
+
+.grambot.l33t .inputbar {
+    color: #aaa;
+}
+
+.grambot.l33t .inputbar input[type=text],
+.grambot.l33t .inputbar input[type=password] {
+    border-color: #444;
+    background-color: #333;
+    color: white;
+}
+
+.grambot.l33t .menubar li {
+    color: white;
+}
+
+.grambot.l33t .menubar .card {
+    color: white;
+    background-color: #444;
+}
+
+.grambot .menubar .themegroup label.l33t {
+    color: darkgreen;
+}
+
+.grambot.l33t .detailbar .statusline {
+    background: #111;
+}

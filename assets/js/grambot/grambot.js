@@ -10,7 +10,7 @@ var GramBot = (function() {
 
     this.localStorage = { playerLogin: undefined,
                           soundVolume: .5,
-                          theme: 'cardroom' }
+                          theme: 'plain' }
     try {
       var ls = JSON.parse (localStorage.getItem (this.localStorageKey))
       $.extend (this.localStorage, ls)
@@ -81,7 +81,7 @@ var GramBot = (function() {
                     compose: 'typewriter-icon' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
-              {style: 'cardroom', text: 'Card room', iconColor: 'white'} ],
+              {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
 
     tabs: [{ name: 'status', method: 'showStatusPage', icon: 'take-my-money', },
            { name: 'compose', method: 'showComposePage', icon: 'typewriter-icon' },
