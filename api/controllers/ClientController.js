@@ -318,23 +318,54 @@ module.exports = {
       })
   },
 
-  // get message
-  getMessage: function (req, res) {
+  // get received message
+  getReceivedMessage: function (req, res) {
     var playerID = parseInt (req.params.player)
     var messageID = parseInt (req.params.message)
     var result = {}
     Message.update ({ recipient: playerID,
-                      id: messageID },
+                      id: messageID,
+                      recipientDeleted: false },
                     { read: true })
       .then (function (message) {
-        Message.findOne ({ id: messageID })
+        return Message.findOne ({ id: messageID })
+          .populate ('symbol')
+          .populate ('sender')
       }).then (function (message) {
         result.message = { id: message.id,
                            sender: { id: message.sender.id,
                                      name: message.sender.displayName },
-                           symbol: { id: message.symbol.id },
+                           symbol: { id: message.symbol.id,
+                                     name: message.symbol.name },
                            title: message.title,
-                           body: message.body }
+                           body: message.body,
+                           date: message.createdAt }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // get sent message
+  getSentMessage: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var messageID = parseInt (req.params.message)
+    var result = {}
+    Message.findOne ({ sender: playerID,
+                       id: messageID,
+                       senderDeleted: false })
+      .populate ('symbol')
+      .populate ('recipient')
+      .then (function (message) {
+        result.message = { id: message.id,
+                           recipient: { id: message.recipient.id,
+                                        name: message.recipient.displayName },
+                           symbol: { id: message.symbol.id,
+                                     name: message.symbol.name },
+                           title: message.title,
+                           body: message.body,
+                           date: message.createdAt }
         res.json (result)
       }).catch (function (err) {
         console.log(err)

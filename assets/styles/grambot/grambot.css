@@ -342,10 +342,14 @@ body {
     justify-content: center;
 }
 
-.grambot .inputbar input[type=text],
-.grambot .inputbar input[type=password] {
+.grambot textarea,
+.grambot input {
     -webkit-appearance: none;
     -moz-appearance: none;
+}
+
+.grambot .inputbar input[type=text],
+.grambot .inputbar input[type=password] {
     display: block;
 
     margin: 0;
@@ -418,32 +422,42 @@ body {
     display: none;
 }
 
-.grambot .compose .messageheader {
+.grambot .messageheader {
     border-top-style: solid;
     border-width: 1px;
+    padding-top: 1px;
+    padding-bottom: 1px;
 }
 
-.grambot .compose .messageheader .row {
+.grambot .messageheader .row {
     width: 100%;
 }
 
-.grambot .compose .messageheader .label {
+.grambot .messageheader .label {
     float: left;
     width: 20vw;
     text-align: right;
     vertical-align: top;
+    padding-right: 2px;
+    font-weight: bold;
 }
 
 .grambot .mailbox,
+.grambot .readmessage,
 .grambot .compose {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
 
-.grambot .compose .messageheader .input {
+.grambot .messageheader .input {
     display: block;
     overflow: hidden;
+    max-height: 20vh;
+}
+
+.grambot .messageheader .field {
+    display: table-cell;
 }
 
 .grambot .compose .messageheader textarea.recipient {
@@ -456,7 +470,7 @@ body {
 }
 
 .grambot .mailbox .contents,
-.grambot .compose .messagebody {
+.grambot .messagebody {
     flex-grow: 1;
     overflow-y: auto;
     border-style: solid none;
