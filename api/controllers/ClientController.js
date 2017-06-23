@@ -267,11 +267,14 @@ module.exports = {
     var result = { player: playerID }
     Message.find ({ recipient: playerID,
                     recipientDeleted: false })
+      .populate ('sender')
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
                    title: message.title,
-                   read: message.read }
+                   sender: { id: message.sender.id,
+                             name: message.sender.displayName },
+                   unread: !message.read }
         })
         res.json (result)
       }).catch (function (err) {
@@ -300,10 +303,13 @@ module.exports = {
     var result = { player: playerID }
     Message.find ({ sender: playerID,
                     senderDeleted: false })
+      .populate ('recipient')
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title }
+                   title: message.title,
+                   recipient: { id: message.recipient.id,
+                                name: message.recipient.displayName } }
         })
         res.json (result)
       }).catch (function (err) {
@@ -343,6 +349,7 @@ module.exports = {
     var symbolID = parseInt (req.body.symbol)
     var title = req.body.title
     var body = req.body.body
+    var result = {}
     Message.create ({ sender: playerID,
                       recipient: recipientID,
                       symbol: symbolID,

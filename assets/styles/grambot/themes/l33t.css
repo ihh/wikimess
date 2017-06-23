@@ -81,3 +81,7 @@
 .grambot.l33t .detailbar .statusline {
     background: #111;
 }
+
+.grambot.l33t .mailbox .contents .message:nth-child(odd) {
+    background: #222;
+}

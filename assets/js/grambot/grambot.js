@@ -41,6 +41,8 @@ var GramBot = (function() {
     this.pushedViews = []
     this.iconPromise = {}
 
+    this.composition = {}
+
     if (config.playerID) {
       this.playerID = config.playerID
       this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
@@ -724,32 +726,56 @@ var GramBot = (function() {
           gb.symbolSearchInput = $('<textarea class="symbol">')
           gb.symbolSearchResultsDiv = $('<div class="results">')
 
-          function sanitizeInput() {
-            var text = gb.symbolSearchInput.val()
-            gb.symbolSearchInput.val (text === '' || text === '#' ? '' : gb.sanitizeSymbolName (text))
+          function inputSanitizer (allowHash) {
+            return function() {
+              var text = gb.symbolSearchInput.val()
+              gb.symbolSearchInput.val (text === '' || (text === '#' && !allowHash) ? '' : gb.sanitizeSymbolName (text))
+            }
           }
           gb.symbolSearchInput
-            .on('keyup',sanitizeInput)
-            .on('change',sanitizeInput)
+            .on('keyup',inputSanitizer(true))
+            .on('change',inputSanitizer(false))
 
           if (config.title)
-            gb.lastMessageTitleInputText = config.title
+            gb.composition.title = config.title
           
           gb.messageTitleInput = $('<textarea class="title">')
-            .val (gb.lastMessageTitleInputText)
+            .val (gb.composition.title)
             .on ('keyup', function() {
-              gb.lastMessageTitleInputText = gb.messageTitleInput.val()
+              gb.composition.title = gb.messageTitleInput.val()
             })
 
           if (config.body)
-            gb.lastMessageBody = config.body
+            gb.composition.body = config.body
 
           gb.messageBodyDiv = $('<div class="messagebody">')
-            .text (gb.lastMessageBody)
+          gb.showMessageBody()
+
           gb.messageControlsDiv = $('<div class="messagecontrols">')
 
+          var sendButton
+          function send() {
+            if (!gb.composition.recipient)
+              gb.showCompose ("Please select a message recipient.")
+            else if (!gb.composition.symbol)
+              gb.showCompose ("Please select a source.")
+            else if (!(gb.composition.body && gb.composition.body.length))
+              gb.showCompose ("Please generate a nonempty message.")
+            else if (!(gb.composition.title && gb.composition.title.length))
+              gb.showCompose ("Please enter a message title.")
+            else {
+              sendButton.off ('click')
+              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.symbol.id, gb.composition.title, gb.composition.body)
+                .then (function (result) {
+                  sendButton.on ('click', send)
+                  gb.showOutbox()
+                })
+            }
+          }
+          sendButton = gb.makeIconButton ('send', send)
+
           gb.container
-            .append ($('<div class="compose">')
+            .append (gb.composeDiv = $('<div class="compose">')
                      .append ($('<div class="messageheader">')
                               .append ($('<div class="row">')
                                        .append ($('<span class="label">').text ('To:'),
@@ -762,26 +788,28 @@ var GramBot = (function() {
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
-                              gb.messageBodyDiv,
-                              gb.messageControlsDiv.append
-                              ($('<span>').html
-                               (gb.makeIconButton ('randomize', function() {
-                                 gb.generateMessageBody()
-                               })),
-                               ($('<span>').html
-                                (gb.makeIconButton ('message', function() {
-                                }))),
-                               ($('<span>').html
-                                (gb.makeIconButton ('outbox', function() {
-                                }))),
-                               ($('<span>').html
-                                (gb.makeIconButton ('send', function() {
-                                }))))))
+                              gb.messageBodyDiv),
+                     gb.outboxDiv = $('<div class="mailbox">').hide(),
+                     gb.messageControlsDiv.append
+                     ($('<span>').html
+                      (gb.makeIconButton ('randomize', function() {
+                        gb.showCompose()
+                        gb.generateMessageBody()
+                      })),
+                      $('<span>').html
+                       (gb.makeIconButton ('message', function() {
+                         gb.showCompose()
+                       })),
+                      $('<span>').html
+                      (gb.makeIconButton ('outbox', function() {
+                        gb.showOutbox()
+                      })),
+                      $('<span>').html (sendButton)))
 
           gb.restoreScrolling (gb.messageBodyDiv)
 
           if (config.recipient) {
-            gb.composeRecipient = config.recipient
+            gb.composition.recipient = config.recipient
             gb.lastComposePlayerSearchText = config.recipient.name
           }
 
@@ -790,33 +818,75 @@ var GramBot = (function() {
           gb.playerSearchInput
             .on ('keyup', gb.doComposePlayerSearch.bind(gb))
             .on ('click', gb.doComposePlayerSearch.bind(gb,true))
-          if (!gb.composeRecipient) {
+          if (!gb.composition.recipient) {
             delete gb.lastComposePlayerSearchText
             gb.doComposePlayerSearch()
           }
 
           if (config.symbol)
-            gb.composeSymbol = config.symbol
+            gb.composition.symbol = config.symbol
           // doing the following test separately of config.symbol guards against symbol being renamed
-          if (gb.composeSymbol && gb.symbolName[gb.composeSymbol.id])
-            gb.lastComposeSymbolSearchText = gb.symbolName[gb.composeSymbol.id]
+          if (gb.composition.symbol && gb.symbolName[gb.composition.symbol.id])
+            gb.lastComposeSymbolSearchText = gb.symbolName[gb.composition.symbol.id]
           
           gb.symbolSearchInput.attr ('placeholder', 'Symbol name')
             .val (gb.lastComposeSymbolSearchText ? ('#' + gb.lastComposeSymbolSearchText) : undefined)
           gb.symbolSearchInput
             .on ('keyup', gb.doComposeSymbolSearch.bind(gb))
             .on ('click', gb.doComposeSymbolSearch.bind(gb,true))
-          if (!gb.composeSymbol) {
+          if (!gb.composition.symbol) {
             delete gb.lastComposeSymbolSearchText
             gb.doComposeSymbolSearch()
           }
         })
     },
 
+    showCompose: function (error) {
+      this.composeDiv.show()
+      this.outboxDiv.hide()
+      if (error)
+        window.setTimeout (function() { alert(error) }, 10)
+    },
+    
+    showOutbox: function() {
+      var gb = this
+      gb.composeDiv.hide()
+      gb.outboxDiv.show()
+      gb.REST_getPlayerOutbox (gb.playerID)
+        .then (function (result) {
+          gb.populateMailboxDiv ({ div: gb.outboxDiv,
+                                   refresh: gb.showOutbox,
+                                   title: 'Sent messages',
+                                   who: 'recipient',
+                                   messages: result.messages })
+        })
+    },
+
+    populateMailboxDiv: function (props) {
+      props.div
+        .empty()
+        .append ($('<span class="mailboxname">').text (props.title),
+                 $('<span class="contents">')
+                 .append (props.messages.map (function (message) {
+                   var div = $('<div class="message">')
+                       .append ($('<div class="title">').text (message.title),
+                                $('<span class="buttons">')
+                                .append (gb.makeIconButton ('destroy', function (evt) {
+                                  evt.stopPropagation()
+                                  gb.REST_deletePlayerMessage (gb.playerID, message.id)
+                                    .then (props.refresh.bind(gb))
+                                })),
+                                $('<div class="player">').text (message[props.who].name))
+                   if (message.unread)
+                     div.addClass ('unread')
+                   return div
+                 })))
+    },
+
     doComposePlayerSearch: function (forceNewSearch) {
       var gb = this
       var searchText = this.playerSearchInput.val()
-      delete gb.composeRecipient
+      delete gb.composition.recipient
       if (forceNewSearch || searchText !== this.lastComposePlayerSearchText) {
         this.lastComposePlayerSearchText = searchText
         if (searchText.length)
@@ -842,7 +912,7 @@ var GramBot = (function() {
             return $('<span class="name">').text (player.name)
               .on ('click', function() {
                 gb.playerSearchResultsDiv.empty()
-                gb.composeRecipient = player
+                gb.composition.recipient = player
                 gb.playerSearchInput.val (gb.lastComposePlayerSearchText = player.name)
               })
           }))
@@ -854,7 +924,7 @@ var GramBot = (function() {
     doComposeSymbolSearch: function (forceNewSearch) {
       var gb = this
       var searchText = this.symbolSearchInput.val().substr(1)
-      delete gb.composeSymbol
+      delete gb.composition.symbol
       if (forceNewSearch || searchText !== this.lastComposeSymbolSearchText) {
         this.lastComposeSymbolSearchText = searchText
         if (searchText.length)
@@ -881,10 +951,10 @@ var GramBot = (function() {
               .append ('#', $('<span class="name">').text (symbol.name))
               .on ('click', function() {
                 gb.symbolSearchResultsDiv.empty()
-                gb.composeSymbol = symbol
+                gb.composition.symbol = symbol
                 gb.symbolSearchInput.val ('#' + (gb.lastComposeSymbolSearchText = symbol.name))
                 if (!gb.messageTitleInput.val().length)
-                  gb.messageTitleInput.val (symbol.name.replace (/_/g, ' '))
+                  gb.messageTitleInput.val (gb.composition.title = symbol.name.replace (/_/g, ' '))
                 gb.generateMessageBody()
               })
           }))
@@ -892,19 +962,34 @@ var GramBot = (function() {
           this.symbolSearchResultsDiv.append ($('<span class="warning">').text ("No matching symbols found"))
       }
     },
+
+    showMessageBody: function() {
+      var gb = this
+      if (gb.composition.body && gb.composition.body.length)
+        gb.messageBodyDiv.text (gb.composition.body)
+      else
+        gb.messageBodyDiv.empty().html ($('<span class="placeholder">')
+                                        .text ('Select a source symbol to generate some message text.'))
+    },
     
     generateMessageBody: function() {
       var gb = this
-      gb.messageBodyDiv.empty()
-      gb.lastMessageBody = ''
-      if (gb.composeSymbol)
-        gb.REST_expandPlayerSymbol (gb.playerID, gb.composeSymbol.id)
+      gb.showMessageBody()
+      gb.composition.body = ''
+      if (gb.composition.symbol)
+        gb.REST_expandPlayerSymbol (gb.playerID, gb.composition.symbol.id)
         .then (function (result) {
           if (gb.verbose.server)
             console.log ('generateMessageBody:', result)
-          if (result.expansion)
-            gb.messageBodyDiv.text (gb.lastMessageBody = result.expansion)
+          gb.composition.body = result.expansion
+          if (result.expansion && result.expansion.length)
+            gb.showMessageBody()
+          else
+            gb.messageBodyDiv.html ($('<span class="placeholder">')
+                                    .text ('This symbol generated an empty message. Try re-rolling, or try a different symbol.'))
         })
+      else
+        gb.showCompose ('Please select a source symbol.')
     },
 
     // inbox
@@ -1047,6 +1132,8 @@ var GramBot = (function() {
         div.off ('click')
         gb.saveCurrentEdit()
           .then (function() {
+            if (props.locateSpan)
+              div = props.locateSpan()
             var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
             var input = $('<textarea>').val(oldText).attr('rows',divRows)
             function sanitizeInput() { input.val (sanitize (input.val())) }
@@ -1190,7 +1277,6 @@ var GramBot = (function() {
           }
         }
       }
-      console.log('parseRhs:',parsed)
       return parsed
     },
 
@@ -1220,6 +1306,9 @@ var GramBot = (function() {
                                             .then (function (newSymbol) {
                                               return newSymbol.rules[n]
                                             })
+                                        },
+                                        locateSpan: function() {
+                                          return gb.ruleDiv[symbol.id].find('.rhs').eq(n)
                                         },
                                         parse: gb.parseRhs.bind(gb),
                                         renderText: function (rhs) {
@@ -1487,15 +1576,14 @@ var GramBot = (function() {
             gb.infoPane = $('<div class="grammarinfopane">')
             gb.infoPaneContent = $('<div class="content">')
             gb.infoPaneTitle = $('<div class="title">')
-            gb.infoPane.append ($('<div class="buttons">')
-                                .append ($('<span class="closebutton">').html
-                                         (gb.makeIconButton ('close', function() {
-                                           gb.infoPane.hide()
-                                           gb.showingHelp = false
-                                         })),
-                                         gb.infoPaneControls = $('<span class="controls">')),
+            gb.infoPane.append ($('<span class="closebutton">').html
+                                (gb.makeIconButton ('close', function() {
+                                  gb.infoPane.hide()
+                                  gb.showingHelp = false
+                                })),
 		                gb.infoPaneTitle,
-		                gb.infoPaneContent)
+		                gb.infoPaneContent,
+                                gb.infoPaneControls = $('<span class="controls">'))
 
             gb.showingHelp = false
 

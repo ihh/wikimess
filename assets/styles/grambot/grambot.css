@@ -68,11 +68,6 @@ body {
     overflow-y: auto;
 }
 
-.grambot .grammarbar .buttons {
-    font-size: medium;
-    float: right;
-}
-
 .grambot .newlhs .button,
 .grambot .help .button,
 .grambot .grammartitle .button,
@@ -82,11 +77,13 @@ body {
     cursor: pointer;
 }
 
+.grambot .message .buttons .button,
 .grambot .grammartitle .button,
 .grambot .grammarbar .button {
     float: right;
 }
 
+.grambot .mailbox .mailboxname,
 .grambot .grammartitle,
 .grambot .searchtitle,
 .grambot .whobar .followsection .title,
@@ -227,11 +224,12 @@ body {
 }
 
 .grambot .grammarinfopane .controls {
+    font-size: large;
+    float: right;
 }
 
-.grambot .grammarinfopane .controls .button {
+.grambot .controls .button {
     float: right;
-    font-size: small;
     width: 1em;
     height: 1em;
     padding: 1px;
@@ -282,6 +280,7 @@ body {
 }
 
 .grambot .follow .followcontrol,
+.grambot .message .buttons .button,
 .grambot .gramlistbar .grammar .button,
 .grambot .gramlistbar .newgrammar .button {
     padding: 2px;
@@ -419,6 +418,11 @@ body {
     display: none;
 }
 
+.grambot .compose .messageheader {
+    border-top-style: solid;
+    border-width: 1px;
+}
+
 .grambot .compose .messageheader .row {
     width: 100%;
 }
@@ -430,6 +434,7 @@ body {
     vertical-align: top;
 }
 
+.grambot .mailbox,
 .grambot .compose {
     flex-grow: 1;
     display: flex;
@@ -450,12 +455,26 @@ body {
     height: 1em;
 }
 
+.grambot .mailbox .contents,
 .grambot .compose .messagebody {
     flex-grow: 1;
     overflow-y: auto;
     border-style: solid none;
     border-width: 1px;
     margin: 2px;
+}
+
+.grambot .mailbox .contents .message .unread {
+    font-weight: bold;
+}
+
+.grambot .mailbox .contents .message .title {
+    font-size: medium;
+}
+
+.grambot .mailbox .contents .message .player {
+    font-size: small;
+    font-style: italic;
 }
 
 .grambot .messagecontrols {

@@ -87,3 +87,7 @@
 .grambot.plain .detailbar .statusline {
     background: #eee;
 }
+
+.grambot.plain .mailbox .contents .message:nth-child(odd) {
+    background: #eee;
+}
