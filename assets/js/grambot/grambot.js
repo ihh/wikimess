@@ -915,7 +915,7 @@ var GramBot = (function() {
 
     populateMailboxDiv: function (props) {
       var gb = this
-      gb.messageCache = {}
+      gb.messageHeaderCache = {}
       gb.mailboxDiv
         .empty()
         .append ($('<span class="mailboxname">').text (props.title),
@@ -925,7 +925,7 @@ var GramBot = (function() {
 
     makeMailboxEntryDiv: function (props, message) {
       var gb = this
-      gb.messageCache[message.id] = message
+      gb.messageHeaderCache[message.id] = message
       var deleteMessage = function (evt) {
         evt.stopPropagation()
         gb.REST_deletePlayerMessage (gb.playerID, message.id)
@@ -937,11 +937,16 @@ var GramBot = (function() {
                    .append (gb.makeIconButton ('destroy', deleteMessage)),
                    $('<div class="player">').text (message[props.object].name))
           .on ('click', function() {
-            div.removeClass ('unread')
             gb[props.method] (gb.playerID, message.id)
               .then (function (result) {
                 if (gb.verbose.server)
                   console.log ('populateMailboxDiv:', result)
+                if (message.unread) {
+                  div.removeClass ('unread')
+                  delete message.unread
+                  --gb.messageCount
+                  gb.updateMessageCountDiv()
+                }
                 gb.populateReadMessageDiv ({ div: gb.readMessageDiv,
                                              verb: props.verb,
                                              preposition: props.preposition,
@@ -1194,7 +1199,7 @@ var GramBot = (function() {
           if (gb.verbose.server)
             console.log ('updateInbox:', result)
           if (gb.page === 'inbox')  // check again in case player switched pages while loading
-            if (!gb.messageCache[result.message.id])
+            if (!gb.messageHeaderCache[result.message.id])
               gb.mailboxContentsDiv.append (gb.makeMailboxEntryDiv (gb.inboxProps(), result.message))
         })
     },
