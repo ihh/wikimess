@@ -48,7 +48,8 @@ var GramBot = (function() {
       this.playerID = config.playerID
       this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
       this.playerName = config.playerDisplayName
-      this.showInboxPage()
+      this.socket_getPlayerSubscribe (this.playerID)
+        .then (this.showInboxPage.bind (this))
     } else
       this.showLoginPage()
   }
@@ -182,6 +183,10 @@ var GramBot = (function() {
 
     REST_getPlayerMessage: function (playerID, messageID) {
       return $.get ('/p/' + playerID + '/message/' + messageID)
+    },
+
+    REST_getPlayerMessageHeader: function (playerID, messageID) {
+      return $.get ('/p/' + playerID + '/message/' + messageID + '/header')
     },
 
     REST_getPlayerMessageSent: function (playerID, messageID) {
@@ -328,7 +333,7 @@ var GramBot = (function() {
     // login menu
     showLoginPage: function() {
       var gb = this
-      this.setPage ('login')
+      return this.setPage ('login')
         .then (function() {
           gb.container
             .empty()
@@ -574,7 +579,7 @@ var GramBot = (function() {
     showSettingsPage: function() {
       var gb = this
 
-      this.setPage ('settings')
+      return this.setPage ('settings')
         .then (function() {
           gb.showNavBar ('settings')
           gb.container
@@ -590,7 +595,7 @@ var GramBot = (function() {
     // settings
     showPlayerConfigPage: function() {
       var gb = this
-      this.pushView ('name')
+      return this.pushView ('name')
         .then (function() {
           var backLink = gb.makeLink ('Back', function() {
             backLink.off()
@@ -619,7 +624,7 @@ var GramBot = (function() {
       var gb = this
 
       var fieldset
-      this.pushView ('theme')
+      return this.pushView ('theme')
         .then (function() {
           gb.container
             .append (gb.makePageTitle ("Themes"))
@@ -661,7 +666,7 @@ var GramBot = (function() {
     showAudioPage: function() {
       var gb = this
 
-      this.pushView ('audio')
+      return this.pushView ('audio')
         .then (function() {
           var soundInput
           gb.container
@@ -724,7 +729,7 @@ var GramBot = (function() {
     showComposePage: function (config) {
       var gb = this
 
-      this.setPage ('compose')
+      return this.setPage ('compose')
         .then (function() {
           gb.showNavBar ('compose')
 
@@ -758,8 +763,6 @@ var GramBot = (function() {
 
           gb.messageBodyDiv = $('<div class="messagebody">')
           gb.showMessageBody()
-
-          gb.messageControlsDiv = $('<div class="messagecontrols">')
 
           function send() {
             if (!gb.composition.recipient)
@@ -796,9 +799,9 @@ var GramBot = (function() {
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
                               gb.messageBodyDiv),
-                     gb.outboxDiv = $('<div class="mailbox">').hide(),
-                     gb.sentMessageDiv = $('<div class="readmessage">').hide(),
-                     gb.messageControlsDiv.append
+                     gb.mailboxDiv = $('<div class="mailbox">').hide(),
+                     gb.readMessageDiv = $('<div class="readmessage">').hide(),
+                     $('<div class="messagecontrols">').append
                      ($('<span>').append
                       (gb.randomizeButton = gb.makeIconButton ('randomize', function() {
                         gb.showCompose()
@@ -809,15 +812,17 @@ var GramBot = (function() {
                        }).hide(),
                        gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide()),
                       $('<span>').html
-                      (gb.outboxButton = gb.makeIconButton ('outbox', function() {
+                      (gb.sendButton = gb.makeIconButton ('send', send),
+                       gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide()),
+                      $('<span>').append
+                      (gb.mailboxButton = gb.makeIconButton ('outbox', function() {
                         gb.showOutbox()
-                      })),
-                      $('<span>').append (gb.sendButton = gb.makeIconButton ('send', send),
-                                          gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide(),
-                                          gb.reloadButton = gb.makeIconButton ('reload', function() {
-                                            gb.outboxDiv.empty()
-                                            window.setTimeout (gb.showOutbox.bind(gb), 10)  // add a little delay so it looks more like a refresh
-                                          }).hide())))
+                      }),
+                       gb.reloadButton = gb.makeIconButton ('reload', function() {
+                         // clear screen and introduce a short delay so it looks more like a refresh
+                         gb.mailboxDiv.empty()
+                         window.setTimeout (gb.showOutbox.bind(gb), 10)
+                       }).hide())))
 
           gb.restoreScrolling (gb.messageBodyDiv)
 
@@ -865,105 +870,120 @@ var GramBot = (function() {
       this.composeDiv.show()
       this.randomizeButton.show()
       this.sendButton.show()
-      this.outboxButton.show()
+      this.mailboxButton.show()
       this.composeButton.hide()
       this.forwardButton.hide()
       this.destroyButton.hide()
       this.reloadButton.hide()
-      this.outboxDiv.hide()
-      this.sentMessageDiv.hide()
+      this.mailboxDiv.hide()
+      this.readMessageDiv.hide()
       if (error)
         window.setTimeout (function() { alert(error) }, 10)
     },
     
     showOutbox: function() {
       var gb = this
-      gb.outboxDiv.show()
+      gb.mailboxDiv.show()
       gb.composeButton.show()
       gb.reloadButton.show()
-      gb.outboxButton.hide()
+      gb.mailboxButton.hide()
       gb.sendButton.hide()
       gb.forwardButton.hide()
       gb.randomizeButton.hide()
       gb.destroyButton.hide()
-      gb.sentMessageDiv.hide()
+      gb.readMessageDiv.hide()
       gb.composeDiv.hide()
       gb.REST_getPlayerOutbox (gb.playerID)
         .then (function (result) {
-          gb.populateMailboxDiv ({ div: gb.outboxDiv,
-                                   refresh: gb.showOutbox,
+          if (gb.verbose.server)
+            console.log ('showOutbox:', result)
+          gb.populateMailboxDiv ({ refresh: gb.showOutbox,
                                    title: 'Sent messages',
-                                   who: 'recipient',
                                    messages: result.messages,
-                                   method: 'REST_getPlayerMessageSent' })
+                                   method: 'REST_getPlayerMessageSent',
+                                   verb: 'Sent',
+                                   preposition: 'To',
+                                   object: 'recipient',
+                                   showMessage: function (message) {
+                                     gb.composeButton.hide()
+                                     gb.randomizeButton.hide()
+                                     gb.sendButton.hide()
+                                     gb.composeDiv.hide()
+                                   }})
         })
     },
 
     populateMailboxDiv: function (props) {
       var gb = this
-      props.div
+      gb.messageCache = {}
+      gb.mailboxDiv
         .empty()
         .append ($('<span class="mailboxname">').text (props.title),
-                 $('<span class="contents">')
-                 .append (props.messages.map (function (message) {
-                   var deleteMessage = function (evt) {
-                     evt.stopPropagation()
-                     gb.REST_deletePlayerMessage (gb.playerID, message.id)
-                       .then (props.refresh.bind(gb))
-                   }
-                   var div = $('<div class="message">')
-                       .append ($('<div class="title">').text (message.title),
-                                $('<span class="buttons">')
-                                .append (gb.makeIconButton ('destroy', deleteMessage)),
-                                $('<div class="player">').text (message[props.who].name))
-                       .on ('click', function() {
-                         div.removeClass ('unread')
-                         gb[props.method] (gb.playerID, message.id)
-                           .then (function (result) {
-                             if (gb.verbose.server)
-                               console.log ('populateMailboxDiv:', result)
-                             gb.populateReadMessageDiv ({ div: gb.sentMessageDiv,
-                                                          verb: 'Sent',
-                                                          preposition: 'To',
-                                                          object: 'recipient',
-                                                          message: result.message })
-                             gb.sentMessageDiv.show()
-                             gb.composeButton.show()
-                             gb.outboxButton.show()
-                             gb.destroyButton.show()
-                               .off('click')
-                               .on('click', deleteMessage)
-                             gb.forwardButton.show()
-                               .off('click')
-                               .on('click', function (evt) {
-                                 evt.stopPropagation()
-                                 gb.showComposePage
-                                 ({ symbol: result.message.symbol,
-                                    title: result.message.title,
-                                    body: result.message.body })
-                               })
-                             gb.reloadButton.hide()
-                             gb.composeButton.hide()
-                             gb.randomizeButton.hide()
-                             gb.sendButton.hide()
-                             gb.outboxDiv.hide()
-                             gb.composeDiv.hide()
-                           })
-                       })
-                   if (message.unread)
-                     div.addClass ('unread')
-                   return div
-                 })))
+                 gb.mailboxContentsDiv = $('<span class="contents">')
+                 .append (props.messages.map (gb.makeMailboxEntryDiv.bind (gb, props))))
+    },
+
+    makeMailboxEntryDiv: function (props, message) {
+      var gb = this
+      gb.messageCache[message.id] = message
+      var deleteMessage = function (evt) {
+        evt.stopPropagation()
+        gb.REST_deletePlayerMessage (gb.playerID, message.id)
+          .then (props.refresh.bind(gb))
+      }
+      var div = $('<div class="message">')
+          .append ($('<div class="title">').text (message.title),
+                   $('<span class="buttons">')
+                   .append (gb.makeIconButton ('destroy', deleteMessage)),
+                   $('<div class="player">').text (message[props.object].name))
+          .on ('click', function() {
+            div.removeClass ('unread')
+            gb[props.method] (gb.playerID, message.id)
+              .then (function (result) {
+                if (gb.verbose.server)
+                  console.log ('populateMailboxDiv:', result)
+                gb.populateReadMessageDiv ({ div: gb.readMessageDiv,
+                                             verb: props.verb,
+                                             preposition: props.preposition,
+                                             object: props.object,
+                                             message: result.message })
+                gb.readMessageDiv.show()
+                gb.mailboxButton.show()
+                gb.destroyButton.show()
+                  .off('click')
+                  .on('click', deleteMessage)
+                gb.forwardButton.show()
+                  .off('click')
+                  .on('click', function (evt) {
+                    evt.stopPropagation()
+                    gb.showComposePage
+                    ({ symbol: result.message.symbol,
+                       title: result.message.title,
+                       body: result.message.body })
+                  })
+                gb.reloadButton.hide()
+                gb.mailboxDiv.hide()
+                props.showMessage (result.message)
+              })
+          })
+      if (message.unread)
+        div.addClass ('unread')
+      return div
     },
 
     populateReadMessageDiv: function (props) {
+      var gb = this
+      var other = props.message[props.object]
       this.symbolName[props.message.symbol.id] = props.message.symbol.name
       props.div
         .empty()
         .append ($('<div class="messageheader">')
                  .append ($('<div class="row">')
                           .append ($('<span class="label">').text (props.preposition + ':'),
-                                   $('<span class="field">').text (props.message[props.object].name)),
+                                   $('<span class="field">').html ($('<span class="player">').text (other.name)
+                                                                   .on ('click', function (evt) {
+                                                                     gb.showOtherStatusPage (other)
+                                                                   }))),
                           $('<div class="row">')
                           .append ($('<span class="label">').text ('Source:'),
                                    $('<span class="field">').append ($('<span class="lhslink">')
@@ -1090,9 +1110,92 @@ var GramBot = (function() {
     showInboxPage: function() {
       var gb = this
 
-      this.setPage ('inbox')
+      return this.setPage ('inbox')
         .then (function() {
           gb.showNavBar ('inbox')
+
+          gb.container
+            .append (gb.mailboxDiv = $('<div class="mailbox">'),
+                     gb.readMessageDiv = $('<div class="readmessage">').hide(),
+                     $('<div class="messagecontrols">').append
+                     ($('<span>').append
+                      (gb.replyButton = gb.makeIconButton ('reply', function(){}).hide()),
+                      $('<span>').append
+                      (gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide()),
+                      $('<span>').append
+                      (gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide()),
+                      $('<span>').append
+                      (gb.mailboxButton = gb.makeIconButton ('inbox', function() {
+                        gb.showInbox()
+                      }),
+                       gb.reloadButton = gb.makeIconButton ('reload', function() {
+                         // clear screen and introduce a short delay so it looks more like a refresh
+                         gb.mailboxDiv.empty()
+                         window.setTimeout (gb.showInbox.bind(gb), 10)
+                       }))))
+
+          gb.showInbox()
+        })
+    },
+
+    showInbox: function() {
+      var gb = this
+      gb.mailboxDiv.show()
+      gb.reloadButton.show()
+      gb.readMessageDiv.hide()
+      gb.replyButton.hide()
+      gb.forwardButton.hide()
+      gb.destroyButton.hide()
+      gb.mailboxButton.hide()
+      gb.REST_getPlayerInbox (gb.playerID)
+        .then (function (result) {
+          if (gb.verbose.server)
+            console.log ('showInbox:', result)
+          gb.populateMailboxDiv ($.extend ({ messages: result.messages },
+                                           gb.inboxProps()))
+        })
+    },
+
+    inboxProps: function() {
+      var gb = this
+      return { refresh: gb.showInbox,
+               title: 'Received messages',
+               method: 'REST_getPlayerMessage',
+               verb: 'Received',
+               preposition: 'From',
+               object: 'sender',
+               showMessage: function (message) {
+                 gb.replyButton
+                   .off('click')
+                   .on('click', function (evt) {
+                     evt.stopPropagation()
+                     var replyTitle = message.title
+                     if (!replyTitle.match(/^re:/i))
+                       replyTitle = 'Re: ' + replyTitle
+                     gb.showComposePage
+                     ({ recipient: message.sender,
+                        symbol: message.symbol,
+                        title: replyTitle,
+                        body: '' })
+                       .then (function() {
+                         gb.generateMessageBody()
+                       })
+                   })
+                 gb.replyButton.show()
+               }}
+    },
+
+    updateInbox: function (messageID) {
+      var gb = this
+      this.updateMessageCount()
+      if (this.page === 'inbox')
+        this.REST_getPlayerMessageHeader (this.playerID, messageID)
+        .then (function (result) {
+          if (gb.verbose.server)
+            console.log ('updateInbox:', result)
+          if (gb.page === 'inbox')  // check again in case player switched pages while loading
+            if (!gb.messageCache[result.message.id])
+              gb.mailboxContentsDiv.append (gb.makeMailboxEntryDiv (gb.inboxProps(), result.message))
         })
     },
 
@@ -1120,7 +1223,7 @@ var GramBot = (function() {
     // status
     showStatusPage: function() {
       var gb = this
-      this.setPage ('status')
+      return this.setPage ('status')
         .then (function() {
           gb.showNavBar ('status')
           gb.showGameStatusPage (gb.REST_getPlayerStatus)
@@ -1130,12 +1233,10 @@ var GramBot = (function() {
 
     showOtherStatusPage: function (follow) {
       var gb = this
-      this.setPage ('otherStatus')
+      return this.pushView ('otherStatus')
         .then (function() {
           gb.otherStatusID = follow.id
-          gb.container.empty()
           gb.makeFollowDiv (follow)
-          if (!follow.human) follow.buttonDiv.hide()
           gb.locBarDiv = $('<div class="locbar">')
           gb.showGameStatusPage (gb.REST_getPlayerStatusOther.bind (gb, gb.playerID, follow.id),
                                    function (status) {
@@ -1149,7 +1250,7 @@ var GramBot = (function() {
           gb.container
 	    .append ($('<div class="backbar">')
 		     .append ($('<span>')
-			      .html (gb.makeLink ('Back', gb.reloadCurrentTab))))
+			      .html (gb.makeLink ('Back', gb.popView.bind(gb)))))
         })
     },
 
@@ -1636,7 +1737,7 @@ var GramBot = (function() {
 
     showGrammarEditPage: function() {
       var gb = this
-      this.setPage ('grammar')
+      return this.setPage ('grammar')
         .then (function() {
           gb.showNavBar ('grammar')
 
@@ -1831,7 +1932,7 @@ var GramBot = (function() {
     showFollowsPage: function() {
       var gb = this
       
-      this.setPage ('follows')
+      return this.setPage ('follows')
         .then (function() {
           gb.showNavBar ('follows')
 
@@ -1870,7 +1971,7 @@ var GramBot = (function() {
       gb.REST_getPlayerFollow (gb.playerID)
 	.done (function (data) {
 	  if (gb.verbose.server)
-	    console.log ('showFollowsPage:', data)
+	    console.log ('updateAddressBook:', data)
           gb.addressBookDiv
             .empty()
             .append ($('<div class="followsection">')
@@ -2021,11 +2122,13 @@ var GramBot = (function() {
     
     // socket message handlers
     handlePlayerMessage: function (msg) {
+      var gb = this
       if (this.verbose.messages)
         console.log (msg)
       switch (msg.data.message) {
-      case "incoming":
+      case 'incoming':
         // incoming message
+        this.updateInbox (msg.data.id)
         break
       default:
         if (this.verbose.messages) {

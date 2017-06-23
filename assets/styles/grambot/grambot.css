@@ -501,7 +501,11 @@ body {
     margin: 2px;
 }
 
-.grambot .mailbox .contents .message .unread {
+.grambot .mailbox .contents .message {
+    cursor: pointer;
+}
+
+.grambot .mailbox .contents .message.unread {
     font-weight: bold;
 }
 

@@ -274,6 +274,7 @@ module.exports = {
                    title: message.title,
                    sender: { id: message.sender.id,
                              name: message.sender.displayName },
+                   date: message.createdAt,
                    unread: !message.read }
         })
         res.json (result)
@@ -288,6 +289,7 @@ module.exports = {
     var playerID = parseInt (req.params.player)
     var result = { player: playerID }
     Message.count ({ recipient: playerID,
+                     recipientDeleted: false,
                      read: false })
       .then (function (count) {
         res.json ({ count: count })
@@ -309,7 +311,8 @@ module.exports = {
           return { id: message.id,
                    title: message.title,
                    recipient: { id: message.recipient.id,
-                                name: message.recipient.displayName } }
+                                name: message.recipient.displayName },
+                   date: message.createdAt }
         })
         res.json (result)
       }).catch (function (err) {
@@ -340,6 +343,29 @@ module.exports = {
                            title: message.title,
                            body: message.body,
                            date: message.createdAt }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // get received message header
+  getReceivedMessageHeader: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var messageID = parseInt (req.params.message)
+    var result = {}
+    Message.findOne ({ recipient: playerID,
+                       id: messageID,
+                       recipientDeleted: false })
+      .populate ('sender')
+      .then (function (message) {
+        result.message = { id: message.id,
+                           title: message.title,
+                           sender: { id: message.sender.id,
+                                     name: message.sender.displayName },
+                           date: message.createdAt,
+                           unread: !message.read }
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -389,8 +415,7 @@ module.exports = {
       .then (function (message) {
         result.message = { id: message.id }
         Player.message (recipientID, { message: "incoming",
-                                       id: message.id,
-                                       title: message.title })
+                                       id: message.id })
         res.json (result)
       }).catch (function (err) {
         console.log(err)
