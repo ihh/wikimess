@@ -121,8 +121,8 @@ var GramBot = (function() {
       return $.post('/login', { name: playerName, password: playerPassword })
     },
 
-    REST_getLogout: function() {
-      return $.post('/logout')
+    REST_postLogout: function() {
+      return $.post ('/logout')
     },
 
     REST_postPlayerSearchPlayersAll: function (playerID, queryText, page) {
@@ -238,6 +238,10 @@ var GramBot = (function() {
       return this.socketGetPromise ('/p/' + playerID + '/subscribe')
     },
 
+    socket_getPlayerUnsubscribe: function (playerID) {
+      return this.socketGetPromise ('/p/' + playerID + '/unsubscribe')
+    },
+    
     socket_getPlayerSymbolNew: function (playerID) {
       return this.socketGetPromise ('/p/' + playerID + '/symbol')
     },
@@ -254,6 +258,17 @@ var GramBot = (function() {
     socketGetPromise: function (url) {
       var def = $.Deferred()
       io.socket.get (url, function (resData, jwres) {
+        if (jwres.statusCode == 200)
+          def.resolve (resData)
+        else
+          def.reject (jwres)
+      })
+      return def
+    },
+
+    socketPostPromise: function (url, data) {
+      var def = $.Deferred()
+      io.socket.post (url, data, function (resData, jwres) {
         if (jwres.statusCode == 200)
           def.resolve (resData)
         else
@@ -388,7 +403,7 @@ var GramBot = (function() {
     },
 
     doInitialLogin: function() {
-      return this.doLogin (this.showInitialUploadPage)
+      return this.doLogin (this.showInboxPage)  // replace showInboxPage with login flow
     },
 
     doLogin: function (showNextPage) {
@@ -571,8 +586,11 @@ var GramBot = (function() {
       delete this.lastSymbolSearch
       delete this.symbolSearchResults
       this.gamePosition = {}
-      this.REST_getLogout()
-      this.showLoginPage()
+      this.socket_getPlayerUnsubscribe (this.playerID)
+	.then (function() {
+	  gb.REST_postLogout()
+	  gb.showLoginPage()
+	})
     },
     
     // settings menu

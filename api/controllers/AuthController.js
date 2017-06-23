@@ -60,8 +60,6 @@ module.exports = {
   },
 
   logout: function(req, res) {
-    if (req.session.passport.user)
-      Player.unsubscribe (req, req.session.passport.user)
     req.logout();
     res.redirect('/');
   },

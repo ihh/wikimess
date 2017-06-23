@@ -254,13 +254,6 @@ module.exports = {
       })
   },
 
-  // subscribe
-  subscribePlayer: function (req, res) {
-    var playerID = parseInt (req.params.player)
-    Player.subscribe (req, playerID)
-    res.ok()
-  },
-  
   // inbox
   getInbox: function (req, res) {
     var playerID = parseInt (req.params.player)
@@ -582,6 +575,20 @@ module.exports = {
         console.log(err)
         res.status(500).send(err)
       })
+  },
+
+  // subscribe to notifications for a player
+  subscribePlayer: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    Player.subscribe (req, playerID)
+    res.ok()
+  },
+
+  // unsubscribe from notifications for a player
+  unsubscribePlayer: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    Player.unsubscribe (req, playerID)
+    res.ok()
   },
 
   // unsubscribe from notifications for a symbol

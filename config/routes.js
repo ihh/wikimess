@@ -45,7 +45,7 @@ module.exports.routes = {
    ***************************************************************************/
 
   'POST /login': 'AuthController.login',
-  '/logout':     'AuthController.logout',
+  '/logout': 'AuthController.logout',
 
   'GET /login/facebook':          'AuthController.facebookLogin',
   'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
@@ -70,6 +70,7 @@ module.exports.routes = {
   'POST /p/:player/config':       'ClientController.configurePlayer',
 
   'GET /p/:player/subscribe':     'ClientController.subscribePlayer',
+  'GET /p/:player/unsubscribe':   'ClientController.unsubscribePlayer',
 
   'GET /p/:player/status':        'ClientController.selfStatus',
   'GET /p/:player/status/:other': 'ClientController.otherStatus',
