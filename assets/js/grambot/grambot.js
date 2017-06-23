@@ -1467,9 +1467,9 @@ var GramBot = (function() {
               gb.populateGrammarRuleDiv (gb.ruleDiv[lhsSymbol.id], lhsSymbol)
           })
         } else if (this.symbolCache[symbol.id]) {
-          this.symbolCache[symbol.id] = symbol
+          $.extend (this.symbolCache[symbol.id], symbol)
           if (this.ruleDiv[symbol.id])
-            this.populateGrammarRuleDiv (this.ruleDiv[symbol.id], symbol)
+            this.populateGrammarRuleDiv (this.ruleDiv[symbol.id], this.symbolCache[symbol.id])
         }
       }
     },
@@ -1522,6 +1522,7 @@ var GramBot = (function() {
                                           symbol.rules[n] = newRhs
                                           return gb.saveSymbol (symbol)
                                             .then (function (newSymbol) {
+					      console.log ('old='+JSON.stringify(symbol.rules)+' new='+JSON.stringify(newSymbol.rules))
                                               return newSymbol.rules[n]
                                             })
                                         },

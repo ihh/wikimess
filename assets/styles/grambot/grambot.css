@@ -439,11 +439,12 @@ body {
 
 .grambot .messageheader .label {
     float: left;
-    width: 20vw;
+    width: 25vw;
     text-align: right;
     vertical-align: top;
     padding-right: 2px;
     font-weight: bold;
+    overflow-wrap: break-word;
 }
 
 .grambot .mailbox,
@@ -462,6 +463,7 @@ body {
 
 .grambot .messageheader .field {
     display: table-cell;
+    overflow-wrap: break-word;
 }
 
 .grambot .compose .messageheader textarea.recipient {
@@ -501,6 +503,7 @@ body {
 
 .grambot .grammareditbuttons,
 .grambot .messagecontrols {
+    min-height: 2em;
     display: flex;
     justify-content: space-between;
     border-top-style: solid;
