@@ -85,3 +85,11 @@
 .grambot.l33t .mailbox .contents .message:nth-child(odd) {
     background: #222;
 }
+
+.grambot.l33t .lhslink.unexpanded {
+    background-color: #003200;
+}
+
+.grambot.l33t .lhslink.unexpanded.animating {
+    background-color: #006400;
+}

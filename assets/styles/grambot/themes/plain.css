@@ -91,3 +91,11 @@
 .grambot.plain .mailbox .contents .message:nth-child(odd) {
     background: #eee;
 }
+
+.grambot.plain .lhslink.unexpanded {
+    background-color: #90cc90;
+}
+
+.grambot.plain .lhslink.unexpanded.animating {
+    background-color: #90ee90;
+}

@@ -85,6 +85,7 @@ var GramBot = (function() {
     maxRating: 5,
     ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
+    expansionAnimationDelay: 400,
     iconFilename: { edit: 'pencil',
                     copy: 'copy',
                     create: 'circle-plus',
@@ -1149,23 +1150,67 @@ var GramBot = (function() {
     },
 
     renderMarkdown: function (markdown) {
-      return marked (markdown, this.markedConfig)
+      return (markdown.match(/\S/)
+              ? marked (markdown, this.markedConfig)
+              : markdown)
     },
     
-    showMessageBody: function (div, expansion) {
+    showMessageBody: function (config) {
       var gb = this
-      div = div || gb.messageBodyDiv
-      expansion = expansion || gb.composition.body
+      config = config || {}
+      div = config.div || gb.messageBodyDiv
+      expansion = config.expansion || gb.composition.body
       var bodyText = gb.makeExpansionText (expansion)
-      if (bodyText.length)
-        div.html (this.renderMarkdown (bodyText))
-      else
+      if (bodyText.length) {
+        if (config.animate) {
+          gb.animationExpansion = _.cloneDeep (expansion)
+          gb.animationDiv = div
+          gb.animateExpansion()
+        } else
+          div.html (this.renderMarkdown (bodyText))
+      } else
         div.html ($('<span class="placeholder">')
                   .text (typeof(expansion) === 'undefined'
                          ? 'Select a script to generate some message text.'
                          : 'The script generated no output. Try re-rolling, or select a different script.'))
     },
+
+    animateExpansion: function() {
+      var gb = this
+      this.clearAnimationTimer()
+      var markdown = this.renderMarkdown (this.makeExpansionText (this.animationExpansion, true))
+      var nSymbols = 0
+      this.animationDiv
+        .html (markdown
+               .replace (/#([A-Za-z0-9_]+)/g,
+                         function (_match, name) {
+                           return '<span class="lhslink unexpanded' + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
+                         }))
+        .off ('click')
+        .on ('click', function() {
+          gb.clearAnimationTimer()
+          div.html (gb.renderMarkdown (gb.makeExpansionText (gb.animationExpansion)))
+        })
+      if (this.deleteFirstSymbolName (this.animationExpansion))
+        this.expansionAnimationTimer = window.setTimeout (this.animateExpansion.bind(this), this.expansionAnimationDelay)
+    },
+
+    clearAnimationTimer: function() {
+      if (this.expansionAnimationTimer)
+        window.clearTimeout (this.expansionAnimationTimer)
+      delete this.expansionAnimationTimer
+    },
     
+    deleteFirstSymbolName: function (node) {
+      if (typeof(node) === 'string')
+        return false
+      if (node.name) {
+        delete node.name
+        return true
+      }
+      return node.rhs.find (this.deleteFirstSymbolName.bind (this))
+    },
+
     generateMessageBody: function() {
       var gb = this
       gb.showMessageBody()
@@ -1176,15 +1221,25 @@ var GramBot = (function() {
           if (gb.verbose.server)
             console.log ('generateMessageBody:', result)
           gb.composition.body = result.expansion
-          gb.showMessageBody()
+          gb.showMessageBody ({ animate: true })
         })
       else
         gb.showCompose ('Please specify a script.')
     },
 
-    makeExpansionText: function (node) {
+    makeExpansionText: function (node, leaveSymbolsUnexpanded) {
       var gb = this
-      return node ? (typeof(node) === 'string' ? node : (node.rhs ? node.rhs.map (function (rhsSym) { return gb.makeExpansionText(rhsSym) }).join('') : '')) : ''
+      return (node
+              ? (typeof(node) === 'string'
+                 ? node
+                 : (node.rhs
+                    ? (leaveSymbolsUnexpanded && node.name
+                       ? ('#' + node.name)
+                       : node.rhs.map (function (rhsSym) {
+                         return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
+                       }).join(''))
+                    : ''))
+              : '')
     },
     
     // inbox
@@ -1454,9 +1509,11 @@ var GramBot = (function() {
               .on('keyup',sanitizeInput)
               .on('change',sanitizeInput)
               .on('click',function(evt){evt.stopPropagation()})
-            if (props.keycodeFilter)
-              input.on ('keydown', function (evt) {
-                if (!props.keycodeFilter (evt.keyCode))
+              .on ('keydown', function (evt) {
+                if (evt.keyCode === 9) {   // tab
+                  evt.preventDefault()
+                  gb.unfocusAndSave()
+                } else if (props.keycodeFilter && !props.keycodeFilter (evt.keyCode))
                   evt.preventDefault()
               })
             if (props.maxLength)
@@ -1715,7 +1772,9 @@ var GramBot = (function() {
                                               console.log ('populateGrammarRuleDiv:', result)
                                             gb.showingHelp = false
 		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
-		                            gb.showMessageBody (gb.infoPaneContent, result.expansion)
+		                            gb.showMessageBody ({ div: gb.infoPaneContent,
+                                                                  expansion: result.expansion,
+                                                                  animate: true })
                                             gb.infoPaneControls
                                               .html (gb.makeIconButton
                                                      ('forward',

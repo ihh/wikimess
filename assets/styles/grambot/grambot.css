@@ -184,7 +184,7 @@ body {
 }
 
 .grambot .grammarbar .rule .rhs p {
-    display: inline-block;
+    display: inline;
     margin: 0;
 }
 
@@ -529,3 +529,28 @@ body {
     width: 1em;
     height: 1em;
 }
+
+.grambot .lhslink.unexpanded {
+    opacity: .8;
+}
+
+.grambot .lhslink.animating {
+    display: inline-block;
+    transform-origin: center;
+    -webkit-animation: 200ms linear 0s infinite alternate throb_rule;
+    -moz-animation: 200ms linear 0s infinite alternate throb_rule;
+    -o-animation: 200ms linear 0s infinite alternate throb_rule;
+    animation: 200ms linear 0s infinite alternate throb_rule;
+}
+
+@-webkit-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
+   @-moz-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
+     @-o-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
+        @keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
+
+/*	
+@-webkit-keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
+   @-moz-keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
+     @-o-keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
+        @keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
+*/
