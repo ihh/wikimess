@@ -83,11 +83,12 @@ module.exports.routes = {
   'GET /p/:player/inbox/count':     'ClientController.getInboxCount',
   'GET /p/:player/outbox':          'ClientController.getOutbox',
 
-  'GET /p/:player/message/:message':        'ClientController.getReceivedMessage',
-  'GET /p/:player/message/:message/header': 'ClientController.getReceivedMessageHeader',
-  'GET /p/:player/message/:message/sent':   'ClientController.getSentMessage',
-  'POST /p/:player/message':              'ClientController.sendMessage',
-  'DELETE /p/:player/message/:message':   'ClientController.deleteMessage',
+  'GET /p/:player/message/:message':         'ClientController.getReceivedMessage',
+  'GET /p/:player/message/:message/header':  'ClientController.getReceivedMessageHeader',
+  'GET /p/:player/message/:message/sent':    'ClientController.getSentMessage',
+  'POST /p/:player/message':                 'ClientController.sendMessage',
+  'DELETE /p/:player/message/:message':      'ClientController.deleteMessage',
+  'PUT /p/:player/message/:message/rating':  'ClientController.rateMessage',
 
   'GET /p/:player/symbols':          'ClientController.getSymbolsByOwner',
   'GET /p/:player/symbol':           'ClientController.newSymbol',

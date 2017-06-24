@@ -72,7 +72,8 @@ var GramBot = (function() {
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
     maxPlayerNameLength: 16,
-    maxGrammarTitleLength: 128,
+    maxRating: 5,
+    ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
     iconFilename: { edit: 'pencil',
                     create: 'circle-plus',
@@ -96,7 +97,9 @@ var GramBot = (function() {
                     reply: 'reply',
                     reload: 'refresh',
                     back: 'back',
-                    dummy: 'dummy' },
+                    dummy: 'dummy',
+                    emptyStar: 'star-empty',
+                    filledStar: 'star-filled' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
@@ -214,6 +217,13 @@ var GramBot = (function() {
     REST_deletePlayerMessage: function (playerID, messageID) {
       return $.ajax ({ url: '/p/' + playerID + '/message/' + messageID,
 		       method: 'DELETE' })
+    },
+
+    REST_putPlayerMessageRating: function (playerID, messageID, rating) {
+      return $.ajax ({ url: '/p/' + playerID + '/message/' + messageID + '/rating',
+		       method: 'PUT',
+                       contentType: 'application/json',
+                       data: JSON.stringify ({ rating: rating }) })
     },
 
     REST_putPlayerSymbol: function (playerID, symbolID, name, rules) {
@@ -801,9 +811,9 @@ var GramBot = (function() {
 
           function send() {
             if (!gb.composition.recipient)
-              gb.showCompose ("Please select a message recipient.")
+              gb.showCompose ("Please specify a message recipient.")
             else if (!gb.composition.symbol)
-              gb.showCompose ("Please select a script.")
+              gb.showCompose ("Please specify a script.")
             else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).length))
               gb.showCompose ("Please generate a nonempty message.")
             else if (!(gb.composition.title && gb.composition.title.length))
@@ -1150,7 +1160,7 @@ var GramBot = (function() {
           gb.showMessageBody()
         })
       else
-        gb.showCompose ('Please select a script.')
+        gb.showCompose ('Please specify a script.')
     },
 
     makeExpansionText: function (node) {
@@ -1169,6 +1179,7 @@ var GramBot = (function() {
           gb.container
             .append (gb.mailboxDiv = $('<div class="mailbox">'),
                      gb.readMessageDiv = $('<div class="readmessage">').hide(),
+                     gb.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      $('<div class="messagecontrols">').append
                      ($('<span>').append
                       (gb.replyButton = gb.makeIconButton ('reply', function(){}).hide()),
@@ -1195,6 +1206,7 @@ var GramBot = (function() {
       gb.mailboxDiv.show()
       gb.reloadButton.show()
       gb.readMessageDiv.hide()
+      gb.rateMessageDiv.hide()
       gb.replyButton.hide()
       gb.forwardButton.hide()
       gb.destroyButton.hide()
@@ -1210,6 +1222,7 @@ var GramBot = (function() {
 
     inboxProps: function() {
       var gb = this
+      
       return { refresh: gb.showInbox,
                title: 'Received messages',
                method: 'REST_getPlayerMessage',
@@ -1217,6 +1230,38 @@ var GramBot = (function() {
                preposition: 'From',
                object: 'sender',
                showMessage: function (message) {
+
+                 if (!message.rating) {
+                   var stars = new Array(gb.maxRating).fill(1).map (function() {
+                     return $('<span class="rating">')
+                   })
+                   var ratingTimer
+                   function fillStars (rating) {
+                     stars.forEach (function (span, n) {
+                       span
+                         .off('click')
+                         .html (gb.makeIconButton (n < rating ? 'filledStar' : 'emptyStar',
+                                                   function() {
+                                                     fillStars (n + 1)
+                                                     if (ratingTimer)
+                                                       window.clearTimeout (ratingTimer)
+                                                     ratingTimer = window.setTimeout (function() {
+                                                       ratingTimer = null
+                                                       gb.REST_putPlayerMessageRating (gb.playerID, message.id, n + 1)
+                                                         .then (function() { gb.rateMessageDiv.hide() })
+                                                     }, gb.ratingDelay)
+                                                   }))
+                     })
+                   }
+                   fillStars(0)
+
+                   gb.rateMessageDiv
+                     .html ($('<div>')
+                            .append ($('<span class="ratinglabel">').text("Rate this message:"),
+                                     stars))
+                     .show()
+                 }
+                 
                  gb.replyButton
                    .off('click')
                    .on('click', function (evt) {

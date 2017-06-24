@@ -486,6 +486,23 @@ body {
     font-style: italic;
 }
 
+.grambot .ratemessage {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.grambot .ratemessage span {
+    padding: 4px;
+}
+
+.grambot .ratemessage svg {
+    width: 1em;
+    height: 1em;
+}
+
 .grambot .backbar,
 .grambot .grammareditbuttons,
 .grambot .messagecontrols {

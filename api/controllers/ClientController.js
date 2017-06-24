@@ -323,7 +323,7 @@ module.exports = {
                       id: messageID,
                       recipientDeleted: false },
                     { read: true })
-      .then (function (message) {
+      .then (function (messages) {
         return Message.findOne ({ id: messageID })
           .populate ('symbol')
           .populate ('sender')
@@ -335,7 +335,8 @@ module.exports = {
                                      name: message.symbol.name },
                            title: message.title,
                            body: message.body,
-                           date: message.createdAt }
+                           date: message.createdAt,
+                           rating: message.rating }
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -436,7 +437,26 @@ module.exports = {
         return (destroy
                 ? Message.destroy ({ id: messageID })
                 : Message.update ({ id: messageID }, update))
-      }).then (function (message) {
+      }).then (function (messages) {
+        res.ok()
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // rate message
+  rateMessage: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var messageID = parseInt (req.params.message)
+    var rating = parseInt (req.body.rating)
+    Message.update ({ id: messageID,
+                      recipient: playerID,
+                      rating: null,
+                      read: true,
+                      recipientDeleted: false },
+                    { rating: rating })
+      .then (function (messages) {
         res.ok()
       }).catch (function (err) {
         console.log(err)
