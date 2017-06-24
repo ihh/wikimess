@@ -30,6 +30,16 @@ var GramBot = (function() {
     Object.keys(this.iconFilename).forEach (function (icon) { gb.getIconPromise (gb.iconFilename[icon]) })
     this.tabs.forEach (function (tab) { gb.getIconPromise (tab.icon) })
 
+    // initialize Markdown renderer
+    var renderer = new marked.Renderer()
+    renderer.link = function (href, title, text) { return text }
+    renderer.image = function (href, title, text) { return text }
+    this.markedConfig = { breaks: true,
+                          sanitize: true,
+                          smartLists: true,
+                          smartypants: true,
+                          renderer: renderer }
+    
     // monitor connection
     io.socket.on('disconnect', function() {
       if (gb.suppressDisconnectWarning)
@@ -902,6 +912,9 @@ var GramBot = (function() {
             delete gb.lastComposeSymbolSearchText
             gb.doComposeSymbolSearch()
           }
+
+          if (config.focus)
+            gb[config.focus].focus()
         })
     },
 
@@ -1010,7 +1023,8 @@ var GramBot = (function() {
                     gb.showComposePage
                     ({ symbol: result.message.symbol,
                        title: result.message.title,
-                       body: result.message.body })
+                       body: result.message.body,
+                       focus: 'playerSearchInput' })
                   })
                 gb.reloadButton.hide()
                 gb.mailboxDiv.hide()
@@ -1051,7 +1065,7 @@ var GramBot = (function() {
                          $('<div class="row">')
                           .append ($('<span class="label">').text (props.verb + ':'),
                                    $('<span class="field">').text (new Date (props.message.date).toString()))),
-                 $('<div class="messagebody">').text (gb.makeExpansionText (props.message.body)))
+                 $('<div class="messagebody">').html (gb.renderMarkdown (gb.makeExpansionText (props.message.body))))
     },
     
     doComposePlayerSearch: function (forceNewSearch) {
@@ -1134,13 +1148,17 @@ var GramBot = (function() {
       }
     },
 
+    renderMarkdown: function (markdown) {
+      return marked (markdown, this.markedConfig)
+    },
+    
     showMessageBody: function (div, expansion) {
       var gb = this
       div = div || gb.messageBodyDiv
       expansion = expansion || gb.composition.body
       var bodyText = gb.makeExpansionText (expansion)
       if (bodyText.length)
-        div.text (bodyText)
+        div.html (this.renderMarkdown (bodyText))
       else
         div.html ($('<span class="placeholder">')
                   .text (typeof(expansion) === 'undefined'
@@ -1166,7 +1184,7 @@ var GramBot = (function() {
 
     makeExpansionText: function (node) {
       var gb = this
-      return node ? (typeof(node) === 'string' ? node : (node.rhs ? node.rhs.map (function (rhsSym) { return gb.makeExpansionText(rhsSym) }) : '')) : ''
+      return node ? (typeof(node) === 'string' ? node : (node.rhs ? node.rhs.map (function (rhsSym) { return gb.makeExpansionText(rhsSym) }).join('') : '')) : ''
     },
     
     // inbox
@@ -1273,7 +1291,8 @@ var GramBot = (function() {
                      gb.showComposePage
                      ({ recipient: message.sender,
                         symbol: message.symbol,
-                        title: replyTitle })
+                        title: replyTitle,
+                        focus: 'messageTitleInput' })
                        .then (function() {
                          gb.generateMessageBody()
                        })
@@ -1552,7 +1571,7 @@ var GramBot = (function() {
 
     parseRhs: function (rhs) {
       var gb = this
-      var regex = /((.*?)#([A-Za-z0-9_]+)|(.+))/g, match
+      var regex = /(([\s\S]*?)#([A-Za-z0-9_]+)|([\s\S]+))/g, match
       var parsed = []
       var name2id = this.symbolNameToID()
       while ((match = regex.exec(rhs))) {
@@ -1598,7 +1617,6 @@ var GramBot = (function() {
                                           symbol.rules[n] = newRhs
                                           return gb.saveSymbol (symbol)
                                             .then (function (newSymbol) {
-					      console.log ('old='+JSON.stringify(symbol.rules)+' new='+JSON.stringify(newSymbol.rules))
                                               return newSymbol.rules[n]
                                             })
                                         },
@@ -1634,7 +1652,7 @@ var GramBot = (function() {
                                                   name.text (rhsSym.name)
                                                 }
                                               } else
-                                                span.text (rhsSym)
+                                                span.html (gb.renderMarkdown (rhsSym))
                                               return span
                                             }))
                                         }
@@ -1700,7 +1718,7 @@ var GramBot = (function() {
 		                            gb.showMessageBody (gb.infoPaneContent, result.expansion)
                                             gb.infoPaneControls
                                               .html (gb.makeIconButton
-                                                     ('compose',
+                                                     ('forward',
                                                       function (evt) {
                                                         evt.stopPropagation()
                                                         gb.saveCurrentEdit()
@@ -1708,7 +1726,8 @@ var GramBot = (function() {
                                                             gb.showComposePage
                                                             ({ symbol: symbol,
                                                                title: gb.symbolName[symbol.id].replace(/_/g,' '),
-                                                               body: result.expansion })
+                                                               body: result.expansion,
+                                                               focus: 'playerSearchInput' })
                                                           })
                                                       }))
 		                            gb.infoPane.show()
@@ -2091,7 +2110,8 @@ var GramBot = (function() {
           .html (gb.makeIconButton ('compose',
                                     function (evt) {
                                       evt.stopPropagation()
-                                      gb.showComposePage ({ recipient: follow })
+                                      gb.showComposePage ({ recipient: follow,
+                                                            focus: 'symbolSearchInput' })
                                     }))
       var doFollow, doUnfollow
       function makeUnfollowButton() {

@@ -183,6 +183,11 @@ body {
     overflow-wrap: break-word;
 }
 
+.grambot .grammarbar .rule .rhs p {
+    display: inline-block;
+    margin: 0;
+}
+
 .grambot .grammarbar .rule.selected {
     -webkit-animation: 500ms linear 0s 1 normal pulse_rule;
     -moz-animation: 500ms linear 0s 1 normal pulse_rule;
@@ -224,7 +229,6 @@ body {
     min-height: 40vw;
     overflow-y: auto;
     padding: 1px;
-    font-style: italic;
 }
 
 .grambot .grammarinfopane .controls {
