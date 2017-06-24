@@ -56,10 +56,12 @@ module.exports = {
   expandSymbol: function (symbolID, rng, depth) {
     rng = rng || Math.random
     depth = depth || {}
+    var result = { id: symbolID }
     return Symbol.findOne ({ id: symbolID })
       .then (function (symbol) {
         if (!symbol)
           throw new Error ('Symbol ' + symbolID + ' not found')
+        result.name = symbol.name
         var rhsSyms = symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : []
         return Promise.map (rhsSyms, function (rhsSym) {
           if (typeof(rhsSym) === 'string')
@@ -71,7 +73,8 @@ module.exports = {
           return SymbolService.expandSymbol (rhsSym.id, rng, nextDepth)
         })
       }).then (function (rhsVals) {
-        return rhsVals.join('')
+        result.rhs = rhsVals
+        return result
       })
   },
 };

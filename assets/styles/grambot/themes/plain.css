@@ -13,9 +13,12 @@
     background-color: white;
 }
 
-.grambot.plain .gramlistbar .grammar,
-.grambot.plain .grammarbar .rule,
-.grambot.plain .detailbar .statusdiv {
+.grambot.plain .grammarbar .rule {
+    border-color: black;
+    background-color: #f0f0f0;
+}
+
+.grambot.plain .gramlistbar .grammar {
     border-color: black;
     background-color: #f8f8f8;
 }

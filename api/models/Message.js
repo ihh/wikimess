@@ -36,7 +36,7 @@ module.exports = {
     },
     
     body: {
-      type: 'string',
+      type: 'json',
       required: true
     },
     

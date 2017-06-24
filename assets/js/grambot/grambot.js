@@ -803,8 +803,8 @@ var GramBot = (function() {
             if (!gb.composition.recipient)
               gb.showCompose ("Please select a message recipient.")
             else if (!gb.composition.symbol)
-              gb.showCompose ("Please select a source.")
-            else if (!(gb.composition.body && gb.composition.body.length))
+              gb.showCompose ("Please select a script.")
+            else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).length))
               gb.showCompose ("Please generate a nonempty message.")
             else if (!(gb.composition.title && gb.composition.title.length))
               gb.showCompose ("Please enter a message title.")
@@ -827,7 +827,7 @@ var GramBot = (function() {
                                                 $('<span class="input">').append (gb.playerSearchInput,
                                                                                   gb.playerSearchResultsDiv)),
                                        $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Source:'),
+                                       .append ($('<span class="label">').text ('Script:'),
                                                 $('<span class="input">').append (gb.symbolSearchInput,
                                                                                  gb.symbolSearchResultsDiv)),
                                        $('<div class="row">')
@@ -882,7 +882,7 @@ var GramBot = (function() {
           if (gb.composition.symbol && gb.symbolName[gb.composition.symbol.id])
             gb.lastComposeSymbolSearchText = gb.symbolName[gb.composition.symbol.id]
           
-          gb.symbolSearchInput.attr ('placeholder', 'Symbol name')
+          gb.symbolSearchInput.attr ('placeholder', 'Script name')
             .val (gb.lastComposeSymbolSearchText ? ('#' + gb.lastComposeSymbolSearchText) : undefined)
           gb.symbolSearchInput
             .on ('keyup', gb.doComposeSymbolSearch.bind(gb))
@@ -1025,16 +1025,22 @@ var GramBot = (function() {
                                                                      gb.showOtherStatusPage (other)
                                                                    }))),
                           $('<div class="row">')
-                          .append ($('<span class="label">').text ('Source:'),
+                          .append ($('<span class="label">').text ('Script:'),
                                    $('<span class="field">').append ($('<span class="lhslink">')
-                                                                     .append ('#', $('<span class="name">').text (props.message.symbol.name)))),
+                                                                     .append ('#', $('<span class="name">')
+                                                                              .text (props.message.symbol.name))
+                                                                     .on ('click', function (evt) {
+                                                                       evt.stopPropagation()
+                                                                       gb.showGrammarEditPage()
+                                                                         .then (gb.loadGrammarSymbol.bind (gb, props.message.symbol))
+                                                                     }))),
                           $('<div class="row">')
                           .append ($('<span class="label">').text ('Subject:'),
                                    $('<span class="field">').text (props.message.title)),
                          $('<div class="row">')
                           .append ($('<span class="label">').text (props.verb + ':'),
                                    $('<span class="field">').text (new Date (props.message.date).toString()))),
-                 $('<div class="messagebody">').text (props.message.body))
+                 $('<div class="messagebody">').text (gb.makeExpansionText (props.message.body)))
     },
     
     doComposePlayerSearch: function (forceNewSearch) {
@@ -1117,35 +1123,41 @@ var GramBot = (function() {
       }
     },
 
-    showMessageBody: function() {
+    showMessageBody: function (div, expansion) {
       var gb = this
-      if (gb.composition.body && gb.composition.body.length)
-        gb.messageBodyDiv.text (gb.composition.body)
+      div = div || gb.messageBodyDiv
+      expansion = expansion || gb.composition.body
+      var bodyText = gb.makeExpansionText (expansion)
+      if (bodyText.length)
+        div.text (bodyText)
       else
-        gb.messageBodyDiv.empty().html ($('<span class="placeholder">')
-                                        .text ('Select a source symbol to generate some message text.'))
+        div.html ($('<span class="placeholder">')
+                  .text (typeof(expansion) === 'undefined'
+                         ? 'Select a script to generate some message text.'
+                         : 'The script generated no output. Try re-rolling, or select a different script.'))
     },
     
     generateMessageBody: function() {
       var gb = this
       gb.showMessageBody()
-      gb.composition.body = ''
+      gb.composition.body = {}
       if (gb.composition.symbol)
         gb.REST_expandPlayerSymbol (gb.playerID, gb.composition.symbol.id)
         .then (function (result) {
           if (gb.verbose.server)
             console.log ('generateMessageBody:', result)
           gb.composition.body = result.expansion
-          if (result.expansion && result.expansion.length)
-            gb.showMessageBody()
-          else
-            gb.messageBodyDiv.html ($('<span class="placeholder">')
-                                    .text ('This symbol generated an empty message. Try re-rolling, or try a different symbol.'))
+          gb.showMessageBody()
         })
       else
-        gb.showCompose ('Please select a source symbol.')
+        gb.showCompose ('Please select a script.')
     },
 
+    makeExpansionText: function (node) {
+      var gb = this
+      return node ? (typeof(node) === 'string' ? node : (node.rhs ? node.rhs.map (function (rhsSym) { return gb.makeExpansionText(rhsSym) }) : '')) : ''
+    },
+    
     // inbox
     showInboxPage: function() {
       var gb = this
@@ -1215,8 +1227,7 @@ var GramBot = (function() {
                      gb.showComposePage
                      ({ recipient: message.sender,
                         symbol: message.symbol,
-                        title: replyTitle,
-                        body: '' })
+                        title: replyTitle })
                        .then (function() {
                          gb.generateMessageBody()
                        })
@@ -1640,7 +1651,7 @@ var GramBot = (function() {
                                               console.log ('populateGrammarRuleDiv:', result)
                                             gb.showingHelp = false
 		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
-		                            gb.infoPaneContent.text (result.expansion)
+		                            gb.showMessageBody (gb.infoPaneContent, result.expansion)
                                             gb.infoPaneControls
                                               .html (gb.makeIconButton
                                                      ('compose',
@@ -1872,7 +1883,7 @@ var GramBot = (function() {
                              })
                          })))))
 
-            gb.searchInput.attr ('placeholder', 'Search symbols')
+            gb.searchInput.attr ('placeholder', 'Search scripts')
             gb.placeIcon (gb.iconFilename.search, searchButton)
             searchButton.addClass('button')
               .on ('click', gb.doSymbolSearch.bind(gb))

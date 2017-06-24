@@ -40,9 +40,9 @@ module.exports = {
   maxDepth: 3,
   
   // lifecycle callbacks to autogenerate names
-  autonamePrefix: 'symbol',
+  autonamePrefix: 'script',
   autonameCount: 1,
-  autonameRegex: /^symbol(\d+)$/,
+  autonameRegex: /^script(\d+)$/,
 
   initAutonameCount() {
     return Symbol.find().then (function (symbols) {
