@@ -76,6 +76,7 @@ var GramBot = (function() {
     ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
     iconFilename: { edit: 'pencil',
+                    copy: 'copy',
                     create: 'circle-plus',
                     destroy: 'trash-can',
                     up: 'up-arrow-button',
