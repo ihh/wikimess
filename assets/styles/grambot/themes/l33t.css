@@ -37,14 +37,11 @@
 
 .grambot.l33t .detailbar,
 .grambot.l33t .grammarbar,
-.grambot.l33t .backbar,
 .grambot.l33t .menubar {
     color: white;
 }
 
-.grambot.l33t .statusbar a,
 .grambot.l33t .menubar a,
-.grambot.l33t .backbar a,
 .grambot.l33t .menubar label {
     color: #888;
     border-color: #888;

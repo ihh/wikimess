@@ -37,14 +37,11 @@
 
 .grambot.plain .detailbar,
 .grambot.plain .grammarbar,
-.grambot.plain .backbar,
 .grambot.plain .menubar {
     color: black;
 }
 
-.grambot.plain .statusbar a,
 .grambot.plain .menubar a,
-.grambot.plain .backbar a,
 .grambot.plain .menubar label {
     color: #888;
     border-color: #888;

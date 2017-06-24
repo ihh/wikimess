@@ -313,21 +313,6 @@ body {
     flex-direction: column;
 }
 
-.grambot .backbar {
-    min-height: 32px;
-    margin: 12px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.grambot .backbar span {
-    flex-grow: 1;
-    justify-content: center;
-    display: flex;
-}
-
-.grambot .backbar a,
 .grambot .menubar a,
 .grambot .menubar label {
     text-decoration: none;
@@ -501,6 +486,7 @@ body {
     font-style: italic;
 }
 
+.grambot .backbar,
 .grambot .grammareditbuttons,
 .grambot .messagecontrols {
     min-height: 2em;
@@ -510,11 +496,13 @@ body {
     border-width: 1px;
 }
 
+.grambot .backbar span,
 .grambot .grammareditbuttons span,
 .grambot .messagecontrols span {
     padding: 2vw;
 }
 
+.grambot .backbar svg,
 .grambot .grammareditbuttons svg,
 .grambot .messagecontrols svg {
     width: 1em;

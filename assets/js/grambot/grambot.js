@@ -94,7 +94,8 @@ var GramBot = (function() {
                     compose: 'typewriter-icon',
                     forward: 'forward',
                     reply: 'reply',
-                    reload: 'refresh' },
+                    reload: 'refresh',
+                    back: 'back' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
@@ -529,7 +530,10 @@ var GramBot = (function() {
           gb.currentTab = tab
           span.addClass('active')
         } else
-          span.on ('click', gb.callWithSoundEffect (gb[tab.method]))
+          span.on ('click', gb.callWithSoundEffect (function() {
+            gb.pushedViews = []
+            gb[tab.method]()
+          }))
         navbar.append (span)
       })
     },
@@ -624,8 +628,8 @@ var GramBot = (function() {
       var gb = this
       return this.pushView ('name')
         .then (function() {
-          var backLink = gb.makeLink ('Back', function() {
-            backLink.off()
+          var backBar = gb.popBack (function (backButton) {
+            backButton.off()
             gb.nameInput.prop('disabled',true)
             var newName = gb.nameInput.val()
             if (newName.length) {
@@ -642,8 +646,8 @@ var GramBot = (function() {
                                        .append ($('<span>').text('Full name'))
                                        .append (gb.nameInput = $('<input type="text">')
                                                 .val(gb.playerName)
-                                                .attr('maxlength', gb.maxPlayerNameLength))))
-                     .append (backLink))
+                                                .attr('maxlength', gb.maxPlayerNameLength)))))
+            .append (backBar)
         })
     },
 
@@ -657,8 +661,8 @@ var GramBot = (function() {
             .append (gb.makePageTitle ("Themes"))
             .append ($('<div class="menubar">')
                      .append (fieldset = $('<fieldset class="themegroup">')
-                              .append ($('<legend>').text("Select theme")))
-                     .append (gb.makeLink ('Back', gb.popView)))
+                              .append ($('<legend>').text("Select theme"))))
+            .append (gb.popBack())
 
           var label = {}, config = { silent: true }
           gb.themes.forEach (function (theme) {
@@ -701,9 +705,8 @@ var GramBot = (function() {
             .append ($('<div class="menubar">')
                      .append ($('<div class="card">')
                               .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
-                              .append ($('<span>').text("Sound FX volume")))
-                     .append ($('<ul>')
-                              .append (gb.makeListLink ('Back', gb.popView))))
+                              .append ($('<span>').text("Sound FX volume"))))
+            .append (gb.popBack())
 
           soundInput.val (gb.soundVolume * 100)
           soundInput.on ('change', function() {
@@ -718,7 +721,8 @@ var GramBot = (function() {
     },
 
     pushView: function (newPage) {
-      var elements = this.container.find(':not(.pushed)')
+      var elements = this.container.find(':not(.pushed)').filter(':not(.navbar)')
+          .filter (function() { return $(this).parents('.navbar').length === 0})
       if (this.verbose.page)
 	console.log ("Pushing " + this.page + " view, going to " + newPage)
       var page = this.page
@@ -740,7 +744,9 @@ var GramBot = (function() {
       if (this.verbose.page)
 	console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
       this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
-      this.container.find(':not(.pushed)').remove()
+      this.container.find(':not(.pushed)').filter(':not(.navbar)')
+        .filter (function() { return $(this).parents('.navbar').length === 0})
+        .remove()
       poppedView.elements.find('*').addBack().removeClass('pushed').removeClass('already-clicked')
       return this.setPage (poppedView.page)
         .then (function() {
@@ -755,7 +761,8 @@ var GramBot = (function() {
     // compose message
     showComposePage: function (config) {
       var gb = this
-
+      config = config || {}
+      
       return this.setPage ('compose')
         .then (function() {
           gb.showNavBar ('compose')
@@ -1269,35 +1276,37 @@ var GramBot = (function() {
         .then (function() {
           gb.otherStatusID = follow.id
           gb.makeFollowDiv (follow)
-          gb.locBarDiv = $('<div class="locbar">')
           gb.showGameStatusPage (gb.REST_getPlayerStatusOther.bind (gb, gb.playerID, follow.id),
                                    function (status) {
                                      if (status.following)
                                        follow.makeUnfollowButton()
-                                     gb.detailBarDiv
-                                       .append ($('<div class="statusdiv">')
-                                                .append (gb.locBarDiv))
                                    })
           gb.detailBarDiv.prepend (follow.followDiv)
-          gb.container
-	    .append ($('<div class="backbar">')
-		     .append ($('<span>')
-			      .html (gb.makeLink ('Back', gb.popView.bind(gb)))))
+          gb.container.append (gb.popBack())
         })
     },
 
+    popBack: function (callback) {
+      var gb = this
+      callback = callback || gb.popView.bind(gb)
+      var button
+      return $('<div class="backbar">')
+	.append ($('<span>')
+		 .html (button = gb.makeIconButton ('back', function() { callback(button) })))
+    },
+    
     showGameStatusPage: function (getMethod, callback) {
       var gb = this
+
       this.container
         .append (this.detailBarDiv = $('<div class="detailbar">'))
-
       this.restoreScrolling (this.detailBarDiv)
 
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
 	  if (gb.verbose.server)
 	    console.log ('showGameStatusPage:', status)
-          // render status
+          // render status to detailBarDiv
           if (callback)
             callback (status)
 	})
