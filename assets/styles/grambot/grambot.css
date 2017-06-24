@@ -548,9 +548,20 @@ body {
      @-o-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
         @keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
 
-/*	
-@-webkit-keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
-   @-moz-keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
-     @-o-keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
-        @keyframes throb_rule { from { font-size:16px; padding: 2px; opacity: .8; } to { font-size:18px; padding: 3px; opacity: .6; } }
-*/
+
+.grambot .ratinginfo .ratinginfolabel {
+    float: left;
+    width: 40vw;
+    text-align: right;
+    vertical-align: top;
+    padding-right: 2px;
+}
+
+.grambot .ratinginfo .ratinginfocount {
+    font-style: italic;
+}
+
+.grambot .ratinginfo .button svg {
+    width: 1em;
+    height: 1em;
+}

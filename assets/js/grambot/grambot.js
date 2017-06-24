@@ -68,7 +68,7 @@ var GramBot = (function() {
       this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
       this.playerName = config.playerDisplayName
       this.socket_getPlayerSubscribe (this.playerID)
-        .then (this.showInboxPage.bind (this))
+        .then (this.showInitialPage.bind (this))
     } else
       this.showLoginPage()
   }
@@ -86,6 +86,7 @@ var GramBot = (function() {
     ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
     expansionAnimationDelay: 400,
+    starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     copy: 'copy',
                     create: 'circle-plus',
@@ -111,7 +112,8 @@ var GramBot = (function() {
                     back: 'back',
                     dummy: 'dummy',
                     emptyStar: 'star-empty',
-                    filledStar: 'star-filled' },
+                    filledStar: 'star-filled',
+                    halfStar: 'star-half' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
@@ -219,11 +221,12 @@ var GramBot = (function() {
       return $.get ('/p/' + playerID + '/message/' + messageID + '/sent')
     },
 
-    REST_postPlayerMessage: function (playerID, recipientID, symbolID, title, body) {
+    REST_postPlayerMessage: function (playerID, recipientID, symbolID, title, body, previous) {
       return $.post ('/p/' + playerID + '/message', { recipient: recipientID,
                                                       symbol: symbolID,
                                                       title: title,
-                                                      body: body })
+                                                      body: body,
+                                                      previous: previous })
     },
 
     REST_deletePlayerMessage: function (playerID, messageID) {
@@ -432,11 +435,11 @@ var GramBot = (function() {
     },
 
     doReturnLogin: function() {
-      return this.doLogin (this.showInboxPage)
+      return this.doLogin (this.showInitialPage)
     },
 
     doInitialLogin: function() {
-      return this.doLogin (this.showInboxPage)  // replace showInboxPage with login flow
+      return this.doLogin (this.showInitialPage)  // replace showInitialPage with login flow
     },
 
     doLogin: function (showNextPage) {
@@ -832,7 +835,7 @@ var GramBot = (function() {
               gb.showCompose ("Please enter a message title.")
             else {
               gb.sendButton.off ('click')
-              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.symbol.id, gb.composition.title, gb.composition.body)
+              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.symbol.id, gb.composition.title, gb.composition.body, gb.composition.previous)
                 .then (function (result) {
                   gb.clearComposeRecipient()
                   gb.sendButton.on ('click', send)
@@ -868,7 +871,7 @@ var GramBot = (function() {
                          gb.showCompose()
                        }).hide(),
                        gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide()),
-                      $('<span>').html
+                      $('<span>').append
                       (gb.sendButton = gb.makeIconButton ('send', send),
                        gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide()),
                       $('<span>').append
@@ -913,6 +916,9 @@ var GramBot = (function() {
             delete gb.lastComposeSymbolSearchText
             gb.doComposeSymbolSearch()
           }
+
+          if (config.previous)
+            gb.composition.previous = config.previous
 
           if (config.focus)
             gb[config.focus].focus()
@@ -1025,6 +1031,7 @@ var GramBot = (function() {
                     ({ symbol: result.message.symbol,
                        title: result.message.title,
                        body: result.message.body,
+                       previous: result.message.id,
                        focus: 'playerSearchInput' })
                   })
                 gb.reloadButton.hide()
@@ -1241,6 +1248,11 @@ var GramBot = (function() {
                     : ''))
               : '')
     },
+
+    // initial page
+    showInitialPage: function() {
+      return this.showStatusPage()
+    },
     
     // inbox
     showInboxPage: function() {
@@ -1324,7 +1336,7 @@ var GramBot = (function() {
                                                        gb.REST_putPlayerMessageRating (gb.playerID, message.id, n + 1)
                                                          .then (function() { gb.rateMessageDiv.hide() })
                                                      }, gb.ratingDelay)
-                                                   }))
+                                                   }, gb.starColor))
                      })
                    }
                    fillStars(0)
@@ -1346,6 +1358,7 @@ var GramBot = (function() {
                      gb.showComposePage
                      ({ recipient: message.sender,
                         symbol: message.symbol,
+                        previous: message.id,
                         title: replyTitle,
                         focus: 'messageTitleInput' })
                        .then (function() {
@@ -1426,7 +1439,20 @@ var GramBot = (function() {
 	.append ($('<span>')
 		 .html (button = gb.makeIconButton ('back', function() { callback(button) })))
     },
-    
+
+    makeStars: function (rating) {
+      var gb = this
+      rating = rating || 0   // in case rating is NaN
+      return new Array(this.maxRating).fill(1).map (function (_dummy, n) {
+        return $('<span class="star">').html (gb.makeIconButton (rating >= n+1
+                                                                 ? 'filledStar'
+                                                                 : (rating >= n+.5
+                                                                    ? 'halfStar'
+                                                                    : 'emptyStar'),
+                                                                 null, gb.starColor))
+      })
+    },
+
     showGameStatusPage: function (getMethod, callback) {
       var gb = this
 
@@ -1438,6 +1464,17 @@ var GramBot = (function() {
 	.done (function (status) {
 	  if (gb.verbose.server)
 	    console.log ('showGameStatusPage:', status)
+
+          gb.detailBarDiv.append
+          ($('<div class="ratinginfo">')
+           .append ($('<span class="ratinginfolabel">').text ("Messages:"),
+                    gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
+                    $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nSenderRatings, "rating") + ")")),
+           $('<div class="ratinginfo">')
+           .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
+                    gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
+                    $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nAuthorRatings, "rating") + ")")))
+
           // render status to detailBarDiv
           if (callback)
             callback (status)

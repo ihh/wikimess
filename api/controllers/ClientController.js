@@ -400,10 +400,12 @@ module.exports = {
     var symbolID = parseInt (req.body.symbol)
     var title = req.body.title
     var body = req.body.body
+    var previous = req.body.previous
     var result = {}
     Message.create ({ sender: playerID,
                       recipient: recipientID,
                       symbol: symbolID,
+                      previous: previous,
                       title: title,
                       body: body })
       .then (function (message) {
@@ -457,6 +459,36 @@ module.exports = {
                       recipientDeleted: false },
                     { rating: rating })
       .then (function (messages) {
+        if (messages && messages.length === 1) {
+          var message = messages[0]
+          return SymbolService.expansionAuthors (message.body)
+            .then (function (authors) {
+              var authorRatingWeight = 1 / authors.length, authorRating = rating * authorRatingWeight
+              return Promise.map (authors,
+                                  function (authorID) {
+                                    return Player.findOne ({ id: authorID })
+                                      .then (function (player) {
+                                        return Player.update ({ id: authorID },
+                                                              { nAuthorRatings: player.nAuthorRatings + 1,
+                                                                sumAuthorRatingWeights: player.sumAuthorRatingWeights + authorRatingWeight,
+                                                                sumAuthorRatings: player.sumAuthorRatings + authorRating })
+                                      })
+                                  })
+            }).then (function() {
+              return Player.findOne ({ id: message.sender })
+            }).then (function (sender) {
+              return Player.update ({ id: message.sender },
+                                    { nSenderRatings: sender.nSenderRatings + 1,
+                                      sumSenderRatings: sender.sumSenderRatings + rating })
+            }).then (function() {
+              return Symbol.findOne ({ id: message.symbol })
+            }).then (function (symbol) {
+              return Symbol.update ({ id: message.symbol },
+                                    { nRatings: symbol.nRatings + 1,
+                                      sumRatings: symbol.sumRatings + rating })
+            })
+        }
+      }).then (function() {
         res.ok()
       }).catch (function (err) {
         console.log(err)

@@ -77,4 +77,30 @@ module.exports = {
         return result
       })
   },
+
+  expansionSymbols: function (expansion) {
+    var symID = {}
+    SymbolService.tagExpansionSymbols (expansion, symID)
+    return Object.keys(symID)
+  },
+  
+  tagExpansionSymbols: function (expansion, symID) {
+    symID[expansion.id] = true
+    expansion.rhs.forEach (function (rhsSym) {
+      if (typeof(rhsSym) === 'object')
+        SymbolService.tagExpansionSymbols (rhsSym, symID)
+    })
+  },
+
+  expansionAuthors: function (expansion) {
+    return Symbol.find ({ id: SymbolService.expansionSymbols (expansion) })
+      .then (function (symbols) {
+        var playerID = {}
+        symbols.forEach (function (symbol) {
+          if (symbol.owner)
+            playerID[symbol.owner] = true
+        })
+        return Object.keys (playerID)
+      })
+  },
 };

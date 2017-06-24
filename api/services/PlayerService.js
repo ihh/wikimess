@@ -70,6 +70,11 @@ module.exports = {
 
     var status = { id: player.id,
                    name: player.displayName,
+                   nSenderRatings: player.nSenderRatings,
+                   sumSenderRatings: player.sumSenderRatings,
+                   nAuthorRatings: player.nAuthorRatings,
+                   sumAuthorRatings: player.sumAuthorRatings,
+                   sumAuthorRatingWeights: player.sumAuthorRatingWeights,
                    human: player.human }
 
     if (follower) {

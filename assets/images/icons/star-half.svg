@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<polygon stroke="#fff" fill="none" stroke-width="37.6152" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="258.2,29.9 329.3,173.9 488.2,197 373.2,309.1 400.3,467.3 258.2,392.6 116.1,467.3 143.2,309.1 
+	28.3,197 187.2,173.9 "/>
+<g>
+  <defs>
+    <rect id="HalfStarClipPath1" x="-73" y="-106" width="332.2" height="626"/>
+  </defs>
+  <clipPath id="HalfStarClipPath2">
+    <use xlink:href="#HalfStarClipPath1" style="overflow:visible;"/>
+  </clipPath>
+  <polygon fill="#fff" clip-path="url(#HalfStarClipPath2)" points="259.2,29.9 330.3,173.9 489.2,197 374.2,309.1 401.3,467.3 259.2,392.6 117.1,467.3 144.2,309.1 
+		29.3,197 188.2,173.9 	"/>
+</g>
+</svg>

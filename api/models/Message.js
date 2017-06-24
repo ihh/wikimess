@@ -25,6 +25,10 @@ module.exports = {
       required: true
     },
 
+    previous: {
+      model: 'message',
+    },
+    
     symbol: {
       model: 'symbol',
       required: true
