@@ -530,11 +530,11 @@ var GramBot = (function() {
         if (tab.name === currentTab) {
           gb.currentTab = tab
           span.addClass('active')
-        } else
-          span.on ('click', gb.callWithSoundEffect (function() {
-            gb.pushedViews = []
-            gb[tab.method]()
-          }))
+        }
+        span.on ('click', gb.callWithSoundEffect (function() {
+          gb.pushedViews = []
+          gb[tab.method]()
+        }))
         navbar.append (span)
       })
     },
