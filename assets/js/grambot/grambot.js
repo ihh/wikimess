@@ -95,7 +95,8 @@ var GramBot = (function() {
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
-                    back: 'back' },
+                    back: 'back',
+                    dummy: 'dummy' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
@@ -1408,13 +1409,13 @@ var GramBot = (function() {
       }
       
       var buttonsDiv = $('<span class="buttons">')
-      div.empty().append (renderHtml (props.content), buttonsDiv)
+      div.empty().append (renderHtml (props.content),
+                          buttonsDiv)
       
       if (props.isConstant)
         buttonsDiv.append (gb.makeIconButton ('locked'))
       else {
         div.on ('click', editCallback)
-        buttonsDiv.append (gb.makeIconButton ('edit', editCallback))
         if (props.destroyCallback)
           buttonsDiv.append (gb.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
