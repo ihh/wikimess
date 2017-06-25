@@ -1267,7 +1267,10 @@ var GramBot = (function() {
             if (typeof(rhsSym) === 'string')
               return rhsSym
             var expansion = result.expansions[n++]
-            rhsSym.id = expansion.id
+            if (typeof(expansion.id) !== 'undefined') {
+              rhsSym.id = expansion.id
+              gb.symbolName[expansion.id] = expansion.name
+            }
             return expansion
           }) }
           gb.showMessageBody ({ animate: true })
