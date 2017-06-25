@@ -29,8 +29,8 @@ module.exports = {
       model: 'message',
     },
     
-    symbol: {
-      model: 'symbol',
+    template: {
+      model: 'template',
       required: true
     },
 

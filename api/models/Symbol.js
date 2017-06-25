@@ -34,10 +34,6 @@ module.exports = {
       type: 'json',
       defaultsTo: [[]]
     },
-
-    // ratings
-    nRatings: { type: 'integer', defaultsTo: 0 },
-    sumRatings: { type: 'integer', defaultsTo: 0 },
   },
 
   // max depth for expansions

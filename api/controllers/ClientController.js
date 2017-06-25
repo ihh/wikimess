@@ -325,14 +325,14 @@ module.exports = {
                     { read: true })
       .then (function (messages) {
         return Message.findOne ({ id: messageID })
-          .populate ('symbol')
+          .populate ('template')
           .populate ('sender')
       }).then (function (message) {
         result.message = { id: message.id,
                            sender: { id: message.sender.id,
                                      name: message.sender.displayName },
-                           symbol: { id: message.symbol.id,
-                                     name: message.symbol.name },
+                           template: { id: message.template.id,
+                                       content: message.template.content },
                            title: message.title,
                            body: message.body,
                            date: message.createdAt,
@@ -375,14 +375,14 @@ module.exports = {
     Message.findOne ({ sender: playerID,
                        id: messageID,
                        senderDeleted: false })
-      .populate ('symbol')
+      .populate ('template')
       .populate ('recipient')
       .then (function (message) {
         result.message = { id: message.id,
                            recipient: { id: message.recipient.id,
                                         name: message.recipient.displayName },
-                           symbol: { id: message.symbol.id,
-                                     name: message.symbol.name },
+                           template: { id: message.template.id,
+                                       content: message.template.content },
                            title: message.title,
                            body: message.body,
                            date: message.createdAt }
@@ -397,26 +397,45 @@ module.exports = {
   sendMessage: function (req, res) {
     var playerID = parseInt (req.params.player)
     var recipientID = parseInt (req.body.recipient)
-    var symbolID = parseInt (req.body.symbol)
+    var template = req.body.template
     var title = req.body.title
     var body = req.body.body
     var previous = req.body.previous
     var result = {}
-    Message.create ({ sender: playerID,
-                      recipient: recipientID,
-                      symbol: symbolID,
-                      previous: previous,
-                      title: title,
-                      body: body })
-      .then (function (message) {
-        result.message = { id: message.id }
-        Player.message (recipientID, { message: "incoming",
-                                       id: message.id })
-        res.json (result)
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send(err)
-      })
+    var templatePromise
+    if (typeof(template.id) !== 'undefined')
+      templatePromise = Template.findOne ({ id: template.id })
+    else {
+      var previousPromise = (typeof(previous) === 'undefined'
+                             ? new Promise (function (resolve, reject) { resolve({}) })
+                             : Message.findOne ({ id: previous })
+                             .populate ('template')
+                             .then (function (message) { return message.template }))
+      templatePromise = previousPromise
+        .then (function (previousTemplate) {
+          return Template.create ({ title: title,
+                                    content: template.content,
+                                    author: playerID,
+                                    previous: previousTemplate })
+        })
+    }
+    templatePromise.then (function (template) {
+      result.template = { id: template.id }
+      return Message.create ({ sender: playerID,
+                        recipient: recipientID,
+                        template: template,
+                        previous: previous,
+                        title: title,
+                        body: body })
+    }).then (function (message) {
+      result.message = { id: message.id }
+      Player.message (recipientID, { message: "incoming",
+                                     id: message.id })
+      res.json (result)
+    }).catch (function (err) {
+      console.log(err)
+      res.status(500).send(err)
+    })
   },
 
   // delete message
@@ -481,11 +500,11 @@ module.exports = {
                                     { nSenderRatings: sender.nSenderRatings + 1,
                                       sumSenderRatings: sender.sumSenderRatings + rating })
             }).then (function() {
-              return Symbol.findOne ({ id: message.symbol })
-            }).then (function (symbol) {
-              return Symbol.update ({ id: message.symbol },
-                                    { nRatings: symbol.nRatings + 1,
-                                      sumRatings: symbol.sumRatings + rating })
+              return Template.findOne ({ id: message.template })
+            }).then (function (template) {
+              return Template.update ({ id: template.id },
+                                      { nRatings: template.nRatings + 1,
+                                        sumRatings: template.sumRatings + rating })
             })
         }
       }).then (function() {
@@ -651,6 +670,22 @@ module.exports = {
     res.ok()
   },
 
+  // get a particular template
+  getTemplate: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var templateID = parseInt (req.params.template)
+    var result = {}
+    Template.findOne ({ id: templateID })
+      .then (function (template) {
+        result.template = { id: template.id,
+                            content: template.content }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
   // expand a symbol using the grammar
   expandSymbol: function (req, res) {
     var playerID = parseInt (req.params.player)
@@ -662,6 +697,20 @@ module.exports = {
         console.log(err)
         res.status(500).send(err)
       })
+  },
+
+  // expand multiple symbols using the grammar
+  expandSymbols: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var symbolIDs = (req.body.ids || []).map (parseInt)
+    Promise.map (symbolIDs, function (symbolID) {
+      return SymbolService.expandSymbol (symbolID)
+    }).then (function (expansions) {
+        res.json ({ expansions: expansions })
+    }).catch (function (err) {
+      console.log(err)
+      res.status(500).send(err)
+    })
   },
 
 };

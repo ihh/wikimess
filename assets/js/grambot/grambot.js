@@ -221,9 +221,9 @@ var GramBot = (function() {
       return $.get ('/p/' + playerID + '/message/' + messageID + '/sent')
     },
 
-    REST_postPlayerMessage: function (playerID, recipientID, symbolID, title, body, previous) {
+    REST_postPlayerMessage: function (playerID, recipientID, template, title, body, previous) {
       return $.post ('/p/' + playerID + '/message', { recipient: recipientID,
-                                                      symbol: symbolID,
+                                                      template: template,
                                                       title: title,
                                                       body: body,
                                                       previous: previous })
@@ -253,8 +253,16 @@ var GramBot = (function() {
                        method: 'DELETE' })
     },
 
-    REST_expandPlayerSymbol: function (playerID, symbolID) {
+    REST_getPlayerTemplate: function (playerID, templateID) {
+      return $.get ('/p/' + playerID + '/template/' + templateID)
+    },
+    
+    REST_getPlayerExpand: function (playerID, symbolID) {
       return $.get ('/p/' + playerID + '/expand/' + symbolID)
+    },
+
+    REST_postPlayerExpand: function (playerID, symbolIDs) {
+      return $.post ('/p/' + playerID + '/expand', { ids: symbolIDs })
     },
 
     REST_getHelpHtml: function() {
@@ -818,26 +826,41 @@ var GramBot = (function() {
               gb.composition.title = gb.messageTitleInput.val()
             })
 
+          gb.composition.template = config.template || {}
+          gb.composition.template.content = gb.composition.template.content || []
+
           if (config.body)
             gb.composition.body = config.body
 
-          gb.messageBodyDiv = $('<div class="messagebody">')
-          gb.showMessageBody()
+          gb.messageBodyDiv = gb.makeEditableElement
+          ({ element: 'div',
+             className: 'messagebody',
+             content: gb.composition.template.content,
+             storeCallback: function (newContent) {
+               gb.composition.content = newContent
+               gb.generateMessageBody()
+               return $.Deferred().resolve()
+             },
+             parse: gb.parseRhs.bind(gb),
+             renderText: gb.renderRhsText.bind(gb),
+             renderHtml: function (content) {
+               return gb.renderMarkdown (gb.makeExpansionText (gb.composition.body))
+             }
+           })
 
           function send() {
             if (!gb.composition.recipient)
               gb.showCompose ("Please specify a message recipient.")
-            else if (!gb.composition.symbol)
-              gb.showCompose ("Please specify a script.")
             else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).length))
               gb.showCompose ("Please generate a nonempty message.")
             else if (!(gb.composition.title && gb.composition.title.length))
               gb.showCompose ("Please enter a message title.")
             else {
               gb.sendButton.off ('click')
-              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.symbol.id, gb.composition.title, gb.composition.body, gb.composition.previous)
+              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.template, gb.composition.title, gb.composition.body, gb.composition.previous)
                 .then (function (result) {
                   gb.clearComposeRecipient()
+                  gb.composition.template.id = result.template.id
                   gb.sendButton.on ('click', send)
                   gb.showOutbox()
                 })
@@ -851,10 +874,6 @@ var GramBot = (function() {
                                        .append ($('<span class="label">').text ('To:'),
                                                 $('<span class="input">').append (gb.playerSearchInput,
                                                                                   gb.playerSearchResultsDiv)),
-                                       $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Script:'),
-                                                $('<span class="input">').append (gb.symbolSearchInput,
-                                                                                 gb.symbolSearchResultsDiv)),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
@@ -900,23 +919,7 @@ var GramBot = (function() {
             delete gb.lastComposePlayerSearchText
             gb.doComposePlayerSearch()
           }
-
-          if (config.symbol)
-            gb.composition.symbol = config.symbol
-          // doing the following test separately of config.symbol guards against symbol being renamed
-          if (gb.composition.symbol && gb.symbolName[gb.composition.symbol.id])
-            gb.lastComposeSymbolSearchText = gb.symbolName[gb.composition.symbol.id]
           
-          gb.symbolSearchInput.attr ('placeholder', 'Script name')
-            .val (gb.lastComposeSymbolSearchText ? ('#' + gb.lastComposeSymbolSearchText) : undefined)
-          gb.symbolSearchInput
-            .on ('keyup', gb.doComposeSymbolSearch.bind(gb))
-            .on ('click', gb.doComposeSymbolSearch.bind(gb,true))
-          if (!gb.composition.symbol) {
-            delete gb.lastComposeSymbolSearchText
-            gb.doComposeSymbolSearch()
-          }
-
           if (config.previous)
             gb.composition.previous = config.previous
 
@@ -1028,8 +1031,8 @@ var GramBot = (function() {
                   .on('click', function (evt) {
                     evt.stopPropagation()
                     gb.showComposePage
-                    ({ symbol: result.message.symbol,
-                       title: result.message.title,
+                    ({ title: result.message.title,
+                       template: result.message.template,
                        body: result.message.body,
                        previous: result.message.id,
                        focus: 'playerSearchInput' })
@@ -1057,16 +1060,6 @@ var GramBot = (function() {
                                                                    .on ('click', function (evt) {
                                                                      gb.showOtherStatusPage (other)
                                                                    }))),
-                          $('<div class="row">')
-                          .append ($('<span class="label">').text ('Script:'),
-                                   $('<span class="field">').append ($('<span class="lhslink">')
-                                                                     .append ('#', $('<span class="name">')
-                                                                              .text (props.message.symbol.name))
-                                                                     .on ('click', function (evt) {
-                                                                       evt.stopPropagation()
-                                                                       gb.showGrammarEditPage()
-                                                                         .then (gb.loadGrammarSymbol.bind (gb, props.message.symbol))
-                                                                     }))),
                           $('<div class="row">')
                           .append ($('<span class="label">').text ('Subject:'),
                                    $('<span class="field">').text (props.message.title)),
@@ -1167,19 +1160,12 @@ var GramBot = (function() {
       config = config || {}
       div = config.div || gb.messageBodyDiv
       expansion = config.expansion || gb.composition.body
-      var bodyText = gb.makeExpansionText (expansion)
-      if (bodyText.length) {
-        if (config.animate) {
-          gb.animationExpansion = _.cloneDeep (expansion)
-          gb.animationDiv = div
-          gb.animateExpansion()
-        } else
-          div.html (this.renderMarkdown (bodyText))
+      if (config.animate) {
+        gb.animationExpansion = _.cloneDeep (expansion)
+        gb.animationDiv = div
+        gb.animateExpansion()
       } else
-        div.html ($('<span class="placeholder">')
-                  .text (typeof(expansion) === 'undefined'
-                         ? 'Select a script to generate some message text.'
-                         : 'The script generated no output. Try re-rolling, or select a different script.'))
+        div.html (this.renderMarkdown (gb.makeExpansionText (expansion)))
     },
 
     animateExpansion: function() {
@@ -1222,16 +1208,31 @@ var GramBot = (function() {
       var gb = this
       gb.showMessageBody()
       gb.composition.body = {}
-      if (gb.composition.symbol)
-        gb.REST_expandPlayerSymbol (gb.playerID, gb.composition.symbol.id)
-        .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('generateMessageBody:', result)
-          gb.composition.body = result.expansion
-          gb.showMessageBody ({ animate: true })
-        })
+
+      var templatePromise
+      if (gb.composition.template && gb.composition.template.content)
+        templatePromise = $.Deferred().resolve (gb.composition.template)
+      else if (gb.composition.template && gb.composition.template.id)
+        templatePromise = gb.REST_getPlayerTemplate (gb.playerID, gb.composition.template.id)
       else
-        gb.showCompose ('Please specify a script.')
+        return gb.showCompose ('Enter text here.')
+
+      templatePromise.then (function (template) {
+        var symbols = template.content.filter (function (rhsSym) {
+          return typeof(rhsSym) === 'object'
+        }).map (function (rhsSym) {
+          return rhsSym.id
+        })
+        return gb.REST_postPlayerExpand (gb.playerID, template.content)
+      }).then (function (result) {
+        if (gb.verbose.server)
+          console.log ('generateMessageBody:', result)
+        var n = 0
+        gb.composition.body = { rhs: gb.composition.content.map (function (rhsSym) {
+          return typeof(rhsSym) === 'string' ? rhsSym : result.expansion[n++]
+        }) }
+        gb.showMessageBody ({ animate: true })
+      })
     },
 
     makeExpansionText: function (node, leaveSymbolsUnexpanded) {
@@ -1357,9 +1358,9 @@ var GramBot = (function() {
                        replyTitle = 'Re: ' + replyTitle
                      gb.showComposePage
                      ({ recipient: message.sender,
-                        symbol: message.symbol,
                         previous: message.id,
                         title: replyTitle,
+                        template: message.template,
                         focus: 'messageTitleInput' })
                        .then (function() {
                          gb.generateMessageBody()
@@ -1489,10 +1490,8 @@ var GramBot = (function() {
       var lastSavePromise
       if (this.lastSavePromise)
         lastSavePromise = this.lastSavePromise
-      else {
-        lastSavePromise = $.Deferred()
-        lastSavePromise.resolve()
-      }
+      else
+        lastSavePromise = $.Deferred().resolve()
       return lastSavePromise
     },
     
@@ -1504,10 +1503,8 @@ var GramBot = (function() {
           if (gb.unfocusAndSave) {
             def = gb.unfocusAndSave()
             delete gb.unfocusAndSave
-          } else {
-            def = $.Deferred()
-            def.resolve()
-          }
+          } else
+            def = $.Deferred().resolve()
           gb.lastSavePromise = def
           return def
         })
@@ -1525,7 +1522,13 @@ var GramBot = (function() {
       return button
     },
 
-    populateEditableSpan: function (div, props) {
+    makeEditableElement: function (props) {
+      var span = $('<'+props.element+'>').addClass(props.className)
+      this.populateEditableElement (span, props)
+      return span
+    },
+
+    populateEditableElement: function (div, props) {
       var gb = this
       var sanitize = props.sanitize || function(x) { return x }
       var parse = props.parse || sanitize
@@ -1546,11 +1549,9 @@ var GramBot = (function() {
               .on('keyup',sanitizeInput)
               .on('change',sanitizeInput)
               .on('click',function(evt){evt.stopPropagation()})
+              .on('focusout',function() { gb.unfocusAndSave() })
               .on ('keydown', function (evt) {
-                if (evt.keyCode === 9) {   // tab
-                  evt.preventDefault()
-                  gb.unfocusAndSave()
-                } else if (props.keycodeFilter && !props.keycodeFilter (evt.keyCode))
+                if (props.keycodeFilter && !props.keycodeFilter (evt.keyCode))
                   evt.preventDefault()
               })
             if (props.maxLength)
@@ -1564,13 +1565,11 @@ var GramBot = (function() {
                   .then (function (modifiedNewContent) {
                     props.content = modifiedNewContent || newContent
                   })
-              } else {
-                def = $.Deferred()
-                def.resolve()
-              }
+              } else
+                def = $.Deferred().resolve()
               return def
                 .then (function() {
-                  gb.populateEditableSpan (div, props)
+                  gb.populateEditableElement (div, props)
                 })
             }
             div.html (input)
@@ -1599,12 +1598,6 @@ var GramBot = (function() {
       }
       if (props.otherButtonDivs)
         buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs)
-    },
-
-    makeEditableSpan: function (props) {
-      var span = $('<span>').addClass(props.className)
-      this.populateEditableSpan (span, props)
-      return span
     },
 
     saveSymbol: function (symbol) {
@@ -1694,63 +1687,67 @@ var GramBot = (function() {
     symbolEditableByPlayer: function (symbol) {
       return this.symbolOwnedByPlayer(symbol) || typeof(symbol.owner.id) === 'undefined' || symbol.owner.id === null
     },
+
+    renderRhsText: function (rhs) {
+      var gb = this
+      return rhs.map (function (rhsSym) {
+        return (typeof(rhsSym) === 'object'
+                ? ('#' + (gb.symbolName[rhsSym.id] || rhsSym.name))
+                : rhsSym)
+      }).join('')
+    },
     
     makeGrammarRhsDiv: function (symbol, ruleDiv, rhs, n) {
-      var span = gb.makeEditableSpan ({ className: 'rhs',
-                                        content: rhs,
-                                        isConstant: !gb.symbolEditableByPlayer (symbol),
-                                        confirmDestroy: function() {
-                                          return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + gb.symbolName[symbol.id] + '?')
-                                        },
-                                        destroyCallback: function() {
-                                          symbol.rules.splice(n,1)
-                                          gb.populateGrammarRuleDiv (ruleDiv, symbol)
-                                          return gb.saveSymbol (symbol)
-                                        },
-                                        storeCallback: function (newRhs) {
-                                          symbol.rules[n] = newRhs
-                                          return gb.saveSymbol (symbol)
-                                            .then (function (newSymbol) {
-                                              return newSymbol.rules[n]
-                                            })
-                                        },
-                                        locateSpan: function() {
-                                          return gb.ruleDiv[symbol.id].find('.rhs').eq(n)
-                                        },
-                                        parse: gb.parseRhs.bind(gb),
-                                        renderText: function (rhs) {
-                                          return rhs.map (function (rhsSym) {
-                                            return (typeof(rhsSym) === 'object'
-                                                    ? ('#' + (gb.symbolName[rhsSym.id] || rhsSym.name))
-                                                    : rhsSym)
-                                          }).join('')
-                                        },
-                                        renderHtml: function (rhs) {
-                                          return $('<span>')
-                                            .append (rhs.map (function (rhsSym) {
-                                              var span = $('<span>')
-                                              if (typeof(rhsSym) === 'object') {
-                                                var name = $('<span class="name">')
-                                                span.addClass('lhslink').append ('#', name)
-                                                if (typeof(rhsSym.id) !== 'undefined' && !gb.symbolName[rhsSym.id]) {
-                                                  console.log('oops; empty symbol name')
-                                                }
-                                                if (typeof(rhsSym.id) !== 'undefined')
-                                                  name.text (gb.symbolName[rhsSym.id])
-                                                  .on ('click', function (evt) {
-                                                    evt.stopPropagation()
-                                                    gb.loadGrammarSymbol (rhsSym)
-                                                  })
-                                                else {
-                                                  console.log('renderHtml: using placeholder for '+rhsSym.name)
-                                                  name.text (rhsSym.name)
-                                                }
-                                              } else
-                                                span.html (gb.renderMarkdown (rhsSym))
-                                              return span
-                                            }))
-                                        }
-                                      })
+      var span = gb.makeEditableElement ({ element: 'span',
+                                           className: 'rhs',
+                                           content: rhs,
+                                           isConstant: !gb.symbolEditableByPlayer (symbol),
+                                           confirmDestroy: function() {
+                                             return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + gb.symbolName[symbol.id] + '?')
+                                           },
+                                           destroyCallback: function() {
+                                             symbol.rules.splice(n,1)
+                                             gb.populateGrammarRuleDiv (ruleDiv, symbol)
+                                             return gb.saveSymbol (symbol)
+                                           },
+                                           storeCallback: function (newRhs) {
+                                             symbol.rules[n] = newRhs
+                                             return gb.saveSymbol (symbol)
+                                               .then (function (newSymbol) {
+                                                 return newSymbol.rules[n]
+                                               })
+                                           },
+                                           locateSpan: function() {
+                                             return gb.ruleDiv[symbol.id].find('.rhs').eq(n)
+                                           },
+                                           parse: gb.parseRhs.bind(gb),
+                                           renderText: gb.renderRhsText.bind(gb),
+                                           renderHtml: function (rhs) {
+                                             return $('<span>')
+                                               .append (rhs.map (function (rhsSym) {
+                                                 var span = $('<span>')
+                                                 if (typeof(rhsSym) === 'object') {
+                                                   var name = $('<span class="name">')
+                                                   span.addClass('lhslink').append ('#', name)
+                                                   if (typeof(rhsSym.id) !== 'undefined' && !gb.symbolName[rhsSym.id]) {
+                                                     console.log('oops; empty symbol name')
+                                                   }
+                                                   if (typeof(rhsSym.id) !== 'undefined')
+                                                     name.text (gb.symbolName[rhsSym.id])
+                                                     .on ('click', function (evt) {
+                                                       evt.stopPropagation()
+                                                       gb.loadGrammarSymbol (rhsSym)
+                                                     })
+                                                   else {
+                                                     console.log('renderHtml: using placeholder for '+rhsSym.name)
+                                                     name.text (rhsSym.name)
+                                                   }
+                                                 } else
+                                                   span.html (gb.renderMarkdown (rhsSym))
+                                                 return span
+                                               }))
+                                           }
+                                         })
       return span
     },
     
@@ -1760,8 +1757,9 @@ var GramBot = (function() {
       var editable = gb.symbolEditableByPlayer (symbol)
       var owned = gb.symbolOwnedByPlayer (symbol)
       ruleDiv.empty()
-        .append (this.makeEditableSpan
-                 ({ className: 'lhs',
+        .append (this.makeEditableElement
+                 ({ element: 'span',
+                    className: 'lhs',
                     content: lhs,
                     renderText: function(lhs) { return '#' + lhs },
                     sanitize: gb.sanitizeSymbolName,
@@ -1803,7 +1801,7 @@ var GramBot = (function() {
                                   .then (function() {
                                     gb.saveCurrentEdit()
                                       .then (function() {
-                                        gb.REST_expandPlayerSymbol (gb.playerID, symbol.id)
+                                        gb.REST_getPlayerExpand (gb.playerID, symbol.id)
                                           .then (function (result) {
                                             if (gb.verbose.server)
                                               console.log ('populateGrammarRuleDiv:', result)
@@ -1820,9 +1818,9 @@ var GramBot = (function() {
                                                         gb.saveCurrentEdit()
                                                           .then (function() {
                                                             gb.showComposePage
-                                                            ({ symbol: symbol,
+                                                            ({ template: { content: [ symbol ] },
                                                                title: gb.symbolName[symbol.id].replace(/_/g,' '),
-                                                               body: result.expansion,
+                                                               body: [ result.expansion ],
                                                                focus: 'playerSearchInput' })
                                                           })
                                                       }))
@@ -1957,10 +1955,9 @@ var GramBot = (function() {
           gb.showNavBar ('grammar')
 
           var def
-          if (gb.symbolCache) {
-            def = $.Deferred()
-            def.resolve()
-          } else {
+          if (gb.symbolCache)
+            def = $.Deferred().resolve()
+          else
             def = gb.socket_getPlayerSymbols (gb.playerID)
               .then (function (result) {
                 if (gb.verbose.server)
@@ -1971,7 +1968,6 @@ var GramBot = (function() {
                 })
                 $.extend (gb.symbolName, result.name)
               })
-          }
 
           def.then (function() {
             

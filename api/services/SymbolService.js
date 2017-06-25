@@ -85,11 +85,12 @@ module.exports = {
   },
   
   tagExpansionSymbols: function (expansion, symID) {
-    symID[expansion.id] = true
-    expansion.rhs.forEach (function (rhsSym) {
-      if (typeof(rhsSym) === 'object')
+    if (typeof(expansion) === 'object' && typeof(expansion.id) !== 'undefined') {
+      symID[expansion.id] = true
+      expansion.rhs.forEach (function (rhsSym) {
         SymbolService.tagExpansionSymbols (rhsSym, symID)
-    })
+      })
+    }
   },
 
   expansionAuthors: function (expansion) {
