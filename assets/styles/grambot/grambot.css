@@ -215,6 +215,7 @@ input {
     margin-left: 1px;
     box-shadow: 1vw -1vw 1vw 0px gray;
     padding: 2px;
+    overflow-wrap: break-word;
 }
 
 .grambot .grammarinfopane .title {
@@ -463,6 +464,7 @@ input {
     margin: 2px;
     display: flex;
     flex-direction: column;
+    overflow-wrap: break-word;
 }
 
 .grambot .mailbox .contents .message {

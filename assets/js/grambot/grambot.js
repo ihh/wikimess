@@ -1642,7 +1642,7 @@ var GramBot = (function() {
           }))
       }
       if (props.otherButtonDivs)
-        buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs)
+        buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs())
     },
 
     saveSymbol: function (symbol) {
@@ -1828,63 +1828,65 @@ var GramBot = (function() {
                     updateCallback: function (newLhs) {
                       return gb.renameSymbol (symbol, newLhs)
                     },
-                    otherButtonDivs: (owned
-                             ? []
-                             : [ gb.makeIconButton
-                                 ('hide', function (evt) {
-                                   evt.stopPropagation()
-                                   gb.saveCurrentEdit()
-                                     .then (function() {
-                                       gb.removeGrammarRule (symbol)
-                                     })
-                                 })])
-                    .concat ([gb.makeIconButton
-                              ('randomize', function (evt) {
-                                evt.stopPropagation()
-                                gb.saveCurrentEdit()
-                                  .then (function() {
+                    otherButtonDivs: function() {
+                      return (owned
+                              ? []
+                              : [ gb.makeIconButton
+                                  ('hide', function (evt) {
+                                    evt.stopPropagation()
                                     gb.saveCurrentEdit()
                                       .then (function() {
-                                        gb.REST_getPlayerExpand (gb.playerID, symbol.id)
-                                          .then (function (result) {
-                                            gb.showingHelp = false
-		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
-		                            gb.showMessageBody ({ div: gb.infoPaneContent,
-                                                                  expansion: result.expansion,
-                                                                  animate: true })
-                                            gb.infoPaneControls
-                                              .html (gb.makeIconButton
-                                                     ('forward',
-                                                      function (evt) {
-                                                        evt.stopPropagation()
-                                                        gb.saveCurrentEdit()
-                                                          .then (function() {
-                                                            gb.showComposePage
-                                                            ({ template: { content: [ symbol ] },
-                                                               title: gb.symbolName[symbol.id].replace(/_/g,' '),
-                                                               body: { rhs: [ result.expansion ] },
-                                                               focus: 'playerSearchInput' })
-                                                          })
-                                                      }))
-		                            gb.infoPane.show()
+                                        gb.removeGrammarRule (symbol)
+                                      })
+                                  })])
+                        .concat ([gb.makeIconButton
+                                  ('randomize', function (evt) {
+                                    evt.stopPropagation()
+                                    gb.saveCurrentEdit()
+                                      .then (function() {
+                                        gb.saveCurrentEdit()
+                                          .then (function() {
+                                            gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+                                              .then (function (result) {
+                                                gb.showingHelp = false
+		                                gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
+		                                gb.showMessageBody ({ div: gb.infoPaneContent,
+                                                                      expansion: result.expansion,
+                                                                      animate: true })
+                                                gb.infoPaneControls
+                                                  .html (gb.makeIconButton
+                                                         ('forward',
+                                                          function (evt) {
+                                                            evt.stopPropagation()
+                                                            gb.saveCurrentEdit()
+                                                              .then (function() {
+                                                                gb.showComposePage
+                                                                ({ template: { content: [ symbol ] },
+                                                                   title: gb.symbolName[symbol.id].replace(/_/g,' '),
+                                                                   body: { rhs: [ result.expansion ] },
+                                                                   focus: 'playerSearchInput' })
+                                                              })
+                                                          }))
+		                                gb.infoPane.show()
+                                              })
                                           })
                                       })
-                                  })
-                              })])
-                    .concat (editable
-                             ? [ gb.makeIconButton
-                                 ('create', function (evt) {
-                                   evt.stopPropagation()
-                                   gb.saveCurrentEdit()
-                                     .then (function() {
-                                       var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                                       ruleDiv.append (gb.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
-                                       symbol.rules.push (newRhs)
-                                       gb.selectGrammarRule (symbol)
-                                       gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                                     })
-                                 }) ]
-                             : [])
+                                  })])
+                        .concat (editable
+                                 ? [ gb.makeIconButton
+                                     ('create', function (evt) {
+                                       evt.stopPropagation()
+                                       gb.saveCurrentEdit()
+                                         .then (function() {
+                                           var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                                           ruleDiv.append (gb.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
+                                           symbol.rules.push (newRhs)
+                                           gb.selectGrammarRule (symbol)
+                                           gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                                         })
+                                     }) ]
+                                 : [])
+                    }
                   }),
                  symbol.rules.map (function (rhs, n) {
                    return gb.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
