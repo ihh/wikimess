@@ -261,8 +261,8 @@ var GramBot = (function() {
       return $.get ('/p/' + playerID + '/expand/' + symbolID)
     },
 
-    REST_postPlayerExpand: function (playerID, symbolIDs) {
-      return $.post ('/p/' + playerID + '/expand', { ids: symbolIDs })
+    REST_postPlayerExpand: function (playerID, symbolQueries) {
+      return $.post ('/p/' + playerID + '/expand', { symbols: symbolQueries })
     },
 
     REST_getHelpHtml: function() {
@@ -826,7 +826,7 @@ var GramBot = (function() {
               gb.composition.title = gb.messageTitleInput.val()
             })
 
-          gb.composition.template = config.template || {}
+          gb.composition.template = config.template || gb.composition.template || {}
           gb.composition.template.content = gb.composition.template.content || []
 
           if (config.body)
@@ -836,8 +836,9 @@ var GramBot = (function() {
           ({ element: 'div',
              className: 'messagebody',
              content: gb.composition.template.content,
+             firstClickCallback: gb.stopAnimation.bind(gb),
              storeCallback: function (newContent) {
-               gb.composition.content = newContent
+               gb.composition.template.content = newContent
                gb.generateMessageBody()
                return $.Deferred().resolve()
              },
@@ -847,7 +848,8 @@ var GramBot = (function() {
                return gb.renderMarkdown (gb.makeExpansionText (gb.composition.body))
              }
            })
-
+          gb.showMessageBody()
+          
           function send() {
             if (!gb.composition.recipient)
               gb.showCompose ("Please specify a message recipient.")
@@ -924,7 +926,9 @@ var GramBot = (function() {
             gb.composition.previous = config.previous
 
           if (config.focus)
-            gb[config.focus].focus()
+            gb[config.focus].focus().trigger ('click')
+          if (config.click)
+            gb[config.click].trigger ('click')
         })
     },
 
@@ -1050,7 +1054,6 @@ var GramBot = (function() {
     populateReadMessageDiv: function (props) {
       var gb = this
       var other = props.message[props.object]
-      this.symbolName[props.message.symbol.id] = props.message.symbol.name
       props.div
         .empty()
         .append ($('<div class="messageheader">')
@@ -1179,11 +1182,6 @@ var GramBot = (function() {
                          function (_match, name) {
                            return '<span class="lhslink unexpanded' + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
                          }))
-        .off ('click')
-        .on ('click', function() {
-          gb.clearAnimationTimer()
-          div.html (gb.renderMarkdown (gb.makeExpansionText (gb.animationExpansion)))
-        })
       if (this.deleteFirstSymbolName (this.animationExpansion))
         this.expansionAnimationTimer = window.setTimeout (this.animateExpansion.bind(this), this.expansionAnimationDelay)
     },
@@ -1192,6 +1190,15 @@ var GramBot = (function() {
       if (this.expansionAnimationTimer)
         window.clearTimeout (this.expansionAnimationTimer)
       delete this.expansionAnimationTimer
+    },
+
+    stopAnimation: function() {
+      if (this.expansionAnimationTimer) {
+        this.animationDiv.html (this.renderMarkdown (this.makeExpansionText (this.animationExpansion)))
+        this.clearAnimationTimer()
+        return true
+      }
+      return false
     },
     
     deleteFirstSymbolName: function (node) {
@@ -1218,18 +1225,16 @@ var GramBot = (function() {
         return gb.showCompose ('Enter text here.')
 
       templatePromise.then (function (template) {
-        var symbols = template.content.filter (function (rhsSym) {
+        var symbolQueries = template.content.filter (function (rhsSym) {
           return typeof(rhsSym) === 'object'
-        }).map (function (rhsSym) {
-          return rhsSym.id
         })
-        return gb.REST_postPlayerExpand (gb.playerID, template.content)
+        return gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
       }).then (function (result) {
         if (gb.verbose.server)
           console.log ('generateMessageBody:', result)
         var n = 0
-        gb.composition.body = { rhs: gb.composition.content.map (function (rhsSym) {
-          return typeof(rhsSym) === 'string' ? rhsSym : result.expansion[n++]
+        gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
+          return typeof(rhsSym) === 'string' ? rhsSym : result.expansions[n++]
         }) }
         gb.showMessageBody ({ animate: true })
       })
@@ -1543,7 +1548,9 @@ var GramBot = (function() {
             if (props.locateSpan)
               div = props.locateSpan()
             var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
-            var input = $('<textarea>').val(oldText).attr('rows',divRows)
+            var input = $('<textarea>').val(oldText)
+            if (props.guessHeight)
+              input.attr('rows',divRows)
             function sanitizeInput() { input.val (sanitize (input.val())) }
             input
               .on('keyup',sanitizeInput)
@@ -1558,6 +1565,7 @@ var GramBot = (function() {
               input.attr ('maxlength', props.maxLength)
             gb.unfocusAndSave = function() {
               var def
+              delete gb.unfocusAndSave
               var newText = input.val()
               if (newText !== oldText) {
                 var newContent = parse (newText)
@@ -1584,7 +1592,13 @@ var GramBot = (function() {
       if (props.isConstant)
         buttonsDiv.append (gb.makeIconButton ('locked'))
       else {
-        div.on ('click', editCallback)
+        div.off ('click')
+          .on ('click', function (evt) {
+          if (props.firstClickCallback && props.firstClickCallback (evt))
+            div.off('click').on ('click', editCallback)
+          else
+            editCallback (evt)
+        })
         if (props.destroyCallback)
           buttonsDiv.append (gb.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
@@ -1701,6 +1715,7 @@ var GramBot = (function() {
       var span = gb.makeEditableElement ({ element: 'span',
                                            className: 'rhs',
                                            content: rhs,
+                                           guessHeight: true,
                                            isConstant: !gb.symbolEditableByPlayer (symbol),
                                            confirmDestroy: function() {
                                              return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + gb.symbolName[symbol.id] + '?')
@@ -1761,6 +1776,7 @@ var GramBot = (function() {
                  ({ element: 'span',
                     className: 'lhs',
                     content: lhs,
+                    guessHeight: true,
                     renderText: function(lhs) { return '#' + lhs },
                     sanitize: gb.sanitizeSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
@@ -1820,7 +1836,7 @@ var GramBot = (function() {
                                                             gb.showComposePage
                                                             ({ template: { content: [ symbol ] },
                                                                title: gb.symbolName[symbol.id].replace(/_/g,' '),
-                                                               body: [ result.expansion ],
+                                                               body: { rhs: [ result.expansion ] },
                                                                focus: 'playerSearchInput' })
                                                           })
                                                       }))
@@ -2203,7 +2219,7 @@ var GramBot = (function() {
                                     function (evt) {
                                       evt.stopPropagation()
                                       gb.showComposePage ({ recipient: follow,
-                                                            focus: 'symbolSearchInput' })
+                                                            click: 'messageBodyDiv' })
                                     }))
       var doFollow, doUnfollow
       function makeUnfollowButton() {

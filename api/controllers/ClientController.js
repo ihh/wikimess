@@ -412,11 +412,11 @@ module.exports = {
                              .populate ('template')
                              .then (function (message) { return message.template }))
       templatePromise = previousPromise
-        .then (function (previousTemplate) {
+        .then (function (previousMessage) {
           return Template.create ({ title: title,
                                     content: template.content,
                                     author: playerID,
-                                    previous: previousTemplate })
+                                    previous: previousMessage.template })
         })
     }
     templatePromise.then (function (template) {
@@ -690,7 +690,7 @@ module.exports = {
   expandSymbol: function (req, res) {
     var playerID = parseInt (req.params.player)
     var symbolID = parseInt (req.params.symid)
-    SymbolService.expandSymbol (symbolID)
+    SymbolService.expandSymbol ({ id: symbolID })
       .then (function (expansion) {
         res.json ({ expansion: expansion })
       }).catch (function (err) {
@@ -702,9 +702,9 @@ module.exports = {
   // expand multiple symbols using the grammar
   expandSymbols: function (req, res) {
     var playerID = parseInt (req.params.player)
-    var symbolIDs = (req.body.ids || []).map (parseInt)
-    Promise.map (symbolIDs, function (symbolID) {
-      return SymbolService.expandSymbol (symbolID)
+    var symbolQueries = req.body.symbols || []
+    Promise.map (symbolQueries, function (symbolQuery) {
+      return SymbolService.expandSymbol (symbolQuery)
     }).then (function (expansions) {
         res.json ({ expansions: expansions })
     }).catch (function (err) {

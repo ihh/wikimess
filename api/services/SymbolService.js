@@ -53,25 +53,31 @@ module.exports = {
       })
   },
 
-  expandSymbol: function (symbolID, rng, depth) {
+  expandSymbol: function (symbolQuery, rng, depth) {
     rng = rng || Math.random
     depth = depth || {}
-    var result = { id: symbolID }
-    return Symbol.findOne ({ id: symbolID })
+    var result = {}
+    return Symbol.findOne (symbolQuery)
       .then (function (symbol) {
-        if (!symbol)
-          throw new Error ('Symbol ' + symbolID + ' not found')
-        result.name = symbol.name
-        var rhsSyms = symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : []
-        return Promise.map (rhsSyms, function (rhsSym) {
-          if (typeof(rhsSym) === 'string')
-            return rhsSym
-          if (depth[rhsSym] >= Symbol.maxDepth)
-            return ''
-          var nextDepth = extend ({}, depth)
-          nextDepth[rhsSym] = (nextDepth[rhsSym] || 0) + 1
-          return SymbolService.expandSymbol (rhsSym.id, rng, nextDepth)
-        })
+        if (!symbol) {
+          result.id = symbolQuery.id
+          result.name = symbolQuery.name
+          result.unresolved = true
+          return []
+        } else {
+          result.id = symbol.id
+          result.name = symbol.name
+          var rhsSyms = symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : []
+          return Promise.map (rhsSyms, function (rhsSym) {
+            if (typeof(rhsSym) === 'string')
+              return rhsSym
+            if (depth[rhsSym] >= Symbol.maxDepth)
+              return ''
+            var nextDepth = extend ({}, depth)
+            nextDepth[rhsSym] = (nextDepth[rhsSym] || 0) + 1
+            return SymbolService.expandSymbol ({ id: rhsSym.id }, rng, nextDepth)
+          })
+        }
       }).then (function (rhsVals) {
         result.rhs = rhsVals
         return result

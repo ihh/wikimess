@@ -3,9 +3,7 @@ html, body {
 }
 
 html,
-body,
-ul,
-li {
+body {
     margin: 0;
     padding: 0;
 }
@@ -19,6 +17,12 @@ body {
     -ms-user-select: none; /* IE10+ */
     -o-user-select: none;
     user-select: none;
+}
+
+textarea,
+input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .pushed {
@@ -70,7 +74,6 @@ body {
 
 .grambot .newlhs .button,
 .grambot .help .button,
-.grambot .grammartitle .button,
 .grambot .grammarbar .button {
     width: 1em;
     height: 1em;
@@ -78,13 +81,11 @@ body {
 }
 
 .grambot .message .buttons .button,
-.grambot .grammartitle .button,
 .grambot .grammarbar .button {
     float: right;
 }
 
 .grambot .mailbox .mailboxname,
-.grambot .grammartitle,
 .grambot .searchtitle,
 .grambot .whobar .followsection .title,
 .grambot .locbar .title {
@@ -253,12 +254,6 @@ body {
     cursor: pointer;
 }
 
-.grambot .grammartitle textarea,
-.grambot .grammarbar textarea {
-    width: 99%;
-    height: 100%;
-}
-
 .grambot .gramlistbar .grammar,
 .grambot .grammarbar .rule,
 .grambot .follow {
@@ -333,12 +328,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.grambot textarea,
-.grambot input {
-    -webkit-appearance: none;
-    -moz-appearance: none;
 }
 
 .grambot .inputbar input[type=text],
@@ -455,15 +444,6 @@ body {
     overflow-wrap: break-word;
 }
 
-.grambot .compose .messageheader textarea.recipient {
-    resize: none;
-}
-
-.grambot .compose .messageheader textarea {
-    width: 100%;
-    height: 1em;
-}
-
 .grambot .mailbox .contents,
 .grambot .messagebody {
     flex-grow: 1;
@@ -471,6 +451,8 @@ body {
     border-top-style: solid;
     border-width: 1px;
     margin: 2px;
+    display: flex;
+    flex-direction: column;
 }
 
 .grambot .mailbox .contents .message {
@@ -564,4 +546,42 @@ body {
 .grambot .ratinginfo .button svg {
     width: 1em;
     height: 1em;
+}
+
+.grambot .compose .messageheader textarea {
+    width: 100%;
+    height: 1em;
+}
+
+.grambot .compose .messageheader textarea.recipient {
+    resize: none;
+}
+
+.grambot .compose .messageheader textarea.title {
+    resize: vertical;
+    max-height: 4em;
+}
+
+.grambot .messagebody textarea,
+.grambot .grammarbar textarea {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+.grambot .messagebody textarea {
+    flex-grow: 1;
+    resize: none;
+}
+
+.grambot .grammarbar .lhs textarea {
+    resize: vertical;
+    max-height: 3em;
+}
+
+.grambot .grammarbar .rhs textarea {
+    resize: vertical;
+    max-height: 6em;
 }
