@@ -375,14 +375,12 @@ module.exports = {
     Message.findOne ({ sender: playerID,
                        id: messageID,
                        senderDeleted: false })
-      .populate ('template')
       .populate ('recipient')
       .then (function (message) {
         result.message = { id: message.id,
                            recipient: { id: message.recipient.id,
                                         name: message.recipient.displayName },
-                           template: { id: message.template.id,
-                                       content: message.template.content },
+                           template: { id: message.template },
                            title: message.title,
                            body: message.body,
                            date: message.createdAt }

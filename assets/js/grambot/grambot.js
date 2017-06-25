@@ -142,87 +142,87 @@ var GramBot = (function() {
     },
 
     REST_postPlayer: function (playerName, playerPassword) {
-      return $.post('/p/new', { name: playerName, password: playerPassword })
+      return this.logPost ('/p/new', { name: playerName, password: playerPassword })
     },
 
     REST_postLogin: function (playerName, playerPassword) {
-      return $.post('/login', { name: playerName, password: playerPassword })
+      return this.logPost ('/login', { name: playerName, password: playerPassword })
     },
 
     REST_postLogout: function() {
-      return $.post ('/logout')
+      return this.logPost ('/logout')
     },
 
     REST_postPlayerSearchPlayersAll: function (playerID, queryText, page) {
-      return $.post ('/p/' + playerID + '/search/players/all', { query: queryText, page: page })
+      return this.logPost ('/p/' + playerID + '/search/players/all', { query: queryText, page: page })
     },
 
     REST_postPlayerSearchPlayersFollowed: function (playerID, queryText) {
-      return $.post ('/p/' + playerID + '/search/players/followed', { query: queryText })
+      return this.logPost ('/p/' + playerID + '/search/players/followed', { query: queryText })
     },
 
     REST_postPlayerSearchSymbolsAll: function (playerID, queryText, page) {
-      return $.post ('/p/' + playerID + '/search/symbols/all', { query: queryText, page: page })
+      return this.logPost ('/p/' + playerID + '/search/symbols/all', { query: queryText, page: page })
     },
 
     REST_postPlayerSearchSymbolsOwned: function (playerID, queryText) {
-      return $.post ('/p/' + playerID + '/search/symbols/owned', { query: queryText })
+      return this.logPost ('/p/' + playerID + '/search/symbols/owned', { query: queryText })
     },
 
     REST_postPlayerConfig: function (playerID, config) {
-      return $.post ('/p/' + playerID + '/config', config)
+      return this.logPost ('/p/' + playerID + '/config', config)
     },
 
     REST_getPlayerFollow: function (playerID) {
-      return $.get ('/p/' + playerID + '/follow')
+      return this.logGet ('/p/' + playerID + '/follow')
     },
 
     REST_getPlayerFollowOther: function (playerID, otherID) {
-      return $.get ('/p/' + playerID + '/follow/' + otherID)
+      return this.logGet ('/p/' + playerID + '/follow/' + otherID)
     },
 
     REST_getPlayerUnfollowOther: function (playerID, otherID) {
-      return $.get ('/p/' + playerID + '/unfollow/' + otherID)
+      return this.logGet ('/p/' + playerID + '/unfollow/' + otherID)
     },
 
     REST_getPlayerStatus: function (playerID) {
-      return $.get ('/p/' + playerID + '/status')
+      return this.logGet ('/p/' + playerID + '/status')
     },
 
     REST_getPlayerStatusOther: function (playerID, otherID) {
-      return $.get ('/p/' + playerID + '/status/' + otherID)
+      return this.logGet ('/p/' + playerID + '/status/' + otherID)
     },
 
     REST_postId: function (playerName) {
-      return $.post ('/id', { name: playerName })
+      return this.logPost ('/id', { name: playerName })
     },
 
     REST_getPlayerInbox: function (playerID) {
-      return $.get ('/p/' + playerID + '/inbox')
+      return this.logGet ('/p/' + playerID + '/inbox')
     },
 
     REST_getPlayerInboxCount: function (playerID) {
-      return $.get ('/p/' + playerID + '/inbox/count')
+      return this.logGet ('/p/' + playerID + '/inbox/count')
     },
 
     REST_getPlayerOutbox: function (playerID) {
-      return $.get ('/p/' + playerID + '/outbox')
+      return this.logGet ('/p/' + playerID + '/outbox')
     },
 
     REST_getPlayerMessage: function (playerID, messageID) {
-      return $.get ('/p/' + playerID + '/message/' + messageID)
+      return this.logGet ('/p/' + playerID + '/message/' + messageID)
     },
 
     REST_getPlayerMessageHeader: function (playerID, messageID) {
-      return $.get ('/p/' + playerID + '/message/' + messageID + '/header')
+      return this.logGet ('/p/' + playerID + '/message/' + messageID + '/header')
     },
 
     REST_getPlayerMessageSent: function (playerID, messageID) {
-      return $.get ('/p/' + playerID + '/message/' + messageID + '/sent')
+      return this.logGet ('/p/' + playerID + '/message/' + messageID + '/sent')
     },
 
     REST_postPlayerMessage: function (playerID, recipientID, template, title, body, previous) {
-      return $.post ('/p/' + playerID + '/message', { recipient: recipientID,
+      return this.logPost ('/p/' + playerID + '/message', { recipient: recipientID,
                                                       template: template,
                                                       title: title,
                                                       body: body,
@@ -230,43 +230,37 @@ var GramBot = (function() {
     },
 
     REST_deletePlayerMessage: function (playerID, messageID) {
-      return $.ajax ({ url: '/p/' + playerID + '/message/' + messageID,
-		       method: 'DELETE' })
+      return this.logDelete ('/p/' + playerID + '/message/' + messageID)
     },
 
     REST_putPlayerMessageRating: function (playerID, messageID, rating) {
-      return $.ajax ({ url: '/p/' + playerID + '/message/' + messageID + '/rating',
-		       method: 'PUT',
-                       contentType: 'application/json',
-                       data: JSON.stringify ({ rating: rating }) })
+      return this.logPut ('/p/' + playerID + '/message/' + messageID + '/rating',
+                          { rating: rating })
     },
 
     REST_putPlayerSymbol: function (playerID, symbolID, name, rules) {
-      return $.ajax ({ url: '/p/' + playerID + '/symbol/' + symbolID,
-                       method: 'PUT',
-                       contentType: 'application/json',
-                       data: JSON.stringify ({ name: name, rules: rules }) })
+      return this.logPut ('/p/' + playerID + '/symbol/' + symbolID,
+                          { name: name, rules: rules })
     },
 
     REST_deletePlayerSymbol: function (playerID, symbolID) {
-      return $.ajax ({ url: '/p/' + playerID + '/symbol/' + symbolID,
-                       method: 'DELETE' })
+      return this.logDelete ('/p/' + playerID + '/symbol/' + symbolID)
     },
 
     REST_getPlayerTemplate: function (playerID, templateID) {
-      return $.get ('/p/' + playerID + '/template/' + templateID)
+      return this.logGet ('/p/' + playerID + '/template/' + templateID)
     },
     
     REST_getPlayerExpand: function (playerID, symbolID) {
-      return $.get ('/p/' + playerID + '/expand/' + symbolID)
+      return this.logGet ('/p/' + playerID + '/expand/' + symbolID)
     },
 
     REST_postPlayerExpand: function (playerID, symbolQueries) {
-      return $.post ('/p/' + playerID + '/expand', { symbols: symbolQueries })
+      return this.logPost ('/p/' + playerID + '/expand', { symbols: symbolQueries })
     },
 
     REST_getHelpHtml: function() {
-      return $.get ('/html/grammar-editor-help.html')
+      return this.logGet ('/html/grammar-editor-help.html')
     },
 
     // WebSockets interface
@@ -298,21 +292,72 @@ var GramBot = (function() {
       return this.socketGetPromise ('/p/' + playerID + '/symbol/' + symbolID)
     },
 
+    // helpers to log ajax calls
+    logGet: function (url) {
+      var gb = this
+      return $.get (url)
+        .then (function (result) {
+          if (gb.verbose.server)
+            console.log ('GET ' + url, result)
+          return result
+        })
+    },
+
+    logPost: function (url, data) {
+      var gb = this
+      return $.post (url, data)
+        .then (function (result) {
+          if (gb.verbose.server)
+            console.log ('POST ' + url, result)
+          return result
+        })
+    },
+
+    logPut: function (url, data) {
+      var gb = this
+      return $.ajax ({ url: url,
+                       method: 'PUT',
+                       contentType: 'application/json',
+                       data: JSON.stringify(data) })
+        .then (function (result) {
+          if (gb.verbose.server)
+            console.log ('PUT ' + url, result)
+          return result
+        })
+    },
+
+    logDelete: function (url) {
+      var gb = this
+      return $.ajax ({ url: url,
+                       method: 'DELETE' })
+        .then (function (result) {
+          if (gb.verbose.server)
+            console.log ('DELETE ' + url, result)
+          return result
+        })
+    },
+    
     // helpers to convert socket callbacks to promises
     socketGetPromise: function (url) {
+      var gb = this
       var def = $.Deferred()
       io.socket.get (url, function (resData, jwres) {
-        if (jwres.statusCode == 200)
+        if (jwres.statusCode == 200) {
+          if (gb.verbose.server)
+            console.log ('socket GET ' + url, resData)
           def.resolve (resData)
-        else
+        } else
           def.reject (jwres)
       })
       return def
     },
 
     socketPostPromise: function (url, data) {
+      var gb = this
       var def = $.Deferred()
       io.socket.post (url, data, function (resData, jwres) {
+          if (gb.verbose.server)
+            console.log ('socket POST ' + url, resData)
         if (jwres.statusCode == 200)
           def.resolve (resData)
         else
@@ -457,8 +502,6 @@ var GramBot = (function() {
       (function() {
         gb.REST_postLogin (gb.playerLogin, gb.playerPassword)
           .done (function (data) {
-	    if (gb.verbose.server)
-              console.log ('doLogin:', data)
 	    if (!data.player)
               gb.showModalMessage (data.message, fail)
 	    else {
@@ -837,7 +880,8 @@ var GramBot = (function() {
              className: 'messagebody',
              content: gb.composition.template.content,
              firstClickCallback: gb.stopAnimation.bind(gb),
-             storeCallback: function (newContent) {
+             alwaysUpdate: true,
+             updateCallback: function (newContent) {
                gb.composition.template.content = newContent
                gb.generateMessageBody()
                return $.Deferred().resolve()
@@ -929,6 +973,8 @@ var GramBot = (function() {
             gb[config.focus].focus().trigger ('click')
           if (config.click)
             gb[config.click].trigger ('click')
+
+          return true
         })
     },
 
@@ -968,8 +1014,6 @@ var GramBot = (function() {
       gb.composeDiv.hide()
       gb.REST_getPlayerOutbox (gb.playerID)
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('showOutbox:', result)
           gb.populateMailboxDiv ({ refresh: gb.showOutbox,
                                    title: 'Sent messages',
                                    messages: result.messages,
@@ -1012,8 +1056,6 @@ var GramBot = (function() {
           .on ('click', function() {
             gb[props.method] (gb.playerID, message.id)
               .then (function (result) {
-                if (gb.verbose.server)
-                  console.log ('populateMailboxDiv:', result)
                 if (message.unread) {
                   div.removeClass ('unread')
                   delete message.unread
@@ -1034,12 +1076,15 @@ var GramBot = (function() {
                   .off('click')
                   .on('click', function (evt) {
                     evt.stopPropagation()
-                    gb.showComposePage
-                    ({ title: result.message.title,
-                       template: result.message.template,
-                       body: result.message.body,
-                       previous: result.message.id,
-                       focus: 'playerSearchInput' })
+                    gb.REST_getPlayerTemplate (gb.playerID, result.message.template.id)
+                      .then (function (templateResult) {
+                        return gb.showComposePage
+                        ({ title: result.message.title,
+                           template: templateResult.template,
+                           body: result.message.body,
+                           previous: result.message.id,
+                           focus: 'playerSearchInput' })
+                      })
                   })
                 gb.reloadButton.hide()
                 gb.mailboxDiv.hide()
@@ -1081,8 +1126,6 @@ var GramBot = (function() {
         if (searchText.length)
           this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText)
           .then (function (result) {
-	    if (gb.verbose.server)
-              console.log ('doComposePlayerSearch:', result)
             gb.showComposePlayerSearchResults (result.results)
           })
         else
@@ -1119,8 +1162,6 @@ var GramBot = (function() {
         if (searchText.length)
           this.REST_postPlayerSearchSymbolsOwned (this.playerID, searchText)
           .then (function (result) {
-	    if (gb.verbose.server)
-              console.log ('doComposeSymbolSearch:', result)
             gb.showComposeSymbolSearchResults (result.results)
           })
         else
@@ -1216,28 +1257,21 @@ var GramBot = (function() {
       gb.showMessageBody()
       gb.composition.body = {}
 
-      var templatePromise
-      if (gb.composition.template && gb.composition.template.content)
-        templatePromise = $.Deferred().resolve (gb.composition.template)
-      else if (gb.composition.template && gb.composition.template.id)
-        templatePromise = gb.REST_getPlayerTemplate (gb.playerID, gb.composition.template.id)
-      else
-        return gb.showCompose ('Enter text here.')
-
-      templatePromise.then (function (template) {
-        var symbolQueries = template.content.filter (function (rhsSym) {
-          return typeof(rhsSym) === 'object'
-        })
-        return gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
-      }).then (function (result) {
-        if (gb.verbose.server)
-          console.log ('generateMessageBody:', result)
-        var n = 0
-        gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
-          return typeof(rhsSym) === 'string' ? rhsSym : result.expansions[n++]
-        }) }
-        gb.showMessageBody ({ animate: true })
+      var symbolQueries = gb.composition.template.content.filter (function (rhsSym) {
+        return typeof(rhsSym) === 'object'
       })
+      gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
+        .then (function (result) {
+          var n = 0
+          gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
+            if (typeof(rhsSym) === 'string')
+              return rhsSym
+            var expansion = result.expansions[n++]
+            rhsSym.id = expansion.id
+            return expansion
+          }) }
+          gb.showMessageBody ({ animate: true })
+        })
     },
 
     makeExpansionText: function (node, leaveSymbolsUnexpanded) {
@@ -1305,8 +1339,6 @@ var GramBot = (function() {
       gb.mailboxButton.hide()
       gb.REST_getPlayerInbox (gb.playerID)
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('showInbox:', result)
           gb.populateMailboxDiv ($.extend ({ messages: result.messages },
                                            gb.inboxProps()))
         })
@@ -1381,8 +1413,6 @@ var GramBot = (function() {
       if (this.page === 'inbox')
         this.REST_getPlayerMessageHeader (this.playerID, messageID)
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('updateInbox:', result)
           if (gb.page === 'inbox')  // check again in case player switched pages while loading
             if (!gb.messageHeaderCache[result.message.id])
               gb.mailboxContentsDiv.append (gb.makeMailboxEntryDiv (gb.inboxProps(), result.message))
@@ -1468,9 +1498,6 @@ var GramBot = (function() {
 
       getMethod.call (this, this.playerID, this.gameID)
 	.done (function (status) {
-	  if (gb.verbose.server)
-	    console.log ('showGameStatusPage:', status)
-
           gb.detailBarDiv.append
           ($('<div class="ratinginfo">')
            .append ($('<span class="ratinginfolabel">').text ("Messages:"),
@@ -1547,7 +1574,8 @@ var GramBot = (function() {
           .then (function() {
             if (props.locateSpan)
               div = props.locateSpan()
-            var divRows = Math.round (div.height() / parseFloat(div.css('line-height')))
+            var divRows = Math.max (Math.round (div.height() / parseFloat(div.css('line-height'))),
+                                    oldText.split('\n').length)
             var input = $('<textarea>').val(oldText)
             if (props.guessHeight)
               input.attr('rows',divRows)
@@ -1567,9 +1595,9 @@ var GramBot = (function() {
               var def
               delete gb.unfocusAndSave
               var newText = input.val()
-              if (newText !== oldText) {
+              if (props.alwaysUpdate || newText !== oldText) {
                 var newContent = parse (newText)
-                def = props.storeCallback (newContent)
+                def = props.updateCallback (newContent)
                   .then (function (modifiedNewContent) {
                     props.content = modifiedNewContent || newContent
                   })
@@ -1620,8 +1648,6 @@ var GramBot = (function() {
         .then (function() {
           gb.lastSavePromise = gb.REST_putPlayerSymbol (gb.playerID, symbol.id, gb.symbolName[symbol.id], symbol.rules)
             .then (function (result) {
-              if (gb.verbose.server)
-                console.log('putPlayerSymbol:',result)
               $.extend (gb.symbolName, result.name)
               return result.symbol
             })
@@ -1635,8 +1661,6 @@ var GramBot = (function() {
         .then (function() {
           gb.lastSavePromise = gb.REST_putPlayerSymbol (gb.playerID, symbol.id, newName, symbol.rules)
             .then (function (result) {
-              if (gb.verbose.server)
-                console.log('putPlayerSymbol:',result)
               gb.updateSymbolCache (result)
             }).fail (function (err) {
               var reload = gb.reloadCurrentTab.bind(gb)
@@ -1725,7 +1749,7 @@ var GramBot = (function() {
                                              gb.populateGrammarRuleDiv (ruleDiv, symbol)
                                              return gb.saveSymbol (symbol)
                                            },
-                                           storeCallback: function (newRhs) {
+                                           updateCallback: function (newRhs) {
                                              symbol.rules[n] = newRhs
                                              return gb.saveSymbol (symbol)
                                                .then (function (newSymbol) {
@@ -1778,6 +1802,7 @@ var GramBot = (function() {
                     content: lhs,
                     guessHeight: true,
                     renderText: function(lhs) { return '#' + lhs },
+                    renderHtml: function(lhs) { return $('<span class="name">').text('#'+lhs) },
                     sanitize: gb.sanitizeSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
@@ -1797,7 +1822,7 @@ var GramBot = (function() {
                       gb.removeGrammarRule (symbol)
                       return gb.REST_deletePlayerSymbol (gb.playerID, symbol.id)
                     },
-                    storeCallback: function (newLhs) {
+                    updateCallback: function (newLhs) {
                       return gb.renameSymbol (symbol, newLhs)
                     },
                     otherButtonDivs: (owned
@@ -1819,8 +1844,6 @@ var GramBot = (function() {
                                       .then (function() {
                                         gb.REST_getPlayerExpand (gb.playerID, symbol.id)
                                           .then (function (result) {
-                                            if (gb.verbose.server)
-                                              console.log ('populateGrammarRuleDiv:', result)
                                             gb.showingHelp = false
 		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
 		                            gb.showMessageBody ({ div: gb.infoPaneContent,
@@ -1878,8 +1901,6 @@ var GramBot = (function() {
           else
             gb.socket_getPlayerSymbol (gb.playerID, symbol.id)
             .then (function (result) {
-              if (gb.verbose.server)
-                console.log('getPlayerSymbol:',result)
               $.extend (gb.symbolName, result.name)
               gb.symbolCache[result.symbol.id] = result.symbol
               gb.placeGrammarRuleDiv (result.symbol)
@@ -1976,8 +1997,6 @@ var GramBot = (function() {
           else
             def = gb.socket_getPlayerSymbols (gb.playerID)
               .then (function (result) {
-                if (gb.verbose.server)
-                  console.log('getPlayerSymbols:',result)
                 gb.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
                   gb.symbolCache[symbol.id] = symbol
@@ -2048,8 +2067,6 @@ var GramBot = (function() {
                              .then (function() {
                                return gb.socket_getPlayerSymbolNew (gb.playerID)
                              }).then (function (result) {
-                               if (gb.verbose.server)
-                                 console.log('getPlayerSymbolNew:',result)
                                gb.symbolCache[result.symbol.id] = result.symbol
                                $.extend (gb.symbolName, result.name)
                                gb.placeGrammarRuleDiv (result.symbol)
@@ -2089,8 +2106,6 @@ var GramBot = (function() {
         delete this.symbolSearchResults
         this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
           .then (function (ret) {
-	    if (gb.verbose.server)
-              console.log ('doSymbolSearch:', ret)
             gb.symbolSearchResults = ret
             gb.showSymbolSearchResults()
           })
@@ -2102,8 +2117,6 @@ var GramBot = (function() {
       if (this.searchInput.val() === this.lastSymbolSearch) {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
           .then (function (ret) {
-	    if (gb.verbose.server)
-              console.log ('continueSymbolSearch:', ret)
             gb.symbolSearchResults.results = gb.symbolSearchResults.results.concat (ret.results)
             gb.symbolSearchResults.more = ret.more
             gb.symbolSearchResults.page = ret.page
@@ -2197,8 +2210,6 @@ var GramBot = (function() {
       var gb = this
       gb.REST_getPlayerFollow (gb.playerID)
 	.done (function (data) {
-	  if (gb.verbose.server)
-	    console.log ('updateAddressBook:', data)
           gb.addressBookDiv
             .empty()
             .append ($('<div class="followsection">')
@@ -2297,8 +2308,6 @@ var GramBot = (function() {
         delete this.playerSearchResults
         this.REST_postPlayerSearchPlayersAll (this.playerID, searchText)
           .then (function (ret) {
-	    if (gb.verbose.server)
-              console.log ('doPlayerSearch:', ret)
             gb.playerSearchResults = ret
             gb.showPlayerSearchResults()
           })
@@ -2310,8 +2319,6 @@ var GramBot = (function() {
       if (this.searchInput.val() === this.lastPlayerSearch) {
         this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
-	    if (gb.verbose.server)
-              console.log ('continuePlayerSearch:', ret)
             gb.playerSearchResults.results = gb.playerSearchResults.results.concat (ret.results)
             gb.playerSearchResults.more = ret.more
             gb.playerSearchResults.page = ret.page
