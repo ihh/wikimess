@@ -1358,7 +1358,7 @@ var GramBot = (function() {
                object: 'sender',
                showMessage: function (message) {
 
-                 if (!message.rating) {
+                 if (!message.rating && message.sender.id !== gb.playerID) {
                    var stars = new Array(gb.maxRating).fill(1).map (function() {
                      return $('<span class="rating">')
                    })
@@ -2274,7 +2274,9 @@ var GramBot = (function() {
         makeFollowButton()
       var nameDiv = $('<span class="name">').text (follow.name)
       var followDiv = $('<div class="follow">')
-          .append (nameDiv, composeDiv, buttonDiv)
+          .append (nameDiv, composeDiv)
+      if (follow.id !== this.playerID)
+        followDiv.append (buttonDiv)
       $.extend (follow, { followDiv: followDiv,
                           nameDiv: nameDiv,
                           buttonDiv: buttonDiv,

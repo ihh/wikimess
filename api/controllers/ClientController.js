@@ -97,11 +97,13 @@ module.exports = {
         else
           playerPromise = Player
           .find ({ displayName: { contains: query },
-                   id: { '!': searcherID },
 		   admin: false,
 		   human: true })
-          .limit (maxResults - matchingFollowed.length)
+          .limit (maxResults)
         playerPromise.then (function (matchingUnfollowed) {
+          var gotID = {}
+          matchingFollowed.forEach (function (player) { gotID[player.id] = true })
+          matchingUnfollowed = matchingUnfollowed.filter (function (player) { return !gotID[player.id] })
           res.json ({ results: matchingFollowed.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
                       .concat (matchingUnfollowed.map (function (player) { return PlayerService.makePlayerSummary (player, false) }))
                       .slice (0, maxResults)
@@ -470,6 +472,7 @@ module.exports = {
     var messageID = parseInt (req.params.message)
     var rating = parseInt (req.body.rating)
     Message.update ({ id: messageID,
+                      sender: { '!': playerID },
                       recipient: playerID,
                       rating: null,
                       read: true,
