@@ -908,7 +908,7 @@ var GramBot = (function() {
           gb.messageBodyDiv = gb.makeEditableElement
           ({ element: 'div',
              className: 'messagebody',
-             content: gb.composition.template.content,
+             content: function() { return gb.composition.template.content },
              firstClickCallback: gb.stopAnimation.bind(gb),
              alwaysUpdate: true,
              updateCallback: function (newContent) {
@@ -1296,7 +1296,7 @@ var GramBot = (function() {
       if (gb.composition.previousTemplate)
         templatePromise = gb.REST_getPlayerSuggestReply (gb.playerID, gb.composition.previousTemplate.id)
         .then (function (result) {
-          gb.template = result.template
+          gb.composition.template = result.template
         })
       else
         templatePromise = $.Deferred().resolve()
@@ -1613,7 +1613,6 @@ var GramBot = (function() {
       var parse = props.parse || sanitize
       var renderText = props.renderText || function(x) { return x }
       var renderHtml = props.renderHtml || renderText
-      var oldText = renderText(props.content)
       var editCallback = function (evt) {
         evt.stopPropagation()
         div.off ('click')
@@ -1621,6 +1620,7 @@ var GramBot = (function() {
           .then (function() {
             if (props.locateSpan)
               div = props.locateSpan()
+            var oldText = renderText (props.content())
             var divRows = Math.max (Math.round (div.height() / parseFloat(div.css('line-height'))),
                                     oldText.split('\n').length)
             var input = $('<textarea>').val(oldText)
@@ -1645,9 +1645,6 @@ var GramBot = (function() {
               if (props.alwaysUpdate || newText !== oldText) {
                 var newContent = parse (newText)
                 def = props.updateCallback (newContent)
-                  .then (function (modifiedNewContent) {
-                    props.content = modifiedNewContent || newContent
-                  })
               } else
                 def = $.Deferred().resolve()
               return def
@@ -1661,7 +1658,7 @@ var GramBot = (function() {
       }
       
       var buttonsDiv = $('<span class="buttons">')
-      div.empty().append (renderHtml (props.content),
+      div.empty().append (renderHtml (props.content()),
                           buttonsDiv)
       
       if (props.isConstant)
@@ -1782,10 +1779,10 @@ var GramBot = (function() {
       }).join('')
     },
     
-    makeGrammarRhsDiv: function (symbol, ruleDiv, rhs, n) {
+    makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
       var span = gb.makeEditableElement ({ element: 'span',
                                            className: 'rhs',
-                                           content: rhs,
+                                           content: function() { return symbol.rules[n] },
                                            guessHeight: true,
                                            isConstant: !gb.symbolEditableByPlayer (symbol),
                                            confirmDestroy: function() {
@@ -1846,7 +1843,7 @@ var GramBot = (function() {
         .append (this.makeEditableElement
                  ({ element: 'span',
                     className: 'lhs',
-                    content: lhs,
+                    content: function() { return gb.symbolName[symbol.id] },
                     guessHeight: true,
                     renderText: function(lhs) { return '#' + lhs },
                     renderHtml: function(lhs) { return $('<span class="name">').text('#'+lhs) },
@@ -1923,8 +1920,8 @@ var GramBot = (function() {
                                        gb.saveCurrentEdit()
                                          .then (function() {
                                            var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                                           ruleDiv.append (gb.makeGrammarRhsDiv (symbol, ruleDiv, newRhs, symbol.rules.length))
                                            symbol.rules.push (newRhs)
+                                           ruleDiv.append (gb.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
                                            gb.selectGrammarRule (symbol)
                                            gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
                                          })
@@ -1933,7 +1930,7 @@ var GramBot = (function() {
                     }
                   }),
                  symbol.rules.map (function (rhs, n) {
-                   return gb.makeGrammarRhsDiv (symbol, ruleDiv, rhs, n)
+                   return gb.makeGrammarRhsDiv (symbol, ruleDiv, n)
                  }))
     },
 
