@@ -81,8 +81,8 @@ var GramBot = (function() {
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
-    maxPlayerNameLength: 16,
-    maxPlayerLoginLength: 32,
+    maxPlayerLoginLength: 16,
+    maxPlayerNameLength: 32,
     maxRating: 5,
     ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
@@ -470,6 +470,7 @@ var GramBot = (function() {
       var gb = this
       return this.setPage ('login')
         .then (function() {
+          var sanitizeLogin = gb.sanitizer ('nameInput', gb.sanitizePlayerName)
           gb.container
             .empty()
             .append ($('<div class="inputbar">')
@@ -477,7 +478,9 @@ var GramBot = (function() {
                               .append ($('<label for="player">')
                                        .text('Player name'))
                               .append (gb.nameInput = $('<input name="player" type="text">')
-                                       .attr('maxlength', gb.maxPlayerNameLength))
+                                       .attr('maxlength', gb.maxPlayerLoginLength)
+                                       .on('change', sanitizeLogin)
+                                       .on('keyup', sanitizeLogin))
                               .append ($('<label for="player">')
                                        .text('Password'))
                               .append (gb.passwordInput = $('<input name="password" type="password">'))))
@@ -754,6 +757,7 @@ var GramBot = (function() {
             } else
               gb.popView()
           })
+          var sanitizeLogin = gb.sanitizer ('loginInput', gb.sanitizePlayerName)
           gb.container
             .append (gb.makePageTitle ("Player details"))
             .append ($('<div class="menubar">')
@@ -762,6 +766,8 @@ var GramBot = (function() {
                                        .append ($('<span>').text('Login name'))
                                        .append (gb.loginInput = $('<input type="text">')
                                                 .val(gb.playerLogin)
+                                                .on('keyup',sanitizeLogin)
+                                                .on('change',sanitizeLogin)
                                                 .attr('maxlength', gb.maxPlayerLoginLength))),
                               $('<div class="inputbar">')
                               .append ($('<form>')
@@ -1090,12 +1096,12 @@ var GramBot = (function() {
           .append ($('<div class="title">').text (message.title),
                    $('<span class="buttons">')
                    .append (gb.makeIconButton ('destroy', deleteMessage)),
-                   $('<div class="player">').text (message[props.object].name))
+                   $('<div class="player">').html (message[props.object].displayName))
           .on ('click', function() {
             gb[props.method] (gb.playerID, message.id)
               .then (function (result) {
                 if (message.unread) {
-                  div.removeClass ('unread')
+                  div.removeClass('unread').addClass('read')
                   delete message.unread
                   --gb.messageCount
                   gb.updateMessageCountDiv()
@@ -1129,8 +1135,7 @@ var GramBot = (function() {
                 props.showMessage (result.message)
               })
           })
-      if (message.unread)
-        div.addClass ('unread')
+      div.addClass (message.unread ? 'unread' : 'read')
       return div
     },
 
@@ -1142,10 +1147,11 @@ var GramBot = (function() {
         .append ($('<div class="messageheader">')
                  .append ($('<div class="row">')
                           .append ($('<span class="label">').text (props.preposition + ':'),
-                                   $('<span class="field">').html ($('<span class="player">').text (other.name)
-                                                                   .on ('click', function (evt) {
-                                                                     gb.showOtherStatusPage (other)
-                                                                   }))),
+                                   $('<span class="field">').html (gb.makePlayerSpan (other.name,
+                                                                                      other.displayName,
+                                                                                      function (evt) {
+                                                                                        gb.showOtherStatusPage (other)
+                                                                                      }))),
                           $('<div class="row">')
                           .append ($('<span class="label">').text ('Subject:'),
                                    $('<span class="field">').text (props.message.title)),
@@ -1180,12 +1186,13 @@ var GramBot = (function() {
         if (results.length)
           this.playerSearchResultsDiv
           .append (results.map (function (player) {
-            return $('<div class="player">').text (player.name)
-              .on ('click', function() {
-                gb.playerSearchResultsDiv.hide()
-                gb.composition.recipient = player
-                gb.playerSearchInput.val (gb.lastComposePlayerSearchText = player.name)
-              })
+            return gb.makePlayerSpan (player.name,
+                                      player.displayName,
+                                      function() {
+                                        gb.playerSearchResultsDiv.hide()
+                                        gb.composition.recipient = player
+                                        gb.playerSearchInput.val (gb.lastComposePlayerSearchText = player.name)
+                                      })
           })).show()
         else
           this.playerSearchResultsDiv
@@ -1254,7 +1261,7 @@ var GramBot = (function() {
       }
       return node.rhs.find (this.deleteFirstSymbolName.bind (this))
     },
-
+    
     generateMessageBody: function() {
       var gb = this
       gb.showMessageBody()
@@ -1471,7 +1478,7 @@ var GramBot = (function() {
         .then (function() {
           gb.showNavBar ('status')
           gb.showGameStatusPage (gb.REST_getPlayerStatus)
-          gb.detailBarDiv.prepend ($('<div>').html($('<h1>').text(gb.playerName)))
+          gb.detailBarDiv.prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin, gb.playerName)))
         })
     },
 
@@ -1785,24 +1792,13 @@ var GramBot = (function() {
                                            renderHtml: function (rhs) {
                                              return $('<span>')
                                                .append (rhs.map (function (rhsSym) {
-                                                 var span = $('<span>')
-                                                 if (typeof(rhsSym) === 'object') {
-                                                   var name = $('<span class="name">')
-                                                   span.addClass('lhslink').append ('#', name)
-                                                   if (typeof(rhsSym.id) !== 'undefined' && !gb.symbolName[rhsSym.id]) {
-                                                     console.log('oops; empty symbol name')
-                                                   }
-                                                   if (typeof(rhsSym.id) !== 'undefined')
-                                                     name.text (gb.symbolName[rhsSym.id])
-                                                     .on ('click', function (evt) {
-                                                       evt.stopPropagation()
-                                                       gb.loadGrammarSymbol (rhsSym)
-                                                     })
-                                                   else {
-                                                     console.log('renderHtml: using placeholder for '+rhsSym.name)
-                                                     name.text (rhsSym.name)
-                                                   }
-                                                 } else
+                                                 if (typeof(rhsSym) === 'object')
+                                                   return gb.makeSymbolSpan (rhsSym,
+                                                                             function (evt) {
+                                                                               evt.stopPropagation()
+                                                                               gb.loadGrammarSymbol (rhsSym)
+                                                                             })
+                                                 else
                                                    span.html (gb.renderMarkdown (rhsSym))
                                                  return span
                                                }))
@@ -1810,7 +1806,7 @@ var GramBot = (function() {
                                          })
       return span
     },
-    
+
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
       var gb = this
       var lhs = gb.symbolName[symbol.id]
@@ -1911,10 +1907,48 @@ var GramBot = (function() {
                  }))
     },
 
+    makePlayerSpan: function (name, displayName, callback) {
+      var nameSpan = $('<span class="name">')
+      var span = $('<span>').addClass(callback ? 'playerlink' : 'playertag').append ('@', nameSpan)
+      nameSpan.text (name)
+      if (callback)
+        span.on ('click', callback)
+      if (displayName)
+        span = $('<span>').append (span, ' (' + displayName + ')')
+      return span
+    },
+
+    makeSymbolSpan: function (sym, callback) {
+      var nameSpan = $('<span class="name">')
+      var span = $('<span class="lhslink">').append ('#', nameSpan)
+      if (typeof(sym.id) !== 'undefined')
+        nameSpan.text (gb.symbolName[sym.id])
+      else
+        nameSpan.text (sym.name)
+      if (callback)
+        span.on ('click', callback)
+      return span
+    },
+
     sanitizeSymbolName: function (text) {
       return '#' + text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'')
     },
 
+    sanitizePlayerName: function (text) {
+      return text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'')
+    },
+
+    sanitizer: function (elementName, sanitizeMethod, prefix) {
+      var boundSanitizeMethod = sanitizeMethod.bind(gb)
+      return function() {
+        var element = gb[elementName]
+        var newVal = element.val()
+        var saneVal = boundSanitizeMethod(newVal)
+        if (saneVal !== newVal)
+          element.val (saneVal)
+      }
+    },
+    
     loadGrammarSymbol: function (symbol) {
       var gb = this
       gb.saveCurrentEdit()
@@ -2181,12 +2215,11 @@ var GramBot = (function() {
       return symbols.length
         ? symbols.map (function (symbol) {
           return $('<div class="symbol">')
-            .append ($('<span class="lhslink">').append ('#', $('<span class="name">').text (symbol.name))
-                     .on ('click', function (evt) {
-                       evt.stopPropagation()
-                       gb.loadGrammarSymbol (symbol)
-                     })
-                    )
+            .append (gb.makeSymbolSpan (symbol,
+                                        function (evt) {
+                                          evt.stopPropagation()
+                                          gb.loadGrammarSymbol (symbol)
+                                        }))
         })
       : $('<span>').text (emptyMessage)
     },
@@ -2245,7 +2278,7 @@ var GramBot = (function() {
 	}).fail (gb.reloadOnFail())
     },
     
-    makeFollowDiv: function (follow) {
+    makeFollowDiv: function (follow, callback) {
       var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
       var composeDiv =  $('<span class="followcontrol">')
@@ -2290,11 +2323,13 @@ var GramBot = (function() {
         makeUnfollowButton()
       else
         makeFollowButton()
-      var nameDiv = $('<span class="player">').text (follow.name)
+      var nameDiv = gb.makePlayerSpan (follow.name, follow.displayName, callback)
       var followDiv = $('<div class="follow">')
           .append (nameDiv, composeDiv)
       if (follow.id !== this.playerID)
         followDiv.append (buttonDiv)
+      if (callback)
+        followDiv.on ('click', callback)
       $.extend (follow, { followDiv: followDiv,
                           nameDiv: nameDiv,
                           buttonDiv: buttonDiv,
@@ -2309,12 +2344,10 @@ var GramBot = (function() {
         ? followList.map (function (follow) {
           gb.followsById[follow.id] = gb.followsById[follow.id] || []
           gb.followsById[follow.id].push (follow)
-          gb.makeFollowDiv (follow)
+          gb.makeFollowDiv (follow, gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, follow)))
           follow.setFollowing = function (flag) {
             gb.followsById[follow.id].forEach (function (f) { f.following = flag })
           }
-          follow.followDiv
-            .on ('click', gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, follow)))
           return follow.followDiv
         })
       : $('<span>').text (emptyMessage)

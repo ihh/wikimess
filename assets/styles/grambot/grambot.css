@@ -187,8 +187,13 @@ input {
      @-o-keyframes pulse_rule { from { background-color:gray; } }
         @keyframes pulse_rule { from { background-color:gray; } }
 
-.grambot .lhslink .name {
+.grambot .playerlink,
+.grambot .lhslink {
     cursor: pointer;
+}
+
+.grambot .playerlink .name,
+.grambot .lhslink .name {
     text-decoration: underline;
 }
 
@@ -289,7 +294,7 @@ input {
     float: right;
 }
 
-.grambot .follow .player {
+.grambot .follow .playerlink {
     padding: 4px;
     word-break: break-all;
 }
@@ -436,12 +441,6 @@ input {
     box-shadow: 1vw 1vw 1vw 0px gray;
 }
 
-.grambot .followsection .player,
-.grambot .messageheader .player {
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 .grambot .messageheader .results .player {
     padding: 2px;
 }
@@ -467,12 +466,12 @@ input {
     cursor: pointer;
 }
 
-.grambot .mailbox .contents .message.unread {
-    font-weight: bold;
+.grambot .mailbox .contents .message.read .title {
+    font-size: medium;
 }
 
-.grambot .mailbox .contents .message .title {
-    font-size: medium;
+.grambot .mailbox .contents .message.unread .title {
+    font-weight: bold;
 }
 
 .grambot .mailbox .contents .message .player {

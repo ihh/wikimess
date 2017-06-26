@@ -95,5 +95,17 @@ module.exports = {
              name: player.name,
              displayName: player.displayName,
              following: following }
-  }
+  },
+
+  makeUniquePlayerName: function (prefix, count) {
+    prefix = prefix.replace (/[^A-Za-z0-9_]/g, '')
+    var suffix = (count || '').toString()
+    var trialName = prefix.substr (0, Player.maxNameLen - suffix.length) + suffix
+    return Player.find ({ name: trialName })
+      .then (function (players) {
+        if (players.length)
+          return PlayerService.makeUniquePlayerName (prefix, (count || 0) + 1)
+        return trialName
+      })
+  },
 }

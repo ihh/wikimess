@@ -53,19 +53,22 @@ passport.use
 
   function (accessToken, refreshToken, profile, done) {
 
-    Player.findOrCreate ({ facebookId: profile.id },
-                         { facebookId: profile.id,
-                           displayName: profile.displayName,
-                           name: profile.displayName + ' ' + profile.id,
-                           password: Math.random()
-                         },
-                         function (err, player) {
-
-                           if (err || !player)
-                             return done(err)
-                           
-                           return done(null, player, {
-                             message: 'Logged In Successfully'
-                           });
-                         })
+    PlayerService.makeUniquePlayerName (profile.displayName)
+      .then (function (name) {
+        Player.findOrCreate ({ facebookId: profile.id },
+                             { facebookId: profile.id,
+                               displayName: profile.displayName,
+                               name: name,
+                               password: Math.random()
+                             },
+                             function (err, player) {
+                               
+                               if (err || !player)
+                                 return done(err)
+                               
+                               return done(null, player, {
+                                 message: 'Logged In Successfully'
+                               });
+                             })
+      })
   }))

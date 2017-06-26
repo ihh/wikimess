@@ -17,6 +17,7 @@
     background-color: #ccc;
 }
 
+.grambot.plain .playerlink,
 .grambot.plain .lhslink {
     color: blue;
 }
@@ -75,9 +76,4 @@
 
 .grambot.plain .messageheader .input .results {
     background-color: white;
-}
-
-.grambot.plain .followsection .player,
-.grambot.plain .messageheader .player {
-    color: blue;
 }

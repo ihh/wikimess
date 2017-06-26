@@ -278,7 +278,7 @@ module.exports = {
           return { id: message.id,
                    title: message.title,
                    sender: { id: message.sender.id,
-                             name: message.sender.displayName },
+                             displayName: message.sender.displayName },
                    date: message.createdAt,
                    unread: !message.read }
         })
@@ -316,7 +316,7 @@ module.exports = {
           return { id: message.id,
                    title: message.title,
                    recipient: { id: message.recipient.id,
-                                name: message.recipient.displayName },
+                                displayName: message.recipient.displayName },
                    date: message.createdAt }
         })
         res.json (result)
@@ -342,7 +342,8 @@ module.exports = {
       }).then (function (message) {
         result.message = { id: message.id,
                            sender: { id: message.sender.id,
-                                     name: message.sender.displayName },
+                                     name: message.sender.name,
+                                     displayName: message.sender.displayName },
                            template: { id: message.template.id,
                                        content: message.template.content },
                            title: message.title,
@@ -391,7 +392,8 @@ module.exports = {
       .then (function (message) {
         result.message = { id: message.id,
                            recipient: { id: message.recipient.id,
-                                        name: message.recipient.displayName },
+                                        name: message.recipient.name,
+                                        displayName: message.recipient.displayName },
                            template: { id: message.template },
                            title: message.title,
                            body: message.body,
@@ -421,7 +423,7 @@ module.exports = {
         .then (function() {
           // find previous Message
           var previousPromise = (typeof(previous) === 'undefined'
-                                 ? new Promise (function (resolve, reject) { resolve({}) })
+                                 ? new Promise (function (resolve, reject) { resolve(null) })
                                  : Message.findOne ({ id: previous })
                                  .populate ('template')
                                  .then (function (message) { return message.template }))

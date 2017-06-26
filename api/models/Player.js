@@ -63,6 +63,8 @@ module.exports = {
     sumAuthorRatingWeights: { type: 'float', defaultsTo: 0 },
   },
 
+  maxNameLen: 16,
+  
   initAdmin: function() {
     return Player.find()
       .then (function (players) {
