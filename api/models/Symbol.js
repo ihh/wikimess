@@ -39,7 +39,7 @@ module.exports = {
   // limits for expansions
   maxDepth: 3,
   maxNodes: 100,
-  maxRhsSyms: 10,
+  maxRhsSyms: 20,
   
   // lifecycle callbacks to autogenerate names
   autonamePrefix: 'script',

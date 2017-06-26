@@ -7,6 +7,20 @@ module.exports = {
 
   createReferences: function (rules) {
     var refs = {}
+    rules.forEach (function (rhs, ruleNum) {
+      var rhsTrim = rhs.filter (function (rhsSym, n) {
+        return typeof(rhsSym) === 'string' || n < Symbol.maxRhsSyms
+      })
+      if (rhsTrim.length < rhs.length)
+        rhsTrim.push ('_(too many scripts)_')
+      rules[ruleNum] = rhsTrim.reduce (function (rhsAcc, rhsSym) {
+        if (typeof(rhsSym) === 'string' && rhsAcc.length > 0 && typeof(rhsAcc[rhsAcc.length-1]) === 'string')
+          rhsAcc[rhsAcc.length-1] = rhsAcc[rhsAcc.length-1].replace(/\s+$/,'') + ' ' + rhsSym.replace(/^\s+/,'')
+        else
+          rhsAcc.push (rhsSym)
+        return rhsAcc
+      }, [])
+    })
     rules.forEach (function (rhs) {
       rhs.forEach (function (rhsSym) {
         if (typeof(rhsSym) === 'object' && rhsSym.name && typeof(rhsSym.id) === 'undefined') {
