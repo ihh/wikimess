@@ -66,12 +66,6 @@ input {
     opacity: 1;
 }
 
-.grambot .gramlistbar,
-.grambot .locbar {
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
 .grambot .newlhs .button,
 .grambot .help .button,
 .grambot .grammarbar .button {
@@ -87,8 +81,7 @@ input {
 
 .grambot .mailbox .mailboxname,
 .grambot .searchtitle,
-.grambot .whobar .followsection .title,
-.grambot .locbar .title {
+.grambot .whobar .followsection .title {
     font-weight: bold;
     font-size: large;
 }
@@ -97,7 +90,6 @@ input {
     border-bottom-style: solid;
     border-width: 1px;
 
-    width: 97vw;
     margin-left: 1px;
     box-shadow: 1vw 1vw 1vw 0px gray;
     border-left-style: solid;
@@ -149,7 +141,6 @@ input {
     border-bottom-style: solid;
     border-width: 1px;
 
-    width: 97vw;
     margin-left: 1px;
     box-shadow: 1vw 1vw 1vw 0px gray;
     border-left-style: solid;
@@ -157,22 +148,18 @@ input {
     padding: 2px;
 }
 
+.grambot .follow {
+    cursor: pointer;
+}
+
 .grambot .follow,
-.grambot .gramlistbar .grammar,
-.grambot .gramlistbar .newgrammar,
 .grambot .grammarbar .rule {
     clear: both;
     float: left;
-    width: 95%;
-    margin: 1vw;
-}
-
-.grambot .gramlistbar .grammar,
-.grambot .gramlistbar .newgrammar,
-.grambot .grammarbar .rule,
-.grambot .follow {
+    width: 100%;
     position: relative;
-    padding: 1vw;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
 .grambot .grammarbar .rule .rhs {
@@ -211,7 +198,6 @@ input {
     border-right-style: solid;
     border-width: 1px;
     z-index: 1;
-    width: 97vw;
     margin-left: 1px;
     box-shadow: 1vw -1vw 1vw 0px gray;
     padding: 2px;
@@ -254,11 +240,11 @@ input {
     cursor: pointer;
 }
 
-.grambot .gramlistbar .grammar,
-.grambot .grammarbar .rule,
-.grambot .follow {
+.grambot .grammarbar .rule {
     border-style: solid;
     border-width: 1px;
+    margin: 2px;
+    width: 99%;
 }
 
 .grambot .grammarbar .rule .lhs {
@@ -281,12 +267,6 @@ input {
     float: right;
 }
 
-.grambot .gramlistbar .newgrammar .button {
-    float: left;
-    cursor: pointer;
-}
-
-.grambot .gramlistbar .grammar .button,
 .grambot .grammarbar .rule .button {
     float: right;
     padding-left: 1vw;
@@ -294,9 +274,7 @@ input {
 }
 
 .grambot .follow .followcontrol,
-.grambot .message .buttons .button,
-.grambot .gramlistbar .grammar .button,
-.grambot .gramlistbar .newgrammar .button {
+.grambot .message .buttons .button {
     padding: 2px;
     cursor: pointer;
     width: 1em;
@@ -311,7 +289,7 @@ input {
     float: right;
 }
 
-.grambot .follow .name {
+.grambot .follow .player {
     padding: 4px;
     word-break: break-all;
 }
@@ -448,6 +426,24 @@ input {
     display: block;
     overflow: hidden;
     max-height: 20vh;
+}
+
+.grambot .messageheader .input .results {
+    margin-bottom: 4px;
+    border-style: none solid solid solid;
+    border-width: 1px;
+    padding: 2px;
+    box-shadow: 1vw 1vw 1vw 0px gray;
+}
+
+.grambot .followsection .player,
+.grambot .messageheader .player {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.grambot .messageheader .results .player {
+    padding: 2px;
 }
 
 .grambot .messageheader .field {

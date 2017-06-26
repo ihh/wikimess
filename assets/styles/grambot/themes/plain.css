@@ -8,19 +8,9 @@
     background-color: black;
 }
 
-.grambot.plain .gramlistbar {
-    color: black;
-    background-color: white;
-}
-
 .grambot.plain .grammarbar .rule {
     border-color: black;
     background-color: #f0f0f0;
-}
-
-.grambot.plain .gramlistbar .grammar {
-    border-color: black;
-    background-color: #f8f8f8;
 }
 
 .grambot.plain .grammarbar .rule .rhs {
@@ -31,14 +21,6 @@
     color: blue;
 }
 
-.grambot.plain .gramlistbar .grammar .button,
-.grambot.plain .gramlistbar .newgrammar .button {
-    border-color: black;
-    background-color: #e8e8e8;
-    color: #222;
-}
-
-.grambot.plain .detailbar,
 .grambot.plain .grammarbar,
 .grambot.plain .menubar {
     color: black;
@@ -78,16 +60,7 @@
     color: white;
 }
 
-.grambot.plain .detailbar .icon img {
-    border-style: solid;
-    border-width: 1px;
-    border-color: #444;
-}
-
-.grambot.plain .detailbar .statusline {
-    background: #eee;
-}
-
+.grambot.plain .followsection .follow:nth-child(odd),
 .grambot.plain .mailbox .contents .message:nth-child(odd) {
     background: #eee;
 }
@@ -98,4 +71,13 @@
 
 .grambot.plain .lhslink.unexpanded.animating {
     background-color: #90ee90;
+}
+
+.grambot.plain .messageheader .input .results {
+    background-color: white;
+}
+
+.grambot.plain .followsection .player,
+.grambot.plain .messageheader .player {
+    color: blue;
 }

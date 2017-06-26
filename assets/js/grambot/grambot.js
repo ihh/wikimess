@@ -133,6 +133,7 @@ var GramBot = (function() {
                errors: true,
 	       stack: false },
 
+    emptyMessageWarning: "_This message is empty. Tap here to edit the message text._",
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],
@@ -704,7 +705,7 @@ var GramBot = (function() {
       delete this.playerSearchResults
       delete this.lastSymbolSearch
       delete this.symbolSearchResults
-      this.gamePosition = {}
+      delete this.messageCount
       this.socket_getPlayerUnsubscribe (this.playerID)
 	.then (function() {
 	  gb.REST_postLogout()
@@ -876,19 +877,6 @@ var GramBot = (function() {
           gb.playerSearchInput = $('<textarea class="recipient">')
           gb.playerSearchResultsDiv = $('<div class="results">')
 
-          gb.symbolSearchInput = $('<textarea class="symbol">')
-          gb.symbolSearchResultsDiv = $('<div class="results">')
-
-          function inputSanitizer (allowHash) {
-            return function() {
-              var text = gb.symbolSearchInput.val()
-              gb.symbolSearchInput.val (text === '' || (text === '#' && !allowHash) ? '' : gb.sanitizeSymbolName (text))
-            }
-          }
-          gb.symbolSearchInput
-            .on('keyup',inputSanitizer(true))
-            .on('change',inputSanitizer(false))
-
           if (config.title)
             gb.composition.title = config.title
           
@@ -930,11 +918,11 @@ var GramBot = (function() {
           
           function send() {
             if (!gb.composition.recipient)
-              gb.showCompose ("Please specify a message recipient.")
-            else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).length))
-              gb.showCompose ("Please generate a nonempty message.")
+              gb.showCompose ("Please specify a recipient.")
+            else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).match(/\S/)))
+              gb.showCompose ("Please enter some message text.")
             else if (!(gb.composition.title && gb.composition.title.length))
-              gb.showCompose ("Please enter a message title.")
+              gb.showCompose ("Please give this message a title.")
             else {
               gb.sendButton.off ('click')
               delete gb.composition.previousTemplate
@@ -954,7 +942,7 @@ var GramBot = (function() {
                               .append ($('<div class="row">')
                                        .append ($('<span class="label">').text ('To:'),
                                                 $('<span class="input">').append (gb.playerSearchInput,
-                                                                                  gb.playerSearchResultsDiv)),
+                                                                                  gb.playerSearchResultsDiv.hide())),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
@@ -1172,19 +1160,22 @@ var GramBot = (function() {
       var gb = this
       this.playerSearchResultsDiv
         .empty()
+        .hide()
       if (results) {
         if (results.length)
           this.playerSearchResultsDiv
           .append (results.map (function (player) {
-            return $('<span class="name">').text (player.name)
+            return $('<div class="player">').text (player.name)
               .on ('click', function() {
-                gb.playerSearchResultsDiv.empty()
+                gb.playerSearchResultsDiv.hide()
                 gb.composition.recipient = player
                 gb.playerSearchInput.val (gb.lastComposePlayerSearchText = player.name)
               })
-          }))
+          })).show()
         else
-          this.playerSearchResultsDiv.append ($('<span class="warning">').text ("No matching players found"))
+          this.playerSearchResultsDiv
+          .html ($('<span class="warning">').text ("No matching players found"))
+          .show()
       }
     },
 
@@ -1204,13 +1195,15 @@ var GramBot = (function() {
         gb.animationDiv = div
         gb.animateExpansion()
       } else
-        div.html (this.renderMarkdown (gb.makeExpansionText (expansion)))
+        div.html (this.renderMarkdown (gb.makeExpansionText (expansion)
+                                       .replace (/^\s*$/, gb.emptyMessageWarning)))
     },
 
     animateExpansion: function() {
       var gb = this
       this.clearAnimationTimer()
-      var markdown = this.renderMarkdown (this.makeExpansionText (this.animationExpansion, true))
+      var markdown = this.renderMarkdown (this.makeExpansionText (this.animationExpansion, true)
+                                          .replace (/^\s*$/, gb.emptyMessageWarning))
       var nSymbols = 0
       this.animationDiv
         .html (markdown
@@ -1463,7 +1456,7 @@ var GramBot = (function() {
         .then (function() {
           gb.showNavBar ('status')
           gb.showGameStatusPage (gb.REST_getPlayerStatus)
-          gb.detailBarDiv.prepend ($('<div class="locbar">').html($('<h1>').text(gb.playerName)))
+          gb.detailBarDiv.prepend ($('<div>').html($('<h1>').text(gb.playerName)))
         })
     },
 
@@ -2153,7 +2146,7 @@ var GramBot = (function() {
           .append ($('<span class="closebutton">').html
                    (gb.makeIconButton ('close', gb.clearSymbolSearch.bind(gb))),
                    $('<div class="searchtitle">').text("Search results"),
-                   this.makeSymbolDivs (this.symbolSearchResults.results, "There are no symbols matching '" + this.lastSymbolSearch + "'."))
+                   this.makeSymbolDivs (this.symbolSearchResults.results, "There are no scripts matching '" + this.lastSymbolSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
         if (this.symbolSearchResults.more)
@@ -2164,7 +2157,7 @@ var GramBot = (function() {
             gb.continueSymbolSearch()
           })
         else if (this.symbolSearchResults.results.length)
-          more.text('All matching symbols shown')
+          more.text('All matching scripts shown')
       }
     },
 
@@ -2282,7 +2275,7 @@ var GramBot = (function() {
         makeUnfollowButton()
       else
         makeFollowButton()
-      var nameDiv = $('<span class="name">').text (follow.name)
+      var nameDiv = $('<span class="player">').text (follow.name)
       var followDiv = $('<div class="follow">')
           .append (nameDiv, composeDiv)
       if (follow.id !== this.playerID)
