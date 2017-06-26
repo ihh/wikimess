@@ -519,6 +519,7 @@ input {
     height: 1em;
 }
 
+.grambot .lhslink.limit,
 .grambot .lhslink.unexpanded {
     opacity: .8;
 }

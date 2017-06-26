@@ -53,9 +53,10 @@ module.exports = {
       })
   },
 
-  expandSymbol: function (symbolQuery, rng, depth) {
+  expandSymbol: function (symbolQuery, rng, depth, info) {
     rng = rng || Math.random
     depth = depth || {}
+    info = info || { nodes: 0 }
     var result = {}
     return Symbol.findOne (symbolQuery)
       .then (function (symbol) {
@@ -68,15 +69,40 @@ module.exports = {
           result.id = symbol.id
           result.name = symbol.name
           var rhsSyms = symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : []
-          return Promise.map (rhsSyms, function (rhsSym) {
+          function* rhsSymGenerator() {
+            var n = 0
+            while (n < rhsSyms.length)
+              yield n++
+          }
+          function remainingExpansionPromise (generator) {
+            var iter = generator.next()
+            var n = iter.value
+            if (iter.done || info.nodes >= Symbol.maxNodes || n > Symbol.maxRhsSyms + 1)  // terminate early if we've hit a limit
+              return Promise.resolve ([])
+            return symbolExpansionPromise (n)
+              .then (function (symbolExpansion) {
+                return remainingExpansionPromise (generator)
+                  .then (function (remainingExpansion) {
+                    return [symbolExpansion].concat (remainingExpansion)
+                  })
+              })
+          }
+          function symbolExpansionPromise (n) {
+            var rhsSym = rhsSyms[n]
             if (typeof(rhsSym) === 'string')
-              return rhsSym
+              return Promise.resolve (rhsSym)
+            if (n >= Symbol.maxRhsSyms)
+              return Promise.resolve ({ id: rhsSym.id, name: rhsSym.name, limit: { rhsSyms: Symbol.maxRhsSyms }, rhs: [] })
+            if (info.nodes >= Symbol.maxNodes)
+              return Promise.resolve ({ id: rhsSym.id, name: rhsSym.name, limit: { nodes: Symbol.maxNodes }, rhs: [] })
             if (depth[rhsSym] >= Symbol.maxDepth)
-              return ''
+              return Promise.resolve ({ id: rhsSym.id, name: rhsSym.name, limit: { depth: Symbol.maxDepth }, rhs: [] })
             var nextDepth = extend ({}, depth)
             nextDepth[rhsSym] = (nextDepth[rhsSym] || 0) + 1
-            return SymbolService.expandSymbol ({ id: rhsSym.id }, rng, nextDepth)
-          })
+            ++info.nodes
+            return SymbolService.expandSymbol ({ id: rhsSym.id }, rng, nextDepth, info)
+          }
+          return remainingExpansionPromise (rhsSymGenerator())
         }
       }).then (function (rhsVals) {
         result.rhs = rhsVals

@@ -87,6 +87,7 @@ var GramBot = (function() {
     ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
     expansionAnimationDelay: 400,
+    maxExpansionAnimationTime: 5000,
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     copy: 'copy',
@@ -1215,6 +1216,8 @@ var GramBot = (function() {
       if (config.animate) {
         gb.animationExpansion = _.cloneDeep (expansion)
         gb.animationDiv = div
+        gb.animationSteps = gb.countSymbolNodes (expansion)
+        gb.lastAnimationStep = 1
         gb.animateExpansion()
       } else
         div.html (this.renderMarkdown (gb.makeExpansionText (expansion)
@@ -1229,12 +1232,13 @@ var GramBot = (function() {
       var nSymbols = 0
       this.animationDiv
         .html (markdown
-               .replace (/#([A-Za-z0-9_]+)/g,
-                         function (_match, name) {
-                           return '<span class="lhslink unexpanded' + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
+               .replace (/#([A-Za-z0-9_]+)\.([a-z]+)/g,
+                         function (_match, name, className) {
+                           return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
                          }))
-      if (this.deleteFirstSymbolName (this.animationExpansion))
-        this.expansionAnimationTimer = window.setTimeout (this.animateExpansion.bind(this), this.expansionAnimationDelay)
+      if (this.deleteFirstSymbolName (this.animationExpansion) || this.lastAnimationStep--)
+        this.expansionAnimationTimer = window.setTimeout (this.animateExpansion.bind(this),
+                                                          Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)))
     },
 
     clearAnimationTimer: function() {
@@ -1252,12 +1256,37 @@ var GramBot = (function() {
       return false
     },
     
+    makeExpansionText: function (node, leaveSymbolsUnexpanded) {
+      var gb = this
+      return (node
+              ? (typeof(node) === 'string'
+                 ? node
+                 : (node.rhs
+                    ? (leaveSymbolsUnexpanded && node.name
+                       ? ('#' + node.name + '.' + (node.limit ? 'limit' : 'unexpanded'))
+                       : node.rhs.map (function (rhsSym) {
+                         return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
+                       }).join(''))
+                    : ''))
+              : '')
+    },
+
+    countSymbolNodes: function (node) {
+      var gb = this
+      return (typeof(node) === 'string'
+              ? 0
+              : node.rhs.reduce (function (total, child) {
+                return total + gb.countSymbolNodes (child)
+              }, node.limit ? 1 : 0))
+    },
+    
     deleteFirstSymbolName: function (node) {
       if (typeof(node) === 'string')
         return false
       if (node.name) {
         delete node.name
-        return true
+        if (!node.limit)
+          return true
       }
       return node.rhs.find (this.deleteFirstSymbolName.bind (this))
     },
@@ -1304,21 +1333,6 @@ var GramBot = (function() {
         } else
           gb.showMessageBody()
       })
-    },
-
-    makeExpansionText: function (node, leaveSymbolsUnexpanded) {
-      var gb = this
-      return (node
-              ? (typeof(node) === 'string'
-                 ? node
-                 : (node.rhs
-                    ? (leaveSymbolsUnexpanded && node.name
-                       ? ('#' + node.name)
-                       : node.rhs.map (function (rhsSym) {
-                         return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
-                       }).join(''))
-                    : ''))
-              : '')
     },
 
     // initial page
@@ -1792,15 +1806,13 @@ var GramBot = (function() {
                                            renderHtml: function (rhs) {
                                              return $('<span>')
                                                .append (rhs.map (function (rhsSym) {
-                                                 if (typeof(rhsSym) === 'object')
-                                                   return gb.makeSymbolSpan (rhsSym,
-                                                                             function (evt) {
-                                                                               evt.stopPropagation()
-                                                                               gb.loadGrammarSymbol (rhsSym)
-                                                                             })
-                                                 else
-                                                   span.html (gb.renderMarkdown (rhsSym))
-                                                 return span
+                                                 return (typeof(rhsSym) === 'object'
+                                                         ? gb.makeSymbolSpan (rhsSym,
+                                                                              function (evt) {
+                                                                                evt.stopPropagation()
+                                                                                gb.loadGrammarSymbol (rhsSym)
+                                                                              })
+                                                         : $('<span>').html (gb.renderMarkdown (rhsSym)))
                                                }))
                                            }
                                          })

@@ -66,6 +66,10 @@
     background: #222;
 }
 
+.grambot.l33t .lhslink.limit {
+    background-color: darkred;
+}
+
 .grambot.l33t .lhslink.unexpanded {
     background-color: #003200;
 }
