@@ -65,7 +65,7 @@ var GramBot = (function() {
     // log in
     if (config.playerID) {
       this.playerID = config.playerID
-      this.playerLogin = undefined  // we don't want to show the ugly generated login name if logged in via Facebook etc
+      this.playerLogin = config.playerName
       this.playerName = config.playerDisplayName
       this.socket_getPlayerSubscribe (this.playerID)
         .then (this.showInitialPage.bind (this))
@@ -82,6 +82,7 @@ var GramBot = (function() {
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
     maxPlayerNameLength: 16,
+    maxPlayerLoginLength: 32,
     maxRating: 5,
     ratingDelay: 2000,
     grammarAutosaveDelay: 5000,
@@ -739,16 +740,30 @@ var GramBot = (function() {
             backButton.off()
             gb.nameInput.prop('disabled',true)
             var newName = gb.nameInput.val()
-            if (newName.length) {
-              gb.playerName = newName
-              gb.REST_postPlayerConfig (gb.playerID, { displayName: newName })
-            }
-            gb.popView()
+            var newLogin = gb.loginInput.val()
+            if (newLogin.length && newName.length) {
+              gb.REST_postPlayerConfig (gb.playerID, { name: newLogin, displayName: newName })
+                .then (function (result) {
+                  gb.playerLogin = newLogin
+                  gb.playerName = newName
+                  gb.writeLocalStorage ('playerLogin')
+                  gb.popView()
+                }).fail (function (err) {
+                  gb.showModalWebError (err, gb.popView.bind(gb))
+                })
+            } else
+              gb.popView()
           })
           gb.container
             .append (gb.makePageTitle ("Player details"))
             .append ($('<div class="menubar">')
                      .append ($('<div class="inputbar">')
+                              .append ($('<form>')
+                                       .append ($('<span>').text('Login name'))
+                                       .append (gb.loginInput = $('<input type="text">')
+                                                .val(gb.playerLogin)
+                                                .attr('maxlength', gb.maxPlayerLoginLength))),
+                              $('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Full name'))
                                        .append (gb.nameInput = $('<input type="text">')

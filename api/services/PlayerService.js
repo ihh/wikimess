@@ -69,7 +69,8 @@ module.exports = {
     var rs = info.rs, player = info.player, follower = info.follower, local = info.local, isPublic = info.isPublic
 
     var status = { id: player.id,
-                   name: player.displayName,
+                   name: player.name,
+                   displayName: player.displayName,
                    nSenderRatings: player.nSenderRatings,
                    sumSenderRatings: player.sumSenderRatings,
                    nAuthorRatings: player.nAuthorRatings,
@@ -91,7 +92,8 @@ module.exports = {
   makePlayerSummary: function (player, following) {
     return { id: player.id,
              human: player.human,
-             name: player.displayName,
+             name: player.name,
+             displayName: player.displayName,
              following: following }
   }
 }

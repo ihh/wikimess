@@ -34,7 +34,7 @@ module.exports = {
         if (err)
           res.status(500).send (err)
         else if (players.length)
-          res.status(400).send ({error: "A player named " + name + " already exists"})
+          res.status(400).send ({error: "The name " + name + " is already in use"})
         else
           Player.findOrCreate ({ name: name,
                                  password: password })
@@ -163,13 +163,23 @@ module.exports = {
 
   // configure Player info
   configurePlayer: function (req, res) {
-    var update = { displayName: req.body.displayName }
-    Player.update ({ id: req.params.player },
-                   update)
-      .then (function() {
-        res.ok()
-      }, function() {
-        res.status(500).send ({ error: "Could not update" })
+    var playerID = parseInt (req.params.player)
+    var name = req.body.name
+    var displayName = req.body.displayName
+    Player.find ({ id: { '!': playerID },
+                   name: name })
+      .then (function (players) {
+        if (players.length)
+          res.status(400).send ({error: "The player name " + name + " is already in use"})
+        else {
+          var update = { name: name,
+                         displayName: displayName }
+          return Player.update ({ id: playerID },
+                                update)
+            .then (function() {
+              res.ok()
+            })
+        }
       }).catch (function (err) {
         console.log(err)
         res.status(500).send (err)
@@ -612,7 +622,7 @@ module.exports = {
                    name: name })
       .then (function (eponSyms) {
         if (eponSyms.length)
-          res.status(400).send ({error: "A symbol named " + name + " already exists"})
+          res.status(400).send ({error: "The symbol name " + name + " is already in use"})
         else
           SymbolService.createReferences (update.rules)
           .then (function (rhsSymbols) {
