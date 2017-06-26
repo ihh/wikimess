@@ -908,7 +908,7 @@ var GramBot = (function() {
           gb.messageBodyDiv = gb.makeEditableElement
           ({ element: 'div',
              className: 'messagebody',
-             content: function() { return gb.composition.template.content },
+             content: function() { return gb.composition.template ? gb.composition.template.content : [] },
              firstClickCallback: gb.stopAnimation.bind(gb),
              alwaysUpdate: true,
              updateCallback: function (newContent) {
@@ -1187,46 +1187,6 @@ var GramBot = (function() {
           this.playerSearchResultsDiv.append ($('<span class="warning">').text ("No matching players found"))
       }
     },
-    
-    doComposeSymbolSearch: function (forceNewSearch) {
-      var gb = this
-      var searchText = this.symbolSearchInput.val().substr(1)
-      delete gb.composition.symbol
-      if (forceNewSearch || searchText !== this.lastComposeSymbolSearchText) {
-        this.lastComposeSymbolSearchText = searchText
-        if (searchText.length)
-          this.REST_postPlayerSearchSymbolsOwned (this.playerID, searchText)
-          .then (function (result) {
-            gb.showComposeSymbolSearchResults (result.results)
-          })
-        else
-          gb.showComposeSymbolSearchResults()
-      }
-    },
-    
-    showComposeSymbolSearchResults: function (results) {
-      var gb = this
-      this.symbolSearchResultsDiv
-        .empty()
-      if (results) {
-        if (results.length)
-          this.symbolSearchResultsDiv
-          .append (results.map (function (symbol) {
-            return $('<span class="lhslink">')
-              .append ('#', $('<span class="name">').text (symbol.name))
-              .on ('click', function() {
-                gb.symbolSearchResultsDiv.empty()
-                gb.composition.symbol = symbol
-                gb.symbolSearchInput.val ('#' + (gb.lastComposeSymbolSearchText = symbol.name))
-                if (!gb.messageTitleInput.val().length)
-                  gb.messageTitleInput.val (gb.composition.title = symbol.name.replace (/_/g, ' '))
-                gb.generateMessageBody()
-              })
-          }))
-        else
-          this.symbolSearchResultsDiv.append ($('<span class="warning">').text ("No matching symbols found"))
-      }
-    },
 
     renderMarkdown: function (markdown) {
       return (markdown.match(/\S/)
@@ -1296,29 +1256,38 @@ var GramBot = (function() {
       if (gb.composition.previousTemplate)
         templatePromise = gb.REST_getPlayerSuggestReply (gb.playerID, gb.composition.previousTemplate.id)
         .then (function (result) {
-          gb.composition.template = result.template
+          if (result.template)
+            gb.composition.template = result.template
+          if (!result.more)
+            delete gb.composition.previousTemplate
         })
       else
         templatePromise = $.Deferred().resolve()
 
       return templatePromise.then (function() {
-        var symbolQueries = gb.composition.template.content.filter (function (rhsSym) {
-          return typeof(rhsSym) === 'object'
-        })
-        return gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
+        if (gb.composition.template && gb.composition.template.content) {
+          var symbolQueries = gb.composition.template.content.filter (function (rhsSym) {
+            return typeof(rhsSym) === 'object'
+          })
+          return gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
+        } else
+          return null
       }).then (function (result) {
-        var n = 0
-        gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
-          if (typeof(rhsSym) === 'string')
-            return rhsSym
-          var expansion = result.expansions[n++]
-          if (typeof(expansion.id) !== 'undefined') {
-            rhsSym.id = expansion.id
-            gb.symbolName[expansion.id] = expansion.name
-          }
-          return expansion
-        }) }
-        gb.showMessageBody ({ animate: true })
+        if (result) {
+          var n = 0
+          gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
+            if (typeof(rhsSym) === 'string')
+              return rhsSym
+            var expansion = result.expansions[n++]
+            if (typeof(expansion.id) !== 'undefined') {
+              rhsSym.id = expansion.id
+              gb.symbolName[expansion.id] = expansion.name
+            }
+            return expansion
+          }) }
+          gb.showMessageBody ({ animate: true })
+        } else
+          gb.showMessageBody()
       })
     },
 

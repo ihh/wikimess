@@ -764,6 +764,7 @@ module.exports = {
           result.template = { id: template.id,
                               title: template.title,
                               content: template.content }
+          result.more = (templates.length > 1)
         }
         res.json (result)
       }).catch (function (err) {
