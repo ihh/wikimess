@@ -406,13 +406,18 @@ module.exports = {
     if (typeof(template.id) !== 'undefined')
       templatePromise = Template.findOne ({ id: template.id })
     else {
-      var previousPromise = (typeof(previous) === 'undefined'
-                             ? new Promise (function (resolve, reject) { resolve({}) })
-                             : Message.findOne ({ id: previous })
-                             .populate ('template')
-                             .then (function (message) { return message.template }))
-      templatePromise = previousPromise
-        .then (function (previousMessage) {
+      // give an initial weight of 1 to all symbol adjacencies in this template
+      templatePromise = SymbolService.updateAdjacencies (template.content, 1)
+        .then (function() {
+          // find previous Message
+          var previousPromise = (typeof(previous) === 'undefined'
+                                 ? new Promise (function (resolve, reject) { resolve({}) })
+                                 : Message.findOne ({ id: previous })
+                                 .populate ('template')
+                                 .then (function (message) { return message.template }))
+          return previousPromise
+        }).then (function (previousMessage) {
+          // create the Template
           return Template.create ({ title: title,
                                     content: template.content,
                                     author: playerID,
@@ -422,11 +427,11 @@ module.exports = {
     templatePromise.then (function (template) {
       result.template = { id: template.id }
       return Message.create ({ sender: playerID,
-                        recipient: recipientID,
-                        template: template,
-                        previous: previous,
-                        title: title,
-                        body: body })
+                               recipient: recipientID,
+                               template: template,
+                               previous: previous,
+                               title: title,
+                               body: body })
     }).then (function (message) {
       result.message = { id: message.id }
       Player.message (recipientID, { message: "incoming",
@@ -481,31 +486,39 @@ module.exports = {
       .then (function (messages) {
         if (messages && messages.length === 1) {
           var message = messages[0]
+          // split author credit between authors of all Symbols used in body
           return SymbolService.expansionAuthors (message.body)
             .then (function (authors) {
               var authorRatingWeight = 1 / authors.length, authorRating = rating * authorRatingWeight
-              return Promise.map (authors,
-                                  function (authorID) {
-                                    return Player.findOne ({ id: authorID })
-                                      .then (function (player) {
-                                        return Player.update ({ id: authorID },
-                                                              { nAuthorRatings: player.nAuthorRatings + 1,
-                                                                sumAuthorRatingWeights: player.sumAuthorRatingWeights + authorRatingWeight,
-                                                                sumAuthorRatings: player.sumAuthorRatings + authorRating })
-                                      })
-                                  })
+              return Promise.map
+              (authors,
+               function (authorID) {
+                 return Player.findOne ({ id: authorID })
+                   .then (function (player) {
+                     return Player.update ({ id: authorID },
+                                           { nAuthorRatings: player.nAuthorRatings + 1,
+                                             sumAuthorRatingWeights: player.sumAuthorRatingWeights + authorRatingWeight,
+                                             sumAuthorRatings: player.sumAuthorRatings + authorRating })
+                   })
+               })
             }).then (function() {
+              // give credit to sender
               return Player.findOne ({ id: message.sender })
             }).then (function (sender) {
               return Player.update ({ id: message.sender },
                                     { nSenderRatings: sender.nSenderRatings + 1,
                                       sumSenderRatings: sender.sumSenderRatings + rating })
+              // give credit to template
             }).then (function() {
               return Template.findOne ({ id: message.template })
             }).then (function (template) {
               return Template.update ({ id: template.id },
                                       { nRatings: template.nRatings + 1,
                                         sumRatings: template.sumRatings + rating })
+                .then (function() {
+                  // update adjacency weights
+                  return SymbolService.updateAdjacencies (template.content, rating)
+                })
             })
         }
       }).then (function() {
@@ -708,6 +721,71 @@ module.exports = {
       return SymbolService.expandSymbol (symbolQuery)
     }).then (function (expansions) {
         res.json ({ expansions: expansions })
+    }).catch (function (err) {
+      console.log(err)
+      res.status(500).send(err)
+    })
+  },
+
+  // suggest best N templates
+  suggestTemplates: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var nSuggestions = 5
+    return Template.find ({ previous: null })
+      .then (function (templates) {
+        templates.forEach (function (template) {
+          template.rating = template.nRatings ? (template.sumRatings / template.nRatings) : 0
+        })
+        var suggestedTemplates = SortService.partialSort
+        (templates, nSuggestions, function (a, b) { return b.rating - a.rating })
+        .map (function (template) {
+          return { id: template.id,
+                   title: template.title }
+        })
+        res.json ({ templates: suggestedTemplates })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // suggest random reply
+  suggestReply: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var previousID = parseInt (req.params.template)
+    return Template.find ({ previous: previousID })
+      .then (function (templates) {
+        var templateRating = templates.map (function (template) {
+          return template.nRatings ? (template.sumRatings / template.nRatings) : 0
+        })
+        var template = templates[SortService.sampleByWeight (templateRating)]
+        res.json ({ template: { id: template.id,
+                                title: template.title,
+                                content: template.content } })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
+  },
+
+  // suggest best N symbols (currently implemented using adjacencies)
+  suggestSymbol: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var beforeQuery = req.body.before && req.body.before.length && req.body.before[req.body.before.length-1]
+    var nSuggestions = 5
+    var beforePromise = (beforeQuery
+                         ? Symbol.findOne(beforeQuery).then (function (symbol) { return symbol ? symbol.id : null })
+                         : new Promise (function (resolve, reject) { resolve (null) }))
+    beforePromise.then (function (beforeSymbolID) {
+      return Adjacency.find ({ predecessor: beforeSymbolID,
+                               successor: { '!': null } })
+        .sort ('weight DESC')
+        .limit (nSuggestions)
+        .populate ('successor')
+    }).then (function (adjacencies) {
+      res.json ({ symbols: adjacencies
+                  .map (function (adj) { return { id: adj.successor.id,
+                                                  name: adj.successor.name } }) })
     }).catch (function (err) {
       console.log(err)
       res.status(500).send(err)

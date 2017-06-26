@@ -1,5 +1,5 @@
 /**
- * Template.js
+ * Adjacency.js
  *
  * @description :: TODO: You might write a short summary of how this model works and what it represents here.
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
@@ -15,29 +15,19 @@ module.exports = {
       primaryKey: true
     },
 
-    title: {
-      type: 'string',
-      required: true
-    },
-    
-    content: {
-      type: 'json',
-      required: true
+    predecessor: {
+      model: 'symbol'
     },
 
-    author: {
-      model: 'player',
-      required: true
+    successor: {
+      model: 'symbol'
     },
 
-    previous: {
-      model: 'template',
-      defaultsTo: null
+    weight: {
+      type: 'integer',
+      defaultsTo: 0
     },
     
-    // ratings
-    nRatings: { type: 'integer', defaultsTo: 0 },
-    sumRatings: { type: 'integer', defaultsTo: 0 },
   }
 };
 

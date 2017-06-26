@@ -126,7 +126,8 @@ var GramBot = (function() {
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
     
     verbose: { page: false,
-               server: true,
+               request: true,
+               response: true,
                messages: true,
                timer: false,
                errors: true,
@@ -223,10 +224,10 @@ var GramBot = (function() {
 
     REST_postPlayerMessage: function (playerID, recipientID, template, title, body, previous) {
       return this.logPost ('/p/' + playerID + '/message', { recipient: recipientID,
-                                                      template: template,
-                                                      title: title,
-                                                      body: body,
-                                                      previous: previous })
+                                                            template: template,
+                                                            title: title,
+                                                            body: body,
+                                                            previous: previous })
     },
 
     REST_deletePlayerMessage: function (playerID, messageID) {
@@ -295,44 +296,55 @@ var GramBot = (function() {
     // helpers to log ajax calls
     logGet: function (url) {
       var gb = this
+      if (gb.verbose.request)
+        console.log ('GET ' + url + ' request')
       return $.get (url)
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('GET ' + url, result)
+          if (gb.verbose.response)
+            console.log ('GET ' + url + ' response', result)
           return result
         })
     },
 
     logPost: function (url, data) {
       var gb = this
-      return $.post (url, data)
+      if (gb.verbose.request)
+        console.log ('POST ' + url + ' request', data)
+      return $.ajax ({ url: url,
+                       method: 'POST',
+                       contentType: 'application/json',
+                       data: JSON.stringify(data) })
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('POST ' + url, result)
+          if (gb.verbose.response)
+            console.log ('POST ' + url + ' response', result)
           return result
         })
     },
 
     logPut: function (url, data) {
       var gb = this
+      if (gb.verbose.request)
+        console.log ('PUT ' + url + ' request', data)
       return $.ajax ({ url: url,
                        method: 'PUT',
                        contentType: 'application/json',
                        data: JSON.stringify(data) })
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('PUT ' + url, result)
+          if (gb.verbose.response)
+            console.log ('PUT ' + url + ' response', result)
           return result
         })
     },
 
     logDelete: function (url) {
       var gb = this
+      if (gb.verbose.request)
+        console.log ('DELETE ' + url + ' request')
       return $.ajax ({ url: url,
                        method: 'DELETE' })
         .then (function (result) {
-          if (gb.verbose.server)
-            console.log ('DELETE ' + url, result)
+          if (gb.verbose.response)
+            console.log ('DELETE ' + url + ' response', result)
           return result
         })
     },
@@ -341,10 +353,12 @@ var GramBot = (function() {
     socketGetPromise: function (url) {
       var gb = this
       var def = $.Deferred()
+      if (gb.verbose.request)
+        console.log ('socket GET ' + url + ' request')
       io.socket.get (url, function (resData, jwres) {
         if (jwres.statusCode == 200) {
-          if (gb.verbose.server)
-            console.log ('socket GET ' + url, resData)
+          if (gb.verbose.response)
+            console.log ('socket GET ' + url + ' response', resData)
           def.resolve (resData)
         } else
           def.reject (jwres)
@@ -355,9 +369,11 @@ var GramBot = (function() {
     socketPostPromise: function (url, data) {
       var gb = this
       var def = $.Deferred()
+      if (gb.verbose.request)
+        console.log ('socket POST ' + url + ' request', data)
       io.socket.post (url, data, function (resData, jwres) {
-          if (gb.verbose.server)
-            console.log ('socket POST ' + url, resData)
+        if (gb.verbose.response)
+            console.log ('socket POST ' + url + ' response', resData)
         if (jwres.statusCode == 200)
           def.resolve (resData)
         else

@@ -102,4 +102,9 @@ module.exports.routes = {
 
   'GET /p/:player/expand/:symid': 'ClientController.expandSymbol',
   'POST /p/:player/expand':       'ClientController.expandSymbols',
+
+  'GET /p/:player/suggest/templates':       'ClientController.suggestTemplates',
+  'GET /p/:player/suggest/reply/:template': 'ClientController.suggestReply',
+  'POST /p/:player/suggest/symbol':         'ClientController.suggestSymbol',
+  
 };
