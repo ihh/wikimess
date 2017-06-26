@@ -36,8 +36,8 @@ module.exports = {
     },
     
     // ratings
-    nRatings: { type: 'integer', defaultsTo: 0 },
-    sumRatings: { type: 'integer', defaultsTo: 0 },
+    nRatings: { type: 'integer', defaultsTo: 1 },
+    sumRatings: { type: 'integer', defaultsTo: 1 },
   }
 };
 

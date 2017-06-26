@@ -416,12 +416,12 @@ module.exports = {
                                  .populate ('template')
                                  .then (function (message) { return message.template }))
           return previousPromise
-        }).then (function (previousMessage) {
+        }).then (function (previousTemplate) {
           // create the Template
           return Template.create ({ title: title,
                                     content: template.content,
                                     author: playerID,
-                                    previous: previousMessage.template })
+                                    previous: previousTemplate })
         })
     }
     templatePromise.then (function (template) {
@@ -755,13 +755,17 @@ module.exports = {
     var previousID = parseInt (req.params.template)
     return Template.find ({ previous: previousID })
       .then (function (templates) {
-        var templateRating = templates.map (function (template) {
-          return template.nRatings ? (template.sumRatings / template.nRatings) : 0
-        })
-        var template = templates[SortService.sampleByWeight (templateRating)]
-        res.json ({ template: { id: template.id,
-                                title: template.title,
-                                content: template.content } })
+        var result = {}
+        if (templates.length) {
+          var templateRating = templates.map (function (template) {
+            return template.nRatings ? (template.sumRatings / template.nRatings) : 0
+          })
+          var template = templates[SortService.sampleByWeight (templateRating)]
+          result.template = { id: template.id,
+                              title: template.title,
+                              content: template.content }
+        }
+        res.json (result)
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)

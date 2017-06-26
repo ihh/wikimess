@@ -264,6 +264,19 @@ var GramBot = (function() {
       return this.logGet ('/html/grammar-editor-help.html')
     },
 
+    REST_getPlayerSuggestTemplates: function (playerID) {
+      return this.logGet ('/p/' + playerID + '/suggest/templates')
+    },
+
+    REST_getPlayerSuggestReply: function (playerID, templateID) {
+      return this.logGet ('/p/' + playerID + '/suggest/reply/' + templateID)
+    },
+
+    REST_postPlayerSuggestSymbol: function (playerID, beforeSymbols, afterSymbols) {
+      return this.logPost ('/p/' + playerID + '/suggest/symbol', { before: beforeSymbols,
+                                                                   after: afterSymbols })
+    },
+    
     // WebSockets interface
     socket_onPlayer: function (callback) {
       io.socket.on ('player', callback)
@@ -885,6 +898,7 @@ var GramBot = (function() {
               gb.composition.title = gb.messageTitleInput.val()
             })
 
+          gb.composition.previousTemplate = config.previousTemplate
           gb.composition.template = config.template || gb.composition.template || {}
           gb.composition.template.content = gb.composition.template.content || []
 
@@ -898,6 +912,10 @@ var GramBot = (function() {
              firstClickCallback: gb.stopAnimation.bind(gb),
              alwaysUpdate: true,
              updateCallback: function (newContent) {
+               if (JSON.stringify(gb.composition.template.content) !== JSON.stringify(newContent)) {
+                 delete gb.composition.template.id
+                 delete gb.composition.previousTemplate
+               }
                gb.composition.template.content = newContent
                gb.generateMessageBody()
                return $.Deferred().resolve()
@@ -919,7 +937,8 @@ var GramBot = (function() {
               gb.showCompose ("Please enter a message title.")
             else {
               gb.sendButton.off ('click')
-              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.template, gb.composition.title, gb.composition.body, gb.composition.previous)
+              delete gb.composition.previousTemplate
+              gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.template, gb.composition.title, gb.composition.body, gb.composition.previousMessage)
                 .then (function (result) {
                   gb.clearComposeRecipient()
                   gb.composition.template.id = result.template.id
@@ -982,8 +1001,8 @@ var GramBot = (function() {
             gb.doComposePlayerSearch()
           }
           
-          if (config.previous)
-            gb.composition.previous = config.previous
+          if (config.previousMessage)
+            gb.composition.previousMessage = config.previousMessage
 
           if (config.focus)
             gb[config.focus].focus().trigger ('click')
@@ -1098,7 +1117,7 @@ var GramBot = (function() {
                         ({ title: result.message.title,
                            template: templateResult.template,
                            body: result.message.body,
-                           previous: result.message.id,
+                           previousMessage: result.message.id,
                            focus: 'playerSearchInput' })
                       })
                   })
@@ -1273,24 +1292,34 @@ var GramBot = (function() {
       gb.showMessageBody()
       gb.composition.body = {}
 
-      var symbolQueries = gb.composition.template.content.filter (function (rhsSym) {
-        return typeof(rhsSym) === 'object'
-      })
-      gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
+      var templatePromise
+      if (gb.composition.previousTemplate)
+        templatePromise = gb.REST_getPlayerSuggestReply (gb.playerID, gb.composition.previousTemplate.id)
         .then (function (result) {
-          var n = 0
-          gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
-            if (typeof(rhsSym) === 'string')
-              return rhsSym
-            var expansion = result.expansions[n++]
-            if (typeof(expansion.id) !== 'undefined') {
-              rhsSym.id = expansion.id
-              gb.symbolName[expansion.id] = expansion.name
-            }
-            return expansion
-          }) }
-          gb.showMessageBody ({ animate: true })
+          gb.template = result.template
         })
+      else
+        templatePromise = $.Deferred().resolve()
+
+      return templatePromise.then (function() {
+        var symbolQueries = gb.composition.template.content.filter (function (rhsSym) {
+          return typeof(rhsSym) === 'object'
+        })
+        return gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
+      }).then (function (result) {
+        var n = 0
+        gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
+          if (typeof(rhsSym) === 'string')
+            return rhsSym
+          var expansion = result.expansions[n++]
+          if (typeof(expansion.id) !== 'undefined') {
+            rhsSym.id = expansion.id
+            gb.symbolName[expansion.id] = expansion.name
+          }
+          return expansion
+        }) }
+        gb.showMessageBody ({ animate: true })
+      })
     },
 
     makeExpansionText: function (node, leaveSymbolsUnexpanded) {
@@ -1414,15 +1443,14 @@ var GramBot = (function() {
                        replyTitle = 'Re: ' + replyTitle
                      gb.showComposePage
                      ({ recipient: message.sender,
-                        previous: message.id,
                         title: replyTitle,
-                        template: message.template,
-                        focus: 'messageTitleInput' })
-                       .then (function() {
-                         gb.generateMessageBody()
-                       })
-                   })
-                 gb.replyButton.show()
+                        previousMessage: message.id,
+                        previousTemplate: message.template,
+                        focus: 'messageTitleInput'
+                      }).then (function() {
+                        gb.generateMessageBody()
+                      })
+                   }).show()
                }}
     },
 
