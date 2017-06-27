@@ -633,6 +633,7 @@ input {
 
 .grambot .grammarbar .rhs textarea {
     resize: vertical;
+    min-height: 10vh;
     max-height: 50vh;
     flex-grow: 1;
 }
