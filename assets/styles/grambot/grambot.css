@@ -171,6 +171,7 @@ input {
     overflow-wrap: break-word;
 }
 
+.grambot .compose .messagecompose p,
 .grambot .grammarbar .rule .rhs p {
     display: inline;
     margin: 0;

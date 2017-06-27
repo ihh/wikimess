@@ -139,6 +139,7 @@ var GramBot = (function() {
 	       stack: false },
 
     emptyMessageWarning: "_This message is empty._",
+    emptyTemplateWarning: "_The expanded message, as sent to the recipient, will appear here._",
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],
@@ -979,7 +980,7 @@ var GramBot = (function() {
                   gb.suggestionDiv.append
                 (gb.makeIconButton ('backspace',
                                     function() {
-                                      var newContent = gb.composition.template.content
+                                      var newContent = gb.composition.template.content.slice(0)
                                       var nSymPopped = 0
                                       while (newContent.length) {
                                         var poppedSym = newContent.pop()
@@ -1046,8 +1047,10 @@ var GramBot = (function() {
               .then (function() {
                 if (!gb.composition.recipient)
                   gb.showCompose ("Please specify a recipient.")
-                else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).match(/\S/)))
+                else if (gb.templateIsEmpty())
                   gb.showCompose ("Please enter some message text.")
+                else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).match(/\S/)))
+                  gb.showCompose ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
                 else if (!(gb.composition.title && gb.composition.title.length))
                   gb.showCompose ("Please give this message a title.")
                 else {
@@ -1088,7 +1091,8 @@ var GramBot = (function() {
                       gb.randomizeButton = gb.makeIconButton ('randomize', function() {
                         gb.showCompose()
                         gb.generateMessageBody()
-                      }),
+                      }).hide(),
+                      gb.dummyRandomizeButton = gb.makeIconButton ('dummy', function(){}),
                       gb.composeButton = gb.makeIconButton ('message', function() {
                         gb.showCompose()
                       }).hide(),
@@ -1138,10 +1142,11 @@ var GramBot = (function() {
     },
 
     updateComposeContent: function (newContent) {
-      if (JSON.stringify(gb.composition.template.content) !== JSON.stringify(newContent)) {
-        delete gb.composition.template.id
-        delete gb.composition.previousTemplate
-        gb.composition.template.content = newContent
+      if (JSON.stringify(this.composition.template.content) !== JSON.stringify(newContent)) {
+        delete this.composition.template.id
+        delete this.composition.previousTemplate
+        this.composition.template.content = newContent
+        this.showRandomizeButton (true)
         return true
       }
       return false
@@ -1173,7 +1178,7 @@ var GramBot = (function() {
     showCompose: function (error) {
       this.composeDiv.show()
       this.editButton.show()
-      this.randomizeButton.show()
+      this.showRandomizeButton (true)
       this.sendButton.show()
       this.mailboxButton.show()
       this.composeButton.hide()
@@ -1195,7 +1200,7 @@ var GramBot = (function() {
       gb.sendButton.hide()
       gb.forwardButton.hide()
       gb.editButton.hide()
-      gb.randomizeButton.hide()
+      gb.showRandomizeButton (false)
       gb.destroyButton.hide()
       gb.readMessageDiv.hide()
       gb.composeDiv.hide()
@@ -1211,11 +1216,26 @@ var GramBot = (function() {
                                    showMessage: function (message) {
                                      gb.composeButton.hide()
                                      gb.editButton.hide()
-                                     gb.randomizeButton.hide()
+                                     gb.showRandomizeButton (false)
                                      gb.sendButton.hide()
                                      gb.composeDiv.hide()
                                    }})
         })
+    },
+
+    showRandomizeButton: function (showFlag) {
+      if (showFlag) {
+        if (this.templateHasSymbols()) {
+          this.randomizeButton.show()
+          this.dummyRandomizeButton.hide()
+        } else {
+          this.randomizeButton.hide()
+          this.dummyRandomizeButton.show()
+        }
+      } else {
+        this.randomizeButton.hide()
+        this.dummyRandomizeButton.hide()
+      }
     },
 
     populateMailboxDiv: function (props) {
@@ -1441,7 +1461,6 @@ var GramBot = (function() {
 
     generateMessageBody: function() {
       var gb = this
-      gb.showMessageBody()
       gb.composition.body = {}
 
       var templatePromise
@@ -1487,8 +1506,8 @@ var GramBot = (function() {
     showMessageBody: function (config) {
       var gb = this
       config = config || {}
-      div = config.div || gb.messageBodyDiv
-      expansion = config.expansion || gb.composition.body
+      var div = config.div || gb.messageBodyDiv
+      var expansion = config.expansion || gb.composition.body
       gb.animationExpansion = _.cloneDeep (expansion)
       gb.animationDiv = div
       if (config.animate && gb.countSymbolNodes(expansion,true)) {
@@ -1499,7 +1518,9 @@ var GramBot = (function() {
         gb.deleteAllSymbolNames (gb.animationExpansion)
         gb.animationSteps = 0
         div.html (this.renderMarkdown (gb.makeExpansionText (expansion)
-                                       .replace (/^\s*$/, gb.emptyMessageWarning)))
+                                       .replace (/^\s*$/, (!config.inEditor && gb.templateIsEmpty()
+                                                           ? gb.emptyTemplateWarning
+                                                           : gb.emptyMessageWarning))))
       }
     },
 
@@ -1509,6 +1530,20 @@ var GramBot = (function() {
       gb.animationSteps = Math.max (gb.animationSteps, gb.countSymbolNodes (gb.animationExpansion))
       gb.extraAnimationSteps = 1
       gb.animateExpansion()
+    },
+
+    templateIsEmpty: function() {
+      return !gb.composition.template.content
+        || !gb.composition.template.content.filter (function (rhsSym) {
+          return typeof(rhsSym) === 'object' || rhsSym.match(/\S/)
+        }).length
+    },
+
+    templateHasSymbols: function() {
+      return gb.composition.template.content
+        && gb.composition.template.content.filter (function (rhsSym) {
+          return typeof(rhsSym) === 'object'
+        }).length
     },
 
     // initial page
@@ -2092,6 +2127,7 @@ var GramBot = (function() {
 		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
 		                            gb.showMessageBody ({ div: gb.infoPaneContent,
                                                                   expansion: result.expansion,
+                                                                  inEditor: true,
                                                                   animate: true })
                                             gb.infoPaneControls
                                               .html (gb.makeIconButton
@@ -2158,7 +2194,7 @@ var GramBot = (function() {
     makeTemplateSpan: function (content) {
       var gb = this
       if (!content || !content.filter (function (rhsSym) { return typeof(rhsSym) === 'object' || rhsSym.match(/\S/) }).length)
-        return $('<p>').html ($('<span class="placeholder">').text ('Enter message text.'))
+        return $('<p>').html ($('<span class="placeholder">').text ('Enter the message text here.'))
       return $('<span>')
         .append (content.map (function (rhsSym) {
           return (typeof(rhsSym) === 'object'
