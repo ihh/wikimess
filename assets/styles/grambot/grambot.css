@@ -451,15 +451,24 @@ input {
 }
 
 .grambot .mailbox .contents,
+.grambot .messageborder,
 .grambot .messagebody {
     flex-grow: 1;
     overflow-y: auto;
-    border-top-style: solid;
-    border-width: 1px;
-    margin: 2px;
     display: flex;
     flex-direction: column;
     overflow-wrap: break-word;
+}
+
+.grambot .mailbox .contents,
+.grambot .messageborder {
+    border-top-style: solid;
+    border-width: 1px;
+    margin: 2px;
+}
+
+.grambot .compose .suggest {
+    height: 10vh;
 }
 
 .grambot .mailbox .contents .message {

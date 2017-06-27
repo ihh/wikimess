@@ -88,6 +88,8 @@ var GramBot = (function() {
     grammarAutosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
+    autocompleteDelay: 500,
+    unfocusDelay: 100,
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     copy: 'copy',
@@ -165,12 +167,12 @@ var GramBot = (function() {
       return this.logPost ('/p/' + playerID + '/search/players/followed', { query: queryText })
     },
 
-    REST_postPlayerSearchSymbolsAll: function (playerID, queryText, page) {
-      return this.logPost ('/p/' + playerID + '/search/symbols/all', { query: queryText, page: page })
+    REST_postPlayerSearchSymbolsAll: function (playerID, query, page) {
+      return this.logPost ('/p/' + playerID + '/search/symbols/all', { query: query, page: page })
     },
 
-    REST_postPlayerSearchSymbolsOwned: function (playerID, queryText) {
-      return this.logPost ('/p/' + playerID + '/search/symbols/owned', { query: queryText })
+    REST_postPlayerSearchSymbolsOwned: function (playerID, query) {
+      return this.logPost ('/p/' + playerID + '/search/symbols/owned', { query: query })
     },
 
     REST_postPlayerConfig: function (playerID, config) {
@@ -915,11 +917,55 @@ var GramBot = (function() {
           if (config.body)
             gb.composition.body = config.body
 
+          gb.clearTimer ('autocompleteTimer')
           gb.messageBodyDiv = gb.makeEditableElement
           ({ element: 'div',
              className: 'messagebody',
              content: function() { return gb.composition.template ? gb.composition.template.content : [] },
              firstClickCallback: gb.stopAnimation.bind(gb),
+             showCallback: function() { gb.suggestionDiv.show() },
+             hideCallback: function() { gb.suggestionDiv.hide() },
+             changeCallback: function (input) {
+               gb.setTimer ('autocompleteTimer',
+                            gb.autocompleteDelay,
+                            function() {
+                              var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
+                              if (caretPos === caretEnd) {
+                                var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
+                                var symbolSuggestionPromise, getInsertText
+                                // autocomplete
+                                var endsWithSymbolRegex = /#([A-Za-z0-9_]+)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
+                                var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
+                                if (endsWithSymbolMatch && !symbolContinuesRegex.exec(newValAfter)) {
+                                  var prefix = endsWithSymbolMatch[1]
+                                  symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
+                                  getInsertText = function (symbol) { return symbol.name.substr (prefix.length) + ' ' }
+                                } else {
+                                  // symbol suggestions
+                                  var beforeSymbols = gb.parseRhs (newValBefore, true)
+                                  var afterSymbols = gb.parseRhs (newValAfter, true)
+                                  symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
+                                  getInsertText = function (symbol) { return '#' + symbol.name + ' ' }
+                                }
+                                symbolSuggestionPromise.then (function (result) {
+                                  if (result.symbols.length) {
+                                    gb.suggestionDiv.empty()
+                                      .append (result.symbols.map (function (symbol) {
+                                        gb.symbolName[symbol.id] = symbol.name
+                                        return gb.makeSymbolSpan (symbol, function (evt) {
+                                          input.focus()
+                                          gb.suggestionDiv.empty()
+                                          var updatedNewValBefore = newValBefore + getInsertText(symbol)
+                                          input.val (updatedNewValBefore + newValAfter)
+                                          gb.setCaretToPos (input, updatedNewValBefore.length)
+                                        })
+                                      }))
+                                  } else
+                                    gb.suggestionDiv.empty()
+                                })
+                              }
+                            })
+             },
              alwaysUpdate: true,
              updateCallback: function (newContent) {
                if (JSON.stringify(gb.composition.template.content) !== JSON.stringify(newContent)) {
@@ -968,7 +1014,9 @@ var GramBot = (function() {
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
-                              gb.messageBodyDiv),
+                              $('<div class="messageborder">')
+                              .append (gb.suggestionDiv = $('<div class="suggest">').hide(),
+                                       gb.messageBodyDiv)),
                      gb.mailboxDiv = $('<div class="mailbox">').hide(),
                      gb.readMessageDiv = $('<div class="readmessage">').hide(),
                      $('<div class="messagecontrols">').append
@@ -1159,7 +1207,7 @@ var GramBot = (function() {
                          $('<div class="row">')
                           .append ($('<span class="label">').text (props.verb + ':'),
                                    $('<span class="field">').text (new Date (props.message.date).toString()))),
-                 $('<div class="messagebody">').html (gb.renderMarkdown (gb.makeExpansionText (props.message.body))))
+                 $('<div class="messagebody messageborder">').html (gb.renderMarkdown (gb.makeExpansionText (props.message.body))))
     },
     
     doComposePlayerSearch: function (forceNewSearch) {
@@ -1171,7 +1219,7 @@ var GramBot = (function() {
         if (searchText.length)
           this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText)
           .then (function (result) {
-            gb.showComposePlayerSearchResults (result.results)
+            gb.showComposePlayerSearchResults (result.players)
           })
         else
           gb.showComposePlayerSearchResults()
@@ -1226,7 +1274,7 @@ var GramBot = (function() {
 
     animateExpansion: function() {
       var gb = this
-      this.clearAnimationTimer()
+      this.clearTimer ('expansionAnimationTimer')
       var markdown = this.renderMarkdown (this.makeExpansionText (this.animationExpansion, true)
                                           .replace (/^\s*$/, gb.emptyMessageWarning))
       var nSymbols = 0
@@ -1237,23 +1285,33 @@ var GramBot = (function() {
                            return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
                          }))
       if (this.deleteFirstSymbolName (this.animationExpansion) || this.lastAnimationStep--)
-        this.expansionAnimationTimer = window.setTimeout (this.animateExpansion.bind(this),
-                                                          Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)))
-    },
-
-    clearAnimationTimer: function() {
-      if (this.expansionAnimationTimer)
-        window.clearTimeout (this.expansionAnimationTimer)
-      delete this.expansionAnimationTimer
+        this.setTimer ('expansionAnimationTimer',
+                       Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)),
+                       this.animateExpansion.bind(this))
     },
 
     stopAnimation: function() {
       if (this.expansionAnimationTimer) {
         this.animationDiv.html (this.renderMarkdown (this.makeExpansionText (this.animationExpansion)))
-        this.clearAnimationTimer()
+        this.clearTimer ('expansionAnimationTimer')
         return true
       }
       return false
+    },
+
+    clearTimer: function (timerName) {
+      if (this[timerName])
+        window.clearTimeout (this[timerName])
+      delete this[timerName]
+    },
+    
+    setTimer: function (timerName, delay, callback) {
+      var gb = this
+      this.clearTimer (timerName)
+      this[timerName] = window.setTimeout (function() {
+        delete gb[timerName]
+        callback()
+      }, delay)
     },
     
     makeExpansionText: function (node, leaveSymbolsUnexpanded) {
@@ -1408,7 +1466,7 @@ var GramBot = (function() {
                    var stars = new Array(gb.maxRating).fill(1).map (function() {
                      return $('<span class="rating">')
                    })
-                   var ratingTimer
+                   gb.clearTimer ('ratingTimer')
                    function fillStars (rating) {
                      stars.forEach (function (span, n) {
                        span
@@ -1416,13 +1474,12 @@ var GramBot = (function() {
                          .html (gb.makeIconButton (n < rating ? 'filledStar' : 'emptyStar',
                                                    function() {
                                                      fillStars (n + 1)
-                                                     if (ratingTimer)
-                                                       window.clearTimeout (ratingTimer)
-                                                     ratingTimer = window.setTimeout (function() {
-                                                       ratingTimer = null
-                                                       gb.REST_putPlayerMessageRating (gb.playerID, message.id, n + 1)
-                                                         .then (function() { gb.rateMessageDiv.hide() })
-                                                     }, gb.ratingDelay)
+                                                     gb.setTimer ('ratingTimer',
+                                                                  gb.ratingDelay,
+                                                                  function() {
+                                                                    gb.REST_putPlayerMessageRating (gb.playerID, message.id, n + 1)
+                                                                      .then (function() { gb.rateMessageDiv.hide() })
+                                                                  })
                                                    }, gb.starColor))
                      })
                    }
@@ -1627,16 +1684,22 @@ var GramBot = (function() {
             var input = $('<textarea>').val(oldText)
             if (props.guessHeight)
               input.attr('rows',divRows)
-            function sanitizeInput() { input.val (sanitize (input.val())) }
+            var changeCallback = props.changeCallback || function (input) { input.val (sanitize (input.val())) }
+            function boundChangeCallback() { changeCallback (input) }
             input
-              .on('keyup',sanitizeInput)
-              .on('change',sanitizeInput)
+              .on('keyup',boundChangeCallback)
+              .on('change',boundChangeCallback)
               .on('click',function(evt){evt.stopPropagation()})
-              .on('focusout',function() { gb.unfocusAndSave() })
               .on ('keydown', function (evt) {
                 if (props.keycodeFilter && !props.keycodeFilter (evt.keyCode))
                   evt.preventDefault()
               })
+            input.on ('focusout', function() {
+              gb.setTimer ('unfocusTimer', gb.unfocusDelay, gb.unfocusAndSave.bind(gb))
+            })
+            input.on ('focusin', function() {
+              gb.clearTimer ('unfocusTimer')
+            })
             if (props.maxLength)
               input.attr ('maxlength', props.maxLength)
             gb.unfocusAndSave = function() {
@@ -1651,10 +1714,15 @@ var GramBot = (function() {
               return def
                 .then (function() {
                   gb.populateEditableElement (div, props)
+                  if (props.hideCallback)
+                    props.hideCallback()
                 })
             }
             div.html (input)
             input.focus()
+            if (props.showCallback)
+              props.showCallback()
+            boundChangeCallback()
           })
       }
       
@@ -1687,6 +1755,24 @@ var GramBot = (function() {
         buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs())
     },
 
+    // https://stackoverflow.com/a/499158
+    setSelectionRange: function (input, selectionStart, selectionEnd) {
+      if (input.setSelectionRange) {
+        input.focus()
+        input.setSelectionRange (selectionStart, selectionEnd)
+      } else if (input.createTextRange) {
+        var range = input.createTextRange()
+        range.collapse(true)
+        range.moveEnd('character', selectionEnd)
+        range.moveStart('character', selectionStart)
+        range.select()
+      }
+    },
+
+    setCaretToPos: function (input, pos) {
+      this.setSelectionRange (input, pos, pos)
+    },
+    
     saveSymbol: function (symbol) {
       var gb = this
       return gb.finishLastSave()
@@ -1739,16 +1825,17 @@ var GramBot = (function() {
       }
     },
 
-    parseRhs: function (rhs) {
+    parseRhs: function (rhs, ignoreText) {
       var gb = this
       var regex = /(([\s\S]*?)#([A-Za-z0-9_]+)|([\s\S]+))/g, match
       var parsed = []
       var name2id = this.symbolNameToID()
       while ((match = regex.exec(rhs))) {
-        if (match[4] && match[4].length)
-          parsed.push (match[4])
-        else {
-          if (match[2].length)
+        if (match[4] && match[4].length) {
+          if (!ignoreText)
+            parsed.push (match[4])
+        } else {
+          if (match[2].length && !ignoreText)
             parsed.push (match[2])
           var lhsName = match[3]
           if (lhsName) {
@@ -1936,10 +2023,10 @@ var GramBot = (function() {
     makeSymbolSpan: function (sym, callback) {
       var nameSpan = $('<span class="name">')
       var span = $('<span class="lhslink">').append ('#', nameSpan)
-      if (typeof(sym.id) !== 'undefined')
-        nameSpan.text (gb.symbolName[sym.id])
-      else
+      if (sym.name)
         nameSpan.text (sym.name)
+      else if (typeof(sym.id) !== 'undefined')
+        nameSpan.text (gb.symbolName[sym.id])
       if (callback)
         span.on ('click', callback)
       return span
@@ -2189,7 +2276,7 @@ var GramBot = (function() {
       if (this.searchInput.val() === this.lastSymbolSearch) {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
           .then (function (ret) {
-            gb.symbolSearchResults.results = gb.symbolSearchResults.results.concat (ret.results)
+            gb.symbolSearchResults.results = gb.symbolSearchResults.results.concat (ret.symbols)
             gb.symbolSearchResults.more = ret.more
             gb.symbolSearchResults.page = ret.page
             gb.showSymbolSearchResults()
@@ -2220,7 +2307,7 @@ var GramBot = (function() {
             more.remove()
             gb.continueSymbolSearch()
           })
-        else if (this.symbolSearchResults.results.length)
+        else if (this.symbolSearchResults.symbols.length)
           more.text('All matching scripts shown')
       }
     },
@@ -2392,7 +2479,7 @@ var GramBot = (function() {
       if (this.searchInput.val() === this.lastPlayerSearch) {
         this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
-            gb.playerSearchResults.results = gb.playerSearchResults.results.concat (ret.results)
+            gb.playerSearchResults.results = gb.playerSearchResults.results.concat (ret.players)
             gb.playerSearchResults.more = ret.more
             gb.playerSearchResults.page = ret.page
             gb.showPlayerSearchResults()

@@ -6,19 +6,19 @@ var extend = require('extend')
 module.exports = {
 
   imposeSymbolLimit: function (rules, limit) {
-    rules.forEach (function (rhs, ruleNum) {
+    rules.forEach (function (rhs) {
       var rhsTrim = rhs.filter (function (rhsSym, n) {
         return typeof(rhsSym) === 'string' || n < limit
       })
       if (rhsTrim.length < rhs.length)
         rhsTrim.push ('_(too many scripts)_')
-      rules[ruleNum] = rhsTrim.reduce (function (rhsAcc, rhsSym) {
+      Array.prototype.splice.apply (rhs, [0, rhs.length].concat (rhsTrim.reduce (function (rhsAcc, rhsSym) {
         if (typeof(rhsSym) === 'string' && rhsAcc.length > 0 && typeof(rhsAcc[rhsAcc.length-1]) === 'string')
           rhsAcc[rhsAcc.length-1] = rhsAcc[rhsAcc.length-1].replace(/\s+$/,'') + ' ' + rhsSym.replace(/^\s+/,'')
         else
           rhsAcc.push (rhsSym)
         return rhsAcc
-      }, [])
+      }, [])))
     })
   },
   
@@ -124,8 +124,13 @@ module.exports = {
       
       return Symbol.findOneCached (query)
         .then (function (symbol) {
-          var symInfo = { id: symbol.id, name: symbol.name, rhs: [] }
-
+          var symInfo = extend ({ rhs: [] },
+                                (symbol
+                                 ? { id: symbol.id, name: symbol.name }
+                                 : { id: query.id, name: query.name }))
+          if (!symbol)
+            return Promise.resolve (symInfo)
+            
           if (depth[symbol.id] >= Symbol.maxDepth)
             return Promise.resolve (extend (symInfo, { limit: { type: 'depth', n: Symbol.maxDepth } }))
       

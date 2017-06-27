@@ -69,7 +69,7 @@ module.exports = {
             })
 	    res.json ({ page: page,
                         more: players.length > resultsPerPage,
-                        results: players.slice(0,resultsPerPage).map (function (player) {
+                        players: players.slice(0,resultsPerPage).map (function (player) {
 	      return PlayerService.makePlayerSummary (player, following[player.id])
 	    })
 		      })
@@ -104,7 +104,7 @@ module.exports = {
           var gotID = {}
           matchingFollowed.forEach (function (player) { gotID[player.id] = true })
           matchingUnfollowed = matchingUnfollowed.filter (function (player) { return !gotID[player.id] })
-          res.json ({ results: matchingFollowed.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
+          res.json ({ players: matchingFollowed.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
                       .concat (matchingUnfollowed.map (function (player) { return PlayerService.makePlayerSummary (player, false) }))
                       .slice (0, maxResults)
                     })
@@ -116,8 +116,8 @@ module.exports = {
   searchOwnedSymbols: function (req, res) {
     var searcherID = parseInt(req.params.player), query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
-    Symbol.find ({ name: { contains: query },
-                   owner: searcherID })
+    Symbol.find ({ owner: searcherID,
+                   name: query.name })
       .populate ('owner')
       .then (function (ownedSymbols) {
         var symbolPromise
@@ -125,12 +125,12 @@ module.exports = {
           symbolPromise = new Promise (function (resolve, reject) { resolve([]) })
         else
           symbolPromise = Symbol
-          .find ({ name: { contains: query },
-                   owner: { '!': searcherID } })
+          .find ({ owner: { '!': searcherID },
+                   name: query.name })
           .limit (maxResults - ownedSymbols.length)
           .populate ('owner')
         symbolPromise.then (function (unownedSymbols) {
-          res.json ({ results: ownedSymbols.concat(unownedSymbols).map (function (symbol) {
+          res.json ({ symbols: ownedSymbols.concat(unownedSymbols).map (function (symbol) {
             return { id: symbol.id,
                      name: symbol.name,
                      owner: { id: symbol.owner.id,
@@ -150,7 +150,7 @@ module.exports = {
       .then (function (symbols) {
         res.json ({ page: page,
                     more: symbols.length > resultsPerPage,
-                    results: symbols.slice(0,resultsPerPage).map (function (symbol) {
+                    symbols: symbols.slice(0,resultsPerPage).map (function (symbol) {
                       return { id: symbol.id,
                                name: symbol.name,
                                owner: symbol.owner
@@ -419,7 +419,7 @@ module.exports = {
       templatePromise = Template.findOne ({ id: template.id })
     else {
       // give an initial weight of 1 to all symbol adjacencies in this template
-      SymbolService.imposeSymbolLimit (template.content, Symbol.maxTemplateSyms)
+      SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
       templatePromise = SymbolService.updateAdjacencies (template.content, 1)
         .then (function() {
           // find previous Message
