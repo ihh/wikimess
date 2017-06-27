@@ -2406,7 +2406,7 @@ var GramBot = (function() {
       if (this.searchInput.val() === this.lastSymbolSearch) {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
           .then (function (ret) {
-            gb.symbolSearchResults.results = gb.symbolSearchResults.results.concat (ret.symbols)
+            gb.symbolSearchResults.symbols = gb.symbolSearchResults.symbols.concat (ret.symbols)
             gb.symbolSearchResults.more = ret.more
             gb.symbolSearchResults.page = ret.page
             gb.showSymbolSearchResults()
@@ -2427,7 +2427,7 @@ var GramBot = (function() {
           .append ($('<span class="closebutton">').html
                    (gb.makeIconButton ('close', gb.clearSymbolSearch.bind(gb))),
                    $('<div class="searchtitle">').text("Search results"),
-                   this.makeSymbolDivs (this.symbolSearchResults.results, "There are no scripts matching '" + this.lastSymbolSearch + "'."))
+                   this.makeSymbolDivs (this.symbolSearchResults.symbols, "There are no scripts matching '" + this.lastSymbolSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
         if (this.symbolSearchResults.more)
@@ -2609,7 +2609,7 @@ var GramBot = (function() {
       if (this.searchInput.val() === this.lastPlayerSearch) {
         this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
-            gb.playerSearchResults.results = gb.playerSearchResults.results.concat (ret.players)
+            gb.playerSearchResults.players = gb.playerSearchResults.players.concat (ret.players)
             gb.playerSearchResults.more = ret.more
             gb.playerSearchResults.page = ret.page
             gb.showPlayerSearchResults()
@@ -2630,7 +2630,7 @@ var GramBot = (function() {
           .append ($('<span class="closebutton">').html
                    (gb.makeIconButton ('close', gb.clearPlayerSearch.bind(gb))),
                    $('<div class="searchtitle">').text("Search results"),
-                   this.makeFollowDivs (this.playerSearchResults.results, "There are no players matching '" + this.lastPlayerSearch + "'."))
+                   this.makeFollowDivs (this.playerSearchResults.players, "There are no players matching '" + this.lastPlayerSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
         if (this.playerSearchResults.more)
@@ -2640,7 +2640,7 @@ var GramBot = (function() {
             more.remove()
             gb.continuePlayerSearch()
           })
-        else if (this.playerSearchResults.results.length)
+        else if (this.playerSearchResults.players.length)
           more.text('All matching players shown')
       }
     },
