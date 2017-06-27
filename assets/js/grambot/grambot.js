@@ -1263,7 +1263,7 @@ var GramBot = (function() {
                  ? node
                  : (node.rhs
                     ? (leaveSymbolsUnexpanded && node.name
-                       ? ('#' + node.name + '.' + (node.limit ? 'limit' : 'unexpanded'))
+                       ? ('#' + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded'))
                        : node.rhs.map (function (rhsSym) {
                          return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
                        }).join(''))
@@ -1275,9 +1275,11 @@ var GramBot = (function() {
       var gb = this
       return (typeof(node) === 'string'
               ? 0
-              : node.rhs.reduce (function (total, child) {
-                return total + gb.countSymbolNodes (child)
-              }, node.limit ? 1 : 0))
+              : (node.rhs
+                 ? node.rhs.reduce (function (total, child) {
+                   return total + gb.countSymbolNodes (child)
+                 }, node.limit ? 1 : 0)
+                 : 0))
     },
     
     deleteFirstSymbolName: function (node) {
@@ -1288,7 +1290,7 @@ var GramBot = (function() {
         if (!node.limit)
           return true
       }
-      return node.rhs.find (this.deleteFirstSymbolName.bind (this))
+      return node.rhs && node.rhs.find (this.deleteFirstSymbolName.bind (this))
     },
     
     generateMessageBody: function() {
@@ -1323,11 +1325,12 @@ var GramBot = (function() {
             if (typeof(rhsSym) === 'string')
               return rhsSym
             var expansion = result.expansions[n++]
-            if (typeof(expansion.id) !== 'undefined') {
+            if (expansion && typeof(expansion.id) !== 'undefined') {
               rhsSym.id = expansion.id
               gb.symbolName[expansion.id] = expansion.name
+              return expansion
             }
-            return expansion
+            return rhsSym
           }) }
           gb.showMessageBody ({ animate: true })
         } else

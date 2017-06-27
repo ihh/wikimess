@@ -66,8 +66,16 @@
     background: #eee;
 }
 
-.grambot.plain .lhslink.limit {
+.grambot.plain .lhslink.limitdepth {
     background-color: palevioletred;
+}
+
+.grambot.plain .lhslink.limitnodes {
+    background-color: orange;
+}
+
+.grambot.plain .lhslink.limitsymbols {
+    background-color: red;
 }
 
 .grambot.plain .lhslink.unexpanded {

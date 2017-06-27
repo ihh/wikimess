@@ -40,6 +40,7 @@ module.exports = {
   maxDepth: 3,
   maxNodes: 100,
   maxRhsSyms: 20,
+  maxTemplateSyms: 20,
   
   // lifecycle callbacks to autogenerate names
   autonamePrefix: 'script',

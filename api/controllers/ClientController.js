@@ -419,6 +419,7 @@ module.exports = {
       templatePromise = Template.findOne ({ id: template.id })
     else {
       // give an initial weight of 1 to all symbol adjacencies in this template
+      SymbolService.imposeSymbolLimit (template.content, Symbol.maxTemplateSyms)
       templatePromise = SymbolService.updateAdjacencies (template.content, 1)
         .then (function() {
           // find previous Message
@@ -625,7 +626,8 @@ module.exports = {
       .then (function (eponSyms) {
         if (eponSyms.length)
           res.status(400).send ({error: "The symbol name " + name + " is already in use"})
-        else
+        else {
+          SymbolService.imposeSymbolLimit (update.rules, Symbol.maxRhsSyms)
           SymbolService.createReferences (update.rules)
           .then (function (rhsSymbols) {
             rhsSymbols.forEach (function (rhsSymbol) {
@@ -640,6 +642,7 @@ module.exports = {
                                               result))
             res.json (result)
           })
+        }
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)
@@ -729,14 +732,13 @@ module.exports = {
   expandSymbols: function (req, res) {
     var playerID = parseInt (req.params.player)
     var symbolQueries = req.body.symbols || []
-    Promise.map (symbolQueries, function (symbolQuery) {
-      return SymbolService.expandSymbol (symbolQuery)
-    }).then (function (expansions) {
+    SymbolService.expandSymbols (symbolQueries, Symbol.maxTemplateSyms)
+      .then (function (expansions) {
         res.json ({ expansions: expansions })
-    }).catch (function (err) {
-      console.log(err)
-      res.status(500).send(err)
-    })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
   },
 
   // suggest best N templates
