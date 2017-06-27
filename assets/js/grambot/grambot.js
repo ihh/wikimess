@@ -918,14 +918,14 @@ var GramBot = (function() {
 
           gb.clearTimer ('autosuggestTimer')
           gb.autosuggestStatus = {}
-          function autosuggest (input) {
+          function textareaAutosuggest (input) {
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (caretPos === caretEnd && (newVal !== gb.autosuggestStatus.lastVal || caretPos !== gb.autosuggestStatus.lastCaretPos)) {
               gb.autosuggestStatus.lastVal = newVal
               gb.autosuggestStatus.lastCaretPos = caretPos
               var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
               var symbolSuggestionPromise, getInsertText
-              // autosuggest
+              // autocomplete
               var endsWithSymbolRegex = /#([A-Za-z0-9_]*)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
               var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
               if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
@@ -941,58 +941,69 @@ var GramBot = (function() {
                 symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
                 getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
               }
-              symbolSuggestionPromise.then (function (result) {
-                if (result.symbols.length) {
-                  gb.suggestionDiv.empty()
-                    .append ($('<div class="suggestlabel">').text('Suggestions:'),
-                             result.symbols.map (function (symbol) {
-                               gb.symbolName[symbol.id] = symbol.name
-                               return gb.makeSymbolSpan (symbol, function (evt) {
-                                 evt.stopPropagation()
-                                 gb.suggestionDiv.empty()
-                                 var updatedNewValBefore = newValBefore + getInsertText(symbol)
-                                 input.val (updatedNewValBefore + newValAfter)
-                                 gb.setCaretToPos (input, updatedNewValBefore.length)
-                                 input.focus()
-                                 autosuggest (input)
-                               })
-                             }))
-                    .on ('click', function() { input.focus() })
-                } else
-                  gb.suggestionDiv.empty()
+              gb.populateSuggestions (symbolSuggestionPromise, function (symbol) {
+                var updatedNewValBefore = newValBefore + getInsertText (symbol)
+                input.val (updatedNewValBefore + newValAfter)
+                gb.setCaretToPos (input, updatedNewValBefore.length)
+                input.focus()
+                textareaAutosuggest (input)
               })
             }
           }
-          
-          gb.messageBodyDiv = gb.makeEditableElement
-          ({ element: 'div',
-             className: 'messagebody',
-             content: function() { return gb.composition.template ? gb.composition.template.content : [] },
-             firstClickCallback: gb.stopAnimation.bind(gb),
-             showCallback: function() { gb.suggestionDiv.show() },
-             hideCallback: function() { gb.suggestionDiv.hide() },
-             changeCallback: function (input) {
-               gb.setTimer ('autosuggestTimer',
-                            gb.autosuggestDelay,
-                            autosuggest.bind (gb, input))
-             },
-             alwaysUpdate: true,
-             updateCallback: function (newContent) {
-               if (JSON.stringify(gb.composition.template.content) !== JSON.stringify(newContent)) {
-                 delete gb.composition.template.id
-                 delete gb.composition.previousTemplate
-               }
-               gb.composition.template.content = newContent
-               gb.generateMessageBody()
-               return $.Deferred().resolve()
-             },
-             parse: gb.parseRhs.bind(gb),
-             renderText: gb.renderRhsText.bind(gb),
-             renderHtml: function (content) {
-               return gb.renderMarkdown (gb.makeExpansionText (gb.composition.body))
-             }
-           })
 
+          function divAutosuggest() {
+            var before = gb.composition.template.content
+                .filter (function (rhsSym) { return typeof(rhsSym) === 'object' })
+            gb.populateSuggestions (gb.REST_postPlayerSuggestSymbol (gb.playerID, before, []),
+                                    function (symbol) {
+                                      var spacer = ' '
+                                      gb.updateComposeContent (gb.composition.template.content.concat ([{ id: symbol.id,
+                                                                                                          name: symbol.name },
+                                                                                                        spacer]))
+                                      updateComposeDiv()
+                                      var generatePromise =
+                                          (gb.animationExpansion
+                                           ? gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+                                           .then (function (result) {
+                                             gb.appendToMessageBody ([result.expansion, spacer])
+                                           })
+                                           : gb.generateMessageBody())
+                                      generatePromise.then (divAutosuggest)
+                                    })
+          }
+
+          gb.messageComposeDiv = $('<div class="messagebody">')
+          function updateComposeDiv() {
+            gb.populateEditableElement
+            (gb.messageComposeDiv,
+             { content: function() { return gb.composition.template ? gb.composition.template.content : [] },
+               changeCallback: function (input) {
+                 gb.setTimer ('autosuggestTimer',
+                              gb.autosuggestDelay,
+                              textareaAutosuggest.bind (gb, input))
+               },
+               showCallback: function (input) {
+                 gb.suggestionDiv
+                   .off ('click')
+                   .on ('click', function() { input.focus() })
+               },
+               hideCallback: divAutosuggest,
+               alwaysUpdate: true,
+               updateCallback: function (newContent) {
+                 gb.updateComposeContent (newContent)
+                 gb.generateMessageBody()
+                 return $.Deferred().resolve()
+               },
+               parse: gb.parseRhs.bind(gb),
+               renderText: gb.makeRhsText.bind(gb),
+               renderHtml: gb.makeTemplateSpan.bind(gb)
+             })
+          }
+          updateComposeDiv()
+          
+          gb.messageBodyDiv = $('<div class="messagebody">')
+
+          delete gb.animationExpansion
           if (config.body) {
             gb.composition.body = config.body
             gb.showMessageBody()
@@ -1032,14 +1043,15 @@ var GramBot = (function() {
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
                               $('<div class="messageborder">')
-                              .append (gb.messageBodyDiv,
-                                       gb.suggestionDiv = $('<div class="suggest">').hide())),
+                              .append (gb.messageComposeDiv,
+                                       gb.suggestionDiv = $('<div class="suggest">'),
+                                       gb.messageBodyDiv)),
                      gb.mailboxDiv = $('<div class="mailbox">').hide(),
                      gb.readMessageDiv = $('<div class="readmessage">').hide(),
                      $('<div class="messagecontrols">').append
                      (gb.editButton = gb.makeIconButton ('edit', function() {
                        gb.stopAnimation()
-                       gb.messageBodyDiv.trigger ('click')
+                       gb.messageComposeDiv.trigger ('click')
                      }),
                       gb.randomizeButton = gb.makeIconButton ('randomize', function() {
                         gb.showCompose()
@@ -1060,6 +1072,7 @@ var GramBot = (function() {
                         window.setTimeout (gb.showOutbox.bind(gb), 10)
                       }).hide()))
 
+          gb.restoreScrolling (gb.messageComposeDiv)
           gb.restoreScrolling (gb.messageBodyDiv)
           gb.restoreScrolling (gb.suggestionDiv)
 
@@ -1081,6 +1094,8 @@ var GramBot = (function() {
           if (config.previousMessage)
             gb.composition.previousMessage = config.previousMessage
 
+          divAutosuggest()
+          
           if (config.focus)
             gb[config.focus].focus().trigger ('click')
           if (config.click)
@@ -1090,6 +1105,33 @@ var GramBot = (function() {
         })
     },
 
+    updateComposeContent: function (newContent) {
+      if (JSON.stringify(gb.composition.template.content) !== JSON.stringify(newContent)) {
+        delete gb.composition.template.id
+        delete gb.composition.previousTemplate
+      }
+      gb.composition.template.content = newContent
+    },
+    
+    populateSuggestions: function (symbolSuggestionPromise, symbolSelectCallback) {
+      var gb = this
+      return symbolSuggestionPromise.then (function (result) {
+        if (result.symbols.length) {
+          gb.suggestionDiv.empty()
+            .append ($('<div class="suggestlabel">').text('Suggestions:'),
+                     result.symbols.map (function (symbol) {
+                               gb.symbolName[symbol.id] = symbol.name
+                               return gb.makeSymbolSpan (symbol, function (evt) {
+                                 evt.stopPropagation()
+                                 gb.suggestionDiv.empty()
+                                 symbolSelectCallback (symbol)
+                               })
+                     }))
+        } else
+          gb.suggestionDiv.empty()
+      })
+    },
+    
     clearComposeRecipient: function() {
       var gb = this
       delete gb.composition.recipient
@@ -1278,22 +1320,6 @@ var GramBot = (function() {
               : markdown)
     },
     
-    showMessageBody: function (config) {
-      var gb = this
-      config = config || {}
-      div = config.div || gb.messageBodyDiv
-      expansion = config.expansion || gb.composition.body
-      if (config.animate && gb.countSymbolNodes(expansion,true)) {
-        gb.animationExpansion = _.cloneDeep (expansion)
-        gb.animationDiv = div
-        gb.animationSteps = gb.countSymbolNodes (expansion)
-        gb.lastAnimationStep = 1
-        gb.animateExpansion()
-      } else
-        div.html (this.renderMarkdown (gb.makeExpansionText (expansion)
-                                       .replace (/^\s*$/, gb.emptyMessageWarning)))
-    },
-
     animateExpansion: function() {
       var gb = this
       this.clearTimer ('expansionAnimationTimer')
@@ -1306,7 +1332,7 @@ var GramBot = (function() {
                          function (_match, name, className) {
                            return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
                          }))
-      if (this.deleteFirstSymbolName (this.animationExpansion) || this.lastAnimationStep--)
+      if (this.deleteFirstSymbolName (this.animationExpansion) || this.extraAnimationSteps-- > 0)
         this.setTimer ('expansionAnimationTimer',
                        Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)),
                        this.animateExpansion.bind(this))
@@ -1372,7 +1398,16 @@ var GramBot = (function() {
       }
       return node.rhs && node.rhs.find (this.deleteFirstSymbolName.bind (this))
     },
-    
+
+    deleteAllSymbolNames: function (node) {
+      if (typeof(node) === 'object') {
+        if (node.name)
+          delete node.name
+        if (node.rhs)
+          node.rhs.forEach (this.deleteAllSymbolNames.bind (this))
+      }
+    },
+
     generateMessageBody: function() {
       var gb = this
       gb.showMessageBody()
@@ -1416,6 +1451,33 @@ var GramBot = (function() {
         } else
           gb.showMessageBody()
       })
+    },
+
+    showMessageBody: function (config) {
+      var gb = this
+      config = config || {}
+      div = config.div || gb.messageBodyDiv
+      expansion = config.expansion || gb.composition.body
+      gb.animationExpansion = _.cloneDeep (expansion)
+      gb.animationDiv = div
+      if (config.animate && gb.countSymbolNodes(expansion,true)) {
+        gb.animationSteps = gb.countSymbolNodes (expansion)
+        gb.extraAnimationSteps = 1
+        gb.animateExpansion()
+      } else {
+        gb.deleteAllSymbolNames (gb.animationExpansion)
+        gb.animationSteps = 0
+        div.html (this.renderMarkdown (gb.makeExpansionText (expansion)
+                                       .replace (/^\s*$/, gb.emptyMessageWarning)))
+      }
+    },
+
+    appendToMessageBody: function (appendedBody) {
+      Array.prototype.push.apply (gb.composition.body, appendedBody)
+      Array.prototype.push.apply (gb.animationExpansion, appendedBody)
+      gb.animationSteps = Math.max (gb.animationSteps, gb.countSymbolNodes (gb.animationExpansion))
+      gb.extraAnimationSteps = 1
+      gb.animateExpansion()
     },
 
     // initial page
@@ -1774,7 +1836,7 @@ var GramBot = (function() {
             div.html (input)
             input.focus()
             if (props.showCallback)
-              props.showCallback()
+              props.showCallback (input)
             boundChangeCallback()
           })
       }
@@ -1911,15 +1973,6 @@ var GramBot = (function() {
       return this.symbolOwnedByPlayer(symbol) || typeof(symbol.owner.id) === 'undefined' || symbol.owner.id === null
     },
 
-    renderRhsText: function (rhs) {
-      var gb = this
-      return rhs.map (function (rhsSym) {
-        return (typeof(rhsSym) === 'object'
-                ? ('#' + (gb.symbolName[rhsSym.id] || rhsSym.name))
-                : rhsSym)
-      }).join('')
-    },
-    
     makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
       var span = gb.makeEditableElement ({ element: 'span',
                                            className: 'rhs',
@@ -1945,19 +1998,8 @@ var GramBot = (function() {
                                              return gb.ruleDiv[symbol.id].find('.rhs').eq(n)
                                            },
                                            parse: gb.parseRhs.bind(gb),
-                                           renderText: gb.renderRhsText.bind(gb),
-                                           renderHtml: function (rhs) {
-                                             return $('<span>')
-                                               .append (rhs.map (function (rhsSym) {
-                                                 return (typeof(rhsSym) === 'object'
-                                                         ? gb.makeSymbolSpan (rhsSym,
-                                                                              function (evt) {
-                                                                                evt.stopPropagation()
-                                                                                gb.loadGrammarSymbol (rhsSym)
-                                                                              })
-                                                         : $('<span>').html (gb.renderMarkdown (rhsSym)))
-                                               }))
-                                           }
+                                           renderText: gb.makeRhsText.bind(gb),
+                                           renderHtml: gb.makeRhsSpan.bind(gb)
                                          })
       return span
     },
@@ -2057,6 +2099,48 @@ var GramBot = (function() {
                  symbol.rules.map (function (rhs, n) {
                    return gb.makeGrammarRhsDiv (symbol, ruleDiv, n)
                  }))
+    },
+
+    makeRhsText: function (rhs) {
+      var gb = this
+      return rhs.map (function (rhsSym) {
+        return (typeof(rhsSym) === 'object'
+                ? ('#' + (gb.symbolName[rhsSym.id] || rhsSym.name))
+                : rhsSym)
+      }).join('')
+    },
+    
+    makeRhsSpan: function (rhs) {
+      var gb = this
+      return $('<span>')
+        .append (rhs.map (function (rhsSym) {
+          return (typeof(rhsSym) === 'object'
+                  ? gb.makeSymbolSpan (rhsSym,
+                                       function (evt) {
+                                         evt.stopPropagation()
+                                         gb.loadGrammarSymbol (rhsSym)
+                                       })
+                  : $('<span>').html (gb.renderMarkdown (rhsSym)))
+        }))
+    },
+
+    makeTemplateSpan: function (content) {
+      var gb = this
+      return $('<span>')
+        .append (content.map (function (rhsSym) {
+          return (typeof(rhsSym) === 'object'
+                  ? gb.makeSymbolSpan (rhsSym,
+                                       function (evt) {
+                                         gb.saveCurrentEdit()
+                                           .then (function() {
+                                             gb.showGrammarEditPage()
+                                               .then (function() {
+                                                 gb.loadGrammarSymbol (rhsSym)
+                                               })
+                                           })
+                                       })
+                  : $('<span>').html (gb.renderMarkdown (rhsSym)))
+        }))
     },
 
     makePlayerSpan: function (name, displayName, callback) {

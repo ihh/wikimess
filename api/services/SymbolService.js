@@ -179,23 +179,30 @@ module.exports = {
   },
 
   updateAdjacencies: function (rhs, weight) {
-    var symbolIDs = rhs.filter (function (rhsSym) {
-      return typeof(rhsSym) === 'object' && typeof(rhsSym.id) !== 'undefined'
-    }).map (function (rhsSym) {
-      return rhsSym.id
+    console.log (rhs)
+    var symbolIDsPromise = Promise.map (rhs.filter (function (rhsSym) {
+      return typeof(rhsSym) === 'object'
+    }), function (rhsSym) {
+      return (typeof(rhsSym.id) !== 'undefined'
+              ? Promise.resolve (rhsSym.id)
+              : Symbol.findOneCached ({ name: rhsSym.name })
+              .then (function (symbol) { return symbol ? symbol.id : null }))
     })
-    var paddedSymbolIDs = [null].concat(symbolIDs).concat([null])
-    var updatePromises = paddedSymbolIDs.map (function (id, n) {
-      if (n === 0)
-        return null
-      var predId = paddedSymbolIDs[n-1]
-      return Adjacency.findOrCreate ({ predecessor: predId,
-                                       successor: id })
-        .then (function (adj) {
-          return Adjacency.update ({ id: adj.id },
-                                   { weight: adj.weight + weight })
-        })
+
+    return symbolIDsPromise.then (function (symbolIDs) {
+      var paddedSymbolIDs = [null].concat(symbolIDs).concat([null])
+      var updatePromises = paddedSymbolIDs.map (function (id, n) {
+        if (n === 0)
+          return null
+        var predId = paddedSymbolIDs[n-1]
+        return Adjacency.findOrCreate ({ predecessor: predId,
+                                         successor: id })
+          .then (function (adj) {
+            return Adjacency.update ({ id: adj.id },
+                                     { weight: adj.weight + weight })
+          })
+      })
+      return Promise.all (updatePromises)
     })
-    return Promise.all (updatePromises)
   },
 };

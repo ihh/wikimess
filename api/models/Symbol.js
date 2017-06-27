@@ -75,7 +75,7 @@ module.exports = {
       if (query.id)
         return Promise.resolve (Symbol.cache.byId[query.id])
       if (query.name)
-        return Promise.resolve (Symbol.cache.byId[query.name])
+        return Promise.resolve (Symbol.cache.byName[query.name])
     }
     return Symbol.findOne (query)
   },

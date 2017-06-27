@@ -451,8 +451,7 @@ input {
 }
 
 .grambot .mailbox .contents,
-.grambot .messageborder,
-.grambot .messagebody {
+.grambot .messageborder {
     flex-grow: 1;
     overflow-y: auto;
     display: flex;
@@ -467,6 +466,11 @@ input {
     margin: 2px;
 }
 
+.grambot .compose .messagecompose {
+    height: 30vh;
+    overflow-y: auto;
+}
+
 .grambot .compose .suggest {
     height: 10vh;
     display: flex;
@@ -474,6 +478,15 @@ input {
     justify-content: space-between;
     flex-wrap: wrap;
     overflow: auto;
+
+    border-top-style: solid;
+    border-bottom-style: solid;
+    border-width: 1px;
+}
+
+.grambot .compose .messagebody {
+    height: 40vh;
+    overflow-y: auto;
 }
 
 .grambot .compose .suggestlabel {
@@ -598,11 +611,7 @@ input {
     -webkit-box-sizing: border-box;
 }
 
-.grambot .messagebody textarea {
-    width: 100%;
-    max-height: 33vh;
-}
-
+.grambot .messagebody textarea,
 .grambot .grammarbar textarea {
     width: 100%;
     height: 100%;
