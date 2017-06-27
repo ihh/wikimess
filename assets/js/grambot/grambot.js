@@ -1092,13 +1092,13 @@ var GramBot = (function() {
                         gb.showCompose()
                         gb.generateMessageBody()
                       }).hide(),
-                      gb.dummyRandomizeButton = gb.makeIconButton ('dummy', function(){}),
+                      gb.dummyRandomizeButton = gb.makeIconButton ('dummy'),
                       gb.composeButton = gb.makeIconButton ('message', function() {
                         gb.showCompose()
                       }).hide(),
-                      gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide(),
+                      gb.destroyButton = gb.makeIconButton ('destroy').hide(),
                       gb.sendButton = gb.makeIconButton ('send', send),
-                      gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide(),
+                      gb.forwardButton = gb.makeIconButton ('forward').hide(),
                       gb.mailboxButton = gb.makeIconButton ('outbox', function() {
                         gb.showOutbox()
                       }),
@@ -1564,9 +1564,9 @@ var GramBot = (function() {
                      gb.readMessageDiv = $('<div class="readmessage">').hide(),
                      gb.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      $('<div class="messagecontrols">').append
-                     (gb.replyButton = gb.makeIconButton ('reply', function(){}).hide(),
-                      gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide(),
-                      gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide(),
+                     (gb.replyButton = gb.makeIconButton ('reply').hide(),
+                      gb.forwardButton = gb.makeIconButton ('forward').hide(),
+                      gb.destroyButton = gb.makeIconButton ('destroy').hide(),
                       gb.mailboxButton = gb.makeIconButton ('inbox', function() {
                         gb.showInbox()
                       }),
@@ -1911,9 +1911,7 @@ var GramBot = (function() {
       div.empty().append (renderHtml (props.content()),
                           buttonsDiv)
       
-      if (props.isConstant)
-        buttonsDiv.append (gb.makeIconButton ('locked'))
-      else {
+      if (!props.isConstant) {
         div.off ('click')
           .on ('click', function (evt) {
           if (props.firstClickCallback && props.firstClickCallback (evt))
@@ -2075,6 +2073,71 @@ var GramBot = (function() {
       var lhs = gb.symbolName[symbol.id]
       var editable = gb.symbolEditableByPlayer (symbol)
       var owned = gb.symbolOwnedByPlayer (symbol)
+      var ruleControlsDiv = $('<div class="rulecontrols">')
+      
+      ruleControlsDiv
+        .append (editable
+                 ? gb.makeIconButton
+                 ('create', function (evt) {
+                   evt.stopPropagation()
+                   gb.saveCurrentEdit()
+                     .then (function() {
+                       var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                       symbol.rules.push (newRhs)
+                       ruleControlsDiv.before (gb.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
+                       gb.selectGrammarRule (symbol)
+                       gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                     })
+                 }) : gb.makeIconButton ('dummy'),
+                 gb.makeIconButton
+                 ('randomize', function (evt) {
+                   evt.stopPropagation()
+                   gb.saveCurrentEdit()
+                     .then (function() {
+                       gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+                         .then (function (result) {
+                           gb.showingHelp = false
+		           gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
+		           gb.showMessageBody ({ div: gb.infoPaneContent,
+                                                 expansion: result.expansion,
+                                                 inEditor: true,
+                                                 animate: true })
+                           gb.infoPaneControls
+                             .html (gb.makeIconButton
+                                    ('forward',
+                                     function (evt) {
+                                       evt.stopPropagation()
+                                       gb.saveCurrentEdit()
+                                         .then (function() {
+                                           gb.showComposePage
+                                           ({ template: { content: [ symbol ] },
+                                              title: gb.symbolName[symbol.id].replace(/_/g,' '),
+                                              body: { rhs: [ result.expansion ] },
+                                              focus: 'playerSearchInput' })
+                                         })
+                                     }))
+		           gb.infoPane.show()
+                         })
+                     })
+                 }),
+                 (owned
+                  ? gb.makeIconButton
+                  ('locked', function() {
+                    gb.saveCurrentEdit()
+                      .then (function() {
+                        if (window.confirm('Relinquish ownership of symbol #' + gb.symbolName[symbol.id] + '?'))
+                          gb.lastSavePromise = gb.REST_deletePlayerSymbol (gb.playerID, symbol.id)
+                     })
+                  })
+                  : gb.makeIconButton
+                  ('hide', function (evt) {
+                    evt.stopPropagation()
+                    gb.saveCurrentEdit()
+                      .then (function() {
+                        gb.removeGrammarRule (symbol)
+                      })
+                  })))
+
       ruleDiv.empty()
         .append (this.makeEditableElement
                  ({ element: 'span',
@@ -2095,77 +2158,22 @@ var GramBot = (function() {
                     },
                     description: 'symbol #' + lhs + ' and all its expansions',
                     isConstant: !editable,
-                    confirmDestroy: function() {
-                      return window.confirm('Relinquish ownership of symbol #' + gb.symbolName[symbol.id] + '?')
-                    },
-                    destroyCallback: owned && function() {
-                      gb.removeGrammarRule (symbol)
-                      return gb.REST_deletePlayerSymbol (gb.playerID, symbol.id)
-                    },
                     updateCallback: function (newLhs) {
                       return gb.renameSymbol (symbol, newLhs)
                     },
                     otherButtonDivs: function() {
-                      return (owned
-                              ? []
-                              : [ gb.makeIconButton
-                                  ('hide', function (evt) {
-                                    evt.stopPropagation()
-                                    gb.saveCurrentEdit()
-                                      .then (function() {
-                                        gb.removeGrammarRule (symbol)
-                                      })
-                                  })])
-                        .concat ([gb.makeIconButton
-                                  ('randomize', function (evt) {
-                                    evt.stopPropagation()
-                                    gb.saveCurrentEdit()
-                                      .then (function() {
-                                        gb.REST_getPlayerExpand (gb.playerID, symbol.id)
-                                          .then (function (result) {
-                                            gb.showingHelp = false
-		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
-		                            gb.showMessageBody ({ div: gb.infoPaneContent,
-                                                                  expansion: result.expansion,
-                                                                  inEditor: true,
-                                                                  animate: true })
-                                            gb.infoPaneControls
-                                              .html (gb.makeIconButton
-                                                     ('forward',
-                                                      function (evt) {
-                                                        evt.stopPropagation()
-                                                        gb.saveCurrentEdit()
-                                                          .then (function() {
-                                                            gb.showComposePage
-                                                            ({ template: { content: [ symbol ] },
-                                                               title: gb.symbolName[symbol.id].replace(/_/g,' '),
-                                                               body: { rhs: [ result.expansion ] },
-                                                               focus: 'playerSearchInput' })
-                                                          })
-                                                      }))
-		                            gb.infoPane.show()
-                                          })
-                                      })
-                                  })])
-                        .concat (editable
-                                 ? [ gb.makeIconButton
-                                     ('create', function (evt) {
-                                       evt.stopPropagation()
-                                       gb.saveCurrentEdit()
-                                         .then (function() {
-                                           var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
-                                           symbol.rules.push (newRhs)
-                                           ruleDiv.append (gb.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
-                                           gb.selectGrammarRule (symbol)
-                                           gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                                         })
-                                     }) ]
-                                 : [])
-                    }
+                      return [$('<span class="owner">')
+                              .html (symbol.owner.id
+                                     ? gb.makePlayerSpan (symbol.owner.name,
+                                                          null,
+                                                          gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, symbol.owner)))
+                                     : "no owner")]
+                    },
                   }),
                  symbol.rules.map (function (rhs, n) {
                    return gb.makeGrammarRhsDiv (symbol, ruleDiv, n)
-                 }))
+                 }),
+                 ruleControlsDiv)
     },
 
     makeRhsText: function (rhs) {
@@ -2361,6 +2369,7 @@ var GramBot = (function() {
               .then (function (result) {
                 gb.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
+                  symbol.owner.name = gb.playerLogin
                   gb.symbolCache[symbol.id] = symbol
                 })
                 $.extend (gb.symbolName, result.name)
@@ -2388,7 +2397,7 @@ var GramBot = (function() {
 
             gb.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
             gb.symbolSearchResultsDiv = $('<div class="results">')
-            gb.endSearchResultsDiv = $('<div class="endresults">')
+            
             var searchButton = $('<span>')
 
             gb.container
@@ -2396,13 +2405,29 @@ var GramBot = (function() {
                        .append ($('<div class="query">')
                                 .append (searchButton, gb.searchInput)),
                        gb.symbolSearchDiv = $('<div class="symbolsearch">')
-                       .append (gb.symbolSearchResultsDiv,
-                                gb.endSearchResultsDiv)
+                       .append ($('<div class="searchtitle">')
+                                .append ($('<span>').text("Search results"),
+                                         $('<span class="closebutton">').html
+                                         (gb.makeIconButton ('close',
+                                                             gb.clearSymbolSearch.bind(gb)))),
+                                gb.symbolSearchResultsDiv)
                        .hide(),
                        gb.grammarBarDiv,
                        gb.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
-                       ($('<span class="help">').html
+                       ($('<span class="newlhs">').html
+                        (gb.makeIconButton ('create', function() {
+		          gb.saveCurrentEdit()
+                            .then (function() {
+                              return gb.socket_postPlayerSymbolNew (gb.playerID)
+                            }).then (function (result) {
+                              result.symbol.owner.name = gb.playerLogin
+                              gb.symbolCache[result.symbol.id] = result.symbol
+                              $.extend (gb.symbolName, result.name)
+                              gb.placeGrammarRuleDiv (result.symbol)
+                            })
+                        })),
+                        $('<span class="help">').html
                         (gb.makeIconButton ('help', function() {
                           if (gb.showingHelp) {
                             gb.infoPane.hide()
@@ -2418,18 +2443,7 @@ var GramBot = (function() {
 		                  gb.infoPane.show()
                                 })
 		            })
-                        })),
-                        ($('<span class="newlhs">').html
-                         (gb.makeIconButton ('create', function() {
-		           gb.saveCurrentEdit()
-                             .then (function() {
-                               return gb.socket_postPlayerSymbolNew (gb.playerID)
-                             }).then (function (result) {
-                               gb.symbolCache[result.symbol.id] = result.symbol
-                               $.extend (gb.symbolName, result.name)
-                               gb.placeGrammarRuleDiv (result.symbol)
-                             })
-                         })))))
+                        }))))
 
             gb.searchInput.attr ('placeholder', 'Search scripts')
             gb.placeIcon (gb.iconFilename.search, searchButton)
@@ -2488,15 +2502,13 @@ var GramBot = (function() {
       this.searchInput.val (this.lastSymbolSearch || '')
       this.symbolSearchResults = this.symbolSearchResults || { results: [] }
       this.symbolSearchResultsDiv.empty()
-      this.endSearchResultsDiv.empty()
       this.symbolSearchDiv.hide()
       if (this.lastSymbolSearch && this.lastSymbolSearch.length) {
         this.symbolSearchDiv.show()
         this.symbolSearchResultsDiv
-          .append ($('<span class="closebutton">').html
-                   (gb.makeIconButton ('close', gb.clearSymbolSearch.bind(gb))),
-                   $('<div class="searchtitle">').text("Search results"),
-                   this.makeSymbolDivs (this.symbolSearchResults.symbols, "There are no scripts matching '" + this.lastSymbolSearch + "'."))
+          .append (this.makeSymbolDivs (this.symbolSearchResults.symbols,
+                                        "There are no scripts matching '" + this.lastSymbolSearch + "'."),
+                   this.endSearchResultsDiv = $('<div class="endresults">'))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
         if (this.symbolSearchResults.more)
@@ -2696,9 +2708,10 @@ var GramBot = (function() {
       if (this.lastPlayerSearch && this.lastPlayerSearch.length) {
         this.playerSearchDiv.show()
         this.playerSearchResultsDiv
-          .append ($('<span class="closebutton">').html
-                   (gb.makeIconButton ('close', gb.clearPlayerSearch.bind(gb))),
-                   $('<div class="searchtitle">').text("Search results"),
+          .append ($('<div class="searchtitle">')
+                   .append ($('<span>').text("Search results"),
+                            $('<span class="closebutton">').html
+                            (gb.makeIconButton ('close', gb.clearPlayerSearch.bind(gb)))),
                    this.makeFollowDivs (this.playerSearchResults.players, "There are no players matching '" + this.lastPlayerSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)

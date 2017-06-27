@@ -592,22 +592,32 @@ module.exports = {
     var playerID = parseInt (req.params.player)
     var symbolID = parseInt (req.params.symid)
     var result = {}
-    var symbol = Symbol.byId[symbolID]
-    if (symbol) {
-      result.symbol = { id: symbol.id,
-                        owner: { id: symbol.owner },
-                        rules: symbol.rules }
-      SymbolService.resolveReferences ([symbol])
-        .then (function (names) {
-          result.name = names
-          Symbol.subscribe (req, symbolID)
-          res.json (result)
-        }).catch (function (err) {
-          console.log(err)
-          res.status(500).send(err)
-        })
-     } else
-       res.status(500).send(new Error ("Symbol not found"))
+    Symbol.findOneCached ({ id: symbolID })
+      .then (function (symbol) {
+        if (symbol) {
+          var ownerID = symbol.owner
+          result.symbol = { id: symbol.id,
+                            owner: { id: ownerID },
+                            rules: symbol.rules }
+          var ownerPromise = (ownerID === null
+                              ? Promise.resolve()
+                              : Player.findOne ({ id: ownerID })
+                              .then (function (player) {
+                                result.symbol.owner.name = player.name
+                              }))
+          ownerPromise.then (function() {
+            return SymbolService.resolveReferences ([symbol])
+          }).then (function (names) {
+            result.name = names
+            Symbol.subscribe (req, symbolID)
+            res.json (result)
+          }).catch (function (err) {
+            console.log(err)
+            res.status(500).send(err)
+          })
+        } else
+          res.status(500).send(new Error ("Symbol not found"))
+      })
   },
 
   // store a particular symbol
@@ -641,6 +651,9 @@ module.exports = {
                                 update)
         }).then (function (symbol) {
           result.name[symbolID] = symbol.name
+          return Player.findOne ({ id: playerID })
+        }).then (function (player) {
+          result.symbol.owner.name = player.name
           Symbol.message (symbolID, extend ({ message: "update" },
                                             result))
           res.json (result)

@@ -76,8 +76,13 @@ input {
 }
 
 .grambot .message .buttons .button,
-.grambot .grammarbar .button {
+.grambot .grammarbar .rhs .button {
     float: right;
+}
+
+.grambot .grammarbar .rulecontrols .button {
+    float: left;
+    padding-right: 4px;
 }
 
 .grambot .mailbox .mailboxname,
@@ -126,19 +131,10 @@ input {
     color: white;
 }
 
-.grambot .endresults {
-    width: 100%;
-    text-align: center;
-    font-style: italic;
-}
-
-.grambot .more {
-    text-decoration: underline;
-}
-
 .grambot .symbolsearch {
-    min-height: 20vh;
-    overflow-y: auto;
+    min-height: 4em;
+    max-height: 8em;
+    overflow: hidden;
     border-bottom-style: solid;
     border-width: 1px;
 
@@ -147,6 +143,29 @@ input {
     border-left-style: solid;
     border-right-style: solid;
     padding: 2px;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.grambot .symbolsearch .results {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.grambot .endresults {
+    width: 100%;
+    text-align: center;
+    font-style: italic;
+}
+
+.grambot .endresults span {
+    cursor: pointer;
+    padding-bottom: 4px;
+}
+
+.grambot .more {
+    text-decoration: underline;
 }
 
 .grambot .follow {
@@ -164,6 +183,7 @@ input {
 }
 
 .grambot .grammarbar .rule .rhs {
+    min-height: 1em;
     display: flex;
     flex-direction: column;
     margin: 1vw;
@@ -171,7 +191,10 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .compose .messagecompose p,
+.grambot .compose .messagecompose p {
+    display: inline-block;
+}
+
 .grambot .grammarbar .rule .rhs p {
     display: inline;
     margin: 0;
@@ -275,9 +298,22 @@ input {
 }
 
 .grambot .grammarbar .rule .button {
-    float: right;
-    padding-left: 1vw;
     cursor: pointer;
+}
+
+.grambot .grammarbar .rule .rulecontrols {
+    padding-left: 4px;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.grambot .grammarbar .rule .lhs .owner {
+    font-size: small;
+    font-style: italic;
+    font-weight: normal;
+    padding-right: 4px;
 }
 
 .grambot .follow .followcontrol,
@@ -388,6 +424,7 @@ input {
 .grambot .detailbar {
     flex-grow: 1;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .grambot .menubar label {
