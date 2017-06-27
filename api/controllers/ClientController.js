@@ -588,20 +588,22 @@ module.exports = {
     var playerID = parseInt (req.params.player)
     var symbolID = parseInt (req.params.symid)
     var result = {}
-    Symbol.findOne ({ id: symbolID })
-      .then (function (symbol) {
-        result.symbol = { id: symbol.id,
-                          owner: { id: symbol.owner },
-                          rules: symbol.rules }
-        return SymbolService.resolveReferences ([symbol])
-      }).then (function (names) {
-        result.name = names
-        Symbol.subscribe (req, symbolID)
-        res.json (result)
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send(err)
-      })
+    var symbol = Symbol.byId[symbolID]
+    if (symbol) {
+      result.symbol = { id: symbol.id,
+                        owner: { id: symbol.owner },
+                        rules: symbol.rules }
+      SymbolService.resolveReferences ([symbol])
+        .then (function (names) {
+          result.name = names
+          Symbol.subscribe (req, symbolID)
+          res.json (result)
+        }).catch (function (err) {
+          console.log(err)
+          res.status(500).send(err)
+        })
+     } else
+       res.status(500).send(new Error ("Symbol not found"))
   },
 
   // store a particular symbol
@@ -620,33 +622,29 @@ module.exports = {
                              rules: rules,
                              initialized: true },
                    name: {} }
-    
-    Symbol.find ({ not: { id: symbolID },
-                   name: name })
-      .then (function (eponSyms) {
-        if (eponSyms.length)
-          res.status(400).send ({error: "The symbol name " + name + " is already in use"})
-        else {
-          SymbolService.imposeSymbolLimit (update.rules, Symbol.maxRhsSyms)
-          SymbolService.createReferences (update.rules)
-          .then (function (rhsSymbols) {
-            rhsSymbols.forEach (function (rhsSymbol) {
-              result.name[rhsSymbol.id] = rhsSymbol.name
-            })
-            return Symbol.update ({ id: symbolID,
-                                    owner: [ playerID, null ] },
-                                  update)
-          }).then (function (symbol) {
-            result.name[symbolID] = symbol.name
-            Symbol.message (symbolID, extend ({ message: "update" },
-                                              result))
-            res.json (result)
+
+    if (Symbol.cache.byName[name] && Symbol.cache.byName[name].id !== symbolID)
+      res.status(400).send ({error: "The symbol name " + name + " is already in use"})
+    else {
+      SymbolService.imposeSymbolLimit (update.rules, Symbol.maxRhsSyms)
+      SymbolService.createReferences (update.rules)
+        .then (function (rhsSymbols) {
+          rhsSymbols.forEach (function (rhsSymbol) {
+            result.name[rhsSymbol.id] = rhsSymbol.name
           })
-        }
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send(err)
-      })
+          return Symbol.update ({ id: symbolID,
+                                  owner: [ playerID, null ] },
+                                update)
+        }).then (function (symbol) {
+          result.name[symbolID] = symbol.name
+          Symbol.message (symbolID, extend ({ message: "update" },
+                                            result))
+          res.json (result)
+        }).catch (function (err) {
+          console.log(err)
+          res.status(500).send(err)
+        })
+      }
   },
 
   // release ownership of a symbol
@@ -793,7 +791,7 @@ module.exports = {
     var beforeQuery = req.body.before && req.body.before.length && req.body.before[req.body.before.length-1]
     var nSuggestions = 5
     var beforePromise = (beforeQuery
-                         ? Symbol.findOne(beforeQuery).then (function (symbol) { return symbol ? symbol.id : null })
+                         ? Symbol.findOneCached(beforeQuery).then (function (symbol) { return symbol ? symbol.id : null })
                          : new Promise (function (resolve, reject) { resolve (null) }))
     beforePromise.then (function (beforeSymbolID) {
       return Adjacency.find ({ predecessor: beforeSymbolID,

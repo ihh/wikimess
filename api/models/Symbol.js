@@ -41,35 +41,66 @@ module.exports = {
   maxNodes: 100,
   maxRhsSyms: 20,
   maxTemplateSyms: 20,
-  
-  // lifecycle callbacks to autogenerate names
-  autonamePrefix: 'script',
-  autonameCount: 1,
-  autonameRegex: /^script(\d+)$/,
 
-  initAutonameCount() {
+  // in-memory cache
+  cache: { byId: {},
+           byName: {} },
+
+  // automatic naming
+  autoname: { defaultPrefix: 'script',
+              maxSuffix: {},
+              regex: /^(.*?)(\d+)$/ },
+
+  // cache accessors
+  initCache: function() {
     return Symbol.find().then (function (symbols) {
-      symbols.forEach (function (symbol) {
-        Symbol.updateAutonameCount (symbol)
-      })
+      symbols.forEach (Symbol.updateCache)
     })
   },
   
-  updateAutonameCount (symbol) {
-    var match = Symbol.autonameRegex.exec (symbol.name)
+  updateCache: function (symbol, callback) {
+    Symbol.cache.byId[symbol.id] = symbol
+    Symbol.cache.byName[symbol.name] = symbol
+    var match = Symbol.autoname.regex.exec (symbol.name)
     if (match)
-      Symbol.autonameCount = Math.max (Symbol.autonameCount, parseInt(match[1]) + 1)
+      Symbol.autoname.maxSuffix[match[1]] = Math.max (Symbol.autoname.maxSuffix[match[1]] || 0, parseInt(match[2]))
+    if (callback)
+      callback()
+  },
+
+  findOneCached: function (query) {
+    if (Object.keys(query).length === 1) {
+      if (query.id)
+        return Promise.resolve (Symbol.cache.byId[query.id])
+      if (query.name)
+        return Promise.resolve (Symbol.cache.byId[query.name])
+    }
+    return Symbol.findOne (query)
   },
   
+  // lifecycle callbacks to update cache
   beforeCreate: function (symbol, callback) {
-    if (!symbol.name)
-      symbol.name = Symbol.autonamePrefix + (Symbol.autonameCount++)
+    if (!symbol.name) {
+      var prefix = symbol.prefix || Symbol.autoname.defaultPrefix
+      var nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 0) + 1
+      symbol.name = prefix + nextSuffix
+    }
     callback()
+  },
+  
+  afterCreate: function (symbol, callback) {
+    Symbol.updateCache (symbol, callback)
   },
 
   afterUpdate: function (symbol, callback) {
-    Symbol.updateAutonameCount (symbol)
+    Symbol.updateCache (symbol, callback)
+  },
+
+  afterDestroy: function (symbols, callback) {
+    symbols.forEach (function (symbol) {
+      delete cache.byId[symbol.id]
+      delete cache.byName[symbol.name]
+    })
     callback()
   },
 };
-

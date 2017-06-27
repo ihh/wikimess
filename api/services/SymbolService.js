@@ -122,7 +122,7 @@ module.exports = {
       else
         query.id = symbolQueryOrString.id
       
-      return Symbol.findOne (query)
+      return Symbol.findOneCached (query)
         .then (function (symbol) {
           var symInfo = { id: symbol.id, name: symbol.name, rhs: [] }
 
