@@ -297,8 +297,8 @@ var GramBot = (function() {
       return this.socketGetPromise ('/p/' + playerID + '/unsubscribe')
     },
     
-    socket_getPlayerSymbolNew: function (playerID) {
-      return this.socketGetPromise ('/p/' + playerID + '/symbol')
+    socket_postPlayerSymbolNew: function (playerID, data) {
+      return this.socketPostPromise ('/p/' + playerID + '/symbol', data)
     },
 
     socket_getPlayerSymbols: function (playerID) {
@@ -2137,7 +2137,7 @@ var GramBot = (function() {
                          (gb.makeIconButton ('create', function() {
 		           gb.saveCurrentEdit()
                              .then (function() {
-                               return gb.socket_getPlayerSymbolNew (gb.playerID)
+                               return gb.socket_postPlayerSymbolNew (gb.playerID)
                              }).then (function (result) {
                                gb.symbolCache[result.symbol.id] = result.symbol
                                $.extend (gb.symbolName, result.name)

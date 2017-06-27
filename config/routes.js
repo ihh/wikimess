@@ -91,9 +91,9 @@ module.exports.routes = {
   'PUT /p/:player/message/:message/rating':  'ClientController.rateMessage',
 
   'GET /p/:player/symbols':          'ClientController.getSymbolsByOwner',
-  'GET /p/:player/symbol':           'ClientController.newSymbol',
   'GET /p/:player/symbol/:symid':    'ClientController.getSymbol',
   'PUT /p/:player/symbol/:symid':    'ClientController.putSymbol',
+  'POST /p/:player/symbol':          'ClientController.newSymbol',
   'DELETE /p/:player/symbol/:symid': 'ClientController.releaseSymbol',
 
   'GET /p/:player/symbol/:symid/unsubscribe': 'ClientController.unsubscribeSymbol',

@@ -54,7 +54,9 @@ module.exports = {
   // cache accessors
   initCache: function() {
     return Symbol.find().then (function (symbols) {
-      symbols.forEach (Symbol.updateCache)
+      symbols.forEach (function (symbol) {
+        Symbol.updateCache (symbol)
+      })
     })
   },
   
@@ -82,8 +84,17 @@ module.exports = {
   beforeCreate: function (symbol, callback) {
     if (!symbol.name) {
       var prefix = symbol.prefix || Symbol.autoname.defaultPrefix
-      var nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 0) + 1
+      var nextSuffix = ''
+      if (Symbol.cache.byName[prefix]) {
+        var match = Symbol.autoname.regex.exec (prefix)
+        if (match)
+          prefix = match[1]
+        nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 0) + 1
+        if (match)
+          nextSuffix = Math.max (nextSuffix, parseInt(match[2]))
+      }
       symbol.name = prefix + nextSuffix
+      delete symbol.prefix
     }
     callback()
   },

@@ -568,7 +568,11 @@ module.exports = {
   newSymbol: function (req, res) {
     var playerID = parseInt (req.params.player)
     var result = {}
-    Symbol.create ({ owner: playerID })
+    var symInfo = { owner: playerID }
+    if (req.body.symbol)
+      extend (symInfo, { prefix: req.body.symbol.name,
+                         rules: req.body.symbol.rules })
+    Symbol.create (symInfo)
       .then (function (symbol) {
         result.symbol = { id: symbol.id,
                           owner: { id: playerID },
