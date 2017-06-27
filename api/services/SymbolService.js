@@ -179,7 +179,6 @@ module.exports = {
   },
 
   updateAdjacencies: function (rhs, weight) {
-    console.log (rhs)
     var symbolIDsPromise = Promise.map (rhs.filter (function (rhsSym) {
       return typeof(rhsSym) === 'object'
     }), function (rhsSym) {

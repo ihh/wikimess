@@ -66,6 +66,7 @@ input {
     opacity: 1;
 }
 
+.grambot .suggest .button,
 .grambot .newlhs .button,
 .grambot .help .button,
 .grambot .grammarbar .button {
@@ -467,12 +468,18 @@ input {
 }
 
 .grambot .compose .messagecompose {
-    height: 30vh;
+    height: 20vh;
+    min-height: 20vh;
     overflow-y: auto;
+}
+
+.grambot .compose .placeholder {
+    font-style: italic;
 }
 
 .grambot .compose .suggest {
     height: 10vh;
+    min-height: 10vh;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -485,7 +492,7 @@ input {
 }
 
 .grambot .compose .messagebody {
-    height: 40vh;
+    flex-grow: 1;
     overflow-y: auto;
 }
 
@@ -604,20 +611,16 @@ input {
     max-height: 4em;
 }
 
-.grambot .messagebody textarea,
+.grambot .messagecompose textarea,
 .grambot .grammarbar textarea {
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
 }
 
-.grambot .messagebody textarea,
-.grambot .grammarbar textarea {
-    width: 100%;
-    height: 100%;
-}
-
-.grambot .messagebody textarea {
+.grambot .messagecompose textarea {
     flex-grow: 1;
     resize: none;
 }
