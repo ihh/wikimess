@@ -89,7 +89,7 @@ var GramBot = (function() {
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
     autocompleteDelay: 500,
-    unfocusDelay: 100,
+    unfocusDelay: 200,
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     copy: 'copy',
@@ -917,7 +917,48 @@ var GramBot = (function() {
           if (config.body)
             gb.composition.body = config.body
 
-          gb.clearTimer ('autocompleteTimer')
+          gb.clearTimer ('autosuggestTimer')
+          function autosuggest (input) {
+            var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
+            if (caretPos === caretEnd) {
+              var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
+              var symbolSuggestionPromise, getInsertText
+              // autosuggest
+              var endsWithSymbolRegex = /#([A-Za-z0-9_]+)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
+              var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
+              if (endsWithSymbolMatch && !symbolContinuesRegex.exec(newValAfter)) {
+                var prefix = endsWithSymbolMatch[1]
+                symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
+                getInsertText = function (symbol) { return symbol.name.substr (prefix.length) + ' ' }
+              } else {
+                // symbol suggestions
+                var beforeSymbols = gb.parseRhs (newValBefore, true)
+                var afterSymbols = gb.parseRhs (newValAfter, true)
+                symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
+                getInsertText = function (symbol) { return '#' + symbol.name + ' ' }
+              }
+              symbolSuggestionPromise.then (function (result) {
+                if (result.symbols.length) {
+                  gb.suggestionDiv.empty()
+                    .append ($('<span>').text('Suggestions:'),
+                             result.symbols.map (function (symbol) {
+                               gb.symbolName[symbol.id] = symbol.name
+                               return gb.makeSymbolSpan (symbol, function (evt) {
+                                 input.focus()
+                                 gb.suggestionDiv.empty()
+                                 var updatedNewValBefore = newValBefore + getInsertText(symbol)
+                                 input.val (updatedNewValBefore + newValAfter)
+                                 gb.setCaretToPos (input, updatedNewValBefore.length)
+                                 autosuggest (input)
+                               })
+                             }))
+                    .on ('click', function() { input.focus() })
+                } else
+                  gb.suggestionDiv.empty()
+              })
+            }
+          }
+          
           gb.messageBodyDiv = gb.makeEditableElement
           ({ element: 'div',
              className: 'messagebody',
@@ -926,45 +967,9 @@ var GramBot = (function() {
              showCallback: function() { gb.suggestionDiv.show() },
              hideCallback: function() { gb.suggestionDiv.hide() },
              changeCallback: function (input) {
-               gb.setTimer ('autocompleteTimer',
-                            gb.autocompleteDelay,
-                            function() {
-                              var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
-                              if (caretPos === caretEnd) {
-                                var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
-                                var symbolSuggestionPromise, getInsertText
-                                // autocomplete
-                                var endsWithSymbolRegex = /#([A-Za-z0-9_]+)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
-                                var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
-                                if (endsWithSymbolMatch && !symbolContinuesRegex.exec(newValAfter)) {
-                                  var prefix = endsWithSymbolMatch[1]
-                                  symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
-                                  getInsertText = function (symbol) { return symbol.name.substr (prefix.length) + ' ' }
-                                } else {
-                                  // symbol suggestions
-                                  var beforeSymbols = gb.parseRhs (newValBefore, true)
-                                  var afterSymbols = gb.parseRhs (newValAfter, true)
-                                  symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
-                                  getInsertText = function (symbol) { return '#' + symbol.name + ' ' }
-                                }
-                                symbolSuggestionPromise.then (function (result) {
-                                  if (result.symbols.length) {
-                                    gb.suggestionDiv.empty()
-                                      .append (result.symbols.map (function (symbol) {
-                                        gb.symbolName[symbol.id] = symbol.name
-                                        return gb.makeSymbolSpan (symbol, function (evt) {
-                                          input.focus()
-                                          gb.suggestionDiv.empty()
-                                          var updatedNewValBefore = newValBefore + getInsertText(symbol)
-                                          input.val (updatedNewValBefore + newValAfter)
-                                          gb.setCaretToPos (input, updatedNewValBefore.length)
-                                        })
-                                      }))
-                                  } else
-                                    gb.suggestionDiv.empty()
-                                })
-                              }
-                            })
+               gb.setTimer ('autosuggestTimer',
+                            gb.autosuggestDelay,
+                            autosuggest.bind (gb, input))
              },
              alwaysUpdate: true,
              updateCallback: function (newContent) {
