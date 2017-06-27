@@ -61,6 +61,7 @@
     color: white;
 }
 
+.grambot.plain .templates .template:nth-child(odd),
 .grambot.plain .followsection .follow:nth-child(odd),
 .grambot.plain .mailbox .contents .message:nth-child(odd) {
     background: #eee;

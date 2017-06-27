@@ -916,9 +916,6 @@ var GramBot = (function() {
           gb.composition.template = config.template || gb.composition.template || {}
           gb.composition.template.content = gb.composition.template.content || []
 
-          if (config.body)
-            gb.composition.body = config.body
-
           gb.clearTimer ('autosuggestTimer')
           gb.autosuggestStatus = {}
           function autosuggest (input) {
@@ -995,7 +992,14 @@ var GramBot = (function() {
                return gb.renderMarkdown (gb.makeExpansionText (gb.composition.body))
              }
            })
-          gb.showMessageBody()
+
+          if (config.body) {
+            gb.composition.body = config.body
+            gb.showMessageBody()
+          } else if (config.template)
+            gb.generateMessageBody()
+          else
+            gb.showMessageBody()
           
           function send() {
             if (!gb.composition.recipient)
@@ -1566,7 +1570,31 @@ var GramBot = (function() {
         .then (function() {
           gb.showNavBar ('status')
           gb.showGameStatusPage (gb.REST_getPlayerStatus)
-          gb.detailBarDiv.prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin, gb.playerName)))
+          gb.detailBarDiv
+            .prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin, gb.playerName)))
+          gb.REST_getPlayerSuggestTemplates (gb.playerID)
+            .then (function (result) {
+              gb.detailBarDiv.append ($('<div class="trending">')
+                                      .append ($('<h1>').text("Trending messages"),
+                                               $('<div class="templates">')
+                                               .append (result.templates.map (function (template) {
+                                                 return $('<div class="template">')
+                                                   .append ($('<span class="title">')
+                                                            .text (template.title)
+                                                            .on ('click', function() {
+                                                              gb.REST_getPlayerTemplate (gb.playerID, template.id)
+                                                                .then (function (templateResult) {
+                                                                  gb.showComposePage ({ title: template.title,
+                                                                                        template: templateResult.template,
+                                                                                        focus: 'playerSearchInput' })
+                                                                })
+                                                            }),
+                                                            $('<span class="by">').text(' by '),
+                                                            gb.makePlayerSpan (template.author.name,
+                                                                               null,
+                                                                               gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author))))
+                                               }))))
+            })
         })
     },
 

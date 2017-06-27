@@ -624,3 +624,19 @@ input {
     max-height: 50vh;
     flex-grow: 1;
 }
+
+.grambot .trending {
+    border-top-style: solid;
+    border-bottom-style: solid;
+    border-width: 1px;
+    margin-top: 4px;
+    padding-bottom: 12px;
+}
+
+.grambot .templates .template .title {
+    font-weight: bold;
+}
+
+.grambot .templates .template .by {
+    font-style: italic;
+}

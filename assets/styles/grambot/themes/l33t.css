@@ -61,6 +61,7 @@
     color: darkgreen;
 }
 
+.grambot.l33t .templates .template:nth-child(odd),
 .grambot.l33t .followsection .follow:nth-child(odd),
 .grambot.l33t .mailbox .contents .message:nth-child(odd) {
     background: #222;

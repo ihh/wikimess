@@ -748,6 +748,7 @@ module.exports = {
     var playerID = parseInt (req.params.player)
     var nSuggestions = 5
     return Template.find ({ previous: null })
+      .populate ('author')
       .then (function (templates) {
         templates.forEach (function (template) {
           template.rating = template.nRatings ? (template.sumRatings / template.nRatings) : 0
@@ -756,6 +757,9 @@ module.exports = {
         (templates, nSuggestions, function (a, b) { return b.rating - a.rating })
         .map (function (template) {
           return { id: template.id,
+                   author: { id: template.author.id,
+                             name: template.author.name,
+                             displayName: template.author.displayName },
                    title: template.title }
         })
         res.json ({ templates: suggestedTemplates })
