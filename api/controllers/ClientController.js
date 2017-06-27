@@ -792,25 +792,41 @@ module.exports = {
   // suggest best N symbols (currently implemented using adjacencies)
   suggestSymbol: function (req, res) {
     var playerID = parseInt (req.params.player)
-    var beforeQuery = req.body.before && req.body.before.length && req.body.before[req.body.before.length-1]
+    var beforeQueries = req.body.before
     var nSuggestions = 5
-    var beforePromise = (beforeQuery
-                         ? Symbol.findOneCached(beforeQuery).then (function (symbol) { return symbol ? symbol.id : null })
-                         : new Promise (function (resolve, reject) { resolve (null) }))
-    beforePromise.then (function (beforeSymbolID) {
-      return Adjacency.find ({ predecessor: beforeSymbolID,
-                               successor: { '!': null } })
-        .sort ('weight DESC')
-        .limit (nSuggestions)
-        .populate ('successor')
-    }).then (function (adjacencies) {
-      res.json ({ symbols: adjacencies
-                  .map (function (adj) { return { id: adj.successor.id,
-                                                  name: adj.successor.name } }) })
-    }).catch (function (err) {
-      console.log(err)
-      res.status(500).send(err)
-    })
+
+    function* beforeQueryGenerator() {
+      while (beforeQueries.length)
+        yield beforeQueries.pop()
+    }
+
+    function beforePromise (generator) {
+      var iter = generator.next()
+      if (iter.done)
+        return Promise.resolve (null)
+      else
+        return Symbol.findOneCached (iter.value).then (function (symbol) {
+          if (symbol)
+            return Promise.resolve (symbol.id)
+          return beforePromise (generator)
+        })
+    }
+
+    beforePromise (beforeQueryGenerator())
+      .then (function (beforeSymbolID) {
+        return Adjacency.find ({ predecessor: beforeSymbolID,
+                                 successor: { '!': null } })
+          .sort ('weight DESC')
+          .limit (nSuggestions)
+          .populate ('successor')
+      }).then (function (adjacencies) {
+        res.json ({ symbols: adjacencies
+                    .map (function (adj) { return { id: adj.successor.id,
+                                                    name: adj.successor.name } }) })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send(err)
+      })
   },
 
 };

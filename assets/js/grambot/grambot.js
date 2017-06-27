@@ -88,8 +88,8 @@ var GramBot = (function() {
     grammarAutosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
-    autocompleteDelay: 500,
-    unfocusDelay: 200,
+    autosuggestDelay: 500,
+    unfocusDelay: 1000,
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     copy: 'copy',
@@ -480,13 +480,13 @@ var GramBot = (function() {
                      .append ($('<form>')
                               .append ($('<label for="player">')
                                        .text('Player name'))
-                              .append (gb.nameInput = $('<input name="player" type="text">')
+                              .append (gb.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="player" type="text">')
                                        .attr('maxlength', gb.maxPlayerLoginLength)
                                        .on('change', sanitizeLogin)
                                        .on('keyup', sanitizeLogin))
                               .append ($('<label for="player">')
                                        .text('Password'))
-                              .append (gb.passwordInput = $('<input name="password" type="password">'))))
+                              .append (gb.passwordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="password" type="password">'))))
             .append ($('<div class="menubar">')
                      .append ($('<ul>')
                               .append (gb.makeListLink ('Log in', gb.doReturnLogin))
@@ -767,7 +767,7 @@ var GramBot = (function() {
                      .append ($('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Login name'))
-                                       .append (gb.loginInput = $('<input type="text">')
+                                       .append (gb.loginInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
                                                 .val(gb.playerLogin)
                                                 .on('keyup',sanitizeLogin)
                                                 .on('change',sanitizeLogin)
@@ -775,7 +775,7 @@ var GramBot = (function() {
                               $('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Full name'))
-                                       .append (gb.nameInput = $('<input type="text">')
+                                       .append (gb.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
                                                 .val(gb.playerName)
                                                 .attr('maxlength', gb.maxPlayerNameLength)))))
             .append (backBar)
@@ -898,13 +898,15 @@ var GramBot = (function() {
         .then (function() {
           gb.showNavBar ('compose')
 
-          gb.playerSearchInput = $('<textarea class="recipient">')
+          gb.saveOnPageExit()
+
+          gb.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
           gb.playerSearchResultsDiv = $('<div class="results">')
 
           if (config.title)
             gb.composition.title = config.title
           
-          gb.messageTitleInput = $('<textarea class="title">')
+          gb.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
             .val (gb.composition.title)
             .on ('keyup', function() {
               gb.composition.title = gb.messageTitleInput.val()
@@ -918,37 +920,43 @@ var GramBot = (function() {
             gb.composition.body = config.body
 
           gb.clearTimer ('autosuggestTimer')
+          gb.autosuggestStatus = {}
           function autosuggest (input) {
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
-            if (caretPos === caretEnd) {
+            if (caretPos === caretEnd && (newVal !== gb.autosuggestStatus.lastVal || caretPos !== gb.autosuggestStatus.lastCaretPos)) {
+              gb.autosuggestStatus.lastVal = newVal
+              gb.autosuggestStatus.lastCaretPos = caretPos
               var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
               var symbolSuggestionPromise, getInsertText
               // autosuggest
-              var endsWithSymbolRegex = /#([A-Za-z0-9_]+)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
+              var endsWithSymbolRegex = /#([A-Za-z0-9_]*)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
               var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
-              if (endsWithSymbolMatch && !symbolContinuesRegex.exec(newValAfter)) {
+              if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
                 var prefix = endsWithSymbolMatch[1]
                 symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
-                getInsertText = function (symbol) { return symbol.name.substr (prefix.length) + ' ' }
+                getInsertText = function (symbol) {
+                  return symbol.name.substr (prefix.length) + ' '
+                }
               } else {
                 // symbol suggestions
                 var beforeSymbols = gb.parseRhs (newValBefore, true)
                 var afterSymbols = gb.parseRhs (newValAfter, true)
                 symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
-                getInsertText = function (symbol) { return '#' + symbol.name + ' ' }
+                getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
               }
               symbolSuggestionPromise.then (function (result) {
                 if (result.symbols.length) {
                   gb.suggestionDiv.empty()
-                    .append ($('<span>').text('Suggestions:'),
+                    .append ($('<div class="suggestlabel">').text('Suggestions:'),
                              result.symbols.map (function (symbol) {
                                gb.symbolName[symbol.id] = symbol.name
                                return gb.makeSymbolSpan (symbol, function (evt) {
-                                 input.focus()
+                                 evt.stopPropagation()
                                  gb.suggestionDiv.empty()
                                  var updatedNewValBefore = newValBefore + getInsertText(symbol)
                                  input.val (updatedNewValBefore + newValAfter)
                                  gb.setCaretToPos (input, updatedNewValBefore.length)
+                                 input.focus()
                                  autosuggest (input)
                                })
                              }))
@@ -1048,6 +1056,7 @@ var GramBot = (function() {
                        }).hide())))
 
           gb.restoreScrolling (gb.messageBodyDiv)
+          gb.restoreScrolling (gb.suggestionDiv)
 
           if (config.recipient) {
             gb.composition.recipient = config.recipient
@@ -1266,7 +1275,7 @@ var GramBot = (function() {
       config = config || {}
       div = config.div || gb.messageBodyDiv
       expansion = config.expansion || gb.composition.body
-      if (config.animate) {
+      if (config.animate && gb.countSymbolNodes(expansion,true)) {
         gb.animationExpansion = _.cloneDeep (expansion)
         gb.animationDiv = div
         gb.animationSteps = gb.countSymbolNodes (expansion)
@@ -1334,14 +1343,14 @@ var GramBot = (function() {
               : '')
     },
 
-    countSymbolNodes: function (node) {
+    countSymbolNodes: function (node, includeLimitedNodes) {
       var gb = this
       return (typeof(node) === 'string'
               ? 0
               : (node.rhs
                  ? node.rhs.reduce (function (total, child) {
-                   return total + gb.countSymbolNodes (child)
-                 }, node.limit ? 1 : 0)
+                   return total + gb.countSymbolNodes (child, includeLimitedNodes)
+                 }, ((node.id || node.name) && (includeLimitedNodes || !node.limit)) ? 1 : 0)
                  : 0))
     },
     
@@ -1652,6 +1661,15 @@ var GramBot = (function() {
         })
     },
 
+    saveOnPageExit: function() {
+      var gb = this
+      gb.pageExit = function() {
+	gb.container.off ('click')
+        return gb.saveCurrentEdit()
+      }
+      gb.container.on ('click', gb.saveCurrentEdit.bind(gb))
+    },
+
     makeIconButton: function (iconName, callback, color) {
       var button = $('<span>').addClass('button').text(iconName)
       this.getIconPromise (this.iconFilename[iconName])
@@ -1686,7 +1704,7 @@ var GramBot = (function() {
             var oldText = renderText (props.content())
             var divRows = Math.max (Math.round (div.height() / parseFloat(div.css('line-height'))),
                                     oldText.split('\n').length)
-            var input = $('<textarea>').val(oldText)
+            var input = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="editable">').val(oldText)
             if (props.guessHeight)
               input.attr('rows',divRows)
             var changeCallback = props.changeCallback || function (input) { input.val (sanitize (input.val())) }
@@ -1699,12 +1717,14 @@ var GramBot = (function() {
                 if (props.keycodeFilter && !props.keycodeFilter (evt.keyCode))
                   evt.preventDefault()
               })
+/*
             input.on ('focusout', function() {
               gb.setTimer ('unfocusTimer', gb.unfocusDelay, gb.unfocusAndSave.bind(gb))
             })
             input.on ('focusin', function() {
               gb.clearTimer ('unfocusTimer')
             })
+*/
             if (props.maxLength)
               input.attr ('maxlength', props.maxLength)
             gb.unfocusAndSave = function() {
@@ -1965,31 +1985,28 @@ var GramBot = (function() {
                                     evt.stopPropagation()
                                     gb.saveCurrentEdit()
                                       .then (function() {
-                                        gb.saveCurrentEdit()
-                                          .then (function() {
-                                            gb.REST_getPlayerExpand (gb.playerID, symbol.id)
-                                              .then (function (result) {
-                                                gb.showingHelp = false
-		                                gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
-		                                gb.showMessageBody ({ div: gb.infoPaneContent,
-                                                                      expansion: result.expansion,
-                                                                      animate: true })
-                                                gb.infoPaneControls
-                                                  .html (gb.makeIconButton
-                                                         ('forward',
-                                                          function (evt) {
-                                                            evt.stopPropagation()
-                                                            gb.saveCurrentEdit()
-                                                              .then (function() {
-                                                                gb.showComposePage
-                                                                ({ template: { content: [ symbol ] },
-                                                                   title: gb.symbolName[symbol.id].replace(/_/g,' '),
-                                                                   body: { rhs: [ result.expansion ] },
-                                                                   focus: 'playerSearchInput' })
-                                                              })
-                                                          }))
-		                                gb.infoPane.show()
-                                              })
+                                        gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+                                          .then (function (result) {
+                                            gb.showingHelp = false
+		                            gb.infoPaneTitle.text ('#' + gb.symbolName[symbol.id])
+		                            gb.showMessageBody ({ div: gb.infoPaneContent,
+                                                                  expansion: result.expansion,
+                                                                  animate: true })
+                                            gb.infoPaneControls
+                                              .html (gb.makeIconButton
+                                                     ('forward',
+                                                      function (evt) {
+                                                        evt.stopPropagation()
+                                                        gb.saveCurrentEdit()
+                                                          .then (function() {
+                                                            gb.showComposePage
+                                                            ({ template: { content: [ symbol ] },
+                                                               title: gb.symbolName[symbol.id].replace(/_/g,' '),
+                                                               body: { rhs: [ result.expansion ] },
+                                                               focus: 'playerSearchInput' })
+                                                          })
+                                                      }))
+		                            gb.infoPane.show()
                                           })
                                       })
                                   })])
@@ -2170,12 +2187,8 @@ var GramBot = (function() {
 
           def.then (function() {
             
-            gb.pageExit = function() {
-	      gb.container.off ('click')
-              return gb.saveCurrentEdit()
-            }
+            gb.saveOnPageExit()
 
-            gb.container.on ('click', gb.saveCurrentEdit.bind(gb))
             gb.grammarBarDiv = $('<div class="grammarbar">')
 
             gb.infoPane = $('<div class="grammarinfopane">')
@@ -2192,7 +2205,7 @@ var GramBot = (function() {
 
             gb.showingHelp = false
 
-            gb.searchInput = $('<input>')
+            gb.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
             gb.symbolSearchResultsDiv = $('<div class="results">')
             gb.endSearchResultsDiv = $('<div class="endresults">')
             var searchButton = $('<span>')
@@ -2339,7 +2352,7 @@ var GramBot = (function() {
         .then (function() {
           gb.showNavBar ('follows')
 
-          gb.searchInput = $('<input>')
+          gb.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
           gb.playerSearchResultsDiv = $('<div class="results">')
           gb.endSearchResultsDiv = $('<div class="endresults">')
           var searchButton = $('<span>')

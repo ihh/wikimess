@@ -469,6 +469,18 @@ input {
 
 .grambot .compose .suggest {
     height: 10vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    overflow: auto;
+}
+
+.grambot .compose .suggestlabel {
+}
+
+.grambot .compose .suggestions {
+    overflow-wrap: break-word;
 }
 
 .grambot .mailbox .contents .message {
