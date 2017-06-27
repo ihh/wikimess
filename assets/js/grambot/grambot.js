@@ -137,7 +137,7 @@ var GramBot = (function() {
                errors: true,
 	       stack: false },
 
-    emptyMessageWarning: "_This message is empty. Tap here to edit the message text._",
+    emptyMessageWarning: "_This message is empty._",
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],
@@ -1028,32 +1028,33 @@ var GramBot = (function() {
                                        .append ($('<span class="label">').text ('Subject:'),
                                                 $('<span class="input">').append (gb.messageTitleInput))),
                               $('<div class="messageborder">')
-                              .append (gb.suggestionDiv = $('<div class="suggest">').hide(),
-                                       gb.messageBodyDiv)),
+                              .append (gb.messageBodyDiv,
+                                       gb.suggestionDiv = $('<div class="suggest">').hide())),
                      gb.mailboxDiv = $('<div class="mailbox">').hide(),
                      gb.readMessageDiv = $('<div class="readmessage">').hide(),
                      $('<div class="messagecontrols">').append
-                     ($('<span>').append
-                      (gb.randomizeButton = gb.makeIconButton ('randomize', function() {
+                     (gb.editButton = gb.makeIconButton ('edit', function() {
+                       gb.stopAnimation()
+                       gb.messageBodyDiv.trigger ('click')
+                     }),
+                      gb.randomizeButton = gb.makeIconButton ('randomize', function() {
                         gb.showCompose()
                         gb.generateMessageBody()
                       }),
-                       gb.composeButton = gb.makeIconButton ('message', function() {
-                         gb.showCompose()
-                       }).hide(),
-                       gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide()),
-                      $('<span>').append
-                      (gb.sendButton = gb.makeIconButton ('send', send),
-                       gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide()),
-                      $('<span>').append
-                      (gb.mailboxButton = gb.makeIconButton ('outbox', function() {
+                      gb.composeButton = gb.makeIconButton ('message', function() {
+                        gb.showCompose()
+                      }).hide(),
+                      gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide(),
+                      gb.sendButton = gb.makeIconButton ('send', send),
+                      gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide(),
+                      gb.mailboxButton = gb.makeIconButton ('outbox', function() {
                         gb.showOutbox()
                       }),
-                       gb.reloadButton = gb.makeIconButton ('reload', function() {
-                         // clear screen and introduce a short delay so it looks more like a refresh
-                         gb.mailboxDiv.empty()
-                         window.setTimeout (gb.showOutbox.bind(gb), 10)
-                       }).hide())))
+                      gb.reloadButton = gb.makeIconButton ('reload', function() {
+                        // clear screen and introduce a short delay so it looks more like a refresh
+                        gb.mailboxDiv.empty()
+                        window.setTimeout (gb.showOutbox.bind(gb), 10)
+                      }).hide()))
 
           gb.restoreScrolling (gb.messageBodyDiv)
           gb.restoreScrolling (gb.suggestionDiv)
@@ -1094,6 +1095,7 @@ var GramBot = (function() {
 
     showCompose: function (error) {
       this.composeDiv.show()
+      this.editButton.show()
       this.randomizeButton.show()
       this.sendButton.show()
       this.mailboxButton.show()
@@ -1115,6 +1117,7 @@ var GramBot = (function() {
       gb.mailboxButton.hide()
       gb.sendButton.hide()
       gb.forwardButton.hide()
+      gb.editButton.hide()
       gb.randomizeButton.hide()
       gb.destroyButton.hide()
       gb.readMessageDiv.hide()
@@ -1130,6 +1133,7 @@ var GramBot = (function() {
                                    object: 'recipient',
                                    showMessage: function (message) {
                                      gb.composeButton.hide()
+                                     gb.editButton.hide()
                                      gb.randomizeButton.hide()
                                      gb.sendButton.hide()
                                      gb.composeDiv.hide()
@@ -1428,21 +1432,17 @@ var GramBot = (function() {
                      gb.readMessageDiv = $('<div class="readmessage">').hide(),
                      gb.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      $('<div class="messagecontrols">').append
-                     ($('<span>').append
-                      (gb.replyButton = gb.makeIconButton ('reply', function(){}).hide()),
-                      $('<span>').append
-                      (gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide()),
-                      $('<span>').append
-                      (gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide()),
-                      $('<span>').append
-                      (gb.mailboxButton = gb.makeIconButton ('inbox', function() {
+                     (gb.replyButton = gb.makeIconButton ('reply', function(){}).hide(),
+                      gb.forwardButton = gb.makeIconButton ('forward', function(){}).hide(),
+                      gb.destroyButton = gb.makeIconButton ('destroy', function(){}).hide(),
+                      gb.mailboxButton = gb.makeIconButton ('inbox', function() {
                         gb.showInbox()
                       }),
-                       gb.reloadButton = gb.makeIconButton ('reload', function() {
-                         // clear screen and introduce a short delay so it looks more like a refresh
-                         gb.mailboxDiv.empty()
-                         window.setTimeout (gb.showInbox.bind(gb), 10)
-                       }))))
+                      gb.reloadButton = gb.makeIconButton ('reload', function() {
+                        // clear screen and introduce a short delay so it looks more like a refresh
+                        gb.mailboxDiv.empty()
+                        window.setTimeout (gb.showInbox.bind(gb), 10)
+                      })))
 
           gb.showInbox()
         })
