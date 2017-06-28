@@ -284,9 +284,10 @@ var GramBot = (function() {
       return this.logGet ('/p/' + playerID + '/suggest/reply/' + templateID)
     },
 
-    REST_postPlayerSuggestSymbol: function (playerID, beforeSymbols, afterSymbols) {
+    REST_postPlayerSuggestSymbol: function (playerID, beforeSymbols, afterSymbols, temperature) {
       return this.logPost ('/p/' + playerID + '/suggest/symbol', { before: beforeSymbols,
-                                                                   after: afterSymbols })
+                                                                   after: afterSymbols,
+                                                                   temperature: temperature })
     },
     
     // WebSockets interface
@@ -925,7 +926,6 @@ var GramBot = (function() {
           gb.composition.template.content = gb.composition.template.content || []
 
           gb.clearTimer ('autosuggestTimer')
-          gb.autosuggestStatus = {}
           function autosuggestKey (before, after) {
             return before.map (function (rhsSym) { return rhsSym.name })
               .concat (['.'],
@@ -933,6 +933,7 @@ var GramBot = (function() {
               .join (' ')
           }
           function textareaAutosuggest (input) {
+            input.focus()  // in case we were triggered by player hitting 'randomize' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== gb.autosuggestStatus.lastVal)
               if (gb.updateComposeContent (gb.parseRhs (newVal)))
@@ -948,6 +949,7 @@ var GramBot = (function() {
               if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
                 var prefix = endsWithSymbolMatch[1]
                 delete gb.autosuggestStatus.lastKey
+                gb.autosuggestStatus.temperature = 0
                 symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
                 getInsertText = function (symbol) {
                   return symbol.name.substr (prefix.length) + ' '
@@ -959,7 +961,7 @@ var GramBot = (function() {
                 var key = autosuggestKey (beforeSymbols, afterSymbols)
                 if (gb.autosuggestStatus.lastKey !== key) {
                   gb.autosuggestStatus.lastKey = key
-                  symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
+                  symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols, gb.autosuggestStatus.temperature)
                   getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
                 }
               }
@@ -980,7 +982,7 @@ var GramBot = (function() {
             var key = autosuggestKey (before, [])
             if (gb.autosuggestStatus.lastKey !== key) {
               gb.autosuggestStatus.lastKey = key
-              gb.populateSuggestions (gb.REST_postPlayerSuggestSymbol (gb.playerID, before, []),
+              gb.populateSuggestions (gb.REST_postPlayerSuggestSymbol (gb.playerID, before, [], gb.autosuggestStatus.temperature),
                                       function (symbol) {
                                         var spacer = ' '
                                         gb.updateComposeContent (gb.composition.template.content.concat ([{ id: symbol.id,
@@ -1024,6 +1026,7 @@ var GramBot = (function() {
                 })
             }
           }
+          gb.autosuggestStatus = { temperature: 0, refresh: divAutosuggest }
 
           gb.messageComposeDiv = $('<div class="messagecompose">')
           function updateComposeDiv() {
@@ -1031,6 +1034,7 @@ var GramBot = (function() {
             (gb.messageComposeDiv,
              { content: function() { return gb.composition.template ? gb.composition.template.content : [] },
                changeCallback: function (input) {
+                 gb.autosuggestStatus.temperature = 0
                  gb.setTimer ('autosuggestTimer',
                               gb.autosuggestDelay,
                               textareaAutosuggest.bind (gb, input))
@@ -1038,6 +1042,8 @@ var GramBot = (function() {
                showCallback: function (input) {
                  delete gb.autosuggestStatus.lastKey
                  delete gb.autosuggestStatus.lastVal
+                 gb.autosuggestStatus.temperature = 0
+                 gb.autosuggestStatus.refresh = textareaAutosuggest.bind (gb, input)
                  gb.clearTimer ('autosuggestTimer')
                  gb.suggestionDiv
                    .empty()
@@ -1047,6 +1053,8 @@ var GramBot = (function() {
                },
                hideCallback: function() {
                  delete gb.autosuggestStatus.lastKey
+                 gb.autosuggestStatus.temperature = 0
+                 gb.autosuggestStatus.refresh = divAutosuggest
                  divAutosuggest()
                },
                alwaysUpdate: true,
@@ -1118,9 +1126,14 @@ var GramBot = (function() {
                        gb.stopAnimation()
                        gb.messageComposeDiv.trigger ('click')
                      }),
-                      gb.randomizeButton = gb.makeIconButton ('randomize', function() {
+                      gb.randomizeButton = gb.makeIconButton ('randomize', function (evt) {
+                        evt.stopPropagation()
                         gb.showCompose()
                         gb.generateMessageBody()
+                        delete gb.autosuggestStatus.lastVal
+                        delete gb.autosuggestStatus.lastKey
+                        gb.autosuggestStatus.temperature++
+                        gb.autosuggestStatus.refresh()
                       }).hide(),
                       gb.dummyRandomizeButton = gb.makeIconButton ('dummy'),
                       gb.composeButton = gb.makeIconButton ('message', function() {
@@ -1170,12 +1183,13 @@ var GramBot = (function() {
           return true
         })
     },
-
+    
     updateComposeContent: function (newContent) {
       if (JSON.stringify(this.composition.template.content) !== JSON.stringify(newContent)) {
         delete this.composition.template.id
         delete this.composition.previousTemplate
         this.composition.template.content = newContent
+        this.autosuggestStatus.temperature = 0
         this.showRandomizeButton (true)
         return true
       }

@@ -846,8 +846,9 @@ module.exports = {
   suggestSymbol: function (req, res) {
     var playerID = parseInt (req.params.player)
     var beforeQueries = req.body.before
+    var temperature = req.body.temperature || 0
     var nSuggestions = 5
-
+    
     function* beforeQueryGenerator() {
       while (beforeQueries.length)
         yield beforeQueries.pop()
@@ -867,15 +868,32 @@ module.exports = {
 
     beforePromise (beforeQueryGenerator())
       .then (function (beforeSymbolID) {
-        return Adjacency.find ({ predecessor: beforeSymbolID,
-                                 successor: { '!': null } })
-          .sort ('weight DESC')
-          .limit (nSuggestions)
-          .populate ('successor')
-      }).then (function (adjacencies) {
-        res.json ({ symbols: adjacencies
-                    .map (function (adj) { return { id: adj.successor.id,
-                                                    name: adj.successor.name } }) })
+        var adjCache = Adjacency.cache[beforeSymbolID] || {}
+        var symbolIDs
+        if (temperature) {
+          var allSymbolIDs = Object.keys (Symbol.cache.byId)
+          var pseudocount = 1 / allSymbolIDs.length
+          var heatedWeights = allSymbolIDs.map (function (symbolID) {
+            return adjCache[symbolID] || pseudocount  // TODO: multiply pseudocount by Symbol rating
+          }).map (function (weight) {
+            return Math.pow (weight, 1 / temperature)
+          })
+          var indices = SortService.multiSampleByWeight (heatedWeights, nSuggestions)
+          symbolIDs = indices.map (function (n) { return allSymbolIDs[n] })
+        } else {
+          symbolIDs = SortService.partialSort (Object.keys(adjCache).filter (function (symbolID) {
+            return symbolID !== 'null'
+          }), nSuggestions, function (a, b) { return adjCache[b] - adjCache[a] })
+          if (!symbolIDs.length) {
+            var allSymbolIDs = Object.keys (Symbol.cache.byId)
+            // TODO: weight sample by Symbol rating
+            symbolIDs.push (allSymbolIDs [Math.floor (Math.random() * allSymbolIDs.length)])
+          }
+        }
+        var symbols = symbolIDs.map (function (symbolID) { return Symbol.cache.byId[symbolID] })
+        res.json ({ symbols: symbols
+                    .map (function (symbol) { return { id: symbol.id,
+                                                       name: symbol.name } }) })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send(err)

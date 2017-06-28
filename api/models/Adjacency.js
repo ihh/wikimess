@@ -27,7 +27,25 @@ module.exports = {
       type: 'integer',
       defaultsTo: 0
     },
+  },
     
-  }
+  // in-memory cache
+  cache: {},
+
+  // cache accessors
+  initCache: function() {
+    return Adjacency.find().then (function (adjacencies) {
+      adjacencies.forEach (function (adjacency) {
+        Adjacency.updateCache (adjacency)
+      })
+    })
+  },
+  
+  updateCache: function (adj, callback) {
+    Adjacency.cache[adj.predecessor] = Adjacency.cache[adj.predecessor] || {}
+    Adjacency.cache[adj.predecessor][adj.successor] = adj.weight
+    if (callback)
+      callback()
+  },
 };
 

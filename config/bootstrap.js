@@ -9,15 +9,20 @@
  * http://sailsjs.org/#!/documentation/reference/sails.config/sails.config.bootstrap.html
  */
 
-module.exports.bootstrap = function(cb) {
+module.exports.bootstrap = function (callback) {
 
   // initialize admin Player
   Player.initAdmin()
     .then (function (admin) {
       // initialize Symbol cache & autonaming
       return Symbol.initCache()
+    }).then (function () {
+      // initialize Adjacency cache
+      return Adjacency.initCache()
     }).then (function() {
-      cb()
-    }).catch (function (err) { throw(err) })
+      callback()
+    }).catch (function (err) {
+      throw (err)
+    })
 
 };

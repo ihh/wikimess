@@ -41,4 +41,21 @@ module.exports = {
     return undefined
   },
 
+  multiSampleByWeight: function (weights, n) {
+    var samples = []
+    var totalWeight = weights.reduce (function (total, w) { return total + w }, 0)
+    while (n > 0 && totalWeight > 0) {
+      var w = totalWeight * Math.random()
+      for (var i = 0; i < weights.length; ++i)
+	if ((w -= weights[i]) <= 0) {
+	  samples.push (i)
+	  totalWeight -= weights[i]
+	  weights[i] = 0
+	  break
+	}
+      --n
+    }
+    return samples
+  },
+
 }
