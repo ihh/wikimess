@@ -1397,14 +1397,20 @@ var GramBot = (function() {
 
     renderMarkdown: function (markdown, transform) {
       var gb = this
+      // this method is pretty hacky...
+      // first, intercept whitespace strings and return them unmodified
       if (!markdown.match (/\S/))
         return markdown
+      // next, call marked to convert Markdown to HTML string
       var renderedHtml = marked (markdown, this.markedConfig)
           .replace (/@(\w+)/g, function (match, name) {
             return '<span class="playertag">@<span class="name">' + name + '</span></span>'
           })
+      // next, call optional transform method on HTML string (e.g. to put animation styling on #symbols)
       if (transform)
         renderedHtml = transform (renderedHtml)
+      // next, convert HTML string to JQuery object, and use JQuery to add player-tag styling
+      // and asynchronously resolve player names
       var rendered = $(renderedHtml)
       $(rendered).find('.playertag')
         .each (function (n, playerTag) {
