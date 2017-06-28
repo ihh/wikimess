@@ -755,25 +755,33 @@ var GramBot = (function() {
       var gb = this
       return this.pushView ('name')
         .then (function() {
-          var backBar = gb.popBack (function (backButton) {
-            backButton.off()
-            gb.nameInput.prop('disabled',true)
+          function saveChanges() {
             var newName = gb.nameInput.val()
             var newLogin = gb.loginInput.val()
             if (newLogin.length && newName.length) {
-              gb.REST_postPlayerConfig (gb.playerID, { name: newLogin,
+              return gb.REST_postPlayerConfig (gb.playerID, { name: newLogin,
                                                        displayName: newName })
                 .then (function (result) {
                   delete gb.playerNameCache[gb.playerLogin]  // just in case it was cached in a previous login
                   gb.playerLogin = newLogin
                   gb.playerName = newName
                   gb.writeLocalStorage ('playerLogin')
-                  gb.popView()
                 }).fail (function (err) {
                   gb.showModalWebError (err, gb.popView.bind(gb))
                 })
             } else
-              gb.popView()
+              return $.Deferred().resolve()
+          }
+          gb.pageExit = saveChanges
+          var backBar = gb.popBack (function (backButton) {
+            backButton.off()
+            gb.nameInput.prop('disabled',true)
+            saveChanges()
+              .then (function (result) {
+                gb.popView()
+              }).fail (function (err) {
+                gb.showModalWebError (err, gb.popView.bind(gb))
+              })
           })
           var sanitizeLogin = gb.sanitizer ('loginInput', gb.sanitizePlayerName)
           gb.container
@@ -802,14 +810,18 @@ var GramBot = (function() {
       var gb = this
       return this.pushView ('bio')
         .then (function() {
-          var backBar = gb.popBack (function (backButton) {
-            backButton.off()
+          function saveChanges() {
             gb.playerInfo.publicBio = gb.publicBioInput.val()
             gb.playerInfo.privateBio = gb.privateBioInput.val()
-            gb.REST_postPlayerConfig (gb.playerID, { noMailUnlessFollowed: gb.playerInfo.noMailUnlessFollowed,
-                                                     gender: gb.playerInfo.gender,
-                                                     publicBio: gb.playerInfo.publicBio,
-                                                     privateBio: gb.playerInfo.privateBio })
+            return gb.REST_postPlayerConfig (gb.playerID, { noMailUnlessFollowed: gb.playerInfo.noMailUnlessFollowed,
+                                                            gender: gb.playerInfo.gender,
+                                                            publicBio: gb.playerInfo.publicBio,
+                                                            privateBio: gb.playerInfo.privateBio })
+          }
+          gb.pageExit = saveChanges
+          var backBar = gb.popBack (function (backButton) {
+            backButton.off()
+            saveChanges()
               .then (function (result) {
                 gb.popView()
               }).fail (function (err) {
@@ -1855,29 +1867,31 @@ var GramBot = (function() {
               gb.showNavBar ('status')
               gb.showGameStatusPage (status)
               gb.detailBarDiv
-                .prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin, gb.playerName)))
+                .prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin)))
               return gb.REST_getPlayerSuggestTemplates (gb.playerID)
                 .then (function (result) {
-                  gb.detailBarDiv.append ($('<div class="trending">')
-                                          .append ($('<h1>').text("Trending messages"),
-                                                   $('<div class="templates">')
-                                                   .append (result.templates.map (function (template) {
-                                                     return $('<div class="template">')
-                                                       .append ($('<span class="title">')
-                                                                .text (template.title)
-                                                                .on ('click', function() {
-                                                                  gb.REST_getPlayerTemplate (gb.playerID, template.id)
-                                                                    .then (function (templateResult) {
-                                                                      gb.showComposePage ({ title: template.title,
-                                                                                            template: templateResult.template,
-                                                                                            focus: 'playerSearchInput' })
-                                                                    })
-                                                                }),
-                                                                $('<span class="by">').text(' by '),
-                                                                gb.makePlayerSpan (template.author.name,
-                                                                                   null,
-                                                                                   gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author))))
-                                                   }))))
+                  if (result && result.templates.length)
+                    gb.detailBarDiv.append ($('<div class="filler">'),
+                                            $('<div class="popular">')
+                                            .append ($('<h1>').text("Popular messages"),
+                                                     $('<div class="templates">')
+                                                     .append (result.templates.map (function (template) {
+                                                       return $('<div class="template">')
+                                                         .append ($('<span class="title">')
+                                                                  .text (template.title)
+                                                                  .on ('click', function() {
+                                                                    gb.REST_getPlayerTemplate (gb.playerID, template.id)
+                                                                      .then (function (templateResult) {
+                                                                        gb.showComposePage ({ title: template.title,
+                                                                                              template: templateResult.template,
+                                                                                              focus: 'playerSearchInput' })
+                                                                      })
+                                                                  }),
+                                                                  $('<span class="by">').text(' by '),
+                                                                  gb.makePlayerSpan (template.author.name,
+                                                                                     null,
+                                                                                     gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author))))
+                                                     }))))
                 })
             })
         })
@@ -1893,7 +1907,7 @@ var GramBot = (function() {
             .then (function() {
               gb.showGameStatusPage (status)
               gb.otherStatusID = follow.id
-              gb.makeFollowDiv (follow)
+              gb.makeFollowDiv ({ follow: follow, hideFullName: true })
               if (status.following)
                 follow.makeUnfollowButton()
               gb.detailBarDiv.prepend (follow.followDiv)
@@ -1932,14 +1946,39 @@ var GramBot = (function() {
       gb.restoreScrolling (gb.detailBarDiv)
       
       gb.detailBarDiv.append
-      ($('<div class="ratinginfo">')
-       .append ($('<span class="ratinginfolabel">').text ("Messages:"),
-                gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nSenderRatings, "rating") + ")")),
-       $('<div class="ratinginfo">')
-       .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
-                gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nAuthorRatings, "rating") + ")")))
+      ($('<div class="ratings">')
+       .append ($('<div class="ratinginfo">')
+                .append ($('<span class="ratinginfolabel">').text ("Messages:"),
+                         gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
+                         $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nSenderRatings, "rating") + ")")),
+                $('<div class="ratinginfo">')
+                .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
+                         gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
+                         $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nAuthorRatings, "rating") + ")"))))
+
+      gb.detailBarDiv.append
+      ($('<div class="biofact">')
+       .append ($('<span class="biofactlabel">').text('Name: '),
+                $('<span class="biofactvalue">').text(status.displayName)))
+
+      var pronouns = { male: 'he/him/his', female: 'she/her/hers', neither: 'they/theirs' }
+      if (status.gender !== 'secret')
+        gb.detailBarDiv.append
+      ($('<div class="biofact">')
+       .append ($('<span class="biofactlabel">').text('Pronouns: '),
+                $('<span class="biofactvalue">').text(pronouns[status.gender])))
+
+      if (status.publicBio && status.publicBio.length)
+        gb.detailBarDiv.append
+      ($('<div class="biofact">')
+       .append ($('<div class="biotitle">').text('Public info'),
+                $('<div class="bio">').text(status.publicBio)))
+
+      if (status.privateBio && status.privateBio.length)
+        gb.detailBarDiv.append
+      ($('<div class="biofact">')
+       .append ($('<div class="biotitle">').text('Private info'),
+                $('<div class="bio">').text(status.privateBio)))
     },
 
     // edit
@@ -2753,7 +2792,9 @@ var GramBot = (function() {
 	}).fail (gb.reloadOnFail())
     },
     
-    makeFollowDiv: function (follow, callback) {
+    makeFollowDiv: function (info) {
+      var follow = info.follow
+      var callback = info.callback
       var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
       var composeDiv =  $('<span class="followcontrol">')
@@ -2798,7 +2839,7 @@ var GramBot = (function() {
         makeUnfollowButton()
       else
         makeFollowButton()
-      var nameDiv = gb.makePlayerSpan (follow.name, follow.displayName, callback)
+      var nameDiv = gb.makePlayerSpan (follow.name, info.hideFullName ? null : follow.displayName, callback)
       var followDiv = $('<div class="follow">')
           .append (nameDiv)
       if (follow.reachable)
@@ -2821,7 +2862,8 @@ var GramBot = (function() {
         ? followList.map (function (follow) {
           gb.followsById[follow.id] = gb.followsById[follow.id] || []
           gb.followsById[follow.id].push (follow)
-          gb.makeFollowDiv (follow, gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, follow)))
+          gb.makeFollowDiv ({ follow: follow,
+                              callback: gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, follow)) })
           follow.setFollowing = function (flag) {
             gb.followsById[follow.id].forEach (function (f) { f.following = flag })
           }
