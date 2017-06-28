@@ -301,8 +301,8 @@ var GramBot = (function() {
       return this.socketGetPromise ('/p/' + playerID + '/unsubscribe')
     },
     
-    socket_postPlayerSymbolNew: function (playerID, data) {
-      return this.socketPostPromise ('/p/' + playerID + '/symbol', data)
+    socket_postPlayerSymbolNew: function (playerID, symbol) {
+      return this.socketPostPromise ('/p/' + playerID + '/symbol', symbol)
     },
 
     socket_getPlayerSymbols: function (playerID) {
@@ -2120,6 +2120,8 @@ var GramBot = (function() {
                          })
                      })
                  }),
+                 gb.makeIconButton ('copy', gb.createNewSymbol.bind (gb, { symbol: { name: symbol.name,
+                                                                                     rules: symbol.rules } })),
                  (owned
                   ? gb.makeIconButton
                   ('locked', function() {
@@ -2416,17 +2418,7 @@ var GramBot = (function() {
                        gb.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
                        ($('<span class="newlhs">').html
-                        (gb.makeIconButton ('create', function() {
-		          gb.saveCurrentEdit()
-                            .then (function() {
-                              return gb.socket_postPlayerSymbolNew (gb.playerID)
-                            }).then (function (result) {
-                              result.symbol.owner.name = gb.playerLogin
-                              gb.symbolCache[result.symbol.id] = result.symbol
-                              $.extend (gb.symbolName, result.name)
-                              gb.placeGrammarRuleDiv (result.symbol)
-                            })
-                        })),
+                        (gb.makeIconButton ('create', gb.createNewSymbol.bind(gb))),
                         $('<span class="help">').html
                         (gb.makeIconButton ('help', function() {
                           if (gb.showingHelp) {
@@ -2537,6 +2529,19 @@ var GramBot = (function() {
       : $('<span>').text (emptyMessage)
     },
 
+    createNewSymbol: function (symbolInfo) {
+      var gb = this
+      gb.saveCurrentEdit()
+        .then (function() {
+          return gb.socket_postPlayerSymbolNew (gb.playerID, symbolInfo)
+        }).then (function (result) {
+          result.symbol.owner.name = gb.playerLogin
+          gb.symbolCache[result.symbol.id] = result.symbol
+          $.extend (gb.symbolName, result.name)
+          gb.placeGrammarRuleDiv (result.symbol)
+        })
+    },
+    
     // follows
     showFollowsPage: function() {
       var gb = this
