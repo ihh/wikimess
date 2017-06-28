@@ -60,6 +60,7 @@ var GramBot = (function() {
     this.pushedViews = []
 
     this.symbolName = {}
+    this.playerNameCache = {}
     this.composition = {}
 
     // log in
@@ -197,8 +198,12 @@ var GramBot = (function() {
       return this.logGet ('/p/' + playerID + '/status')
     },
 
-    REST_getPlayerStatusOther: function (playerID, otherID) {
-      return this.logGet ('/p/' + playerID + '/status/' + otherID)
+    REST_getPlayerStatusId: function (playerID, otherID) {
+      return this.logGet ('/p/' + playerID + '/status/id/' + otherID)
+    },
+
+    REST_getPlayerId: function (playerID, otherName) {
+      return this.logGet ('/p/' + playerID + '/id/' + otherName)
     },
 
     REST_postId: function (playerName) {
@@ -752,6 +757,7 @@ var GramBot = (function() {
             if (newLogin.length && newName.length) {
               gb.REST_postPlayerConfig (gb.playerID, { name: newLogin, displayName: newName })
                 .then (function (result) {
+                  delete gb.playerNameCache[gb.playerLogin]  // just in case it was cached in a previous login
                   gb.playerLogin = newLogin
                   gb.playerName = newName
                   gb.writeLocalStorage ('playerLogin')
@@ -920,6 +926,12 @@ var GramBot = (function() {
 
           gb.clearTimer ('autosuggestTimer')
           gb.autosuggestStatus = {}
+          function autosuggestKey (before, after) {
+            return before.map (function (rhsSym) { return rhsSym.name })
+              .concat (['.'],
+                       after.map (function (rhsSym) { return rhsSym.name }))
+              .join (' ')
+          }
           function textareaAutosuggest (input) {
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== gb.autosuggestStatus.lastVal)
@@ -935,6 +947,7 @@ var GramBot = (function() {
               var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
               if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
                 var prefix = endsWithSymbolMatch[1]
+                delete gb.autosuggestStatus.lastKey
                 symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
                 getInsertText = function (symbol) {
                   return symbol.name.substr (prefix.length) + ' '
@@ -943,64 +956,73 @@ var GramBot = (function() {
                 // symbol suggestions
                 var beforeSymbols = gb.parseRhs (newValBefore, true)
                 var afterSymbols = gb.parseRhs (newValAfter, true)
-                symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
-                getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
+                var key = autosuggestKey (beforeSymbols, afterSymbols)
+                if (gb.autosuggestStatus.lastKey !== key) {
+                  gb.autosuggestStatus.lastKey = key
+                  symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols)
+                  getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
+                }
               }
-              gb.populateSuggestions (symbolSuggestionPromise, function (symbol) {
-                var updatedNewValBefore = newValBefore + getInsertText (symbol)
-                input.val (updatedNewValBefore + newValAfter)
-                gb.setCaretToPos (input, updatedNewValBefore.length)
-                input.focus()
-                textareaAutosuggest (input)
-              })
+              if (symbolSuggestionPromise)
+                gb.populateSuggestions (symbolSuggestionPromise, function (symbol) {
+                  var updatedNewValBefore = newValBefore + getInsertText (symbol)
+                  input.val (updatedNewValBefore + newValAfter)
+                  gb.setCaretToPos (input, updatedNewValBefore.length)
+                  input.focus()
+                  textareaAutosuggest (input)
+                })
             }
           }
 
           function divAutosuggest() {
             var before = gb.composition.template.content
                 .filter (function (rhsSym) { return typeof(rhsSym) === 'object' })
-            gb.populateSuggestions (gb.REST_postPlayerSuggestSymbol (gb.playerID, before, []),
-                                    function (symbol) {
-                                      var spacer = ' '
-                                      gb.updateComposeContent (gb.composition.template.content.concat ([{ id: symbol.id,
-                                                                                                          name: symbol.name },
-                                                                                                        spacer]))
-                                      updateComposeDiv()
-                                      var generatePromise =
-                                          (gb.animationExpansion
-                                           ? gb.REST_getPlayerExpand (gb.playerID, symbol.id)
-                                           .then (function (result) {
-                                             gb.appendToMessageBody ([result.expansion, spacer])
-                                           })
-                                           : gb.generateMessageBody())
-                                      generatePromise.then (divAutosuggest)
-                                    })
-              .then (function() {
-                if (gb.composition.template.content.length)
-                  gb.suggestionDiv.append
-                (gb.makeIconButton ('backspace',
-                                    function() {
-                                      var newContent = gb.composition.template.content.slice(0)
-                                      var nSymPopped = 0
-                                      while (newContent.length) {
-                                        var poppedSym = newContent.pop()
-                                        ++nSymPopped
-                                        if (typeof(poppedSym) === 'object'
-                                            || poppedSym.match(/\S/))
-                                          break
-                                      }
-                                      gb.updateComposeContent (newContent)
-                                      updateComposeDiv()
-                                      if (gb.composition.body) {
-                                        gb.composition.body.rhs.splice
-                                        (gb.composition.template.content.length,
-                                         gb.composition.body.rhs.length - gb.composition.template.content.length)
-                                        gb.showMessageBody()
-                                      } else
-                                        gb.generateMessageBody()
-                                      divAutosuggest()
-                                    }))
-              })
+            var key = autosuggestKey (before, [])
+            if (gb.autosuggestStatus.lastKey !== key) {
+              gb.autosuggestStatus.lastKey = key
+              gb.populateSuggestions (gb.REST_postPlayerSuggestSymbol (gb.playerID, before, []),
+                                      function (symbol) {
+                                        var spacer = ' '
+                                        gb.updateComposeContent (gb.composition.template.content.concat ([{ id: symbol.id,
+                                                                                                            name: symbol.name },
+                                                                                                          spacer]))
+                                        updateComposeDiv()
+                                        var generatePromise =
+                                            (gb.animationExpansion
+                                             ? gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+                                             .then (function (result) {
+                                               gb.appendToMessageBody ([result.expansion, spacer])
+                                             })
+                                             : gb.generateMessageBody())
+                                        generatePromise.then (divAutosuggest)
+                                      })
+                .then (function() {
+                  if (gb.composition.template.content.length)
+                    gb.suggestionDiv.append
+                  (gb.makeIconButton ('backspace',
+                                      function() {
+                                        var newContent = gb.composition.template.content.slice(0)
+                                        var nSymPopped = 0
+                                        while (newContent.length) {
+                                          var poppedSym = newContent.pop()
+                                          ++nSymPopped
+                                          if (typeof(poppedSym) === 'object'
+                                              || poppedSym.match(/\S/))
+                                            break
+                                        }
+                                        gb.updateComposeContent (newContent)
+                                        updateComposeDiv()
+                                        if (gb.composition.body) {
+                                          gb.composition.body.rhs.splice
+                                          (gb.composition.template.content.length,
+                                           gb.composition.body.rhs.length - gb.composition.template.content.length)
+                                          gb.showMessageBody()
+                                        } else
+                                          gb.generateMessageBody()
+                                        divAutosuggest()
+                                      }))
+                })
+            }
           }
 
           gb.messageComposeDiv = $('<div class="messagecompose">')
@@ -1014,11 +1036,19 @@ var GramBot = (function() {
                               textareaAutosuggest.bind (gb, input))
                },
                showCallback: function (input) {
+                 delete gb.autosuggestStatus.lastKey
+                 delete gb.autosuggestStatus.lastVal
+                 gb.clearTimer ('autosuggestTimer')
                  gb.suggestionDiv
+                   .empty()
                    .off ('click')
                    .on ('click', function() { input.focus() })
+                 textareaAutosuggest (input)
                },
-               hideCallback: divAutosuggest,
+               hideCallback: function() {
+                 delete gb.autosuggestStatus.lastKey
+                 divAutosuggest()
+               },
                alwaysUpdate: true,
                updateCallback: function (newContent) {
                  return gb.updateComposeContent (newContent) ? gb.generateMessageBody() : $.Deferred().resolve()
@@ -1332,7 +1362,7 @@ var GramBot = (function() {
       if (forceNewSearch || searchText !== this.lastComposePlayerSearchText) {
         this.lastComposePlayerSearchText = searchText
         if (searchText.length)
-          this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText)
+          this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText.replace('@',''))
           .then (function (result) {
             gb.showComposePlayerSearchResults (result.players)
           })
@@ -1355,8 +1385,8 @@ var GramBot = (function() {
                                       function() {
                                         gb.playerSearchResultsDiv.hide()
                                         gb.composition.recipient = player
-                                        gb.playerSearchInput.val (gb.lastComposePlayerSearchText = player.name)
-                                      })
+                                        gb.playerSearchInput.val (gb.lastComposePlayerSearchText = '@' + player.name)
+                                      }).addClass('result')
           })).show()
         else
           this.playerSearchResultsDiv
@@ -1365,24 +1395,59 @@ var GramBot = (function() {
       }
     },
 
-    renderMarkdown: function (markdown) {
-      return (markdown.match(/\S/)
-              ? marked (markdown, this.markedConfig)
-              : markdown)
+    renderMarkdown: function (markdown, transform) {
+      var gb = this
+      if (!markdown.match (/\S/))
+        return markdown
+      var renderedHtml = marked (markdown, this.markedConfig)
+          .replace (/@(\w+)/g, function (match, name) {
+            return '<span class="playertag">@<span class="name">' + name + '</span></span>'
+          })
+      if (transform)
+        renderedHtml = transform (renderedHtml)
+      var rendered = $(renderedHtml)
+      $(rendered).find('.playertag')
+        .each (function (n, playerTag) {
+          var playerName = $(playerTag).find('.name').text()
+          gb.getPlayerId (playerName)
+            .then (function (player) {
+              if (player)
+                $(playerTag).removeClass('playertag').addClass('playerlink')
+                .on ('click', gb.showOtherStatusPage.bind (gb, player))
+            })
+        })
+      return rendered
+    },
+
+    getPlayerId: function (name) {
+      if (name === gb.playerLogin)
+        return $.Deferred().resolve (gb.playerID)
+      if (typeof(gb.playerNameCache[name]) !== 'undefined')
+        return $.Deferred().resolve (gb.playerNameCache[name])
+      return gb.REST_getPlayerId (gb.playerID, name)
+        .then (function (result) {
+          gb.playerNameCache[name] = result.player
+          return result.player
+        })
     },
     
     animateExpansion: function() {
       var gb = this
       this.clearTimer ('expansionAnimationTimer')
-      var markdown = this.renderMarkdown (this.makeExpansionText (this.animationExpansion, true)
-                                          .replace (/^\s*$/, gb.emptyMessageWarning))
       var nSymbols = 0
-      this.animationDiv
-        .html (markdown
-               .replace (/#(\w+)\.([a-z]+)/g,
-                         function (_match, name, className) {
-                           return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
-                         }))
+      var markdown = this.renderMarkdown
+      (this.makeExpansionText (this.animationExpansion, true)
+       .replace (/^\s*$/, gb.emptyMessageWarning),
+       function (html) {
+         return html.replace
+         (/#(\w+)\.([a-z]+)/g,
+          function (_match, name, className) {
+            return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
+          })
+       })
+      
+      this.animationDiv.html (markdown)
+               
       if (this.deleteFirstSymbolName (this.animationExpansion) || this.extraAnimationSteps-- > 0)
         this.setTimer ('expansionAnimationTimer',
                        Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)),
@@ -1694,51 +1759,57 @@ var GramBot = (function() {
     // status
     showStatusPage: function() {
       var gb = this
-      return this.setPage ('status')
-        .then (function() {
-          gb.showNavBar ('status')
-          gb.showGameStatusPage (gb.REST_getPlayerStatus)
-          gb.detailBarDiv
-            .prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin, gb.playerName)))
-          gb.REST_getPlayerSuggestTemplates (gb.playerID)
-            .then (function (result) {
-              gb.detailBarDiv.append ($('<div class="trending">')
-                                      .append ($('<h1>').text("Trending messages"),
-                                               $('<div class="templates">')
-                                               .append (result.templates.map (function (template) {
-                                                 return $('<div class="template">')
-                                                   .append ($('<span class="title">')
-                                                            .text (template.title)
-                                                            .on ('click', function() {
-                                                              gb.REST_getPlayerTemplate (gb.playerID, template.id)
-                                                                .then (function (templateResult) {
-                                                                  gb.showComposePage ({ title: template.title,
-                                                                                        template: templateResult.template,
-                                                                                        focus: 'playerSearchInput' })
-                                                                })
-                                                            }),
-                                                            $('<span class="by">').text(' by '),
-                                                            gb.makePlayerSpan (template.author.name,
-                                                                               null,
-                                                                               gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author))))
-                                               }))))
+      return gb.REST_getPlayerStatus (gb.playerID)
+        .then (function (status) {
+          return gb.setPage ('status')
+            .then (function() {
+              gb.showNavBar ('status')
+              gb.showGameStatusPage (status)
+              gb.detailBarDiv
+                .prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin, gb.playerName)))
+              return gb.REST_getPlayerSuggestTemplates (gb.playerID)
+                .then (function (result) {
+                  gb.detailBarDiv.append ($('<div class="trending">')
+                                          .append ($('<h1>').text("Trending messages"),
+                                                   $('<div class="templates">')
+                                                   .append (result.templates.map (function (template) {
+                                                     return $('<div class="template">')
+                                                       .append ($('<span class="title">')
+                                                                .text (template.title)
+                                                                .on ('click', function() {
+                                                                  gb.REST_getPlayerTemplate (gb.playerID, template.id)
+                                                                    .then (function (templateResult) {
+                                                                      gb.showComposePage ({ title: template.title,
+                                                                                            template: templateResult.template,
+                                                                                            focus: 'playerSearchInput' })
+                                                                    })
+                                                                }),
+                                                                $('<span class="by">').text(' by '),
+                                                                gb.makePlayerSpan (template.author.name,
+                                                                                   null,
+                                                                                   gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author))))
+                                                   }))))
+                })
             })
         })
     },
 
     showOtherStatusPage: function (follow) {
       var gb = this
-      return this.pushView ('otherStatus')
-        .then (function() {
-          gb.otherStatusID = follow.id
-          gb.makeFollowDiv (follow)
-          gb.showGameStatusPage (gb.REST_getPlayerStatusOther.bind (gb, gb.playerID, follow.id),
-                                   function (status) {
-                                     if (status.following)
-                                       follow.makeUnfollowButton()
-                                   })
-          gb.detailBarDiv.prepend (follow.followDiv)
-          gb.container.append (gb.popBack())
+      if (follow.id === this.playerID)
+        return this.showStatusPage()
+      return gb.REST_getPlayerStatusId (gb.playerID, follow.id)
+        .then (function (status) {
+          return gb.pushView ('otherStatus')
+            .then (function() {
+              gb.showGameStatusPage (status)
+              gb.otherStatusID = follow.id
+              gb.makeFollowDiv (follow)
+              if (status.following)
+                follow.makeUnfollowButton()
+              gb.detailBarDiv.prepend (follow.followDiv)
+              gb.container.append (gb.popBack())
+            })
         })
     },
 
@@ -1764,32 +1835,22 @@ var GramBot = (function() {
       })
     },
 
-    showGameStatusPage: function (getMethod, callback) {
+    showGameStatusPage: function (status) {
       var gb = this
 
-      this.container
-        .append (this.detailBarDiv = $('<div class="detailbar">'))
-      this.restoreScrolling (this.detailBarDiv)
-
-      getMethod.call (this, this.playerID, this.gameID)
-	.done (function (status) {
-          gb.detailBarDiv.append
-          ($('<div class="ratinginfo">')
-           .append ($('<span class="ratinginfolabel">').text ("Messages:"),
-                    gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                    $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nSenderRatings, "rating") + ")")),
-           $('<div class="ratinginfo">')
-           .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
-                    gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                    $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nAuthorRatings, "rating") + ")")))
-
-          // render status to detailBarDiv
-          if (callback)
-            callback (status)
-	})
-        .fail (function (err) {
-          console.log(err)
-        })
+      gb.container
+        .append (gb.detailBarDiv = $('<div class="detailbar">'))
+      gb.restoreScrolling (gb.detailBarDiv)
+      
+      gb.detailBarDiv.append
+      ($('<div class="ratinginfo">')
+       .append ($('<span class="ratinginfolabel">').text ("Messages:"),
+                gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
+                $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nSenderRatings, "rating") + ")")),
+       $('<div class="ratinginfo">')
+       .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
+                gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
+                $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nAuthorRatings, "rating") + ")")))
     },
 
     // edit
@@ -2689,7 +2750,7 @@ var GramBot = (function() {
       if (searchText !== this.lastPlayerSearch) {
         this.lastPlayerSearch = searchText
         delete this.playerSearchResults
-        this.REST_postPlayerSearchPlayersAll (this.playerID, searchText)
+        this.REST_postPlayerSearchPlayersAll (this.playerID, searchText.replace('@',''))
           .then (function (ret) {
             gb.playerSearchResults = ret
             gb.showPlayerSearchResults()

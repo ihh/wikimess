@@ -480,8 +480,8 @@ input {
     box-shadow: 1vw 1vw 1vw 0px gray;
 }
 
-.grambot .messageheader .results .player {
-    padding: 2px;
+.grambot .messageheader .input .results .result {
+    display: block;
 }
 
 .grambot .messageheader .field {

@@ -53,8 +53,8 @@ module.exports = {
   searchAllPlayers: function (req, res) {
     var searcherID = parseInt(req.params.player), query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
-    Player.find ({ displayName: { contains: query },
-                   id: { '!': searcherID },
+    Player.find ({ or: [{ displayName: { contains: query } },
+                        { name: { contains: query } }],
 		   admin: false,
 		   human: true })
       .limit (resultsPerPage + 1)
@@ -70,15 +70,15 @@ module.exports = {
 	    res.json ({ page: page,
                         more: players.length > resultsPerPage,
                         players: players.slice(0,resultsPerPage).map (function (player) {
-	      return PlayerService.makePlayerSummary (player, following[player.id])
-	    })
+	                  return PlayerService.makePlayerSummary (player, following[player.id])
+	                })
 		      })
 	  })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send (err)
       })
-	},
+  },
 
   // search Players, preferentially followed, with no pagination
   searchFollowedPlayers: function (req, res) {
@@ -89,17 +89,21 @@ module.exports = {
       .then (function (follows) {
         var lowerCaseQuery = query.toLowerCase()
         var matchingFollowed = follows
-            .filter (function (follow) { return follow.followed.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0})
-            .map (function (follow) { return follow.followed })
+            .filter (function (follow) {
+              return follow.followed.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0
+                || follow.followed.name.toLowerCase().indexOf (lowerCaseQuery) >= 0
+            }).map (function (follow) { return follow.followed })
         var playerPromise
         if (matchingFollowed.length >= maxResults)
           playerPromise = new Promise (function (resolve, reject) { resolve([]) })
-        else
+        else {
           playerPromise = Player
-          .find ({ displayName: { contains: query },
-		   admin: false,
-		   human: true })
-          .limit (maxResults)
+            .find ({ or: [{ displayName: { contains: query } },
+                          { name: { contains: query } }],
+		     admin: false,
+		     human: true })
+            .limit (maxResults)
+        }
         playerPromise.then (function (matchingUnfollowed) {
           var gotID = {}
           matchingFollowed.forEach (function (player) { gotID[player.id] = true })
@@ -188,24 +192,55 @@ module.exports = {
 
   // get player status
   selfStatus: function (req, res) {
-    PlayerService.findPlayer (req, res, function (player, rs) {
-      PlayerService.makeStatus ({ rs: rs,
-                                  player: player,
-                                  isPublic: false })
-    })
+    var playerID = req.params.player
+    Player.findOne ({ id: playerID })
+      .then (function (player) {
+        return PlayerService.makeStatus ({ player: player,
+                                           isPublic: false })
+      }).then (function (result) {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send (err)
+      })
   },
 
-  otherStatus: function (req, res) {
-    PlayerService.findPlayer (req, res, function (player) {
-      PlayerService.findOther (req, res, function (other, rs) {
-        PlayerService.makeStatus ({ rs: rs,
-                                    player: other,
-                                    follower: player,
-                                    isPublic: true })
+  otherStatusById: function (req, res) {
+    var playerID = req.params.player
+    var otherID = req.params.id
+    Player.findOne ({ id: otherID })
+      .then (function (other) {
+        return PlayerService.makeStatus ({ player: other,
+                                           follower: { id: playerID },
+                                           isPublic: true })
+      }).then (function (result) {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send (err)
       })
-    })
   },
-  
+
+  getPlayerId: function (req, res) {
+    var playerID = req.params.player
+    var otherName = req.params.name
+    var result = {}
+    Player.findOne ({ name: otherName })
+      .then (function (other) {
+        if (other)
+          result.player = { id: other.id,
+                            name: other.name,
+                            displayName: other.displayName }
+        else
+          result.player = null
+      }).then (function() {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send (err)
+      })
+  },
+
   // list followers
   listFollowed: function (req, res) {
     var playerID = parseInt (req.params.player)
@@ -236,20 +271,21 @@ module.exports = {
 
   // add follower
   follow: function (req, res) {
-    if (req.params.player != req.params.other)  // don't let someone follow themselves
-      PlayerService.findPlayer (req, res, function (player, rs) {
-        PlayerService.findOther (req, res, function (other, rs) {
-          var newFollow = { follower: player.id,
-                            followed: other.id }
-          Follow.findOrCreate (newFollow)
-            .exec (function (err, follow) {
-              if (err)
-                rs(err)
-              else
-                rs(null,newFollow)
-            })
+    var playerID = req.params.player
+    var otherID = req.params.other
+    if (playerID === otherID)
+      res.status(500).send (new Error ("You can't follow yourself"))
+    else {
+      var newFollow = { follower: playerID,
+                        followed: otherID }
+      Follow.findOrCreate (newFollow)
+        .then (function (follow) {
+          res.json (follow)
+        }).catch (function (err) {
+          console.log(err)
+          res.status(500).send(err)
         })
-      })
+    }
   },
 
   // remove follower
