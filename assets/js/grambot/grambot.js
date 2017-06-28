@@ -931,7 +931,7 @@ var GramBot = (function() {
               var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
               var symbolSuggestionPromise, getInsertText
               // autocomplete
-              var endsWithSymbolRegex = /#([A-Za-z0-9_]*)$/, symbolContinuesRegex = /^[A-Za-z0-9_]/;
+              var endsWithSymbolRegex = /#(\w*)$/, symbolContinuesRegex = /^\w/;
               var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
               if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
                 var prefix = endsWithSymbolMatch[1]
@@ -1379,7 +1379,7 @@ var GramBot = (function() {
       var nSymbols = 0
       this.animationDiv
         .html (markdown
-               .replace (/#([A-Za-z0-9_]+)\.([a-z]+)/g,
+               .replace (/#(\w+)\.([a-z]+)/g,
                          function (_match, name, className) {
                            return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
                          }))
@@ -2006,7 +2006,7 @@ var GramBot = (function() {
 
     parseRhs: function (rhs, ignoreText) {
       var gb = this
-      var regex = /(([\s\S]*?)#([A-Za-z0-9_]+)|([\s\S]+))/g, match
+      var regex = /(([\s\S]*?)#(\w+)|([\s\S]+))/g, match
       var parsed = []
       var name2id = this.symbolNameToID()
       while ((match = regex.exec(rhs))) {
@@ -2148,7 +2148,7 @@ var GramBot = (function() {
                     guessHeight: true,
                     renderText: function(lhs) { return '#' + lhs },
                     renderHtml: function(lhs) { return $('<span class="name">').text('#'+lhs) },
-                    sanitize: gb.sanitizeSymbolName,
+                    sanitize: gb.sanitizeHashSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
                       return (keycode >= 65 && keycode <= 90)   // a...z
@@ -2245,12 +2245,16 @@ var GramBot = (function() {
       return span
     },
 
+    sanitizeHashSymbolName: function (text) {
+      return '#' + text.replace(/\s/g,'_').replace(/\W/g,'')
+    },
+
     sanitizeSymbolName: function (text) {
-      return '#' + text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'')
+      return text.replace(/\s/g,'_').replace(/\W/g,'')
     },
 
     sanitizePlayerName: function (text) {
-      return text.replace(/ /g,'_').replace(/[^A-Za-z0-9_]/g,'')
+      return text.replace(/\s/g,'_').replace(/\W/g,'')
     },
 
     sanitizer: function (elementName, sanitizeMethod, prefix) {
@@ -2397,7 +2401,10 @@ var GramBot = (function() {
 
             gb.showingHelp = false
 
+            var sanitizer = gb.sanitizer ('searchInput', gb.sanitizeSymbolName)
             gb.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
+              .on ('keyup', sanitizer)
+              .on ('change', sanitizer)
             gb.symbolSearchResultsDiv = $('<div class="results">')
             
             var searchButton = $('<span>')

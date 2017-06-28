@@ -132,7 +132,7 @@ input {
 }
 
 .grambot .symbolsearch {
-    min-height: 4em;
+    min-height: 7em;
     max-height: 8em;
     overflow: hidden;
     border-bottom-style: solid;
@@ -168,18 +168,25 @@ input {
     text-decoration: underline;
 }
 
-.grambot .follow {
-    cursor: pointer;
-}
-
 .grambot .follow,
 .grambot .grammarbar .rule {
     clear: both;
     float: left;
-    width: 100%;
     position: relative;
     padding-top: 2px;
     padding-bottom: 2px;
+}
+
+.grambot .follow {
+    width: 100%;
+    cursor: pointer;
+}
+
+.grambot .grammarbar .rule {
+    border-style: solid;
+    border-width: 1px;
+    margin: 2px;
+    width: 98%;
 }
 
 .grambot .grammarbar .rule .rhs {
@@ -268,13 +275,6 @@ input {
     height: 1em;
     padding: 1px;
     cursor: pointer;
-}
-
-.grambot .grammarbar .rule {
-    border-style: solid;
-    border-width: 1px;
-    margin: 2px;
-    width: 99%;
 }
 
 .grambot .grammarbar .rule .lhs {
