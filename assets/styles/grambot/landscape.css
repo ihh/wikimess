@@ -77,8 +77,4 @@
     .grambot .menubar .horizontal-list li {
 	display: inline;
     }
-
-    .grambot .menubar fieldset {
-	margin: 4vw;
-    }
 }

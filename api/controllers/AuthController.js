@@ -23,10 +23,7 @@ module.exports = {
         if (player)
           return res.view ('homepage',
                            { loggedIn: true,
-                             playerID: player.id,
-                             playerName: player.name,
-                             playerDisplayName: player.displayName,
-                             newSignUp: player.newSignUp })
+                             player: PlayerService.makeLoginSummary (player) })
         else
           return res.view ('homepage',
                            { loggedIn: false })
@@ -42,7 +39,7 @@ module.exports = {
       if ((err) || (!player)) {
         return res.send({
           message: info.message,
-          player: player
+          player: PlayerService.makeLoginSummary (player)
         });
       }
       req.logIn(player, function(err) {
@@ -51,7 +48,7 @@ module.exports = {
         else {
           return res.send({
             message: info.message,
-            player: player
+            player: PlayerService.makeLoginSummary (player)
           });
         }
       });
@@ -70,7 +67,7 @@ module.exports = {
                             req.logIn(player, function (err) {
                               if (err) res.send(err)
                               return res.send({
-                                player: player
+                                player: PlayerService.makeLoginSummary (player)
                               });
                             });
                           })(req, res, next);

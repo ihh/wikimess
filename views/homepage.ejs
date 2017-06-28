@@ -5,7 +5,7 @@
 <script type="text/javascript">
   var gb
   $(function() {
-    gb = new GramBot(<%- (loggedIn ? '{playerID:'+playerID+',playerName:"'+playerName+'",playerDisplayName:"'+playerDisplayName+'",newSignUp:'+newSignUp+'}' : '') -%>)
+    gb = new GramBot(<%- (loggedIn ? '{player:'+JSON.stringify(player)+'}' : '') -%>)
   
   })
 </script>

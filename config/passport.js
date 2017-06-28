@@ -30,12 +30,7 @@ passport.use
           return done(null, false, {
             message: 'Invalid Password'
           });
-        var returnPlayer = {
-          name: player.name,
-          displayName: player.displayName,
-          createdAt: player.createdAt,
-          id: player.id
-        };
+        var returnPlayer = PlayerService.makeLoginSummary (player)
         return done(null, returnPlayer, {
           message: 'Logged In Successfully'
         });

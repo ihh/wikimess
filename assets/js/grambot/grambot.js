@@ -64,10 +64,8 @@ var GramBot = (function() {
     this.composition = {}
 
     // log in
-    if (config.playerID) {
-      this.playerID = config.playerID
-      this.playerLogin = config.playerName
-      this.playerName = config.playerDisplayName
+    if (config.player) {
+      this.initPlayerInfo (config.player)
       this.socket_getPlayerSubscribe (this.playerID)
         .then (this.showInitialPage.bind (this))
     } else
@@ -552,9 +550,7 @@ var GramBot = (function() {
 	    else {
               gb.selectSound.stop()
               gb.playSound ('login')
-	      gb.playerID = data.player.id
-              gb.playerLogin = data.player.name
-              gb.playerName = data.player.displayName
+              gb.initPlayerInfo (data.player)
               gb.socket_getPlayerSubscribe (gb.playerID)
                 .then (function() {
                   showNextPage.call(gb)
@@ -565,6 +561,14 @@ var GramBot = (function() {
 	    gb.showModalWebError (err, fail)
           })
       }, fail)
+    },
+
+    initPlayerInfo: function (player) {
+      var gb = this
+      gb.playerInfo = player
+      gb.playerID = player.id
+      gb.playerLogin = player.name
+      gb.playerName = player.displayName
     },
 
     createPlayer: function() {
@@ -738,13 +742,14 @@ var GramBot = (function() {
           gb.container
             .append ($('<div class="menubar">')
                      .append ($('<ul>')
-                              .append (gb.makeListLink ('Name', gb.showPlayerConfigPage))
+                              .append (gb.makeListLink ('Name and password', gb.showPlayerConfigPage))
+                              .append (gb.makeListLink ('Biographical info', gb.showPlayerBioPage))
                               .append (gb.makeListLink ('Audio', gb.showAudioPage))
-                              .append (gb.makeListLink ('Themes', gb.showThemesPage))
+                              .append (gb.makeListLink ('Colors', gb.showThemesPage))
                               .append (gb.makeListLink ('Log out', gb.doLogout))))
         })
     },
-    
+
     // settings
     showPlayerConfigPage: function() {
       var gb = this
@@ -756,7 +761,8 @@ var GramBot = (function() {
             var newName = gb.nameInput.val()
             var newLogin = gb.loginInput.val()
             if (newLogin.length && newName.length) {
-              gb.REST_postPlayerConfig (gb.playerID, { name: newLogin, displayName: newName })
+              gb.REST_postPlayerConfig (gb.playerID, { name: newLogin,
+                                                       displayName: newName })
                 .then (function (result) {
                   delete gb.playerNameCache[gb.playerLogin]  // just in case it was cached in a previous login
                   gb.playerLogin = newLogin
@@ -771,8 +777,8 @@ var GramBot = (function() {
           })
           var sanitizeLogin = gb.sanitizer ('loginInput', gb.sanitizePlayerName)
           gb.container
-            .append (gb.makePageTitle ("Player details"))
-            .append ($('<div class="menubar">')
+            .append (gb.makePageTitle ('Login info'),
+                     $('<div class="menubar">')
                      .append ($('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Login name'))
@@ -789,6 +795,67 @@ var GramBot = (function() {
                                                 .attr('maxlength', gb.maxPlayerNameLength)))))
             .append (backBar)
         })
+    },
+
+    // settings
+    showPlayerBioPage: function() {
+      var gb = this
+      return this.pushView ('bio')
+        .then (function() {
+          var backBar = gb.popBack (function (backButton) {
+            backButton.off()
+            gb.playerInfo.publicBio = gb.publicBioInput.val()
+            gb.playerInfo.privateBio = gb.privateBioInput.val()
+            gb.REST_postPlayerConfig (gb.playerID, { noMailUnlessFollowed: gb.playerInfo.noMailUnlessFollowed,
+                                                     gender: gb.playerInfo.gender,
+                                                     publicBio: gb.playerInfo.publicBio,
+                                                     privateBio: gb.playerInfo.privateBio })
+              .then (function (result) {
+                gb.popView()
+              }).fail (function (err) {
+                gb.showModalWebError (err, gb.popView.bind(gb))
+              })
+          })
+          gb.container
+            .append ($('<div class="menubar">')
+                     .append ($('<div class="configmenus">')
+                              .append (gb.makeConfigMenu ({ id: 'gender',
+                                                            opts: [{ text: "I'm a 'she'", value: 'female' },
+                                                                   { text: "I'm a 'he'", value: 'male' },
+                                                                   { text: "I'm a 'they'", value: 'neither' },
+                                                                   { text: "I prefer not to say", value: 'secret' }] }),
+                                       gb.makeConfigMenu ({ id: 'noMailUnlessFollowed',
+                                                            opts: [{ text: "Anyone can contact me", value: false },
+                                                                   { text: "Only people in my address book, please", value: true }] })),
+                              $('<div class="inputbar">')
+                              .append (gb.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
+                                       .attr ('rows', 2)
+                                       .attr ('placeholder', 'Public info (shown to all)')
+                                       .val(gb.playerInfo.publicBio)),
+                              $('<div class="inputbar">')
+                              .append (gb.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
+                                       .attr ('rows', 2)
+                                       .attr ('placeholder', 'Private info (shown to people in your address book)')
+                                       .val(gb.playerInfo.privateBio))))
+            .append (backBar)
+        })
+    },
+
+    makeConfigMenu: function (config) {
+      var gb = this
+      var menu = $('<div class="configmenu">')
+          .append (config.opts.map (function (opt) {
+            var span = $('<div class="option">').text (opt.text)
+              .on ('click', function() {
+                menu.find('*').removeClass('checked')
+                span.addClass('checked')
+                gb.playerInfo[config.id] = opt.value
+              })
+            if ((gb.playerInfo[config.id] || 0) == opt.value)
+              span.addClass('checked')
+            return span
+          }))
+      return menu
     },
 
     showThemesPage: function() {
@@ -1100,6 +1167,8 @@ var GramBot = (function() {
                       gb.composition.template.id = result.template.id
                       gb.sendButton.on ('click', send)
                       gb.showOutbox()
+                    }).catch (function (err) {
+                      gb.showModalWebError (err, gb.reloadCurrentTab.bind(gb))
                     })
                 }
               })
@@ -2731,7 +2800,9 @@ var GramBot = (function() {
         makeFollowButton()
       var nameDiv = gb.makePlayerSpan (follow.name, follow.displayName, callback)
       var followDiv = $('<div class="follow">')
-          .append (nameDiv, composeDiv)
+          .append (nameDiv)
+      if (follow.reachable)
+        followDiv.append (composeDiv)
       if (follow.id !== this.playerID)
         followDiv.append (buttonDiv)
       if (callback)

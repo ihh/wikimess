@@ -33,6 +33,8 @@ module.exports = {
     var status = { id: player.id,
                    name: player.name,
                    displayName: player.displayName,
+                   gender: player.gender,
+                   publicBio: player.publicBio,
                    nSenderRatings: player.nSenderRatings,
                    sumSenderRatings: player.sumSenderRatings,
                    nAuthorRatings: player.nAuthorRatings,
@@ -41,14 +43,25 @@ module.exports = {
                    human: player.human }
 
     if (follower) {
-      var seenEventId = {}
-      return Follow.find ({ follower: follower.id, followed: player.id })
-      .then (function (follows) {
-        status.following = (follows.length > 0)
-        return status
-      })
-    } else
+      if (!player.noMailUnlessFollowed)
+        status.reachable = true
+      return Follow.find ({ or: [{ follower: follower.id, followed: player.id },
+                                 { followed: follower.id, follower: player.id }] })
+        .then (function (follows) {
+          follows.forEach (function (follow) {
+            if (follow.follower === follower.id && follow.followed === player.id)
+              status.following = true
+            else if (follow.followed === follower.id && follow.follower === player.id) {
+              status.privateBio = player.privateBio
+              status.reachable = true
+            }
+          })
+          return status
+        })
+    } else {
+      status.privateBio = player.privateBio
       return Promise.resolve (status)
+    }
   },
 
   makePlayerSummary: function (player, following) {
@@ -56,9 +69,21 @@ module.exports = {
              human: player.human,
              name: player.name,
              displayName: player.displayName,
+             reachable: !player.noMailUnlessFollowed,
              following: following }
   },
 
+  makeLoginSummary: function (player) {
+    return { id: player.id,
+             name: player.name,
+             displayName: player.displayName,
+             noMailUnlessFollowed: player.noMailUnlessFollowed,
+             publicBio: player.publicBio,
+             privateBio: player.privateBio,
+             gender: player.gender
+           }
+  },
+  
   makeUniquePlayerName: function (prefix, count) {
     prefix = prefix.replace (/[^A-Za-z0-9_]/g, '')
     var suffix = (count || '').toString()

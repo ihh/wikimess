@@ -80,39 +80,55 @@ module.exports = {
       })
   },
 
-  // search Players, preferentially followed, with no pagination
+  // search Players who are reachable, preferentially followed or following, with no pagination
   searchFollowedPlayers: function (req, res) {
     var searcherID = parseInt(req.params.player), query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
+    var lowerCaseQuery = query.toLowerCase()
+    var matches = []
+    function matchFilter (player) {
+      return (player.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0
+              || player.name.toLowerCase().indexOf (lowerCaseQuery) >= 0)
+        && !player.admin && player.human
+    }
+    // find players we're following who match the search criteria
     Follow.find ({ follower: searcherID })
       .populate ('followed')
       .then (function (follows) {
-        var lowerCaseQuery = query.toLowerCase()
-        var matchingFollowed = follows
-            .filter (function (follow) {
-              return follow.followed.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0
-                || follow.followed.name.toLowerCase().indexOf (lowerCaseQuery) >= 0
-            }).map (function (follow) { return follow.followed })
-        var playerPromise
-        if (matchingFollowed.length >= maxResults)
-          playerPromise = new Promise (function (resolve, reject) { resolve([]) })
-        else {
-          playerPromise = Player
-            .find ({ or: [{ displayName: { contains: query } },
-                          { name: { contains: query } }],
-		     admin: false,
-		     human: true })
-            .limit (maxResults)
-        }
-        playerPromise.then (function (matchingUnfollowed) {
-          var gotID = {}
-          matchingFollowed.forEach (function (player) { gotID[player.id] = true })
-          matchingUnfollowed = matchingUnfollowed.filter (function (player) { return !gotID[player.id] })
-          res.json ({ players: matchingFollowed.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
-                      .concat (matchingUnfollowed.map (function (player) { return PlayerService.makePlayerSummary (player, false) }))
-                      .slice (0, maxResults)
-                    })
+        matches = follows.map (function (follow) { return follow.followed })
+          .filter (matchFilter)
+        if (matches.length >= maxResults)
+          return Promise.resolve()
+        else
+          return Follow.find ({ followed: searcherID })
+          .populate ('follower')
+          .then (function (follows) {
+            matches = matches.concat (follows.map (function (follow) { return follow.follower })
+                                      .filter (matchFilter))
+          })
+      }).then (function() {
+        // find players who're following us and match the search criteria
+        if (matches.length >= maxResults)
+          return Promise.resolve()
+        else
+          return Player.find ({ or: [{ displayName: { contains: query } },
+                                     { name: { contains: query } }],
+                                noMailUnlessFollowed: false,
+		                admin: false,
+		                human: true })
+          .limit (maxResults)
+          .then (function (players) {
+            matches = matches.concat (players)
+          })
+      }).then (function() {
+        var gotID = {}
+        matches = matches.filter (function (player) {
+          var duplicate = gotID[player.id]
+          gotID[player.id] = true
+          return !duplicate
         })
+        res.json ({ players: matches.map (function (player) { return PlayerService.makePlayerSummary (player, true) })
+                    .slice (0, maxResults) })
       })
   },
 
@@ -168,31 +184,39 @@ module.exports = {
   // configure Player info
   configurePlayer: function (req, res) {
     var playerID = parseInt (req.params.player)
+    var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed']
     var name = req.body.name
-    var displayName = req.body.displayName
-    Player.find ({ id: { '!': playerID },
-                   name: name })
-      .then (function (players) {
-        if (players.length)
-          res.status(400).send ({error: "The player name " + name + " is already in use"})
-        else {
-          var update = { name: name,
-                         displayName: displayName }
-          return Player.update ({ id: playerID },
-                                update)
-            .then (function() {
-              res.ok()
-            })
-        }
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send (err)
-      })
+    var nameClashPromise = (typeof(name) === 'undefined'
+                            ? Promise.resolve (false)
+                            : Player.find ({ id: { '!': playerID },
+                                             name: name })
+                            .then (function (players) {
+                              return players.length > 0
+                            }))
+    nameClashPromise.then (function (nameClash) {
+      if (nameClash)
+        res.status(400).send ({error: "The player name " + name + " is already in use"})
+      else {
+        var update = {}
+        updateKeys.forEach (function (key) {
+          if (typeof (req.body[key]) !== 'undefined')
+            update[key] = req.body[key]
+        })
+        return Player.update ({ id: playerID },
+                              update)
+          .then (function() {
+            res.ok()
+          })
+      }
+    }).catch (function (err) {
+      console.log(err)
+      res.status(500).send (err)
+    })
   },
 
   // get player status
   selfStatus: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     Player.findOne ({ id: playerID })
       .then (function (player) {
         return PlayerService.makeStatus ({ player: player,
@@ -206,8 +230,8 @@ module.exports = {
   },
 
   otherStatusById: function (req, res) {
-    var playerID = req.params.player
-    var otherID = req.params.id
+    var playerID = parseInt (req.params.player)
+    var otherID = parseInt (req.params.id)
     Player.findOne ({ id: otherID })
       .then (function (other) {
         return PlayerService.makeStatus ({ player: other,
@@ -222,7 +246,7 @@ module.exports = {
   },
 
   getPlayerId: function (req, res) {
-    var playerID = req.params.player
+    var playerID = parseInt (req.params.player)
     var otherName = req.params.name
     var result = {}
     Player.findOne ({ name: otherName })
@@ -245,22 +269,23 @@ module.exports = {
   listFollowed: function (req, res) {
     var playerID = parseInt (req.params.player)
     var result = { id: playerID }
-    var following = {}
-    function makeInfo (player) {
-      return PlayerService.makePlayerSummary (player, following[player.id])
-    }
+    var followInfo = {}
     Follow.find ({ follower: playerID })
       .populate ('followed')
       .then (function (follows) {
         result.followed = follows.map (function (follow) {
-          following[follow.followed.id] = true
-          return makeInfo (follow.followed)
+          var info = PlayerService.makePlayerSummary (follow.followed, true)
+          followInfo[follow.followed.id] = info
+          return info
         })
         return Follow.find ({ followed: playerID })
           .populate ('follower')
       }).then (function (followed) {
         result.followers = followed.map (function (follow) {
-          return makeInfo (follow.follower)
+          var followedInfo = followInfo[follow.follower.id]
+          if (followedInfo)
+            followedInfo.reachable = true
+          return PlayerService.makePlayerSummary (follow.follower, followedInfo && true)
         })
         res.json (result)
       }).catch (function (err) {
@@ -450,42 +475,56 @@ module.exports = {
     var body = req.body.body
     var previous = req.body.previous
     var result = {}
-    var templatePromise
-    if (typeof(template.id) !== 'undefined')
-      templatePromise = Template.findOne ({ id: template.id })
-    else {
-      // give an initial weight of 1 to all symbol adjacencies in this template
-      SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
-      templatePromise = SymbolService.updateAdjacencies (template.content, 1)
-        .then (function() {
-          // find previous Message
-          var previousPromise = (typeof(previous) === 'undefined'
-                                 ? new Promise (function (resolve, reject) { resolve(null) })
-                                 : Message.findOne ({ id: previous })
-                                 .populate ('template')
-                                 .then (function (message) { return message.template }))
-          return previousPromise
-        }).then (function (previousTemplate) {
-          // create the Template
-          return Template.create ({ title: title,
-                                    content: template.content,
-                                    author: playerID,
-                                    previous: previousTemplate })
+    // check that the recipient is reachable
+    Follow.find ({ follower: recipientID,
+                   followed: playerID })
+      .then (function (follows) {
+        if (!follows.length)
+          return Player.find ({ id: recipientID,
+                                noMailUnlessFollowed: false })
+          .then (function (players) {
+            if (!players.length)
+              throw new Error ("Recipient unreachable")
+          })
+      }).then (function() {
+        // find, or create, the template
+        var templatePromise
+        if (typeof(template.id) !== 'undefined')
+          templatePromise = Template.findOne ({ id: template.id })
+        else {
+          // give an initial weight of 1 to all symbol adjacencies in this template
+          SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
+          templatePromise = SymbolService.updateAdjacencies (template.content, 1)
+            .then (function() {
+              // find previous Message
+              var previousPromise = (typeof(previous) === 'undefined'
+                                     ? new Promise (function (resolve, reject) { resolve(null) })
+                                     : Message.findOne ({ id: previous })
+                                     .populate ('template')
+                                     .then (function (message) { return message.template }))
+              return previousPromise
+            }).then (function (previousTemplate) {
+              // create the Template
+              return Template.create ({ title: title,
+                                        content: template.content,
+                                        author: playerID,
+                                        previous: previousTemplate })
+            })
+        }
+        templatePromise.then (function (template) {
+          result.template = { id: template.id }
+          return Message.create ({ sender: playerID,
+                                   recipient: recipientID,
+                                   template: template,
+                                   previous: previous,
+                                   title: title,
+                                   body: body })
+        }).then (function (message) {
+          result.message = { id: message.id }
+          Player.message (recipientID, { message: "incoming",
+                                         id: message.id })
+          res.json (result)
         })
-    }
-    templatePromise.then (function (template) {
-      result.template = { id: template.id }
-      return Message.create ({ sender: playerID,
-                               recipient: recipientID,
-                               template: template,
-                               previous: previous,
-                               title: title,
-                               body: body })
-    }).then (function (message) {
-      result.message = { id: message.id }
-      Player.message (recipientID, { message: "incoming",
-                                     id: message.id })
-      res.json (result)
     }).catch (function (err) {
       console.log(err)
       res.status(500).send(err)
@@ -887,7 +926,8 @@ module.exports = {
           if (!symbolIDs.length) {
             var allSymbolIDs = Object.keys (Symbol.cache.byId)
             // TODO: weight sample by Symbol rating
-            symbolIDs.push (allSymbolIDs [Math.floor (Math.random() * allSymbolIDs.length)])
+            if (symbolIDs.length)
+              symbolIDs.push (allSymbolIDs [Math.floor (Math.random() * allSymbolIDs.length)])
           }
         }
         var symbols = symbolIDs.map (function (symbolID) { return Symbol.cache.byId[symbolID] })

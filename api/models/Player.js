@@ -18,13 +18,10 @@ module.exports = {
       primaryKey: true
     },
 
+    // login info
     name: {
       type: 'string',
       unique: true
-    },
-
-    displayName: {
-      type: 'string'
     },
     
     password: {
@@ -33,6 +30,24 @@ module.exports = {
       required: true
     },
 
+    // bio
+    displayName: {
+      type: 'string'
+    },
+
+    gender: {
+      type: 'string',
+      enum: ['male', 'female', 'neither', 'secret'],
+      defaultsTo: 'secret'
+    },
+
+    publicBio: { type: 'string' },
+    privateBio: { type: 'string' },
+    
+    // privacy controls
+    noMailUnlessFollowed: { type: 'boolean', defaultsTo: false },
+    
+    // social networks
     facebookId: {
       type: 'string',
       unique: true
