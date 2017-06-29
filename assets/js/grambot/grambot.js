@@ -2106,7 +2106,7 @@ var GramBot = (function() {
       if (status.privateBio && status.privateBio.length)
         gb.detailBarDiv.append
       ($('<div class="biofact">')
-       .append ($('<div class="biotitle">').text('Private info'),
+       .append ($('<div class="biotitle">').text('"Private" info'),
                 $('<div class="bio">').text(status.privateBio)))
     },
 
