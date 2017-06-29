@@ -448,11 +448,9 @@ var GramBot = (function() {
 
     makeListLink: function (text, callback, sfx, allowMultipleClicks) {
       sfx = sfx || 'select'
-      var li = $('<li>')
-          .append ($('<span>')
-                   .html(text))
-      li.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && li))
-      return li
+      var span = $('<span class="listitem">').html(text)
+      span.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && span))
+      return span
     },
 
     setPage: function (page) {
@@ -494,10 +492,10 @@ var GramBot = (function() {
                                        .text('Password'))
                               .append (gb.passwordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="password" type="password">'))))
             .append ($('<div class="menubar">')
-                     .append ($('<ul>')
-                              .append (gb.makeListLink ('Log in', gb.doReturnLogin))
-                              .append (gb.makeListLink ('Sign up', gb.createPlayer))
-                              .append (gb.makeListLink ($('<img>').attr('src',gb.facebookButtonImageUrl), gb.REST_loginFacebook)
+                     .append ($('<div class="list">')
+                              .append (gb.makeListLink ('Log in', gb.doReturnLogin),
+                                       gb.makeListLink ('Sign up', gb.createPlayer),
+                                       gb.makeListLink ($('<img>').attr('src',gb.facebookButtonImageUrl), gb.REST_loginFacebook)
                                        .addClass("noborder"))))
           if (gb.playerLogin)
             gb.nameInput.val (gb.playerLogin)
@@ -741,12 +739,12 @@ var GramBot = (function() {
           gb.showNavBar ('settings')
           gb.container
             .append ($('<div class="menubar">')
-                     .append ($('<ul>')
-                              .append (gb.makeListLink ('Name and password', gb.showPlayerConfigPage))
-                              .append (gb.makeListLink ('Biographical info', gb.showPlayerBioPage))
-                              .append (gb.makeListLink ('Audio', gb.showAudioPage))
-                              .append (gb.makeListLink ('Colors', gb.showThemesPage))
-                              .append (gb.makeListLink ('Log out', gb.doLogout))))
+                     .append ($('<div class="list">')
+                              .append (gb.makeListLink ('Name and password', gb.showPlayerConfigPage),
+                                       gb.makeListLink ('Biographical info', gb.showPlayerBioPage),
+                                       gb.makeListLink ('Audio', gb.showAudioPage),
+                                       gb.makeListLink ('Colors', gb.showThemesPage),
+                                       gb.makeListLink ('Log out', gb.doLogout))))
         })
     },
 

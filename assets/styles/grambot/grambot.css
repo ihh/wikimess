@@ -404,11 +404,12 @@ input {
     width: 100%;
 }
 
-.grambot .menubar li {
-    list-style: none;
+.grambot .menubar .list {
+    display: flex;
+    flex-direction: column;
 }
-
-.grambot .menubar li,
+			     
+.grambot .menubar .listitem,
 .grambot .menubar label {
     padding: 8px;
 }
@@ -417,7 +418,7 @@ input {
     padding: 16px;
 }
 
-.grambot .menubar li,
+.grambot .menubar .listitem,
 .grambot .menubar .card {
     margin: 4vh;
     border: 1px solid #888;
@@ -425,7 +426,7 @@ input {
     text-align: center;
 }
 
-.grambot .menubar li.noborder {
+.grambot .menubar .listitem.noborder {
     border-style: none;
 }
 
@@ -434,7 +435,7 @@ input {
     width: 80vw;
 }
 
-.grambot .menubar li,
+.grambot .menubar .listitem,
 .grambot .menubar .card input {
     cursor: pointer;
 }
