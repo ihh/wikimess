@@ -7,6 +7,7 @@
 
 var Promise = require('bluebird')
 var extend = require('extend')
+var bcrypt = require('bcrypt')
 
 module.exports = {
 
@@ -17,7 +18,7 @@ module.exports = {
     Player.findOneByName (name)
       .exec (function (err, player) {
         if (err)
-          res.status(500).send (err)
+          res.status(500).send ({ message: err })
         else if (player)
           res.json ({ id: player.id })
         else
@@ -32,7 +33,7 @@ module.exports = {
     Player.find ({ name: name })
       .exec (function (err, players) {
         if (err)
-          res.status(500).send (err)
+          res.status(500).send ({ message: err })
         else if (players.length)
           res.status(400).send ({error: "The name " + name + " is already in use"})
         else
@@ -40,9 +41,9 @@ module.exports = {
                                  password: password })
           .exec (function (err, player) {
             if (err)
-              res.status(500).send (err)
+              res.status(500).send ({ message: err })
             else if (!player)
-              res.status(500).send ({error: "Player " + name + " not created"})
+              res.status(500).send ({ message: "Player " + name + " not created"})
             else
               res.json ({ name: player.name, id: player.id })
           })
@@ -76,7 +77,7 @@ module.exports = {
 	  })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send (err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -202,15 +203,42 @@ module.exports = {
           if (typeof (req.body[key]) !== 'undefined')
             update[key] = req.body[key]
         })
-        return Player.update ({ id: playerID },
-                              update)
+        var passwordPromise
+        if (req.body.newPassword)
+          passwordPromise = Player.findOne ({ id: playerID })
+            .then (function (player) {
+              return new Promise (function (resolve, reject) {
+                bcrypt.compare (req.body.oldPassword, player.password, function (err, res) {
+                  if (!res)
+                    reject (new Error ('Invalid Password'))
+                  else
+                    Player.hashPassword (req.body.newPassword, function (err, hash) {
+                      if (err)
+                        reject (err)
+                      else {
+                        update.password = hash
+                        resolve()
+                      }
+                    })
+                })
+              })
+            })
+        else
+          passwordPromise = Promise.resolve()
+
+        return passwordPromise
           .then (function() {
-            res.ok()
+            return Player.update ({ id: playerID }, update)
+          }).then (function (updated) {
+            if (updated.length)
+              res.ok()
+            else
+              res.status(500).send ({ message: req.body.newPassword ? 'Password incorrect' : 'An error occurred.' })
           })
       }
     }).catch (function (err) {
       console.log(err)
-      res.status(500).send (err)
+      res.status(500).send ({ message: err })
     })
   },
 
@@ -225,7 +253,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send (err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -241,7 +269,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send (err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -261,7 +289,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send (err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -290,7 +318,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -308,7 +336,7 @@ module.exports = {
           res.json (follow)
         }).catch (function (err) {
           console.log(err)
-          res.status(500).send(err)
+          res.status(500).send ({ message: err })
         })
     }
   },
@@ -319,7 +347,7 @@ module.exports = {
                       followed: req.params.other })
       .exec (function (err, deleted) {
         if (err)
-          res.status(500).send(err)
+          res.status(500).send ({ message: err })
         else if (deleted.length)
           res.ok()
         else
@@ -346,7 +374,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -361,7 +389,7 @@ module.exports = {
         res.json ({ count: count })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
   
@@ -383,7 +411,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -414,7 +442,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -437,7 +465,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -462,7 +490,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -527,7 +555,7 @@ module.exports = {
         })
     }).catch (function (err) {
       console.log(err)
-      res.status(500).send(err)
+      res.status(500).send ({ message: err })
     })
   },
 
@@ -555,7 +583,7 @@ module.exports = {
         res.ok()
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -613,7 +641,7 @@ module.exports = {
         res.ok()
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -635,7 +663,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -659,7 +687,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -702,10 +730,10 @@ module.exports = {
             res.json (result)
           }).catch (function (err) {
             console.log(err)
-            res.status(500).send(err)
+            res.status(500).send ({ message: err })
           })
         } else
-          res.status(500).send(new Error ("Symbol not found"))
+          res.status(500).send ({ message: "Symbol not found" })
       })
   },
 
@@ -748,7 +776,7 @@ module.exports = {
           res.json (result)
         }).catch (function (err) {
           console.log(err)
-          res.status(500).send(err)
+          res.status(500).send ({ message: err })
         })
       }
   },
@@ -777,7 +805,7 @@ module.exports = {
           })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -815,7 +843,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -828,7 +856,7 @@ module.exports = {
         res.json ({ expansion: expansion })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -841,7 +869,7 @@ module.exports = {
         res.json ({ expansions: expansions })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -867,7 +895,7 @@ module.exports = {
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -891,7 +919,7 @@ module.exports = {
         res.json (result)
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 
@@ -950,7 +978,7 @@ module.exports = {
                                                        name: symbol.name } }) })
       }).catch (function (err) {
         console.log(err)
-        res.status(500).send(err)
+        res.status(500).send ({ message: err })
       })
   },
 

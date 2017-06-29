@@ -50,6 +50,7 @@ module.exports = {
     // social networks
     facebookId: {
       type: 'string',
+      required: false,
       unique: true
     },
 
@@ -92,19 +93,25 @@ module.exports = {
       })
   },
   adminUserId: 1,
-  
-  beforeCreate: function(player, cb) {
-    player.displayName = player.displayName || player.name
+
+  hashPassword: function (password, cb) {
     bcrypt.genSalt(10, function(err, salt) {
-      bcrypt.hash(player.password, salt, function(err, hash) {
+      bcrypt.hash(password, salt, function(err, hash) {
         if (err) {
           console.log(err);
           cb(err);
         } else {
-          player.password = hash;
-          cb();
+          cb(null,hash);
         }
       });
-    });
+    })
+  },
+  
+  beforeCreate: function(player, cb) {
+    player.displayName = player.displayName || player.name
+    Player.hashPassword (player.password, function (err, hash) {
+      player.password = hash
+      cb()
+    })
   },
 };

@@ -74,14 +74,15 @@ module.exports = {
   },
 
   makeLoginSummary: function (player) {
-    return { id: player.id,
-             name: player.name,
-             displayName: player.displayName,
-             noMailUnlessFollowed: player.noMailUnlessFollowed,
-             publicBio: player.publicBio,
-             privateBio: player.privateBio,
-             gender: player.gender
-           }
+    return player && { id: player.id,
+                       name: player.name,
+                       displayName: player.displayName,
+                       hidePassword: player.facebookId ? true : false,
+                       noMailUnlessFollowed: player.noMailUnlessFollowed,
+                       publicBio: player.publicBio,
+                       privateBio: player.privateBio,
+                       gender: player.gender
+                     }
   },
   
   makeUniquePlayerName: function (prefix, count) {

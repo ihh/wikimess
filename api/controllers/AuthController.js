@@ -38,8 +38,7 @@ module.exports = {
     passport.authenticate('local', function(err, player, info) {
       if ((err) || (!player)) {
         return res.send({
-          message: info.message,
-          player: PlayerService.makeLoginSummary (player)
+          message: info.message
         });
       }
       req.logIn(player, function(err) {

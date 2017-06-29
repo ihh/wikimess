@@ -27,8 +27,8 @@
     /* Menu views */
     .grambot .inputbar {
 	width: 100vw;
-	height: 33vh;
-
+	margin: 2vh;
+	
 	display: flex;
 	justify-content: center;
     }

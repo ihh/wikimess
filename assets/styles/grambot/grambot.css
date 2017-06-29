@@ -375,6 +375,11 @@ input {
     justify-content: center;
 }
 
+.grambot .detailbar .titlebar {
+    border-bottom-style: solid;
+    border-width: 2px;
+}
+
 .grambot .inputbar input[type=text],
 .grambot .inputbar input[type=password],
 .grambot .inputbar textarea {

@@ -459,9 +459,11 @@ var GramBot = (function() {
 	console.log ("Changing view from " + this.page + " to " + page)
       
       var def
-      if (this.pageExit)
-        def = this.pageExit()
-      else {
+      if (this.pageExit) {
+        var pageExit = this.pageExit
+        delete this.pageExit
+        def = pageExit()
+      } else {
         def = $.Deferred()
         def.resolve()
       }
@@ -610,7 +612,7 @@ var GramBot = (function() {
     },
 
     showModalWebError: function (err, sfx, callback) {
-      this.showModalMessage ((err.responseJSON && err.responseJSON.error) || (err.status + " " + err.statusText), sfx, callback)
+      this.showModalMessage ((err.responseJSON && err.responseJSON.error) || (err.status && (err.status + " " + err.statusText)) || err, sfx, callback)
     },
 
     reloadOnFail: function() {
@@ -740,7 +742,7 @@ var GramBot = (function() {
           gb.container
             .append ($('<div class="menubar">')
                      .append ($('<div class="list">')
-                              .append (gb.makeListLink ('Name and password', gb.showPlayerConfigPage),
+                              .append (gb.makeListLink (gb.playerInfo.hidePassword ? 'Name' : 'Name and password', gb.showPlayerConfigPage),
                                        gb.makeListLink ('Biographical info', gb.showPlayerBioPage),
                                        gb.makeListLink ('Audio', gb.showAudioPage),
                                        gb.makeListLink ('Colors', gb.showThemesPage),
@@ -754,18 +756,29 @@ var GramBot = (function() {
       return this.pushView ('name')
         .then (function() {
           function saveChanges() {
+            delete gb.pageExit
             var newName = gb.nameInput.val()
             var newLogin = gb.loginInput.val()
             if (newLogin.length && newName.length) {
-              return gb.REST_postPlayerConfig (gb.playerID, { name: newLogin,
-                                                       displayName: newName })
+              var update = {}
+              if (newLogin !== gb.playerLogin)
+                update.name = newLogin
+              if (newName !== gb.playerName)
+                update.displayName = newName
+              if (gb.changePasswordInput.val().length) {
+                if (gb.confirmPasswordInput.val() !== gb.changePasswordInput.val())
+                  return $.Deferred().reject ("Passwords don't match")
+                update.oldPassword = gb.oldPasswordInput.val()
+                update.newPassword = gb.changePasswordInput.val()
+              }
+              return gb.REST_postPlayerConfig (gb.playerID, update)
                 .then (function (result) {
                   delete gb.playerNameCache[gb.playerLogin]  // just in case it was cached in a previous login
                   gb.playerLogin = newLogin
                   gb.playerName = newName
                   gb.writeLocalStorage ('playerLogin')
-                }).fail (function (err) {
-                  gb.showModalWebError (err, gb.popView.bind(gb))
+                  if (update.newPassword)
+                    window.alert ("Password successfully changed")
                 })
             } else
               return $.Deferred().resolve()
@@ -782,6 +795,18 @@ var GramBot = (function() {
               })
           })
           var sanitizeLogin = gb.sanitizer ('loginInput', gb.sanitizePlayerName)
+
+          var passwordForm = $('<div class="inputbar">')
+              .append ($('<form>')
+                       .append ($('<span>').text('New password'),
+                                gb.changePasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                $('<span>').text('Confirm new password'),
+                                gb.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                $('<span>').text('Old password'),
+                                gb.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))
+          if (gb.playerInfo.hidePassword)
+            passwordForm.hide()
+
           gb.container
             .append (gb.makePageTitle ('Login info'),
                      $('<div class="menubar">')
@@ -798,7 +823,8 @@ var GramBot = (function() {
                                        .append ($('<span>').text('Full name'))
                                        .append (gb.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
                                                 .val(gb.playerName)
-                                                .attr('maxlength', gb.maxPlayerNameLength)))))
+                                                .attr('maxlength', gb.maxPlayerNameLength))),
+                              passwordForm))
             .append (backBar)
         })
     },
@@ -830,9 +856,9 @@ var GramBot = (function() {
             .append ($('<div class="menubar">')
                      .append ($('<div class="configmenus">')
                               .append (gb.makeConfigMenu ({ id: 'gender',
-                                                            opts: [{ text: "I'm a 'she'", value: 'female' },
+                                                            opts: [{ text: "I'm a 'they'", value: 'neither' },
+                                                                   { text: "I'm a 'she'", value: 'female' },
                                                                    { text: "I'm a 'he'", value: 'male' },
-                                                                   { text: "I'm a 'they'", value: 'neither' },
                                                                    { text: "I prefer not to say", value: 'secret' }] }),
                                        gb.makeConfigMenu ({ id: 'noMailUnlessFollowed',
                                                             opts: [{ text: "Anyone can contact me", value: false },
@@ -1843,7 +1869,8 @@ var GramBot = (function() {
               gb.showNavBar ('status')
               gb.showGameStatusPage (status)
               gb.detailBarDiv
-                .prepend ($('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin)))
+                .prepend (gb.makePageTitle ('Welcome to Ghost Messenger'),
+                          $('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin)))
               return gb.REST_getPlayerSuggestTemplates (gb.playerID)
                 .then (function (result) {
                   if (result && result.templates.length)
