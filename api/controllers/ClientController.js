@@ -502,7 +502,8 @@ module.exports = {
     var title = req.body.title
     var body = req.body.body
     var previous = req.body.previous
-    var result = {}
+    var draftID = req.body.draft
+    var result = {}, notification = {}
     // check that the recipient is reachable
     Follow.find ({ follower: recipientID,
                    followed: playerID })
@@ -541,6 +542,7 @@ module.exports = {
         }
         templatePromise.then (function (template) {
           result.template = { id: template.id }
+          // create the Message
           return Message.create ({ sender: playerID,
                                    recipient: recipientID,
                                    template: template,
@@ -549,14 +551,25 @@ module.exports = {
                                    body: body })
         }).then (function (message) {
           result.message = { id: message.id }
-          Player.message (recipientID, { message: "incoming",
-                                         id: message.id })
+          notification.message = "incoming"
+          notification.id = message.id
+          // delete the Draft
+          var draftPromise
+          if (draftID)
+            draftPromise = Draft.destroy ({ id: draftID,
+                                            sender: playerID })
+          else
+            draftPromise = Promise.resolve()
+          return draftPromise
+        }).then (function() {
+          // send out the good news
+          Player.message (recipientID, notification)
           res.json (result)
         })
-    }).catch (function (err) {
-      console.log(err)
-      res.status(500).send ({ message: err })
-    })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
   },
 
   // delete message
@@ -638,6 +651,104 @@ module.exports = {
             })
         }
       }).then (function() {
+        res.ok()
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  // get drafts
+  getDrafts: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var result = {}
+    Draft.find ({ sender: playerID })
+      .populate ('recipient')
+      .then (function (drafts) {
+        result.drafts = drafts.map (function (draft) {
+          return { id: draft.id,
+                   title: draft.title,
+                   recipient: draft.recipient && { id: draft.recipient.id,
+                                                   displayName: draft.recipient.displayName },
+                   date: draft.updatedAt }
+        })
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+  
+  // get draft
+  getDraft: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var draftID = parseInt (req.params.draft)
+    var result = {}
+    Draft.findOne ({ id: draftID,
+                     sender: playerID })
+      .populate ('recipient')
+      .then (function (draft) {
+        result.draft = { id: draft.id,
+                         recipient: draft.recipient && { id: draft.recipient.id,
+                                                         name: draft.recipient.name,
+                                                         displayName: draft.recipient.displayName },
+                         previous: draft.previous,
+                         previousTemplate: draft.previousTemplate,
+                         template: draft.template,
+                         title: draft.title,
+                         body: draft.body,
+                         date: draft.updatedAt }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+  
+  // save draft
+  saveDraft: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var draft = req.body.draft
+    var result = {}
+    Draft.create ({ sender: playerID,
+                    recipient: draft.recipient,
+                    previous: draft.previous,
+                    previousTemplate: draft.previousTemplate,
+                    template: draft.template,
+                    title: draft.title,
+                    body: draft.body })
+      .then (function (created) {
+        result.draft = { id: created.id }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+  
+  // update draft
+  updateDraft: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var draftID = parseInt (req.params.draft)
+    var draft = req.body.draft
+    Draft.update ({ id: draftID,
+                    sender: playerID },
+                  draft)
+      .then (function (updated) {
+        res.ok()
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+  
+  // delete draft
+  deleteDraft: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var draftID = parseInt (req.params.draft)
+    Draft.destroy ({ id: draftID,
+                     sender: playerID })
+      .then (function (destroyed) {
         res.ok()
       }).catch (function (err) {
         console.log(err)

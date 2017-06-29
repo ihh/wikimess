@@ -91,6 +91,12 @@ module.exports.routes = {
   'DELETE /p/:player/message/:message':      'ClientController.deleteMessage',
   'PUT /p/:player/message/:message/rating':  'ClientController.rateMessage',
 
+  'GET /p/:player/drafts':           'ClientController.getDrafts',
+  'GET /p/:player/draft/:draft':     'ClientController.getDraft',
+  'POST /p/:player/draft':           'ClientController.saveDraft',
+  'PUT /p/:player/draft/:draft':     'ClientController.updateDraft',
+  'DELETE /p/:player/draft/:draft':  'ClientController.deleteDraft',
+
   'GET /p/:player/symbols':          'ClientController.getSymbolsByOwner',
   'GET /p/:player/symbol/:symid':    'ClientController.getSymbol',
   'PUT /p/:player/symbol/:symid':    'ClientController.putSymbol',

@@ -84,7 +84,7 @@ var GramBot = (function() {
     maxPlayerNameLength: 32,
     maxRating: 5,
     ratingDelay: 2000,
-    grammarAutosaveDelay: 5000,
+    autosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
     autosuggestDelay: 500,
@@ -105,11 +105,12 @@ var GramBot = (function() {
                     send: 'send',
                     inbox: 'inbox',
                     outbox: 'outbox',
+                    drafts: 'scroll-unfurled',
                     message: 'document',
                     follow: 'circle-plus',
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
-                    compose: 'scroll-unfurled',
+                    compose: 'quill-ink',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -123,8 +124,8 @@ var GramBot = (function() {
               {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
 
     tabs: [{ name: 'status', method: 'showStatusPage', icon: 'castle', },
-           { name: 'compose', method: 'showComposePage', icon: 'scroll-unfurled' },
-           { name: 'inbox', method: 'showInboxPage', icon: 'envelope' },
+           { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
+           { name: 'mailbox', method: 'showMailboxPage', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', icon: 'backup' },
            { name: 'grammar', method: 'showGrammarEditPage', icon: 'spell-book' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
@@ -232,12 +233,8 @@ var GramBot = (function() {
       return this.logGet ('/p/' + playerID + '/message/' + messageID + '/sent')
     },
 
-    REST_postPlayerMessage: function (playerID, recipientID, template, title, body, previous) {
-      return this.logPost ('/p/' + playerID + '/message', { recipient: recipientID,
-                                                            template: template,
-                                                            title: title,
-                                                            body: body,
-                                                            previous: previous })
+    REST_postPlayerMessage: function (playerID, message) {
+      return this.logPost ('/p/' + playerID + '/message', message)
     },
 
     REST_deletePlayerMessage: function (playerID, messageID) {
@@ -249,6 +246,26 @@ var GramBot = (function() {
                           { rating: rating })
     },
 
+    REST_getPlayerDrafts: function (playerID) {
+      return this.logGet ('/p/' + playerID + '/drafts')
+    },
+
+    REST_getPlayerDraft: function (playerID, draftID) {
+      return this.logGet ('/p/' + playerID + '/draft/' + draftID)
+    },
+
+    REST_postPlayerDraft: function (playerID, draft) {
+      return this.logPost ('/p/' + playerID + '/draft', { draft: draft })
+    },
+
+    REST_putPlayerDraft: function (playerID, draftID, draft) {
+      return this.logPut ('/p/' + playerID + '/draft/' + draftID, { draft: draft })
+    },
+
+    REST_deletePlayerDraft: function (playerID, draftID) {
+      return this.logDelete ('/p/' + playerID + '/draft/' + draftID)
+    },
+    
     REST_putPlayerSymbol: function (playerID, symbolID, name, rules) {
       return this.logPut ('/p/' + playerID + '/symbol/' + symbolID,
                           { name: name, rules: rules })
@@ -646,7 +663,7 @@ var GramBot = (function() {
         gb.getIconPromise(tab.icon)
           .done (function (svg) {
             span.append ($(svg).addClass('navicon'))
-	    if (tab.name === 'inbox')
+	    if (tab.name === 'mailbox')
 	      span.append (gb.messageCountDiv)
           })
           .fail (function (err) {
@@ -1010,7 +1027,31 @@ var GramBot = (function() {
         .then (function() {
           gb.showNavBar ('compose')
 
-          gb.saveOnPageExit()
+          function saveDraft() {
+            if (gb.composition.needsSave) {
+              delete gb.composition.needsSave
+              return gb.finishLastSave()
+                .then (function() {
+                  var draft = { recipient: gb.composition.recipient && gb.composition.recipient.id,
+                                previous: gb.composition.previousMessage,
+                                previousTemplate: gb.composition.previousTemplate,
+                                template: gb.composition.template,
+                                title: gb.composition.title,
+                                body: gb.composition.body }
+                  if (gb.composition.draft)
+                    gb.lastSavePromise = gb.REST_putPlayerDraft (gb.playerID, gb.composition.draft, draft)
+                  else
+                    gb.lastSavePromise = gb.REST_postPlayerDraft (gb.playerID, draft)
+                    .then (function (result) {
+                      gb.composition.draft = result.draft.id
+                    })
+                })
+            } else
+              return Promise.resolve()
+          }
+          gb.saveOnPageExit ({ unfocus: gb.saveCurrentEdit.bind(gb),
+                               autosave: saveDraft,
+                               pageExit: saveDraft })
 
           gb.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
           gb.playerSearchResultsDiv = $('<div class="results">')
@@ -1018,11 +1059,12 @@ var GramBot = (function() {
           if (config.title)
             gb.composition.title = config.title
           
+          function markForSave() { gb.composition.needsSave = true }
           gb.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
             .val (gb.composition.title)
             .on ('keyup', function() {
               gb.composition.title = gb.messageTitleInput.val()
-            })
+            }).on ('change', markForSave)
 
           gb.composition.previousTemplate = config.previousTemplate
           gb.composition.template = config.template || gb.composition.template || {}
@@ -1138,6 +1180,7 @@ var GramBot = (function() {
             (gb.messageComposeDiv,
              { content: function() { return gb.composition.template ? gb.composition.template.content : [] },
                changeCallback: function (input) {
+                 gb.composition.needsSave = true
                  gb.autosuggestStatus.temperature = 0
                  gb.setTimer ('autosuggestTimer',
                               gb.autosuggestDelay,
@@ -1188,22 +1231,25 @@ var GramBot = (function() {
             gb.saveCurrentEdit()
               .then (function() {
                 if (!gb.composition.recipient)
-                  gb.showCompose ("Please specify a recipient.")
+                  window.alert ("Please specify a recipient.")
                 else if (gb.templateIsEmpty())
-                  gb.showCompose ("Please enter some message text.")
+                  window.alert ("Please enter some message text.")
                 else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).match(/\S/)))
-                  gb.showCompose ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
+                  window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
                 else if (!(gb.composition.title && gb.composition.title.length))
-                  gb.showCompose ("Please give this message a title.")
+                  window.alert ("Please give this message a title.")
                 else {
                   gb.sendButton.off ('click')
                   delete gb.composition.previousTemplate
-                  gb.REST_postPlayerMessage (gb.playerID, gb.composition.recipient.id, gb.composition.template, gb.composition.title, gb.composition.body, gb.composition.previousMessage)
+                  gb.REST_postPlayerMessage (gb.playerID, { recipient: gb.composition.recipient.id,
+                                                            template: gb.composition.template,
+                                                            title: gb.composition.title,
+                                                            body: gb.composition.body,
+                                                            previous: gb.composition.previousMessage,
+                                                            draft: gb.composition.draft })
                     .then (function (result) {
-                      gb.clearComposeRecipient()
-                      gb.composition.template.id = result.template.id
-                      gb.sendButton.on ('click', send)
-                      gb.showOutbox()
+                      delete gb.composition
+                      return gb.showMailboxPage()
                     }).catch (function (err) {
                       gb.showModalWebError (err, gb.reloadCurrentTab.bind(gb))
                     })
@@ -1225,8 +1271,6 @@ var GramBot = (function() {
                               .append (gb.messageComposeDiv,
                                        gb.suggestionDiv = $('<div class="suggest">'),
                                        gb.messageBodyDiv)),
-                     gb.mailboxDiv = $('<div class="mailbox">').hide(),
-                     gb.readMessageDiv = $('<div class="readmessage">').hide(),
                      $('<div class="messagecontrols">').append
                      (gb.editButton = gb.makeIconButton ('edit', function() {
                        gb.stopAnimation()
@@ -1234,27 +1278,14 @@ var GramBot = (function() {
                      }),
                       gb.randomizeButton = gb.makeIconButton ('randomize', function (evt) {
                         evt.stopPropagation()
-                        gb.showCompose()
                         gb.generateMessageBody()
                         delete gb.autosuggestStatus.lastVal
                         delete gb.autosuggestStatus.lastKey
                         gb.autosuggestStatus.temperature++
                         gb.autosuggestStatus.refresh()
                       }),
-                      gb.composeButton = gb.makeIconButton ('message', function() {
-                        gb.showCompose()
-                      }).hide(),
-                      gb.destroyButton = gb.makeIconButton ('destroy').hide(),
-                      gb.sendButton = gb.makeIconButton ('send', send),
-                      gb.forwardButton = gb.makeIconButton ('forward').hide(),
-                      gb.mailboxButton = gb.makeIconButton ('outbox', function() {
-                        gb.showOutbox()
-                      }),
-                      gb.reloadButton = gb.makeIconButton ('reload', function() {
-                        // clear screen and introduce a short delay so it looks more like a refresh
-                        gb.mailboxDiv.empty()
-                        window.setTimeout (gb.showOutbox.bind(gb), 10)
-                      }).hide()))
+                      gb.destroyButton = gb.makeIconButton ('destroy'),
+                      gb.sendButton = gb.makeIconButton ('send', send)))
 
           gb.restoreScrolling (gb.messageComposeDiv)
           gb.restoreScrolling (gb.messageBodyDiv)
@@ -1270,6 +1301,7 @@ var GramBot = (function() {
           gb.playerSearchInput
             .on ('keyup', gb.doComposePlayerSearch.bind(gb))
             .on ('click', gb.doComposePlayerSearch.bind(gb,true))
+            .on ('change', markForSave)
           if (!gb.composition.recipient) {
             delete gb.lastComposePlayerSearchText
             gb.doComposePlayerSearch()
@@ -1296,6 +1328,7 @@ var GramBot = (function() {
         delete this.composition.previousTemplate
         this.composition.template.content = newContent
         this.autosuggestStatus.temperature = 0
+        gb.composition.needsSave = true
         return true
       }
       return false
@@ -1322,141 +1355,6 @@ var GramBot = (function() {
       delete gb.composition.recipient
       gb.playerSearchInput.val('')
       gb.doComposePlayerSearch()
-    },
-
-    showCompose: function (error) {
-      this.composeDiv.show()
-      this.editButton.show()
-      this.randomizeButton.show()
-      this.sendButton.show()
-      this.mailboxButton.show()
-      this.composeButton.hide()
-      this.forwardButton.hide()
-      this.destroyButton.hide()
-      this.reloadButton.hide()
-      this.mailboxDiv.hide()
-      this.readMessageDiv.hide()
-      if (error)
-        window.setTimeout (function() { alert(error) }, 10)
-    },
-    
-    showOutbox: function() {
-      var gb = this
-      gb.mailboxDiv.show()
-      gb.composeButton.show()
-      gb.reloadButton.show()
-      gb.mailboxButton.hide()
-      gb.sendButton.hide()
-      gb.forwardButton.hide()
-      gb.editButton.hide()
-      gb.randomizeButton.show()
-      gb.destroyButton.hide()
-      gb.readMessageDiv.hide()
-      gb.composeDiv.hide()
-      gb.REST_getPlayerOutbox (gb.playerID)
-        .then (function (result) {
-          gb.populateMailboxDiv ({ refresh: gb.showOutbox,
-                                   title: 'Sent messages',
-                                   messages: result.messages,
-                                   method: 'REST_getPlayerMessageSent',
-                                   verb: 'Sent',
-                                   preposition: 'To',
-                                   object: 'recipient',
-                                   showMessage: function (message) {
-                                     gb.composeButton.hide()
-                                     gb.editButton.hide()
-                                     gb.randomizeButton.show()
-                                     gb.sendButton.hide()
-                                     gb.composeDiv.hide()
-                                   }})
-        })
-    },
-
-    populateMailboxDiv: function (props) {
-      var gb = this
-      gb.messageHeaderCache = {}
-      gb.mailboxDiv
-        .empty()
-        .append ($('<span class="mailboxname">').text (props.title),
-                 gb.mailboxContentsDiv = $('<span class="contents">')
-                 .append (props.messages.map (gb.makeMailboxEntryDiv.bind (gb, props))))
-    },
-
-    makeMailboxEntryDiv: function (props, message) {
-      var gb = this
-      gb.messageHeaderCache[message.id] = message
-      var deleteMessage = function (evt) {
-        evt.stopPropagation()
-        gb.REST_deletePlayerMessage (gb.playerID, message.id)
-          .then (props.refresh.bind(gb))
-      }
-      var div = $('<div class="message">')
-          .append ($('<div class="title">').text (message.title),
-                   $('<span class="buttons">')
-                   .append (gb.makeIconButton ('destroy', deleteMessage)),
-                   $('<div class="player">').html (message[props.object].displayName))
-          .on ('click', function() {
-            gb[props.method] (gb.playerID, message.id)
-              .then (function (result) {
-                if (message.unread) {
-                  div.removeClass('unread').addClass('read')
-                  delete message.unread
-                  --gb.messageCount
-                  gb.updateMessageCountDiv()
-                }
-                gb.populateReadMessageDiv ({ div: gb.readMessageDiv,
-                                             verb: props.verb,
-                                             preposition: props.preposition,
-                                             object: props.object,
-                                             message: result.message })
-                gb.readMessageDiv.show()
-                gb.mailboxButton.show()
-                gb.destroyButton.show()
-                  .off('click')
-                  .on('click', deleteMessage)
-                gb.forwardButton.show()
-                  .off('click')
-                  .on('click', function (evt) {
-                    evt.stopPropagation()
-                    gb.REST_getPlayerTemplate (gb.playerID, result.message.template.id)
-                      .then (function (templateResult) {
-                        return gb.showComposePage
-                        ({ title: result.message.title,
-                           template: templateResult.template,
-                           body: result.message.body,
-                           previousMessage: result.message.id,
-                           focus: 'playerSearchInput' })
-                      })
-                  })
-                gb.reloadButton.hide()
-                gb.mailboxDiv.hide()
-                props.showMessage (result.message)
-              })
-          })
-      div.addClass (message.unread ? 'unread' : 'read')
-      return div
-    },
-
-    populateReadMessageDiv: function (props) {
-      var gb = this
-      var other = props.message[props.object]
-      props.div
-        .empty()
-        .append ($('<div class="messageheader">')
-                 .append ($('<div class="row">')
-                          .append ($('<span class="label">').text (props.preposition + ':'),
-                                   $('<span class="field">').html (gb.makePlayerSpan (other.name,
-                                                                                      other.displayName,
-                                                                                      function (evt) {
-                                                                                        gb.showOtherStatusPage (other)
-                                                                                      }))),
-                          $('<div class="row">')
-                          .append ($('<span class="label">').text ('Subject:'),
-                                   $('<span class="field">').text (props.message.title)),
-                         $('<div class="row">')
-                          .append ($('<span class="label">').text (props.verb + ':'),
-                                   $('<span class="field">').text (new Date (props.message.date).toString()))),
-                 $('<div class="messagebody messageborder">').html (gb.renderMarkdown (gb.makeExpansionText (props.message.body))))
     },
     
     doComposePlayerSearch: function (forceNewSearch) {
@@ -1637,7 +1535,8 @@ var GramBot = (function() {
     generateMessageBody: function() {
       var gb = this
       gb.composition.body = {}
-
+      gb.composition.needsSave = true
+      
       var templatePromise
       if (gb.composition.previousTemplate)
         templatePromise = gb.REST_getPlayerSuggestReply (gb.playerID, gb.composition.previousTemplate.id)
@@ -1719,49 +1618,72 @@ var GramBot = (function() {
       return this.showStatusPage()
     },
     
-    // inbox
-    showInboxPage: function() {
+    // inbox/outbox/drafts
+    showMailboxPage: function() {
       var gb = this
 
-      return this.setPage ('inbox')
+      return this.setPage ('mailbox')
         .then (function() {
-          gb.showNavBar ('inbox')
+          gb.showNavBar ('mailbox')
 
           gb.container
             .append (gb.mailboxDiv = $('<div class="mailbox">'),
-                     gb.readMessageDiv = $('<div class="readmessage">').hide(),
-                     gb.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      $('<div class="messagecontrols">').append
-                     (gb.replyButton = gb.makeIconButton ('reply').hide(),
-                      gb.forwardButton = gb.makeIconButton ('forward').hide(),
-                      gb.destroyButton = gb.makeIconButton ('destroy').hide(),
-                      gb.mailboxButton = gb.makeIconButton ('inbox', function() {
+                     (gb.inboxButton = gb.makeIconButton ('inbox', function() {
                         gb.showInbox()
                       }),
-                      gb.reloadButton = gb.makeIconButton ('reload', function() {
-                        // clear screen and introduce a short delay so it looks more like a refresh
-                        gb.mailboxDiv.empty()
-                        window.setTimeout (gb.showInbox.bind(gb), 10)
+                      gb.outboxButton = gb.makeIconButton ('drafts', function() {
+                        gb.showDrafts()
+                      }),
+                      gb.outboxButton = gb.makeIconButton ('outbox', function() {
+                        gb.showOutbox()
                       })))
 
+          gb.restoreScrolling (gb.mailboxDiv)
           gb.showInbox()
         })
     },
 
     showInbox: function() {
       var gb = this
-      gb.mailboxDiv.show()
-      gb.reloadButton.show()
-      gb.readMessageDiv.hide()
-      gb.rateMessageDiv.hide()
-      gb.replyButton.hide()
-      gb.forwardButton.hide()
-      gb.destroyButton.hide()
-      gb.mailboxButton.hide()
       gb.REST_getPlayerInbox (gb.playerID)
         .then (function (result) {
           gb.populateMailboxDiv ($.extend ({ messages: result.messages },
                                            gb.inboxProps()))
+        })
+    },
+    
+    showOutbox: function() {
+      var gb = this
+      gb.REST_getPlayerOutbox (gb.playerID)
+        .then (function (result) {
+          gb.populateMailboxDiv ({ refresh: gb.showOutbox,
+                                   title: 'Sent messages',
+                                   messages: result.messages,
+                                   method: 'REST_getPlayerMessageSent',
+                                   verb: 'Sent',
+                                   preposition: 'To',
+                                   object: 'recipient',
+                                   showMessage: gb.showMessage.bind(gb)
+                                 })
+        })
+    },
+
+    showDrafts: function() {
+      var gb = this
+      gb.REST_getPlayerDrafts (gb.playerID)
+        .then (function (result) {
+          gb.populateMailboxDiv ({ refresh: gb.showDrafts,
+                                   title: 'Drafts',
+                                   messages: result.drafts,
+                                   method: 'REST_getPlayerDraft',
+                                   verb: 'Edited',
+                                   preposition: 'To',
+                                   object: 'recipient',
+                                   showMessage: function (props) {
+                                     gb.showComposePage (props.message)
+                                   }
+                                 })
         })
     },
 
@@ -1774,8 +1696,9 @@ var GramBot = (function() {
                verb: 'Received',
                preposition: 'From',
                object: 'sender',
-               showMessage: function (message) {
-
+               showMessage: function (props) {
+                 var message = props.message
+                 gb.showMessage (props)
                  if (!message.rating && message.sender.id !== gb.playerID) {
                    var stars = new Array(gb.maxRating).fill(1).map (function() {
                      return $('<span class="rating">')
@@ -1805,9 +1728,9 @@ var GramBot = (function() {
                                      stars))
                      .show()
                  }
-                 
+
+                 gb.dummyReplyButton.hide()
                  gb.replyButton
-                   .off('click')
                    .on('click', function (evt) {
                      evt.stopPropagation()
                      var replyTitle = message.title
@@ -1835,6 +1758,93 @@ var GramBot = (function() {
           if (gb.page === 'inbox')  // check again in case player switched pages while loading
             if (!gb.messageHeaderCache[result.message.id])
               gb.mailboxContentsDiv.append (gb.makeMailboxEntryDiv (gb.inboxProps(), result.message))
+        })
+    },
+
+    populateMailboxDiv: function (props) {
+      var gb = this
+      gb.messageHeaderCache = {}
+      gb.mailboxDiv
+        .empty()
+        .append ($('<span class="mailboxname">').text (props.title),
+                 gb.mailboxContentsDiv = $('<span class="contents">')
+                 .append (props.messages.map (gb.makeMailboxEntryDiv.bind (gb, props))))
+    },
+
+    makeMailboxEntryDiv: function (props, message) {
+      var gb = this
+      gb.messageHeaderCache[message.id] = message
+      var deleteMessage = function (evt) {
+        evt.stopPropagation()
+        gb.REST_deletePlayerMessage (gb.playerID, message.id)
+          .then (props.refresh.bind(gb))
+      }
+      var div = $('<div class="message">')
+          .append ($('<div class="title">').text (message.title || 'Untitled'),
+                   $('<span class="buttons">')
+                   .append (gb.makeIconButton ('destroy', deleteMessage)),
+                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No recipient')))
+          .on ('click', function() {
+            gb[props.method] (gb.playerID, message.id)
+              .then (function (result) {
+                if (message.unread) {
+                  div.removeClass('unread').addClass('read')
+                  delete message.unread
+                  --gb.messageCount
+                  gb.updateMessageCountDiv()
+                }
+                props.showMessage ($.extend
+                                   ({ message: result.message,
+                                      destroy: deleteMessage },
+                                    props))
+              })
+          })
+      div.addClass (message.unread ? 'unread' : 'read')
+      return div
+    },
+
+    showMessage: function (props) {
+      var gb = this
+      gb.pushView ('read')
+        .then (function() {
+          gb.container
+            .append (gb.readMessageDiv = $('<div class="readmessage">'),
+                     gb.rateMessageDiv = $('<div class="ratemessage">').hide(),
+                     gb.popBack()
+                     .append (gb.dummyReplyButton = gb.makeIconButton('dummy'),
+                              gb.replyButton = gb.makeIconButton('reply').hide(),
+                              gb.forwardButton = gb.makeIconButton ('forward', function (evt) {
+                                evt.stopPropagation()
+                                gb.REST_getPlayerTemplate (gb.playerID, props.message.template.id)
+                                  .then (function (templateResult) {
+                                    return gb.showComposePage
+                                    ({ title: props.message.title,
+                                       template: templateResult.template,
+                                       body: props.message.body,
+                                       previousMessage: props.message.id,
+                                       focus: 'playerSearchInput' })
+                                  })
+                              }),
+                              gb.destroyButton = gb.makeIconButton('destroy',props.destroy)))
+
+          var other = props.message[props.object]
+          gb.readMessageDiv
+            .empty()
+            .append ($('<div class="messageheader">')
+                     .append ($('<div class="row">')
+                              .append ($('<span class="label">').text (props.preposition + ':'),
+                                       $('<span class="field">').html (gb.makePlayerSpan (other.name,
+                                                                                          other.displayName,
+                                                                                          function (evt) {
+                                                                                            gb.showOtherStatusPage (other)
+                                                                                          }))),
+                              $('<div class="row">')
+                              .append ($('<span class="label">').text ('Subject:'),
+                                       $('<span class="field">').text (props.message.title)),
+                              $('<div class="row">')
+                              .append ($('<span class="label">').text (props.verb + ':'),
+                                       $('<span class="field">').text (new Date (props.message.date).toString()))),
+                     $('<div class="messagebody messageborder">').html (gb.renderMarkdown (gb.makeExpansionText (props.message.body))))
         })
     },
 
@@ -1920,7 +1930,7 @@ var GramBot = (function() {
       var gb = this
       callback = callback || gb.popView.bind(gb)
       var button
-      return $('<div class="backbar">')
+      return (gb.backBarDiv = $('<div class="backbar">'))
 	.append ($('<span>')
 		 .html (button = gb.makeIconButton ('back', function() { callback(button) })))
     },
@@ -2006,13 +2016,27 @@ var GramBot = (function() {
         })
     },
 
-    saveOnPageExit: function() {
+    saveOnPageExit: function (config) {
       var gb = this
+      config = config || {}
+      var unfocusCallback = config.unfocus || gb.saveCurrentEdit.bind(gb)
+      var autosaveCallback = config.autosave || unfocusCallback
+      var pageExitCallback = config.pageExit || autosaveCallback
       gb.pageExit = function() {
+        gb.clearTimer ('autosaveTimer')
 	gb.container.off ('click')
-        return gb.saveCurrentEdit()
+        return pageExitCallback()
       }
-      gb.container.on ('click', gb.saveCurrentEdit.bind(gb))
+      function setAutosaveTimer() {
+        gb.setTimer ('autosaveTimer',
+                     gb.autosaveDelay,
+                     function() {
+                       autosaveCallback()
+                       setAutosaveTimer()
+                     })
+      }
+      setAutosaveTimer()
+      gb.container.on ('click', unfocusCallback)
     },
 
     makeIconButton: function (iconName, callback, color) {
