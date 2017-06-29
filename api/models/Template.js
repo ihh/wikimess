@@ -34,7 +34,13 @@ module.exports = {
       model: 'template',
       defaultsTo: null
     },
-    
+
+    // privacy
+    isPublic: {
+      type: 'boolean',
+      defaultsTo: true
+    },
+
     // ratings
     nRatings: { type: 'integer', defaultsTo: 1 },
     sumRatings: { type: 'integer', defaultsTo: 1 },

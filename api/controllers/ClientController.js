@@ -185,7 +185,7 @@ module.exports = {
   // configure Player info
   configurePlayer: function (req, res) {
     var playerID = parseInt (req.params.player)
-    var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed']
+    var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed', 'createsPublicTemplates']
     var name = req.body.name
     var nameClashPromise = (typeof(name) === 'undefined'
                             ? Promise.resolve (false)
@@ -203,6 +203,7 @@ module.exports = {
           if (typeof (req.body[key]) !== 'undefined')
             update[key] = req.body[key]
         })
+
         var passwordPromise
         if (req.body.newPassword)
           passwordPromise = Player.findOne ({ id: playerID })
@@ -228,7 +229,8 @@ module.exports = {
 
         return passwordPromise
           .then (function() {
-            return Player.update ({ id: playerID }, update)
+            return Player.update ({ id: playerID },
+                                  update)
           }).then (function (updated) {
             if (updated.length)
               res.ok()
@@ -503,6 +505,7 @@ module.exports = {
     var body = req.body.body
     var previous = req.body.previous
     var draftID = req.body.draft
+    var isPublic = req.body.isPublic
     var result = {}, notification = {}
     // check that the recipient is reachable
     Follow.find ({ follower: recipientID,
@@ -519,7 +522,9 @@ module.exports = {
         // find, or create, the template
         var templatePromise
         if (typeof(template.id) !== 'undefined')
-          templatePromise = Template.findOne ({ id: template.id })
+          templatePromise = Template.findOne ({ id: template.id,
+                                                or: [{ author: playerID },
+                                                     { isPublic: true }] })
         else {
           // give an initial weight of 1 to all symbol adjacencies in this template
           SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
@@ -537,7 +542,8 @@ module.exports = {
               return Template.create ({ title: title,
                                         content: template.content,
                                         author: playerID,
-                                        previous: previousTemplate })
+                                        previous: previousTemplate,
+                                        isPublic: isPublic })
             })
         }
         templatePromise.then (function (template) {
@@ -947,7 +953,9 @@ module.exports = {
     var playerID = parseInt (req.params.player)
     var templateID = parseInt (req.params.template)
     var result = {}
-    Template.findOne ({ id: templateID })
+    Template.findOne ({ id: templateID,
+                        or: [{ author: playerID },
+                             { isPublic: true }] })
       .then (function (template) {
         result.template = { id: template.id,
                             content: template.content }
@@ -988,7 +996,8 @@ module.exports = {
   suggestTemplates: function (req, res) {
     var playerID = parseInt (req.params.player)
     var nSuggestions = 5
-    return Template.find ({ previous: null })
+    return Template.find ({ previous: null,
+                            isPublic: true })
       .populate ('author')
       .then (function (templates) {
         templates.forEach (function (template) {
@@ -1014,7 +1023,9 @@ module.exports = {
   suggestReply: function (req, res) {
     var playerID = parseInt (req.params.player)
     var previousID = parseInt (req.params.template)
-    return Template.find ({ previous: previousID })
+    return Template.find ({ previous: previousID,
+                            or: [{ author: playerID },
+                                 { isPublic: true }] })
       .then (function (templates) {
         var result = {}
         if (templates.length) {

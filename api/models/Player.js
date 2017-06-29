@@ -46,6 +46,7 @@ module.exports = {
     
     // privacy controls
     noMailUnlessFollowed: { type: 'boolean', defaultsTo: false },
+    createsPublicTemplates: { type: 'boolean', defaultsTo: false },
     
     // social networks
     facebookId: {

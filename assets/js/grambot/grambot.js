@@ -758,11 +758,11 @@ var GramBot = (function() {
           gb.container
             .append ($('<div class="menubar">')
                      .append ($('<div class="list">')
-                              .append (gb.makeListLink (gb.playerInfo.hidePassword ? 'Name' : 'Name and password', gb.showPlayerConfigPage),
-                                       gb.makeListLink ('Biographical info', gb.showPlayerBioPage),
-                                       gb.makeListLink ('Audio', gb.showAudioPage),
+                              .append (gb.makeListLink ('Login', gb.showPlayerConfigPage),
+                                       gb.makeListLink ('"Privacy"', gb.showPlayerBioPage),
                                        gb.makeListLink ('Colors', gb.showThemesPage),
-                                       gb.makeListLink ('Log out', gb.doLogout))))
+                                       gb.makeListLink ('Audio', gb.showAudioPage),
+                                       gb.makeListLink ('Exit', gb.doLogout))))
         })
     },
 
@@ -854,6 +854,7 @@ var GramBot = (function() {
             gb.playerInfo.publicBio = gb.publicBioInput.val()
             gb.playerInfo.privateBio = gb.privateBioInput.val()
             return gb.REST_postPlayerConfig (gb.playerID, { noMailUnlessFollowed: gb.playerInfo.noMailUnlessFollowed,
+                                                            createsPublicTemplates: gb.playerInfo.createsPublicTemplates,
                                                             gender: gb.playerInfo.gender,
                                                             publicBio: gb.playerInfo.publicBio,
                                                             privateBio: gb.playerInfo.privateBio })
@@ -878,7 +879,10 @@ var GramBot = (function() {
                                                                    { text: "I prefer not to say", value: 'secret' }] }),
                                        gb.makeConfigMenu ({ id: 'noMailUnlessFollowed',
                                                             opts: [{ text: "Anyone can contact me", value: false },
-                                                                   { text: "Only people in my address book, please", value: true }] })),
+                                                                   { text: "Only people in my address book, please", value: true }] }),
+                                       gb.makeConfigMenu ({ id: 'createsPublicTemplates',
+                                                            opts: [{ text: "All my mail is public", value: true },
+                                                                   { text: 'I trust WikiMess "security"', value: false }] })),
                               $('<div class="inputbar">')
                               .append (gb.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
                                        .attr ('rows', 2)
@@ -887,7 +891,7 @@ var GramBot = (function() {
                               $('<div class="inputbar">')
                               .append (gb.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
                                        .attr ('rows', 2)
-                                       .attr ('placeholder', 'Private info (shown to people in your address book)')
+                                       .attr ('placeholder', 'Private info. Shown "only" to people in your address book')
                                        .val(gb.playerInfo.privateBio))))
             .append (backBar)
         })
