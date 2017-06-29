@@ -22,7 +22,7 @@ module.exports = {
 
     owner: {
       model: 'player',
-      defaultsTo: null
+      defaultsTo: function() { return Player.adminUserId }
     },
 
     initialized: {

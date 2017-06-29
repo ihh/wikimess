@@ -646,7 +646,8 @@ module.exports = {
     var symInfo = { owner: playerID }
     if (req.body.symbol)
       extend (symInfo, { prefix: req.body.symbol.name,
-                         rules: req.body.symbol.rules })
+                         rules: req.body.symbol.rules,
+                         initialized: (req.body.symbol.rules && req.body.symbol.rules.length > 0) })
     Symbol.create (symInfo)
       .then (function (symbol) {
         result.symbol = { id: symbol.id,
@@ -939,7 +940,7 @@ module.exports = {
           if (!symbolIDs.length) {
             var allSymbolIDs = Object.keys (Symbol.cache.byId)
             // TODO: weight sample by Symbol rating
-            if (symbolIDs.length)
+            if (allSymbolIDs.length)
               symbolIDs.push (allSymbolIDs [Math.floor (Math.random() * allSymbolIDs.length)])
           }
         }

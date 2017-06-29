@@ -79,15 +79,19 @@ module.exports = {
   },
 
   maxNameLen: 16,
-  
+
   initAdmin: function() {
     return Player.find()
       .then (function (players) {
         return players.length
           ? true
-          : Player.create ({ name: 'admin', password: 'admin', admin: true })
+          : Player.create ({ id: Player.adminUserId,
+                             name: 'admin',
+                             password: 'admin',
+                             admin: true })
       })
   },
+  adminUserId: 1,
   
   beforeCreate: function(player, cb) {
     player.displayName = player.displayName || player.name

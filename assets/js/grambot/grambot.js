@@ -109,7 +109,7 @@ var GramBot = (function() {
                     follow: 'circle-plus',
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
-                    compose: 'typewriter-icon',
+                    compose: 'scroll-unfurled',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -122,11 +122,11 @@ var GramBot = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
               {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
 
-    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'take-my-money', },
-           { name: 'compose', method: 'showComposePage', icon: 'typewriter-icon' },
+    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'castle', },
+           { name: 'compose', method: 'showComposePage', icon: 'scroll-unfurled' },
            { name: 'inbox', method: 'showInboxPage', icon: 'envelope' },
-           { name: 'follows', method: 'showFollowsPage', icon: 'address-book-black' },
-           { name: 'grammar', method: 'showGrammarEditPage', icon: 'printing-press' },
+           { name: 'follows', method: 'showFollowsPage', icon: 'backup' },
+           { name: 'grammar', method: 'showGrammarEditPage', icon: 'spell-book' },
            { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
     
     verbose: { page: false,
@@ -877,7 +877,7 @@ var GramBot = (function() {
       return this.pushView ('theme')
         .then (function() {
           gb.container
-            .append (gb.makePageTitle ("Themes"))
+            .append (gb.makePageTitle ("Color themes"))
             .append ($('<div class="menubar">')
                      .append (fieldset = $('<fieldset class="themegroup">')
                               .append ($('<legend>').text("Select theme"))))
@@ -1073,7 +1073,7 @@ var GramBot = (function() {
                                             (gb.animationExpansion
                                              ? gb.REST_getPlayerExpand (gb.playerID, symbol.id)
                                              .then (function (result) {
-                                               gb.appendToMessageBody ([result.expansion, spacer])
+                                               gb.appendToMessageBody ([spacer, result.expansion])
                                              })
                                              : gb.generateMessageBody())
                                         generatePromise.then (divAutosuggest)
@@ -1855,21 +1855,18 @@ var GramBot = (function() {
                                                      $('<div class="templates">')
                                                      .append (result.templates.map (function (template) {
                                                        return $('<div class="template">')
+                                                         .on ('click', function() {
+                                                           gb.REST_getPlayerTemplate (gb.playerID, template.id)
+                                                             .then (function (templateResult) {
+                                                               gb.showComposePage ({ title: template.title,
+                                                                                     template: templateResult.template,
+                                                                                     focus: 'playerSearchInput' }) }) })
                                                          .append ($('<span class="title">')
-                                                                  .text (template.title)
-                                                                  .on ('click', function() {
-                                                                    gb.REST_getPlayerTemplate (gb.playerID, template.id)
-                                                                      .then (function (templateResult) {
-                                                                        gb.showComposePage ({ title: template.title,
-                                                                                              template: templateResult.template,
-                                                                                              focus: 'playerSearchInput' })
-                                                                      })
-                                                                  }),
+                                                                  .text (template.title),
                                                                   $('<span class="by">').text(' by '),
                                                                   gb.makePlayerSpan (template.author.name,
                                                                                      null,
-                                                                                     gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author))))
-                                                     }))))
+                                                                                     gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author)))) }))))
                 })
             })
         })
@@ -2383,7 +2380,7 @@ var GramBot = (function() {
     makeTemplateSpan: function (content) {
       var gb = this
       if (!content || !content.filter (function (rhsSym) { return typeof(rhsSym) === 'object' || rhsSym.match(/\S/) }).length)
-        return $('<p>').html ($('<span class="placeholder">').text ('Enter the message text here.'))
+        return $('<p>').html ($('<span class="placeholder">').text ('Enter the message text here, or pick one of the suggestions below.'))
       return $('<span>')
         .append (content.map (function (rhsSym) {
           return (typeof(rhsSym) === 'object'
@@ -2406,7 +2403,10 @@ var GramBot = (function() {
       var span = $('<span>').addClass(callback ? 'playerlink' : 'playertag').append ('@', nameSpan)
       nameSpan.text (name)
       if (callback)
-        span.on ('click', callback)
+        span.on ('click', function (evt) {
+          evt.stopPropagation()
+          callback (evt)
+        })
       if (displayName)
         span = $('<span>').append (span, ' (' + displayName + ')')
       return span
