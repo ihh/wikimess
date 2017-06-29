@@ -1994,7 +1994,7 @@ var GramBot = (function() {
               gb.showNavBar ('status')
               gb.showGameStatusPage (status)
               gb.detailBarDiv
-                .prepend (gb.makePageTitle ('Welcome to Ghost Messenger'),
+                .prepend (gb.makePageTitle ('Welcome to Wiki Messenger'),
                           $('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin)))
               return gb.REST_getPlayerSuggestTemplates (gb.playerID)
                 .then (function (result) {
