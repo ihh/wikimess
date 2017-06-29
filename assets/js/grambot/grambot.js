@@ -3,7 +3,6 @@ var GramBot = (function() {
     var gb = this
     config = config || {}
     $.extend (this, config)
-    this.Label = grambotLabel
 
     this.container = $('#'+this.containerID)
       .addClass("grambot")
@@ -1139,6 +1138,7 @@ var GramBot = (function() {
                                             (gb.animationExpansion
                                              ? gb.REST_getPlayerExpand (gb.playerID, symbol.id)
                                              .then (function (result) {
+                                               gb.copyModifiers (result.expansion, symbol)
                                                gb.appendToMessageBody ([spacer, result.expansion])
                                              })
                                              : gb.generateMessageBody())
@@ -1502,17 +1502,87 @@ var GramBot = (function() {
     
     makeExpansionText: function (node, leaveSymbolsUnexpanded) {
       var gb = this
-      return (node
-              ? (typeof(node) === 'string'
-                 ? node
-                 : (node.rhs
-                    ? (leaveSymbolsUnexpanded && node.name
-                       ? ('#' + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded'))
-                       : node.rhs.map (function (rhsSym) {
-                         return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
-                       }).join(''))
-                    : ''))
-              : '')
+      var expansion = ''
+      if (node) {
+        if (typeof(node) === 'string')
+          expansion = node
+        else if (node.rhs) {
+          if (leaveSymbolsUnexpanded && node.name)
+            expansion = '#' + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded')
+          else {
+            expansion = node.rhs.map (function (rhsSym) {
+              return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
+            }).join('')
+            if (!leaveSymbolsUnexpanded || !gb.firstNamedSymbol(node)) {
+              if (node.cap)
+                expansion = gb.capitalize (expansion)
+              if (node.upper)
+                expansion = expansion.toUpperCase()
+              if (node.plural)
+                expansion = gb.pluralForm (expansion)
+              if (node.a)
+                expansion = gb.indefiniteArticle (expansion)
+            }
+          }
+        }
+      }
+      return expansion
+    },
+
+    copyModifiers: function (target, source) {
+      var mods = ['cap', 'upper', 'plural', 'a']
+      mods.forEach (function (mod) { target[mod] = source[mod] })
+    },
+    
+    capitalize: function (text) {
+      return text
+        .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+        .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+    },
+
+    matchCase: function (model, text) {
+      return model.match(/[A-Z]/) ? text.toUpperCase() : text
+    },
+    
+    plural: function (num, singular) {
+      if (num === 1)
+        return '1 ' + singular
+      return num + ' ' + this.pluralForm (singular)
+    },
+
+    // this list needs beefing up...
+    irregularPlural: {
+      addendum: 'addenda', alga: 'algae', alumnus: 'alumni', amoeba: 'amoebae', antenna: 'antennae', bacterium: 'bacteria', cactus: 'cacti', curriculum: 'curricula', datum: 'data', fungus: 'fungi', genus: 'genera', larva: 'larvae', memorandum: 'memoranda', stimulus: 'stimuli', syllabus: 'syllabi', vertebra: 'vertebrae',
+      echo: 'echoes', embargo: 'embargoes', hero: 'heroes', potato: 'potatoes', tomato: 'tomatoes', torpedo: 'torpedoes', veto: 'vetoes', volcano: 'volcanoes',
+      child: 'children', dormouse: 'dormice', foot: 'feet', goose: 'geese', louse: 'lice', man: 'men', mouse: 'mice', ox: 'oxen', tooth: 'teeth', woman: 'women',
+      axis: 'axes', analysis: 'analyses', basis: 'bases', crisis: 'crises', diagnosis: 'diagnoses', ellipsis: 'ellipses', emphasis: 'emphases', hypothesis: 'hypotheses', neurosis: 'neuroses', oasis: 'oases', paralysis: 'paralyses', parenthesis: 'parentheses', thesis: 'theses',
+      appendix: 'appendices', index: 'indices', matrix: 'matrices',
+      barracks: 'barracks', deer: 'deer', fish: 'fish', gallows: 'gallows', means: 'means', offspring: 'offspring', series: 'series', sheep: 'sheep', species: 'species'
+    },
+
+    pluralForm: function (singular) {
+      var gb = this
+      var match
+      if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && gb.irregularPlural[match[2]])
+        return match[1] + gb.matchCase (match[2], gb.irregularPlural[match[2]]) + match[3]
+      else if (singular.match(/(ch|sh|s|x|z)\s*$/i))
+        return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + gb.matchCase(ending,'es') + spacer })
+      else if (singular.match(/[aeiou]y\s*$/i))
+        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return gb.matchCase(y,'ys') + spacer })
+      else if (singular.match(/y\s*$/i))
+        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return gb.matchCase(y,'ies') + spacer })
+      else if (singular.match(/fe?\s*$/i))
+        return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return gb.matchCase(fe,'ves') + spacer })
+      else if (singular.match(/o\s*$/i))
+        return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return gb.matchCase(o,'os') + spacer })
+      else if (singular.match(/[a-zA-Z]\s*$/i))
+        return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + gb.matchCase(c,'s') + spacer })
+      return singular
+    },
+
+    indefiniteArticle: function (nounPhrase) {
+      var article = nounPhrase.match(/^[^A-Za-z]*[aeiou]/i) ? 'an' : 'a'
+      return article + nounPhrase
     },
 
     countSymbolNodes: function (node, includeLimitedNodes) {
@@ -1525,16 +1595,21 @@ var GramBot = (function() {
                  }, ((node.id || node.name) && (includeLimitedNodes || !node.limit)) ? 1 : 0)
                  : 0))
     },
-    
-    deleteFirstSymbolName: function (node) {
+
+    firstNamedSymbol: function (node) {
+      var gb = this
       if (typeof(node) === 'string')
         return false
-      if (node.name) {
-        delete node.name
-        if (!node.limit)
-          return true
-      }
-      return node.rhs && node.rhs.find (this.deleteFirstSymbolName.bind (this))
+      if (node.name)
+        return node
+      return node.rhs && node.rhs.find (this.firstNamedSymbol.bind (this))
+    },
+    
+    deleteFirstSymbolName: function (node) {
+      var namedNode = this.firstNamedSymbol (node)
+      if (namedNode)
+        delete namedNode.name
+      return namedNode ? true : false
     },
 
     deleteAllSymbolNames: function (node) {
@@ -1581,6 +1656,7 @@ var GramBot = (function() {
             if (expansion && typeof(expansion.id) !== 'undefined') {
               rhsSym.id = expansion.id
               gb.symbolName[expansion.id] = expansion.name
+              gb.copyModifiers (expansion, rhsSym)
               return expansion
             }
             return rhsSym
@@ -1999,11 +2075,11 @@ var GramBot = (function() {
        .append ($('<div class="ratinginfo">')
                 .append ($('<span class="ratinginfolabel">').text ("Messages:"),
                          gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                         $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nSenderRatings, "rating") + ")")),
+                         $('<span class="ratinginfocount">').text (" (" + gb.plural (status.nSenderRatings, "rating") + ")")),
                 $('<div class="ratinginfo">')
                 .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
                          gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                         $('<span class="ratinginfocount">').text (" (" + gb.Label.plural (status.nAuthorRatings, "rating") + ")"))))
+                         $('<span class="ratinginfocount">').text (" (" + gb.plural (status.nAuthorRatings, "rating") + ")"))))
 
       gb.detailBarDiv.append
       ($('<div class="biofact">')
@@ -2258,26 +2334,39 @@ var GramBot = (function() {
 
     parseRhs: function (rhs, ignoreText) {
       var gb = this
-      var regex = /(([\s\S]*?)#(\w+)|([\s\S]+))/g, match
+      var regex = /(([\s\S]*?)#(\w+)|([\s\S]*?)#\((\w+)\+(\w+)\)|[\s\S]+)/g, match
       var parsed = []
       var name2id = this.symbolNameToID()
-      while ((match = regex.exec(rhs))) {
-        if (match[4] && match[4].length) {
-          if (!ignoreText)
-            parsed.push (match[4])
-        } else {
-          if (match[2].length && !ignoreText)
-            parsed.push (match[2])
-          var lhsName = match[3]
-          if (lhsName) {
-            var lhsRef = { name: lhsName.toLowerCase() }
-            var lhsID = name2id[lhsName]
-          if (lhsID)
-            lhsRef.id = lhsID
-            parsed.push (lhsRef)
+      while ((match = regex.exec(rhs)))
+        (function() {
+          var text = match[1], symbol
+          if (match[6] && match[6].length) {
+            var pre = match[5], post = match[6]
+            if (pre.match(/^(a|an|A|AN)$/)) {
+              symbol = { name: post, a: pre }
+              text = match[4]
+            } else if (post.match(/^(s|S)$/)) {
+              symbol = { name: pre, plural: post }
+              text = match[4]
+            }
+          } else if (match[3] && match[3].length) {
+            text = match[2]
+            symbol = { name: match[3] }
           }
-        }
-      }
+          if (text && !ignoreText)
+            parsed.push (text)
+          if (symbol) {
+            if (symbol.name.match(/^[0-9_]*[A-Z][A-Z0-9_]*$/))
+              symbol.upper = true
+            else if (symbol.name.match(/^[0-9_]*[A-Z]\w*$/))
+              symbol.cap = true
+            symbol.name = symbol.name.toLowerCase()
+            var id = name2id[symbol.name]
+            if (id)
+              symbol.id = id
+            parsed.push (symbol)
+          }
+        }) ()
       return parsed
     },
 
@@ -2446,7 +2535,7 @@ var GramBot = (function() {
       var gb = this
       return rhs.map (function (rhsSym) {
         return (typeof(rhsSym) === 'object'
-                ? ('#' + (gb.symbolName[rhsSym.id] || rhsSym.name))
+                ? ('#' + gb.makeSymbolName(rhsSym))
                 : rhsSym)
       }).join('')
     },
@@ -2500,13 +2589,25 @@ var GramBot = (function() {
       return span
     },
 
-    makeSymbolSpan: function (sym, callback) {
-      var nameSpan = $('<span class="name">')
-      var span = $('<span class="lhslink">').append ('#', nameSpan)
+    makeSymbolName: function (sym) {
+      var name
       if (sym.name)
-        nameSpan.text (sym.name)
+        name = sym.name
       else if (typeof(sym.id) !== 'undefined')
-        nameSpan.text (gb.symbolName[sym.id])
+        name = gb.symbolName[sym.id]
+      if (sym.upper)
+        name = name.toUpperCase()
+      else if (sym.cap)
+        name = name.replace (/([a-z])/, function (c) { return c.toUpperCase() })
+      if (sym.a)
+        name = '(' + sym.a + '+' + name + ')'
+      else if (sym.plural)
+        name = '(' + name + '+' + sym.plural + ')'
+      return name
+    },
+
+    makeSymbolSpan: function (sym, callback) {
+      var span = $('<span class="lhslink">').append ('#', $('<span class="name">').text (this.makeSymbolName (sym)))
       if (callback)
         span.on ('click', callback)
       return span
