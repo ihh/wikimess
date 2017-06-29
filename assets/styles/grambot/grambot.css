@@ -202,6 +202,7 @@ input {
     display: inline-block;
 }
 
+.grambot .grammarbar .rule .summary p,
 .grambot .grammarbar .rule .rhs p {
     display: inline;
     margin: 0;
@@ -260,6 +261,12 @@ input {
     float: right;
 }
 
+.grambot .grammarinfopane .leftcontrols {
+    font-size: large;
+    float: left;
+}
+
+.grambot .leftcontrols .button,
 .grambot .controls .button {
     float: right;
     width: 1em;
@@ -299,6 +306,12 @@ input {
 
 .grambot .grammarbar .rule .button {
     cursor: pointer;
+}
+
+.grambot .grammarbar .rule .summary {
+    font-style: italic;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 .grambot .grammarbar .rule .rulecontrols {

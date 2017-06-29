@@ -29,6 +29,11 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false
     },
+
+    summary: {
+      type: 'string',
+      defaultsTo: null
+    },
     
     rules: {
       type: 'json',

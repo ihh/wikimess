@@ -15,6 +15,7 @@ var defaultUserName = "admin"
 var defaultPassword = "admin"
 var defaultDataDir = "data"
 var defaultPlayerFilename = "$DATA/players"
+var defaultSymbolFilename = "$DATA/symbols"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt)$'
 var databasePath = '.tmp/localDiskDb.db'
@@ -36,9 +37,10 @@ var opt = getopt.create([
   ['w' , 'password=STRING'  , 'admin player password (default="' + defaultPassword + '")'],
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['p' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
+  ['s' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
   ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
-  ['s' , 'sails'            , 'lift sails before loading data'],
+  ['l' , 'sails'            , 'lift sails before loading data'],
   ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
   ['h' , 'help'             , 'display this help message']
@@ -68,6 +70,7 @@ var jar = request.jar()
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
 var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
+var symbolFilenames = opt.options.symbols || [defaultPath('Symbol',opt)]
 
 var sailsApp, promise = Promise.resolve()
 if (opt.options.sails || opt.options.erase) {
@@ -110,6 +113,12 @@ promise = promise.then (processFilenameList ({ path: '/player',
                                                handler: playerHandler,
                                                parsers: [JSON.parse, eval],
                                                list: playerFilenames.reverse() }))
+
+promise = promise.then (processFilenameList ({ path: '/symbol',
+//                                               schema: schemaPath('symbol'),
+                                               handler: genericHandler('Symbol'),
+                                               parsers: [JSON.parse, eval],
+                                               list: symbolFilenames.reverse() }))
 
 promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
 

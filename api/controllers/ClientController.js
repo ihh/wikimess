@@ -672,13 +672,26 @@ module.exports = {
         if (symbol) {
           var ownerID = symbol.owner
           result.symbol = { id: symbol.id,
-                            owner: { id: ownerID },
-                            rules: symbol.rules }
+                            owner: {} }
+          if (ownerID === playerID || symbol.summary === null)
+            result.symbol.rules = symbol.rules
+          else {
+            result.symbol.rules = []
+            result.symbol.summary = symbol.summary
+          }
           var ownerPromise = (ownerID === null
                               ? Promise.resolve()
+                              .then (function() {
+                                result.symbol.owner = null
+                              })
                               : Player.findOne ({ id: ownerID })
                               .then (function (player) {
-                                result.symbol.owner.name = player.name
+                                if (player.admin)
+                                  result.symbol.owner.admin = true
+                                else {
+                                  result.symbol.owner = ownerID
+                                  result.symbol.owner.name = player.name
+                                }
                               }))
           ownerPromise.then (function() {
             return SymbolService.resolveReferences ([symbol])
