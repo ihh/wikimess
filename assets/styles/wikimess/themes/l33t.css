@@ -4,6 +4,7 @@
     color: white;
 }
 
+.wikimess.l33t .subnavbar,
 .wikimess.l33t .navbar {
     background-color: black;
 }
@@ -91,6 +92,7 @@
     background-color: white;
 }
 
+.wikimess.l33t .menubar .listitem,
 .wikimess.l33t .detailbar .titlebar,
 .wikimess.l33t .compose .messageheader,
 .wikimess.l33t .compose .suggest {

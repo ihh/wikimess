@@ -19,6 +19,10 @@
 	height: 15vw;
     }
 
+    .wikimess .menubar .list {
+	flex-direction: column;
+    }
+    
     .wikimess .menubar a,
     .wikimess .backbar a {
 	padding: 4px 8px 4px 8px;

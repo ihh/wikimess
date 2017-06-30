@@ -411,9 +411,8 @@ input {
 
 .wikimess .menubar .list {
     display: flex;
-    flex-direction: column;
 }
-			     
+
 .wikimess .menubar .listitem,
 .wikimess .menubar label {
     padding: 8px;
@@ -657,9 +656,7 @@ input {
     height: 1em;
 }
 
-.wikimess .backbar,
-.wikimess .grammareditbuttons,
-.wikimess .messagecontrols {
+.wikimess .subnavbar {
     min-height: 2em;
     display: flex;
     justify-content: space-between;
@@ -667,15 +664,11 @@ input {
     border-width: 1px;
 }
 
-.wikimess .backbar span,
-.wikimess .grammareditbuttons span,
-.wikimess .messagecontrols span {
+.wikimess .subnavbar span {
     padding: 2vw;
 }
 
-.wikimess .backbar svg,
-.wikimess .grammareditbuttons svg,
-.wikimess .messagecontrols svg {
+.wikimess .subnavbar svg {
     width: 1em;
     height: 1em;
 }

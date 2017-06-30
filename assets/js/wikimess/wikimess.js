@@ -119,8 +119,8 @@ var WikiMess = (function() {
                     filledStar: 'star-filled',
                     halfStar: 'star-half' },
     
-    themes: [ {style: 'plain', text: 'Plain', iconColor: 'black'},
-              {style: 'l33t', text: 'L33t', iconColor: 'white'} ],
+    themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
+              {style: 'l33t', text: 'L33t', iconColor: 'white', navbarIconColor: 'white', subnavbarIconColor: 'white' } ],
 
     tabs: [{ name: 'status', method: 'showStatusPage', icon: 'castle', },
            { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
@@ -137,7 +137,7 @@ var WikiMess = (function() {
                errors: true,
 	       stack: false },
 
-    emptyMessageWarning: "_This message is empty._",
+    emptyMessageWarning: "_Nothing. I got nothing._",
     emptyTemplateWarning: "_The expanded message, as sent to the recipient, will appear here._",
     suppressDisconnectWarning: true,
 
@@ -661,6 +661,7 @@ var WikiMess = (function() {
         var span = $('<span>').addClass('navtab').addClass('nav-'+tab.name)
         wm.getIconPromise(tab.icon)
           .done (function (svg) {
+            svg = wm.colorizeIcon (svg, wm.themeInfo.navbarIconColor)
             span.append ($(svg).addClass('navicon'))
 	    if (tab.name === 'mailbox')
 	      span.append (wm.messageCountDiv)
@@ -759,7 +760,7 @@ var WikiMess = (function() {
             .append ($('<div class="menubar">')
                      .append ($('<div class="list">')
                               .append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
-                                       wm.makeListLink ('"Privacy"', wm.showPlayerBioPage),
+                                       wm.makeListLink ('Bio', wm.showPlayerBioPage),
                                        wm.makeListLink ('Colors', wm.showThemesPage),
                                        wm.makeListLink ('Audio', wm.showAudioPage),
                                        wm.makeListLink ('Log out', wm.doLogout))))
@@ -891,7 +892,7 @@ var WikiMess = (function() {
                               $('<div class="inputbar">')
                               .append (wm.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
                                        .attr ('rows', 2)
-                                       .attr ('placeholder', 'Private info. Shown "only" to people in your address book')
+                                       .attr ('placeholder', 'Private info (shown only to people in your address book)')
                                        .val(wm.playerInfo.privateBio))))
             .append (backBar)
         })
@@ -1278,12 +1279,12 @@ var WikiMess = (function() {
                               .append (wm.messageComposeDiv,
                                        wm.suggestionDiv = $('<div class="suggest">'),
                                        wm.messageBodyDiv)),
-                     $('<div class="messagecontrols">').append
-                     (wm.editButton = wm.makeIconButton ('edit', function() {
+                     $('<div class="subnavbar">').append
+                     (wm.editButton = wm.makeSubNavIcon ('edit', function() {
                        wm.stopAnimation()
                        wm.messageComposeDiv.trigger ('click')
                      }),
-                      wm.randomizeButton = wm.makeIconButton ('randomize', function (evt) {
+                      wm.randomizeButton = wm.makeSubNavIcon ('randomize', function (evt) {
                         evt.stopPropagation()
                         wm.generateMessageBody()
                         delete wm.autosuggestStatus.lastVal
@@ -1291,7 +1292,7 @@ var WikiMess = (function() {
                         wm.autosuggestStatus.temperature++
                         wm.autosuggestStatus.refresh()
                       }),
-                      wm.destroyButton = wm.makeIconButton ('destroy', function (evt) {
+                      wm.destroyButton = wm.makeSubNavIcon ('destroy', function (evt) {
                         if (window.confirm ('Delete this draft?'))
                           wm.finishLastSave()
                           .then (function() {
@@ -1303,7 +1304,7 @@ var WikiMess = (function() {
                             })
                           })
                       }),
-                      wm.sendButton = wm.makeIconButton ('send', send)))
+                      wm.sendButton = wm.makeSubNavIcon ('send', send)))
 
           wm.restoreScrolling (wm.messageComposeDiv)
           wm.restoreScrolling (wm.messageBodyDiv)
@@ -1726,14 +1727,14 @@ var WikiMess = (function() {
 
           wm.container
             .append (wm.mailboxDiv = $('<div class="mailbox">'),
-                     $('<div class="messagecontrols">').append
-                     (wm.inboxButton = wm.makeIconButton ('inbox', function() {
+                     $('<div class="subnavbar">').append
+                     (wm.inboxButton = wm.makeSubNavIcon ('inbox', function() {
                         wm.showInbox()
                       }),
-                      wm.outboxButton = wm.makeIconButton ('drafts', function() {
+                      wm.outboxButton = wm.makeSubNavIcon ('drafts', function() {
                         wm.showDrafts()
                       }),
-                      wm.outboxButton = wm.makeIconButton ('outbox', function() {
+                      wm.outboxButton = wm.makeSubNavIcon ('outbox', function() {
                         wm.showOutbox()
                       })))
 
@@ -1933,9 +1934,9 @@ var WikiMess = (function() {
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      wm.popBack()
-                     .append (wm.dummyReplyButton = wm.makeIconButton('dummy'),
-                              wm.replyButton = wm.makeIconButton('reply').hide(),
-                              wm.forwardButton = wm.makeIconButton ('forward', function (evt) {
+                     .append (wm.dummyReplyButton = wm.makeSubNavIcon('dummy'),
+                              wm.replyButton = wm.makeSubNavIcon('reply').hide(),
+                              wm.forwardButton = wm.makeSubNavIcon ('forward', function (evt) {
                                 evt.stopPropagation()
                                 wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
                                   .then (function (templateResult) {
@@ -1947,7 +1948,7 @@ var WikiMess = (function() {
                                        focus: 'playerSearchInput' })
                                   })
                               }),
-                              wm.destroyButton = wm.makeIconButton('destroy',props.destroy)))
+                              wm.destroyButton = wm.makeSubNavIcon('destroy',props.destroy)))
 
           var other = message[props.object]
           wm.readMessageDiv
@@ -2052,9 +2053,9 @@ var WikiMess = (function() {
       var wm = this
       callback = callback || wm.popView.bind(wm)
       var button
-      return (wm.popBackDiv = $('<div class="backbar">'))
+      return (wm.popBackDiv = $('<div class="subnavbar backbar">'))
 	.append ($('<span>')
-		 .html (button = wm.makeIconButton ('back', function() { callback(button) })))
+		 .html (button = wm.makeSubNavIcon ('back', function() { callback(button) })))
     },
 
     redrawPopBack: function (callback) {
@@ -2179,6 +2180,10 @@ var WikiMess = (function() {
       return button
     },
 
+    makeSubNavIcon: function (iconName, callback) {
+      return this.makeIconButton (iconName, callback, this.themeInfo.subnavbarIconColor)
+    },
+    
     makeEditableElement: function (props) {
       var span = $('<'+props.element+'>').addClass(props.className)
       this.populateEditableElement (span, props)
@@ -2805,11 +2810,11 @@ var WikiMess = (function() {
                        .hide(),
                        wm.grammarBarDiv,
                        wm.infoPane.hide(),
-                       $('<div class="grammareditbuttons">').append
+                       $('<div class="subnavbar">').append
                        ($('<span class="newlhs">').html
-                        (wm.makeIconButton ('create', wm.createNewSymbol.bind(wm))),
+                        (wm.makeSubNavIcon ('create', wm.createNewSymbol.bind(wm))),
                         $('<span class="help">').html
-                        (wm.makeIconButton ('help', function() {
+                        (wm.makeSubNavIcon ('help', function() {
                           if (wm.showingHelp) {
                             wm.infoPane.hide()
                             wm.showingHelp = false
