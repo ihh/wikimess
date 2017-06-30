@@ -2302,11 +2302,7 @@ var WikiMess = (function() {
       
       var buttonsDiv = $('<span class="buttons">')
       var contentHtmlDiv = renderHtml (props.content())
-      div.empty()
-      div.append.apply (div,
-                        (props.buttonsFirst
-                         ? [buttonsDiv, contentHtmlDiv]
-                         : [contentHtmlDiv, buttonsDiv]))
+      div.empty().append (contentHtmlDiv, buttonsDiv)
       
       if (!props.isConstant) {
         div.off ('click')
@@ -2457,7 +2453,6 @@ var WikiMess = (function() {
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
                                            isConstant: !wm.symbolEditableByPlayer (symbol),
-                                           buttonsFirst: true,
                                            confirmDestroy: function() {
                                              return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + wm.symbolName[symbol.id] + '?')
                                            },
