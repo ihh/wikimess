@@ -62,9 +62,10 @@
 	justify-content: center;
     }
 
-    .wikimess .menubar li,
+    .wikimess .menubar .listitem,
     .wikimess .menubar .card {
 	font-size: 18px;
+	margin: 4vh;
     }
 
     .wikimess .menubar .rubric {

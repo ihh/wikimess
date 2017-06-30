@@ -424,14 +424,20 @@ input {
 
 .wikimess .menubar .listitem,
 .wikimess .menubar .card {
-    margin: 4vh;
     border: 1px solid #888;
     box-sizing: border-box;
     text-align: center;
 }
 
+.wikimess .menubar .listitem {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .wikimess .menubar .listitem.noborder {
     border-style: none;
+    background: none;
 }
 
 .wikimess .menubar .card {
