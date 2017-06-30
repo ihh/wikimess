@@ -82,4 +82,46 @@
     .wikimess .menubar .horizontal-list li {
 	display: inline;
     }
+
+    .wikimess .whobar .search .followsection {
+	box-shadow: 1vh 1vh 1vh 0px gray;
+    }
+
+    .wikimess .symbolsearch {
+	box-shadow: 1vh 1vh 1vh 0px gray;
+    }
+
+    .wikimess .grammarbar .rule .rhs {
+	margin: 1vh;
+	padding: 0.5vh;
+    }
+
+    .wikimess .grammarinfopane {
+	box-shadow: 1vh -1vh 1vh 0px gray;
+    }
+
+    .wikimess .grammarinfopane .content {
+	max-height: 40vh;
+	min-height: 40vh;
+    }
+
+    .wikimess .ratinginfo .ratinginfolabel {
+	width: 30vh;
+    }
+
+    .wikimess .messageheader .label {
+	width: 25vh;
+    }
+
+    .wikimess .messageheader .input {
+	max-height: 20vw;
+    }
+
+    .wikimess .messageheader .input .results {
+	box-shadow: 1vh 1vh 1vh 0px gray;
+    }
+
+    .wikimess .subnavbar span {
+	padding: 2vh;
+    }
 }
