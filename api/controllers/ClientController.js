@@ -817,8 +817,7 @@ module.exports = {
       .then (function (symbol) {
         if (symbol) {
           var ownerID = symbol.owner
-          result.symbol = { id: symbol.id,
-                            owner: {} }
+          result.symbol = { id: symbol.id }
           if (ownerID === playerID || symbol.summary === null)
             result.symbol.rules = symbol.rules
           else {
@@ -833,11 +832,10 @@ module.exports = {
                               : Player.findOne ({ id: ownerID })
                               .then (function (player) {
                                 if (player.admin)
-                                  result.symbol.owner.admin = true
-                                else {
-                                  result.symbol.owner = ownerID
-                                  result.symbol.owner.name = player.name
-                                }
+                                  result.symbol.owner = { admin: true }
+                                else
+                                  result.symbol.owner = { id: ownerID,
+                                                          name: player.name }
                               }))
           ownerPromise.then (function() {
             return SymbolService.resolveReferences ([symbol])

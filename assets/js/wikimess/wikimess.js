@@ -61,7 +61,8 @@ var WikiMess = (function() {
     this.symbolName = {}
     this.playerNameCache = {}
     this.composition = {}
-
+    this.mailbox = {}
+    
     // log in
     if (config.player) {
       this.initPlayerInfo (config.player)
@@ -109,7 +110,7 @@ var WikiMess = (function() {
                     follow: 'circle-plus',
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
-                    compose: 'quill-ink',
+                    compose: 'quill',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -1068,6 +1069,7 @@ var WikiMess = (function() {
           
           function markForSave() { wm.composition.needsSave = true }
           wm.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
+            .attr ('placeholder', 'Message subject')
             .val (wm.composition.title)
             .on ('keyup', function() {
               wm.composition.title = wm.messageTitleInput.val()
@@ -1907,19 +1909,26 @@ var WikiMess = (function() {
                    .append (wm.makeIconButton ('destroy', deleteMessage)),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No recipient')))
           .on ('click', function() {
-            wm[props.getMethod] (wm.playerID, message.id)
-              .then (function (result) {
-                if (message.unread) {
-                  div.removeClass('unread').addClass('read')
-                  delete message.unread
-                  --wm.messageCount
-                  wm.updateMessageCountDiv()
-                }
-                props.showMessage ($.extend
-                                   ({ result: result,
-                                      destroy: deleteMessage },
-                                    props))
-              })
+            var mailbox = wm.mailbox[props.tab]
+            var mailboxPromise = (mailbox
+                                  ? $.Deferred().resolve(mailbox)
+                                  : (wm[props.getMethod] (wm.playerID, message.id)
+                                     .then (function (result) {
+                                       wm.mailbox[props.tab] = result
+                                       return result
+                                     })))
+            mailboxPromise.then (function (result) {
+              if (message.unread) {
+                div.removeClass('unread').addClass('read')
+                delete message.unread
+                --wm.messageCount
+                wm.updateMessageCountDiv()
+              }
+              props.showMessage ($.extend
+                                 ({ result: result,
+                                    destroy: deleteMessage },
+                                  props))
+            })
           })
       div.addClass (message.unread ? 'unread' : 'read')
       return div
@@ -2148,21 +2157,22 @@ var WikiMess = (function() {
     saveOnPageExit: function (config) {
       var wm = this
       config = config || {}
-      var unfocusCallback = config.unfocus || wm.saveCurrentEdit.bind(wm)
-      var autosaveCallback = config.autosave || unfocusCallback
-      var pageExitCallback = config.pageExit || autosaveCallback
+      var unfocusCallback = typeof(config.unfocus) !== 'undefined' ? config.unfocus : wm.saveCurrentEdit.bind(wm)
+      var autosaveCallback = typeof(config.autosave) !== 'undefined' ? config.autosave : unfocusCallback
+      var pageExitCallback = typeof(config.pageExit) !== 'undefined' ? config.pageExit : autosaveCallback
       wm.pageExit = function() {
         wm.clearTimer ('autosaveTimer')
 	wm.container.off ('click')
         return pageExitCallback()
       }
       function setAutosaveTimer() {
-        wm.setTimer ('autosaveTimer',
-                     wm.autosaveDelay,
-                     function() {
-                       autosaveCallback()
-                       setAutosaveTimer()
-                     })
+        if (autosaveCallback)
+          wm.setTimer ('autosaveTimer',
+                       wm.autosaveDelay,
+                       function() {
+                         autosaveCallback()
+                         setAutosaveTimer()
+                       })
       }
       setAutosaveTimer()
       wm.container.on ('click', unfocusCallback)
@@ -2254,8 +2264,12 @@ var WikiMess = (function() {
       }
       
       var buttonsDiv = $('<span class="buttons">')
-      div.empty().append (renderHtml (props.content()),
-                          buttonsDiv)
+      var contentHtmlDiv = renderHtml (props.content())
+      div.empty()
+      div.append.apply (div,
+                        (props.buttonsFirst
+                         ? [buttonsDiv, contentHtmlDiv]
+                         : [contentHtmlDiv, buttonsDiv]))
       
       if (!props.isConstant) {
         div.off ('click')
@@ -2402,6 +2416,7 @@ var WikiMess = (function() {
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
                                            isConstant: !wm.symbolEditableByPlayer (symbol),
+                                           buttonsFirst: true,
                                            confirmDestroy: function() {
                                              return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + wm.symbolName[symbol.id] + '?')
                                            },
@@ -2769,7 +2784,8 @@ var WikiMess = (function() {
 
           def.then (function() {
             
-            wm.saveOnPageExit()
+            wm.saveOnPageExit ({ autosave: null,
+                                 pageExit: wm.saveCurrentEdit.bind(wm) })
 
             wm.grammarBarDiv = $('<div class="grammarbar">')
 
