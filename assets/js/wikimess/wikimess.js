@@ -884,15 +884,15 @@ var WikiMess = (function() {
                                                                    { text: "Only people in my address book, please", value: true }] }),
                                        wm.makeConfigMenu ({ id: 'createsPublicTemplates',
                                                             opts: [{ text: "All my mail is public", value: true },
-                                                                   { text: 'I trust WikiMess "security"', value: false }] })),
+                                                                   { text: "I trust WikiMess security with my secrets", value: false }] })),
                               $('<div class="inputbar">')
-                              .append (wm.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
+                              .append (wm.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio public">')
                                        .attr ('rows', 2)
                                        .attr ('placeholder', 'Public info (shown to all)')
                                        .val(wm.playerInfo.publicBio)),
                               $('<div class="inputbar">')
-                              .append (wm.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
-                                       .attr ('rows', 2)
+                              .append (wm.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio private">')
+                                       .attr ('rows', 3)
                                        .attr ('placeholder', 'Private info (shown only to people in your address book)')
                                        .val(wm.playerInfo.privateBio))))
             .append (backBar)

@@ -31,8 +31,6 @@
     /* Menu views */
     .wikimess .inputbar {
 	width: 100vw;
-	margin: 2vh;
-	
 	display: flex;
 	justify-content: center;
     }

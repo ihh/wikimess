@@ -185,6 +185,7 @@ input {
 .wikimess .follow {
     width: 100%;
     cursor: pointer;
+    font-size: x-large;
 }
 
 .wikimess .grammarbar .rule {
@@ -488,6 +489,7 @@ input {
     font-style: italic;
     overflow-wrap: break-word;
 }
+
 
 .wikimess .detailbar .filler {
     flex-grow: 1;
