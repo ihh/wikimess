@@ -20,7 +20,7 @@
 
 .wikimess.l33t .playerlink,
 .wikimess.l33t .lhslink {
-    color: lightblue;
+    color: limegreen;
 }
 
 .wikimess.l33t .grammarbar,
@@ -89,7 +89,7 @@
 }
 
 .wikimess.l33t .messageheader .input .results {
-    background-color: white;
+    background-color: black;
 }
 
 .wikimess.l33t .menubar .listitem,
@@ -97,4 +97,9 @@
 .wikimess.l33t .compose .messageheader,
 .wikimess.l33t .compose .suggest {
     background-color: #222;
+}
+
+/* main page titlebar top border: this one just for l33t theme, not plain: */
+.wikimess.l33t .detailbar .titlebar {
+    border-top-style: solid;
 }

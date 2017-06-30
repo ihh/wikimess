@@ -380,6 +380,7 @@ input {
 .wikimess .detailbar .titlebar {
     border-bottom-style: solid;
     border-width: 2px;
+    margin-bottom: 4px;
 }
 
 .wikimess .inputbar input[type=text],
@@ -539,6 +540,7 @@ input {
 
 .wikimess .messageheader .row {
     width: 100%;
+    padding-top: 4px;
 }
 
 .wikimess .messageheader .label {

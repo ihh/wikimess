@@ -2440,11 +2440,15 @@ var WikiMess = (function() {
     },
 
     symbolOwnedByPlayer: function (symbol) {
-      return symbol.owner.id === this.playerID
+      return symbol.owner && symbol.owner.id === this.playerID
     },
 
     symbolEditableByPlayer: function (symbol) {
-      return this.symbolOwnedByPlayer(symbol) || ((typeof(symbol.owner.id) === 'undefined' || symbol.owner.id === null) && !symbol.owner.admin)
+      return (this.symbolOwnedByPlayer(symbol)
+              || ((symbol.owner === null
+                   || typeof(symbol.owner.id) === 'undefined'
+                   || symbol.owner.id === null)
+                  && !(symbol.owner && symbol.owner.admin)))
     },
 
     makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
@@ -2583,10 +2587,10 @@ var WikiMess = (function() {
                       return wm.renameSymbol (symbol, newLhs)
                     },
                     otherButtonDivs: function() {
-                      return (symbol.owner.admin
+                      return ((symbol.owner && symbol.owner.admin)
                               ? []
                               : [$('<span class="owner">')
-                                 .html (symbol.owner.id
+                                 .html ((symbol.owner && symbol.owner.id)
                                         ? wm.makePlayerSpan (symbol.owner.name,
                                                              null,
                                                              wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner)))
@@ -2730,7 +2734,7 @@ var WikiMess = (function() {
     },
 
     makeGrammarRuleDiv: function (symbol) {
-      if (Object.keys(this.ruleDiv).length === 0)
+      if (Object.keys(this.ruleDiv).length === 0 && this.emptyGrammarSpan)
         this.emptyGrammarSpan.remove()  // remove the placerholder message
 
       var ruleDiv = $('<div class="rule">')
