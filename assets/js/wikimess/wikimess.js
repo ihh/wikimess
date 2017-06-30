@@ -61,7 +61,8 @@ var WikiMess = (function() {
     this.symbolName = {}
     this.playerNameCache = {}
     this.composition = {}
-    this.mailbox = {}
+    this.mailboxCache = {}
+    this.messageCache = {}
     
     // log in
     if (config.player) {
@@ -1259,7 +1260,11 @@ var WikiMess = (function() {
                                                             draft: wm.composition.draft })
                     .then (function (result) {
                       wm.composition = {}
+                      delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
                       return wm.showMailboxPage ({ tab: 'outbox' })
+                        .then (function() {
+                          // TODO: update wm.mailboxCache.outbox
+                        })
                     }).catch (function (err) {
                       wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                     })
@@ -1303,6 +1308,9 @@ var WikiMess = (function() {
                                        : $.Deferred().resolve())
                             def.then (function() {
                               wm.showMailboxPage ({ tab: 'drafts' })
+                                .then (function() {
+                                  // TODO: update wm.mailboxCache.drafts
+                                })
                             })
                           })
                       }),
@@ -1742,68 +1750,93 @@ var WikiMess = (function() {
 
           wm.restoreScrolling (wm.mailboxDiv)
           var tab = config.tab || wm.lastMailboxTab || 'inbox'
-          wm.refreshMailbox (tab)
+          return wm.refreshMailbox (tab)
         })
     },
 
     refreshMailbox: function (tab) {
       switch (tab) {
-      case 'outbox': wm.showOutbox(); break;
-      case 'drafts': wm.showDrafts(); break;
-      case 'inbox': default: wm.showInbox(); break;
+      case 'outbox': return wm.showOutbox(); break;
+      case 'drafts': return wm.showDrafts(); break;
+      case 'inbox': default: return wm.showInbox(); break;
       }
     },
 
     showInbox: function() {
       var wm = this
-      wm.REST_getPlayerInbox (wm.playerID)
-        .then (function (result) {
-          wm.populateMailboxDiv ($.extend ({ messages: result.messages },
-                                           wm.inboxProps()))
-        })
+      var inbox = wm.mailboxCache.inbox
+      var inboxPromise = (inbox
+                          ? $.Deferred().resolve(inbox)
+                          : wm.REST_getPlayerInbox (wm.playerID))
+      return inboxPromise.then (function (inbox) {
+        wm.mailboxCache.inbox = inbox
+        return inbox
+      }).then (function (result) {
+        wm.populateMailboxDiv ($.extend ({ messages: result.messages },
+                                         wm.inboxProps()))
+        return result
+      })
     },
     
     showOutbox: function() {
       var wm = this
-      wm.REST_getPlayerOutbox (wm.playerID)
-        .then (function (result) {
-          wm.populateMailboxDiv ({ tab: 'outbox',
-                                   title: 'Sent messages',
-                                   messages: result.messages,
-                                   getMethod: 'REST_getPlayerMessageSent',
-                                   deleteMethod: 'REST_deletePlayerMessage',
-                                   verb: 'Sent',
-                                   preposition: 'To',
-                                   object: 'recipient',
-                                   showMessage: wm.showMessage.bind(wm)
-                                 })
-        })
+      var outbox = wm.mailboxCache.outbox
+      var outboxPromise = (outbox
+                           ? $.Deferred().resolve(outbox)
+                           : wm.REST_getPlayerOutbox (wm.playerID))
+      outboxPromise.then (function (outbox) {
+        wm.mailboxCache.outbox = outbox
+        return outbox
+      }).then (function (result) {
+        
+        wm.populateMailboxDiv ({ tab: 'outbox',
+                                 title: 'Sent messages',
+                                 messages: result.messages,
+                                 getMethod: 'REST_getPlayerMessageSent',
+                                 deleteMethod: 'REST_deletePlayerMessage',
+                                 verb: 'Sent',
+                                 preposition: 'To',
+                                 object: 'recipient',
+                                 showMessage: wm.showMessage.bind(wm)
+                               })
+        return result
+      })
     },
 
     showDrafts: function() {
       var wm = this
-      wm.REST_getPlayerDrafts (wm.playerID)
-        .then (function (result) {
-          wm.populateMailboxDiv ({ tab: 'drafts',
-                                   title: 'Drafts',
-                                   messages: result.drafts,
-                                   getMethod: 'REST_getPlayerDraft',
-                                   deleteMethod: 'REST_deletePlayerDraft',
-                                   verb: 'Edited',
-                                   preposition: 'To',
-                                   object: 'recipient',
-                                   showMessage: function (props) {
-                                     var draft = props.result.draft
-                                     wm.showComposePage ({ recipient: draft.recipient,
-                                                           title: draft.title,
-                                                           previousMessage: draft.previous,
-                                                           previousTemplate: draft.previousTemplate,
-                                                           template: draft.template,
-                                                           body: draft.body,
-                                                           draft: draft.id })
-                                   }
-                                 })
-        })
+      delete wm.mailboxCache.drafts  // TODO: synchronize wm.mailboxCache.drafts with server
+      delete wm.messageCache.drafts  // TODO: synchronize wm.mailboxCache.drafts with server
+      var drafts = wm.mailboxCache.drafts
+      var draftsPromise = (drafts
+                           ? $.Deferred().resolve(drafts)
+                           : wm.REST_getPlayerDrafts (wm.playerID))
+      draftsPromise.then (function (drafts) {
+        wm.mailboxCache.drafts = drafts
+        return drafts
+      }).then (function (result) {
+        
+        wm.populateMailboxDiv ({ tab: 'drafts',
+                                 title: 'Drafts',
+                                 messages: result.drafts,
+                                 getMethod: 'REST_getPlayerDraft',
+                                 deleteMethod: 'REST_deletePlayerDraft',
+                                 verb: 'Edited',
+                                 preposition: 'To',
+                                 object: 'recipient',
+                                 showMessage: function (props) {
+                                   var draft = props.result.draft
+                                   wm.showComposePage ({ recipient: draft.recipient,
+                                                         title: draft.title,
+                                                         previousMessage: draft.previous,
+                                                         previousTemplate: draft.previousTemplate,
+                                                         template: draft.template,
+                                                         body: draft.body,
+                                                         draft: draft.id })
+                                 }
+                               })
+        return result
+      })
     },
 
     inboxProps: function() {
@@ -1874,12 +1907,15 @@ var WikiMess = (function() {
     updateInbox: function (messageID) {
       var wm = this
       this.updateMessageCount()
-      if (this.page === 'inbox')
+      if (wm.mailboxCache.inbox)
         this.REST_getPlayerMessageHeader (this.playerID, messageID)
         .then (function (result) {
-          if (wm.page === 'inbox')  // check again in case player switched pages while loading
-            if (!wm.messageHeaderCache[result.message.id])
+          if (!wm.messageHeaderCache[result.message.id]) {
+            wm.messageHeaderCache[message.id] = message
+            wm.mailboxCache.inbox.messages.push (result.message)
+            if (wm.page === 'inbox')
               wm.mailboxContentsDiv.append (wm.makeMailboxEntryDiv (wm.inboxProps(), result.message))
+          }
         })
     },
 
@@ -1909,15 +1945,16 @@ var WikiMess = (function() {
                    .append (wm.makeIconButton ('destroy', deleteMessage)),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No recipient')))
           .on ('click', function() {
-            var mailbox = wm.mailbox[props.tab]
-            var mailboxPromise = (mailbox
-                                  ? $.Deferred().resolve(mailbox)
+            wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
+            var cachedMessage = wm.messageCache[props.tab][message.id]
+            var messagePromise = (cachedMessage
+                                  ? $.Deferred().resolve(cachedMessage)
                                   : (wm[props.getMethod] (wm.playerID, message.id)
                                      .then (function (result) {
-                                       wm.mailbox[props.tab] = result
+                                       wm.messageCache[props.tab][message.id] = result
                                        return result
                                      })))
-            mailboxPromise.then (function (result) {
+            messagePromise.then (function (result) {
               if (message.unread) {
                 div.removeClass('unread').addClass('read')
                 delete message.unread
