@@ -1,11 +1,11 @@
 <body>
-  <div id="grambot"></div>
+  <div id="wikimess"></div>
 </body>
 
 <script type="text/javascript">
-  var gb
+  var wm
   $(function() {
-    gb = new GramBot(<%- (loggedIn ? '{player:'+JSON.stringify(player)+'}' : '') -%>)
+    wm = new WikiMess(<%- (loggedIn ? '{player:'+JSON.stringify(player)+'}' : '') -%>)
   
   })
 </script>

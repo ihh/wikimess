@@ -11,7 +11,7 @@ module.exports = {
         return typeof(rhsSym) === 'string' || n < limit
       })
       if (rhsTrim.length < rhs.length)
-        rhsTrim.push ('_(too many scripts)_')
+        rhsTrim.push ('_(too many ' + Symbol.noun + 's)_')
       Array.prototype.splice.apply (rhs, [0, rhs.length].concat (rhsTrim.reduce (function (rhsAcc, rhsSym) {
         if (typeof(rhsSym) === 'string' && rhsAcc.length > 0 && typeof(rhsAcc[rhsAcc.length-1]) === 'string')
           rhsAcc[rhsAcc.length-1] = rhsAcc[rhsAcc.length-1].replace(/\s+$/,'') + ' ' + rhsSym.replace(/^\s+/,'')

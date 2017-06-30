@@ -31,17 +31,17 @@ input {
     width: 0  !important;
 }
 
-.grambot .navbar {
+.wikimess .navbar {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-.grambot .navbar .navtab {
+.wikimess .navbar .navtab {
     position: relative;
 }
 
-.grambot .navbar .navtab .messagecount {
+.wikimess .navbar .navtab .messagecount {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -57,42 +57,42 @@ input {
     border-color: black;
 }
 
-.grambot .navbar .navicon {
+.wikimess .navbar .navicon {
     opacity: .6;
     cursor: pointer;
 }
 
-.grambot .navbar .active .navicon {
+.wikimess .navbar .active .navicon {
     opacity: 1;
 }
 
-.grambot .suggest .button,
-.grambot .newlhs .button,
-.grambot .help .button,
-.grambot .grammarbar .button {
+.wikimess .suggest .button,
+.wikimess .newlhs .button,
+.wikimess .help .button,
+.wikimess .grammarbar .button {
     width: 1em;
     height: 1em;
     cursor: pointer;
 }
 
-.grambot .message .buttons .button,
-.grambot .grammarbar .rhs .button {
+.wikimess .message .buttons .button,
+.wikimess .grammarbar .rhs .button {
     float: right;
 }
 
-.grambot .grammarbar .rulecontrols .button {
+.wikimess .grammarbar .rulecontrols .button {
     float: left;
     padding-right: 4px;
 }
 
-.grambot .mailbox .mailboxname,
-.grambot .searchtitle,
-.grambot .whobar .followsection .title {
+.wikimess .mailbox .mailboxname,
+.wikimess .searchtitle,
+.wikimess .whobar .followsection .title {
     font-weight: bold;
     font-size: large;
 }
 
-.grambot .whobar .search .followsection {
+.wikimess .whobar .search .followsection {
     border-bottom-style: solid;
     border-width: 1px;
 
@@ -103,11 +103,11 @@ input {
     padding: 2px;
 }
 
-.grambot .whobar .followsection {
+.wikimess .whobar .followsection {
     margin-bottom: 12px;
 }
 
-.grambot .search .query {
+.wikimess .search .query {
     display: flex;
     width: 100%;
     height: 32px;
@@ -119,19 +119,19 @@ input {
     border-color: #888;
 }
 
-.grambot .search .query .button {
+.wikimess .search .query .button {
     height: 32px;
     width: 32px;
 }
 
-.grambot .search .query input {
+.wikimess .search .query input {
     background: black;
     flex-grow: 1;
     border-style: none;
     color: white;
 }
 
-.grambot .symbolsearch {
+.wikimess .symbolsearch {
     min-height: 7em;
     max-height: 8em;
     overflow: hidden;
@@ -148,28 +148,28 @@ input {
     flex-direction: column;
 }
 
-.grambot .symbolsearch .results {
+.wikimess .symbolsearch .results {
     height: 100%;
     overflow-y: auto;
 }
 
-.grambot .endresults {
+.wikimess .endresults {
     width: 100%;
     text-align: center;
     font-style: italic;
 }
 
-.grambot .endresults span {
+.wikimess .endresults span {
     cursor: pointer;
     padding-bottom: 4px;
 }
 
-.grambot .more {
+.wikimess .more {
     text-decoration: underline;
 }
 
-.grambot .follow,
-.grambot .grammarbar .rule {
+.wikimess .follow,
+.wikimess .grammarbar .rule {
     clear: both;
     float: left;
     position: relative;
@@ -177,19 +177,19 @@ input {
     padding-bottom: 2px;
 }
 
-.grambot .follow {
+.wikimess .follow {
     width: 100%;
     cursor: pointer;
 }
 
-.grambot .grammarbar .rule {
+.wikimess .grammarbar .rule {
     border-style: solid;
     border-width: 1px;
     margin: 2px;
     width: 98%;
 }
 
-.grambot .grammarbar .rule .rhs {
+.wikimess .grammarbar .rule .rhs {
     min-height: 1em;
     display: flex;
     flex-direction: column;
@@ -198,17 +198,17 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .compose .messagecompose p {
+.wikimess .compose .messagecompose p {
     display: inline-block;
 }
 
-.grambot .grammarbar .rule .summary p,
-.grambot .grammarbar .rule .rhs p {
+.wikimess .grammarbar .rule .summary p,
+.wikimess .grammarbar .rule .rhs p {
     display: inline;
     margin: 0;
 }
 
-.grambot .grammarbar .rule.selected {
+.wikimess .grammarbar .rule.selected {
     -webkit-animation: 500ms linear 0s 1 normal pulse_rule;
     -moz-animation: 500ms linear 0s 1 normal pulse_rule;
     -o-animation: 500ms linear 0s 1 normal pulse_rule;
@@ -220,17 +220,17 @@ input {
      @-o-keyframes pulse_rule { from { background-color:gray; } }
         @keyframes pulse_rule { from { background-color:gray; } }
 
-.grambot .playerlink,
-.grambot .lhslink {
+.wikimess .playerlink,
+.wikimess .lhslink {
     cursor: pointer;
 }
 
-.grambot .playerlink .name,
-.grambot .lhslink .name {
+.wikimess .playerlink .name,
+.wikimess .lhslink .name {
     text-decoration: underline;
 }
 
-.grambot .grammarinfopane {
+.wikimess .grammarinfopane {
     border-top-style: solid;
     border-left-style: solid;
     border-right-style: solid;
@@ -242,13 +242,13 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .grammarinfopane .title {
+.wikimess .grammarinfopane .title {
     font-weight: bold;
     font-size: large;
     font-style: italic;
 }
 
-.grambot .grammarinfopane .content {
+.wikimess .grammarinfopane .content {
     clear: both;
     max-height: 40vw;
     min-height: 40vw;
@@ -256,18 +256,18 @@ input {
     padding: 1px;
 }
 
-.grambot .grammarinfopane .controls {
+.wikimess .grammarinfopane .controls {
     font-size: large;
     float: right;
 }
 
-.grambot .grammarinfopane .leftcontrols {
+.wikimess .grammarinfopane .leftcontrols {
     font-size: large;
     float: left;
 }
 
-.grambot .leftcontrols .button,
-.grambot .controls .button {
+.wikimess .leftcontrols .button,
+.wikimess .controls .button {
     float: right;
     width: 1em;
     height: 1em;
@@ -275,7 +275,7 @@ input {
     cursor: pointer;
 }
 
-.grambot .closebutton {
+.wikimess .closebutton {
     float: right;
     font-size: small;
     width: 1em;
@@ -284,7 +284,7 @@ input {
     cursor: pointer;
 }
 
-.grambot .grammarbar .rule .lhs {
+.wikimess .grammarbar .rule .lhs {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -296,25 +296,25 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .grammarbar .rule .lhs .name {
+.wikimess .grammarbar .rule .lhs .name {
     max-width: 75%;  /* leave space for buttons */
 }
 
-.grambot .grammarbar .rule .lhs .buttons {
+.wikimess .grammarbar .rule .lhs .buttons {
     float: right;
 }
 
-.grambot .grammarbar .rule .button {
+.wikimess .grammarbar .rule .button {
     cursor: pointer;
 }
 
-.grambot .grammarbar .rule .summary {
+.wikimess .grammarbar .rule .summary {
     font-style: italic;
     padding-left: 4px;
     padding-right: 4px;
 }
 
-.grambot .grammarbar .rule .rulecontrols {
+.wikimess .grammarbar .rule .rulecontrols {
     padding-left: 4px;
     padding-right: 4px;
     display: flex;
@@ -322,67 +322,67 @@ input {
     justify-content: space-between;
 }
 
-.grambot .grammarbar .rule .lhs .owner {
+.wikimess .grammarbar .rule .lhs .owner {
     font-size: small;
     font-style: italic;
     font-weight: normal;
     padding-right: 4px;
 }
 
-.grambot .follow .followcontrol,
-.grambot .message .buttons .button {
+.wikimess .follow .followcontrol,
+.wikimess .message .buttons .button {
     padding: 2px;
     cursor: pointer;
     width: 1em;
     height: 1em;
 }
 
-.grambot .other {
+.wikimess .other {
     display: flex;
 }
 
-.grambot .follow .followcontrol {
+.wikimess .follow .followcontrol {
     float: right;
 }
 
-.grambot .follow .playerlink {
+.wikimess .follow .playerlink {
     padding: 4px;
     word-break: break-all;
 }
 
-.grambot .topbar {
+.wikimess .topbar {
     width: 100vw;
     min-height: 64px;
     display: flex;
     flex-direction: column;
 }
 
-.grambot .menubar a,
-.grambot .menubar label {
+.wikimess .menubar a,
+.wikimess .menubar label {
     text-decoration: none;
     border-width: 1px;
     border-style: solid;
     cursor: pointer;
 }
 
-.grambot .inputbar {
+.wikimess .inputbar {
     line-height: 32px;
 }
 
-.grambot .titlebar {
+.wikimess .titlebar {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.grambot .detailbar .titlebar {
+.wikimess .detailbar .titlebar {
     border-bottom-style: solid;
     border-width: 2px;
 }
 
-.grambot .inputbar input[type=text],
-.grambot .inputbar input[type=password],
-.grambot .inputbar textarea {
+.wikimess .inputbar input[type=text],
+.wikimess .inputbar input[type=password],
+.wikimess .inputbar textarea {
     display: block;
 
     margin: 0;
@@ -394,87 +394,87 @@ input {
     width: 100%;
 }
 
-.grambot .inputbar input[type=text],
-.grambot .inputbar input[type=password] {
+.wikimess .inputbar input[type=text],
+.wikimess .inputbar input[type=password] {
     height: 40px;
     line-height: 40px;
 }
 
-.grambot .inputbar textarea {
+.wikimess .inputbar textarea {
     resize: none;
     margin: 4px;
 }
 
-.grambot .menubar input {
+.wikimess .menubar input {
     width: 100%;
 }
 
-.grambot .menubar .list {
+.wikimess .menubar .list {
     display: flex;
     flex-direction: column;
 }
 			     
-.grambot .menubar .listitem,
-.grambot .menubar label {
+.wikimess .menubar .listitem,
+.wikimess .menubar label {
     padding: 8px;
 }
 
-.grambot .menubar .card {
+.wikimess .menubar .card {
     padding: 16px;
 }
 
-.grambot .menubar .listitem,
-.grambot .menubar .card {
+.wikimess .menubar .listitem,
+.wikimess .menubar .card {
     margin: 4vh;
     border: 1px solid #888;
     box-sizing: border-box;
     text-align: center;
 }
 
-.grambot .menubar .listitem.noborder {
+.wikimess .menubar .listitem.noborder {
     border-style: none;
 }
 
-.grambot .menubar .card {
+.wikimess .menubar .card {
     cursor: default;
     width: 80vw;
 }
 
-.grambot .menubar .listitem,
-.grambot .menubar .card input {
+.wikimess .menubar .listitem,
+.wikimess .menubar .card input {
     cursor: pointer;
 }
 
-.grambot .menubar .rubric {
+.wikimess .menubar .rubric {
     text-align: center;
 }
 
-.grambot .grammarbar,
-.grambot .detailbar {
+.wikimess .grammarbar,
+.wikimess .detailbar {
     flex-grow: 1;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-.grambot .detailbar {
+.wikimess .detailbar {
     display: flex;
     flex-direction: column;
 }
 
-.grambot .detailbar .biofact {
+.wikimess .detailbar .biofact {
     padding-top: 4px;
 }
 
-.grambot .detailbar .biofactlabel,
-.grambot .detailbar .biotitle {
+.wikimess .detailbar .biofactlabel,
+.wikimess .detailbar .biotitle {
     font-weight: bold;
 }
 
-.grambot .detailbar .biofactvalue {
+.wikimess .detailbar .biofactvalue {
     font-style: italic;
 }
 
-.grambot .detailbar .bio {
+.wikimess .detailbar .bio {
     border-style: solid;
     border-width: 1px;
     margin: 2px;
@@ -483,15 +483,15 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .detailbar .filler {
+.wikimess .detailbar .filler {
     flex-grow: 1;
 }
 
-.grambot .ratings {
+.wikimess .ratings {
     padding: 16px;
 }
 	
-.grambot .ratinginfo .ratinginfolabel {
+.wikimess .ratinginfo .ratinginfolabel {
     float: left;
     width: 30vw;
     text-align: right;
@@ -499,37 +499,37 @@ input {
     padding-right: 2px;
 }
 
-.grambot .ratinginfo .ratinginfocount {
+.wikimess .ratinginfo .ratinginfocount {
     font-style: italic;
 }
 
-.grambot .ratinginfo .button svg {
+.wikimess .ratinginfo .button svg {
     width: 1em;
     height: 1em;
 }
 
-.grambot .menubar label {
+.wikimess .menubar label {
     display: block;
     margin: 8px;
     text-align: center;
 }
 
-.grambot .menubar input[type="radio"] {
+.wikimess .menubar input[type="radio"] {
     display: none;
 }
 
-.grambot .messageheader {
+.wikimess .messageheader {
     border-top-style: solid;
     border-width: 1px;
     padding-top: 1px;
     padding-bottom: 1px;
 }
 
-.grambot .messageheader .row {
+.wikimess .messageheader .row {
     width: 100%;
 }
 
-.grambot .messageheader .label {
+.wikimess .messageheader .label {
     float: left;
     width: 25vw;
     text-align: right;
@@ -539,22 +539,22 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .mailbox,
-.grambot .readmessage,
-.grambot .compose {
+.wikimess .mailbox,
+.wikimess .readmessage,
+.wikimess .compose {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
 
-.grambot .messageheader .input {
+.wikimess .messageheader .input {
     display: block;
     overflow: hidden;
     max-height: 20vh;
     padding-right: 16px;
 }
 
-.grambot .messageheader .input .results {
+.wikimess .messageheader .input .results {
     margin-bottom: 4px;
     border-style: none solid solid solid;
     border-width: 1px;
@@ -562,17 +562,17 @@ input {
     box-shadow: 1vw 1vw 1vw 0px gray;
 }
 
-.grambot .messageheader .input .results .result {
+.wikimess .messageheader .input .results .result {
     display: block;
 }
 
-.grambot .messageheader .field {
+.wikimess .messageheader .field {
     display: table-cell;
     overflow-wrap: break-word;
 }
 
-.grambot .mailbox .contents,
-.grambot .messageborder {
+.wikimess .mailbox .contents,
+.wikimess .messageborder {
     flex-grow: 1;
     overflow-y: auto;
     display: flex;
@@ -580,24 +580,24 @@ input {
     overflow-wrap: break-word;
 }
 
-.grambot .mailbox .contents,
-.grambot .messageborder {
+.wikimess .mailbox .contents,
+.wikimess .messageborder {
     border-top-style: solid;
     border-width: 1px;
     margin: 2px;
 }
 
-.grambot .compose .messagecompose {
+.wikimess .compose .messagecompose {
     height: 20vh;
     min-height: 20vh;
     overflow-y: auto;
 }
 
-.grambot .compose .placeholder {
+.wikimess .compose .placeholder {
     font-style: italic;
 }
 
-.grambot .compose .suggest {
+.wikimess .compose .suggest {
     height: 10vh;
     min-height: 10vh;
     display: flex;
@@ -611,36 +611,36 @@ input {
     border-width: 1px;
 }
 
-.grambot .compose .messagebody {
+.wikimess .compose .messagebody {
     flex-grow: 1;
     overflow-y: auto;
 }
 
-.grambot .compose .suggestlabel {
+.wikimess .compose .suggestlabel {
 }
 
-.grambot .compose .suggestions {
+.wikimess .compose .suggestions {
     overflow-wrap: break-word;
 }
 
-.grambot .mailbox .contents .message {
+.wikimess .mailbox .contents .message {
     cursor: pointer;
 }
 
-.grambot .mailbox .contents .message.read .title {
+.wikimess .mailbox .contents .message.read .title {
     font-size: medium;
 }
 
-.grambot .mailbox .contents .message.unread .title {
+.wikimess .mailbox .contents .message.unread .title {
     font-weight: bold;
 }
 
-.grambot .mailbox .contents .message .player {
+.wikimess .mailbox .contents .message .player {
     font-size: small;
     font-style: italic;
 }
 
-.grambot .ratemessage {
+.wikimess .ratemessage {
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -648,18 +648,18 @@ input {
     padding-bottom: 4px;
 }
 
-.grambot .ratemessage span {
+.wikimess .ratemessage span {
     padding: 4px;
 }
 
-.grambot .ratemessage svg {
+.wikimess .ratemessage svg {
     width: 1em;
     height: 1em;
 }
 
-.grambot .backbar,
-.grambot .grammareditbuttons,
-.grambot .messagecontrols {
+.wikimess .backbar,
+.wikimess .grammareditbuttons,
+.wikimess .messagecontrols {
     min-height: 2em;
     display: flex;
     justify-content: space-between;
@@ -667,25 +667,25 @@ input {
     border-width: 1px;
 }
 
-.grambot .backbar span,
-.grambot .grammareditbuttons span,
-.grambot .messagecontrols span {
+.wikimess .backbar span,
+.wikimess .grammareditbuttons span,
+.wikimess .messagecontrols span {
     padding: 2vw;
 }
 
-.grambot .backbar svg,
-.grambot .grammareditbuttons svg,
-.grambot .messagecontrols svg {
+.wikimess .backbar svg,
+.wikimess .grammareditbuttons svg,
+.wikimess .messagecontrols svg {
     width: 1em;
     height: 1em;
 }
 
-.grambot .lhslink.limit,
-.grambot .lhslink.unexpanded {
+.wikimess .lhslink.limit,
+.wikimess .lhslink.unexpanded {
     opacity: .8;
 }
 
-.grambot .lhslink.animating {
+.wikimess .lhslink.animating {
     display: inline-block;
     transform-origin: center;
     -webkit-animation: 200ms linear 0s infinite alternate throb_rule;
@@ -700,22 +700,22 @@ input {
         @keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
 
 
-.grambot .compose .messageheader textarea {
+.wikimess .compose .messageheader textarea {
     width: 100%;
     height: 1em;
 }
 
-.grambot .compose .messageheader textarea.recipient {
+.wikimess .compose .messageheader textarea.recipient {
     resize: none;
 }
 
-.grambot .compose .messageheader textarea.title {
+.wikimess .compose .messageheader textarea.title {
     resize: vertical;
     max-height: 4em;
 }
 
-.grambot .messagecompose textarea,
-.grambot .grammarbar textarea {
+.wikimess .messagecompose textarea,
+.wikimess .grammarbar textarea {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -723,43 +723,43 @@ input {
     -webkit-box-sizing: border-box;
 }
 
-.grambot .messagecompose textarea {
+.wikimess .messagecompose textarea {
     flex-grow: 1;
     resize: none;
 }
 
-.grambot .grammarbar .lhs textarea {
+.wikimess .grammarbar .lhs textarea {
     resize: vertical;
     max-height: 3em;
     flex-grow: 1;
 }
 
-.grambot .grammarbar .rhs textarea {
+.wikimess .grammarbar .rhs textarea {
     resize: vertical;
     min-height: 10vh;
     max-height: 50vh;
     flex-grow: 1;
 }
 
-.grambot .popular {
+.wikimess .popular {
     margin-top: 4px;
     padding-bottom: 12px;
 }
 
-.grambot .templates .template .title {
+.wikimess .templates .template .title {
     font-weight: bold;
 }
 
-.grambot .templates .template .by {
+.wikimess .templates .template .by {
     font-style: italic;
 }
 
-.grambot .configmenu {
+.wikimess .configmenu {
     margin: 16px;
     font-size: small;
 }
 
-.grambot .configmenu .option {
+.wikimess .configmenu .option {
     text-align: center;
     padding: 4px;
     border-top-style: solid;
@@ -769,17 +769,17 @@ input {
     cursor: pointer;
 }
 
-.grambot .configmenu .option:nth-child(1) {
+.wikimess .configmenu .option:nth-child(1) {
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
 }
 
-.grambot .configmenu .option:nth-last-child(1) {
+.wikimess .configmenu .option:nth-last-child(1) {
     border-bottom-style: solid;
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
 }
 
-.grambot .configmenu .option.checked {
+.wikimess .configmenu .option.checked {
     background-color: #ccc;
 }

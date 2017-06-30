@@ -1,12 +1,12 @@
-.grambot .locbar h1,
-.grambot .detailbar h1 {
+.wikimess .locbar h1,
+.wikimess .detailbar h1 {
     margin: 4px 0;
     clear: both;
     font-size: large;
     text-decoration: underline;
 }
 
-.grambot .detailbar .statusdiv {
+.wikimess .detailbar .statusdiv {
     float: left;
     clear: both;
     width: 95vw;
@@ -17,7 +17,7 @@
     padding: 1vw;
 }
 
-.grambot .detailbar .statusline {
+.wikimess .detailbar .statusline {
     margin-top: 10px;
     float: left;
     width: 31%;
@@ -28,21 +28,21 @@
     border-radius: 4px;
 }
 
-.grambot .detailbar .icon,
-.grambot .detailbar .text {
+.wikimess .detailbar .icon,
+.wikimess .detailbar .text {
     float: left;
     clear: both;
 }
 
-.grambot .detailbar .icon img,
-.grambot .detailbar .icon svg {
+.wikimess .detailbar .icon img,
+.wikimess .detailbar .icon svg {
     width: 10vw;
     height: 10vw;
     border-radius: 4px;
     background-color: black;
 }
 
-.grambot .detailbar .text {
+.wikimess .detailbar .text {
     padding-left: 4px;
     display: inline-block;
     font-size: small;

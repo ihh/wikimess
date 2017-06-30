@@ -52,7 +52,8 @@ module.exports = {
            byName: {} },
 
   // automatic naming
-  autoname: { defaultPrefix: 'script',
+  noun: 'phrase',
+  autoname: { defaultPrefix: 'phrase',
               maxSuffix: {},
               regex: /^(.*?)(\d+)$/ },
 

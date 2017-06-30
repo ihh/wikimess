@@ -1,14 +1,14 @@
 /* Theme selection page */
 
-.grambot .themegroup input:checked + label li {
+.wikimess .themegroup input:checked + label li {
     background-color: #444;
     opacity: 1;
 }
 
-.grambot .themegroup label {
+.wikimess .themegroup label {
     background: black;
 }
 
-.grambot .themegroup input:checked + label {
+.wikimess .themegroup input:checked + label {
     background: #444;
 }

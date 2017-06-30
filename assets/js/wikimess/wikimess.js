@@ -1,11 +1,11 @@
-var GramBot = (function() {
+var WikiMess = (function() {
   var proto = function (config) {
-    var gb = this
+    var wm = this
     config = config || {}
     $.extend (this, config)
 
     this.container = $('#'+this.containerID)
-      .addClass("grambot")
+      .addClass("wikimess")
 
     this.localStorage = { playerLogin: undefined,
                           soundVolume: .5,
@@ -26,8 +26,8 @@ var GramBot = (function() {
 
     // preload icons
     this.iconPromise = {}
-    Object.keys(this.iconFilename).forEach (function (icon) { gb.getIconPromise (gb.iconFilename[icon]) })
-    this.tabs.forEach (function (tab) { gb.getIconPromise (tab.icon) })
+    Object.keys(this.iconFilename).forEach (function (icon) { wm.getIconPromise (wm.iconFilename[icon]) })
+    this.tabs.forEach (function (tab) { wm.getIconPromise (tab.icon) })
 
     // initialize Markdown renderer
     var renderer = new marked.Renderer()
@@ -41,10 +41,10 @@ var GramBot = (function() {
     
     // monitor connection
     io.socket.on('disconnect', function() {
-      if (gb.suppressDisconnectWarning)
+      if (wm.suppressDisconnectWarning)
         location.reload()
       else
-        gb.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
+        wm.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
 			     location.reload.bind (location, true))
     })
 
@@ -73,8 +73,8 @@ var GramBot = (function() {
 
   $.extend (proto.prototype, {
     // default constants
-    containerID: 'grambot',
-    localStorageKey: 'grambot',
+    containerID: 'wikimess',
+    localStorageKey: 'wikimess',
     iconPrefix: '/images/icons/',
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
@@ -335,55 +335,55 @@ var GramBot = (function() {
 
     // helpers to log ajax calls
     logGet: function (url) {
-      var gb = this
-      if (gb.verbose.request)
+      var wm = this
+      if (wm.verbose.request)
         console.log ('GET ' + url + ' request')
       return $.get (url)
         .then (function (result) {
-          if (gb.verbose.response)
+          if (wm.verbose.response)
             console.log ('GET ' + url + ' response', result)
           return result
         })
     },
 
     logPost: function (url, data) {
-      var gb = this
-      if (gb.verbose.request)
+      var wm = this
+      if (wm.verbose.request)
         console.log ('POST ' + url + ' request', data)
       return $.ajax ({ url: url,
                        method: 'POST',
                        contentType: 'application/json',
                        data: JSON.stringify(data) })
         .then (function (result) {
-          if (gb.verbose.response)
+          if (wm.verbose.response)
             console.log ('POST ' + url + ' response', result)
           return result
         })
     },
 
     logPut: function (url, data) {
-      var gb = this
-      if (gb.verbose.request)
+      var wm = this
+      if (wm.verbose.request)
         console.log ('PUT ' + url + ' request', data)
       return $.ajax ({ url: url,
                        method: 'PUT',
                        contentType: 'application/json',
                        data: JSON.stringify(data) })
         .then (function (result) {
-          if (gb.verbose.response)
+          if (wm.verbose.response)
             console.log ('PUT ' + url + ' response', result)
           return result
         })
     },
 
     logDelete: function (url) {
-      var gb = this
-      if (gb.verbose.request)
+      var wm = this
+      if (wm.verbose.request)
         console.log ('DELETE ' + url + ' request')
       return $.ajax ({ url: url,
                        method: 'DELETE' })
         .then (function (result) {
-          if (gb.verbose.response)
+          if (wm.verbose.response)
             console.log ('DELETE ' + url + ' response', result)
           return result
         })
@@ -391,13 +391,13 @@ var GramBot = (function() {
     
     // helpers to convert socket callbacks to promises
     socketGetPromise: function (url) {
-      var gb = this
+      var wm = this
       var def = $.Deferred()
-      if (gb.verbose.request)
+      if (wm.verbose.request)
         console.log ('socket GET ' + url + ' request')
       io.socket.get (url, function (resData, jwres) {
         if (jwres.statusCode == 200) {
-          if (gb.verbose.response)
+          if (wm.verbose.response)
             console.log ('socket GET ' + url + ' response', resData)
           def.resolve (resData)
         } else
@@ -407,12 +407,12 @@ var GramBot = (function() {
     },
 
     socketPostPromise: function (url, data) {
-      var gb = this
+      var wm = this
       var def = $.Deferred()
-      if (gb.verbose.request)
+      if (wm.verbose.request)
         console.log ('socket POST ' + url + ' request', data)
       io.socket.post (url, data, function (resData, jwres) {
-        if (gb.verbose.response)
+        if (wm.verbose.response)
             console.log ('socket POST ' + url + ' response', resData)
         if (jwres.statusCode == 200)
           def.resolve (resData)
@@ -433,7 +433,7 @@ var GramBot = (function() {
 
     callWithSoundEffect: function (callback, sfx, elementToDisable) {
       sfx = sfx || 'select'
-      var gb = this
+      var wm = this
       return function (evt) {
         evt.preventDefault()
         evt.stopPropagation()
@@ -443,8 +443,8 @@ var GramBot = (function() {
           elementToDisable.addClass('already-clicked')
         }
         if (sfx.length)
-          gb.selectSound = gb.playSound (sfx)
-        callback.call (gb, evt)
+          wm.selectSound = wm.playSound (sfx)
+        callback.call (wm, evt)
       }
     },
 
@@ -453,7 +453,7 @@ var GramBot = (function() {
     },
 
     makeLink: function (text, callback, sfx, allowMultipleClicks) {
-      var gb = this
+      var wm = this
       sfx = sfx || 'select'
       var link = $('<a href="#">')
           .text (text)
@@ -470,7 +470,7 @@ var GramBot = (function() {
     },
 
     setPage: function (page) {
-      var gb = this
+      var wm = this
       if (this.verbose.page)
 	console.log ("Changing view from " + this.page + " to " + page)
       
@@ -486,37 +486,37 @@ var GramBot = (function() {
 
       return def
         .then (function() {
-          gb.page = page
+          wm.page = page
         })
     },
 
     // login menu
     showLoginPage: function() {
-      var gb = this
+      var wm = this
       return this.setPage ('login')
         .then (function() {
-          var sanitizeLogin = gb.sanitizer ('nameInput', gb.sanitizePlayerName)
-          gb.container
+          var sanitizeLogin = wm.sanitizer ('nameInput', wm.sanitizePlayerName)
+          wm.container
             .empty()
             .append ($('<div class="inputbar">')
                      .append ($('<form>')
                               .append ($('<label for="player">')
                                        .text('Player name'))
-                              .append (gb.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="player" type="text">')
-                                       .attr('maxlength', gb.maxPlayerLoginLength)
+                              .append (wm.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="player" type="text">')
+                                       .attr('maxlength', wm.maxPlayerLoginLength)
                                        .on('change', sanitizeLogin)
                                        .on('keyup', sanitizeLogin))
                               .append ($('<label for="player">')
                                        .text('Password'))
-                              .append (gb.passwordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="password" type="password">'))))
+                              .append (wm.passwordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="password" type="password">'))))
             .append ($('<div class="menubar">')
                      .append ($('<div class="list">')
-                              .append (gb.makeListLink ('Log in', gb.doReturnLogin),
-                                       gb.makeListLink ('Sign up', gb.createPlayer),
-                                       gb.makeListLink ($('<img>').attr('src',gb.facebookButtonImageUrl), gb.REST_loginFacebook)
+                              .append (wm.makeListLink ('Log in', wm.doReturnLogin),
+                                       wm.makeListLink ('Sign up', wm.createPlayer),
+                                       wm.makeListLink ($('<img>').attr('src',wm.facebookButtonImageUrl), wm.REST_loginFacebook)
                                        .addClass("noborder"))))
-          if (gb.playerLogin)
-            gb.nameInput.val (gb.playerLogin)
+          if (wm.playerLogin)
+            wm.nameInput.val (wm.playerLogin)
         })
     },
 
@@ -555,54 +555,54 @@ var GramBot = (function() {
     },
 
     doLogin: function (showNextPage) {
-      var gb = this
+      var wm = this
       var fail = this.showLoginPage.bind (this)
       this.validatePlayerName
       (function() {
-        gb.REST_postLogin (gb.playerLogin, gb.playerPassword)
+        wm.REST_postLogin (wm.playerLogin, wm.playerPassword)
           .done (function (data) {
 	    if (!data.player)
-              gb.showModalMessage (data.message, fail)
+              wm.showModalMessage (data.message, fail)
 	    else {
-              gb.selectSound.stop()
-              gb.playSound ('login')
-              gb.initPlayerInfo (data.player)
-              gb.socket_getPlayerSubscribe (gb.playerID)
+              wm.selectSound.stop()
+              wm.playSound ('login')
+              wm.initPlayerInfo (data.player)
+              wm.socket_getPlayerSubscribe (wm.playerID)
                 .then (function() {
-                  showNextPage.call(gb)
+                  showNextPage.call(wm)
                 })
 	    }
           })
           .fail (function (err) {
-	    gb.showModalWebError (err, fail)
+	    wm.showModalWebError (err, fail)
           })
       }, fail)
     },
 
     initPlayerInfo: function (player) {
-      var gb = this
-      gb.playerInfo = player
-      gb.playerID = player.id
-      gb.playerLogin = player.name
-      gb.playerName = player.displayName
+      var wm = this
+      wm.playerInfo = player
+      wm.playerID = player.id
+      wm.playerLogin = player.name
+      wm.playerName = player.displayName
     },
 
     createPlayer: function() {
-      var gb = this
+      var wm = this
       var fail = this.showLoginPage.bind (this)
       this.validatePlayerName
       (function() {
-        gb.REST_postPlayer (gb.playerLogin, gb.playerPassword)
+        wm.REST_postPlayer (wm.playerLogin, wm.playerPassword)
           .done (function (data) {
-	    gb.selectSound.stop()
-	    gb.playSound ('login')
-	    gb.doInitialLogin()
+	    wm.selectSound.stop()
+	    wm.playSound ('login')
+	    wm.doInitialLogin()
           })
           .fail (function (err) {
 	    if (err.status == 400)
-              gb.showModalMessage ("A player with that name already exists", fail)
+              wm.showModalMessage ("A player with that name already exists", fail)
 	    else
-              gb.showModalWebError (err, fail)
+              wm.showModalWebError (err, fail)
           })
       }, fail)
     },
@@ -632,9 +632,9 @@ var GramBot = (function() {
     },
 
     reloadOnFail: function() {
-      var gb = this
+      var wm = this
       return function (err) {
-        gb.showModalWebError (err, gb.reloadCurrentTab.bind(gb))
+        wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
       }
     },
     
@@ -644,7 +644,7 @@ var GramBot = (function() {
     },
 
     showNavBar: function (currentTab) {
-      var gb = this
+      var wm = this
       
       var navbar
       this.container
@@ -659,22 +659,22 @@ var GramBot = (function() {
 	
       this.tabs.map (function (tab) {
         var span = $('<span>').addClass('navtab').addClass('nav-'+tab.name)
-        gb.getIconPromise(tab.icon)
+        wm.getIconPromise(tab.icon)
           .done (function (svg) {
             span.append ($(svg).addClass('navicon'))
 	    if (tab.name === 'mailbox')
-	      span.append (gb.messageCountDiv)
+	      span.append (wm.messageCountDiv)
           })
           .fail (function (err) {
             console.log(err)
           })
         if (tab.name === currentTab) {
-          gb.currentTab = tab
+          wm.currentTab = tab
           span.addClass('active')
         }
-        span.on ('click', gb.callWithSoundEffect (function() {
-          gb.pushedViews = []
-          gb[tab.method]()
+        span.on ('click', wm.callWithSoundEffect (function() {
+          wm.pushedViews = []
+          wm[tab.method]()
         }))
         navbar.append (span)
       })
@@ -703,11 +703,11 @@ var GramBot = (function() {
     },
 
     updateMessageCount: function() {
-      var gb = this
+      var wm = this
       this.REST_getPlayerInboxCount (this.playerID)
 	.then (function (result) {
-	  gb.messageCount = result.count
-	  gb.updateMessageCountDiv()
+	  wm.messageCount = result.count
+	  wm.updateMessageCountDiv()
 	})
     },
 
@@ -734,7 +734,7 @@ var GramBot = (function() {
     
     // log out
     doLogout: function() {
-      var gb = this
+      var wm = this
       delete this.symbolCache
       delete this.lastPlayerSearch
       delete this.playerSearchResults
@@ -743,103 +743,103 @@ var GramBot = (function() {
       delete this.messageCount
       this.socket_getPlayerUnsubscribe (this.playerID)
 	.then (function() {
-	  gb.REST_postLogout()
-	  gb.showLoginPage()
+	  wm.REST_postLogout()
+	  wm.showLoginPage()
 	})
     },
     
     // settings menu
     showSettingsPage: function() {
-      var gb = this
+      var wm = this
 
       return this.setPage ('settings')
         .then (function() {
-          gb.showNavBar ('settings')
-          gb.container
+          wm.showNavBar ('settings')
+          wm.container
             .append ($('<div class="menubar">')
                      .append ($('<div class="list">')
-                              .append (gb.makeListLink ('Login', gb.showPlayerConfigPage),
-                                       gb.makeListLink ('"Privacy"', gb.showPlayerBioPage),
-                                       gb.makeListLink ('Colors', gb.showThemesPage),
-                                       gb.makeListLink ('Audio', gb.showAudioPage),
-                                       gb.makeListLink ('Exit', gb.doLogout))))
+                              .append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
+                                       wm.makeListLink ('"Privacy"', wm.showPlayerBioPage),
+                                       wm.makeListLink ('Colors', wm.showThemesPage),
+                                       wm.makeListLink ('Audio', wm.showAudioPage),
+                                       wm.makeListLink ('Log out', wm.doLogout))))
         })
     },
 
     // settings
     showPlayerConfigPage: function() {
-      var gb = this
+      var wm = this
       return this.pushView ('name')
         .then (function() {
           function saveChanges() {
-            delete gb.pageExit
-            var newName = gb.nameInput.val()
-            var newLogin = gb.loginInput.val()
+            delete wm.pageExit
+            var newName = wm.nameInput.val()
+            var newLogin = wm.loginInput.val()
             if (newLogin.length && newName.length) {
               var update = {}
-              if (newLogin !== gb.playerLogin)
+              if (newLogin !== wm.playerLogin)
                 update.name = newLogin
-              if (newName !== gb.playerName)
+              if (newName !== wm.playerName)
                 update.displayName = newName
-              if (gb.changePasswordInput.val().length) {
-                if (gb.confirmPasswordInput.val() !== gb.changePasswordInput.val())
+              if (wm.changePasswordInput.val().length) {
+                if (wm.confirmPasswordInput.val() !== wm.changePasswordInput.val())
                   return $.Deferred().reject ("Passwords don't match")
-                update.oldPassword = gb.oldPasswordInput.val()
-                update.newPassword = gb.changePasswordInput.val()
+                update.oldPassword = wm.oldPasswordInput.val()
+                update.newPassword = wm.changePasswordInput.val()
               }
-              return gb.REST_postPlayerConfig (gb.playerID, update)
+              return wm.REST_postPlayerConfig (wm.playerID, update)
                 .then (function (result) {
-                  delete gb.playerNameCache[gb.playerLogin]  // just in case it was cached in a previous login
-                  gb.playerLogin = newLogin
-                  gb.playerName = newName
-                  gb.writeLocalStorage ('playerLogin')
+                  delete wm.playerNameCache[wm.playerLogin]  // just in case it was cached in a previous login
+                  wm.playerLogin = newLogin
+                  wm.playerName = newName
+                  wm.writeLocalStorage ('playerLogin')
                   if (update.newPassword)
                     window.alert ("Password successfully changed")
                 })
             } else
               return $.Deferred().resolve()
           }
-          gb.pageExit = saveChanges
-          var backBar = gb.popBack (function (backButton) {
+          wm.pageExit = saveChanges
+          var backBar = wm.popBack (function (backButton) {
             backButton.off()
-            gb.nameInput.prop('disabled',true)
+            wm.nameInput.prop('disabled',true)
             saveChanges()
               .then (function (result) {
-                gb.popView()
+                wm.popView()
               }).fail (function (err) {
-                gb.showModalWebError (err, gb.popView.bind(gb))
+                wm.showModalWebError (err, wm.popView.bind(wm))
               })
           })
-          var sanitizeLogin = gb.sanitizer ('loginInput', gb.sanitizePlayerName)
+          var sanitizeLogin = wm.sanitizer ('loginInput', wm.sanitizePlayerName)
 
           var passwordForm = $('<div class="inputbar">')
               .append ($('<form>')
                        .append ($('<span>').text('New password'),
-                                gb.changePasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                wm.changePasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
                                 $('<span>').text('Confirm new password'),
-                                gb.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                wm.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
                                 $('<span>').text('Old password'),
-                                gb.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))
-          if (gb.playerInfo.hidePassword)
+                                wm.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))
+          if (wm.playerInfo.hidePassword)
             passwordForm.hide()
 
-          gb.container
-            .append (gb.makePageTitle ('Login info'),
+          wm.container
+            .append (wm.makePageTitle ('Login info'),
                      $('<div class="menubar">')
                      .append ($('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Login name'))
-                                       .append (gb.loginInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
-                                                .val(gb.playerLogin)
+                                       .append (wm.loginInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
+                                                .val(wm.playerLogin)
                                                 .on('keyup',sanitizeLogin)
                                                 .on('change',sanitizeLogin)
-                                                .attr('maxlength', gb.maxPlayerLoginLength))),
+                                                .attr('maxlength', wm.maxPlayerLoginLength))),
                               $('<div class="inputbar">')
                               .append ($('<form>')
                                        .append ($('<span>').text('Full name'))
-                                       .append (gb.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
-                                                .val(gb.playerName)
-                                                .attr('maxlength', gb.maxPlayerNameLength))),
+                                       .append (wm.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
+                                                .val(wm.playerName)
+                                                .attr('maxlength', wm.maxPlayerNameLength))),
                               passwordForm))
             .append (backBar)
         })
@@ -847,67 +847,67 @@ var GramBot = (function() {
 
     // settings
     showPlayerBioPage: function() {
-      var gb = this
+      var wm = this
       return this.pushView ('bio')
         .then (function() {
           function saveChanges() {
-            gb.playerInfo.publicBio = gb.publicBioInput.val()
-            gb.playerInfo.privateBio = gb.privateBioInput.val()
-            return gb.REST_postPlayerConfig (gb.playerID, { noMailUnlessFollowed: gb.playerInfo.noMailUnlessFollowed,
-                                                            createsPublicTemplates: gb.playerInfo.createsPublicTemplates,
-                                                            gender: gb.playerInfo.gender,
-                                                            publicBio: gb.playerInfo.publicBio,
-                                                            privateBio: gb.playerInfo.privateBio })
+            wm.playerInfo.publicBio = wm.publicBioInput.val()
+            wm.playerInfo.privateBio = wm.privateBioInput.val()
+            return wm.REST_postPlayerConfig (wm.playerID, { noMailUnlessFollowed: wm.playerInfo.noMailUnlessFollowed,
+                                                            createsPublicTemplates: wm.playerInfo.createsPublicTemplates,
+                                                            gender: wm.playerInfo.gender,
+                                                            publicBio: wm.playerInfo.publicBio,
+                                                            privateBio: wm.playerInfo.privateBio })
           }
-          gb.pageExit = saveChanges
-          var backBar = gb.popBack (function (backButton) {
+          wm.pageExit = saveChanges
+          var backBar = wm.popBack (function (backButton) {
             backButton.off()
             saveChanges()
               .then (function (result) {
-                gb.popView()
+                wm.popView()
               }).fail (function (err) {
-                gb.showModalWebError (err, gb.popView.bind(gb))
+                wm.showModalWebError (err, wm.popView.bind(wm))
               })
           })
-          gb.container
+          wm.container
             .append ($('<div class="menubar">')
                      .append ($('<div class="configmenus">')
-                              .append (gb.makeConfigMenu ({ id: 'gender',
+                              .append (wm.makeConfigMenu ({ id: 'gender',
                                                             opts: [{ text: "I'm a 'they'", value: 'neither' },
                                                                    { text: "I'm a 'she'", value: 'female' },
                                                                    { text: "I'm a 'he'", value: 'male' },
                                                                    { text: "I prefer not to say", value: 'secret' }] }),
-                                       gb.makeConfigMenu ({ id: 'noMailUnlessFollowed',
+                                       wm.makeConfigMenu ({ id: 'noMailUnlessFollowed',
                                                             opts: [{ text: "Anyone can contact me", value: false },
                                                                    { text: "Only people in my address book, please", value: true }] }),
-                                       gb.makeConfigMenu ({ id: 'createsPublicTemplates',
+                                       wm.makeConfigMenu ({ id: 'createsPublicTemplates',
                                                             opts: [{ text: "All my mail is public", value: true },
                                                                    { text: 'I trust WikiMess "security"', value: false }] })),
                               $('<div class="inputbar">')
-                              .append (gb.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
+                              .append (wm.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
                                        .attr ('rows', 2)
                                        .attr ('placeholder', 'Public info (shown to all)')
-                                       .val(gb.playerInfo.publicBio)),
+                                       .val(wm.playerInfo.publicBio)),
                               $('<div class="inputbar">')
-                              .append (gb.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
+                              .append (wm.privateBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio">')
                                        .attr ('rows', 2)
                                        .attr ('placeholder', 'Private info. Shown "only" to people in your address book')
-                                       .val(gb.playerInfo.privateBio))))
+                                       .val(wm.playerInfo.privateBio))))
             .append (backBar)
         })
     },
 
     makeConfigMenu: function (config) {
-      var gb = this
+      var wm = this
       var menu = $('<div class="configmenu">')
           .append (config.opts.map (function (opt) {
             var span = $('<div class="option">').text (opt.text)
               .on ('click', function() {
                 menu.find('*').removeClass('checked')
                 span.addClass('checked')
-                gb.playerInfo[config.id] = opt.value
+                wm.playerInfo[config.id] = opt.value
               })
-            if ((gb.playerInfo[config.id] || 0) == opt.value)
+            if ((wm.playerInfo[config.id] || 0) == opt.value)
               span.addClass('checked')
             return span
           }))
@@ -915,67 +915,70 @@ var GramBot = (function() {
     },
 
     showThemesPage: function() {
-      var gb = this
+      var wm = this
 
       var fieldset
       return this.pushView ('theme')
         .then (function() {
-          gb.container
-            .append (gb.makePageTitle ("Color themes"))
+          wm.container
+            .append (wm.makePageTitle ("Color themes"))
             .append ($('<div class="menubar">')
                      .append (fieldset = $('<fieldset class="themegroup">')
                               .append ($('<legend>').text("Select theme"))))
-            .append (gb.popBack())
+            .append (wm.popBack())
 
-          var label = {}, config = { silent: true }
-          gb.themes.forEach (function (theme) {
+          var radio = {}, label = {}, config = { silent: true, reload: true }
+          wm.themes.forEach (function (theme) {
             var id = 'theme-' + theme.style
-            fieldset.append ($('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
+            fieldset.append (radio[theme.style] = $('<input type="radio" name="theme" id="'+id+'" value="'+theme.style+'">'))
 	      .append (label[theme.style] = $('<label for="'+id+'" class="'+theme.style+'">')
                        .text(theme.text)
-                       .on('click',gb.themeSelector(theme.style,config)))
+                       .on('click',wm.themeSelector(theme.style,config)))
           })
 
-          label[gb.theme].click()
+          wm.themeSelector (wm.theme, { silent: true })()
+          radio[wm.theme].prop ('checked', true)
           config.silent = false
         })
     },
 
     themeSelector: function(style,config) {
-      var gb = this
-      var theme = gb.themes.find (function(t) { return t.style === style })
+      var wm = this
+      var theme = wm.themes.find (function(t) { return t.style === style })
       return function() {
         if (!(config && config.silent))
-          gb.playSound ('select')
-	gb.themes.forEach (function (oldTheme) {
-          gb.container.removeClass (oldTheme.style)
+          wm.playSound ('select')
+	wm.themes.forEach (function (oldTheme) {
+          wm.container.removeClass (oldTheme.style)
 	})
-        gb.container.addClass (theme.style)
-        gb.theme = theme.style
-        gb.themeInfo = theme
-        gb.writeLocalStorage ('theme')
+        wm.container.addClass (theme.style)
+        wm.theme = theme.style
+        wm.themeInfo = theme
+        wm.writeLocalStorage ('theme')
+        if (config.reload)
+          wm.redrawPopBack()
       }
     },
 
     showAudioPage: function() {
-      var gb = this
+      var wm = this
 
       return this.pushView ('audio')
         .then (function() {
           var soundInput
-          gb.container
-            .append (gb.makePageTitle ("Audio settings"))
+          wm.container
+            .append (wm.makePageTitle ("Audio settings"))
             .append ($('<div class="menubar">')
                      .append ($('<div class="card">')
                               .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
                               .append ($('<span>').text("Sound FX volume"))))
-            .append (gb.popBack())
+            .append (wm.popBack())
 
-          soundInput.val (gb.soundVolume * 100)
+          soundInput.val (wm.soundVolume * 100)
           soundInput.on ('change', function() {
-            gb.soundVolume = soundInput.val() / 100
-            gb.playSound ('select')
-            gb.writeLocalStorage ('soundVolume')
+            wm.soundVolume = soundInput.val() / 100
+            wm.playSound ('select')
+            wm.writeLocalStorage ('soundVolume')
           })
 
           // restore disabled slide events for these controls
@@ -1002,7 +1005,7 @@ var GramBot = (function() {
     },
 
     popView: function() {
-      var gb = this
+      var wm = this
       var poppedView = this.pushedViews.pop()
       if (this.verbose.page)
 	console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
@@ -1013,67 +1016,67 @@ var GramBot = (function() {
       poppedView.elements.find('*').addBack().removeClass('pushed').removeClass('already-clicked')
       return this.setPage (poppedView.page)
         .then (function() {
-          gb.pageSuspend = poppedView.pageSuspend
-          gb.pageResume = poppedView.pageResume
-          gb.pageExit = poppedView.pageExit
-          if (gb.pageResume)
-            gb.pageResume()
+          wm.pageSuspend = poppedView.pageSuspend
+          wm.pageResume = poppedView.pageResume
+          wm.pageExit = poppedView.pageExit
+          if (wm.pageResume)
+            wm.pageResume()
         })
     },
 
     // compose message
     showComposePage: function (config) {
-      var gb = this
+      var wm = this
       config = config || {}
       
       return this.setPage ('compose')
         .then (function() {
-          gb.showNavBar ('compose')
+          wm.showNavBar ('compose')
 
           function saveDraft() {
-            if (gb.composition.needsSave) {
-              delete gb.composition.needsSave
-              return gb.finishLastSave()
+            if (wm.composition.needsSave) {
+              delete wm.composition.needsSave
+              return wm.finishLastSave()
                 .then (function() {
-                  var draft = { recipient: gb.composition.recipient && gb.composition.recipient.id,
-                                previous: gb.composition.previousMessage,
-                                previousTemplate: gb.composition.previousTemplate,
-                                template: gb.composition.template,
-                                title: gb.composition.title,
-                                body: gb.composition.body }
-                  if (gb.composition.draft)
-                    gb.lastSavePromise = gb.REST_putPlayerDraft (gb.playerID, gb.composition.draft, draft)
+                  var draft = { recipient: wm.composition.recipient && wm.composition.recipient.id,
+                                previous: wm.composition.previousMessage,
+                                previousTemplate: wm.composition.previousTemplate,
+                                template: wm.composition.template,
+                                title: wm.composition.title,
+                                body: wm.composition.body }
+                  if (wm.composition.draft)
+                    wm.lastSavePromise = wm.REST_putPlayerDraft (wm.playerID, wm.composition.draft, draft)
                   else
-                    gb.lastSavePromise = gb.REST_postPlayerDraft (gb.playerID, draft)
+                    wm.lastSavePromise = wm.REST_postPlayerDraft (wm.playerID, draft)
                     .then (function (result) {
-                      gb.composition.draft = result.draft.id
+                      wm.composition.draft = result.draft.id
                     })
                 })
             } else
               return Promise.resolve()
           }
-          gb.saveOnPageExit ({ unfocus: gb.saveCurrentEdit.bind(gb),
+          wm.saveOnPageExit ({ unfocus: wm.saveCurrentEdit.bind(wm),
                                autosave: saveDraft,
                                pageExit: saveDraft })
 
-          gb.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
-          gb.playerSearchResultsDiv = $('<div class="results">')
+          wm.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
+          wm.playerSearchResultsDiv = $('<div class="results">')
 
           if (config.title)
-            gb.composition.title = config.title
+            wm.composition.title = config.title
           
-          function markForSave() { gb.composition.needsSave = true }
-          gb.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
-            .val (gb.composition.title)
+          function markForSave() { wm.composition.needsSave = true }
+          wm.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
+            .val (wm.composition.title)
             .on ('keyup', function() {
-              gb.composition.title = gb.messageTitleInput.val()
+              wm.composition.title = wm.messageTitleInput.val()
             }).on ('change', markForSave)
 
-          gb.composition.previousTemplate = config.previousTemplate
-          gb.composition.template = config.template || gb.composition.template || {}
-          gb.composition.template.content = gb.composition.template.content || []
+          wm.composition.previousTemplate = config.previousTemplate
+          wm.composition.template = config.template || wm.composition.template || {}
+          wm.composition.template.content = wm.composition.template.content || []
 
-          gb.clearTimer ('autosuggestTimer')
+          wm.clearTimer ('autosuggestTimer')
           function autosuggestKey (before, after) {
             return before.map (function (rhsSym) { return rhsSym.name })
               .concat (['.'],
@@ -1083,12 +1086,12 @@ var GramBot = (function() {
           function textareaAutosuggest (input) {
             input.focus()  // in case we were triggered by player hitting 'randomize' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
-            if (newVal !== gb.autosuggestStatus.lastVal)
-              if (gb.updateComposeContent (gb.parseRhs (newVal)))
-                gb.generateMessageBody()
-            if (caretPos === caretEnd && (newVal !== gb.autosuggestStatus.lastVal || caretPos !== gb.autosuggestStatus.lastCaretPos)) {
-              gb.autosuggestStatus.lastVal = newVal
-              gb.autosuggestStatus.lastCaretPos = caretPos
+            if (newVal !== wm.autosuggestStatus.lastVal)
+              if (wm.updateComposeContent (wm.parseRhs (newVal)))
+                wm.generateMessageBody()
+            if (caretPos === caretEnd && (newVal !== wm.autosuggestStatus.lastVal || caretPos !== wm.autosuggestStatus.lastCaretPos)) {
+              wm.autosuggestStatus.lastVal = newVal
+              wm.autosuggestStatus.lastCaretPos = caretPos
               var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
               var symbolSuggestionPromise, getInsertText
               // autocomplete
@@ -1096,28 +1099,28 @@ var GramBot = (function() {
               var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
               if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
                 var prefix = endsWithSymbolMatch[1]
-                delete gb.autosuggestStatus.lastKey
-                gb.autosuggestStatus.temperature = 0
-                symbolSuggestionPromise = gb.REST_postPlayerSearchSymbolsOwned (gb.playerID, { name: { startsWith: prefix } })
+                delete wm.autosuggestStatus.lastKey
+                wm.autosuggestStatus.temperature = 0
+                symbolSuggestionPromise = wm.REST_postPlayerSearchSymbolsOwned (wm.playerID, { name: { startsWith: prefix } })
                 getInsertText = function (symbol) {
                   return symbol.name.substr (prefix.length) + ' '
                 }
               } else {
                 // symbol suggestions
-                var beforeSymbols = gb.parseRhs (newValBefore, true).map (function (sym) { return { id: sym.id, name: sym.name } })
-                var afterSymbols = gb.parseRhs (newValAfter, true).map (function (sym) { return { id: sym.id, name: sym.name } })
+                var beforeSymbols = wm.parseRhs (newValBefore, true).map (function (sym) { return { id: sym.id, name: sym.name } })
+                var afterSymbols = wm.parseRhs (newValAfter, true).map (function (sym) { return { id: sym.id, name: sym.name } })
                 var key = autosuggestKey (beforeSymbols, afterSymbols)
-                if (gb.autosuggestStatus.lastKey !== key) {
-                  gb.autosuggestStatus.lastKey = key
-                  symbolSuggestionPromise = gb.REST_postPlayerSuggestSymbol (gb.playerID, beforeSymbols, afterSymbols, gb.autosuggestStatus.temperature)
+                if (wm.autosuggestStatus.lastKey !== key) {
+                  wm.autosuggestStatus.lastKey = key
+                  symbolSuggestionPromise = wm.REST_postPlayerSuggestSymbol (wm.playerID, beforeSymbols, afterSymbols, wm.autosuggestStatus.temperature)
                   getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
                 }
               }
               if (symbolSuggestionPromise)
-                gb.populateSuggestions (symbolSuggestionPromise, function (symbol) {
+                wm.populateSuggestions (symbolSuggestionPromise, function (symbol) {
                   var updatedNewValBefore = newValBefore + getInsertText (symbol)
                   input.val (updatedNewValBefore + newValAfter)
-                  gb.setCaretToPos (input, updatedNewValBefore.length)
+                  wm.setCaretToPos (input, updatedNewValBefore.length)
                   input.focus()
                   textareaAutosuggest (input)
                 })
@@ -1125,35 +1128,35 @@ var GramBot = (function() {
           }
 
           function divAutosuggest() {
-            var before = gb.composition.template.content
+            var before = wm.composition.template.content
                 .filter (function (rhsSym) { return typeof(rhsSym) === 'object' })
                 .map (function (sym) { return { id: sym.id, name: sym.name } })
             var key = autosuggestKey (before, [])
-            if (gb.autosuggestStatus.lastKey !== key) {
-              gb.autosuggestStatus.lastKey = key
-              gb.populateSuggestions (gb.REST_postPlayerSuggestSymbol (gb.playerID, before, [], gb.autosuggestStatus.temperature),
+            if (wm.autosuggestStatus.lastKey !== key) {
+              wm.autosuggestStatus.lastKey = key
+              wm.populateSuggestions (wm.REST_postPlayerSuggestSymbol (wm.playerID, before, [], wm.autosuggestStatus.temperature),
                                       function (symbol) {
                                         var spacer = ' '
-                                        gb.updateComposeContent (gb.composition.template.content.concat ([spacer,
+                                        wm.updateComposeContent (wm.composition.template.content.concat ([spacer,
                                                                                                           { id: symbol.id,
                                                                                                             name: symbol.name }]))
                                         updateComposeDiv()
                                         var generatePromise =
-                                            (gb.animationExpansion
-                                             ? gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+                                            (wm.animationExpansion
+                                             ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
                                              .then (function (result) {
-                                               gb.copyModifiers (result.expansion, symbol)
-                                               gb.appendToMessageBody ([spacer, result.expansion])
+                                               wm.copyModifiers (result.expansion, symbol)
+                                               wm.appendToMessageBody ([spacer, result.expansion])
                                              })
-                                             : gb.generateMessageBody())
+                                             : wm.generateMessageBody())
                                         generatePromise.then (divAutosuggest)
                                       })
                 .then (function() {
-                  if (gb.composition.template.content.length)
-                    gb.suggestionDiv.append
-                  (gb.makeIconButton ('backspace',
+                  if (wm.composition.template.content.length)
+                    wm.suggestionDiv.append
+                  (wm.makeIconButton ('backspace',
                                       function() {
-                                        var newContent = gb.composition.template.content.slice(0)
+                                        var newContent = wm.composition.template.content.slice(0)
                                         var nSymPopped = 0
                                         while (newContent.length) {
                                           var poppedSym = newContent.pop()
@@ -1162,179 +1165,179 @@ var GramBot = (function() {
                                               || poppedSym.match(/\S/))
                                             break
                                         }
-                                        gb.updateComposeContent (newContent)
+                                        wm.updateComposeContent (newContent)
                                         updateComposeDiv()
-                                        if (gb.composition.body) {
-                                          gb.composition.body.rhs.splice
-                                          (gb.composition.template.content.length,
-                                           gb.composition.body.rhs.length - gb.composition.template.content.length)
-                                          gb.showMessageBody()
+                                        if (wm.composition.body) {
+                                          wm.composition.body.rhs.splice
+                                          (wm.composition.template.content.length,
+                                           wm.composition.body.rhs.length - wm.composition.template.content.length)
+                                          wm.showMessageBody()
                                         } else
-                                          gb.generateMessageBody()
+                                          wm.generateMessageBody()
                                         divAutosuggest()
                                       }))
                 })
             }
           }
-          gb.autosuggestStatus = { temperature: 0, refresh: divAutosuggest }
+          wm.autosuggestStatus = { temperature: 0, refresh: divAutosuggest }
 
-          gb.messageComposeDiv = $('<div class="messagecompose">')
+          wm.messageComposeDiv = $('<div class="messagecompose">')
           function updateComposeDiv() {
-            gb.populateEditableElement
-            (gb.messageComposeDiv,
-             { content: function() { return gb.composition.template ? gb.composition.template.content : [] },
+            wm.populateEditableElement
+            (wm.messageComposeDiv,
+             { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
                changeCallback: function (input) {
-                 gb.composition.needsSave = true
-                 gb.autosuggestStatus.temperature = 0
-                 gb.setTimer ('autosuggestTimer',
-                              gb.autosuggestDelay,
-                              textareaAutosuggest.bind (gb, input))
+                 wm.composition.needsSave = true
+                 wm.autosuggestStatus.temperature = 0
+                 wm.setTimer ('autosuggestTimer',
+                              wm.autosuggestDelay,
+                              textareaAutosuggest.bind (wm, input))
                },
                showCallback: function (input) {
-                 delete gb.autosuggestStatus.lastKey
-                 delete gb.autosuggestStatus.lastVal
-                 gb.autosuggestStatus.temperature = 0
-                 gb.autosuggestStatus.refresh = textareaAutosuggest.bind (gb, input)
-                 gb.clearTimer ('autosuggestTimer')
-                 gb.suggestionDiv
+                 delete wm.autosuggestStatus.lastKey
+                 delete wm.autosuggestStatus.lastVal
+                 wm.autosuggestStatus.temperature = 0
+                 wm.autosuggestStatus.refresh = textareaAutosuggest.bind (wm, input)
+                 wm.clearTimer ('autosuggestTimer')
+                 wm.suggestionDiv
                    .empty()
                    .off ('click')
                    .on ('click', function() { input.focus() })
                  textareaAutosuggest (input)
                },
                hideCallback: function() {
-                 delete gb.autosuggestStatus.lastKey
-                 gb.autosuggestStatus.temperature = 0
-                 gb.autosuggestStatus.refresh = divAutosuggest
+                 delete wm.autosuggestStatus.lastKey
+                 wm.autosuggestStatus.temperature = 0
+                 wm.autosuggestStatus.refresh = divAutosuggest
                  divAutosuggest()
                },
                alwaysUpdate: true,
                updateCallback: function (newContent) {
-                 return gb.updateComposeContent (newContent) ? gb.generateMessageBody() : $.Deferred().resolve()
+                 return wm.updateComposeContent (newContent) ? wm.generateMessageBody() : $.Deferred().resolve()
                },
-               parse: gb.parseRhs.bind(gb),
-               renderText: gb.makeRhsText.bind(gb),
-               renderHtml: gb.makeTemplateSpan.bind(gb)
+               parse: wm.parseRhs.bind(wm),
+               renderText: wm.makeRhsText.bind(wm),
+               renderHtml: wm.makeTemplateSpan.bind(wm)
              })
           }
           updateComposeDiv()
           
-          gb.messageBodyDiv = $('<div class="messagebody">')
-            .on ('click', gb.stopAnimation.bind(gb))
+          wm.messageBodyDiv = $('<div class="messagebody">')
+            .on ('click', wm.stopAnimation.bind(wm))
 
-          delete gb.animationExpansion
+          delete wm.animationExpansion
           if (config.body) {
-            gb.composition.body = config.body
-            gb.showMessageBody()
+            wm.composition.body = config.body
+            wm.showMessageBody()
           } else if (config.template)
-            gb.generateMessageBody()
+            wm.generateMessageBody()
           else
-            gb.showMessageBody()
+            wm.showMessageBody()
           
           function send() {
-            gb.saveCurrentEdit()
+            wm.saveCurrentEdit()
               .then (function() {
-                if (!gb.composition.recipient)
+                if (!wm.composition.recipient)
                   window.alert ("Please specify a recipient.")
-                else if (gb.templateIsEmpty())
+                else if (wm.templateIsEmpty())
                   window.alert ("Please enter some message text.")
-                else if (!(gb.composition.body && gb.makeExpansionText(gb.composition.body).match(/\S/)))
+                else if (!(wm.composition.body && wm.makeExpansionText(wm.composition.body).match(/\S/)))
                   window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
-                else if (!(gb.composition.title && gb.composition.title.length))
+                else if (!(wm.composition.title && wm.composition.title.length))
                   window.alert ("Please give this message a title.")
                 else {
-                  gb.sendButton.off ('click')
-                  delete gb.composition.previousTemplate
-                  gb.REST_postPlayerMessage (gb.playerID, { recipient: gb.composition.recipient.id,
-                                                            template: gb.composition.template,
-                                                            title: gb.composition.title,
-                                                            body: gb.composition.body,
-                                                            previous: gb.composition.previousMessage,
-                                                            draft: gb.composition.draft })
+                  wm.sendButton.off ('click')
+                  delete wm.composition.previousTemplate
+                  wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient.id,
+                                                            template: wm.composition.template,
+                                                            title: wm.composition.title,
+                                                            body: wm.composition.body,
+                                                            previous: wm.composition.previousMessage,
+                                                            draft: wm.composition.draft })
                     .then (function (result) {
-                      gb.composition = {}
-                      return gb.showMailboxPage ({ tab: 'outbox' })
+                      wm.composition = {}
+                      return wm.showMailboxPage ({ tab: 'outbox' })
                     }).catch (function (err) {
-                      gb.showModalWebError (err, gb.reloadCurrentTab.bind(gb))
+                      wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                     })
                 }
               })
           }
                     
-          gb.container
-            .append (gb.composeDiv = $('<div class="compose">')
+          wm.container
+            .append (wm.composeDiv = $('<div class="compose">')
                      .append ($('<div class="messageheader">')
                               .append ($('<div class="row">')
                                        .append ($('<span class="label">').text ('To:'),
-                                                $('<span class="input">').append (gb.playerSearchInput,
-                                                                                  gb.playerSearchResultsDiv.hide())),
+                                                $('<span class="input">').append (wm.playerSearchInput,
+                                                                                  wm.playerSearchResultsDiv.hide())),
                                        $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject:'),
-                                                $('<span class="input">').append (gb.messageTitleInput))),
+                                                $('<span class="input">').append (wm.messageTitleInput))),
                               $('<div class="messageborder">')
-                              .append (gb.messageComposeDiv,
-                                       gb.suggestionDiv = $('<div class="suggest">'),
-                                       gb.messageBodyDiv)),
+                              .append (wm.messageComposeDiv,
+                                       wm.suggestionDiv = $('<div class="suggest">'),
+                                       wm.messageBodyDiv)),
                      $('<div class="messagecontrols">').append
-                     (gb.editButton = gb.makeIconButton ('edit', function() {
-                       gb.stopAnimation()
-                       gb.messageComposeDiv.trigger ('click')
+                     (wm.editButton = wm.makeIconButton ('edit', function() {
+                       wm.stopAnimation()
+                       wm.messageComposeDiv.trigger ('click')
                      }),
-                      gb.randomizeButton = gb.makeIconButton ('randomize', function (evt) {
+                      wm.randomizeButton = wm.makeIconButton ('randomize', function (evt) {
                         evt.stopPropagation()
-                        gb.generateMessageBody()
-                        delete gb.autosuggestStatus.lastVal
-                        delete gb.autosuggestStatus.lastKey
-                        gb.autosuggestStatus.temperature++
-                        gb.autosuggestStatus.refresh()
+                        wm.generateMessageBody()
+                        delete wm.autosuggestStatus.lastVal
+                        delete wm.autosuggestStatus.lastKey
+                        wm.autosuggestStatus.temperature++
+                        wm.autosuggestStatus.refresh()
                       }),
-                      gb.destroyButton = gb.makeIconButton ('destroy', function (evt) {
+                      wm.destroyButton = wm.makeIconButton ('destroy', function (evt) {
                         if (window.confirm ('Delete this draft?'))
-                          gb.finishLastSave()
+                          wm.finishLastSave()
                           .then (function() {
-                            var def = (gb.composition.draft
-                                       ? gb.REST_deletePlayerDraft (gb.playerID, gb.composition.draft)
+                            var def = (wm.composition.draft
+                                       ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
                                        : $.Deferred().resolve())
                             def.then (function() {
-                              gb.showMailboxPage ({ tab: 'drafts' })
+                              wm.showMailboxPage ({ tab: 'drafts' })
                             })
                           })
                       }),
-                      gb.sendButton = gb.makeIconButton ('send', send)))
+                      wm.sendButton = wm.makeIconButton ('send', send)))
 
-          gb.restoreScrolling (gb.messageComposeDiv)
-          gb.restoreScrolling (gb.messageBodyDiv)
-          gb.restoreScrolling (gb.suggestionDiv)
+          wm.restoreScrolling (wm.messageComposeDiv)
+          wm.restoreScrolling (wm.messageBodyDiv)
+          wm.restoreScrolling (wm.suggestionDiv)
 
           if (config.recipient) {
-            gb.composition.recipient = config.recipient
-            gb.lastComposePlayerSearchText = config.recipient.name
+            wm.composition.recipient = config.recipient
+            wm.lastComposePlayerSearchText = config.recipient.name
           }
 
-          gb.playerSearchInput.attr ('placeholder', 'Player name')
-            .val (gb.lastComposePlayerSearchText)
-          gb.playerSearchInput
-            .on ('keyup', gb.doComposePlayerSearch.bind(gb))
-            .on ('click', gb.doComposePlayerSearch.bind(gb,true))
+          wm.playerSearchInput.attr ('placeholder', 'Player name')
+            .val (wm.lastComposePlayerSearchText)
+          wm.playerSearchInput
+            .on ('keyup', wm.doComposePlayerSearch.bind(wm))
+            .on ('click', wm.doComposePlayerSearch.bind(wm,true))
             .on ('change', markForSave)
-          if (!gb.composition.recipient) {
-            delete gb.lastComposePlayerSearchText
-            gb.doComposePlayerSearch()
+          if (!wm.composition.recipient) {
+            delete wm.lastComposePlayerSearchText
+            wm.doComposePlayerSearch()
           }
           
           if (config.previousMessage)
-            gb.composition.previousMessage = config.previousMessage
+            wm.composition.previousMessage = config.previousMessage
 
           if (config.draft)
-            gb.composition.draft = config.draft
+            wm.composition.draft = config.draft
 
           divAutosuggest()
-          gb.randomizeButton.show()
+          wm.randomizeButton.show()
           
           if (config.focus)
-            gb[config.focus].focus().trigger ('click')
+            wm[config.focus].focus().trigger ('click')
           if (config.click)
-            gb[config.click].trigger ('click')
+            wm[config.click].trigger ('click')
 
           return true
         })
@@ -1346,22 +1349,22 @@ var GramBot = (function() {
         delete this.composition.previousTemplate
         this.composition.template.content = newContent
         this.autosuggestStatus.temperature = 0
-        gb.composition.needsSave = true
+        wm.composition.needsSave = true
         return true
       }
       return false
     },
     
     populateSuggestions: function (symbolSuggestionPromise, symbolSelectCallback) {
-      var gb = this
+      var wm = this
       return symbolSuggestionPromise.then (function (result) {
-        gb.suggestionDiv.empty()
+        wm.suggestionDiv.empty()
           .append ($('<div class="suggestlabel">').text('Suggestions:'),
                    result.symbols.map (function (symbol) {
-                     gb.symbolName[symbol.id] = symbol.name
-                     return gb.makeSymbolSpan (symbol, function (evt) {
+                     wm.symbolName[symbol.id] = symbol.name
+                     return wm.makeSymbolSpan (symbol, function (evt) {
                        evt.stopPropagation()
-                       gb.suggestionDiv.empty()
+                       wm.suggestionDiv.empty()
                        symbolSelectCallback (symbol)
                      })
                    }))
@@ -1369,30 +1372,30 @@ var GramBot = (function() {
     },
     
     clearComposeRecipient: function() {
-      var gb = this
-      delete gb.composition.recipient
-      gb.playerSearchInput.val('')
-      gb.doComposePlayerSearch()
+      var wm = this
+      delete wm.composition.recipient
+      wm.playerSearchInput.val('')
+      wm.doComposePlayerSearch()
     },
     
     doComposePlayerSearch: function (forceNewSearch) {
-      var gb = this
+      var wm = this
       var searchText = this.playerSearchInput.val()
-      delete gb.composition.recipient
+      delete wm.composition.recipient
       if (forceNewSearch || searchText !== this.lastComposePlayerSearchText) {
         this.lastComposePlayerSearchText = searchText
         if (searchText.length)
           this.REST_postPlayerSearchPlayersFollowed (this.playerID, searchText.replace('@',''))
           .then (function (result) {
-            gb.showComposePlayerSearchResults (result.players)
+            wm.showComposePlayerSearchResults (result.players)
           })
         else
-          gb.showComposePlayerSearchResults()
+          wm.showComposePlayerSearchResults()
       }
     },
     
     showComposePlayerSearchResults: function (results) {
-      var gb = this
+      var wm = this
       this.playerSearchResultsDiv
         .empty()
         .hide()
@@ -1400,12 +1403,12 @@ var GramBot = (function() {
         if (results.length)
           this.playerSearchResultsDiv
           .append (results.map (function (player) {
-            return gb.makePlayerSpan (player.name,
+            return wm.makePlayerSpan (player.name,
                                       player.displayName,
                                       function() {
-                                        gb.playerSearchResultsDiv.hide()
-                                        gb.composition.recipient = player
-                                        gb.playerSearchInput.val (gb.lastComposePlayerSearchText = '@' + player.name)
+                                        wm.playerSearchResultsDiv.hide()
+                                        wm.composition.recipient = player
+                                        wm.playerSearchInput.val (wm.lastComposePlayerSearchText = '@' + player.name)
                                       }).addClass('result')
           })).show()
         else
@@ -1416,7 +1419,7 @@ var GramBot = (function() {
     },
 
     renderMarkdown: function (markdown, transform) {
-      var gb = this
+      var wm = this
       // this method is pretty hacky...
       // first, intercept whitespace strings and return them unmodified
       if (!markdown.match (/\S/))
@@ -1435,35 +1438,35 @@ var GramBot = (function() {
       $(rendered).find('.playertag')
         .each (function (n, playerTag) {
           var playerName = $(playerTag).find('.name').text()
-          gb.getPlayerId (playerName)
+          wm.getPlayerId (playerName)
             .then (function (player) {
               if (player)
                 $(playerTag).removeClass('playertag').addClass('playerlink')
-                .on ('click', gb.showOtherStatusPage.bind (gb, player))
+                .on ('click', wm.showOtherStatusPage.bind (wm, player))
             })
         })
       return rendered
     },
 
     getPlayerId: function (name) {
-      if (name === gb.playerLogin)
-        return $.Deferred().resolve (gb.playerID)
-      if (typeof(gb.playerNameCache[name]) !== 'undefined')
-        return $.Deferred().resolve (gb.playerNameCache[name])
-      return gb.REST_getPlayerId (gb.playerID, name)
+      if (name === wm.playerLogin)
+        return $.Deferred().resolve (wm.playerID)
+      if (typeof(wm.playerNameCache[name]) !== 'undefined')
+        return $.Deferred().resolve (wm.playerNameCache[name])
+      return wm.REST_getPlayerId (wm.playerID, name)
         .then (function (result) {
-          gb.playerNameCache[name] = result.player
+          wm.playerNameCache[name] = result.player
           return result.player
         })
     },
     
     animateExpansion: function() {
-      var gb = this
+      var wm = this
       this.clearTimer ('expansionAnimationTimer')
       var nSymbols = 0
       var markdown = this.renderMarkdown
       (this.makeExpansionText (this.animationExpansion, true)
-       .replace (/^\s*$/, gb.emptyMessageWarning),
+       .replace (/^\s*$/, wm.emptyMessageWarning),
        function (html) {
          return html.replace
          (/#(\w+)\.([a-z]+)/g,
@@ -1496,16 +1499,16 @@ var GramBot = (function() {
     },
     
     setTimer: function (timerName, delay, callback) {
-      var gb = this
+      var wm = this
       this.clearTimer (timerName)
       this[timerName] = window.setTimeout (function() {
-        delete gb[timerName]
+        delete wm[timerName]
         callback()
       }, delay)
     },
     
     makeExpansionText: function (node, leaveSymbolsUnexpanded) {
-      var gb = this
+      var wm = this
       var expansion = ''
       if (node) {
         if (typeof(node) === 'string')
@@ -1515,17 +1518,17 @@ var GramBot = (function() {
             expansion = '#' + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded')
           else {
             expansion = node.rhs.map (function (rhsSym) {
-              return gb.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
+              return wm.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
             }).join('')
-            if (!leaveSymbolsUnexpanded || !gb.firstNamedSymbol(node)) {
+            if (!leaveSymbolsUnexpanded || !wm.firstNamedSymbol(node)) {
               if (node.cap)
-                expansion = gb.capitalize (expansion)
+                expansion = wm.capitalize (expansion)
               if (node.upper)
                 expansion = expansion.toUpperCase()
               if (node.plural)
-                expansion = gb.pluralForm (expansion)
+                expansion = wm.pluralForm (expansion)
               if (node.a)
-                expansion = gb.indefiniteArticle (expansion)
+                expansion = wm.indefiniteArticle (expansion)
             }
           }
         }
@@ -1565,22 +1568,22 @@ var GramBot = (function() {
     },
 
     pluralForm: function (singular) {
-      var gb = this
+      var wm = this
       var match
-      if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && gb.irregularPlural[match[2]])
-        return match[1] + gb.matchCase (match[2], gb.irregularPlural[match[2]]) + match[3]
+      if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && wm.irregularPlural[match[2]])
+        return match[1] + wm.matchCase (match[2], wm.irregularPlural[match[2]]) + match[3]
       else if (singular.match(/(ch|sh|s|x|z)\s*$/i))
-        return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + gb.matchCase(ending,'es') + spacer })
+        return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + wm.matchCase(ending,'es') + spacer })
       else if (singular.match(/[aeiou]y\s*$/i))
-        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return gb.matchCase(y,'ys') + spacer })
+        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ys') + spacer })
       else if (singular.match(/y\s*$/i))
-        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return gb.matchCase(y,'ies') + spacer })
+        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ies') + spacer })
       else if (singular.match(/fe?\s*$/i))
-        return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return gb.matchCase(fe,'ves') + spacer })
+        return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return wm.matchCase(fe,'ves') + spacer })
       else if (singular.match(/o\s*$/i))
-        return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return gb.matchCase(o,'os') + spacer })
+        return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return wm.matchCase(o,'os') + spacer })
       else if (singular.match(/[a-zA-Z]\s*$/i))
-        return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + gb.matchCase(c,'s') + spacer })
+        return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + wm.matchCase(c,'s') + spacer })
       return singular
     },
 
@@ -1590,18 +1593,18 @@ var GramBot = (function() {
     },
 
     countSymbolNodes: function (node, includeLimitedNodes) {
-      var gb = this
+      var wm = this
       return (typeof(node) === 'string'
               ? 0
               : (node.rhs
                  ? node.rhs.reduce (function (total, child) {
-                   return total + gb.countSymbolNodes (child, includeLimitedNodes)
+                   return total + wm.countSymbolNodes (child, includeLimitedNodes)
                  }, ((node.id || node.name) && (includeLimitedNodes || !node.limit)) ? 1 : 0)
                  : 0))
     },
 
     firstNamedSymbol: function (node) {
-      var gb = this
+      var wm = this
       if (typeof(node) === 'string')
         return false
       if (node.name)
@@ -1626,83 +1629,83 @@ var GramBot = (function() {
     },
 
     generateMessageBody: function() {
-      var gb = this
-      gb.composition.body = {}
-      gb.composition.needsSave = true
+      var wm = this
+      wm.composition.body = {}
+      wm.composition.needsSave = true
       
       var templatePromise
-      if (gb.composition.previousTemplate)
-        templatePromise = gb.REST_getPlayerSuggestReply (gb.playerID, gb.composition.previousTemplate.id)
+      if (wm.composition.previousTemplate)
+        templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id)
         .then (function (result) {
           if (result.template)
-            gb.composition.template = result.template
+            wm.composition.template = result.template
           if (!result.more)
-            delete gb.composition.previousTemplate
+            delete wm.composition.previousTemplate
         })
       else
         templatePromise = $.Deferred().resolve()
 
       return templatePromise.then (function() {
-        if (gb.composition.template && gb.composition.template.content) {
-          var symbolQueries = gb.composition.template.content.filter (function (rhsSym) {
+        if (wm.composition.template && wm.composition.template.content) {
+          var symbolQueries = wm.composition.template.content.filter (function (rhsSym) {
             return typeof(rhsSym) === 'object'
           })
-          return gb.REST_postPlayerExpand (gb.playerID, symbolQueries)
+          return wm.REST_postPlayerExpand (wm.playerID, symbolQueries)
         } else
           return null
       }).then (function (result) {
         if (result) {
           var n = 0
-          gb.composition.body = { rhs: gb.composition.template.content.map (function (rhsSym) {
+          wm.composition.body = { rhs: wm.composition.template.content.map (function (rhsSym) {
             if (typeof(rhsSym) === 'string')
               return rhsSym
             var expansion = result.expansions[n++]
             if (expansion && typeof(expansion.id) !== 'undefined') {
               rhsSym.id = expansion.id
-              gb.symbolName[expansion.id] = expansion.name
-              gb.copyModifiers (expansion, rhsSym)
+              wm.symbolName[expansion.id] = expansion.name
+              wm.copyModifiers (expansion, rhsSym)
               return expansion
             }
             return rhsSym
           }) }
-          gb.showMessageBody ({ animate: true })
+          wm.showMessageBody ({ animate: true })
         } else
-          gb.showMessageBody()
+          wm.showMessageBody()
       })
     },
 
     showMessageBody: function (config) {
-      var gb = this
+      var wm = this
       config = config || {}
-      var div = config.div || gb.messageBodyDiv
-      var expansion = config.expansion || gb.composition.body
-      gb.animationExpansion = _.cloneDeep (expansion)
-      gb.animationDiv = div
-      if (config.animate && gb.countSymbolNodes(expansion,true)) {
-        gb.animationSteps = gb.countSymbolNodes (expansion)
-        gb.extraAnimationSteps = 1
-        gb.animateExpansion()
+      var div = config.div || wm.messageBodyDiv
+      var expansion = config.expansion || wm.composition.body
+      wm.animationExpansion = _.cloneDeep (expansion)
+      wm.animationDiv = div
+      if (config.animate && wm.countSymbolNodes(expansion,true)) {
+        wm.animationSteps = wm.countSymbolNodes (expansion)
+        wm.extraAnimationSteps = 1
+        wm.animateExpansion()
       } else {
-        gb.deleteAllSymbolNames (gb.animationExpansion)
-        gb.animationSteps = 0
-        div.html (this.renderMarkdown (gb.makeExpansionText (expansion)
-                                       .replace (/^\s*$/, (!config.inEditor && gb.templateIsEmpty()
-                                                           ? gb.emptyTemplateWarning
-                                                           : gb.emptyMessageWarning))))
+        wm.deleteAllSymbolNames (wm.animationExpansion)
+        wm.animationSteps = 0
+        div.html (this.renderMarkdown (wm.makeExpansionText (expansion)
+                                       .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
+                                                           ? wm.emptyTemplateWarning
+                                                           : wm.emptyMessageWarning))))
       }
     },
 
     appendToMessageBody: function (appendedRhs) {
-      Array.prototype.push.apply (gb.composition.body.rhs, appendedRhs)
-      Array.prototype.push.apply (gb.animationExpansion.rhs, appendedRhs)
-      gb.animationSteps = Math.max (gb.animationSteps, gb.countSymbolNodes (gb.animationExpansion))
-      gb.extraAnimationSteps = 1
-      gb.animateExpansion()
+      Array.prototype.push.apply (wm.composition.body.rhs, appendedRhs)
+      Array.prototype.push.apply (wm.animationExpansion.rhs, appendedRhs)
+      wm.animationSteps = Math.max (wm.animationSteps, wm.countSymbolNodes (wm.animationExpansion))
+      wm.extraAnimationSteps = 1
+      wm.animateExpansion()
     },
 
     templateIsEmpty: function() {
-      return !gb.composition.template.content
-        || !gb.composition.template.content.filter (function (rhsSym) {
+      return !wm.composition.template.content
+        || !wm.composition.template.content.filter (function (rhsSym) {
           return typeof(rhsSym) === 'object' || rhsSym.match(/\S/)
         }).length
     },
@@ -1714,54 +1717,54 @@ var GramBot = (function() {
     
     // inbox/outbox/drafts
     showMailboxPage: function (config) {
-      var gb = this
+      var wm = this
       config = config || {}
       
       return this.setPage ('mailbox')
         .then (function() {
-          gb.showNavBar ('mailbox')
+          wm.showNavBar ('mailbox')
 
-          gb.container
-            .append (gb.mailboxDiv = $('<div class="mailbox">'),
+          wm.container
+            .append (wm.mailboxDiv = $('<div class="mailbox">'),
                      $('<div class="messagecontrols">').append
-                     (gb.inboxButton = gb.makeIconButton ('inbox', function() {
-                        gb.showInbox()
+                     (wm.inboxButton = wm.makeIconButton ('inbox', function() {
+                        wm.showInbox()
                       }),
-                      gb.outboxButton = gb.makeIconButton ('drafts', function() {
-                        gb.showDrafts()
+                      wm.outboxButton = wm.makeIconButton ('drafts', function() {
+                        wm.showDrafts()
                       }),
-                      gb.outboxButton = gb.makeIconButton ('outbox', function() {
-                        gb.showOutbox()
+                      wm.outboxButton = wm.makeIconButton ('outbox', function() {
+                        wm.showOutbox()
                       })))
 
-          gb.restoreScrolling (gb.mailboxDiv)
-          var tab = config.tab || gb.lastMailboxTab || 'inbox'
-          gb.refreshMailbox (tab)
+          wm.restoreScrolling (wm.mailboxDiv)
+          var tab = config.tab || wm.lastMailboxTab || 'inbox'
+          wm.refreshMailbox (tab)
         })
     },
 
     refreshMailbox: function (tab) {
       switch (tab) {
-      case 'outbox': gb.showOutbox(); break;
-      case 'drafts': gb.showDrafts(); break;
-      case 'inbox': default: gb.showInbox(); break;
+      case 'outbox': wm.showOutbox(); break;
+      case 'drafts': wm.showDrafts(); break;
+      case 'inbox': default: wm.showInbox(); break;
       }
     },
 
     showInbox: function() {
-      var gb = this
-      gb.REST_getPlayerInbox (gb.playerID)
+      var wm = this
+      wm.REST_getPlayerInbox (wm.playerID)
         .then (function (result) {
-          gb.populateMailboxDiv ($.extend ({ messages: result.messages },
-                                           gb.inboxProps()))
+          wm.populateMailboxDiv ($.extend ({ messages: result.messages },
+                                           wm.inboxProps()))
         })
     },
     
     showOutbox: function() {
-      var gb = this
-      gb.REST_getPlayerOutbox (gb.playerID)
+      var wm = this
+      wm.REST_getPlayerOutbox (wm.playerID)
         .then (function (result) {
-          gb.populateMailboxDiv ({ tab: 'outbox',
+          wm.populateMailboxDiv ({ tab: 'outbox',
                                    title: 'Sent messages',
                                    messages: result.messages,
                                    getMethod: 'REST_getPlayerMessageSent',
@@ -1769,16 +1772,16 @@ var GramBot = (function() {
                                    verb: 'Sent',
                                    preposition: 'To',
                                    object: 'recipient',
-                                   showMessage: gb.showMessage.bind(gb)
+                                   showMessage: wm.showMessage.bind(wm)
                                  })
         })
     },
 
     showDrafts: function() {
-      var gb = this
-      gb.REST_getPlayerDrafts (gb.playerID)
+      var wm = this
+      wm.REST_getPlayerDrafts (wm.playerID)
         .then (function (result) {
-          gb.populateMailboxDiv ({ tab: 'drafts',
+          wm.populateMailboxDiv ({ tab: 'drafts',
                                    title: 'Drafts',
                                    messages: result.drafts,
                                    getMethod: 'REST_getPlayerDraft',
@@ -1788,7 +1791,7 @@ var GramBot = (function() {
                                    object: 'recipient',
                                    showMessage: function (props) {
                                      var draft = props.result.draft
-                                     gb.showComposePage ({ recipient: draft.recipient,
+                                     wm.showComposePage ({ recipient: draft.recipient,
                                                            title: draft.title,
                                                            previousMessage: draft.previous,
                                                            previousTemplate: draft.previousTemplate,
@@ -1801,7 +1804,7 @@ var GramBot = (function() {
     },
 
     inboxProps: function() {
-      var gb = this
+      var wm = this
       
       return { tab: 'inbox',
                title: 'Received messages',
@@ -1811,54 +1814,54 @@ var GramBot = (function() {
                preposition: 'From',
                object: 'sender',
                showMessage: function (props) {
-                 gb.showMessage (props)
+                 wm.showMessage (props)
                    .then (function() {
                      var message = props.result.message
-                     if (!message.rating && message.sender.id !== gb.playerID) {
-                       var stars = new Array(gb.maxRating).fill(1).map (function() {
+                     if (!message.rating && message.sender.id !== wm.playerID) {
+                       var stars = new Array(wm.maxRating).fill(1).map (function() {
                          return $('<span class="rating">')
                        })
-                       gb.clearTimer ('ratingTimer')
+                       wm.clearTimer ('ratingTimer')
                        function fillStars (rating) {
                          stars.forEach (function (span, n) {
                            span
                              .off('click')
-                             .html (gb.makeIconButton (n < rating ? 'filledStar' : 'emptyStar',
+                             .html (wm.makeIconButton (n < rating ? 'filledStar' : 'emptyStar',
                                                        function() {
                                                          fillStars (n + 1)
-                                                         gb.setTimer ('ratingTimer',
-                                                                      gb.ratingDelay,
+                                                         wm.setTimer ('ratingTimer',
+                                                                      wm.ratingDelay,
                                                                       function() {
-                                                                        gb.REST_putPlayerMessageRating (gb.playerID, message.id, n + 1)
-                                                                          .then (function() { gb.rateMessageDiv.hide() })
+                                                                        wm.REST_putPlayerMessageRating (wm.playerID, message.id, n + 1)
+                                                                          .then (function() { wm.rateMessageDiv.hide() })
                                                                       })
-                                                       }, gb.starColor))
+                                                       }, wm.starColor))
                          })
                        }
                        fillStars(0)
 
-                       gb.rateMessageDiv
+                       wm.rateMessageDiv
                          .html ($('<div>')
                                 .append ($('<span class="ratinglabel">').text("Rate this message:"),
                                          stars))
                          .show()
                      }
 
-                     gb.dummyReplyButton.hide()
-                     gb.replyButton
+                     wm.dummyReplyButton.hide()
+                     wm.replyButton
                        .on('click', function (evt) {
                          evt.stopPropagation()
                          var replyTitle = message.title
                          if (!replyTitle.match(/^re:/i))
                            replyTitle = 'Re: ' + replyTitle
-                         gb.showComposePage
+                         wm.showComposePage
                          ({ recipient: message.sender,
                             title: replyTitle,
                             previousMessage: message.id,
                             previousTemplate: message.template,
                             focus: 'messageTitleInput'
                           }).then (function() {
-                            gb.generateMessageBody()
+                            wm.generateMessageBody()
                           })
                        }).show()
                    })
@@ -1866,50 +1869,50 @@ var GramBot = (function() {
     },
 
     updateInbox: function (messageID) {
-      var gb = this
+      var wm = this
       this.updateMessageCount()
       if (this.page === 'inbox')
         this.REST_getPlayerMessageHeader (this.playerID, messageID)
         .then (function (result) {
-          if (gb.page === 'inbox')  // check again in case player switched pages while loading
-            if (!gb.messageHeaderCache[result.message.id])
-              gb.mailboxContentsDiv.append (gb.makeMailboxEntryDiv (gb.inboxProps(), result.message))
+          if (wm.page === 'inbox')  // check again in case player switched pages while loading
+            if (!wm.messageHeaderCache[result.message.id])
+              wm.mailboxContentsDiv.append (wm.makeMailboxEntryDiv (wm.inboxProps(), result.message))
         })
     },
 
     populateMailboxDiv: function (props) {
-      var gb = this
-      gb.lastMailboxTab = props.tab
-      gb.messageHeaderCache = {}
-      gb.mailboxDiv
+      var wm = this
+      wm.lastMailboxTab = props.tab
+      wm.messageHeaderCache = {}
+      wm.mailboxDiv
         .empty()
         .append ($('<span class="mailboxname">').text (props.title),
-                 gb.mailboxContentsDiv = $('<span class="contents">')
-                 .append (props.messages.map (gb.makeMailboxEntryDiv.bind (gb, props))))
+                 wm.mailboxContentsDiv = $('<span class="contents">')
+                 .append (props.messages.map (wm.makeMailboxEntryDiv.bind (wm, props))))
     },
 
     makeMailboxEntryDiv: function (props, message) {
-      var gb = this
-      gb.messageHeaderCache[message.id] = message
+      var wm = this
+      wm.messageHeaderCache[message.id] = message
       var deleteMessage = function (evt) {
         evt.stopPropagation()
         if (window.confirm ('Delete this message?'))
-          gb[props.deleteMethod] (gb.playerID, message.id)
-          .then (gb.reloadCurrentTab.bind(gb))
+          wm[props.deleteMethod] (wm.playerID, message.id)
+          .then (wm.reloadCurrentTab.bind(wm))
       }
       var div = $('<div class="message">')
           .append ($('<div class="title">').text (message.title || 'Untitled'),
                    $('<span class="buttons">')
-                   .append (gb.makeIconButton ('destroy', deleteMessage)),
+                   .append (wm.makeIconButton ('destroy', deleteMessage)),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No recipient')))
           .on ('click', function() {
-            gb[props.getMethod] (gb.playerID, message.id)
+            wm[props.getMethod] (wm.playerID, message.id)
               .then (function (result) {
                 if (message.unread) {
                   div.removeClass('unread').addClass('read')
                   delete message.unread
-                  --gb.messageCount
-                  gb.updateMessageCountDiv()
+                  --wm.messageCount
+                  wm.updateMessageCountDiv()
                 }
                 props.showMessage ($.extend
                                    ({ result: result,
@@ -1922,21 +1925,21 @@ var GramBot = (function() {
     },
 
     showMessage: function (props) {
-      var gb = this
+      var wm = this
       var message = props.result.message
-      return gb.pushView ('read')
+      return wm.pushView ('read')
         .then (function() {
-          gb.container
-            .append (gb.readMessageDiv = $('<div class="readmessage">'),
-                     gb.rateMessageDiv = $('<div class="ratemessage">').hide(),
-                     gb.popBack()
-                     .append (gb.dummyReplyButton = gb.makeIconButton('dummy'),
-                              gb.replyButton = gb.makeIconButton('reply').hide(),
-                              gb.forwardButton = gb.makeIconButton ('forward', function (evt) {
+          wm.container
+            .append (wm.readMessageDiv = $('<div class="readmessage">'),
+                     wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
+                     wm.popBack()
+                     .append (wm.dummyReplyButton = wm.makeIconButton('dummy'),
+                              wm.replyButton = wm.makeIconButton('reply').hide(),
+                              wm.forwardButton = wm.makeIconButton ('forward', function (evt) {
                                 evt.stopPropagation()
-                                gb.REST_getPlayerTemplate (gb.playerID, message.template.id)
+                                wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
                                   .then (function (templateResult) {
-                                    return gb.showComposePage
+                                    return wm.showComposePage
                                     ({ title: message.title,
                                        template: templateResult.template,
                                        body: message.body,
@@ -1944,18 +1947,18 @@ var GramBot = (function() {
                                        focus: 'playerSearchInput' })
                                   })
                               }),
-                              gb.destroyButton = gb.makeIconButton('destroy',props.destroy)))
+                              wm.destroyButton = wm.makeIconButton('destroy',props.destroy)))
 
           var other = message[props.object]
-          gb.readMessageDiv
+          wm.readMessageDiv
             .empty()
             .append ($('<div class="messageheader">')
                      .append ($('<div class="row">')
                               .append ($('<span class="label">').text (props.preposition + ':'),
-                                       $('<span class="field">').html (gb.makePlayerSpan (other.name,
+                                       $('<span class="field">').html (wm.makePlayerSpan (other.name,
                                                                                           other.displayName,
                                                                                           function (evt) {
-                                                                                            gb.showOtherStatusPage (other)
+                                                                                            wm.showOtherStatusPage (other)
                                                                                           }))),
                               $('<div class="row">')
                               .append ($('<span class="label">').text ('Subject:'),
@@ -1963,7 +1966,7 @@ var GramBot = (function() {
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb + ':'),
                                        $('<span class="field">').text (new Date (message.date).toString()))),
-                     $('<div class="messagebody messageborder">').html (gb.renderMarkdown (gb.makeExpansionText (message.body))))
+                     $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body))))
         })
     },
 
@@ -1990,121 +1993,127 @@ var GramBot = (function() {
 
     // status
     showStatusPage: function() {
-      var gb = this
-      return gb.REST_getPlayerStatus (gb.playerID)
+      var wm = this
+      return wm.REST_getPlayerStatus (wm.playerID)
         .then (function (status) {
-          return gb.setPage ('status')
+          return wm.setPage ('status')
             .then (function() {
-              gb.showNavBar ('status')
-              gb.showGameStatusPage (status)
-              gb.detailBarDiv
-                .prepend (gb.makePageTitle ('Welcome to Wiki Messenger'),
-                          $('<div class="follow">').html (gb.makePlayerSpan (gb.playerLogin)))
-              return gb.REST_getPlayerSuggestTemplates (gb.playerID)
+              wm.showNavBar ('status')
+              wm.showGameStatusPage (status)
+              wm.detailBarDiv
+                .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'),
+                          $('<div class="follow">').html (wm.makePlayerSpan (wm.playerLogin)))
+              return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                 .then (function (result) {
                   if (result && result.templates.length)
-                    gb.detailBarDiv.append ($('<div class="filler">'),
+                    wm.detailBarDiv.append ($('<div class="filler">'),
                                             $('<div class="popular">')
                                             .append ($('<h1>').text("Popular templates"),
                                                      $('<div class="templates">')
                                                      .append (result.templates.map (function (template) {
                                                        return $('<div class="template">')
                                                          .on ('click', function() {
-                                                           gb.REST_getPlayerTemplate (gb.playerID, template.id)
+                                                           wm.REST_getPlayerTemplate (wm.playerID, template.id)
                                                              .then (function (templateResult) {
-                                                               gb.showComposePage ({ title: template.title,
+                                                               wm.showComposePage ({ title: template.title,
                                                                                      template: templateResult.template,
                                                                                      focus: 'playerSearchInput' }) }) })
                                                          .append ($('<span class="title">')
                                                                   .text (template.title),
                                                                   $('<span class="by">').text(' by '),
-                                                                  gb.makePlayerSpan (template.author.name,
+                                                                  wm.makePlayerSpan (template.author.name,
                                                                                      null,
-                                                                                     gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, template.author)))) }))))
+                                                                                     wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))) }))))
                 })
             })
         })
     },
 
     showOtherStatusPage: function (follow) {
-      var gb = this
+      var wm = this
       if (follow.id === this.playerID)
         return this.showStatusPage()
-      return gb.REST_getPlayerStatusId (gb.playerID, follow.id)
+      return wm.REST_getPlayerStatusId (wm.playerID, follow.id)
         .then (function (status) {
-          return gb.pushView ('otherStatus')
+          return wm.pushView ('otherStatus')
             .then (function() {
-              gb.showGameStatusPage (status)
-              gb.otherStatusID = follow.id
-              gb.makeFollowDiv ({ follow: follow, hideFullName: true })
+              wm.showGameStatusPage (status)
+              wm.otherStatusID = follow.id
+              wm.makeFollowDiv ({ follow: follow, hideFullName: true })
               if (status.following)
                 follow.makeUnfollowButton()
-              gb.detailBarDiv.prepend (follow.followDiv)
-              gb.container.append (gb.popBack())
+              wm.detailBarDiv.prepend (follow.followDiv)
+              wm.container.append (wm.popBack())
             })
         })
     },
 
     popBack: function (callback) {
-      var gb = this
-      callback = callback || gb.popView.bind(gb)
+      var wm = this
+      callback = callback || wm.popView.bind(wm)
       var button
-      return (gb.backBarDiv = $('<div class="backbar">'))
+      return (wm.popBackDiv = $('<div class="backbar">'))
 	.append ($('<span>')
-		 .html (button = gb.makeIconButton ('back', function() { callback(button) })))
+		 .html (button = wm.makeIconButton ('back', function() { callback(button) })))
+    },
+
+    redrawPopBack: function (callback) {
+      var wm = this
+      wm.popBackDiv.remove()
+      wm.container.append (wm.popBack())
     },
 
     makeStars: function (rating) {
-      var gb = this
+      var wm = this
       rating = rating || 0   // in case rating is NaN
       return new Array(this.maxRating).fill(1).map (function (_dummy, n) {
-        return $('<span class="star">').html (gb.makeIconButton (rating >= n+1
+        return $('<span class="star">').html (wm.makeIconButton (rating >= n+1
                                                                  ? 'filledStar'
                                                                  : (rating >= n+.5
                                                                     ? 'halfStar'
                                                                     : 'emptyStar'),
-                                                                 null, gb.starColor))
+                                                                 null, wm.starColor))
       })
     },
 
     showGameStatusPage: function (status) {
-      var gb = this
+      var wm = this
 
-      gb.container
-        .append (gb.detailBarDiv = $('<div class="detailbar">'))
-      gb.restoreScrolling (gb.detailBarDiv)
+      wm.container
+        .append (wm.detailBarDiv = $('<div class="detailbar">'))
+      wm.restoreScrolling (wm.detailBarDiv)
       
-      gb.detailBarDiv.append
+      wm.detailBarDiv.append
       ($('<div class="ratings">')
        .append ($('<div class="ratinginfo">')
                 .append ($('<span class="ratinginfolabel">').text ("Messages:"),
-                         gb.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                         $('<span class="ratinginfocount">').text (" (" + gb.plural (status.nSenderRatings, "rating") + ")")),
+                         wm.makeStars (status.sumSenderRatings / status.nSenderRatings),
+                         $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nSenderRatings, "rating") + ")")),
                 $('<div class="ratinginfo">')
-                .append ($('<span class="ratinginfolabel">').text ("Scripts:"),
-                         gb.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                         $('<span class="ratinginfocount">').text (" (" + gb.plural (status.nAuthorRatings, "rating") + ")"))))
+                .append ($('<span class="ratinginfolabel">').text ("Phrases:"),
+                         wm.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
+                         $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nAuthorRatings, "rating") + ")"))))
 
-      gb.detailBarDiv.append
+      wm.detailBarDiv.append
       ($('<div class="biofact">')
        .append ($('<span class="biofactlabel">').text('Name: '),
                 $('<span class="biofactvalue">').text(status.displayName)))
 
       var pronouns = { male: 'he/him/his', female: 'she/her/hers', neither: 'they/theirs' }
       if (status.gender !== 'secret')
-        gb.detailBarDiv.append
+        wm.detailBarDiv.append
       ($('<div class="biofact">')
        .append ($('<span class="biofactlabel">').text('Pronouns: '),
                 $('<span class="biofactvalue">').text(pronouns[status.gender])))
 
       if (status.publicBio && status.publicBio.length)
-        gb.detailBarDiv.append
+        wm.detailBarDiv.append
       ($('<div class="biofact">')
        .append ($('<div class="biotitle">').text('Public info'),
                 $('<div class="bio">').text(status.publicBio)))
 
       if (status.privateBio && status.privateBio.length)
-        gb.detailBarDiv.append
+        wm.detailBarDiv.append
       ($('<div class="biofact">')
        .append ($('<div class="biotitle">').text('"Private" info'),
                 $('<div class="bio">').text(status.privateBio)))
@@ -2121,48 +2130,48 @@ var GramBot = (function() {
     },
     
     saveCurrentEdit: function() {
-      var gb = this
+      var wm = this
       return this.finishLastSave()
         .then (function() {
           var def
-          if (gb.saveEditableElement) {
-            def = gb.saveEditableElement()
-            delete gb.saveEditableElement
+          if (wm.saveEditableElement) {
+            def = wm.saveEditableElement()
+            delete wm.saveEditableElement
           } else
             def = $.Deferred().resolve()
-          gb.lastSavePromise = def
+          wm.lastSavePromise = def
           return def
         })
     },
 
     saveOnPageExit: function (config) {
-      var gb = this
+      var wm = this
       config = config || {}
-      var unfocusCallback = config.unfocus || gb.saveCurrentEdit.bind(gb)
+      var unfocusCallback = config.unfocus || wm.saveCurrentEdit.bind(wm)
       var autosaveCallback = config.autosave || unfocusCallback
       var pageExitCallback = config.pageExit || autosaveCallback
-      gb.pageExit = function() {
-        gb.clearTimer ('autosaveTimer')
-	gb.container.off ('click')
+      wm.pageExit = function() {
+        wm.clearTimer ('autosaveTimer')
+	wm.container.off ('click')
         return pageExitCallback()
       }
       function setAutosaveTimer() {
-        gb.setTimer ('autosaveTimer',
-                     gb.autosaveDelay,
+        wm.setTimer ('autosaveTimer',
+                     wm.autosaveDelay,
                      function() {
                        autosaveCallback()
                        setAutosaveTimer()
                      })
       }
       setAutosaveTimer()
-      gb.container.on ('click', unfocusCallback)
+      wm.container.on ('click', unfocusCallback)
     },
 
     makeIconButton: function (iconName, callback, color) {
       var button = $('<span>').addClass('button').text(iconName)
       this.getIconPromise (this.iconFilename[iconName])
         .done (function (svg) {
-          svg = gb.colorizeIcon (svg, color || gb.themeInfo.iconColor)
+          svg = wm.colorizeIcon (svg, color || wm.themeInfo.iconColor)
           button.html ($(svg))
         })
       if (callback)
@@ -2177,7 +2186,7 @@ var GramBot = (function() {
     },
 
     populateEditableElement: function (div, props) {
-      var gb = this
+      var wm = this
       var sanitize = props.sanitize || function(x) { return x }
       var parse = props.parse || sanitize
       var renderText = props.renderText || function(x) { return x }
@@ -2185,7 +2194,7 @@ var GramBot = (function() {
       var editCallback = function (evt) {
         evt.stopPropagation()
         div.off ('click')
-        gb.saveCurrentEdit()
+        wm.saveCurrentEdit()
           .then (function() {
             if (props.locateSpan)
               div = props.locateSpan()
@@ -2207,17 +2216,17 @@ var GramBot = (function() {
               })
 /*
             input.on ('focusout', function() {
-              gb.setTimer ('unfocusTimer', gb.unfocusDelay, gb.saveEditableElement.bind(gb))
+              wm.setTimer ('unfocusTimer', wm.unfocusDelay, wm.saveEditableElement.bind(wm))
             })
             input.on ('focusin', function() {
-              gb.clearTimer ('unfocusTimer')
+              wm.clearTimer ('unfocusTimer')
             })
 */
             if (props.maxLength)
               input.attr ('maxlength', props.maxLength)
-            gb.saveEditableElement = function() {
+            wm.saveEditableElement = function() {
               var def
-              delete gb.saveEditableElement
+              delete wm.saveEditableElement
               var newText = input.val()
               if (props.alwaysUpdate || newText !== oldText) {
                 var newContent = parse (newText)
@@ -2226,7 +2235,7 @@ var GramBot = (function() {
                 def = $.Deferred().resolve()
               return def
                 .then (function() {
-                  gb.populateEditableElement (div, props)
+                  wm.populateEditableElement (div, props)
                   if (props.hideCallback)
                     props.hideCallback()
                 })
@@ -2252,13 +2261,13 @@ var GramBot = (function() {
             editCallback (evt)
         })
         if (props.destroyCallback)
-          buttonsDiv.append (gb.makeIconButton ('destroy', function (evt) {
+          buttonsDiv.append (wm.makeIconButton ('destroy', function (evt) {
             evt.stopPropagation()
-            gb.saveCurrentEdit()
+            wm.saveCurrentEdit()
               .then (function() {
                 
                 if (props.confirmDestroy())
-                  gb.lastSavePromise = props.destroyCallback()
+                  wm.lastSavePromise = props.destroyCallback()
               })
           }))
       }
@@ -2285,48 +2294,48 @@ var GramBot = (function() {
     },
     
     saveSymbol: function (symbol) {
-      var gb = this
-      return gb.finishLastSave()
+      var wm = this
+      return wm.finishLastSave()
         .then (function() {
-          gb.lastSavePromise = gb.REST_putPlayerSymbol (gb.playerID, symbol.id, gb.symbolName[symbol.id], symbol.rules)
+          wm.lastSavePromise = wm.REST_putPlayerSymbol (wm.playerID, symbol.id, wm.symbolName[symbol.id], symbol.rules)
             .then (function (result) {
-              $.extend (gb.symbolName, result.name)
+              $.extend (wm.symbolName, result.name)
               return result.symbol
             })
-          return gb.lastSavePromise
+          return wm.lastSavePromise
         })
     },
 
     renameSymbol: function (symbol, newName) {
-      var gb = this
-      return gb.finishLastSave()
+      var wm = this
+      return wm.finishLastSave()
         .then (function() {
-          gb.lastSavePromise = gb.REST_putPlayerSymbol (gb.playerID, symbol.id, newName, symbol.rules)
+          wm.lastSavePromise = wm.REST_putPlayerSymbol (wm.playerID, symbol.id, newName, symbol.rules)
             .then (function (result) {
-              gb.updateSymbolCache (result)
+              wm.updateSymbolCache (result)
             }).fail (function (err) {
-              var reload = gb.reloadCurrentTab.bind(gb)
+              var reload = wm.reloadCurrentTab.bind(wm)
 	      if (err.status == 400)
-                gb.showModalMessage ("A symbol with that name already exists", reload)
+                wm.showModalMessage ("A symbol with that name already exists", reload)
               else
-                gb.showModalWebError (err, reload)
+                wm.showModalWebError (err, reload)
             })
         })
     },
 
     updateSymbolCache: function (result) {
-      var gb = this
+      var wm = this
       var symbol = result.symbol
       var oldName = this.symbolName[symbol.id]
       $.extend (this.symbolName, result.name)
       if (oldName) {
         if (oldName !== symbol.name) {
-          gb.symbolName[symbol.id] = symbol.name
-          gb.ruleDiv[symbol.id].remove()
-          gb.placeGrammarRuleDiv (symbol)
-          gb.referringSymbols(symbol).forEach (function (lhsSymbol) {
+          wm.symbolName[symbol.id] = symbol.name
+          wm.ruleDiv[symbol.id].remove()
+          wm.placeGrammarRuleDiv (symbol)
+          wm.referringSymbols(symbol).forEach (function (lhsSymbol) {
             if (lhsSymbol.id !== symbol.id)
-              gb.populateGrammarRuleDiv (gb.ruleDiv[lhsSymbol.id], lhsSymbol)
+              wm.populateGrammarRuleDiv (wm.ruleDiv[lhsSymbol.id], lhsSymbol)
           })
         } else if (this.symbolCache[symbol.id]) {
           $.extend (this.symbolCache[symbol.id], symbol)
@@ -2337,7 +2346,7 @@ var GramBot = (function() {
     },
 
     parseRhs: function (rhs, ignoreText) {
-      var gb = this
+      var wm = this
       var regex = /(([\s\S]*?)#(\w+)|([\s\S]*?)#\((\w+)\+(\w+)\)|[\s\S]+)/g, match
       var parsed = []
       var name2id = this.symbolNameToID()
@@ -2383,113 +2392,113 @@ var GramBot = (function() {
     },
 
     makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
-      var span = gb.makeEditableElement ({ element: 'span',
+      var span = wm.makeEditableElement ({ element: 'span',
                                            className: 'rhs',
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
-                                           isConstant: !gb.symbolEditableByPlayer (symbol),
+                                           isConstant: !wm.symbolEditableByPlayer (symbol),
                                            confirmDestroy: function() {
-                                             return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + gb.symbolName[symbol.id] + '?')
+                                             return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + wm.symbolName[symbol.id] + '?')
                                            },
                                            destroyCallback: function() {
                                              symbol.rules.splice(n,1)
-                                             gb.populateGrammarRuleDiv (ruleDiv, symbol)
-                                             return gb.saveSymbol (symbol)
+                                             wm.populateGrammarRuleDiv (ruleDiv, symbol)
+                                             return wm.saveSymbol (symbol)
                                            },
                                            updateCallback: function (newRhs) {
                                              symbol.rules[n] = newRhs
-                                             return gb.saveSymbol (symbol)
+                                             return wm.saveSymbol (symbol)
                                                .then (function (newSymbol) {
                                                  return newSymbol.rules[n]
                                                })
                                            },
                                            locateSpan: function() {
-                                             return gb.ruleDiv[symbol.id].find('.rhs').eq(n)
+                                             return wm.ruleDiv[symbol.id].find('.rhs').eq(n)
                                            },
-                                           parse: gb.parseRhs.bind(gb),
-                                           renderText: gb.makeRhsText.bind(gb),
-                                           renderHtml: gb.makeRhsSpan.bind(gb)
+                                           parse: wm.parseRhs.bind(wm),
+                                           renderText: wm.makeRhsText.bind(wm),
+                                           renderHtml: wm.makeRhsSpan.bind(wm)
                                          })
       return span
     },
 
     populateGrammarRuleDiv: function (ruleDiv, symbol) {
-      var gb = this
-      var lhs = gb.symbolName[symbol.id]
-      var editable = gb.symbolEditableByPlayer (symbol)
-      var owned = gb.symbolOwnedByPlayer (symbol)
+      var wm = this
+      var lhs = wm.symbolName[symbol.id]
+      var editable = wm.symbolEditableByPlayer (symbol)
+      var owned = wm.symbolOwnedByPlayer (symbol)
       var ruleControlsDiv = $('<div class="rulecontrols">')
 
       function randomize (evt) {
         evt.stopPropagation()
-        gb.saveCurrentEdit()
+        wm.saveCurrentEdit()
           .then (function() {
-            gb.REST_getPlayerExpand (gb.playerID, symbol.id)
+            wm.REST_getPlayerExpand (wm.playerID, symbol.id)
               .then (function (result) {
-                gb.showingHelp = false
-		gb.infoPaneTitle.html (gb.makeSymbolSpan (symbol,
+                wm.showingHelp = false
+		wm.infoPaneTitle.html (wm.makeSymbolSpan (symbol,
                                                           function (evt) {
                                                             evt.stopPropagation()
-                                                            gb.loadGrammarSymbol (symbol)
+                                                            wm.loadGrammarSymbol (symbol)
                                                           }))
-		gb.showMessageBody ({ div: gb.infoPaneContent,
+		wm.showMessageBody ({ div: wm.infoPaneContent,
                                       expansion: result.expansion,
                                       inEditor: true,
                                       animate: true })
-                gb.infoPaneLeftControls.html (gb.makeIconButton ('randomize', randomize))
-                gb.infoPaneControls
-                  .html (gb.makeIconButton
+                wm.infoPaneLeftControls.html (wm.makeIconButton ('randomize', randomize))
+                wm.infoPaneControls
+                  .html (wm.makeIconButton
                          ('forward',
                           function (evt) {
                             evt.stopPropagation()
-                            gb.saveCurrentEdit()
+                            wm.saveCurrentEdit()
                               .then (function() {
-                                gb.showComposePage
+                                wm.showComposePage
                                 ({ template: { content: [ symbol ] },
-                                   title: gb.symbolName[symbol.id].replace(/_/g,' '),
+                                   title: wm.symbolName[symbol.id].replace(/_/g,' '),
                                    body: { rhs: [ result.expansion ] },
                                    focus: 'playerSearchInput' })
                               })
                           }))
-		gb.infoPane.show()
+		wm.infoPane.show()
               })
           })
       }
 
       ruleControlsDiv
         .append (editable
-                 ? gb.makeIconButton
+                 ? wm.makeIconButton
                  ('create', function (evt) {
                    evt.stopPropagation()
-                   gb.saveCurrentEdit()
+                   wm.saveCurrentEdit()
                      .then (function() {
                        var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
                        symbol.rules.push (newRhs)
-                       ruleControlsDiv.before (gb.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
-                       gb.selectGrammarRule (symbol)
-                       gb.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                       ruleControlsDiv.before (wm.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
+                       wm.selectGrammarRule (symbol)
+                       wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
                      })
-                 }) : gb.makeIconButton ('dummy'),
-                 gb.makeIconButton ('randomize', randomize),
+                 }) : wm.makeIconButton ('dummy'),
+                 wm.makeIconButton ('randomize', randomize),
                  (symbol.summary
-                  ? gb.makeIconButton ('dummy')
-                  : gb.makeIconButton ('copy', gb.createNewSymbol.bind (gb, { symbol: { name: symbol.name,
+                  ? wm.makeIconButton ('dummy')
+                  : wm.makeIconButton ('copy', wm.createNewSymbol.bind (wm, { symbol: { name: symbol.name,
                                                                                         rules: symbol.rules } }))),
                  (owned
-                  ? gb.makeIconButton
+                  ? wm.makeIconButton
                   ('locked', function() {
-                    gb.saveCurrentEdit()
+                    wm.saveCurrentEdit()
                       .then (function() {
-                        if (window.confirm('Relinquish ownership of symbol #' + gb.symbolName[symbol.id] + '?'))
-                          gb.lastSavePromise = gb.REST_deletePlayerSymbol (gb.playerID, symbol.id)
+                        if (window.confirm('Relinquish ownership of symbol #' + wm.symbolName[symbol.id] + '?'))
+                          wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
                      })
                   })
-                  : gb.makeIconButton
+                  : wm.makeIconButton
                   ('hide', function (evt) {
                     evt.stopPropagation()
-                    gb.saveCurrentEdit()
+                    wm.saveCurrentEdit()
                       .then (function() {
-                        gb.removeGrammarRule (symbol)
+                        wm.removeGrammarRule (symbol)
                       })
                   })))
 
@@ -2497,11 +2506,11 @@ var GramBot = (function() {
         .append (this.makeEditableElement
                  ({ element: 'span',
                     className: 'lhs',
-                    content: function() { return gb.symbolName[symbol.id] },
+                    content: function() { return wm.symbolName[symbol.id] },
                     guessHeight: true,
                     renderText: function(lhs) { return '#' + lhs },
                     renderHtml: function(lhs) { return $('<span class="name">').text('#'+lhs) },
-                    sanitize: gb.sanitizeHashSymbolName,
+                    sanitize: wm.sanitizeHashSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
                       return (keycode >= 65 && keycode <= 90)   // a...z
@@ -2514,68 +2523,68 @@ var GramBot = (function() {
                     description: 'symbol #' + lhs + ' and all its expansions',
                     isConstant: !editable,
                     updateCallback: function (newLhs) {
-                      return gb.renameSymbol (symbol, newLhs)
+                      return wm.renameSymbol (symbol, newLhs)
                     },
                     otherButtonDivs: function() {
                       return (symbol.owner.admin
                               ? []
                               : [$('<span class="owner">')
                                  .html (symbol.owner.id
-                                        ? gb.makePlayerSpan (symbol.owner.name,
+                                        ? wm.makePlayerSpan (symbol.owner.name,
                                                              null,
-                                                             gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, symbol.owner)))
+                                                             wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner)))
                                         : "no owner")])
                     },
                   }),
                  (symbol.summary
-                  ? $('<div class="summary">').html (gb.renderMarkdown (symbol.summary))
+                  ? $('<div class="summary">').html (wm.renderMarkdown (symbol.summary))
                   : symbol.rules.map (function (rhs, n) {
-                    return gb.makeGrammarRhsDiv (symbol, ruleDiv, n)
+                    return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
                   })),
                  ruleControlsDiv)
     },
 
     makeRhsText: function (rhs) {
-      var gb = this
+      var wm = this
       return rhs.map (function (rhsSym) {
         return (typeof(rhsSym) === 'object'
-                ? ('#' + gb.makeSymbolName(rhsSym))
+                ? ('#' + wm.makeSymbolName(rhsSym))
                 : rhsSym)
       }).join('')
     },
     
     makeRhsSpan: function (rhs) {
-      var gb = this
+      var wm = this
       return $('<span>')
         .append (rhs.map (function (rhsSym) {
           return (typeof(rhsSym) === 'object'
-                  ? gb.makeSymbolSpan (rhsSym,
+                  ? wm.makeSymbolSpan (rhsSym,
                                        function (evt) {
                                          evt.stopPropagation()
-                                         gb.loadGrammarSymbol (rhsSym)
+                                         wm.loadGrammarSymbol (rhsSym)
                                        })
-                  : $('<span>').html (gb.renderMarkdown (rhsSym)))
+                  : $('<span>').html (wm.renderMarkdown (rhsSym)))
         }))
     },
 
     makeTemplateSpan: function (content) {
-      var gb = this
+      var wm = this
       if (!content || !content.filter (function (rhsSym) { return typeof(rhsSym) === 'object' || rhsSym.match(/\S/) }).length)
         return $('<p>').html ($('<span class="placeholder">').text ('Enter the message text here, or pick one of the suggestions below.'))
       return $('<span>')
         .append (content.map (function (rhsSym) {
           return (typeof(rhsSym) === 'object'
-                  ? gb.makeSymbolSpan (rhsSym,
+                  ? wm.makeSymbolSpan (rhsSym,
                                        function (evt) {
-                                         gb.saveCurrentEdit()
+                                         wm.saveCurrentEdit()
                                            .then (function() {
-                                             gb.showGrammarEditPage()
+                                             wm.showGrammarEditPage()
                                                .then (function() {
-                                                 gb.loadGrammarSymbol (rhsSym)
+                                                 wm.loadGrammarSymbol (rhsSym)
                                                })
                                            })
                                        })
-                  : $('<span>').html (gb.renderMarkdown (rhsSym)))
+                  : $('<span>').html (wm.renderMarkdown (rhsSym)))
         }))
     },
 
@@ -2598,7 +2607,7 @@ var GramBot = (function() {
       if (sym.name)
         name = sym.name
       else if (typeof(sym.id) !== 'undefined')
-        name = gb.symbolName[sym.id]
+        name = wm.symbolName[sym.id]
       if (sym.upper)
         name = name.toUpperCase()
       else if (sym.cap)
@@ -2630,9 +2639,9 @@ var GramBot = (function() {
     },
 
     sanitizer: function (elementName, sanitizeMethod, prefix) {
-      var boundSanitizeMethod = sanitizeMethod.bind(gb)
+      var boundSanitizeMethod = sanitizeMethod.bind(wm)
       return function() {
-        var element = gb[elementName]
+        var element = wm[elementName]
         var newVal = element.val()
         var saneVal = boundSanitizeMethod(newVal)
         if (saneVal !== newVal)
@@ -2641,18 +2650,18 @@ var GramBot = (function() {
     },
     
     loadGrammarSymbol: function (symbol) {
-      var gb = this
-      gb.saveCurrentEdit()
+      var wm = this
+      wm.saveCurrentEdit()
         .then (function() {
-          if (gb.symbolCache[symbol.id])
-            gb.scrollGrammarTo (gb.symbolCache[symbol.id])
+          if (wm.symbolCache[symbol.id])
+            wm.scrollGrammarTo (wm.symbolCache[symbol.id])
           else
-            gb.socket_getPlayerSymbol (gb.playerID, symbol.id)
+            wm.socket_getPlayerSymbol (wm.playerID, symbol.id)
             .then (function (result) {
-              $.extend (gb.symbolName, result.name)
-              gb.symbolCache[result.symbol.id] = result.symbol
-              gb.placeGrammarRuleDiv (result.symbol)
-              gb.scrollGrammarTo (result.symbol)
+              $.extend (wm.symbolName, result.name)
+              wm.symbolCache[result.symbol.id] = result.symbol
+              wm.placeGrammarRuleDiv (result.symbol)
+              wm.scrollGrammarTo (result.symbol)
             })
         })
     },
@@ -2673,8 +2682,8 @@ var GramBot = (function() {
     placeGrammarRuleDiv: function (symbol) {
       var ruleDiv = this.makeGrammarRuleDiv (symbol)
       var syms = this.cachedSymbols()
-      var name = gb.symbolName[symbol.id]
-      var nextSym = syms.find (function (s) { return gb.symbolName[s.id] > name })
+      var name = wm.symbolName[symbol.id]
+      var nextSym = syms.find (function (s) { return wm.symbolName[s.id] > name })
       if (typeof(nextSym) === 'undefined')
         this.grammarBarDiv.append (ruleDiv)
       else
@@ -2692,30 +2701,30 @@ var GramBot = (function() {
     },
 
     selectGrammarRule: function (symbol) {
-      var gb = this
+      var wm = this
       $('.selected').removeClass('selected')
-      gb.ruleDiv[symbol.id].addClass('selected')
+      wm.ruleDiv[symbol.id].addClass('selected')
     },
     
     cachedSymbols: function() {
-      var gb = this
+      var wm = this
       return Object.keys(this.symbolCache).map (function (id) {
-        return gb.symbolCache[id]
-      }).sort (function (a, b) { return gb.symbolName[a.id] < gb.symbolName[b.id] ? -1 : +1 })
+        return wm.symbolCache[id]
+      }).sort (function (a, b) { return wm.symbolName[a.id] < wm.symbolName[b.id] ? -1 : +1 })
     },
 
     symbolNameToID: function() {
-      var gb = this
+      var wm = this
       var name2id = {}
       Object.keys(this.symbolName).forEach (function (id) {
-        name2id[gb.symbolName[id]] = parseInt (id)
+        name2id[wm.symbolName[id]] = parseInt (id)
       })
       return name2id
     },
 
     getSymbol: function (symbolName) {
-      var gb = this
-      return this.symbolCache[Object.keys(this.symbolName).find (function (id) { return gb.symbolName[id] === symbolName })]
+      var wm = this
+      return this.symbolCache[Object.keys(this.symbolName).find (function (id) { return wm.symbolName[id] === symbolName })]
     },
     
     lhsRefersTo: function (lhsSymbol, rhsSymbol) {
@@ -2727,113 +2736,113 @@ var GramBot = (function() {
     },
 
     referringSymbols: function (rhsSymbol) {
-      var gb = this
+      var wm = this
       return this.cachedSymbols().filter (function (lhsSymbol) {
-        return gb.lhsRefersTo (lhsSymbol, rhsSymbol)
+        return wm.lhsRefersTo (lhsSymbol, rhsSymbol)
       })
     },
 
     showGrammarEditPage: function() {
-      var gb = this
+      var wm = this
       return this.setPage ('grammar')
         .then (function() {
-          gb.showNavBar ('grammar')
+          wm.showNavBar ('grammar')
 
           var def
-          if (gb.symbolCache)
+          if (wm.symbolCache)
             def = $.Deferred().resolve()
           else
-            def = gb.socket_getPlayerSymbols (gb.playerID)
+            def = wm.socket_getPlayerSymbols (wm.playerID)
               .then (function (result) {
-                gb.symbolCache = {}
+                wm.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
-                  symbol.owner.name = gb.playerLogin
-                  gb.symbolCache[symbol.id] = symbol
+                  symbol.owner.name = wm.playerLogin
+                  wm.symbolCache[symbol.id] = symbol
                 })
-                $.extend (gb.symbolName, result.name)
+                $.extend (wm.symbolName, result.name)
               })
 
           def.then (function() {
             
-            gb.saveOnPageExit()
+            wm.saveOnPageExit()
 
-            gb.grammarBarDiv = $('<div class="grammarbar">')
+            wm.grammarBarDiv = $('<div class="grammarbar">')
 
-            gb.infoPane = $('<div class="grammarinfopane">')
-            gb.infoPaneContent = $('<div class="content">')
-            gb.infoPaneTitle = $('<div class="title">')
-            gb.infoPane.append ($('<span class="closebutton">').html
-                                (gb.makeIconButton ('close', function() {
-                                  gb.infoPane.hide()
-                                  gb.showingHelp = false
+            wm.infoPane = $('<div class="grammarinfopane">')
+            wm.infoPaneContent = $('<div class="content">')
+            wm.infoPaneTitle = $('<div class="title">')
+            wm.infoPane.append ($('<span class="closebutton">').html
+                                (wm.makeIconButton ('close', function() {
+                                  wm.infoPane.hide()
+                                  wm.showingHelp = false
                                 })),
-                                gb.infoPaneTitle,
-		                gb.infoPaneContent,
-                                gb.infoPaneLeftControls = $('<span class="leftcontrols">'),
-		                gb.infoPaneControls = $('<span class="controls">'))
+                                wm.infoPaneTitle,
+		                wm.infoPaneContent,
+                                wm.infoPaneLeftControls = $('<span class="leftcontrols">'),
+		                wm.infoPaneControls = $('<span class="controls">'))
 
-            gb.showingHelp = false
+            wm.showingHelp = false
 
-            var sanitizer = gb.sanitizer ('searchInput', gb.sanitizeSymbolName)
-            gb.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
+            var sanitizer = wm.sanitizer ('searchInput', wm.sanitizeSymbolName)
+            wm.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
               .on ('keyup', sanitizer)
               .on ('change', sanitizer)
-            gb.symbolSearchResultsDiv = $('<div class="results">')
+            wm.symbolSearchResultsDiv = $('<div class="results">')
             
             var searchButton = $('<span>')
 
-            gb.container
+            wm.container
 	      .append ($('<div class="search">')
                        .append ($('<div class="query">')
-                                .append (searchButton, gb.searchInput)),
-                       gb.symbolSearchDiv = $('<div class="symbolsearch">')
+                                .append (searchButton, wm.searchInput)),
+                       wm.symbolSearchDiv = $('<div class="symbolsearch">')
                        .append ($('<div class="searchtitle">')
                                 .append ($('<span>').text("Search results"),
                                          $('<span class="closebutton">').html
-                                         (gb.makeIconButton ('close',
-                                                             gb.clearSymbolSearch.bind(gb)))),
-                                gb.symbolSearchResultsDiv)
+                                         (wm.makeIconButton ('close',
+                                                             wm.clearSymbolSearch.bind(wm)))),
+                                wm.symbolSearchResultsDiv)
                        .hide(),
-                       gb.grammarBarDiv,
-                       gb.infoPane.hide(),
+                       wm.grammarBarDiv,
+                       wm.infoPane.hide(),
                        $('<div class="grammareditbuttons">').append
                        ($('<span class="newlhs">').html
-                        (gb.makeIconButton ('create', gb.createNewSymbol.bind(gb))),
+                        (wm.makeIconButton ('create', wm.createNewSymbol.bind(wm))),
                         $('<span class="help">').html
-                        (gb.makeIconButton ('help', function() {
-                          if (gb.showingHelp) {
-                            gb.infoPane.hide()
-                            gb.showingHelp = false
+                        (wm.makeIconButton ('help', function() {
+                          if (wm.showingHelp) {
+                            wm.infoPane.hide()
+                            wm.showingHelp = false
                           } else                            
-		            gb.REST_getHelpHtml().then (function (helpHtml) {
-		              gb.saveCurrentEdit()
+		            wm.REST_getHelpHtml().then (function (helpHtml) {
+		              wm.saveCurrentEdit()
                                 .then (function() {
-                                  gb.showingHelp = true
-		                  gb.infoPaneTitle.text ('Help')
-		                  gb.infoPaneContent.html (helpHtml)
-                                  gb.infoPaneControls.empty()
-                                  gb.infoPaneLeftControls.empty()
-		                  gb.infoPane.show()
+                                  wm.showingHelp = true
+		                  wm.infoPaneTitle.text ('Help')
+		                  wm.infoPaneContent.html (helpHtml)
+                                  wm.infoPaneControls.empty()
+                                  wm.infoPaneLeftControls.empty()
+		                  wm.infoPane.show()
                                 })
 		            })
                         }))))
 
-            gb.searchInput.attr ('placeholder', 'Search scripts')
-            gb.placeIcon (gb.iconFilename.search, searchButton)
+            wm.searchInput.attr ('placeholder', 'Search phrases')
+            wm.placeIcon (wm.iconFilename.search, searchButton)
             searchButton.addClass('button')
-              .on ('click', gb.doSymbolSearch.bind(gb))
-            gb.searchInput.on ('keyup', function(event) {
-              gb.doSymbolSearch()
+              .on ('click', wm.doSymbolSearch.bind(wm))
+            wm.searchInput.on ('keyup', function(event) {
+              wm.doSymbolSearch()
             })
-            gb.showSymbolSearchResults()
+            wm.showSymbolSearchResults()
 
-            gb.restoreScrolling (gb.symbolSearchResultsDiv)
-            gb.restoreScrolling (gb.grammarBarDiv)
-            gb.restoreScrolling (gb.infoPaneContent)
+            wm.restoreScrolling (wm.symbolSearchResultsDiv)
+            wm.restoreScrolling (wm.grammarBarDiv)
+            wm.restoreScrolling (wm.infoPaneContent)
 
-            gb.ruleDiv = {}
-            gb.grammarBarDiv
-              .append (gb.cachedSymbols().map (gb.makeGrammarRuleDiv.bind (gb)))
+            wm.ruleDiv = {}
+            wm.grammarBarDiv
+              .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
           })
         })
     },
@@ -2844,28 +2853,28 @@ var GramBot = (function() {
     },
     
     doSymbolSearch: function() {
-      var gb = this
+      var wm = this
       var searchText = this.searchInput.val()
       if (searchText !== this.lastSymbolSearch) {
         this.lastSymbolSearch = searchText
         delete this.symbolSearchResults
         this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
           .then (function (ret) {
-            gb.symbolSearchResults = ret
-            gb.showSymbolSearchResults()
+            wm.symbolSearchResults = ret
+            wm.showSymbolSearchResults()
           })
       }
     },
 
     continueSymbolSearch: function() {
-      var gb = this
+      var wm = this
       if (this.searchInput.val() === this.lastSymbolSearch) {
         this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
           .then (function (ret) {
-            gb.symbolSearchResults.symbols = gb.symbolSearchResults.symbols.concat (ret.symbols)
-            gb.symbolSearchResults.more = ret.more
-            gb.symbolSearchResults.page = ret.page
-            gb.showSymbolSearchResults()
+            wm.symbolSearchResults.symbols = wm.symbolSearchResults.symbols.concat (ret.symbols)
+            wm.symbolSearchResults.more = ret.more
+            wm.symbolSearchResults.page = ret.page
+            wm.showSymbolSearchResults()
           })
       } else
         this.doSymbolSearch()
@@ -2880,7 +2889,7 @@ var GramBot = (function() {
         this.symbolSearchDiv.show()
         this.symbolSearchResultsDiv
           .append (this.makeSymbolDivs (this.symbolSearchResults.symbols,
-                                        "There are no scripts matching '" + this.lastSymbolSearch + "'."),
+                                        "There are no phrases matching '" + this.lastSymbolSearch + "'."),
                    this.endSearchResultsDiv = $('<div class="endresults">'))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
@@ -2889,92 +2898,92 @@ var GramBot = (function() {
           .on ('click', function (evt) {
             evt.preventDefault()
             more.remove()
-            gb.continueSymbolSearch()
+            wm.continueSymbolSearch()
           })
         else if (this.symbolSearchResults.symbols.length)
-          more.text('All matching scripts shown')
+          more.text('All matching phrases shown')
       }
     },
 
     makeSymbolDivs: function (symbols, emptyMessage) {
-      var gb = this
+      var wm = this
       return symbols.length
         ? symbols.map (function (symbol) {
           return $('<div class="symbol">')
-            .append (gb.makeSymbolSpan (symbol,
+            .append (wm.makeSymbolSpan (symbol,
                                         function (evt) {
                                           evt.stopPropagation()
-                                          gb.loadGrammarSymbol (symbol)
+                                          wm.loadGrammarSymbol (symbol)
                                         }))
         })
       : $('<span>').text (emptyMessage)
     },
 
     createNewSymbol: function (symbolInfo) {
-      var gb = this
-      gb.saveCurrentEdit()
+      var wm = this
+      wm.saveCurrentEdit()
         .then (function() {
-          return gb.socket_postPlayerSymbolNew (gb.playerID, symbolInfo)
+          return wm.socket_postPlayerSymbolNew (wm.playerID, symbolInfo)
         }).then (function (result) {
-          result.symbol.owner.name = gb.playerLogin
-          gb.symbolCache[result.symbol.id] = result.symbol
-          $.extend (gb.symbolName, result.name)
-          gb.placeGrammarRuleDiv (result.symbol)
+          result.symbol.owner.name = wm.playerLogin
+          wm.symbolCache[result.symbol.id] = result.symbol
+          $.extend (wm.symbolName, result.name)
+          wm.placeGrammarRuleDiv (result.symbol)
         })
     },
     
     // follows
     showFollowsPage: function() {
-      var gb = this
+      var wm = this
       
       return this.setPage ('follows')
         .then (function() {
-          gb.showNavBar ('follows')
+          wm.showNavBar ('follows')
 
-          gb.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
-          gb.playerSearchResultsDiv = $('<div class="results">')
-          gb.endSearchResultsDiv = $('<div class="endresults">')
+          wm.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
+          wm.playerSearchResultsDiv = $('<div class="results">')
+          wm.endSearchResultsDiv = $('<div class="endresults">')
           var searchButton = $('<span>')
-          gb.container
-            .append (gb.whoBarDiv = $('<div class="whobar">')
+          wm.container
+            .append (wm.whoBarDiv = $('<div class="whobar">')
                      .append ($('<div class="search">')
                               .append ($('<div class="query">')
-                                       .append (searchButton, gb.searchInput),
-                                       gb.playerSearchDiv = $('<div class="followsection">')
-                                       .append (gb.playerSearchResultsDiv,
-                                                gb.endSearchResultsDiv))))
-          gb.searchInput.attr ('placeholder', 'Search players')
-          gb.placeIcon (gb.iconFilename.search, searchButton)
+                                       .append (searchButton, wm.searchInput),
+                                       wm.playerSearchDiv = $('<div class="followsection">')
+                                       .append (wm.playerSearchResultsDiv,
+                                                wm.endSearchResultsDiv))))
+          wm.searchInput.attr ('placeholder', 'Search players')
+          wm.placeIcon (wm.iconFilename.search, searchButton)
           searchButton.addClass('button')
-            .on ('click', gb.doPlayerSearch.bind(gb))
-          gb.searchInput.on ('keyup', function(event) {
-              gb.doPlayerSearch()
+            .on ('click', wm.doPlayerSearch.bind(wm))
+          wm.searchInput.on ('keyup', function(event) {
+              wm.doPlayerSearch()
           })
           
-          gb.restoreScrolling (gb.whoBarDiv)
+          wm.restoreScrolling (wm.whoBarDiv)
 
-          gb.followsById = {}
-          gb.whoBarDiv.append (gb.addressBookDiv = $('<div>'))
+          wm.followsById = {}
+          wm.whoBarDiv.append (wm.addressBookDiv = $('<div>'))
 
-          gb.showPlayerSearchResults()
-          gb.updateAddressBook()
+          wm.showPlayerSearchResults()
+          wm.updateAddressBook()
         })
     },
 
     updateAddressBook: function() {
-      var gb = this
-      gb.REST_getPlayerFollow (gb.playerID)
+      var wm = this
+      wm.REST_getPlayerFollow (wm.playerID)
 	.done (function (data) {
-          gb.addressBookDiv
+          wm.addressBookDiv
             .empty()
             .append ($('<div class="followsection">')
                      .append ($('<div class="title">').text("Address book"))
-                     .append (gb.makeFollowDivs (data.followed, "Your address book is empty.")))
+                     .append (wm.makeFollowDivs (data.followed, "Your address book is empty.")))
           var following = {}
           data.followed.map (function (follow) {
             following[follow.id] = true
           })
-	}).fail (gb.reloadOnFail())
+	}).fail (wm.reloadOnFail())
     },
     
     makeFollowDiv: function (info) {
@@ -2983,48 +2992,48 @@ var GramBot = (function() {
       var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
       var composeDiv =  $('<span class="followcontrol">')
-          .html (gb.makeIconButton ('compose',
+          .html (wm.makeIconButton ('compose',
                                     function (evt) {
                                       evt.stopPropagation()
-                                      gb.showComposePage ({ recipient: follow,
+                                      wm.showComposePage ({ recipient: follow,
                                                             click: 'messageBodyDiv' })
                                     }))
       var doFollow, doUnfollow
       function makeUnfollowButton() {
         $(followSelector).add(buttonDiv)
           .off()
-          .html (gb.makeIconButton ('unfollow',
-                                    gb.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv))))
+          .html (wm.makeIconButton ('unfollow',
+                                    wm.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       function makeFollowButton() {
         $(followSelector).add(buttonDiv)
           .off()
-          .html (gb.makeIconButton ('follow',
-                                    gb.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv))))
+          .html (wm.makeIconButton ('follow',
+                                    wm.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       doFollow = function() {
-        gb.REST_getPlayerFollowOther (gb.playerID, follow.id)
+        wm.REST_getPlayerFollowOther (wm.playerID, follow.id)
           .then (function() {
 	    follow.setFollowing(true)
 	    follow.makeUnfollowButton()
-            gb.updateAddressBook()
+            wm.updateAddressBook()
 	  })
       }
       doUnfollow = function() {
-        gb.REST_getPlayerUnfollowOther (gb.playerID, follow.id)
+        wm.REST_getPlayerUnfollowOther (wm.playerID, follow.id)
           .then (function() {
 	    follow.setFollowing(false)
 	    follow.makeFollowButton()
-            gb.updateAddressBook()
+            wm.updateAddressBook()
 	  })
       }
       if (follow.following)
         makeUnfollowButton()
       else
         makeFollowButton()
-      var nameDiv = gb.makePlayerSpan (follow.name, info.hideFullName ? null : follow.displayName, callback)
+      var nameDiv = wm.makePlayerSpan (follow.name, info.hideFullName ? null : follow.displayName, callback)
       var followDiv = $('<div class="follow">')
           .append (nameDiv)
       if (follow.reachable)
@@ -3042,15 +3051,15 @@ var GramBot = (function() {
     },
 
     makeFollowDivs: function (followList, emptyMessage) {
-      var gb = this
+      var wm = this
       return followList.length
         ? followList.map (function (follow) {
-          gb.followsById[follow.id] = gb.followsById[follow.id] || []
-          gb.followsById[follow.id].push (follow)
-          gb.makeFollowDiv ({ follow: follow,
-                              callback: gb.callWithSoundEffect (gb.showOtherStatusPage.bind (gb, follow)) })
+          wm.followsById[follow.id] = wm.followsById[follow.id] || []
+          wm.followsById[follow.id].push (follow)
+          wm.makeFollowDiv ({ follow: follow,
+                              callback: wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, follow)) })
           follow.setFollowing = function (flag) {
-            gb.followsById[follow.id].forEach (function (f) { f.following = flag })
+            wm.followsById[follow.id].forEach (function (f) { f.following = flag })
           }
           return follow.followDiv
         })
@@ -3063,28 +3072,28 @@ var GramBot = (function() {
     },
 
     doPlayerSearch: function() {
-      var gb = this
+      var wm = this
       var searchText = this.searchInput.val()
       if (searchText !== this.lastPlayerSearch) {
         this.lastPlayerSearch = searchText
         delete this.playerSearchResults
         this.REST_postPlayerSearchPlayersAll (this.playerID, searchText.replace('@',''))
           .then (function (ret) {
-            gb.playerSearchResults = ret
-            gb.showPlayerSearchResults()
+            wm.playerSearchResults = ret
+            wm.showPlayerSearchResults()
           })
       }
     },
 
     continuePlayerSearch: function() {
-      var gb = this
+      var wm = this
       if (this.searchInput.val() === this.lastPlayerSearch) {
         this.REST_postPlayerSearchPlayersAll (this.playerID, this.lastPlayerSearch, this.playerSearchResults.page + 1)
           .then (function (ret) {
-            gb.playerSearchResults.players = gb.playerSearchResults.players.concat (ret.players)
-            gb.playerSearchResults.more = ret.more
-            gb.playerSearchResults.page = ret.page
-            gb.showPlayerSearchResults()
+            wm.playerSearchResults.players = wm.playerSearchResults.players.concat (ret.players)
+            wm.playerSearchResults.more = ret.more
+            wm.playerSearchResults.page = ret.page
+            wm.showPlayerSearchResults()
           })
       } else
         this.doPlayerSearch()
@@ -3102,7 +3111,7 @@ var GramBot = (function() {
           .append ($('<div class="searchtitle">')
                    .append ($('<span>').text("Search results"),
                             $('<span class="closebutton">').html
-                            (gb.makeIconButton ('close', gb.clearPlayerSearch.bind(gb)))),
+                            (wm.makeIconButton ('close', wm.clearPlayerSearch.bind(wm)))),
                    this.makeFollowDivs (this.playerSearchResults.players, "There are no players matching '" + this.lastPlayerSearch + "'."))
         var more = $('<span>')
         this.endSearchResultsDiv.append(more)
@@ -3111,7 +3120,7 @@ var GramBot = (function() {
           .on ('click', function (evt) {
             evt.preventDefault()
             more.remove()
-            gb.continuePlayerSearch()
+            wm.continuePlayerSearch()
           })
         else if (this.playerSearchResults.players.length)
           more.text('All matching players shown')
@@ -3120,7 +3129,7 @@ var GramBot = (function() {
     
     // socket message handlers
     handlePlayerMessage: function (msg) {
-      var gb = this
+      var wm = this
       if (this.verbose.messages)
         console.log (msg)
       switch (msg.data.message) {

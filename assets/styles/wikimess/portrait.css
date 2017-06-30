@@ -2,30 +2,30 @@
 /* Portrait view */
 @media all and (orientation:portrait) {
     /* Game view */
-    .grambot {
+    .wikimess {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 	height: 100%;
     }
 
-    .grambot .navbar {
+    .wikimess .navbar {
 	height: 15vw;
 	min-height: 15vw;
     }
 
-    .grambot .navbar .navicon {
+    .wikimess .navbar .navicon {
 	width: 15vw;
 	height: 15vw;
     }
 
-    .grambot .menubar a,
-    .grambot .backbar a {
+    .wikimess .menubar a,
+    .wikimess .backbar a {
 	padding: 4px 8px 4px 8px;
     }
 
     /* Menu views */
-    .grambot .inputbar {
+    .wikimess .inputbar {
 	width: 100vw;
 	margin: 2vh;
 	
@@ -33,22 +33,22 @@
 	justify-content: center;
     }
 
-    .grambot .inputbar form {
+    .wikimess .inputbar form {
 	width: 60vw;
     }
 
-    .grambot .titlebar {
+    .wikimess .titlebar {
 	width: 100vw;
 	height: 6vh;
 	text-align: center;
     }
 
-    .grambot .menucontainer {
+    .wikimess .menucontainer {
 	display: flex;
 	flex-direction: column;
     }
 
-    .grambot .menubar {
+    .wikimess .menubar {
 	width: 100vw;
 	flex-grow: 1;
 
@@ -58,12 +58,12 @@
 	justify-content: center;
     }
 
-    .grambot .menubar li,
-    .grambot .menubar .card {
+    .wikimess .menubar li,
+    .wikimess .menubar .card {
 	font-size: 18px;
     }
 
-    .grambot .menubar .rubric {
+    .wikimess .menubar .rubric {
 	width: 80vw;
     }
 }

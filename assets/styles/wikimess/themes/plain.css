@@ -1,0 +1,98 @@
+/* Colors, plain theme */
+.wikimess.plain {
+    background-color: #f8f8f8;
+    color: black;
+}
+
+.wikimess.plain .navbar {
+    background-color: black;
+}
+
+.wikimess.plain .grammarbar .rule {
+    border-color: black;
+    background-color: #f0f0f0;
+}
+
+.wikimess.plain .grammarbar .rule .rhs {
+    background-color: #ccc;
+}
+
+.wikimess.plain .playerlink,
+.wikimess.plain .lhslink {
+    color: blue;
+}
+
+.wikimess.plain .grammarbar,
+.wikimess.plain .menubar {
+    color: black;
+}
+
+.wikimess.plain .menubar a,
+.wikimess.plain .menubar label {
+    color: #888;
+    border-color: #888;
+}
+
+.wikimess.plain .titlebar {
+    color: black;
+}
+
+.wikimess.plain .inputbar {
+    color: black;
+}
+
+.wikimess.plain .inputbar input[type=text],
+.wikimess.plain .inputbar input[type=password] {
+    border-color: #ccc;
+    background-color: #ddd;
+    color: black;
+}
+
+.wikimess.plain .menubar li {
+    color: black;
+}
+
+.wikimess.plain .menubar .card {
+    color: black;
+    background-color: #ccc;
+}
+
+.wikimess .menubar .themegroup label.plain {
+    color: white;
+}
+
+.wikimess.plain .templates .template:nth-child(odd),
+.wikimess.plain .followsection .follow:nth-child(odd),
+.wikimess.plain .mailbox .contents .message:nth-child(odd) {
+    background: #eee;
+}
+
+.wikimess.plain .lhslink.limitdepth {
+    background-color: palevioletred;
+}
+
+.wikimess.plain .lhslink.limitnodes {
+    background-color: orange;
+}
+
+.wikimess.plain .lhslink.limitsymbols {
+    background-color: red;
+}
+
+.wikimess.plain .lhslink.unexpanded {
+    background-color: #90cc90;
+}
+
+.wikimess.plain .lhslink.unexpanded.animating {
+    background-color: #90ee90;
+}
+
+.wikimess.plain .messageheader .input .results {
+    background-color: white;
+}
+
+.wikimess.plain .detailbar .titlebar,
+.wikimess.plain .compose .messageheader,
+.wikimess.plain .compose .suggest {
+    background-color: #eee;
+}
