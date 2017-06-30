@@ -505,7 +505,7 @@ module.exports = {
     var body = req.body.body
     var previous = req.body.previous
     var draftID = req.body.draft
-    var isPublic = req.body.isPublic
+    var isPublic = req.body.isPublic || false
     var result = {}, notification = {}
     // check that the recipient is reachable
     Follow.find ({ follower: recipientID,

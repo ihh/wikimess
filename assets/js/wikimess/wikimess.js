@@ -1911,7 +1911,7 @@ var WikiMess = (function() {
         this.REST_getPlayerMessageHeader (this.playerID, messageID)
         .then (function (result) {
           if (!wm.messageHeaderCache[result.message.id]) {
-            wm.messageHeaderCache[message.id] = message
+            wm.messageHeaderCache[result.message.id] = result.message
             wm.mailboxCache.inbox.messages.push (result.message)
             if (wm.page === 'inbox')
               wm.mailboxContentsDiv.append (wm.makeMailboxEntryDiv (wm.inboxProps(), result.message))
