@@ -4,23 +4,33 @@
     color: white;
 }
 
+.wikimess.l33t textarea {
+    background-color: black;
+    color: green;
+}
+
 .wikimess.l33t .subnavbar,
 .wikimess.l33t .navbar {
     background-color: black;
 }
 
+.wikimess.l33t .subnavbar,
+.wikimess.l33t .messageborder,
+.wikimess.l33t body {
+    border-color: #333
+}
+
 .wikimess.l33t .grammarbar .rule {
-    border-color: #ccc;
-    background-color: #181818;
+    border-color: #002800;
+    background-color: #001800;
 }
 
 .wikimess.l33t .grammarbar .rule .rhs {
-    background-color: #444;
+    background-color: #030;
 }
 
-.wikimess.l33t .playerlink,
-.wikimess.l33t .lhslink {
-    color: limegreen;
+.wikimess.l33t .grammarbar .rule .rulecontrols {
+    background-color: #020;
 }
 
 .wikimess.l33t .grammarbar,
@@ -58,8 +68,22 @@
     background-color: #444;
 }
 
+.wikimess.l33t .mailboxname,
+.wikimess.l33t .followsection .title,
+.wikimess.l33t .grammartitle {
+    color: limegreen
+}
+
+.wikimess.l33t .grammarbar .rule .lhs .buttons .name,
+.wikimess.l33t .playerlink,
+.wikimess.l33t .displayname,
+.wikimess.l33t .lhslink,
 .wikimess .menubar .themegroup label.l33t {
-    color: darkgreen;
+    color: #070;
+}
+
+.wikimess.l33t .grammarbar .rule .lhs .name {
+    color: #090;
 }
 
 .wikimess.l33t .templates .template:nth-child(odd),

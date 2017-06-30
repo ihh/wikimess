@@ -346,6 +346,12 @@ input {
     float: right;
 }
 
+.wikimess .displayname {
+    margin-left: 4px;
+    font-size: medium;
+    font-style: italic;
+}
+
 .wikimess .follow .playerlink {
     padding: 4px;
     word-break: break-all;

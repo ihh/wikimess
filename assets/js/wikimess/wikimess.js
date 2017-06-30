@@ -122,7 +122,7 @@ var WikiMess = (function() {
                     halfStar: 'star-half' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
-              {style: 'l33t', text: 'L33t', iconColor: 'white', navbarIconColor: 'white', subnavbarIconColor: 'white' } ],
+              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'white', subnavbarIconColor: 'darkgreen' } ],
 
     tabs: [{ name: 'status', method: 'showStatusPage', icon: 'castle', },
            { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
@@ -2646,7 +2646,7 @@ var WikiMess = (function() {
 
     makePlayerSpan: function (name, displayName, callback) {
       var nameSpan = $('<span class="name">')
-      var span = $('<span>').addClass(callback ? 'playerlink' : 'playertag').append ('@', nameSpan)
+      var span = $('<span class="player">').addClass(callback ? 'playerlink' : 'playertag').append ('@', nameSpan)
       nameSpan.text (name)
       if (callback)
         span.on ('click', function (evt) {
@@ -2654,7 +2654,7 @@ var WikiMess = (function() {
           callback (evt)
         })
       if (displayName)
-        span = $('<span>').append (span, ' (' + displayName + ')')
+        span = $('<span class="playerwrap">').append (span, $('<span class="displayname">').text ('('+displayName+')'))
       return span
     },
 
@@ -2863,8 +2863,7 @@ var WikiMess = (function() {
                                                              wm.clearSymbolSearch.bind(wm)))),
                                 wm.symbolSearchResultsDiv)
                        .hide(),
-                       $('<div class="grammartitle">').text ('Phrase book'),
-                       wm.grammarBarDiv,
+                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase book')),
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
                        ($('<span class="newlhs">').html
