@@ -2509,7 +2509,7 @@ var WikiMess = (function() {
                   ('locked', function() {
                     wm.saveCurrentEdit()
                       .then (function() {
-                        if (window.confirm('Relinquish ownership of symbol #' + wm.symbolName[symbol.id] + '?'))
+                        if (window.confirm('Give up your current ownership of symbol #' + wm.symbolName[symbol.id] + '?'))
                           wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
                      })
                   })
@@ -2693,6 +2693,9 @@ var WikiMess = (function() {
     },
 
     makeGrammarRuleDiv: function (symbol) {
+      if (Object.keys(this.ruleDiv).length === 0)
+        this.emptyGrammarSpan.remove()  // remove the placerholder message
+
       var ruleDiv = $('<div class="rule">')
       this.populateGrammarRuleDiv (ruleDiv, symbol)
       this.ruleDiv[symbol.id] = ruleDiv
@@ -2824,6 +2827,7 @@ var WikiMess = (function() {
                                                              wm.clearSymbolSearch.bind(wm)))),
                                 wm.symbolSearchResultsDiv)
                        .hide(),
+                       $('<div class="grammartitle">').text ('Phrase book'),
                        wm.grammarBarDiv,
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
@@ -2864,6 +2868,8 @@ var WikiMess = (function() {
             wm.ruleDiv = {}
             wm.grammarBarDiv
               .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
+            if (Object.keys(wm.ruleDiv).length === 0)
+              wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">').text ('Your phrase book is empty.'))
           })
         })
     },

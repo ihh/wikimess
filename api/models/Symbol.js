@@ -98,8 +98,10 @@ module.exports = {
         nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 0) + 1
         if (match)
           nextSuffix = Math.max (nextSuffix, parseInt(match[2]))
+        do
+          symbol.name = prefix + (nextSuffix++)
+        while (Symbol.cache.byName[symbol.name])
       }
-      symbol.name = prefix + nextSuffix
       delete symbol.prefix
     }
     callback()

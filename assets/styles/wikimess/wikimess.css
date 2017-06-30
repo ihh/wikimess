@@ -23,6 +23,7 @@ textarea,
 input {
     -webkit-appearance: none;
     -moz-appearance: none;
+    font-size: large;
 }
 
 .pushed {
@@ -87,8 +88,13 @@ input {
     padding-right: 4px;
 }
 
+.wikimess .whobar {
+    overflow-y: auto;
+}
+
 .wikimess .mailbox .mailboxname,
 .wikimess .searchtitle,
+.wikimess .grammartitle,
 .wikimess .whobar .followsection .title {
     font-weight: bold;
     font-size: large;
@@ -149,7 +155,6 @@ input {
 }
 
 .wikimess .symbolsearch .results {
-    height: 100%;
     overflow-y: auto;
 }
 
