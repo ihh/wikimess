@@ -26,6 +26,7 @@
 }
 
 .wikimess.l33t .grammarbar .rule .rhs {
+    color: #0a0;
     background-color: #030;
 }
 
@@ -83,7 +84,7 @@
 }
 
 .wikimess.l33t .grammarbar .rule .lhs .name {
-    color: #090;
+    color: #2c2;
 }
 
 .wikimess.l33t .templates .template:nth-child(odd),
@@ -122,7 +123,7 @@
 .wikimess.l33t .detailbar .titlebar,
 .wikimess.l33t .compose .messageheader,
 .wikimess.l33t .compose .suggest {
-    background-color: #222;
+    background-color: #002200;
 }
 
 /* main page titlebar top border: this one just for l33t theme, not plain: */

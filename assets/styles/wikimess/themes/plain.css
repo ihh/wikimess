@@ -14,11 +14,15 @@
 
 .wikimess.plain .grammarbar .rule {
     border-color: black;
-    background-color: #f0f0f0;
+    background-color: #eee;
 }
 
 .wikimess.plain .grammarbar .rule .rhs {
     background-color: #ccc;
+}
+
+.wikimess.plain .grammarbar .rule .rulecontrols {
+    background-color: #bbb;
 }
 
 .wikimess.plain .playerlink,
