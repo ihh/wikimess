@@ -106,10 +106,12 @@
 
 .wikimess.l33t .lhslink.unexpanded {
     background-color: #003200;
+    color: #cfc;
 }
 
 .wikimess.l33t .lhslink.unexpanded.animating {
     background-color: #006400;
+    color: #0f0;
 }
 
 .wikimess.l33t .messageheader .input .results {
