@@ -101,7 +101,8 @@ module.exports = {
         do
           symbol.name = prefix + (nextSuffix++)
         while (Symbol.cache.byName[symbol.name])
-      }
+      } else
+        symbol.name = prefix
       delete symbol.prefix
     }
     callback()

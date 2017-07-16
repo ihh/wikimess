@@ -817,12 +817,12 @@ var WikiMess = (function() {
 
           var passwordForm = $('<div class="inputbar">')
               .append ($('<form>')
-                       .append ($('<span>').text('New password'),
+                       .append ($('<span>').text('Old password'),
+                                wm.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                $('<span>').text('New password'),
                                 wm.changePasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
-                                $('<span>').text('Confirm new password'),
-                                wm.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
-                                $('<span>').text('Old password'),
-                                wm.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))
+                                $('<span>').text('New password (confirm)'),
+                                wm.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))
           if (wm.playerInfo.hidePassword)
             passwordForm.hide()
 
@@ -2867,7 +2867,7 @@ var WikiMess = (function() {
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
                        ($('<span class="newlhs">').html
-                        (wm.makeSubNavIcon ('create', wm.createNewSymbol.bind(wm))),
+                        (wm.makeSubNavIcon ('create', wm.createNewSymbol.bind(wm,{}))),
                         $('<span class="help">').html
                         (wm.makeSubNavIcon ('help', function() {
                           if (wm.showingHelp) {
