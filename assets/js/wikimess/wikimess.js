@@ -146,6 +146,7 @@ var WikiMess = (function() {
                                '#content. Please edit!',
                                'Blah, blah, #content.',
                                'TODO: #content.',
+                               'WRITE ME: #content.',
                                '#content. Do better if you can.',
                                'Insert #content.',
                                'Placeholder for #content.',
@@ -163,7 +164,7 @@ var WikiMess = (function() {
                                '#content / #content.'],
                         content: ['#adjective #noun'],
                         adjective: ['witty', 'attractive', 'scintillating', 'wonderful', 'amazing', 'engaging', 'brilliant', 'sparkling', 'illuminating', 'sharp', 'dazzling', 'humorous', 'lulzy', 'fascinating', 'radical', 'erudite', 'eloquent', 'hilarious', 'amusing', 'titillating', 'provocative', 'thoughtful', 'literate', 'intelligent', 'clever', 'bold', 'breathtaking', 'beautiful', 'flowery', 'pretty', 'loquacious', 'succinct', 'pithy', 'gracious', 'compassionate', 'warm'],
-                        noun: ['prose', 'commentary', 'opinion', 'text', 'content', 'verbiage', 'language', 'output', 'poetry', 'writing', 'insight', 'repartee', 'conversation', 'badinage']},
+                        noun: ['prose', 'commentary', 'opinion', 'text', 'content', 'verbiage', 'language', 'output', 'poetry', 'writing', 'insight', 'repartee', 'conversation', 'badinage', 'nonsense']},
     
     emptyMessageWarnings: ["Nothing. I got nothing.",
                            "Nothing. I got nothing for ya.",
@@ -1526,7 +1527,7 @@ var WikiMess = (function() {
     },
 
     startAnimatingExpansion: function() {
-      this.animationSteps = Math.max (this.animationSteps, this.countSymbolNodes (this.animationExpansion))
+      this.animationSteps = Math.max (this.animationSteps || 0, this.countSymbolNodes (this.animationExpansion))
       this.extraAnimationSteps = 1
       this.animateExpansion()
     },
@@ -2794,6 +2795,7 @@ var WikiMess = (function() {
       var wm = this
       wm.saveCurrentEdit()
         .then (function() {
+          wm.symbolCache = wm.symbolCache || {}
           if (wm.symbolCache[symbol.id])
             wm.scrollGrammarTo (wm.symbolCache[symbol.id])
           else
