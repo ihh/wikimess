@@ -21,5 +21,5 @@ Use the `-s` option to just load the data into the existing database, without er
 The script has lots more options; it crawls the [data](data) directory to pre-load corpora into the wiki database.
 
 You can log in using Facebook authentication (via [passport.js](http://passportjs.org/)).
-However, currently this redirects back to `localhost:1337`, not a public URL, so it will only work on your local machine (if at all).
+However, currently this redirects back to `wikimess.me`, so it will not work on your local machine.
 You could probably edit the Facebook client ID & secret in [config/passport.js](config/passport.js) to use your own Facebook account, in theory.

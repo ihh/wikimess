@@ -43,7 +43,7 @@ passport.use
 (new FacebookStrategy
  ({ clientID: "***REMOVED***",
     clientSecret: "***REMOVED***",
-    callbackURL: "http://localhost:1337/login/facebook/callback",
+    callbackURL: "http://wikimess.me/login/facebook/callback",
     enableProof: false },
 
   function (accessToken, refreshToken, profile, done) {

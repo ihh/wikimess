@@ -40,7 +40,7 @@ var opt = getopt.create([
   ['s' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
   ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
-  ['l' , 'sails'            , 'lift sails before loading data'],
+  ['l' , 'lift'             , 'lift sails before loading data'],
   ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
   ['h' , 'help'             , 'display this help message']
