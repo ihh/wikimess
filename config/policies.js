@@ -17,16 +17,23 @@
  */
 
 
-// Set restPolicy to 'isAdmin' to prevent unauthorized modification of all database tables
+// Set restPolicy to:
+// 'isAdmin' to prevent unauthorized modification of all database tables
+//  to true for unrestricted access
 var restPolicy = 'isAdmin'
 
-// Set findPolicy to 'isAdmin' to prevent unauthorized inspection of all database tables
-var findPolicy = true
-// var findPolicy = 'isAdmin'
+// Set findPolicy to:
+// 'isAdmin' to prevent unauthorized inspection of all database tables
+//  true for unrestricted access
+var findPolicy = 'isAdmin'
 
-// Set clientPolicy to 'isAuthenticated' to prevent unauthenticated client operations (gameplay, config, etc)
-var clientPolicy = true
-// var clientPolicy = 'isAuthenticated'
+// Set clientPolicy to:
+// 'isAuthenticated' to prevent unauthenticated client operations (gameplay, config, etc)
+//  true for unrestricted access to other players' operations
+var clientPolicy = 'isAuthenticated'
+
+// Collective blueprint policies
+var blueprintPolicy = { '*': restPolicy, find: findPolicy, findOne: findPolicy }
 
 module.exports.policies = {
 
@@ -37,10 +44,16 @@ module.exports.policies = {
    *                                                                          *
    ***************************************************************************/
 
-  //  '*': true,
+  'AdjacencyController': blueprintPolicy,
+  'DraftController': blueprintPolicy,
+  'FollowController': blueprintPolicy,
+  'GrammarController': blueprintPolicy,
+  'MessageController': blueprintPolicy,
+  'PlayerController': blueprintPolicy,
+  'SymbolController': blueprintPolicy,
+  'TemplateController': blueprintPolicy,
 
-  'GrammarController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
-  'PlayerController': { '*': restPolicy, find: findPolicy, findOne: findPolicy },
+  'IconController': { '*': true },
 
   // non-permissive policy for player controller
   'ClientController': {
