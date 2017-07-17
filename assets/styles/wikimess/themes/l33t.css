@@ -6,7 +6,7 @@
 
 .wikimess.l33t textarea {
     background-color: black;
-    color: green;
+    color: #0f0;
 }
 
 .wikimess.l33t .subnavbar,
@@ -15,9 +15,12 @@
 }
 
 .wikimess.l33t .subnavbar,
-.wikimess.l33t .messageborder,
 .wikimess.l33t body {
     border-color: #333
+}
+
+.wikimess.l33t .messageborder {
+    border-color: white;
 }
 
 .wikimess.l33t .grammarbar .rule {
@@ -45,7 +48,7 @@
     border-color: #888;
 }
 
-.wikimess.l33t .titlebar {
+.wikimess.l33t .detailbar .titlebar {
     color: white;
 }
 
@@ -67,6 +70,16 @@
 .wikimess.l33t .menubar .card {
     color: white;
     background-color: #444;
+}
+
+.wikimess.l33t .mailboxname {
+    border-top-style: solid;
+    border-top-width: 1px;
+}
+
+.wikimess.l33t .mailbox .mailboxname,
+.wikimess.l33t .mailbox .contents {
+    border-color: #333;
 }
 
 .wikimess.l33t .mailboxname,
@@ -129,4 +142,8 @@
 /* main page titlebar top border: this one just for l33t theme, not plain: */
 .wikimess.l33t .detailbar .titlebar {
     border-top-style: solid;
+}
+
+.wikimess.l33t .configmenu .option.checked {
+    background-color: darkgreen;
 }

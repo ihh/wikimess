@@ -38,6 +38,8 @@ var WikiMess = (function() {
                           smartLists: true,
                           smartypants: true,
                           renderer: renderer }
+
+    this.randomizeEmptyMessageWarning()
     
     // monitor connection
     io.socket.on('disconnect', function() {
@@ -122,7 +124,7 @@ var WikiMess = (function() {
                     halfStar: 'star-half' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
-              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'white', subnavbarIconColor: 'darkgreen' } ],
+              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
 
     tabs: [{ name: 'status', method: 'showStatusPage', icon: 'castle', },
            { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
@@ -139,7 +141,49 @@ var WikiMess = (function() {
                errors: true,
 	       stack: false },
 
-    emptyMessageWarning: "_Nothing. I got nothing._",
+    newRhsTextGrammar: {root: ['#content goes here.',
+                               'Here\'s where you add #content.',
+                               '#content. Please edit!',
+                               'Blah, blah, #content.',
+                               'TODO: #content.',
+                               '#content. Do better if you can.',
+                               'Insert #content.',
+                               'Placeholder for #content.',
+                               'Generic #content.',
+                               'Just add #content.',
+                               'More #content.',
+                               'Yet more #content.',
+                               '#content and #content.',
+                               '#content, laced with #content.',
+                               '#content, with a dash of #content.',
+                               '#content, plus #content.',
+                               '#content, #content.',
+                               '#content, #content, #content.',
+                               '#content. Or, #content.',
+                               '#content / #content.'],
+                        content: ['#adjective #noun'],
+                        adjective: ['witty', 'attractive', 'scintillating', 'wonderful', 'amazing', 'engaging', 'brilliant', 'sparkling', 'illuminating', 'sharp', 'dazzling', 'humorous', 'lulzy', 'fascinating', 'radical', 'erudite', 'eloquent', 'hilarious', 'amusing', 'titillating', 'provocative', 'thoughtful', 'literate', 'intelligent', 'clever', 'bold', 'breathtaking', 'beautiful', 'flowery', 'pretty', 'loquacious', 'succinct', 'pithy', 'gracious', 'compassionate', 'warm'],
+                        noun: ['prose', 'commentary', 'opinion', 'text', 'content', 'verbiage', 'language', 'output', 'poetry', 'writing', 'insight', 'repartee', 'conversation', 'badinage']},
+    
+    emptyMessageWarnings: ["Nothing. I got nothing.",
+                           "Nothing. I got nothing for ya.",
+                           "Nothing. Really, nothing.",
+                           "Nothing will come of nothing.",
+                           "Nothing can come of nothing.",
+                           "I am the wisest man alive, for I know one thing, and that is that I know nothing.",
+                           "I must be made of nothing to feel so much nothing.",
+                           "There is no there, there.",
+                           "Anything can happen in life, especially nothing.",
+                           "If you write a line of zeroes, it's still nothing.",  // This is Ayn Rand. Sorry.
+                           "I deserve a spring - I owe nobody nothing.",
+                           "And if thou gaze long into an abyss, the abyss will also gaze into thee.",
+                           "We become aware of the void as we fill it.",
+                           "Nothing, thou elder brother ev’n to shade. Thou hadst a being ere the world was made.",
+                           "Where you have nothing, there you should want nothing.",
+                           "For we brought nothing into this world; and it is certain we can carry nothing out.",
+                           "It is good to say it aloud: 'Nothing has happened.' Once again: 'Nothing has happened.' Does that help?",
+                           "We are nothing; less than nothing, and dreams. We are only what might have been..."],
+                           
     emptyTemplateWarning: "_The expanded message, as sent to the recipient, will appear here._",
     suppressDisconnectWarning: true,
 
@@ -434,7 +478,6 @@ var WikiMess = (function() {
     },
 
     callWithSoundEffect: function (callback, sfx, elementToDisable) {
-      sfx = sfx || 'select'
       var wm = this
       return function (evt) {
         evt.preventDefault()
@@ -444,7 +487,7 @@ var WikiMess = (function() {
             return;
           elementToDisable.addClass('already-clicked')
         }
-        if (sfx.length)
+        if (sfx && sfx.length)
           wm.selectSound = wm.playSound (sfx)
         callback.call (wm, evt)
       }
@@ -456,7 +499,6 @@ var WikiMess = (function() {
 
     makeLink: function (text, callback, sfx, allowMultipleClicks) {
       var wm = this
-      sfx = sfx || 'select'
       var link = $('<a href="#">')
           .text (text)
           .attr ('title', text)
@@ -465,7 +507,6 @@ var WikiMess = (function() {
     },
 
     makeListLink: function (text, callback, sfx, allowMultipleClicks) {
-      sfx = sfx || 'select'
       var span = $('<span class="listitem">').html(text)
       span.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && span))
       return span
@@ -566,7 +607,8 @@ var WikiMess = (function() {
 	    if (!data.player)
               wm.showModalMessage (data.message, fail)
 	    else {
-              wm.selectSound.stop()
+              if (wm.selectSound)
+                wm.selectSound.stop()
               wm.playSound ('login')
               wm.initPlayerInfo (data.player)
               wm.socket_getPlayerSubscribe (wm.playerID)
@@ -596,7 +638,8 @@ var WikiMess = (function() {
       (function() {
         wm.REST_postPlayer (wm.playerLogin, wm.playerPassword)
           .done (function (data) {
-	    wm.selectSound.stop()
+            if (wm.selectSound)
+	      wm.selectSound.stop()
 	    wm.playSound ('login')
 	    wm.doInitialLogin()
           })
@@ -648,10 +691,21 @@ var WikiMess = (function() {
     showNavBar: function (currentTab) {
       var wm = this
       
-      var navbar
       this.container
         .empty()
-        .append (navbar = $('<div class="navbar">'))
+        .append (this.navbar = $('<div class="navbar">'))
+
+      this.drawNavBar (currentTab)
+    },
+
+    redrawNavBar: function() {
+      this.navbar.empty()
+      this.drawNavBar (this.currentTab)
+    },
+
+    drawNavBar: function (currentTab) {
+      var wm = this
+      var navbar = this.navbar
 
       this.messageCountDiv = $('<div class="messagecount">').hide()
       if (typeof(this.messageCount) === 'undefined')
@@ -949,8 +1003,6 @@ var WikiMess = (function() {
       var wm = this
       var theme = wm.themes.find (function(t) { return t.style === style })
       return function() {
-        if (!(config && config.silent))
-          wm.playSound ('select')
 	wm.themes.forEach (function (oldTheme) {
           wm.container.removeClass (oldTheme.style)
 	})
@@ -958,8 +1010,10 @@ var WikiMess = (function() {
         wm.theme = theme.style
         wm.themeInfo = theme
         wm.writeLocalStorage ('theme')
-        if (config.reload)
+        if (config.reload) {
           wm.redrawPopBack()
+          wm.redrawNavBar()
+        }
       }
     },
 
@@ -1470,6 +1524,12 @@ var WikiMess = (function() {
           return result.player
         })
     },
+
+    startAnimatingExpansion: function() {
+      this.animationSteps = Math.max (this.animationSteps, this.countSymbolNodes (this.animationExpansion))
+      this.extraAnimationSteps = 1
+      this.animateExpansion()
+    },
     
     animateExpansion: function() {
       var wm = this
@@ -1692,10 +1752,10 @@ var WikiMess = (function() {
       var expansion = config.expansion || wm.composition.body
       wm.animationExpansion = _.cloneDeep (expansion)
       wm.animationDiv = div
+      wm.randomizeEmptyMessageWarning()
       if (config.animate && wm.countSymbolNodes(expansion,true)) {
-        wm.animationSteps = wm.countSymbolNodes (expansion)
-        wm.extraAnimationSteps = 1
-        wm.animateExpansion()
+        delete wm.animationSteps
+        this.startAnimatingExpansion()
       } else {
         wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
@@ -1706,12 +1766,37 @@ var WikiMess = (function() {
       }
     },
 
+    randomElement: function (array) {
+      return array[Math.floor (Math.random() * array.length)]
+    },
+    
+    randomizeEmptyMessageWarning: function() {
+      this.emptyMessageWarning = '_' + this.randomElement (this.emptyMessageWarnings) + '_'
+    },
+
+    newRhsText: function() {
+      var text = this.expandGrammar (this.newRhsTextGrammar, '#root')
+      return text.charAt(0).toUpperCase() + text.substr(1)
+    },
+    
+    expandGrammar: function (grammar, text) {
+      var wm = this
+      var re = /#(\w+)/, changed
+      do {
+        changed = false
+        text = text.replace (re, function (match, symbol) {
+          changed = true
+          return wm.randomElement (grammar[symbol])
+        })
+      } while (changed)
+      return text
+    },
+    
     appendToMessageBody: function (appendedRhs) {
       Array.prototype.push.apply (wm.composition.body.rhs, appendedRhs)
       Array.prototype.push.apply (wm.animationExpansion.rhs, appendedRhs)
-      wm.animationSteps = Math.max (wm.animationSteps, wm.countSymbolNodes (wm.animationExpansion))
-      wm.extraAnimationSteps = 1
-      wm.animateExpansion()
+      this.randomizeEmptyMessageWarning()
+      this.startAnimatingExpansion()
     },
 
     templateIsEmpty: function() {
@@ -2528,7 +2613,7 @@ var WikiMess = (function() {
                    evt.stopPropagation()
                    wm.saveCurrentEdit()
                      .then (function() {
-                       var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : []
+                       var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : [wm.newRhsText()]
                        symbol.rules.push (newRhs)
                        ruleControlsDiv.before (wm.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
                        wm.selectGrammarRule (symbol)
@@ -2867,7 +2952,7 @@ var WikiMess = (function() {
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
                        ($('<span class="newlhs">').html
-                        (wm.makeSubNavIcon ('create', wm.createNewSymbol.bind(wm,{}))),
+                        (wm.makeSubNavIcon ('create', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) })),
                         $('<span class="help">').html
                         (wm.makeSubNavIcon ('help', function() {
                           if (wm.showingHelp) {
@@ -3065,14 +3150,14 @@ var WikiMess = (function() {
         $(followSelector).add(buttonDiv)
           .off()
           .html (wm.makeIconButton ('unfollow',
-                                    wm.callWithSoundEffect (doUnfollow, 'select', $(followSelector).add(buttonDiv))))
+                                    wm.callWithSoundEffect (doUnfollow, null, $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       function makeFollowButton() {
         $(followSelector).add(buttonDiv)
           .off()
           .html (wm.makeIconButton ('follow',
-                                    wm.callWithSoundEffect (doFollow, 'select', $(followSelector).add(buttonDiv))))
+                                    wm.callWithSoundEffect (doFollow, null, $(followSelector).add(buttonDiv))))
 	  .removeClass('already-clicked')
       }
       doFollow = function() {

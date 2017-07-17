@@ -20,6 +20,7 @@
     }
 
     .wikimess .menubar .list {
+	height: 8em;
 	flex-direction: row;
     }
 
