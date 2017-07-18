@@ -36,7 +36,9 @@ module.exports = {
     var refNames = Object.keys(refs), refSymbols = {}
     if (refNames.length)
       promise = Promise.map (refNames, function (refName) {
-        return Symbol.findOrCreate ({ name: refName })
+        return Symbol.findOrCreate ({ name: refName },
+                                    { name: refName,
+                                      owner: null })
           .then (function (refSymbol) {
             refs[refName].forEach (function (rhsSym) {
               rhsSym.id = refSymbol.id

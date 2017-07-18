@@ -682,7 +682,7 @@ input {
     min-height: 1em;
     max-height: 1em;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     border-top-style: solid;
     border-width: 1px;
     padding-bottom: 4px;
