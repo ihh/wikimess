@@ -30,6 +30,7 @@ module.exports = {
           refs[rhsSym.name] = refs[rhsSym.name] || []
           refs[rhsSym.name].push (rhsSym)
         }
+        delete rhsSym.name
       })
     })
     var promise

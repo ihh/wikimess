@@ -1677,18 +1677,26 @@ var WikiMess = (function() {
 
     firstNamedSymbol: function (node) {
       var wm = this
-      if (typeof(node) === 'string')
-        return false
-      if (node.name)
-        return node
-      return node.rhs && node.rhs.find (this.firstNamedSymbol.bind (this))
+      if (typeof(node) === 'object') {
+        if (node.name)
+          return node
+        if (node.rhs)
+          for (var n = 0; n < node.rhs.length; ++n) {
+            var s = this.firstNamedSymbol (node.rhs[n])
+            if (s)
+              return s
+          }
+      }
+      return false
     },
     
     deleteFirstSymbolName: function (node) {
       var namedNode = this.firstNamedSymbol (node)
-      if (namedNode)
+      if (namedNode && namedNode.name) {
         delete namedNode.name
-      return namedNode ? true : false
+        return true
+      }
+      return false
     },
 
     deleteAllSymbolNames: function (node) {
@@ -2472,6 +2480,13 @@ var WikiMess = (function() {
           wm.ruleDiv[symbol.id].remove()
           wm.placeGrammarRuleDiv (symbol)
           wm.referringSymbols(symbol).forEach (function (lhsSymbol) {
+            lhsSymbol.rules = lhsSymbol.rules.map (function (rule) {
+              return rule.map (function (rhsSym) {
+                if (typeof(rhsSym) === 'object' && rhsSym.id === symbol.id)
+                  rhsSym.name = symbol.name
+                return rhsSym
+              })
+            })
             if (lhsSymbol.id !== symbol.id)
               wm.populateGrammarRuleDiv (wm.ruleDiv[lhsSymbol.id], lhsSymbol)
           })
