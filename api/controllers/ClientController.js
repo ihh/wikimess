@@ -539,11 +539,20 @@ module.exports = {
               return previousPromise
             }).then (function (previousTemplate) {
               // create the Template
+              var content = template.content
               return Template.create ({ title: title,
-                                        content: template.content,
                                         author: playerID,
+                                        content: content,
                                         previous: previousTemplate,
                                         isPublic: isPublic })
+                .then (function (template) {
+                  // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
+                  return Template.update ({ id: template.id },
+                                          { content: content })
+                    .then (function() {
+                      return template
+                    })
+                })
             })
         }
         templatePromise.then (function (template) {

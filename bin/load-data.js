@@ -38,7 +38,7 @@ var opt = getopt.create([
   ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['p' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
   ['s' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
-  ['r' , 'regex=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
+  ['m' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['l' , 'lift'             , 'lift sails before loading data'],
   ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
@@ -90,6 +90,7 @@ if (opt.options.sails || opt.options.erase) {
 
 promise = promise.then (function() {
   return new Promise (function (resolve) {
+    console.log (urlPrefix + '/login')
     request.post ({ jar: jar,
                     url: urlPrefix + '/login',
                     json: true,
@@ -97,9 +98,12 @@ promise = promise.then (function() {
                   function (err, res, body) {
                     if (err)
                       throw err
-                    else if (!body.player) {
-                    log (0, body.message)
-                    } else {
+                    else if (!body) {
+                      console.log (res)
+                      log (0, "no body")
+                    } else if (!body.player)
+                      log (0, body.message)
+                    else {
                       log (1, "Logged in as '" + adminUser + "'")
                       resolve()
                   }
