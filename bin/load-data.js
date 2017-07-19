@@ -133,17 +133,17 @@ promise.then (function() { log (1, "Loading complete - point your browser at " +
 function processFilenameList (info) {
   return function() {
     return Promise.all (info.list.map (function (filename) {
-      return process ({ filename: filename,
-                        path: info.path,
-                        schema: info.schema,
-                        handler: info.handler,
-                        parsers: info.parsers,
-                        first: true })
+      return processFiles ({ filename: filename,
+                             path: info.path,
+                             schema: info.schema,
+                             handler: info.handler,
+                             parsers: info.parsers,
+                             first: true })
     }))
   }
 }
 
-function process (info) {
+function processFiles (info) {
   var filename = info.filename,
       first = info.first
   if (fs.existsSync (filename)) {
@@ -160,11 +160,11 @@ function processDir (info) {
   var dir = info.filename
   log (1, 'Processing ' + dir)
   return Promise.all (fs.readdirSync(dir).map (function (filename) {
-    return process ({ filename: dir + '/' + filename,
-                      schema: info.schema,
-                      path: info.path,
-                      handler: info.handler,
-                      parsers: info.parsers })
+    return processFiles ({ filename: dir + '/' + filename,
+                           schema: info.schema,
+                           path: info.path,
+                           handler: info.handler,
+                           parsers: info.parsers })
   }))
 }
 
