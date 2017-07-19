@@ -33,12 +33,13 @@ function schemaPath (schema) {
 
 var opt = getopt.create([
   ['r' , 'root=STRING'      , 'URL prefix (default="' + defaultUrlPrefix + '")'],
+  ['p' , 'production'       , 'production mode (requires sudo)'],
   ['u' , 'username=STRING'  , 'admin player name (default="' + defaultUserName + '")'],
   ['w' , 'password=STRING'  , 'admin player password (default="' + defaultPassword + '")'],
-  ['d' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
-  ['p' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
-  ['s' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
-  ['m' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
+  ['D' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
+  ['P' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
+  ['S' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
+  ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['l' , 'lift'             , 'lift sails before loading data'],
   ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
@@ -61,6 +62,9 @@ function log (v, text) {
     console.log (colors[color].call (colors, text))
   }
 }
+
+if (opt.options.production)
+  process.env.NODE_ENV = 'production'
 
 var urlPrefix = opt.options.root || defaultUrlPrefix
 
