@@ -2645,7 +2645,7 @@ var WikiMess = (function() {
                  (symbol.summary
                   ? wm.makeIconButton ('dummy')
                   : wm.makeIconButton ('copy', function() {
-                    if (window.confirm ('Duplicate phrase #' + wm.symbolName[symbol.id] + '?'))
+                    if (window.confirm ('Make a copy of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
                       wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
                                                       rules: symbol.rules } })
                   })),
@@ -2654,7 +2654,7 @@ var WikiMess = (function() {
                   ('locked', function() {
                     wm.saveCurrentEdit()
                       .then (function() {
-                        if (window.confirm('Give up your current ownership of phrase #' + wm.symbolName[symbol.id] + '?'))
+                        if (window.confirm('Really, give up your current ownership of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
                           wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
                      })
                   })
@@ -2826,12 +2826,14 @@ var WikiMess = (function() {
                 .then (wm.symbolLoaded.bind (wm))
           } else
               wm.socket_getPlayerSymname (wm.playerID, symbol.name)
-                .then (wm.symbolLoaded.bind (wm))
+            .then (wm.symbolLoaded.bind (wm))
         })
     },
 
     symbolLoaded: function (result) {
       var wm = this
+      if (wm.symbolCache[result.symbol.id])
+        wm.removeGrammarRule (result.symbol)
       $.extend (wm.symbolName, result.name)
       wm.symbolCache[result.symbol.id] = result.symbol
       wm.placeGrammarRuleDiv (result.symbol)
