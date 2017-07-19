@@ -824,40 +824,42 @@ module.exports = {
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
       .then (function (symbol) {
-        if (symbol) {
-          var ownerID = symbol.owner
-          result.symbol = { id: symbol.id }
-          if (ownerID === playerID || symbol.summary === null)
-            result.symbol.rules = symbol.rules
-          else {
-            result.symbol.rules = []
-            result.symbol.summary = symbol.summary
-          }
-          var ownerPromise = (ownerID === null
-                              ? Promise.resolve()
-                              .then (function() {
-                                result.symbol.owner = null
-                              })
-                              : Player.findOne ({ id: ownerID })
-                              .then (function (player) {
-                                if (player.admin)
-                                  result.symbol.owner = { admin: true }
-                                else
-                                  result.symbol.owner = { id: ownerID,
-                                                          name: player.name }
-                              }))
-          ownerPromise.then (function() {
-            return SymbolService.resolveReferences ([symbol])
-          }).then (function (names) {
-            result.name = names
+        if (symbol)
+          return SymbolService.makeSymbolInfo (symbol, playerID)
+          .then (function (result) {
             Symbol.subscribe (req, symbolID)
             res.json (result)
           }).catch (function (err) {
             console.log(err)
             res.status(500).send ({ message: err })
           })
-        } else
-          res.status(500).send ({ message: "Symbol not found" })
+        res.status(500).send ({ message: "Symbol not found" })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  // get a particular symbol by name
+  getSymbolByName: function (req, res) {
+    var playerID = parseInt (req.params.player)
+    var symbolName = req.params.symname
+    var result = {}
+    Symbol.findOneCached ({ name: symbolName })
+      .then (function (symbol) {
+        if (symbol)
+          return symbol
+        else
+          return Symbol.create ({ name: symbolName,
+                                  owner: null })
+      }).then (function (symbol) {
+        return SymbolService.makeSymbolInfo (symbol, playerID)
+      }).then (function (result) {
+        Symbol.subscribe (req, result.symbol.id)
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
       })
   },
 

@@ -185,6 +185,7 @@ var WikiMess = (function() {
                            "It is good to say it aloud: 'Nothing has happened.' Once again: 'Nothing has happened.' Does that help?",
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
+    emptyContentWarning: "Enter the message text here, or pick one of the suggestions below.",
     emptyTemplateWarning: "_The expanded message, as sent to the recipient, will appear here._",
     suppressDisconnectWarning: true,
 
@@ -378,6 +379,10 @@ var WikiMess = (function() {
 
     socket_getPlayerSymbol: function (playerID, symbolID) {
       return this.socketGetPromise ('/p/' + playerID + '/symbol/' + symbolID)
+    },
+
+    socket_getPlayerSymname: function (playerID, symbolName) {
+      return this.socketGetPromise ('/p/' + playerID + '/symname/' + symbolName)
     },
 
     // helpers to log ajax calls
@@ -2727,7 +2732,7 @@ var WikiMess = (function() {
     makeTemplateSpan: function (content) {
       var wm = this
       if (!content || !content.filter (function (rhsSym) { return typeof(rhsSym) === 'object' || rhsSym.match(/\S/) }).length)
-        return $('<p>').html ($('<span class="placeholder">').text ('Enter the message text here, or pick one of the suggestions below.'))
+        return $('<p>').html ($('<span class="placeholder">').text (wm.emptyContentWarning))
       return $('<span>')
         .append (content.map (function (rhsSym) {
           return (typeof(rhsSym) === 'object'
@@ -2811,17 +2816,24 @@ var WikiMess = (function() {
       wm.saveCurrentEdit()
         .then (function() {
           wm.symbolCache = wm.symbolCache || {}
-          if (wm.symbolCache[symbol.id])
-            wm.scrollGrammarTo (wm.symbolCache[symbol.id])
-          else
-            wm.socket_getPlayerSymbol (wm.playerID, symbol.id)
-            .then (function (result) {
-              $.extend (wm.symbolName, result.name)
-              wm.symbolCache[result.symbol.id] = result.symbol
-              wm.placeGrammarRuleDiv (result.symbol)
-              wm.scrollGrammarTo (result.symbol)
-            })
+          if (symbol.id) {
+            if (wm.symbolCache[symbol.id])
+              wm.scrollGrammarTo (wm.symbolCache[symbol.id])
+            else
+              wm.socket_getPlayerSymbol (wm.playerID, symbol.id)
+                .then (wm.symbolLoaded.bind (wm))
+          } else
+              wm.socket_getPlayerSymname (wm.playerID, symbol.name)
+                .then (wm.symbolLoaded.bind (wm))
         })
+    },
+
+    symbolLoaded: function (result) {
+      var wm = this
+      $.extend (wm.symbolName, result.name)
+      wm.symbolCache[result.symbol.id] = result.symbol
+      wm.placeGrammarRuleDiv (result.symbol)
+      wm.scrollGrammarTo (result.symbol)
     },
     
     removeGrammarRule: function (symbol) {

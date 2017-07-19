@@ -5,6 +5,36 @@ var extend = require('extend')
 
 module.exports = {
 
+  makeSymbolInfo: function (symbol, playerID) {
+    var ownerID = symbol.owner
+    var result = { symbol: { id: symbol.id } }
+    if (ownerID === playerID || symbol.summary === null)
+      result.symbol.rules = symbol.rules
+    else {
+      result.symbol.rules = []
+      result.symbol.summary = symbol.summary
+    }
+    var ownerPromise = (ownerID === null
+                        ? Promise.resolve()
+                        .then (function() {
+                          result.symbol.owner = null
+                        })
+                        : Player.findOne ({ id: ownerID })
+                        .then (function (player) {
+                          if (player.admin)
+                            result.symbol.owner = { admin: true }
+                          else
+                            result.symbol.owner = { id: ownerID,
+                                                    name: player.name }
+                        }))
+    return ownerPromise.then (function() {
+      return SymbolService.resolveReferences ([symbol])
+    }).then (function (names) {
+      result.name = names
+      return result
+    })
+  },
+  
   imposeSymbolLimit: function (rules, limit) {
     rules.forEach (function (rhs) {
       var rhsTrim = rhs.filter (function (rhsSym, n) {

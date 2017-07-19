@@ -105,6 +105,8 @@ module.exports.routes = {
 
   'GET /p/:player/symbol/:symid/unsubscribe': 'ClientController.unsubscribeSymbol',
 
+  'GET /p/:player/symname/:symname':   'ClientController.getSymbolByName',
+
   'GET /p/:player/template/:template': 'ClientController.getTemplate',
 
   'GET /p/:player/expand/:symid': 'ClientController.expandSymbol',
