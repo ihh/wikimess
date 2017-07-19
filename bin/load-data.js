@@ -77,7 +77,7 @@ var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
 var symbolFilenames = opt.options.symbols || [defaultPath('Symbol',opt)]
 
 var sailsApp, promise = Promise.resolve()
-if (opt.options.sails || opt.options.erase) {
+if (opt.options.lift || opt.options.erase) {
   if (opt.options.erase && fs.existsSync(databasePath)) {
     log (1, 'Erasing temporary database in ' + databasePath)
     if (!dryRun)
