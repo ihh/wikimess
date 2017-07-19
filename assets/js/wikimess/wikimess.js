@@ -2560,7 +2560,7 @@ var WikiMess = (function() {
                                            guessHeight: true,
                                            isConstant: !wm.symbolEditableByPlayer (symbol),
                                            confirmDestroy: function() {
-                                             return !symbol.rules[n].length || window.confirm('Delete this expansion for symbol #' + wm.symbolName[symbol.id] + '?')
+                                             return !symbol.rules[n].length || window.confirm('Delete this expansion for phrase #' + wm.symbolName[symbol.id] + '?')
                                            },
                                            destroyCallback: function() {
                                              symbol.rules.splice(n,1)
@@ -2644,14 +2644,17 @@ var WikiMess = (function() {
                  wm.makeIconButton ('randomize', randomize),
                  (symbol.summary
                   ? wm.makeIconButton ('dummy')
-                  : wm.makeIconButton ('copy', wm.createNewSymbol.bind (wm, { symbol: { name: symbol.name,
-                                                                                        rules: symbol.rules } }))),
+                  : wm.makeIconButton ('copy', function() {
+                    if (window.confirm ('Duplicate phrase #' + wm.symbolName[symbol.id] + '?'))
+                      wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
+                                                      rules: symbol.rules } })
+                  })),
                  (owned
                   ? wm.makeIconButton
                   ('locked', function() {
                     wm.saveCurrentEdit()
                       .then (function() {
-                        if (window.confirm('Give up your current ownership of symbol #' + wm.symbolName[symbol.id] + '?'))
+                        if (window.confirm('Give up your current ownership of phrase #' + wm.symbolName[symbol.id] + '?'))
                           wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
                      })
                   })
@@ -2682,7 +2685,6 @@ var WikiMess = (function() {
                         || (keycode === 37 || keycode === 39)  // left, right arrow
                         || (keycode === 8)  // backspace/delete
                     },
-                    description: 'symbol #' + lhs + ' and all its expansions',
                     isConstant: !editable,
                     updateCallback: function (newLhs) {
                       return wm.renameSymbol (symbol, newLhs)
