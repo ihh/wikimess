@@ -27,7 +27,7 @@ module.exports = {
 
     author: {
       model: 'player',
-      required: true
+      defaultsTo: function() { return Player.adminUserId }
     },
 
     previous: {

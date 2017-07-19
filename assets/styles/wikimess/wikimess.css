@@ -232,6 +232,10 @@ input {
     cursor: pointer;
 }
 
+.wikimess .suggest .lhslink {
+    padding-left: 4px;
+}
+
 .wikimess .playerlink .name,
 .wikimess .lhslink .name {
     text-decoration: underline;

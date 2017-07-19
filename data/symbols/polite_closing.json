@@ -1,0 +1,12 @@
+[{"name":"polite_closing",
+  "rules":[
+    ["\nYours,\n\nMe.\n"],
+    ["\nIn Closing, etc.,\n\nMe.\n"],
+    ["\nYours Faithfully,\n\nMe.\n"],
+    ["\nYours Sincerely,\n\nMe.\n"],
+    ["\nYours in Good Faith,\n\nMe.\n"],
+    ["\nYours Honorably,\n\nMe.\n"],
+    ["\nYours as Always,\n\nMe.\n"],
+    ["\nEver Yours,\n\nMe.\n"],
+    ["\nYours....\n"]
+  ]}]

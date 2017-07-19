@@ -16,6 +16,7 @@ var defaultPassword = "admin"
 var defaultDataDir = "data"
 var defaultPlayerFilename = "$DATA/players"
 var defaultSymbolFilename = "$DATA/symbols"
+var defaultTemplateFilename = "$DATA/templates"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt)$'
 var databasePath = '.tmp/localDiskDb.db'
@@ -39,6 +40,7 @@ var opt = getopt.create([
   ['D' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['P' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
   ['S' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
+  ['T' , 'templates=PATH+'  , 'path to js/json template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['l' , 'lift'             , 'lift sails before loading data'],
@@ -75,6 +77,7 @@ var jar = request.jar()
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
 var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
 var symbolFilenames = opt.options.symbols || [defaultPath('Symbol',opt)]
+var templateFilenames = opt.options.templates || [defaultPath('Template',opt)]
 
 var sailsApp, promise = Promise.resolve()
 if (opt.options.lift || opt.options.erase) {
@@ -94,9 +97,10 @@ if (opt.options.lift || opt.options.erase) {
 
 promise = promise.then (function() {
   return new Promise (function (resolve) {
-    console.log (urlPrefix + '/login')
+    var url = urlPrefix + '/login'
+    log (1, "Logging into " + url)
     request.post ({ jar: jar,
-                    url: urlPrefix + '/login',
+                    url: url,
                     json: true,
                     body: { name: adminUser, password: adminPass } },
                   function (err, res, body) {
@@ -108,7 +112,7 @@ promise = promise.then (function() {
                     } else if (!body.player)
                       log (0, body.message)
                     else {
-                      log (1, "Logged in as '" + adminUser + "'")
+                      log (2, "Logged in as '" + adminUser + "'")
                       resolve()
                   }
                   })
@@ -123,10 +127,14 @@ promise = promise.then (processFilenameList ({ path: '/player',
                                                list: playerFilenames.reverse() }))
 
 promise = promise.then (processFilenameList ({ path: '/symbol',
-//                                               schema: schemaPath('symbol'),
                                                handler: genericHandler('Symbol'),
                                                parsers: [JSON.parse, eval],
                                                list: symbolFilenames.reverse() }))
+
+promise = promise.then (processFilenameList ({ path: '/template',
+                                               handler: makeHandler('Template',hasID,getTitle),
+                                               parsers: [JSON.parse, eval],
+                                               list: templateFilenames.reverse() }))
 
 promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
 
@@ -240,7 +248,7 @@ function post (info) {
   }
 
   var elem = array[n]
-  log (2, 'POST ' + path + ' ' + elem.name + ' (entry #' + (n+1) + ' in ' + filename + ')')
+  log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+1) + ' in ' + filename + ')')
 
   var post_data = JSON.stringify (elem)
 
@@ -329,7 +337,9 @@ function genericHandler (model) {
 
 function getName (obj) { return obj.name }
 function hasName (obj) { return typeof(obj.name) === 'string' }
-function hasNameAndID (obj) { return typeof(obj.name) === 'string' && typeof(obj.id) === 'number' }
+function getTitle (obj) { return obj.title }
+function hasID (obj) { return typeof(obj.id) === 'number' }
+function hasNameAndID (obj) { return hasName(obj) && hasID(obj) }
 
 function playerHandler (err, data) {
   if (err)
