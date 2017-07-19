@@ -867,8 +867,7 @@ module.exports = {
     var symbolID = parseInt (req.params.symid)
     var name = req.body.name
     var rules = req.body.rules
-    var update = extend ({ owner: playerID,
-                           initialized: true },
+    var update = extend ({ initialized: true },
                          { name: name,
                            rules: rules })
     var result = { symbol: { id: symbolID,
@@ -887,11 +886,15 @@ module.exports = {
           rhsSymbols.forEach (function (rhsSymbol) {
             result.name[rhsSymbol.id] = rhsSymbol.name
           })
-          return Symbol.update ({ id: symbolID,
-                                  owner: [ playerID, null ] },
-                                update)
+          return Symbol.findOne ({ id: symbolID,
+                                   owner: [ playerID, null ] })
         }).then (function (symbol) {
           result.name[symbolID] = symbol.name
+          if (symbol.transferable)
+            update.owner = playerID
+          return Symbol.update ({ id: symbolID },
+                                update)
+        }).then (function (symbol) {
           return Player.findOne ({ id: playerID })
         }).then (function (player) {
           result.symbol.owner.name = player.name

@@ -25,6 +25,11 @@ module.exports = {
       defaultsTo: function() { return Player.adminUserId }
     },
 
+    transferable: {
+      type: 'boolean',
+      defaultsTo: true
+    },
+    
     initialized: {
       type: 'boolean',
       defaultsTo: false
