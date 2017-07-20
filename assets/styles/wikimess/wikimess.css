@@ -71,10 +71,15 @@ input {
 .wikimess .newlhs .button,
 .wikimess .help .button,
 .wikimess .grammarbar .button {
-    font-size: x-large;
     width: 1em;
     height: 1em;
     cursor: pointer;
+}
+
+.wikimess .suggest .button,
+.wikimess .newlhs .button,
+.wikimess .help .button {
+    font-size: x-large;
 }
 
 .wikimess .message .buttons .button,
@@ -200,9 +205,15 @@ input {
 }
 
 .wikimess .grammarbar .rule .rhs {
-    min-height: 1.5em;
     display: block;
+    min-height: 1.5em;
     overflow-wrap: break-word;
+}
+
+.wikimess .grammarbar .rule .rhs .buttons {
+    display: flex;
+    height: 1em;
+    justify-content: space-between;
 }
 
 .wikimess .compose .messagecompose p {
@@ -695,6 +706,10 @@ input {
 .wikimess .subnavbar svg {
     width: 1em;
     height: 1em;
+}
+
+.wikimess .subnavbar .inactive {
+    opacity: .6;
 }
 
 .wikimess .lhslink.limit,

@@ -144,21 +144,24 @@ var WikiMess = (function() {
                                'Blah, blah, #content.',
                                'TODO: #content.',
                                'WRITE ME: #content.',
-                               '#content. Do better if you can.',
+                               '#Content. Do better if you can.',
                                'Insert #content.',
                                'Placeholder for #content.',
                                'Generic #content.',
                                'Just add #content.',
                                'More #content.',
                                'Yet more #content.',
-                               '#content and #content.',
-                               '#content, laced with #content.',
-                               '#content, with a dash of #content.',
-                               '#content, plus #content.',
-                               '#content, #content.',
-                               '#content, #content, #content.',
-                               '#content. Or, #content.',
-                               '#content / #content.'],
+                               '#Content and #content.',
+                               '#Content, laced with #content.',
+                               '#Content, with a dash of #content.',
+                               '#Content, plus #content.',
+                               '#Content. Or, #content.',
+                               '#Content, #content.',
+                               '#Content. #Content.',
+                               '#Content; #content.',
+                               '#Content / #content.',
+                               '#Content, #content, and #content.',
+                               '#Content, #content, #content.'],
                         content: ['#adjective #noun'],
                         adjective: ['witty', 'attractive', 'scintillating', 'wonderful', 'amazing', 'engaging', 'brilliant', 'sparkling', 'illuminating', 'sharp', 'dazzling', 'humorous', 'lulzy', 'fascinating', 'radical', 'erudite', 'eloquent', 'hilarious', 'amusing', 'titillating', 'provocative', 'thoughtful', 'literate', 'intelligent', 'clever', 'bold', 'breathtaking', 'beautiful', 'flowery', 'pretty', 'loquacious', 'succinct', 'pithy', 'gracious', 'compassionate', 'warm'],
                         noun: ['prose', 'commentary', 'opinion', 'text', 'content', 'verbiage', 'language', 'output', 'poetry', 'writing', 'insight', 'repartee', 'conversation', 'badinage', 'nonsense']},
@@ -1832,22 +1835,31 @@ var WikiMess = (function() {
         .then (function() {
           wm.showNavBar ('mailbox')
 
+          wm.subnavButton = {}
+          function makeSubNavIcon (tab, callback) {
+            return wm.makeSubNavIcon (tab, function() {
+              wm.subnavButton[wm.mailboxTab].addClass('inactive')
+              wm.subnavButton[wm.mailboxTab = tab].removeClass('inactive')
+              callback()
+            }).addClass('inactive')
+          }
           wm.container
             .append (wm.mailboxDiv = $('<div class="mailbox">'),
                      $('<div class="subnavbar">').append
-                     (wm.inboxButton = wm.makeSubNavIcon ('inbox', function() {
-                        wm.showInbox()
+                     (wm.subnavButton.inbox = makeSubNavIcon ('inbox', function() {
+                       wm.showInbox()
                       }),
-                      wm.outboxButton = wm.makeSubNavIcon ('drafts', function() {
+                      wm.subnavButton.drafts = makeSubNavIcon ('drafts', function() {
                         wm.showDrafts()
                       }),
-                      wm.outboxButton = wm.makeSubNavIcon ('outbox', function() {
+                      wm.subnavButton.outbox = makeSubNavIcon ('outbox', function() {
                         wm.showOutbox()
                       })))
 
           wm.restoreScrolling (wm.mailboxDiv)
-          var tab = config.tab || wm.lastMailboxTab || 'inbox'
-          return wm.refreshMailbox (tab)
+          wm.mailboxTab = config.tab || wm.lastMailboxTab || 'inbox'
+          wm.subnavButton[wm.mailboxTab].removeClass('inactive')
+          return wm.refreshMailbox (wm.mailboxTab)
         })
     },
 
@@ -2401,6 +2413,8 @@ var WikiMess = (function() {
       var contentHtmlDiv = renderHtml (props.content())
       div.empty().append (contentHtmlDiv, buttonsDiv)
       
+      if (props.otherButtonDivs)
+        buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs())
       if (!props.isConstant) {
         div.off ('click')
           .on ('click', function (evt) {
@@ -2420,8 +2434,6 @@ var WikiMess = (function() {
               })
           }))
       }
-      if (props.otherButtonDivs)
-        buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs())
     },
 
     // https://stackoverflow.com/a/499158
@@ -2552,11 +2564,13 @@ var WikiMess = (function() {
     },
 
     makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
+      var wm = this
+      var editable = wm.symbolEditableByPlayer (symbol)
       var span = wm.makeEditableElement ({ element: 'span',
                                            className: 'rhs',
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
-                                           isConstant: !wm.symbolEditableByPlayer (symbol),
+                                           isConstant: !editable,
                                            confirmDestroy: function() {
                                              return !symbol.rules[n].length || window.confirm('Delete this expansion for phrase #' + wm.symbolName[symbol.id] + '?')
                                            },
@@ -2574,6 +2588,19 @@ var WikiMess = (function() {
                                            },
                                            locateSpan: function() {
                                              return wm.ruleDiv[symbol.id].find('.rhs').eq(n)
+                                           },
+                                           otherButtonDivs: function() {
+                                             return editable ? [wm.makeIconButton ('create', function(evt) {
+                                               evt.stopPropagation()
+                                               wm.saveCurrentEdit()
+                                                 .then (function() {
+                                                   var newRhs = symbol.rules[n]
+                                                   symbol.rules.splice (n, 0, newRhs)
+                                                   wm.populateGrammarRuleDiv (ruleDiv, symbol)
+                                                   wm.selectGrammarRule (symbol)
+                                                   wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                                                 })
+                                             })] : []
                                            },
                                            parse: wm.parseRhs.bind(wm),
                                            renderText: wm.makeRhsText.bind(wm),
