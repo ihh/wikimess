@@ -209,7 +209,6 @@ input {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
-    height: 1.5em;
 }
 
 .wikimess .compose .messagecompose p {
