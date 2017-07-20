@@ -123,7 +123,7 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'castle', },
+    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'mushroom-house', },
            { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
            { name: 'mailbox', method: 'showMailboxPage', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', icon: 'backup' },
