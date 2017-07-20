@@ -55,7 +55,7 @@
     ["Empathic"],
     ["Considerate"],
     ["Thoughtful"],
-    [{"name":"polite_adjectives"}]
+    [{"name":"polite_adjectives"},{"name":"polite_adjectives"}]
   ]},
     
  {"name":"polite_noun",
