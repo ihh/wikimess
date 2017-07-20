@@ -207,8 +207,9 @@ input {
 
 .wikimess .grammarbar .rule .rhs .buttons {
     display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
     height: 1.5em;
-    justify-content: space-between;
 }
 
 .wikimess .compose .messagecompose p {
