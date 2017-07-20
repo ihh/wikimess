@@ -207,7 +207,7 @@ input {
 
 .wikimess .grammarbar .rule .rhs .buttons {
     display: flex;
-    height: 1em;
+    height: 1.5em;
     justify-content: space-between;
 }
 
