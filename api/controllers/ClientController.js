@@ -527,34 +527,31 @@ module.exports = {
                                                 or: [{ author: playerID },
                                                      { isPublic: true }] })
         else {
-          // give an initial weight of 1 to all symbol adjacencies in this template
+          // impose limits
           SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
-          templatePromise = SymbolService.updateAdjacencies (template.content, 1)
-            .then (function() {
-              // find previous Message
-              var previousPromise = (typeof(previous) === 'undefined'
-                                     ? new Promise (function (resolve, reject) { resolve(null) })
-                                     : Message.findOne ({ id: previous })
-                                     .populate ('template')
-                                     .then (function (message) { return message.template }))
-              return previousPromise
-            }).then (function (previousTemplate) {
-              // create the Template
-              var content = template.content
-              return Template.create ({ title: title,
-                                        author: playerID,
-                                        content: content,
-                                        previous: previousTemplate,
-                                        isPublic: isPublic })
-                .then (function (template) {
-                  // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
-                  return Template.update ({ id: template.id },
-                                          { content: content })
-                    .then (function() {
+          // find previous Message
+          var previousPromise = (typeof(previous) === 'undefined'
+                                 ? new Promise (function (resolve, reject) { resolve(null) })
+                                 : (Message.findOne ({ id: previous })
+                                    .populate ('template')
+                                    .then (function (message) { return message.template })))
+          templatePromise = previousPromise.then (function (previousTemplate) {
+            // create the Template
+            var content = template.content
+            return Template.create ({ title: title,
+                                      author: playerID,
+                                      content: content,
+                                      previous: previousTemplate,
+                                      isPublic: isPublic })
+              .then (function (template) {
+                // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
+                return Template.update ({ id: template.id },
+                                        { content: content })
+                  .then (function() {
                       return template
-                    })
+                  })
                 })
-            })
+          })
         }
         templatePromise.then (function (template) {
           result.template = { id: template.id }
@@ -631,6 +628,7 @@ module.exports = {
       .then (function (messages) {
         if (messages && messages.length === 1) {
           var message = messages[0]
+//          sails.log.debug ('Player '+playerID+' rates "'+message.title+'": '+rating+' stars')
           // split author credit between authors of all Symbols used in body
           return SymbolService.expansionAuthors (message.body)
             .then (function (authors) {
@@ -657,6 +655,7 @@ module.exports = {
             }).then (function() {
               return Template.findOne ({ id: message.template })
             }).then (function (template) {
+//              sails.log.debug ('Awarding '+rating+' stars to template '+template.id)
               return Template.update ({ id: template.id },
                                       { nRatings: template.nRatings + 1,
                                         sumRatings: template.sumRatings + rating })

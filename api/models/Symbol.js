@@ -90,6 +90,11 @@ module.exports = {
     }
     return Symbol.findOne (query)
   },
+
+  id2name: function (id) {
+    var sym = Symbol.cache.byId[id]
+    return sym ? sym.name : sym
+  },
   
   // lifecycle callbacks to update cache
   beforeCreate: function (symbol, callback) {

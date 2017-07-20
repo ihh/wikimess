@@ -44,6 +44,14 @@ module.exports = {
     // ratings
     nRatings: { type: 'integer', defaultsTo: 1 },
     sumRatings: { type: 'integer', defaultsTo: 1 },
+  },
+
+  // lifecycle callback to update Adjacency table
+  afterCreate: function (template, callback) {
+    SymbolService.updateAdjacencies (template.content, 1)
+      .then (function() {
+        callback()
+      })
   }
 };
 

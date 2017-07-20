@@ -559,7 +559,7 @@ input {
     float: left;
     text-align: right;
     vertical-align: top;
-    padding-right: 2px;
+    padding-right: 4px;
     font-weight: bold;
     overflow-wrap: break-word;
 }

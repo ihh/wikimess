@@ -212,6 +212,7 @@ module.exports = {
   },
 
   updateAdjacencies: function (rhs, weight) {
+//    sails.log.debug ('Awarding '+weight+' stars to rhs ('+rhs.filter((r)=>typeof(r)==='object').map((r)=>r.id||r.name).join(',')+')')
     var symbolIDsPromise = Promise.map (rhs.filter (function (rhsSym) {
       return typeof(rhsSym) === 'object'
     }), function (rhsSym) {
@@ -230,6 +231,7 @@ module.exports = {
         return Adjacency.findOrCreate ({ predecessor: predId,
                                          successor: id })
           .then (function (adj) {
+//            sails.log.debug ('Awarding '+weight+' stars to symbol adjacency '+adj.id+' ('+(Symbol.id2name(adj.predecessor)||'null')+','+(Symbol.id2name(adj.successor)||'null')+')')
             return Adjacency.update ({ id: adj.id },
                                      { weight: adj.weight + weight })
           })

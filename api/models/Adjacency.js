@@ -47,5 +47,23 @@ module.exports = {
     if (callback)
       callback()
   },
+
+  // lifecycle updates
+  afterCreate: function (adj, callback) {
+    Adjacency.updateCache (adj, callback)
+  },
+
+  afterUpdate: function (adj, callback) {
+    Adjacency.updateCache (adj, callback)
+  },
+
+  afterDestroy: function (adjs, callback) {
+    adjs.forEach (function (adj) {
+      if (Adjacency.cache[adj.predecessor])
+        delete Adjacency.cache[adj.predecessor][adj.successor]
+    })
+    callback()
+  },
+
 };
 

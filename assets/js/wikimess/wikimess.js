@@ -1334,11 +1334,11 @@ var WikiMess = (function() {
             .append (wm.composeDiv = $('<div class="compose">')
                      .append ($('<div class="messageheader">')
                               .append ($('<div class="row">')
-                                       .append ($('<span class="label">').text ('To:'),
+                                       .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
                                                                                   wm.playerSearchResultsDiv.hide())),
                                        $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Subject:'),
+                                       .append ($('<span class="label">').text ('Subject'),
                                                 $('<span class="input">').append (wm.messageTitleInput))),
                               $('<div class="messageborder">')
                               .append (wm.messageComposeDiv,
@@ -2098,17 +2098,17 @@ var WikiMess = (function() {
             .empty()
             .append ($('<div class="messageheader">')
                      .append ($('<div class="row">')
-                              .append ($('<span class="label">').text (props.preposition + ':'),
+                              .append ($('<span class="label">').text (props.preposition),
                                        $('<span class="field">').html (wm.makePlayerSpan (other.name,
                                                                                           other.displayName,
                                                                                           function (evt) {
                                                                                             wm.showOtherStatusPage (other)
                                                                                           }))),
                               $('<div class="row">')
-                              .append ($('<span class="label">').text ('Subject:'),
+                              .append ($('<span class="label">').text ('Subject'),
                                        $('<span class="field">').text (message.title)),
                               $('<div class="row">')
-                              .append ($('<span class="label">').text (props.verb + ':'),
+                              .append ($('<span class="label">').text (props.verb),
                                        $('<span class="field">').text (new Date (message.date).toString()))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body))))
         })
