@@ -74,11 +74,6 @@ input {
     width: 1em;
     height: 1em;
     cursor: pointer;
-}
-
-.wikimess .suggest .button,
-.wikimess .newlhs .button,
-.wikimess .help .button {
     font-size: x-large;
 }
 
