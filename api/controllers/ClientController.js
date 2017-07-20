@@ -481,14 +481,15 @@ module.exports = {
                        senderDeleted: false })
       .populate ('recipient')
       .then (function (message) {
-        result.message = { id: message.id,
-                           recipient: { id: message.recipient.id,
-                                        name: message.recipient.name,
-                                        displayName: message.recipient.displayName },
-                           template: { id: message.template },
-                           title: message.title,
-                           body: message.body,
-                           date: message.createdAt }
+        if (message)
+          result.message = { id: message.id,
+                             recipient: { id: message.recipient.id,
+                                          name: message.recipient.name,
+                                          displayName: message.recipient.displayName },
+                             template: { id: message.template },
+                             title: message.title,
+                             body: message.body,
+                             date: message.createdAt }
         res.json (result)
       }).catch (function (err) {
         console.log(err)

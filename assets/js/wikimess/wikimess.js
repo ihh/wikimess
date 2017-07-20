@@ -62,9 +62,6 @@ var WikiMess = (function() {
 
     this.symbolName = {}
     this.playerNameCache = {}
-    this.composition = {}
-    this.mailboxCache = {}
-    this.messageCache = {}
     
     // log in
     if (config.player) {
@@ -615,7 +612,6 @@ var WikiMess = (function() {
 	    else {
               if (wm.selectSound)
                 wm.selectSound.stop()
-              wm.playSound ('login')
               wm.initPlayerInfo (data.player)
               wm.socket_getPlayerSubscribe (wm.playerID)
                 .then (function() {
@@ -630,11 +626,14 @@ var WikiMess = (function() {
     },
 
     initPlayerInfo: function (player) {
-      var wm = this
-      wm.playerInfo = player
-      wm.playerID = player.id
-      wm.playerLogin = player.name
-      wm.playerName = player.displayName
+      this.playerInfo = player
+      this.playerID = player.id
+      this.playerLogin = player.name
+      this.playerName = player.displayName
+
+      this.composition = {}
+      this.mailboxCache = {}
+      this.messageCache = {}
     },
 
     createPlayer: function() {
@@ -646,7 +645,6 @@ var WikiMess = (function() {
           .done (function (data) {
             if (wm.selectSound)
 	      wm.selectSound.stop()
-	    wm.playSound ('login')
 	    wm.doInitialLogin()
           })
           .fail (function (err) {
@@ -706,7 +704,7 @@ var WikiMess = (function() {
 
     redrawNavBar: function() {
       this.navbar.empty()
-      this.drawNavBar (this.currentTab)
+      this.drawNavBar (this.currentTab.name)
     },
 
     drawNavBar: function (currentTab) {
