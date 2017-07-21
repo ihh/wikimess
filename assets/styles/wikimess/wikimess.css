@@ -206,6 +206,10 @@ input {
     overflow-wrap: break-word;
 }
 
+.wikimess .grammarbar .rule .rhs .content {
+    flex-grow: 1;
+}
+
 .wikimess .grammarbar .rule .rhs .buttons {
     display: flex;
     flex-direction: row;
