@@ -2664,20 +2664,7 @@ var WikiMess = (function() {
       }
 
       ruleControlsDiv
-        .append (editable
-                 ? wm.makeIconButton
-                 ('create', function (evt) {
-                   evt.stopPropagation()
-                   wm.saveCurrentEdit()
-                     .then (function() {
-                       var newRhs = symbol.rules.length ? symbol.rules[symbol.rules.length-1] : [wm.newRhsText()]
-                       symbol.rules.push (newRhs)
-                       ruleControlsDiv.before (wm.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
-                       wm.selectGrammarRule (symbol)
-                       wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                     })
-                 }) : wm.makeIconButton ('dummy'),
-                 wm.makeIconButton ('randomize', randomize),
+        .append (wm.makeIconButton ('randomize', randomize),
                  (symbol.summary
                   ? wm.makeIconButton ('dummy')
                   : wm.makeIconButton ('copy', function() {
@@ -2738,10 +2725,27 @@ var WikiMess = (function() {
                   }),
                  (symbol.summary
                   ? $('<div class="summary">').html (wm.renderMarkdown (symbol.summary))
-                  : symbol.rules.map (function (rhs, n) {
+                  : [wm.placeholderRhsSpan = $('<span class="rhs">').append ($('<span>'),
+                                                                             $('<span class="buttons">')
+                                                                             .html (wm.makeIconButton
+                                                                                    ('create', function (evt) {
+                                                                                      evt.stopPropagation()
+                                                                                      wm.saveCurrentEdit()
+                                                                                        .then (function() {
+                                                                                          var newRhs = [wm.newRhsText()]
+                                                                                          symbol.rules.push (newRhs)
+                                                                                          ruleControlsDiv.before (wm.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
+                                                                                          wm.placeholderRhsSpan.hide()
+                                                                                          wm.selectGrammarRule (symbol)
+                                                                                          wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+                                                                                        })
+                                                                                    })))]
+                  .concat (symbol.rules.map (function (rhs, n) {
                     return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
-                  })),
+                  }))),
                  ruleControlsDiv)
+      if (symbol.rules.length || symbol.summary || !wm.symbolEditableByPlayer (symbol))
+        wm.placeholderRhsSpan.hide()
     },
 
     makeRhsText: function (rhs) {
