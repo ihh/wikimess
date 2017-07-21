@@ -200,7 +200,8 @@ input {
 }
 
 .wikimess .grammarbar .rule .rhs {
-    display: block;
+    display: flex;
+    justify-content: space-between;
     min-height: 1.5em;
     overflow-wrap: break-word;
 }
@@ -299,22 +300,11 @@ input {
 }
 
 .wikimess .grammarbar .rule .lhs {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
     font-weight: bold;
     font-style: italic;
     font-size: large;
     flex-wrap: wrap;
     overflow-wrap: break-word;
-}
-
-.wikimess .grammarbar .rule .lhs .name {
-    max-width: 75%;  /* leave space for buttons */
-}
-
-.wikimess .grammarbar .rule .lhs .buttons {
-    float: right;
 }
 
 .wikimess .grammarbar .rule .button {

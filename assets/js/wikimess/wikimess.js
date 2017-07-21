@@ -1800,8 +1800,16 @@ var WikiMess = (function() {
       do {
         changed = false
         text = text.replace (re, function (match, symbol) {
-          changed = true
-          return wm.randomElement (grammar[symbol])
+          var rhs = grammar[symbol.toLowerCase()]
+          if (rhs) {
+            changed = true
+            var expansion = wm.randomElement(rhs)
+            if (symbol.match (/^[A-Z]/))
+              expansion = expansion.charAt(0).toUpperCase() + expansion.substr(1)
+            return expansion
+          }
+          console.log ("Undefined symbol: " + match)
+          return match
         })
       } while (changed)
       return text
@@ -2375,7 +2383,9 @@ var WikiMess = (function() {
                 if (props.keycodeFilter && !props.keycodeFilter (evt.keyCode))
                   evt.preventDefault()
               })
-/*
+
+            // reacting to focusout/focusin is problematic for debugging and touchy(heh) on mobile devices, so commented out...
+            /*
             input.on ('focusout', function() {
               wm.setTimer ('unfocusTimer', wm.unfocusDelay, wm.saveEditableElement.bind(wm))
             })
@@ -2383,6 +2393,7 @@ var WikiMess = (function() {
               wm.clearTimer ('unfocusTimer')
             })
 */
+
             if (props.maxLength)
               input.attr ('maxlength', props.maxLength)
             wm.saveEditableElement = function() {
@@ -2410,7 +2421,7 @@ var WikiMess = (function() {
       }
       
       var buttonsDiv = $('<span class="buttons">')
-      var contentHtmlDiv = renderHtml (props.content())
+      var contentHtmlDiv = renderHtml (props.content()).addClass ('content')
       div.empty().append (contentHtmlDiv, buttonsDiv)
       
       if (props.otherButtonDivs)
@@ -2694,12 +2705,12 @@ var WikiMess = (function() {
 
       ruleDiv.empty()
         .append (this.makeEditableElement
-                 ({ element: 'span',
+                 ({ element: 'div',
                     className: 'lhs',
                     content: function() { return wm.symbolName[symbol.id] },
                     guessHeight: true,
                     renderText: function(lhs) { return '#' + lhs },
-                    renderHtml: function(lhs) { return $('<span class="name">').text('#'+lhs) },
+                    renderHtml: function(lhs) { return $('<div class="name">').text('#'+lhs) },
                     sanitize: wm.sanitizeHashSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
