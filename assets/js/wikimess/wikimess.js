@@ -118,7 +118,8 @@ var WikiMess = (function() {
                     dummy: 'dummy',
                     emptyStar: 'star-empty',
                     filledStar: 'star-filled',
-                    halfStar: 'star-half' },
+                    halfStar: 'star-half',
+                    menu: 'menu' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
@@ -2427,6 +2428,10 @@ var WikiMess = (function() {
       
       if (props.otherButtonDivs)
         buttonsDiv.append.apply (buttonsDiv, props.otherButtonDivs())
+
+      if (props.beforeContentDiv)
+        contentHtmlDiv.before (props.beforeContentDiv())
+
       if (!props.isConstant) {
         div.off ('click')
           .on ('click', function (evt) {
@@ -2626,7 +2631,6 @@ var WikiMess = (function() {
       var lhs = wm.symbolName[symbol.id]
       var editable = wm.symbolEditableByPlayer (symbol)
       var owned = wm.symbolOwnedByPlayer (symbol)
-      var ruleControlsDiv = $('<div class="rulecontrols">')
 
       function randomize (evt) {
         evt.stopPropagation()
@@ -2664,33 +2668,41 @@ var WikiMess = (function() {
           })
       }
 
-      ruleControlsDiv
-        .append (wm.makeIconButton ('randomize', randomize),
-                 (symbol.summary
-                  ? wm.makeIconButton ('dummy')
-                  : wm.makeIconButton ('copy', function() {
-                    if (window.confirm ('Make a copy of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
-                      wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
-                                                      rules: symbol.rules } })
-                  })),
-                 (owned
-                  ? wm.makeIconButton
-                  ('locked', function() {
-                    wm.saveCurrentEdit()
-                      .then (function() {
-                        if (window.confirm('Really, give up your current ownership of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
-                          wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
-                     })
-                  })
-                  : wm.makeIconButton
-                  ('hide', function (evt) {
-                    evt.stopPropagation()
-                    wm.saveCurrentEdit()
-                      .then (function() {
-                        wm.removeGrammarRule (symbol)
-                      })
-                  })))
+      function copySymbol (evt) {
+        evt.stopPropagation()
+        if (window.confirm ('Make a copy of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
+          wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
+                                          rules: symbol.rules } })
+      }
 
+      function unlockSymbol (evt) {
+        evt.stopPropagation()
+        wm.saveCurrentEdit()
+          .then (function() {
+            if (window.confirm('Really, give up your current ownership of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
+              wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
+          })
+      }
+
+      function hideSymbol (evt) {
+        evt.stopPropagation()
+        wm.saveCurrentEdit()
+          .then (function() {
+            wm.removeGrammarRule (symbol)
+          })
+      }
+
+      function menuSelector (name, func) {
+        return $('<div class="option">')
+          .text (name)
+          .on ('click', function (evt) {
+            menuDiv.hide()
+            wm.modalExitDiv.hide()
+            func (evt)
+          })
+      }
+      
+      var menuDiv = $('<div class="rulemenu">').hide()
       ruleDiv.empty()
         .append (this.makeEditableElement
                  ({ element: 'div',
@@ -2712,6 +2724,17 @@ var WikiMess = (function() {
                     isConstant: !editable,
                     updateCallback: function (newLhs) {
                       return wm.renameSymbol (symbol, newLhs)
+                    },
+                    beforeContentDiv: function() {
+                      return $('<div class="menubutton">').append (wm.makeIconButton ('menu', function (evt) {
+                        evt.stopPropagation()
+                        menuDiv.empty()
+                          .append (menuSelector ('Generate sample text', randomize),
+                                   symbol.summary ? null : menuSelector ('Duplicate phrase', copySymbol),
+                                   owned ? menuSelector ('Release lock', unlockSymbol) : menuSelector ('Hide phrase', hideSymbol))
+                          .show()
+                        wm.modalExitDiv.show()
+                      }), menuDiv)
                     },
                     otherButtonDivs: function() {
                       return ((symbol.owner && symbol.owner.admin)
@@ -2747,8 +2770,7 @@ var WikiMess = (function() {
                                          })))])
                      .concat (symbol.rules.map (function (rhs, n) {
                        return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
-                     })))),
-                 ruleControlsDiv)
+                     })))))
     },
 
     makeRhsText: function (rhs) {
@@ -3066,6 +3088,12 @@ var WikiMess = (function() {
               .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
             if (Object.keys(wm.ruleDiv).length === 0)
               wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">').text ('Your phrase book is empty.'))
+
+            wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
+                                 .on ('click', function() {
+                                   $('.rulemenu').hide()
+                                   wm.modalExitDiv.hide()
+                                 }).hide())
           })
         })
     },

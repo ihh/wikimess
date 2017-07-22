@@ -28,13 +28,13 @@
     background-color: #001800;
 }
 
+.wikimess.l33t .grammarbar .rule .rulemenu {
+    background-color: black;
+}
+
 .wikimess.l33t .grammarbar .rule .rhs .content {
     color: #0a0;
     background-color: #030;
-}
-
-.wikimess.l33t .grammarbar .rule .rulecontrols {
-    background-color: #020;
 }
 
 .wikimess.l33t .grammarbar,

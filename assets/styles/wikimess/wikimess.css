@@ -82,12 +82,6 @@ input {
     float: right;
 }
 
-.wikimess .grammarbar .rulecontrols .button {
-    float: left;
-    padding-top: 4px;
-    padding-right: 4px;
-}
-
 .wikimess .whobar {
     overflow-y: auto;
 }
@@ -197,6 +191,42 @@ input {
     border-width: 1px;
     margin: 6px 2px 2px 2px;
     width: 98%;
+}
+
+.wikimess .grammarbar .rule .menubutton {
+    position: relative;
+    float: right;
+}
+
+.wikimess .grammarbar .rule .rulemenu {
+    position: absolute;
+    right: 0;
+    z-index: 20;
+    border-style: solid;
+    border-width: 1px;
+    padding: 4px;
+    box-shadow: 2px 2px 2px 0px gray;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.wikimess .grammarbar .rule .rulemenu .option {
+    white-space: nowrap;
+    text-align: right;
+    font-weight: normal;
+    font-style: normal;
+    font-size: smaller;
+    text-decoration: underline;
+}
+
+.wikimess .modalexit {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
 }
 
 .wikimess .grammarbar .rule .rhs {
@@ -324,14 +354,6 @@ input {
     font-style: italic;
     padding-left: 4px;
     padding-right: 4px;
-}
-
-.wikimess .grammarbar .rule .rulecontrols {
-    padding-bottom: 4px;
-    padding-right: 40px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
 }
 
 .wikimess .grammarbar .rule .lhs .owner {
@@ -527,6 +549,7 @@ input {
     font-style: italic;
 }
 
+.wikimess .menubutton .button svg,
 .wikimess .ratinginfo .button svg {
     width: 1em;
     height: 1em;

@@ -17,6 +17,10 @@
     background-color: #eee;
 }
 
+.wikimess.plain .grammarbar .rule .rulemenu {
+    background-color: white;
+}
+
 .wikimess.plain .grammarbar .rule .rhs .content {
     background-color: #ccc;
 }
