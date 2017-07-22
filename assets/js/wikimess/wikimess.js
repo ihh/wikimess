@@ -217,47 +217,47 @@ var WikiMess = (function() {
     },
 
     REST_postPlayerSearchPlayersAll: function (playerID, queryText, page) {
-      return this.logPost ('/p/' + playerID + '/search/players/all', { query: queryText, page: page })
+      return this.logPost ('/p/search/players/all', { query: queryText, page: page })
     },
 
     REST_postPlayerSearchPlayersFollowed: function (playerID, queryText) {
-      return this.logPost ('/p/' + playerID + '/search/players/followed', { query: queryText })
+      return this.logPost ('/p/search/players/followed', { query: queryText })
     },
 
     REST_postPlayerSearchSymbolsAll: function (playerID, query, page) {
-      return this.logPost ('/p/' + playerID + '/search/symbols/all', { query: query, page: page })
+      return this.logPost ('/p/search/symbols/all', { query: query, page: page })
     },
 
     REST_postPlayerSearchSymbolsOwned: function (playerID, query) {
-      return this.logPost ('/p/' + playerID + '/search/symbols/owned', { query: query })
+      return this.logPost ('/p/search/symbols/owned', { query: query })
     },
 
     REST_postPlayerConfig: function (playerID, config) {
-      return this.logPost ('/p/' + playerID + '/config', config)
+      return this.logPost ('/p/config', config)
     },
 
     REST_getPlayerFollow: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/follow')
+      return this.logGet ('/p/follow')
     },
 
     REST_getPlayerFollowOther: function (playerID, otherID) {
-      return this.logGet ('/p/' + playerID + '/follow/' + otherID)
+      return this.logGet ('/p/follow/' + otherID)
     },
 
     REST_getPlayerUnfollowOther: function (playerID, otherID) {
-      return this.logGet ('/p/' + playerID + '/unfollow/' + otherID)
+      return this.logGet ('/p/unfollow/' + otherID)
     },
 
     REST_getPlayerStatus: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/status')
+      return this.logGet ('/p/status')
     },
 
     REST_getPlayerStatusId: function (playerID, otherID) {
-      return this.logGet ('/p/' + playerID + '/status/id/' + otherID)
+      return this.logGet ('/p/status/id/' + otherID)
     },
 
     REST_getPlayerId: function (playerID, otherName) {
-      return this.logGet ('/p/' + playerID + '/id/' + otherName)
+      return this.logGet ('/p/id/' + otherName)
     },
 
     REST_postId: function (playerName) {
@@ -265,81 +265,81 @@ var WikiMess = (function() {
     },
 
     REST_getPlayerInbox: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/inbox')
+      return this.logGet ('/p/inbox')
     },
 
     REST_getPlayerInboxCount: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/inbox/count')
+      return this.logGet ('/p/inbox/count')
     },
 
     REST_getPlayerOutbox: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/outbox')
+      return this.logGet ('/p/outbox')
     },
 
     REST_getPlayerMessage: function (playerID, messageID) {
-      return this.logGet ('/p/' + playerID + '/message/' + messageID)
+      return this.logGet ('/p/message/' + messageID)
     },
 
     REST_getPlayerMessageHeader: function (playerID, messageID) {
-      return this.logGet ('/p/' + playerID + '/message/' + messageID + '/header')
+      return this.logGet ('/p/message/' + messageID + '/header')
     },
 
     REST_getPlayerMessageSent: function (playerID, messageID) {
-      return this.logGet ('/p/' + playerID + '/message/' + messageID + '/sent')
+      return this.logGet ('/p/message/' + messageID + '/sent')
     },
 
     REST_postPlayerMessage: function (playerID, message) {
-      return this.logPost ('/p/' + playerID + '/message', message)
+      return this.logPost ('/p/message', message)
     },
 
     REST_deletePlayerMessage: function (playerID, messageID) {
-      return this.logDelete ('/p/' + playerID + '/message/' + messageID)
+      return this.logDelete ('/p/message/' + messageID)
     },
 
     REST_putPlayerMessageRating: function (playerID, messageID, rating) {
-      return this.logPut ('/p/' + playerID + '/message/' + messageID + '/rating',
+      return this.logPut ('/p/message/' + messageID + '/rating',
                           { rating: rating })
     },
 
     REST_getPlayerDrafts: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/drafts')
+      return this.logGet ('/p/drafts')
     },
 
     REST_getPlayerDraft: function (playerID, draftID) {
-      return this.logGet ('/p/' + playerID + '/draft/' + draftID)
+      return this.logGet ('/p/draft/' + draftID)
     },
 
     REST_postPlayerDraft: function (playerID, draft) {
-      return this.logPost ('/p/' + playerID + '/draft', { draft: draft })
+      return this.logPost ('/p/draft', { draft: draft })
     },
 
     REST_putPlayerDraft: function (playerID, draftID, draft) {
-      return this.logPut ('/p/' + playerID + '/draft/' + draftID, { draft: draft })
+      return this.logPut ('/p/draft/' + draftID, { draft: draft })
     },
 
     REST_deletePlayerDraft: function (playerID, draftID) {
-      return this.logDelete ('/p/' + playerID + '/draft/' + draftID)
+      return this.logDelete ('/p/draft/' + draftID)
     },
     
     REST_putPlayerSymbol: function (playerID, symbolID, name, rules) {
-      return this.logPut ('/p/' + playerID + '/symbol/' + symbolID,
+      return this.logPut ('/p/symbol/' + symbolID,
                           { name: name, rules: rules })
     },
 
     REST_deletePlayerSymbol: function (playerID, symbolID) {
-      return this.logDelete ('/p/' + playerID + '/symbol/' + symbolID)
+      return this.logDelete ('/p/symbol/' + symbolID)
     },
 
     REST_getPlayerTemplate: function (playerID, templateID) {
-      return this.logGet ('/p/' + playerID + '/template/' + templateID)
+      return this.logGet ('/p/template/' + templateID)
     },
     
     REST_getPlayerExpand: function (playerID, symbolID) {
-      return this.logGet ('/p/' + playerID + '/expand/' + symbolID)
+      return this.logGet ('/p/expand/' + symbolID)
     },
 
     REST_postPlayerExpand: function (playerID, symbolQueries) {
-      return this.logPost ('/p/' + playerID + '/expand', { symbols: symbolQueries })
+      return this.logPost ('/p/expand', { symbols: symbolQueries })
     },
 
     REST_getHelpHtml: function() {
@@ -347,17 +347,17 @@ var WikiMess = (function() {
     },
 
     REST_getPlayerSuggestTemplates: function (playerID) {
-      return this.logGet ('/p/' + playerID + '/suggest/templates')
+      return this.logGet ('/p/suggest/templates')
     },
 
     REST_getPlayerSuggestReply: function (playerID, templateID) {
-      return this.logGet ('/p/' + playerID + '/suggest/reply/' + templateID)
+      return this.logGet ('/p/suggest/reply/' + templateID)
     },
 
     REST_postPlayerSuggestSymbol: function (playerID, beforeSymbols, afterSymbols, temperature) {
-      return this.logPost ('/p/' + playerID + '/suggest/symbol', { before: beforeSymbols,
-                                                                   after: afterSymbols,
-                                                                   temperature: temperature })
+      return this.logPost ('/p/suggest/symbol', { before: beforeSymbols,
+                                                  after: afterSymbols,
+                                                  temperature: temperature })
     },
     
     // WebSockets interface
@@ -370,27 +370,27 @@ var WikiMess = (function() {
     },
 
     socket_getPlayerSubscribe: function (playerID) {
-      return this.socketGetPromise ('/p/' + playerID + '/subscribe')
+      return this.socketGetPromise ('/p/subscribe')
     },
 
     socket_getPlayerUnsubscribe: function (playerID) {
-      return this.socketGetPromise ('/p/' + playerID + '/unsubscribe')
+      return this.socketGetPromise ('/p/unsubscribe')
     },
     
     socket_postPlayerSymbolNew: function (playerID, symbol) {
-      return this.socketPostPromise ('/p/' + playerID + '/symbol', symbol)
+      return this.socketPostPromise ('/p/symbol', symbol)
     },
 
     socket_getPlayerSymbols: function (playerID) {
-      return this.socketGetPromise ('/p/' + playerID + '/symbols')
+      return this.socketGetPromise ('/p/symbols')
     },
 
     socket_getPlayerSymbol: function (playerID, symbolID) {
-      return this.socketGetPromise ('/p/' + playerID + '/symbol/' + symbolID)
+      return this.socketGetPromise ('/p/symbol/' + symbolID)
     },
 
     socket_getPlayerSymname: function (playerID, symbolName) {
-      return this.socketGetPromise ('/p/' + playerID + '/symname/' + symbolName)
+      return this.socketGetPromise ('/p/symname/' + symbolName)
     },
 
     // helpers to log ajax calls
