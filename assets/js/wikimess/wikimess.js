@@ -92,7 +92,7 @@ var WikiMess = (function() {
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     backspace: 'backspace',
-                    copy: 'copy',
+                    document: 'copy',
                     create: 'circle-plus',
                     destroy: 'trash-can',
                     up: 'up-arrow-button',
@@ -139,11 +139,13 @@ var WikiMess = (function() {
                errors: true,
 	       stack: false },
 
-    noRhsWarning: 'No expansions',
+    noRhsWarning: 'No definitions',
     newRhsTextGrammar: {root: ['#content goes here.',
                                'Here\'s where you add #content.',
                                '#content. Please edit!',
-                               'Blah, blah, #content.',
+                               '#Rhubarb, #content.',
+                               '#Rhubarb: #content.',
+                               '#Content; #rhubarb.',
                                'TODO: #content.',
                                'WRITE ME: #content.',
                                '#Content. Do better if you can.',
@@ -153,6 +155,9 @@ var WikiMess = (function() {
                                'Just add #content.',
                                'More #content.',
                                'Yet more #content.',
+                               '#Content, #content, #rhubarb...',
+                               '#Content, #rhubarb, #content.',
+                               '#Content, #rhubarb; #content.',
                                '#Content and #content.',
                                '#Content, laced with #content.',
                                '#Content, with a dash of #content.',
@@ -165,6 +170,7 @@ var WikiMess = (function() {
                                '#Content, #content, and #content.',
                                '#Content, #content, #content.'],
                         content: ['#adjective #noun'],
+                        rhubarb: ['blah, blah', 'blah', 'rhubarb, rhubarb', 'jaw jaw', 'natter natter', 'wah wah wah'],
                         adjective: ['witty', 'attractive', 'scintillating', 'wonderful', 'amazing', 'engaging', 'brilliant', 'sparkling', 'illuminating', 'sharp', 'dazzling', 'humorous', 'lulzy', 'fascinating', 'radical', 'erudite', 'eloquent', 'hilarious', 'amusing', 'titillating', 'provocative', 'thoughtful', 'literate', 'intelligent', 'clever', 'bold', 'breathtaking', 'beautiful', 'flowery', 'pretty', 'loquacious', 'succinct', 'pithy', 'gracious', 'compassionate', 'warm'],
                         noun: ['prose', 'commentary', 'opinion', 'text', 'content', 'verbiage', 'language', 'output', 'poetry', 'writing', 'insight', 'repartee', 'conversation', 'badinage', 'nonsense']},
     
@@ -1807,7 +1813,7 @@ var WikiMess = (function() {
             changed = true
             var expansion = wm.randomElement(rhs)
             if (symbol.match (/^[A-Z]/))
-              expansion = expansion.charAt(0).toUpperCase() + expansion.substr(1)
+              expansion = expansion.replace(/[a-z]/,function(m){return m.toUpperCase()})
             return expansion
           }
           console.log ("Undefined symbol: " + match)
@@ -2589,7 +2595,23 @@ var WikiMess = (function() {
                                            guessHeight: true,
                                            isConstant: !editable,
                                            confirmDestroy: function() {
-                                             return !symbol.rules[n].length || window.confirm('Delete this expansion for phrase #' + wm.symbolName[symbol.id] + '?')
+                                             var rhsText = wm.makeRhsText(symbol.rules[n])
+                                             // no need to confirm if this expansion is empty
+                                             var confirmed = !symbol.rules[n].length
+                                             // no need to confirm if this is a duplicate of an adjacent expansion
+                                             confirmed = confirmed || 
+                                               ((n > 0 && rhsText === wm.makeRhsText(symbol.rules[n-1]))
+                                                || (n+1 < symbol.rules.length && rhsText === wm.makeRhsText(symbol.rules[n+1])))
+                                             // If we need to confirm after all that, try to give a helpful summary
+                                             var summLen = 40,
+                                                 rhsSumm = rhsText.length < summLen ? rhsText : (rhsText.substr(0,summLen) + '...')
+                                             confirmed = confirmed ||
+                                               window.confirm('Delete ' + (symbol.rules.length === 1
+                                                                           ? 'only definition'
+                                                                           : ('definition '+(n+1)))
+                                                              + ' for phrase #' + wm.symbolName[symbol.id]
+                                                              + ' (\'' + rhsSumm + '\')?')
+                                             return confirmed
                                            },
                                            destroyCallback: function() {
                                              symbol.rules.splice(n,1)
@@ -2670,16 +2692,19 @@ var WikiMess = (function() {
 
       function copySymbol (evt) {
         evt.stopPropagation()
-        if (window.confirm ('Make a copy of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
-          wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
-                                          rules: symbol.rules } })
+        wm.saveCurrentEdit()
+          .then (function() {
+            if (window.confirm ('Make a copy of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
+              wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
+                                              rules: symbol.rules } })
+          })
       }
 
       function unlockSymbol (evt) {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm('Really, give up your current ownership of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
+            if (window.confirm('Give up your current lock on this phrase (#' + wm.symbolName[symbol.id] + ')?'))
               wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
           })
       }
@@ -2729,9 +2754,9 @@ var WikiMess = (function() {
                       return $('<div class="menubutton">').append (wm.makeIconButton ('menu', function (evt) {
                         evt.stopPropagation()
                         menuDiv.empty()
-                          .append (menuSelector ('Generate sample text', randomize),
-                                   symbol.summary ? null : menuSelector ('Duplicate phrase', copySymbol),
-                                   owned ? menuSelector ('Release lock', unlockSymbol) : menuSelector ('Hide phrase', hideSymbol))
+                          .append (menuSelector ('Show random sample', randomize),
+                                   symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
+                                   owned ? menuSelector ('Release my lock', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
                           .show()
                         wm.modalExitDiv.show()
                       }), menuDiv)
@@ -3046,11 +3071,11 @@ var WikiMess = (function() {
                                                              wm.clearSymbolSearch.bind(wm)))),
                                 wm.symbolSearchResultsDiv)
                        .hide(),
-                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase book')),
+                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase editor')),
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
                        ($('<span class="newlhs">').html
-                        (wm.makeSubNavIcon ('create', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) })),
+                        (wm.makeSubNavIcon ('document', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) })),
                         $('<span class="help">').html
                         (wm.makeSubNavIcon ('help', function() {
                           if (wm.showingHelp) {

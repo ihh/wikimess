@@ -43,15 +43,16 @@ var opt = getopt.create([
   ['T' , 'templates=PATH+'  , 'path to js/json template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
-  ['l' , 'lift'             , 'lift sails before loading data'],
-  ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails'],
+  ['s' , 'start'            , 'lift (start) Sails, but don\'t POST anything'],
+  ['l' , 'lift'             , 'lift Sails & POST'],
+  ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails & POST'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
   ['h' , 'help'             , 'display this help message']
 ])              // create Getopt instance
     .bindHelp()     // bind option 'help' to default action
     .parseSystem() // parse command line
 
-var dryRun = opt.options.dryrun
+var dryRun = opt.options.dryrun, start = opt.options.start
 var verbose = opt.options.verbose || defaultVerbosity
 var logColor = ['green', 'yellow', 'magenta', 'cyan', 'red', 'blue']
 function log (v, text) {
@@ -80,10 +81,10 @@ var symbolFilenames = opt.options.symbols || [defaultPath('Symbol',opt)]
 var templateFilenames = opt.options.templates || [defaultPath('Template',opt)]
 
 var sailsApp, promise = Promise.resolve()
-if (opt.options.lift || opt.options.erase) {
+if (opt.options.lift || opt.options.start || opt.options.erase) {
   if (opt.options.erase && fs.existsSync(databasePath)) {
     log (1, 'Erasing temporary database in ' + databasePath)
-    if (!dryRun)
+    if (!(dryRun || start))
       fs.unlinkSync (databasePath)
   }
   log (1, 'Lifting Sails')
@@ -166,7 +167,8 @@ function processFiles (info) {
 
 function processDir (info) {
   var dir = info.filename
-  log (1, 'Processing ' + dir)
+  if (!start)
+    log (1, 'Processing ' + dir)
   return Promise.all (fs.readdirSync(dir).map (function (filename) {
     return processFiles ({ filename: dir + '/' + filename,
                            schema: info.schema,
@@ -180,7 +182,8 @@ function processFile (info) {
   var filename = info.filename,
       parsers = info.parsers,
       schemaFilename = info.schema
-  log (1, 'Processing ' + filename)
+  if (!start)
+    log (1, 'Processing ' + filename)
   var json = readJsonFileSync (filename, parsers)
   json = isArray(json) ? json : [json]
   log (8, JSON.stringify(json))
@@ -248,10 +251,7 @@ function post (info) {
   }
 
   var elem = array[n]
-  log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+1) + ' in ' + filename + ')')
-
   var post_data = JSON.stringify (elem)
-
   var post_options = {
     url: urlPrefix + path,
     jar: jar,
@@ -271,10 +271,12 @@ function post (info) {
             callback: callback })
   }
 
-  if (dryRun) {
-    log(3,post_data)
+  if (dryRun || start) {
+    if (dryRun)
+      log(3,post_data)
     post_next()
   } else {
+    log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+1) + ' in ' + filename + ')')
     
     // Set up the request
     var req = request(post_options, function (err, res, body) {

@@ -332,6 +332,7 @@ input {
 
 .wikimess .closebutton {
     float: right;
+    font-size: x-large;
     width: 1em;
     height: 1em;
     padding: 1px;
