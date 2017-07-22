@@ -891,7 +891,7 @@ module.exports = {
           return Symbol.findOne ({ id: symbolID,
                                    owner: [ playerID, null ] })
         }).then (function (symbol) {
-          result.name[symbolID] = symbol.name
+          result.name[symbolID] = name
           if (symbol.transferable)
             update.owner = playerID
           return Symbol.update ({ id: symbolID },

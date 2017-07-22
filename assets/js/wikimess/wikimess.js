@@ -2500,7 +2500,7 @@ var WikiMess = (function() {
             }).fail (function (err) {
               var reload = wm.reloadCurrentTab.bind(wm)
 	      if (err.status == 400)
-                wm.showModalMessage ("A symbol with that name already exists", reload)
+                wm.showModalMessage ("You can't rename #" + wm.symbolName[symbol.id] + " to #" + newName + ", because #" + newName + " already exists", reload)
               else
                 wm.showModalWebError (err, reload)
             })
