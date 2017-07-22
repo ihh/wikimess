@@ -183,7 +183,7 @@ var WikiMess = (function() {
                            "I must be made of nothing to feel so much nothing.",
                            "There is no there, there.",
                            "Anything can happen in life, especially nothing.",
-                           "If you write a line of zeroes, it's still nothing.",  // This is Ayn Rand. Sorry.
+                           "If you write a line of zeroes, it is still nothing.",  // This is Ayn Rand. Sorry.
                            "I deserve a spring - I owe nobody nothing.",
                            "And if thou gaze long into an abyss, the abyss will also gaze into thee.",
                            "We become aware of the void as we fill it.",
@@ -2602,15 +2602,11 @@ var WikiMess = (function() {
                                              confirmed = confirmed || 
                                                ((n > 0 && rhsText === wm.makeRhsText(symbol.rules[n-1]))
                                                 || (n+1 < symbol.rules.length && rhsText === wm.makeRhsText(symbol.rules[n+1])))
-                                             // If we need to confirm after all that, try to give a helpful summary
-                                             var summLen = 40,
-                                                 rhsSumm = rhsText.length < summLen ? rhsText : (rhsText.substr(0,summLen) + '...')
                                              confirmed = confirmed ||
                                                window.confirm('Delete ' + (symbol.rules.length === 1
-                                                                           ? 'only definition'
+                                                                           ? 'the only definition'
                                                                            : ('definition '+(n+1)))
-                                                              + ' for phrase #' + wm.symbolName[symbol.id]
-                                                              + ' (\'' + rhsSumm + '\')?')
+                                                              + ' for #' + wm.symbolName[symbol.id] + '?')
                                              return confirmed
                                            },
                                            destroyCallback: function() {
@@ -2694,7 +2690,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm ('Make a copy of this phrase (#' + wm.symbolName[symbol.id] + ')?'))
+            if (window.confirm ('Make a copy of #' + wm.symbolName[symbol.id] + '? You will be able to edit the copy.'))
               wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
                                               rules: symbol.rules } })
           })
@@ -2704,7 +2700,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm('Give up your current lock on this phrase (#' + wm.symbolName[symbol.id] + ')?'))
+            if (window.confirm('Give up your current lock on #' + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) it.'))
               wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
           })
       }
