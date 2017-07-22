@@ -2755,7 +2755,7 @@ var WikiMess = (function() {
                       return $('<div class="menubutton">').append (wm.makeIconButton ('menu', function (evt) {
                         evt.stopPropagation()
                         menuDiv.empty()
-                          .append (menuSelector ('Show random sample', randomize),
+                          .append (menuSelector ('Show sample text', randomize),
                                    symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
                                    owned ? menuSelector ('Release my lock', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
                           .show()
