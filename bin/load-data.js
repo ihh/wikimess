@@ -128,11 +128,13 @@ promise = promise.then (processFilenameList ({ path: '/player',
                                                list: playerFilenames.reverse() }))
 
 promise = promise.then (processFilenameList ({ path: '/symbol',
+                                               schema: schemaPath('symbol'),
                                                handler: genericHandler('Symbol'),
                                                parsers: [JSON.parse, eval],
                                                list: symbolFilenames.reverse() }))
 
 promise = promise.then (processFilenameList ({ path: '/template',
+                                               schema: schemaPath('template'),
                                                handler: makeHandler('Template',hasID,getTitle),
                                                parsers: [JSON.parse, eval],
                                                list: templateFilenames.reverse() }))

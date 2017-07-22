@@ -798,10 +798,14 @@ module.exports = {
     var playerID = req.session.passport.user
     var result = {}
     var symInfo = { owner: playerID }
-    if (req.body.symbol)
-      extend (symInfo, { prefix: req.body.symbol.name,
-                         rules: req.body.symbol.rules,
-                         initialized: (req.body.symbol.rules && req.body.symbol.rules.length > 0) })
+    if (req.body.symbol) {
+      var name = req.body.symbol.name
+      var rules = req.body.symbol.rules
+      if (rules && !SchemaService.validateRules (rules, res.badRequest.bind(res)))
+        return
+      extend (symInfo, { prefix: name,
+                         rules: rules,
+                         initialized: (rules && rules.length > 0) })
     Symbol.create (symInfo)
       .then (function (symbol) {
         result.symbol = { id: symbol.id,
@@ -815,6 +819,7 @@ module.exports = {
         console.log(err)
         res.status(500).send ({ message: err })
       })
+    }
   },
 
   // get a particular symbol
@@ -869,45 +874,47 @@ module.exports = {
     var symbolID = parseInt (req.params.symid)
     var name = req.body.name
     var rules = req.body.rules
-    var update = extend ({ initialized: true },
-                         { name: name,
-                           rules: rules })
-    var result = { symbol: { id: symbolID,
-                             name: name,
-                             owner: { id: playerID },
-                             rules: rules,
-                             initialized: true },
-                   name: {} }
+    if (SchemaService.validateRules (rules, res.badRequest.bind(res))) {
+      var update = extend ({ initialized: true },
+                           { name: name,
+                             rules: rules })
+      var result = { symbol: { id: symbolID,
+                               name: name,
+                               owner: { id: playerID },
+                               rules: rules,
+                               initialized: true },
+                     name: {} }
 
-    if (Symbol.cache.byName[name] && Symbol.cache.byName[name].id !== symbolID)
-      res.status(400).send ({error: "The symbol name " + name + " is already in use"})
-    else {
-      SymbolService.imposeSymbolLimit (update.rules, Symbol.maxRhsSyms)
-      SymbolService.createReferences (update.rules)
-        .then (function (rhsSymbols) {
-          rhsSymbols.forEach (function (rhsSymbol) {
-            result.name[rhsSymbol.id] = rhsSymbol.name
+      if (Symbol.cache.byName[name] && Symbol.cache.byName[name].id !== symbolID)
+        res.status(400).send ({error: "The symbol name " + name + " is already in use"})
+      else {
+        SymbolService.imposeSymbolLimit (update.rules, Symbol.maxRhsSyms)
+        SymbolService.createReferences (update.rules)
+          .then (function (rhsSymbols) {
+            rhsSymbols.forEach (function (rhsSymbol) {
+              result.name[rhsSymbol.id] = rhsSymbol.name
+            })
+            return Symbol.findOne ({ id: symbolID,
+                                     owner: [ playerID, null ] })
+          }).then (function (symbol) {
+            result.name[symbolID] = name
+            if (symbol.transferable)
+              update.owner = playerID
+            return Symbol.update ({ id: symbolID },
+                                  update)
+          }).then (function (symbol) {
+            return Player.findOne ({ id: playerID })
+          }).then (function (player) {
+            result.symbol.owner.name = player.name
+            Symbol.message (symbolID, extend ({ message: "update" },
+                                              result))
+            res.json (result)
+          }).catch (function (err) {
+            console.log(err)
+            res.status(500).send ({ message: err })
           })
-          return Symbol.findOne ({ id: symbolID,
-                                   owner: [ playerID, null ] })
-        }).then (function (symbol) {
-          result.name[symbolID] = name
-          if (symbol.transferable)
-            update.owner = playerID
-          return Symbol.update ({ id: symbolID },
-                                update)
-        }).then (function (symbol) {
-          return Player.findOne ({ id: playerID })
-        }).then (function (player) {
-          result.symbol.owner.name = player.name
-          Symbol.message (symbolID, extend ({ message: "update" },
-                                            result))
-          res.json (result)
-        }).catch (function (err) {
-          console.log(err)
-          res.status(500).send ({ message: err })
-        })
-      }
+            }
+    }
   },
 
   // release ownership of a symbol

@@ -20,29 +20,6 @@
     "human": {
       "type": "boolean"
     },
-    "hidden": {
-      "type": "boolean"
-    },
-    "global": {
-      "type": [
-        "number",
-        "string",
-        "object"
-      ]
-    },
-    "home": {
-      "type": "string"
-    },
-    "initialMood": {
-      "type": "string"
-    },
-    "avatarConfig": {
-      "type": [
-        "number",
-        "string",
-        "object"
-      ]
-    },
     "newSignUp": {
       "type": "boolean"
     }
