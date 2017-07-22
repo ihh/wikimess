@@ -1299,7 +1299,7 @@ var WikiMess = (function() {
             .on ('click', wm.stopAnimation.bind(wm))
 
           delete wm.animationExpansion
-          if (config.body) {
+          if (config.body && config.body.rhs && config.body.rhs.find (function (x) { return typeof(x) === 'string' && x.match(/\S/) })) {
             wm.composition.body = config.body
             wm.showMessageBody()
           } else if (config.template)
@@ -2674,7 +2674,12 @@ var WikiMess = (function() {
                             evt.stopPropagation()
                             wm.saveCurrentEdit()
                               .then (function() {
-                                wm.showComposePage
+                                if (wm.composition && wm.composition.template && wm.composition.template.content) {
+                                  wm.composition.template.content.push ({ id: symbol.id })
+                                  wm.composition.body.rhs.push (result.expansion)
+                                  wm.showComposePage()
+                                } else
+                                  wm.showComposePage
                                 ({ template: { content: [ symbol ] },
                                    title: wm.symbolName[symbol.id].replace(/_/g,' '),
                                    body: { rhs: [ result.expansion ] },
