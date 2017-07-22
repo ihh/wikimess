@@ -138,6 +138,7 @@ var WikiMess = (function() {
                errors: true,
 	       stack: false },
 
+    noRhsWarning: 'No expansions',
     newRhsTextGrammar: {root: ['#content goes here.',
                                'Here\'s where you add #content.',
                                '#content. Please edit!',
@@ -2725,27 +2726,29 @@ var WikiMess = (function() {
                   }),
                  (symbol.summary
                   ? $('<div class="summary">').html (wm.renderMarkdown (symbol.summary))
-                  : [wm.placeholderRhsSpan = $('<span class="rhs">').append ($('<span>'),
-                                                                             $('<span class="buttons">')
-                                                                             .html (wm.makeIconButton
-                                                                                    ('create', function (evt) {
-                                                                                      evt.stopPropagation()
-                                                                                      wm.saveCurrentEdit()
-                                                                                        .then (function() {
-                                                                                          var newRhs = [wm.newRhsText()]
-                                                                                          symbol.rules.push (newRhs)
-                                                                                          ruleControlsDiv.before (wm.makeGrammarRhsDiv (symbol, ruleDiv, symbol.rules.length-1))
-                                                                                          wm.placeholderRhsSpan.hide()
-                                                                                          wm.selectGrammarRule (symbol)
-                                                                                          wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                                                                                        })
-                                                                                    })))]
-                  .concat (symbol.rules.map (function (rhs, n) {
-                    return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
-                  }))),
+                  : (((symbol.rules.length || !editable)
+                      ? []
+                      : [$('<span class="rhs">')
+                         .append ($('<span class="placeholder">').text (wm.noRhsWarning),
+                                  $('<span class="buttons">')
+                                  .html (wm.makeIconButton
+                                         ('create', function (evt) {
+                                           evt.stopPropagation()
+                                           wm.saveCurrentEdit()
+                                             .then (function() {
+                                               symbol.rules = [[wm.newRhsText()]]
+                                               wm.saveSymbol(symbol)
+                                                 .then (function() {
+                                                   wm.populateGrammarRuleDiv (ruleDiv, symbol)
+                                                   wm.selectGrammarRule (symbol)
+                                                   // should probably give focus to new RHS here
+                                                 })
+                                             })
+                                         })))])
+                     .concat (symbol.rules.map (function (rhs, n) {
+                       return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
+                     })))),
                  ruleControlsDiv)
-      if (symbol.rules.length || symbol.summary || !wm.symbolEditableByPlayer (symbol))
-        wm.placeholderRhsSpan.hide()
     },
 
     makeRhsText: function (rhs) {

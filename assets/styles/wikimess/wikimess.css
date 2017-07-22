@@ -206,8 +206,13 @@ input {
     overflow-wrap: break-word;
 }
 
+.wikimess .grammarbar .rule .rhs .placeholder {
+    font-style: italic;
+}
+
 .wikimess .grammarbar .rule .rhs .content {
     flex-grow: 1;
+    margin-right: 4px;
 }
 
 .wikimess .grammarbar .rule .rhs .buttons {
