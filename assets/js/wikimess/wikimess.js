@@ -2762,14 +2762,18 @@ var WikiMess = (function() {
                       }), menuDiv)
                     },
                     otherButtonDivs: function() {
-                      return ((symbol.owner && symbol.owner.admin)
-                              ? []
-                              : [$('<span class="owner">')
-                                 .html ((symbol.owner && symbol.owner.id)
-                                        ? wm.makePlayerSpan (symbol.owner.name,
+                      var divs = []
+                      if (symbol.owner && !symbol.owner.admin) {
+                        var ownerSpan = $('<span class="owner">')
+                        if (symbol.owner.id)
+                          ownerSpan.html (wm.makePlayerSpan (symbol.owner.name,
                                                              null,
-                                                             wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner)))
-                                        : "no owner")])
+                                                             wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))))
+                        else
+                          ownerSpan.text ('no owner')
+                        divs.push (ownerSpan)
+                      }
+                      return divs
                     },
                   }),
                  (symbol.summary

@@ -1,7 +1,7 @@
 /* Colors, l33t theme */
 .wikimess.l33t {
     background-color: black;
-    color: white;
+    color: #0c0;
 }
 
 .wikimess.l33t textarea {
@@ -20,7 +20,7 @@
 }
 
 .wikimess.l33t .messageborder {
-    border-color: white;
+    border-color: green;
 }
 
 .wikimess.l33t .grammarbar .rule {
@@ -30,6 +30,7 @@
 
 .wikimess.l33t .grammarbar .rule .rulemenu {
     background-color: black;
+    color: #0c0;
 }
 
 .wikimess.l33t .grammarbar .rule .rhs .content {
@@ -39,7 +40,7 @@
 
 .wikimess.l33t .grammarbar,
 .wikimess.l33t .menubar {
-    color: white;
+    color: green;
 }
 
 .wikimess.l33t .menubar a,
@@ -49,7 +50,7 @@
 }
 
 .wikimess.l33t .detailbar .titlebar {
-    color: white;
+    color: #0c0;
 }
 
 .wikimess.l33t .inputbar {
@@ -60,15 +61,15 @@
 .wikimess.l33t .inputbar input[type=password] {
     border-color: #444;
     background-color: #333;
-    color: white;
+    color: #0f0;
 }
 
 .wikimess.l33t .menubar li {
-    color: white;
+    color: green;
 }
 
 .wikimess.l33t .menubar .card {
-    color: white;
+    color: green;
     background-color: #444;
 }
 
@@ -130,6 +131,10 @@
 
 .wikimess.l33t .messageheader .input .results {
     background-color: black;
+}
+
+.wikimess.l33t .search .query input {
+    color: green;
 }
 
 .wikimess.l33t .menubar .listitem,

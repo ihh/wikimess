@@ -99,6 +99,10 @@
     background-color: white;
 }
 
+.wikimess.plain .search .query input {
+    color: white;
+}
+
 .wikimess.plain .menubar .listitem,
 .wikimess.plain .detailbar .titlebar,
 .wikimess.plain .compose .messageheader,
