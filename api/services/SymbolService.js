@@ -163,6 +163,12 @@ module.exports = {
                                  : { id: query.id, name: query.name }))
           if (!symbol)
             return Promise.resolve (symInfo)
+
+          if (typeof(symbolQueryOrString) === 'object')
+            ['cap', 'upper', 'plural', 'a'].forEach (function (key) {
+              if (symbolQueryOrString[key])
+                symInfo[key] = symbolQueryOrString[key]
+            })
             
           if (depth[symbol.id] >= Symbol.maxDepth)
             return Promise.resolve (extend (symInfo, { limit: { type: 'depth', n: Symbol.maxDepth } }))

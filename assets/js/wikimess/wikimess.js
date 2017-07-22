@@ -2705,7 +2705,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm('Give up your current lock on #' + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) it.'))
+            if (window.confirm('Give up your lock on #' + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) the phrase.'))
               wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
           })
       }
@@ -2757,7 +2757,7 @@ var WikiMess = (function() {
                         menuDiv.empty()
                           .append (menuSelector ('Show sample text', randomize),
                                    symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
-                                   owned ? menuSelector ('Release my lock', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
+                                   owned ? menuSelector ('Release this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
                           .show()
                         wm.modalExitDiv.show()
                       }), menuDiv)
