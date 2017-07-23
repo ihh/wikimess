@@ -3088,13 +3088,22 @@ var WikiMess = (function() {
                           if (wm.showingHelp) {
                             wm.infoPane.hide()
                             wm.showingHelp = false
-                          } else                            
+                          } else
 		            wm.REST_getHelpHtml().then (function (helpHtml) {
 		              wm.saveCurrentEdit()
                                 .then (function() {
                                   wm.showingHelp = true
 		                  wm.infoPaneTitle.text ('Help')
 		                  wm.infoPaneContent.html (helpHtml)
+                                  var icons = wm.infoPaneContent.find('.helpicon')
+                                  icons.each (function (n) {
+                                    var iconSpan = icons.slice(n,n+1), iconName = iconSpan.attr('icon')
+                                    wm.getIconPromise(wm.iconFilename[iconName])
+                                      .done (function (svg) {
+                                        svg = wm.colorizeIcon (svg, wm.themeInfo.iconColor)
+                                        iconSpan.append ($(svg))
+                                      })
+                                  })
                                   wm.infoPaneControls.empty()
                                   wm.infoPaneLeftControls.empty()
 		                  wm.infoPane.show()

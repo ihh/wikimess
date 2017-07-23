@@ -338,6 +338,14 @@ input {
     cursor: pointer;
 }
 
+.wikimess .helpicon {
+    font-size: x-large;
+    width: 1em;
+    height: 1em;
+    padding: 1px;
+    display: inline-block;
+}
+
 .wikimess .grammarbar .rule .lhs {
     font-weight: bold;
     font-style: italic;
