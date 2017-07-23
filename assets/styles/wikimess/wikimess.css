@@ -203,6 +203,7 @@ input {
     z-index: 20;
     border-style: solid;
     border-width: 1px;
+    border-radius: 4px;
     padding: 4px;
     box-shadow: 2px 2px 2px 0px gray;
     cursor: pointer;
@@ -736,6 +737,7 @@ input {
 .wikimess .subnavbar svg {
     width: 1em;
     height: 1em;
+    cursor: pointer;
 }
 
 .wikimess .subnavbar .inactive {

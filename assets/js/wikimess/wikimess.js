@@ -95,6 +95,8 @@ var WikiMess = (function() {
                     document: 'copy',
                     create: 'circle-plus',
                     destroy: 'trash-can',
+                    plus: 'circle-plus',
+                    minus: 'circle-minus',
                     up: 'up-arrow-button',
                     down: 'down-arrow-button',
                     help: 'help',
@@ -2461,7 +2463,7 @@ var WikiMess = (function() {
             editCallback (evt)
         })
         if (props.destroyCallback)
-          buttonsDiv.append (wm.makeIconButton ('destroy', function (evt) {
+          buttonsDiv.append (wm.makeIconButton (props.destroyIcon || 'destroy', function (evt) {
             evt.stopPropagation()
             wm.saveCurrentEdit()
               .then (function() {
@@ -2623,6 +2625,7 @@ var WikiMess = (function() {
                                                               + ' for #' + wm.symbolName[symbol.id] + '?')
                                              return confirmed
                                            },
+                                           destroyIcon: 'minus',
                                            destroyCallback: function() {
                                              symbol.rules.splice(n,1)
                                              wm.populateGrammarRuleDiv (ruleDiv, symbol)
@@ -2639,7 +2642,7 @@ var WikiMess = (function() {
                                              return wm.ruleDiv[symbol.id].find('.rhs').eq(n)
                                            },
                                            otherButtonDivs: function() {
-                                             return editable ? [wm.makeIconButton ('create', function(evt) {
+                                             return editable ? [wm.makeIconButton ('plus', function(evt) {
                                                evt.stopPropagation()
                                                wm.saveCurrentEdit()
                                                  .then (function() {
@@ -2801,7 +2804,7 @@ var WikiMess = (function() {
                          .append ($('<span class="placeholder">').text (wm.noRhsWarning),
                                   $('<span class="buttons">')
                                   .html (wm.makeIconButton
-                                         ('create', function (evt) {
+                                         ('plus', function (evt) {
                                            evt.stopPropagation()
                                            wm.saveCurrentEdit()
                                              .then (function() {

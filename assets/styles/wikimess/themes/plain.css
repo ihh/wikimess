@@ -13,8 +13,10 @@
 }
 
 .wikimess.plain .grammarbar .rule {
-    border-color: black;
+    border-color: #888;
     background-color: #eee;
+    border-radius: 4px;
+    box-shadow: 2px 2px 2px 0px #444;
 }
 
 .wikimess.plain .grammarbar .rule .rulemenu {
@@ -23,6 +25,8 @@
 
 .wikimess.plain .grammarbar .rule .rhs .content {
     background-color: #ccc;
+    border-radius: 4px;
+    padding: 2px;
 }
 
 .wikimess.plain .playerlink,
@@ -110,6 +114,10 @@
     background-color: #eee;
 }
 
+.wikimess.plain .compose .messagecompose {
+    background-color: #f8f8ff;
+}
+		      
 .wikimess.plain .configmenu .option.checked {
     background-color: #ccc;
 }
