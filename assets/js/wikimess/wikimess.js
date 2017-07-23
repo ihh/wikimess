@@ -1504,7 +1504,7 @@ var WikiMess = (function() {
       // first, intercept whitespace strings and return them unmodified
       if (!markdown.match (/\S/))
         return markdown
-      // next, call marked to convert Markdown to HTML string
+      // next, call marked library to convert Markdown to HTML string
       var renderedHtml = marked (markdown, this.markedConfig)
           .replace (/@(\w+)/g, function (match, name) {
             return '<span class="playertag">@<span class="name">' + name + '</span></span>'
@@ -2138,7 +2138,12 @@ var WikiMess = (function() {
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
                                        $('<span class="field">').text (new Date (message.date).toString()))),
-                     $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body))))
+                     $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
+                                                                                           function (html) {
+                                                                                             return html
+                                                                                               .replace (/\$me\b/ig, function() { return '@' + wm.playerLogin })
+                                                                                               .replace (/\$you\b/ig, function() { return '@' + other.name })
+                                                                                           })))
         })
     },
 
@@ -2676,7 +2681,7 @@ var WikiMess = (function() {
                               .then (function() {
                                 if (wm.composition && wm.composition.template && wm.composition.template.content) {
                                   wm.composition.template.content.push ({ id: symbol.id })
-                                  wm.composition.body.rhs.push (result.expansion)
+                                  wm.composition.body.rhs = wm.composition.body.rhs.concat (result.expansion.rhs)
                                   wm.showComposePage()
                                 } else
                                   wm.showComposePage
