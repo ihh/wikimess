@@ -2760,6 +2760,8 @@ var WikiMess = (function() {
                                    owned ? menuSelector ('Release this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
                           .show()
                         wm.modalExitDiv.show()
+                        wm.infoPane.hide()
+                        wm.showingHelp = false
                       }), menuDiv)
                     },
                     otherButtonDivs: function() {
@@ -3076,7 +3078,7 @@ var WikiMess = (function() {
                                                              wm.clearSymbolSearch.bind(wm)))),
                                 wm.symbolSearchResultsDiv)
                        .hide(),
-                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase editor')),
+                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase book')),
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
                        ($('<span class="newlhs">').html
@@ -3117,7 +3119,7 @@ var WikiMess = (function() {
             wm.grammarBarDiv
               .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
             if (Object.keys(wm.ruleDiv).length === 0)
-              wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">').text ('Your phrase book is empty.'))
+              wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">').text ('Search existing phrases, or add a new one.'))
 
             wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
                                  .on ('click', function() {

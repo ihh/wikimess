@@ -59,8 +59,7 @@ module.exports.policies = {
 
   // non-permissive policy for player controller
   'ClientController': {
-    'create': true,
-    'otherStatus': true,
+    'createPlayer': true,
     '*': clientPolicy
   },
 
