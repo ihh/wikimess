@@ -1,12 +1,12 @@
 [{"name":"polite_closing",
   "rules":[
-    ["\nYours,\n\nMe.\n"],
-    ["\nIn Closing, etc.,\n\nMe.\n"],
-    ["\nYours Faithfully,\n\nMe.\n"],
-    ["\nYours Sincerely,\n\nMe.\n"],
-    ["\nYours in Good Faith,\n\nMe.\n"],
-    ["\nYours Honorably,\n\nMe.\n"],
-    ["\nYours as Always,\n\nMe.\n"],
-    ["\nEver Yours,\n\nMe.\n"],
+    ["\nYours,\n\n$me\n"],
+    ["\nIn Closing, etc.,\n\n$me\n"],
+    ["\nYours Faithfully,\n\n$me\n"],
+    ["\nYours Sincerely,\n\n$me\n"],
+    ["\nYours in Good Faith,\n\n$me\n"],
+    ["\nYours Honorably,\n\n$me\n"],
+    ["\nYours as Always,\n\n$me\n"],
+    ["\nEver Yours,\n\n$me\n"],
     ["\nYours....\n"]
   ]}]

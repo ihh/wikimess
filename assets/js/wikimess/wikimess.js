@@ -1549,17 +1549,10 @@ var WikiMess = (function() {
     animateExpansion: function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
-      var nSymbols = 0
       var markdown = this.renderMarkdown
       (this.makeExpansionText (this.animationExpansion, true)
        .replace (/^\s*$/, wm.emptyMessageWarning),
-       function (html) {
-         return html.replace
-         (/#(\w+)\.([a-z]+)/g,
-          function (_match, name, className) {
-            return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
-          })
-       })
+       function (html) { return wm.linkSymbols (wm.expandVars (html)) })
       
       this.animationDiv.html (markdown)
                
@@ -1569,9 +1562,25 @@ var WikiMess = (function() {
                        this.animateExpansion.bind(this))
     },
 
+    linkSymbols: function (html) {
+      var nSymbols = 0
+      return html.replace
+      (/#(\w+)\.([a-z]+)/g,
+       function (_match, name, className) {
+         return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
+       })
+    },
+
+    expandVars: function (html, varVal) {
+      varVal = varVal || { me: '<span class="var">Sender</span>',
+                           you: '<span class="var">Recipient</span>' }
+      return html
+        .replace (/\$(\w+)\b/ig, function (m, v) { return varVal[v] || m })
+    },
+
     stopAnimation: function() {
       if (this.expansionAnimationTimer) {
-        this.animationDiv.html (this.renderMarkdown (this.makeExpansionText (this.animationExpansion)))
+        this.animationDiv.html (this.renderMarkdown (this.makeExpansionText (this.animationExpansion), this.expandVars))
         this.clearTimer ('expansionAnimationTimer')
         return true
       }
@@ -1785,7 +1794,8 @@ var WikiMess = (function() {
         div.html (this.renderMarkdown (wm.makeExpansionText (expansion)
                                        .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
                                                            ? wm.emptyTemplateWarning
-                                                           : wm.emptyMessageWarning))))
+                                                           : wm.emptyMessageWarning)),
+                                       this.expandVars))
       }
     },
 
@@ -2140,9 +2150,8 @@ var WikiMess = (function() {
                                        $('<span class="field">').text (new Date (message.date).toString()))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
                                                                                            function (html) {
-                                                                                             return html
-                                                                                               .replace (/\$me\b/ig, function() { return '@' + wm.playerLogin })
-                                                                                               .replace (/\$you\b/ig, function() { return '@' + other.name })
+                                                                                             return wm.expandVars (html, { me: '@' + wm.playerLogin,
+                                                                                                                           you: '@' + other.name })
                                                                                            })))
         })
     },

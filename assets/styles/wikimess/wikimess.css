@@ -281,6 +281,11 @@ input {
     padding-left: 4px;
 }
 
+.wikimess .var {
+    font-style: italic;
+    text-decoration: underline;
+}
+
 .wikimess .playerlink .name,
 .wikimess .lhslink .name {
     text-decoration: underline;
