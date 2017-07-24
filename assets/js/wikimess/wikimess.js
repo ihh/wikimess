@@ -3047,7 +3047,6 @@ var WikiMess = (function() {
               .then (function (result) {
                 wm.symbolCache = {}
                 result.symbols.forEach (function (symbol) {
-                  symbol.owner.name = wm.playerLogin
                   wm.symbolCache[symbol.id] = symbol
                 })
                 $.extend (wm.symbolName, result.name)

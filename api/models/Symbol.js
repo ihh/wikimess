@@ -25,6 +25,11 @@ module.exports = {
       defaultsTo: function() { return Player.adminUserId }
     },
 
+    ownershipTerm: {
+      type: 'integer',  // milliseconds until lock expires
+      defaultsTo: 24*60*1000
+    },
+    
     transferable: {
       type: 'boolean',
       defaultsTo: true

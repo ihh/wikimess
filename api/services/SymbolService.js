@@ -34,6 +34,20 @@ module.exports = {
       return result
     })
   },
+
+  makeOwnerID: function (symbol) {
+    var result = null
+    var locked = (Date.parse(symbol.updatedAt) + symbol.ownershipTerm > Date.now())
+    if (symbol.owner && locked) {
+      if (typeof(symbol.owner) === 'object')
+        result = { id: symbol.owner.id,
+                   login: symbol.owner.name,
+                   name: symbol.owner.displayName }
+      else
+        result = { id: symbol.owner }
+    }
+    return result
+  },
   
   imposeSymbolLimit: function (rules, limit) {
     rules.forEach (function (rhs) {

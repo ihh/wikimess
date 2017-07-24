@@ -154,8 +154,7 @@ module.exports = {
           res.json ({ symbols: ownedSymbols.concat(unownedSymbols).map (function (symbol) {
             return { id: symbol.id,
                      name: symbol.name,
-                     owner: { id: symbol.owner.id,
-                              name: symbol.owner.displayName } } })
+                     owner: SymbolService.makeOwnerID (symbol) } })
                     })
         })
       })
@@ -168,16 +167,14 @@ module.exports = {
     Symbol.find ({ name: { contains: query } })
       .limit (resultsPerPage + 1)
       .skip (resultsPerPage * page)
+      .populate ('owner')
       .then (function (symbols) {
         res.json ({ page: page,
                     more: symbols.length > resultsPerPage,
                     symbols: symbols.slice(0,resultsPerPage).map (function (symbol) {
                       return { id: symbol.id,
                                name: symbol.name,
-                               owner: symbol.owner
-                               ? { id: symbol.owner.id,
-                                   name: symbol.owner.displayName }
-                               : null } })
+                               owner: SymbolService.makeOwnerID (symbol) } })
                   })
       })
   },
@@ -775,15 +772,19 @@ module.exports = {
   getSymbolsByOwner: function (req, res) {
     var playerID = req.session.passport.user
     var result = { owner: playerID }
-    Symbol.find ({ owner: playerID })
-      .then (function (symbols) {
-        result.symbols = symbols.map (function (symbol) {
-          return { id: symbol.id,
-                   owner: { id: playerID },
-                   rules: symbol.rules }
-        })
-        Symbol.subscribe (req, symbols.map (function (symbol) { return symbol.id }))
-        return SymbolService.resolveReferences (symbols)
+    Player.findOne ({ id: playerID })
+      .then (function (player) {
+        return Symbol.find ({ owner: playerID })
+          .then (function (symbols) {
+            result.symbols = symbols.map (function (symbol) {
+              symbol.owner = player
+              return { id: symbol.id,
+                       owner: SymbolService.makeOwnerID (symbol),
+                       rules: symbol.rules }
+            })
+            Symbol.subscribe (req, symbols.map (function (symbol) { return symbol.id }))
+            return SymbolService.resolveReferences (symbols)
+          })
       }).then (function (names) {
         result.name = names
         res.json (result)
