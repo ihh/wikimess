@@ -204,7 +204,6 @@ input {
     border-style: solid;
     border-width: 1px;
     border-radius: 4px;
-    padding: 4px;
     box-shadow: 2px 2px 2px 0px gray;
     cursor: pointer;
     display: flex;
@@ -216,10 +215,17 @@ input {
     text-align: right;
     font-weight: normal;
     font-style: normal;
-    font-size: smaller;
+    font-size: large;
     text-decoration: underline;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-bottom: 4px;
 }
 
+.wikimess .grammarbar .rule .rulemenu .option:nth-child(1) {
+    padding-top: 4px;
+}
+					       
 .wikimess .modalexit {
     position: absolute;
     top: 0;
@@ -316,7 +322,7 @@ input {
     padding: 1px;
 }
 
-.wikimess .grammarinfopane .controls {
+.wikimess .grammarinfopane .rightcontrols {
     font-size: x-large;
     float: right;
 }
@@ -326,13 +332,27 @@ input {
     float: left;
 }
 
+.wikimess .grammarinfopane .leftcontrols .hint,
+.wikimess .grammarinfopane .rightcontrols .hint {
+    font-size: smaller;
+    font-style: italic;
+    cursor: pointer;
+}
+
 .wikimess .leftcontrols .button,
-.wikimess .controls .button {
-    float: right;
+.wikimess .rightcontrols .button {
     width: 1em;
     height: 1em;
     padding: 1px;
     cursor: pointer;
+}
+
+.wikimess .leftcontrols .button {
+    float: left;
+}
+
+.wikimess .rightcontrols .button {
+    float: right;
 }
 
 .wikimess .closebutton {
@@ -665,7 +685,7 @@ input {
 .wikimess .compose .suggest {
     height: 15vh;
     min-height: 15vh;
-    font-size: x-large;
+    font-size: larger;
     
     display: flex;
     flex-direction: row;

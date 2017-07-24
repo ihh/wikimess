@@ -1196,7 +1196,7 @@ var WikiMess = (function() {
                   var updatedNewValBefore = newValBefore + getInsertText (symbol)
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input, updatedNewValBefore.length)
-                  input.focus()
+//                  input.focus()
                   textareaAutosuggest (input)
                 })
             }
@@ -2490,7 +2490,7 @@ var WikiMess = (function() {
     },
 
     setCaretToPos: function (input, pos) {
-      this.setSelectionRange (input, pos, pos)
+      this.setSelectionRange(input, pos, pos)
     },
     
     saveSymbol: function (symbol) {
@@ -2683,26 +2683,33 @@ var WikiMess = (function() {
                                       expansion: result.expansion,
                                       inEditor: true,
                                       animate: true })
-                wm.infoPaneLeftControls.html (wm.makeIconButton ('randomize', randomize))
-                wm.infoPaneControls
-                  .html (wm.makeIconButton
-                         ('forward',
-                          function (evt) {
-                            evt.stopPropagation()
-                            wm.saveCurrentEdit()
-                              .then (function() {
-                                if (wm.composition && wm.composition.template && wm.composition.template.content) {
-                                  wm.composition.template.content.push ({ id: symbol.id })
-                                  wm.composition.body.rhs = wm.composition.body.rhs.concat (result.expansion.rhs)
-                                  wm.showComposePage()
-                                } else
-                                  wm.showComposePage
-                                ({ template: { content: [ symbol ] },
-                                   title: wm.symbolName[symbol.id].replace(/_/g,' '),
-                                   body: { rhs: [ result.expansion ] },
-                                   focus: 'playerSearchInput' })
-                              })
-                          }))
+                wm.infoPaneLeftControls
+                  .empty()
+                  .append ($('<span class="hint">').text('Re-roll'),
+                           wm.makeIconButton ('randomize'))
+                  .off('click')
+                  .on('click',randomize)
+                wm.infoPaneRightControls
+                  .empty()
+                  .append ($('<span class="hint">').text('Add to draft'),
+                           wm.makeIconButton ('forward'))
+                  .off('click')
+                  .on('click', function (evt) {
+                    evt.stopPropagation()
+                    wm.saveCurrentEdit()
+                      .then (function() {
+                        if (wm.composition && wm.composition.template && wm.composition.template.content) {
+                          wm.composition.template.content.push ({ id: symbol.id })
+                          wm.composition.body.rhs = wm.composition.body.rhs.concat (result.expansion.rhs)
+                          wm.showComposePage()
+                        } else
+                          wm.showComposePage
+                        ({ template: { content: [ symbol ] },
+                           title: wm.symbolName[symbol.id].replace(/_/g,' '),
+                           body: { rhs: [ result.expansion ] },
+                           focus: 'playerSearchInput' })
+                      })
+                  })
 		wm.infoPane.show()
               })
           })
@@ -2774,7 +2781,7 @@ var WikiMess = (function() {
                         menuDiv.empty()
                           .append (menuSelector ('Show sample text', randomize),
                                    symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
-                                   owned ? menuSelector ('Release this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
+                                   owned ? menuSelector ('Unlock this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
                           .show()
                         wm.modalExitDiv.show()
                         wm.infoPane.hide()
@@ -3070,7 +3077,7 @@ var WikiMess = (function() {
                                 wm.infoPaneTitle,
 		                wm.infoPaneContent,
                                 wm.infoPaneLeftControls = $('<span class="leftcontrols">'),
-		                wm.infoPaneControls = $('<span class="controls">'))
+		                wm.infoPaneRightControls = $('<span class="rightcontrols">'))
 
             wm.showingHelp = false
 
@@ -3120,7 +3127,7 @@ var WikiMess = (function() {
                                         iconSpan.append ($(svg))
                                       })
                                   })
-                                  wm.infoPaneControls.empty()
+                                  wm.infoPaneRightControls.empty()
                                   wm.infoPaneLeftControls.empty()
 		                  wm.infoPane.show()
                                 })
