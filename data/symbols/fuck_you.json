@@ -45,7 +45,7 @@
   "transferable":false,
   "rules":[["with ",{"name":"fuck_dildo"}],
            ["in ",{"name":"fuck_location"}],
-           ["on "],{"name":"fuck_surface"}]},
+           ["on ",{"name":"fuck_surface"}]]},
 
  {"name":"fuck_dildo",
   "owner":null,
