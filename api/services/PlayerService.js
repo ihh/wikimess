@@ -28,25 +28,33 @@ module.exports = {
   },
 
   makeStatus: function (info) {
-    var player = info.player, follower = info.follower, isPublic = info.isPublic
-
-    var status = { id: player.id,
-                   name: player.name,
-                   displayName: player.displayName,
-                   gender: player.gender,
-                   publicBio: player.publicBio,
-                   nSenderRatings: player.nSenderRatings,
-                   sumSenderRatings: player.sumSenderRatings,
-                   nAuthorRatings: player.nAuthorRatings,
-                   sumAuthorRatings: player.sumAuthorRatings,
-                   sumAuthorRatingWeights: player.sumAuthorRatingWeights,
-                   human: player.human }
+    var player = info.player, follower = info.follower, messages = info.messages, before = info.before, limit = info.limit || 10
+    
+    var status = {}
+    if (!before)
+      extend (status,
+              { id: player.id,
+                name: player.name,
+                displayName: player.displayName,
+                gender: player.gender,
+                publicBio: player.publicBio,
+                nSenderRatings: player.nSenderRatings,
+                sumSenderRatings: player.sumSenderRatings,
+                nAuthorRatings: player.nAuthorRatings,
+                sumAuthorRatings: player.sumAuthorRatings,
+                sumAuthorRatingWeights: player.sumAuthorRatingWeights,
+                human: player.human })
 
     if (follower) {
       if (!player.noMailUnlessFollowed)
         status.reachable = true
-      return Follow.find ({ or: [{ follower: follower.id, followed: player.id },
-                                 { followed: follower.id, follower: player.id }] })
+
+      var followPromise
+      if (before)
+        followPromise = Promise.resolve(true)
+      else
+        followPromise = Follow.find ({ or: [{ follower: follower.id, followed: player.id },
+                                            { followed: follower.id, follower: player.id }] })
         .then (function (follows) {
           follows.forEach (function (follow) {
             if (follow.follower === follower.id && follow.followed === player.id)
@@ -56,6 +64,54 @@ module.exports = {
               status.reachable = true
             }
           })
+        })
+      
+      var messagePromise
+      if (messages) {
+       var query = { or: [{ sender: player.id, recipient: follower.id, recipientDeleted: false },
+                          { sender: follower.id, recipient: player.id, senderDeleted: false }] }
+        if (before)
+          query.id = { '<': before }
+        messagePromise = Message.find (query)
+          .sort ('id DESC')
+          .limit (limit + 1)
+          .then (function (msgs) {
+            if (msgs.length > limit) {
+              msgs.pop()
+              status.more = true
+            }
+            status.messages = msgs.map (function (message) {
+              var toFollower = message.recipient === follower
+              return { id: message.id,
+                       sender: message.sender,
+                       body: message.body,
+                       date: message.createdAt,
+                       rating: toFollower ? message.rating : undefined }
+            })
+            var messagesToFollower = msgs.filter (function (m) { return m.recipient === follower })
+            return Message.update ({ id: messagesToFollower.map (function (m) { return m.id }) },
+                                   { read: true })
+          }).then (function() {
+            if (!before)
+              return Draft.find ({ sender: follower.id,
+                                   recipient: player.id })
+              .sort('createdAt ASC')
+              .limit(1)
+              .then (function (drafts) {
+                if (drafts.length) {
+                  var draft = drafts[0]
+                  status.draft = { id: draft.id,
+                                   template: draft.template,
+                                   body: draft.body }
+                }
+              })
+          })
+      }
+
+      return followPromise
+        .then (function() {
+          return messagePromise
+        }).then (function() {
           return status
         })
     } else {

@@ -72,9 +72,10 @@ module.exports.routes = {
   'GET /p/subscribe':     'ClientController.subscribePlayer',
   'GET /p/unsubscribe':   'ClientController.unsubscribePlayer',
 
-  'GET /p/status':            'ClientController.selfStatus',
-  'GET /p/status/id/:id':     'ClientController.otherStatusById',
-  'GET /p/id/:name':          'ClientController.getPlayerId',
+  'GET /p/status':                  'ClientController.selfStatus',
+  'GET /p/id/:name':                'ClientController.getPlayerId',
+  'GET /p/thread/:id':              'ClientController.getThread',
+  'GET /p/thread/:id/before/:date': 'ClientController.getThreadBefore',
 
   'GET /p/follow':          'ClientController.listFollowed',
   'GET /p/follow/:other':   'ClientController.follow',

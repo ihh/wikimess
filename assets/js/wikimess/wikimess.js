@@ -254,8 +254,8 @@ var WikiMess = (function() {
       return this.logGet ('/p/status')
     },
 
-    REST_getPlayerStatusId: function (playerID, otherID) {
-      return this.logGet ('/p/status/id/' + otherID)
+    REST_getPlayerThread: function (playerID, otherID) {
+      return this.logGet ('/p/thread/' + otherID)
     },
 
     REST_getPlayerId: function (playerID, otherName) {
@@ -2221,7 +2221,7 @@ var WikiMess = (function() {
       var wm = this
       if (follow.id === this.playerID)
         return this.showStatusPage()
-      return wm.REST_getPlayerStatusId (wm.playerID, follow.id)
+      return wm.REST_getPlayerThread (wm.playerID, follow.id)
         .then (function (status) {
           return wm.pushView ('otherStatus')
             .then (function() {

@@ -247,7 +247,7 @@ module.exports = {
     Player.findOne ({ id: playerID })
       .then (function (player) {
         return PlayerService.makeStatus ({ player: player,
-                                           isPublic: false })
+                                           messages: false })
       }).then (function (result) {
         res.json (result)
       }).catch (function (err) {
@@ -256,14 +256,15 @@ module.exports = {
       })
   },
 
-  otherStatusById: function (req, res) {
+  // get a conversation thread
+  getThread: function (req, res) {
     var playerID = req.session.passport.user
     var otherID = parseInt (req.params.id)
     Player.findOne ({ id: otherID })
       .then (function (other) {
         return PlayerService.makeStatus ({ player: other,
                                            follower: { id: playerID },
-                                           isPublic: true })
+                                           messages: true })
       }).then (function (result) {
         res.json (result)
       }).catch (function (err) {
@@ -272,6 +273,26 @@ module.exports = {
       })
   },
 
+  // get a conversation thread (subsequent page)
+  getThreadBefore: function (req, res) {
+    var playerID = req.session.passport.user
+    var otherID = parseInt (req.params.id)
+    var beforeID = parseInt (req.params.before)
+    Player.findOne ({ id: otherID })
+      .then (function (other) {
+        return PlayerService.makeStatus ({ player: other,
+                                           follower: { id: playerID },
+                                           messages: true,
+                                           before: beforeID })
+      }).then (function (result) {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  // find player ID
   getPlayerId: function (req, res) {
     var playerID = req.session.passport.user
     var otherName = req.params.name
