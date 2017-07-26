@@ -247,6 +247,7 @@ input {
 }
 
 .wikimess .grammarbar .rule .rhs .content {
+    overflow: auto;
     flex-grow: 1;
     margin-right: 4px;
 }
@@ -769,6 +770,8 @@ input {
 .wikimess .lhslink.limit,
 .wikimess .lhslink.unexpanded {
     opacity: .8;
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 .wikimess .lhslink.animating {
