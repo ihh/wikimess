@@ -837,6 +837,9 @@ input {
 
 .wikimess .templates .template .title {
     font-weight: bold;
+    text-decoration: underline;
+    color: blue;
+    cursor: pointer;
 }
 
 .wikimess .templates .template .by {
