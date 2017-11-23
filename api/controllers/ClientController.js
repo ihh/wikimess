@@ -998,8 +998,9 @@ module.exports = {
                         or: [{ author: playerID },
                              { isPublic: true }] })
       .then (function (template) {
-        result.template = { id: template.id,
-                            content: template.content }
+        if (template)
+          result.template = { id: template.id,
+                              content: template.content }
         res.json (result)
       }).catch (function (err) {
         console.log(err)
