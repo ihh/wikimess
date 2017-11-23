@@ -44,12 +44,17 @@ module.exports.routes = {
    *                                                                          *
    ***************************************************************************/
 
+  // login/logout
   'POST /login': 'AuthController.login',
   '/logout': 'AuthController.logout',
 
   'GET /login/facebook':          'AuthController.facebookLogin',
   'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
 
+  'GET /p/subscribe':     'ClientController.subscribePlayer',
+  'GET /p/unsubscribe':   'ClientController.unsubscribePlayer',
+
+  // icon management
   'GET /icon/:icon.svg':                    'IconController.getIcon',
   'GET /icon/:icon/:color.svg':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background.svg': 'IconController.getIcon',
@@ -58,33 +63,36 @@ module.exports.routes = {
   'GET /icon/:icon/:color':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background': 'IconController.getIcon', 
 
+  // player ID lookup/creation
   'POST /id':                     'ClientController.byName',
-
   'POST /p/new':                  'ClientController.createPlayer',
 
+  // client search
   'POST /p/search/players/all':      'ClientController.searchAllPlayers',
   'POST /p/search/players/followed': 'ClientController.searchFollowedPlayers',
   'POST /p/search/symbols/all':      'ClientController.searchAllSymbols',
   'POST /p/search/symbols/owned':    'ClientController.searchOwnedSymbols',
 
+  // config
   'POST /p/config':       'ClientController.configurePlayer',
 
-  'GET /p/subscribe':     'ClientController.subscribePlayer',
-  'GET /p/unsubscribe':   'ClientController.unsubscribePlayer',
-
-  'GET /p/status':                  'ClientController.selfStatus',
-  'GET /p/id/:name':                'ClientController.getPlayerId',
-  'GET /p/thread/:id':              'ClientController.getThread',
-  'GET /p/thread/:id/before/:date': 'ClientController.getThreadBefore',
-
+  // follow/unfollow
   'GET /p/follow':          'ClientController.listFollowed',
   'GET /p/follow/:other':   'ClientController.follow',
   'GET /p/unfollow/:other': 'ClientController.unfollow',
 
+  'GET /p/status':                  'ClientController.selfStatus',
+  'GET /p/id/:name':                'ClientController.getPlayerId',
+
+  // mailboxes
   'GET /p/inbox':           'ClientController.getInbox',
   'GET /p/inbox/count':     'ClientController.getInboxCount',
   'GET /p/outbox':          'ClientController.getOutbox',
 
+  'GET /p/thread/:id':              'ClientController.getThread',
+  'GET /p/thread/:id/before/:date': 'ClientController.getThreadBefore',
+
+  // messages
   'GET /p/message/:message':         'ClientController.getReceivedMessage',
   'GET /p/message/:message/header':  'ClientController.getReceivedMessageHeader',
   'GET /p/message/:message/sent':    'ClientController.getSentMessage',
@@ -92,12 +100,17 @@ module.exports.routes = {
   'DELETE /p/message/:message':      'ClientController.deleteMessage',
   'PUT /p/message/:message/rating':  'ClientController.rateMessage',
 
+  // templates
+  'GET /p/template/:template': 'ClientController.getTemplate',
+
+  // drafts
   'GET /p/drafts':           'ClientController.getDrafts',
   'GET /p/draft/:draft':     'ClientController.getDraft',
   'POST /p/draft':           'ClientController.saveDraft',
   'PUT /p/draft/:draft':     'ClientController.updateDraft',
   'DELETE /p/draft/:draft':  'ClientController.deleteDraft',
 
+  // symbol definitions
   'GET /p/symbols':          'ClientController.getSymbolsByOwner',
   'GET /p/symbol/:symid':    'ClientController.getSymbol',
   'PUT /p/symbol/:symid':    'ClientController.putSymbol',
@@ -108,11 +121,11 @@ module.exports.routes = {
 
   'GET /p/symname/:symname':   'ClientController.getOrCreateSymbolByName',
 
-  'GET /p/template/:template': 'ClientController.getTemplate',
-
+  // symbol expansion
   'GET /p/expand/:symid': 'ClientController.expandSymbol',
   'POST /p/expand':       'ClientController.expandSymbols',
 
+  // auto-suggest of templates, messages, and symbols
   'GET /p/suggest/templates':       'ClientController.suggestTemplates',
   'GET /p/suggest/reply/:template': 'ClientController.suggestReply',
   'POST /p/suggest/symbol':         'ClientController.suggestSymbol',

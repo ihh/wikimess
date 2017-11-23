@@ -35,6 +35,7 @@
     padding: 2px;
 }
 
+.wikimess.plain .templates .template .title,
 .wikimess.plain .playerlink,
 .wikimess.plain .lhslink {
     color: blue;
@@ -123,7 +124,7 @@
 .wikimess.plain .compose .messagecompose {
     background-color: #f8f8ff;
 }
-		      
+
 .wikimess.plain .configmenu .option.checked {
     background-color: #ccc;
 }

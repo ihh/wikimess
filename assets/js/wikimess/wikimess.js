@@ -2454,14 +2454,14 @@ var WikiMess = (function() {
       if (props.beforeContentDiv)
         contentHtmlDiv.before (props.beforeContentDiv())
 
-      if (!props.isConstant) {
-        div.off ('click')
-          .on ('click', function (evt) {
-          if (props.firstClickCallback && props.firstClickCallback (evt))
-            div.off('click').on ('click', editCallback)
-          else
-            editCallback (evt)
-        })
+      div.off ('click')
+      if (props.isConstant) {
+        if (props.editWarning)
+          div.on ('click', function (evt) {
+            wm.showModalMessage (props.editWarning)
+          })
+      } else {
+        div.on ('click', editCallback)
         if (props.destroyCallback)
           buttonsDiv.append (wm.makeIconButton (props.destroyIcon || 'destroy', function (evt) {
             evt.stopPropagation()
@@ -2610,6 +2610,7 @@ var WikiMess = (function() {
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
                                            isConstant: !editable,
+                                           editWarning: 'Regrettably, you don\'t have permission to edit phrase #' + wm.symbolName[symbol.id] + '. However, if you select \'Duplicate this phrase\' from the menu, then you\'ll have full editing rights for the duplicate.',
                                            confirmDestroy: function() {
                                              var rhsText = wm.makeRhsText(symbol.rules[n])
                                              // no need to confirm if this expansion is empty
