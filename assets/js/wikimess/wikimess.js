@@ -2208,10 +2208,10 @@ var WikiMess = (function() {
                                                                                      focus: 'playerSearchInput' }) }) })
                                                          .append ($('<span class="title">')
                                                                   .text (template.title),
-                                                                  $('<span class="by">').text(' by '),
-                                                                  wm.makePlayerSpan (template.author.name,
-                                                                                     null,
-                                                                                     wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))) }))))
+                                                                  $('<span class="by">').append (' by ',
+                                                                                                 wm.makePlayerSpan (template.author.name,
+                                                                                                                    null,
+                                                                                                                    wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author))))) }))))
                 })
             })
         })
