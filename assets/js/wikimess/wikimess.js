@@ -575,9 +575,8 @@ var WikiMess = (function() {
                      .append ($('<div class="list">')
                               .append (wm.makeListLink ('Log in', wm.doReturnLogin),
                                        wm.makeListLink ('Sign up', wm.createPlayer),
-                                       wm.makeListLink ('Guest', wm.continueAsGuest),
-                                       wm.makeListLink ($('<img>').attr('src',wm.facebookButtonImageUrl), wm.REST_loginFacebook)
-                                       .addClass("noborder"))))
+                                       wm.makeListLink ($('<div>').html ($('<img>').attr('src',wm.facebookButtonImageUrl), wm.REST_loginFacebook)).addClass("noborder"),
+                                       wm.makeListLink ('Play as Guest', wm.continueAsGuest))))
           if (wm.playerLogin)
             wm.nameInput.val (wm.playerLogin)
         })
@@ -1233,10 +1232,11 @@ var WikiMess = (function() {
               wm.autosuggestStatus.lastKey = key
               wm.populateSuggestions (wm.REST_postPlayerSuggestSymbol (wm.playerID, before, [], wm.autosuggestStatus.temperature),
                                       function (symbol) {
-                                        var spacer = ' '
-                                        wm.updateComposeContent (wm.composition.template.content.concat ([spacer,
-                                                                                                          { id: symbol.id,
-                                                                                                            name: symbol.name }]))
+                                        // prepend a space only if we're nonempty & don't already end in a space
+                                        var content = wm.composition.template.content, lastTok = content.length && content[content.length-1]
+                                        var spacer = (lastTok && !(typeof(lastTok) === 'string' && lastTok.match(/\s$/))) ? [' '] : []
+                                        wm.updateComposeContent (content.concat (spacer.concat ([{ id: symbol.id,
+                                                                                                   name: symbol.name }])))
                                         updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
@@ -1249,30 +1249,30 @@ var WikiMess = (function() {
                                         generatePromise.then (divAutosuggest)
                                       })
                 .then (function() {
-                  if (wm.composition.template.content.length)
-                    wm.suggestionDiv.append
-                  (wm.makeIconButton ('backspace',
-                                      function() {
-                                        var newContent = wm.composition.template.content.slice(0)
-                                        var nSymPopped = 0
-                                        while (newContent.length) {
-                                          var poppedSym = newContent.pop()
-                                          ++nSymPopped
-                                          if (typeof(poppedSym) === 'object'
-                                              || poppedSym.match(/\S/))
-                                            break
-                                        }
-                                        wm.updateComposeContent (newContent)
-                                        updateComposeDiv()
-                                        if (wm.composition.body) {
-                                          wm.composition.body.rhs.splice
-                                          (wm.composition.template.content.length,
-                                           wm.composition.body.rhs.length - wm.composition.template.content.length)
-                                          wm.showMessageBody()
-                                        } else
-                                          wm.generateMessageBody()
-                                        divAutosuggest()
-                                      }))
+                  if (wm.composition.template.content.length) {
+                    function backspace() {
+                      var newContent = wm.composition.template.content.slice(0)
+                      var nSymPopped = 0
+                      while (newContent.length) {
+                        var poppedSym = newContent.pop()
+                        ++nSymPopped
+                        if (typeof(poppedSym) === 'object'
+                            || poppedSym.match(/\S/))
+                          break
+                      }
+                      wm.updateComposeContent (newContent)
+                      updateComposeDiv()
+                      if (wm.composition.body) {
+                        wm.composition.body.rhs.splice
+                        (wm.composition.template.content.length,
+                         wm.composition.body.rhs.length - wm.composition.template.content.length)
+                        wm.showMessageBody()
+                      } else
+                        wm.generateMessageBody()
+                      divAutosuggest()
+                    }
+                    wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
+                  }
                 })
             }
           }
