@@ -795,6 +795,7 @@ module.exports = {
     var result = { owner: playerID }
     Player.findOne ({ id: playerID })
       .then (function (player) {
+        if (!playerID || !player) return []  // if no player was specified, silently return an empty list, rather than returning all unowned symbols
         return Symbol.find ({ owner: playerID })
           .then (function (symbols) {
             result.symbols = symbols.map (function (symbol) {
@@ -817,7 +818,7 @@ module.exports = {
 
   // create a new symbol
   newSymbol: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var result = {}
     var symInfo = { owner: playerID }
     if (req.body.symbol) {
@@ -846,7 +847,7 @@ module.exports = {
 
   // get a particular symbol
   getSymbol: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var symbolID = parseInt (req.params.symid)
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
@@ -983,7 +984,6 @@ module.exports = {
 
   // unsubscribe from notifications for a symbol
   unsubscribeSymbol: function (req, res) {
-    var playerID = req.session.passport.user
     var symbolID = parseInt (req.params.symid)
     Symbol.unsubscribe (req, symbolID)
     res.ok()
@@ -991,7 +991,7 @@ module.exports = {
 
   // get a particular template
   getTemplate: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var templateID = parseInt (req.params.template)
     var result = {}
     Template.findOne ({ id: templateID,
@@ -1010,7 +1010,6 @@ module.exports = {
 
   // expand a symbol using the grammar
   expandSymbol: function (req, res) {
-    var playerID = req.session.passport.user
     var symbolID = parseInt (req.params.symid)
     SymbolService.expandSymbol ({ id: symbolID })
       .then (function (expansion) {
@@ -1023,7 +1022,6 @@ module.exports = {
 
   // expand multiple symbols using the grammar
   expandSymbols: function (req, res) {
-    var playerID = req.session.passport.user
     var symbolQueries = req.body.symbols || []
     SymbolService.expandSymbols (symbolQueries, Symbol.maxTemplateSyms)
       .then (function (expansions) {
@@ -1036,7 +1034,6 @@ module.exports = {
 
   // suggest best N templates
   suggestTemplates: function (req, res) {
-    var playerID = req.session.passport.user
     var nSuggestions = 5
     return Template.find ({ previous: null,
                             isPublic: true })
@@ -1089,7 +1086,6 @@ module.exports = {
 
   // suggest best N symbols (currently implemented using adjacencies)
   suggestSymbol: function (req, res) {
-    var playerID = req.session.passport.user
     var beforeQueries = req.body.before
     var temperature = req.body.temperature || 0
     var nSuggestions = 5

@@ -59,7 +59,22 @@ module.exports.policies = {
 
   // non-permissive policy for player controller
   'ClientController': {
+    // signup
     'createPlayer': true,
+    // symbol expansions
+    'getSymbolsByOwner': true,
+    'getSymbol': true,
+    'putSymbol': true,
+    'newSymbol': true,
+    'unsubscribeSymbol': true,
+    'getOrCreateSymbolByName': true,
+    'expandSymbol': true,
+    'expandSymbols': true,
+    // compose, autosuggest
+    'getTemplate': true,
+    'suggestTemplates': true,
+    'suggestSymbol': true,
+    // everything else requires authentication
     '*': clientPolicy
   },
 
