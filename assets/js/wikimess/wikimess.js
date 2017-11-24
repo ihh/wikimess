@@ -1409,8 +1409,10 @@ var WikiMess = (function() {
                       }),
                       wm.sendButton = wm.makeSubNavIcon ('send', send)))
 
-          if (!wm.playerID)
+          if (!wm.playerID) {
+            wm.destroyButton.hide()
             wm.messageHeaderDiv.hide()
+          }
           
           wm.restoreScrolling (wm.messageComposeDiv)
           wm.restoreScrolling (wm.messageBodyDiv)
