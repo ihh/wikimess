@@ -1,6 +1,7 @@
 var WikiMess = (function() {
   var proto = function (config) {
     var wm = this
+    
     config = config || {}
     $.extend (this, config)
 
@@ -72,6 +73,8 @@ var WikiMess = (function() {
       this.showLoginPage()
   }
 
+  // config, defaults
+  var hashChar = '>', hashCharHtml = '&gt;'
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -143,7 +146,7 @@ var WikiMess = (function() {
 
     noRhsWarning: 'No definitions',
     newRhsTextGrammar: {root: ['#content goes here.',
-                               'Here\'s where you add #content.',
+                               "Here's where you add #content.",
                                '#content. Please edit!',
                                '#Rhubarb, #content.',
                                '#Rhubarb: #content.',
@@ -195,8 +198,8 @@ var WikiMess = (function() {
                            "It is good to say it aloud: 'Nothing has happened.' Once again: 'Nothing has happened.' Does that help?",
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
-    emptyContentWarning: "Enter the message text here, or pick one of the suggestions below.",
-    emptyTemplateWarning: "_The expanded message, as sent to the recipient, will appear here._",
+    emptyContentWarning: "Enter phrases here, or pick from the suggestions below.",
+    emptyTemplateWarning: "_The generated message, with phrase definitions expanded, will appear here._",
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],
@@ -1170,7 +1173,7 @@ var WikiMess = (function() {
               var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
               var symbolSuggestionPromise, getInsertText
               // autocomplete
-              var endsWithSymbolRegex = /#(\w*)$/, symbolContinuesRegex = /^\w/;
+              var endsWithSymbolRegex = new RegExp('\\'+hashChar+'(\\w*)$'), symbolContinuesRegex = /^\w/;
               var endsWithSymbolMatch = endsWithSymbolRegex.exec(newValBefore)
               if (endsWithSymbolMatch && endsWithSymbolMatch[1].length && !symbolContinuesRegex.exec(newValAfter)) {
                 var prefix = endsWithSymbolMatch[1]
@@ -1188,7 +1191,7 @@ var WikiMess = (function() {
                 if (wm.autosuggestStatus.lastKey !== key) {
                   wm.autosuggestStatus.lastKey = key
                   symbolSuggestionPromise = wm.REST_postPlayerSuggestSymbol (wm.playerID, beforeSymbols, afterSymbols, wm.autosuggestStatus.temperature)
-                  getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : '#') + symbol.name + ' ' }
+                  getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : hashChar) + symbol.name + ' ' }
                 }
               }
               if (symbolSuggestionPromise)
@@ -1511,7 +1514,7 @@ var WikiMess = (function() {
           .replace (/@(\w+)/g, function (match, name) {
             return '<span class="playertag">@<span class="name">' + name + '</span></span>'
           })
-      // next, call optional transform method on HTML string (e.g. to put animation styling on #symbols)
+      // next, call optional transform method on HTML string (e.g. to put animation styling on symbols)
       if (transform)
         renderedHtml = transform (renderedHtml)
       // next, convert HTML string to JQuery object, and use JQuery to add player-tag styling
@@ -1567,9 +1570,9 @@ var WikiMess = (function() {
     linkSymbols: function (html) {
       var nSymbols = 0
       return html.replace
-      (/#(\w+)\.([a-z]+)/g,
+      (new RegExp (hashCharHtml + '(\\w+)\.([a-z]+)', 'g'),
        function (_match, name, className) {
-         return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">#<span class="name">' + name + '</span></span>'
+         return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">' + hashCharHtml + '<span class="name">' + name + '</span></span>'
        })
     },
 
@@ -1612,7 +1615,7 @@ var WikiMess = (function() {
           expansion = node
         else if (node.rhs) {
           if (leaveSymbolsUnexpanded && node.name)
-            expansion = '#' + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded')
+            expansion = hashCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded')
           else {
             expansion = node.rhs.map (function (rhsSym) {
               return wm.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
@@ -2516,7 +2519,7 @@ var WikiMess = (function() {
             }).fail (function (err) {
               var reload = wm.reloadCurrentTab.bind(wm)
 	      if (err.status == 400)
-                wm.showModalMessage ("You can't rename #" + wm.symbolName[symbol.id] + " to #" + newName + ", because #" + newName + " already exists", reload)
+                wm.showModalMessage ("You can't rename " + hashChar + wm.symbolName[symbol.id] + " to " + hashChar + newName + ", because " + hashChar + newName + " already exists", reload)
               else
                 wm.showModalWebError (err, reload)
             })
@@ -2554,7 +2557,7 @@ var WikiMess = (function() {
 
     parseRhs: function (rhs, ignoreText) {
       var wm = this
-      var regex = /(([\s\S]*?)#(\w+)|([\s\S]*?)#\((\w+)\+(\w+)\)|[\s\S]+)/g, match
+      var regex = new RegExp ('(([\\s\\S]*?)\\' + hashChar + '(\\w+)|([\\s\\S]*?)\\' + hashChar + '\((\\w+)\+(\\w+)\)|[\\s\\S]+)', 'g'), match
       var parsed = []
       var name2id = this.symbolNameToID()
       while ((match = regex.exec(rhs)))
@@ -2610,7 +2613,7 @@ var WikiMess = (function() {
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
                                            isConstant: !editable,
-                                           editWarning: 'Regrettably, you don\'t have permission to edit phrase #' + wm.symbolName[symbol.id] + '. However, if you select \'Duplicate this phrase\' from the menu, then you\'ll have full editing rights for the duplicate.',
+                                           editWarning: "Regrettably, you don't have permission to edit phrase " + hashChar + wm.symbolName[symbol.id] + ". However, if you select 'Duplicate this phrase' from the menu, then you'll have full editing rights for the duplicate.",
                                            confirmDestroy: function() {
                                              var rhsText = wm.makeRhsText(symbol.rules[n])
                                              // no need to confirm if this expansion is empty
@@ -2623,7 +2626,7 @@ var WikiMess = (function() {
                                                window.confirm('Delete ' + (symbol.rules.length === 1
                                                                            ? 'the only definition'
                                                                            : ('definition '+(n+1)))
-                                                              + ' for #' + wm.symbolName[symbol.id] + '?')
+                                                              + ' for ' + hashChar + wm.symbolName[symbol.id] + '?')
                                              return confirmed
                                            },
                                            destroyIcon: 'minus',
@@ -2720,7 +2723,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm ('Make a copy of #' + wm.symbolName[symbol.id] + '? You will be able to edit the copy.'))
+            if (window.confirm ('Make a copy of ' + hashChar + wm.symbolName[symbol.id] + '? You will be able to edit the copy.'))
               wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
                                               rules: symbol.rules } })
           })
@@ -2730,7 +2733,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm('Give up your lock on #' + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) the phrase.'))
+            if (window.confirm('Give up your lock on ' + hashChar + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) the phrase.'))
               wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
           })
       }
@@ -2760,8 +2763,8 @@ var WikiMess = (function() {
                     className: 'lhs',
                     content: function() { return wm.symbolName[symbol.id] },
                     guessHeight: true,
-                    renderText: function(lhs) { return '#' + lhs },
-                    renderHtml: function(lhs) { return $('<div class="name">').text('#'+lhs) },
+                    renderText: function(lhs) { return hashChar + lhs },
+                    renderHtml: function(lhs) { return $('<div class="name">').text(hashChar + lhs) },
                     sanitize: wm.sanitizeHashSymbolName,
                     parse: function(hashLhs) { return hashLhs.substr(1) },
                     keycodeFilter: function (keycode) {
@@ -2834,7 +2837,7 @@ var WikiMess = (function() {
       var wm = this
       return rhs.map (function (rhsSym) {
         return (typeof(rhsSym) === 'object'
-                ? ('#' + wm.makeSymbolName(rhsSym))
+                ? (hashChar + wm.makeSymbolName(rhsSym))
                 : rhsSym)
       }).join('')
     },
@@ -2906,14 +2909,14 @@ var WikiMess = (function() {
     },
 
     makeSymbolSpan: function (sym, callback) {
-      var span = $('<span class="lhslink">').append ('#', $('<span class="name">').text (this.makeSymbolName(sym) + ' '))
+      var span = $('<span class="lhslink">').append (hashCharHtml, $('<span class="name">').text (this.makeSymbolName(sym) + ' '))
       if (callback)
         span.on ('click', callback)
       return span
     },
 
     sanitizeHashSymbolName: function (text) {
-      return '#' + text.replace(/\s/g,'_').replace(/\W/g,'')
+      return hashChar + text.replace(/\s/g,'_').replace(/\W/g,'')
     },
 
     sanitizeSymbolName: function (text) {
