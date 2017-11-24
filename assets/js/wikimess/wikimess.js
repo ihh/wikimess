@@ -199,7 +199,7 @@ var WikiMess = (function() {
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
     emptyContentWarning: "Enter phrases here, or pick from the suggestions below.",
-    emptyTemplateWarning: "_The generated message, with phrase definitions expanded, will appear here._",
+    emptyTemplateWarning: "_The expanded message, with randomly selected definitions substituted for any phrase references, will appear here._",
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],
@@ -3121,7 +3121,7 @@ var WikiMess = (function() {
                                 .then (function() {
                                   wm.showingHelp = true
 		                  wm.infoPaneTitle.text ('Help')
-		                  wm.infoPaneContent.html (helpHtml)
+		                  wm.infoPaneContent.html (helpHtml.replace (/HASH/g, function() { return hashCharHtml }))
                                   var icons = wm.infoPaneContent.find('.helpicon')
                                   icons.each (function (n) {
                                     var iconSpan = icons.slice(n,n+1), iconName = iconSpan.attr('icon')
