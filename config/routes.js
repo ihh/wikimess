@@ -92,6 +92,7 @@ module.exports.routes = {
   'GET /p/inbox':           'ClientController.getInbox',
   'GET /p/inbox/count':     'ClientController.getInboxCount',
   'GET /p/outbox':          'ClientController.getOutbox',
+  'GET /p/public':          'ClientController.getRecentBroadcasts',
 
   'GET /p/thread/:id':              'ClientController.getThread',
   'GET /p/thread/:id/before/:date': 'ClientController.getThreadBefore',
@@ -100,6 +101,7 @@ module.exports.routes = {
   'GET /p/message/:message':         'ClientController.getReceivedMessage',
   'GET /p/message/:message/header':  'ClientController.getReceivedMessageHeader',
   'GET /p/message/:message/sent':    'ClientController.getSentMessage',
+  'GET /p/message/:message/public':  'ClientController.getBroadcastMessage',
   'POST /p/message':                 'ClientController.sendMessage',
   'DELETE /p/message/:message':      'ClientController.deleteMessage',
   'PUT /p/message/:message/rating':  'ClientController.rateMessage',

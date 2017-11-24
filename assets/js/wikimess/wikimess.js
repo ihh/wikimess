@@ -281,6 +281,10 @@ var WikiMess = (function() {
       return this.logGet ('/p/outbox')
     },
 
+    REST_getPlayerPublic: function (playerID) {
+      return this.logGet ('/p/public')
+    },
+
     REST_getPlayerMessage: function (playerID, messageID) {
       return this.logGet ('/p/message/' + messageID)
     },
@@ -291,6 +295,10 @@ var WikiMess = (function() {
 
     REST_getPlayerMessageSent: function (playerID, messageID) {
       return this.logGet ('/p/message/' + messageID + '/sent')
+    },
+
+    REST_getPlayerMessagePublic: function (playerID, messageID) {
+      return this.logGet ('/p/message/' + messageID + '/public')
     },
 
     REST_postPlayerMessage: function (playerID, message) {
@@ -1540,7 +1548,7 @@ var WikiMess = (function() {
           })
       // next, call optional transform method on HTML string (e.g. to put animation styling on symbols)
       if (transform)
-        renderedHtml = transform (renderedHtml)
+        renderedHtml = transform.call (wm, renderedHtml)
       // next, convert HTML string to JQuery object, and use JQuery to add player-tag styling
       // and asynchronously resolve player names
       var rendered = $(renderedHtml)
@@ -1600,9 +1608,13 @@ var WikiMess = (function() {
        })
     },
 
+    defaultVarText: function (text) {
+      return '<span class="var">' + text + '</span>'
+    },
+    
     expandVars: function (html, varVal) {
-      varVal = varVal || { me: '<span class="var">Sender</span>',
-                           you: '<span class="var">Recipient</span>' }
+      varVal = varVal || { me: this.defaultVarText('Sender'),
+                           you: this.defaultVarText('Recipient') }
       return html
         .replace (/\$(\w+)\b/ig, function (m, v) { return varVal[v] || m })
     },
@@ -2097,16 +2109,19 @@ var WikiMess = (function() {
     makeMailboxEntryDiv: function (props, message) {
       var wm = this
       wm.messageHeaderCache[message.id] = message
-      var deleteMessage = function (evt) {
-        evt.stopPropagation()
-        if (window.confirm ('Delete this message?'))
-          wm[props.deleteMethod] (wm.playerID, message.id)
-          .then (wm.reloadCurrentTab.bind(wm))
-      }
+      var deleteMessage = (props.deleteMethod
+                           ? function (evt) {
+                             evt.stopPropagation()
+                             if (window.confirm ('Delete this message?'))
+                               wm[props.deleteMethod] (wm.playerID, message.id)
+                               .then (wm.reloadCurrentTab.bind(wm))
+                           }
+                           : null)
       var div = $('<div class="message">')
           .append ($('<div class="title">').text (message.title || 'Untitled'),
-                   $('<span class="buttons">')
-                   .append (wm.makeIconButton ('destroy', deleteMessage)),
+                   (deleteMessage
+                    ? $('<span class="buttons">').append (wm.makeIconButton ('destroy', deleteMessage))
+                    : []),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No '+props.object)))
           .on ('click', function() {
             wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
@@ -2158,7 +2173,7 @@ var WikiMess = (function() {
                                        focus: 'playerSearchInput' })
                                   })
                               }),
-                              wm.destroyButton = wm.makeSubNavIcon('destroy',props.destroy)))
+                              props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('destroy',props.destroy)) : []))
 
           var other = message[props.object]
           wm.readMessageDiv
@@ -2181,8 +2196,8 @@ var WikiMess = (function() {
                                        $('<span class="field">').text (new Date (message.date).toString()))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
                                                                                            function (html) {
-                                                                                             return wm.expandVars (html, { me: (wm.playerLogin ? ('@' + wm.playerLogin) : ''),
-                                                                                                                           you: (other ? ('@' + other.name) : '') })
+                                                                                             return wm.expandVars (html, { me: (wm.playerLogin ? ('@' + wm.playerLogin) : wm.defaultVarText('Sender')),
+                                                                                                                           you: (other ? ('@' + other.name) : wm.defaultVarText('Recipient')) })
                                                                                            })))
         })
     },
@@ -2222,7 +2237,9 @@ var WikiMess = (function() {
               wm.showGameStatusPage (status)
               if (wm.playerID)
                 wm.detailBarDiv.prepend ($('<div class="follow">').html (wm.makePlayerSpan (wm.playerLogin)))
-              wm.detailBarDiv.prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
+              wm.detailBarDiv
+                .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
+                .append (wm.mailboxDiv = $('<div class="mailbox">'))
               return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                 .then (function (result) {
                   if (result && result.templates.length)
@@ -2244,6 +2261,17 @@ var WikiMess = (function() {
                                                                                                  wm.makePlayerSpan (template.author.name,
                                                                                                                     null,
                                                                                                                     wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author))))) }))))
+                  return wm.REST_getPlayerPublic (wm.playerID)
+                    .then (function (pubResult) {
+                      wm.populateMailboxDiv ({ messages: pubResult.messages,
+                                               tab: 'public',
+                                               title: 'Recent broadcasts',
+                                               getMethod: 'REST_getPlayerMessagePublic',
+                                               verb: 'Sent',
+                                               preposition: 'From',
+                                               object: 'sender',
+                                               showMessage: wm.showMessage.bind(wm) })
+                    })
                 })
             })
         })

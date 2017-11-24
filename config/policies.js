@@ -77,6 +77,9 @@ module.exports.policies = {
     'suggestTemplates': true,
     'suggestSymbol': true,
     'sendMessage': true,
+    // broadcasts
+    'getRecentBroadcasts': true,
+    'getBroadcastMessage': true,
     // status
     'getThread': true,
     'getThreadBefore': true,

@@ -438,6 +438,60 @@ module.exports = {
       })
   },
 
+  // broadcasts
+  getRecentBroadcasts: function (req, res) {
+    var limit = req.params.limit ? parseInt(req.params.limit) : 10
+    var result = { }
+    Message.find ({ recipient: null })
+      .sort ('id DESC')
+      .limit (limit)
+      .populate ('sender')
+      .then (function (messages) {
+        result.messages = messages.map (function (message) {
+          return { id: message.id,
+                   title: message.title,
+                   sender: (message.sender
+                            ? { id: message.sender.id,
+                                displayName: message.sender.displayName }
+                            : undefined),
+                   date: message.createdAt,
+                   unread: !message.read }
+        })
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  // get broadcast message
+  getBroadcastMessage: function (req, res) {
+    var messageID = parseInt (req.params.message)
+    var result = {}
+    Message.findOne ({ recipient: null,
+                       id: messageID })
+      .populate ('template')
+      .populate ('sender')
+      .then (function (message) {
+        result.message = { id: message.id,
+                           sender: (message.sender
+                                    ? { id: message.sender.id,
+                                        name: message.sender.name,
+                                        displayName: message.sender.displayName }
+                                    : null),
+                           template: { id: message.template.id,
+                                       content: message.template.content },
+                           title: message.title,
+                           body: message.body,
+                           date: message.createdAt,
+                           rating: message.rating }
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
   // get received message
   getReceivedMessage: function (req, res) {
     var playerID = req.session.passport.user
