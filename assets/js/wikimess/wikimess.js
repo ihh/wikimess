@@ -1950,6 +1950,8 @@ var WikiMess = (function() {
 
           wm.restoreScrolling (wm.mailboxDiv)
           wm.mailboxTab = config.tab || wm.lastMailboxTab || 'inbox'
+          if (wm.mailboxTab === 'public')
+            wm.mailboxTab = 'inbox'
           wm.subnavButton[wm.mailboxTab].removeClass('inactive')
           return wm.refreshMailbox (wm.mailboxTab)
         })

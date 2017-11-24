@@ -455,7 +455,7 @@ module.exports = {
                                 displayName: message.sender.displayName }
                             : undefined),
                    date: message.createdAt,
-                   unread: !message.read }
+                   unread: false }
         })
         res.json (result)
       }).catch (function (err) {
