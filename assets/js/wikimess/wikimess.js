@@ -1334,18 +1334,16 @@ var WikiMess = (function() {
           function send() {
             wm.saveCurrentEdit()
               .then (function() {
-                if (!wm.composition.recipient)
-                  window.alert ("Please specify a recipient.")
-                else if (wm.templateIsEmpty())
+                if (wm.templateIsEmpty())
                   window.alert ("Please enter some message text.")
                 else if (!(wm.composition.body && wm.makeExpansionText(wm.composition.body).match(/\S/)))
                   window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
-                else if (!(wm.composition.title && wm.composition.title.length))
+                else if (wm.composition.recipient && !(wm.composition.title && wm.composition.title.length))
                   window.alert ("Please give this message a title.")
                 else {
                   wm.sendButton.off ('click')
                   delete wm.composition.previousTemplate
-                  wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient.id,
+                  wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient ? wm.composition.recipient.id : null,
                                                             template: wm.composition.template,
                                                             title: wm.composition.title,
                                                             body: wm.composition.body,
@@ -1354,10 +1352,12 @@ var WikiMess = (function() {
                     .then (function (result) {
                       wm.composition = {}
                       delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
-                      return wm.showMailboxPage ({ tab: 'outbox' })
-                        .then (function() {
-                          // TODO: update wm.mailboxCache.outbox
-                        })
+                      return (wm.playerID
+                              ? wm.showMailboxPage ({ tab: 'outbox' })
+                              .then (function() {
+                                // TODO: update wm.mailboxCache.outbox
+                              })
+                              : wm.showStatusPage())
                     }).catch (function (err) {
                       wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                     })
@@ -2107,7 +2107,7 @@ var WikiMess = (function() {
           .append ($('<div class="title">').text (message.title || 'Untitled'),
                    $('<span class="buttons">')
                    .append (wm.makeIconButton ('destroy', deleteMessage)),
-                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No recipient')))
+                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No '+props.object)))
           .on ('click', function() {
             wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
             var cachedMessage = wm.messageCache[props.tab][message.id]
@@ -2166,21 +2166,23 @@ var WikiMess = (function() {
             .append ($('<div class="messageheader">')
                      .append ($('<div class="row">')
                               .append ($('<span class="label">').text (props.preposition),
-                                       $('<span class="field">').html (wm.makePlayerSpan (other.name,
-                                                                                          other.displayName,
-                                                                                          function (evt) {
-                                                                                            wm.showOtherStatusPage (other)
-                                                                                          }))),
+                                       $('<span class="field">').html (other
+                                                                       ? wm.makePlayerSpan (other.name,
+                                                                                            other.displayName,
+                                                                                            function (evt) {
+                                                                                              wm.showOtherStatusPage (other)
+                                                                                            })
+                                                                       : ('No '+props.object))),
                               $('<div class="row">')
                               .append ($('<span class="label">').text ('Subject'),
-                                       $('<span class="field">').text (message.title)),
+                                       $('<span class="field">').text (message.title && message.title.length ? message.title : 'Untitled')),
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
                                        $('<span class="field">').text (new Date (message.date).toString()))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
                                                                                            function (html) {
-                                                                                             return wm.expandVars (html, { me: '@' + wm.playerLogin,
-                                                                                                                           you: '@' + other.name })
+                                                                                             return wm.expandVars (html, { me: (wm.playerLogin ? ('@' + wm.playerLogin) : ''),
+                                                                                                                           you: (other ? ('@' + other.name) : '') })
                                                                                            })))
         })
     },

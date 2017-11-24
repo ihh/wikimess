@@ -72,10 +72,11 @@ module.exports.policies = {
     'getOrCreateSymbolByName': true,
     'expandSymbol': true,
     'expandSymbols': true,
-    // compose, autosuggest
+    // compose, autosuggest, send
     'getTemplate': true,
     'suggestTemplates': true,
     'suggestSymbol': true,
+    'sendMessage': true,
     // status
     'getThread': true,
     'getThreadBefore': true,

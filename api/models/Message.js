@@ -16,13 +16,11 @@ module.exports = {
     },
 
     sender: {
-      model: 'player',
-      required: true
+      model: 'player'
     },
 
     recipient: {
-      model: 'player',
-      required: true
+      model: 'player'
     },
 
     previous: {
@@ -36,7 +34,7 @@ module.exports = {
 
     title: {
       type: 'string',
-      required: true
+      defaultsTo: ''
     },
     
     body: {
