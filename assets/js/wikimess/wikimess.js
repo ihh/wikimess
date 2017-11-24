@@ -359,6 +359,10 @@ var WikiMess = (function() {
       return this.logPost ('/p/expand', { symbols: symbolQueries })
     },
 
+    REST_getWelcomeHtml: function() {
+      return this.logGet ('/html/welcome-guest.html')
+    },
+
     REST_getHelpHtml: function() {
       return this.logGet ('/html/grammar-editor-help.html')
     },
@@ -846,7 +850,7 @@ var WikiMess = (function() {
         this.socket_getPlayerUnsubscribe (this.playerID)
 	  .then (function() {
 	    wm.REST_postLogout()
-	    wm.showLoginPage()
+	    wm.continueAsGuest()
 	  })
       else
         this.showLoginPage()
@@ -865,7 +869,7 @@ var WikiMess = (function() {
                             wm.makeListLink ('Bio', wm.showPlayerBioPage))
           menuDiv.append (wm.makeListLink ('Colors', wm.showThemesPage),
                           wm.makeListLink ('Audio', wm.showAudioPage),
-                          wm.makeListLink ('Log ' + (wm.playerID ? 'out' : 'in'), wm.doLogout))
+                          wm.makeListLink ('Log' + (wm.playerID ? ' out' : 'in / signup'), wm.doLogout))
           wm.container
             .append ($('<div class="menubar">').html (menuDiv))
         })
@@ -1928,6 +1932,7 @@ var WikiMess = (function() {
             wm.loadGrammarSymbol (config.symbol)
           })
         break
+      case 'home':
       default:
         promise = this.showStatusPage()
         break
@@ -2281,8 +2286,13 @@ var WikiMess = (function() {
     showStatusPage: function() {
       var wm = this
       var statusPromise = (wm.playerID
-                           ? wm.REST_getPlayerStatus (wm.playerID)
-                           : $.Deferred().resolve())
+                           ? wm.REST_getPlayerStatus(wm.playerID).then (function (status) {
+                             status.loggedIn = (wm.playerID !== null)
+                             return status
+                           })
+                           : wm.REST_getWelcomeHtml().then (function (html) {
+                             return { loggedIn: false, html: $('<div class="welcome">').html (html) }
+                           }))
       return statusPromise
         .then (function (status) {
           return wm.setPage ('status')
@@ -2379,7 +2389,10 @@ var WikiMess = (function() {
         .append (wm.detailBarDiv = $('<div class="detailbar">'))
       wm.restoreScrolling (wm.detailBarDiv)
 
-      if (status) {
+      if (status && status.html)
+        wm.detailBarDiv.append (status.html)
+
+      if (status && status.loggedIn) {
         wm.detailBarDiv.append
         ($('<div class="ratings">')
          .append ($('<div class="ratinginfo">')

@@ -18,10 +18,24 @@ module.exports = {
     rest: false
   },
 
+  loginOrHomepage: function (req, res) {
+    var playerID = req.session.passport.user
+    return PlayerService.makeHomepage (playerID)
+      .then (function (homepage) {
+        res.view ('homepage', homepage.vars)
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
+      })
+  },
+
   homepage: function (req, res) {
     var playerID = req.session.passport.user
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
+        homepage.vars.init = true
+        homepage.vars.initConfig = homepage.vars.initConfig || {}
+        homepage.vars.initConfig.action = homepage.vars.initConfig.action || 'home'
         res.view ('homepage', homepage.vars)
       }).catch (function (err) {
         console.log(err)
@@ -54,7 +68,7 @@ module.exports = {
       .then (function (homepage) {
         return Symbol.findOneCached ({ name: symname })
           .then (function (symbol) {
-            if (symbol)
+            if (symbol) {
               homepage.vars.init = true
               homepage.vars.initConfig =
               extend ({},
@@ -64,6 +78,7 @@ module.exports = {
                         title: symname.replace(/_/g,' '),
                         content: [{ id: symbol.id,
                                     name: symbol.name }] })
+            }
             res.view ('homepage', homepage.vars)
           })
       }).catch (function (err) {
@@ -79,7 +94,7 @@ module.exports = {
       .then (function (homepage) {
         return Symbol.findOneCached ({ name: symname })
           .then (function (symbol) {
-            if (symbol)
+            if (symbol) {
               homepage.vars.init = true
               homepage.vars.initConfig =
               extend ({},
@@ -87,6 +102,7 @@ module.exports = {
                       { action: 'grammar',
                         symbol: { id: symbol.id,
                                   name: symbol.name } })
+            }
             res.view ('homepage', homepage.vars)
           })
       }).catch (function (err) {

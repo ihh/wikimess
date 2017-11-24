@@ -459,6 +459,10 @@ input {
     margin-bottom: 4px;
 }
 
+.wikimess .detailbar .welcome {
+    margin-bottom: 16px;
+}
+
 .wikimess .inputbar input[type=text],
 .wikimess .inputbar input[type=password],
 .wikimess .inputbar textarea {
