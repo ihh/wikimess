@@ -51,9 +51,6 @@ module.exports.routes = {
   'GET /login/facebook':          'AuthController.facebookLogin',
   'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
 
-  'GET /p/subscribe':     'ClientController.subscribePlayer',
-  'GET /p/unsubscribe':   'ClientController.unsubscribePlayer',
-
   // icon management
   'GET /icon/:icon.svg':                    'IconController.getIcon',
   'GET /icon/:icon/:color.svg':             'IconController.getIcon',
@@ -67,7 +64,12 @@ module.exports.routes = {
   'POST /id':                     'ClientController.byName',
 
   // client controller
+  // create player
   'POST /p/new':                  'ClientController.createPlayer',
+
+  // sub/unsub to notifications
+  'GET /p/subscribe':     'ClientController.subscribePlayer',
+  'GET /p/unsubscribe':   'ClientController.unsubscribePlayer',
 
   // client search
   'POST /p/search/players/all':      'ClientController.searchAllPlayers',

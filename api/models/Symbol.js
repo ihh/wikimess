@@ -75,7 +75,14 @@ module.exports = {
       })
     })
   },
-  
+
+  invalidateCache: function (symbol, callback) {
+    delete Symbol.cache.byId[symbol.id]
+    delete Symbol.cache.byName[symbol.name]
+    if (callback)
+      callback()
+  },
+
   updateCache: function (symbol, callback) {
     Symbol.cache.byId[symbol.id] = symbol
     Symbol.cache.byName[symbol.name] = symbol
@@ -125,6 +132,14 @@ module.exports = {
   
   afterCreate: function (symbol, callback) {
     Symbol.updateCache (symbol, callback)
+  },
+
+  beforeUpdate: function (symbol, callback) {
+    if (!symbol.id) return callback()
+    Symbol.findOne ({ id: symbol.id })
+      .then (function (oldSymbol) {
+        Symbol.invalidateCache (oldSymbol, callback)
+      })
   },
 
   afterUpdate: function (symbol, callback) {
