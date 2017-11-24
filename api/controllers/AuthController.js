@@ -134,8 +134,10 @@ module.exports = {
   },
 
   logout: function(req, res) {
-    req.logout();
-    res.redirect('/');
+    // https://stackoverflow.com/a/19132999
+    req.session.destroy(function (err) {
+      res.redirect('/') //Inside a callback... "bulletproof"
+    })
   },
 
   facebookLogin:function (req, res, next) {

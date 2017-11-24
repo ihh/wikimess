@@ -849,7 +849,8 @@ var WikiMess = (function() {
       if (this.playerID)
         this.socket_getPlayerUnsubscribe (this.playerID)
 	  .then (function() {
-	    wm.REST_postLogout()
+	    return wm.REST_postLogout()
+          }).then (function() {
 	    wm.continueAsGuest()
 	  })
       else
