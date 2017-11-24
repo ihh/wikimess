@@ -575,6 +575,7 @@ var WikiMess = (function() {
                      .append ($('<div class="list">')
                               .append (wm.makeListLink ('Log in', wm.doReturnLogin),
                                        wm.makeListLink ('Sign up', wm.createPlayer),
+                                       wm.makeListLink ('Guest', wm.continueAsGuest),
                                        wm.makeListLink ($('<img>').attr('src',wm.facebookButtonImageUrl), wm.REST_loginFacebook)
                                        .addClass("noborder"))))
           if (wm.playerLogin)
@@ -613,7 +614,7 @@ var WikiMess = (function() {
     },
 
     doInitialLogin: function() {
-      return this.doLogin (this.showInitialPage)  // replace showInitialPage with login flow
+      return this.doLogin (this.showInitialPage)  // replace showInitialPage with signup flow
     },
 
     doLogin: function (showNextPage) {
@@ -641,6 +642,13 @@ var WikiMess = (function() {
       }, fail)
     },
 
+    continueAsGuest: function() {
+      this.initPlayerInfo ({ id: null,
+                             name: '',
+                             displayName: '' })
+      this.showInitialPage()
+    },
+    
     initPlayerInfo: function (player) {
       this.playerInfo = player
       this.playerID = player.id
@@ -733,13 +741,17 @@ var WikiMess = (function() {
       else
 	this.updateMessageCountDiv()
 	
-      this.tabs.map (function (tab) {
+      this.tabs.forEach (function (tab) {
         var span = $('<span>').addClass('navtab').addClass('nav-'+tab.name)
+	var isMailbox = (tab.name === 'mailbox')
+	var isFollows = (tab.name === 'follows')
+        if ((isMailbox || isFollows) && wm.playerID === null)
+          return
         wm.getIconPromise(tab.icon)
           .done (function (svg) {
             svg = wm.colorizeIcon (svg, wm.themeInfo.navbarIconColor)
             span.append ($(svg).addClass('navicon'))
-	    if (tab.name === 'mailbox')
+	    if (isMailbox)
 	      span.append (wm.messageCountDiv)
           })
           .fail (function (err) {
@@ -781,7 +793,8 @@ var WikiMess = (function() {
 
     updateMessageCount: function() {
       var wm = this
-      this.REST_getPlayerInboxCount (this.playerID)
+      if (this.playerID)
+        this.REST_getPlayerInboxCount (this.playerID)
 	.then (function (result) {
 	  wm.messageCount = result.count
 	  wm.updateMessageCountDiv()
@@ -818,11 +831,14 @@ var WikiMess = (function() {
       delete this.lastSymbolSearch
       delete this.symbolSearchResults
       delete this.messageCount
-      this.socket_getPlayerUnsubscribe (this.playerID)
-	.then (function() {
-	  wm.REST_postLogout()
-	  wm.showLoginPage()
-	})
+      if (this.playerID)
+        this.socket_getPlayerUnsubscribe (this.playerID)
+	  .then (function() {
+	    wm.REST_postLogout()
+	    wm.showLoginPage()
+	  })
+      else
+        this.showLoginPage()
     },
     
     // settings menu
@@ -832,14 +848,15 @@ var WikiMess = (function() {
       return this.setPage ('settings')
         .then (function() {
           wm.showNavBar ('settings')
+          var menuDiv = $('<div class="list">')
+          if (wm.playerID)
+            menuDiv.append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
+                            wm.makeListLink ('Bio', wm.showPlayerBioPage))
+          menuDiv.append (wm.makeListLink ('Colors', wm.showThemesPage),
+                          wm.makeListLink ('Audio', wm.showAudioPage),
+                          wm.makeListLink ('Log ' + (wm.playerID ? 'out' : 'in'), wm.doLogout))
           wm.container
-            .append ($('<div class="menubar">')
-                     .append ($('<div class="list">')
-                              .append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
-                                       wm.makeListLink ('Bio', wm.showPlayerBioPage),
-                                       wm.makeListLink ('Colors', wm.showThemesPage),
-                                       wm.makeListLink ('Audio', wm.showAudioPage),
-                                       wm.makeListLink ('Log out', wm.doLogout))))
+            .append ($('<div class="menubar">').html (menuDiv))
         })
     },
 
@@ -1115,19 +1132,21 @@ var WikiMess = (function() {
               delete wm.composition.needsSave
               return wm.finishLastSave()
                 .then (function() {
-                  var draft = { recipient: wm.composition.recipient && wm.composition.recipient.id,
-                                previous: wm.composition.previousMessage,
-                                previousTemplate: wm.composition.previousTemplate,
-                                template: wm.composition.template,
-                                title: wm.composition.title,
-                                body: wm.composition.body }
-                  if (wm.composition.draft)
-                    wm.lastSavePromise = wm.REST_putPlayerDraft (wm.playerID, wm.composition.draft, draft)
-                  else
-                    wm.lastSavePromise = wm.REST_postPlayerDraft (wm.playerID, draft)
-                    .then (function (result) {
-                      wm.composition.draft = result.draft.id
-                    })
+                  if (wm.playerID) {
+                    var draft = { recipient: wm.composition.recipient && wm.composition.recipient.id,
+                                  previous: wm.composition.previousMessage,
+                                  previousTemplate: wm.composition.previousTemplate,
+                                  template: wm.composition.template,
+                                  title: wm.composition.title,
+                                  body: wm.composition.body }
+                    if (wm.composition.draft)
+                      wm.lastSavePromise = wm.REST_putPlayerDraft (wm.playerID, wm.composition.draft, draft)
+                    else
+                      wm.lastSavePromise = wm.REST_postPlayerDraft (wm.playerID, draft)
+                      .then (function (result) {
+                        wm.composition.draft = result.draft.id
+                      })
+                  }
                 })
             } else
               return Promise.resolve()
@@ -1348,7 +1367,7 @@ var WikiMess = (function() {
                     
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
-                     .append ($('<div class="messageheader">')
+                     .append (wm.messageHeaderDiv = $('<div class="messageheader">')
                               .append ($('<div class="row">')
                                        .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
@@ -1390,6 +1409,9 @@ var WikiMess = (function() {
                       }),
                       wm.sendButton = wm.makeSubNavIcon ('send', send)))
 
+          if (!wm.playerID)
+            wm.messageHeaderDiv.hide()
+          
           wm.restoreScrolling (wm.messageComposeDiv)
           wm.restoreScrolling (wm.messageBodyDiv)
           wm.restoreScrolling (wm.suggestionDiv)
@@ -2185,15 +2207,18 @@ var WikiMess = (function() {
     // status
     showStatusPage: function() {
       var wm = this
-      return wm.REST_getPlayerStatus (wm.playerID)
+      var statusPromise = (wm.playerID
+                           ? wm.REST_getPlayerStatus (wm.playerID)
+                           : $.Deferred().resolve())
+      return statusPromise
         .then (function (status) {
           return wm.setPage ('status')
             .then (function() {
               wm.showNavBar ('status')
               wm.showGameStatusPage (status)
-              wm.detailBarDiv
-                .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'),
-                          $('<div class="follow">').html (wm.makePlayerSpan (wm.playerLogin)))
+              if (wm.playerID)
+                wm.detailBarDiv.prepend ($('<div class="follow">').html (wm.makePlayerSpan (wm.playerLogin)))
+              wm.detailBarDiv.prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
               return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                 .then (function (result) {
                   if (result && result.templates.length)
@@ -2273,41 +2298,43 @@ var WikiMess = (function() {
       wm.container
         .append (wm.detailBarDiv = $('<div class="detailbar">'))
       wm.restoreScrolling (wm.detailBarDiv)
-      
-      wm.detailBarDiv.append
-      ($('<div class="ratings">')
-       .append ($('<div class="ratinginfo">')
-                .append ($('<span class="ratinginfolabel">').text ("Messages:"),
-                         wm.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                         $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nSenderRatings, "rating") + ")")),
-                $('<div class="ratinginfo">')
-                .append ($('<span class="ratinginfolabel">').text ("Phrases:"),
-                         wm.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                         $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nAuthorRatings, "rating") + ")"))))
 
-      wm.detailBarDiv.append
-      ($('<div class="biofact">')
-       .append ($('<span class="biofactlabel">').text('Name: '),
-                $('<span class="biofactvalue">').text(status.displayName)))
-
-      var pronouns = { male: 'he/him/his', female: 'she/her/hers', neither: 'they/theirs' }
-      if (status.gender !== 'secret')
+      if (status) {
         wm.detailBarDiv.append
-      ($('<div class="biofact">')
-       .append ($('<span class="biofactlabel">').text('Pronouns: '),
-                $('<span class="biofactvalue">').text(pronouns[status.gender])))
+        ($('<div class="ratings">')
+         .append ($('<div class="ratinginfo">')
+                  .append ($('<span class="ratinginfolabel">').text ("Messages:"),
+                           wm.makeStars (status.sumSenderRatings / status.nSenderRatings),
+                           $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nSenderRatings, "rating") + ")")),
+                  $('<div class="ratinginfo">')
+                  .append ($('<span class="ratinginfolabel">').text ("Phrases:"),
+                           wm.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
+                           $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nAuthorRatings, "rating") + ")"))))
 
-      if (status.publicBio && status.publicBio.length)
         wm.detailBarDiv.append
-      ($('<div class="biofact">')
-       .append ($('<div class="biotitle">').text('Public info'),
-                $('<div class="bio">').text(status.publicBio)))
+        ($('<div class="biofact">')
+         .append ($('<span class="biofactlabel">').text('Name: '),
+                  $('<span class="biofactvalue">').text(status.displayName)))
 
-      if (status.privateBio && status.privateBio.length)
-        wm.detailBarDiv.append
-      ($('<div class="biofact">')
-       .append ($('<div class="biotitle">').text('"Private" info'),
-                $('<div class="bio">').text(status.privateBio)))
+        var pronouns = { male: 'he/him/his', female: 'she/her/hers', neither: 'they/theirs' }
+        if (status.gender !== 'secret')
+          wm.detailBarDiv.append
+        ($('<div class="biofact">')
+         .append ($('<span class="biofactlabel">').text('Pronouns: '),
+                  $('<span class="biofactvalue">').text(pronouns[status.gender])))
+
+        if (status.publicBio && status.publicBio.length)
+          wm.detailBarDiv.append
+        ($('<div class="biofact">')
+         .append ($('<div class="biotitle">').text('Public info'),
+                  $('<div class="bio">').text(status.publicBio)))
+
+        if (status.privateBio && status.privateBio.length)
+          wm.detailBarDiv.append
+        ($('<div class="biofact">')
+         .append ($('<div class="biotitle">').text('"Private" info'),
+                  $('<div class="bio">').text(status.privateBio)))
+      }
     },
 
     // edit
@@ -3291,7 +3318,8 @@ var WikiMess = (function() {
 
     updateAddressBook: function() {
       var wm = this
-      wm.REST_getPlayerFollow (wm.playerID)
+      if (wm.playerID)
+        wm.REST_getPlayerFollow (wm.playerID)
 	.done (function (data) {
           wm.addressBookDiv
             .empty()

@@ -62,6 +62,8 @@ module.exports.policies = {
     // signup
     'createPlayer': true,
     // symbol expansions
+    'searchAllSymbols': true,
+    'searchOwnedSymbols': true,
     'getSymbolsByOwner': true,
     'getSymbol': true,
     'putSymbol': true,
@@ -74,6 +76,9 @@ module.exports.policies = {
     'getTemplate': true,
     'suggestTemplates': true,
     'suggestSymbol': true,
+    // status
+    'getThread': true,
+    'getThreadBefore': true,
     // everything else requires authentication
     '*': clientPolicy
   },

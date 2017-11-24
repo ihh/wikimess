@@ -135,7 +135,8 @@ module.exports = {
 
   // search Symbols, preferentially owned, with no pagination
   searchOwnedSymbols: function (req, res) {
-    var searcherID = req.session.passport.user, query = req.body.query
+    var searcherID = req.session.passport.user || null
+    var query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
     Symbol.find ({ owner: searcherID,
                    name: query.name })
@@ -162,7 +163,7 @@ module.exports = {
 
   // search all Symbols, with pagination
   searchAllSymbols: function (req, res) {
-    var searcherID = req.session.passport.user, query = req.body.query, page = parseInt(req.body.page) || 0
+    var query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
     Symbol.find ({ name: { contains: query } })
       .limit (resultsPerPage + 1)
@@ -263,7 +264,7 @@ module.exports = {
     Player.findOne ({ id: otherID })
       .then (function (other) {
         return PlayerService.makeStatus ({ player: other,
-                                           follower: { id: playerID },
+                                           follower: playerID ? { id: playerID } : null,
                                            messages: true })
       }).then (function (result) {
         res.json (result)
@@ -281,7 +282,7 @@ module.exports = {
     Player.findOne ({ id: otherID })
       .then (function (other) {
         return PlayerService.makeStatus ({ player: other,
-                                           follower: { id: playerID },
+                                           follower: playerID ? { id: playerID } : null,
                                            messages: true,
                                            before: beforeID })
       }).then (function (result) {
@@ -795,7 +796,11 @@ module.exports = {
     var result = { owner: playerID }
     Player.findOne ({ id: playerID })
       .then (function (player) {
-        if (!playerID || !player) return []  // if no player was specified, silently return an empty list, rather than returning all unowned symbols
+        if (!playerID || !player) {
+          // if no player was specified, silently return an empty list, rather than returning all unowned symbols
+          result.symbols = []
+          return []
+        }
         return Symbol.find ({ owner: playerID })
           .then (function (symbols) {
             result.symbols = symbols.map (function (symbol) {
