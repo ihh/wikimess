@@ -1922,6 +1922,12 @@ var WikiMess = (function() {
                                           title: config.title,
                                           template: { content: config.content } })
         break
+      case 'grammar':
+        promise = this.showGrammarEditPage()
+          .then (function() {
+            wm.loadGrammarSymbol (config.symbol)
+          })
+        break
       default:
         promise = this.showStatusPage()
         break
@@ -2293,7 +2299,7 @@ var WikiMess = (function() {
                   if (result && result.templates.length)
                     wm.detailBarDiv.append ($('<div class="filler">'),
                                             $('<div class="popular">')
-                                            .append ($('<h1>').text("Popular templates"),
+                                            .append ($('<div class="header">').text("Popular templates"),
                                                      $('<div class="templates">')
                                                      .append (result.templates.map (function (template) {
                                                        return $('<div class="template">')

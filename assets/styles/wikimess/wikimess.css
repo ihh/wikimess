@@ -86,10 +86,12 @@ input {
     overflow-y: auto;
 }
 
+.wikimess .popular .header,
 .wikimess .mailbox .mailboxname {
     text-align: center;
 }
 
+.wikimess .popular .header,
 .wikimess .mailbox .mailboxname,
 .wikimess .searchtitle,
 .wikimess .grammartitle,
@@ -666,6 +668,7 @@ input {
     overflow-wrap: break-word;
 }
 
+.wikimess .popular .templates,
 .wikimess .mailbox .contents,
 .wikimess .messageborder {
     border-top-style: solid;

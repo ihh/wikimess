@@ -47,7 +47,7 @@ module.exports = {
       })
   },
 
-  randomPage: function (req, res) {
+  composePage: function (req, res) {
     var playerID = req.session.passport.user
     var symname = req.params.symname
     return PlayerService.makeHomepage (playerID)
@@ -71,7 +71,30 @@ module.exports = {
         res.notFound()
       })
   },
-  
+
+  grammarPage: function (req, res) {
+    var playerID = req.session.passport.user
+    var symname = req.params.symname
+    return PlayerService.makeHomepage (playerID)
+      .then (function (homepage) {
+        return Symbol.findOneCached ({ name: symname })
+          .then (function (symbol) {
+            if (symbol)
+              homepage.vars.init = true
+              homepage.vars.initConfig =
+              extend ({},
+                      homepage.vars.initConfig,
+                      { action: 'grammar',
+                        symbol: { id: symbol.id,
+                                  name: symbol.name } })
+            res.view ('homepage', homepage.vars)
+          })
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
+      })
+  },
+
   login: function(req, res, next) {
 
     passport.authenticate('local', function(err, player, info) {

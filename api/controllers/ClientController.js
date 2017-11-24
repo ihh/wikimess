@@ -998,7 +998,8 @@ module.exports = {
           }).then (function (symbol) {
             return Player.findOne ({ id: playerID })
           }).then (function (player) {
-            result.symbol.owner.name = player.name
+            if (player)
+              result.symbol.owner.name = player.name
             Symbol.message (symbolID, extend ({ message: "update" },
                                               result))
             res.json (result)
