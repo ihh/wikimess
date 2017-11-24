@@ -34,6 +34,7 @@ module.exports.routes = {
 
   '/': 'AuthController.homepage',
   'GET /m/:message': 'AuthController.broadcastPage',
+  'GET /random/:symname': 'AuthController.randomPage',
 
   /***************************************************************************
    *                                                                          *

@@ -142,11 +142,12 @@ module.exports = {
   },
 
   makeHomepage: function (playerID) {
-    var homepagePromise, vars = {}, result = { vars: vars }
+    var homepagePromise, vars = { init: false }, result = { vars: vars }
     if (playerID)
       homepagePromise = Player.findOne({ id: playerID })
       .then (function (player) {
         if (player) {
+          vars.init = true
           vars.initConfig = { player: PlayerService.makeLoginSummary (player) }
           result.player = player
         }

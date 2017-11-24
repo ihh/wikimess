@@ -34,12 +34,38 @@ module.exports = {
     var messageID = parseInt (req.params.message)
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
+        homepage.vars.init = true
         homepage.vars.initConfig =
           extend ({},
                   homepage.vars.initConfig,
                   { action: 'message',
                     message: messageID })
         res.view ('homepage', homepage.vars)
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
+      })
+  },
+
+  randomPage: function (req, res) {
+    var playerID = req.session.passport.user
+    var symname = req.params.symname
+    return PlayerService.makeHomepage (playerID)
+      .then (function (homepage) {
+        return Symbol.findOneCached ({ name: symname })
+          .then (function (symbol) {
+            if (symbol)
+              homepage.vars.init = true
+              homepage.vars.initConfig =
+              extend ({},
+                      homepage.vars.initConfig,
+                      { action: 'compose',
+                        recipient: null,
+                        title: symname.replace(/_/g,' '),
+                        content: [{ id: symbol.id,
+                                    name: symbol.name }] })
+            res.view ('homepage', homepage.vars)
+          })
       }).catch (function (err) {
         console.log(err)
         res.notFound()

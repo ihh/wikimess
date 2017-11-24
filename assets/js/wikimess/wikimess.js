@@ -1897,14 +1897,19 @@ var WikiMess = (function() {
       config = config || {}
       switch (config.action) {
       case 'message':
-        promise = this.showStatusPage()
-          .then (function () {
-            wm.REST_getPlayerMessagePublic (wm.playerID, config.message)
-              .then (function (result) {
+        promise = wm.REST_getPlayerMessagePublic (wm.playerID, config.message)
+          .then (function (result) {
+            return wm.showStatusPage()
+              .then (function () {
                 wm.showMessage ($.extend ({ result: result },
                                           wm.broadcastProps()))
               })
           })
+        break
+      case 'compose':
+        promise = this.showComposePage ({ recipient: config.recipient,
+                                          title: config.title,
+                                          template: { content: config.content } })
         break
       default:
         promise = this.showStatusPage()
