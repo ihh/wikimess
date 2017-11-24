@@ -85,6 +85,8 @@ var WikiMess = (function() {
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
+    twitterIntentPath: 'https://twitter.com/intent/tweet',
+    twitterUsername: 'wikimessage',
     maxPlayerLoginLength: 16,
     maxPlayerNameLength: 32,
     maxRating: 5,
@@ -1360,6 +1362,15 @@ var WikiMess = (function() {
                                                             previous: wm.composition.previousMessage,
                                                             draft: wm.composition.draft })
                     .then (function (result) {
+                      if (result.message && result.message.path) {
+                        var text = wm.makeExpansionText (wm.composition.body)
+                        var url = window.location.origin + result.message.path
+                        window.open (wm.twitterIntentPath
+                                     + '?text=' + encodeURIComponent(text)
+                                     + '&url=' + encodeURIComponent(url)
+                                     + '&via=' + wm.twitterUsername)
+                      }
+                    }).then (function() {
                       wm.composition = {}
                       delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
                       return (wm.playerID

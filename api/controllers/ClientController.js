@@ -657,9 +657,10 @@ module.exports = {
           draftPromise = Promise.resolve()
         return draftPromise
       }).then (function() {
-        // send out the good news
-        if (recipientID !== null)
-          Player.message (recipientID, notification)
+        if (recipientID === null)
+          result.message.path = '/m/' + result.message.id  // broadcast; give sender a URL to advertise
+        else
+          Player.message (recipientID, notification)    // send the good news to recipient
         res.json (result)
       })
     }).catch (function (err) {
