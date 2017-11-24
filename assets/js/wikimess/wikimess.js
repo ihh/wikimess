@@ -1433,7 +1433,7 @@ var WikiMess = (function() {
             wm.lastComposePlayerSearchText = config.recipient.name
           }
 
-          wm.playerSearchInput.attr ('placeholder', 'Player name')
+          wm.playerSearchInput.attr ('placeholder', 'Everyone')
             .val (wm.lastComposePlayerSearchText)
           wm.playerSearchInput
             .on ('keyup', wm.doComposePlayerSearch.bind(wm))

@@ -43,7 +43,7 @@ var opt = getopt.create([
   ['T' , 'templates=PATH+'  , 'path to js/json template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
-  ['s' , 'start'            , 'lift (start) Sails, but don\'t POST anything'],
+  ['s' , 'start'            , "lift (start) Sails, but don't POST anything"],
   ['l' , 'lift'             , 'lift Sails & POST'],
   ['e' , 'erase'            , 'delete database in ' + databasePath + ', then lift sails & POST'],
   ['v' , 'verbose=INT'      , 'verbosity level (default=' + defaultVerbosity + ')'],
