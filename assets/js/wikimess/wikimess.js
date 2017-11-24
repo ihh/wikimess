@@ -3338,6 +3338,7 @@ var WikiMess = (function() {
       var callback = info.callback
       var followClass = 'followcontrol-' + follow.id, followSelector = '.' + followClass
       var buttonDiv = $('<span class="followcontrol">').addClass(followClass)
+      if (!wm.playerID) buttonDiv.hide()
       var composeDiv =  $('<span class="followcontrol">')
           .html (wm.makeIconButton ('compose',
                                     function (evt) {
