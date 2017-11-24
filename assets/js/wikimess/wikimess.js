@@ -68,8 +68,10 @@ var WikiMess = (function() {
     if (config.player) {
       this.initPlayerInfo (config.player)
       this.socket_getPlayerSubscribe (this.playerID)
-        .then (this.showInitialPage.bind (this))
-    } else
+        .then (this.showInitialPage.bind (this, config))
+    } else if (config.action)
+      this.continueAsGuest (config)
+    else
       this.showLoginPage()
   }
 
@@ -649,11 +651,11 @@ var WikiMess = (function() {
       }, fail)
     },
 
-    continueAsGuest: function() {
+    continueAsGuest: function (config) {
       this.initPlayerInfo ({ id: null,
                              name: '',
                              displayName: '' })
-      this.showInitialPage()
+      this.showInitialPage (config)
     },
     
     initPlayerInfo: function (player) {
@@ -1889,8 +1891,26 @@ var WikiMess = (function() {
     },
 
     // initial page
-    showInitialPage: function() {
-      return this.showStatusPage()
+    showInitialPage: function (config) {
+      var wm = this
+      var promise
+      config = config || {}
+      switch (config.action) {
+      case 'message':
+        promise = this.showStatusPage()
+          .then (function () {
+            wm.REST_getPlayerMessagePublic (wm.playerID, config.message)
+              .then (function (result) {
+                wm.showMessage ($.extend ({ result: result },
+                                          wm.broadcastProps()))
+              })
+          })
+        break
+      default:
+        promise = this.showStatusPage()
+        break
+      }
+      return promise
     },
     
     // inbox/outbox/drafts
@@ -2015,6 +2035,16 @@ var WikiMess = (function() {
       })
     },
 
+    broadcastProps: function() {
+      return { tab: 'public',
+               title: 'Recent broadcasts',
+               getMethod: 'REST_getPlayerMessagePublic',
+               verb: 'Sent',
+               preposition: 'From',
+               object: 'sender',
+               showMessage: this.showMessage.bind(this) }
+    },
+    
     inboxProps: function() {
       var wm = this
       
@@ -2263,14 +2293,8 @@ var WikiMess = (function() {
                                                                                                                     wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author))))) }))))
                   return wm.REST_getPlayerPublic (wm.playerID)
                     .then (function (pubResult) {
-                      wm.populateMailboxDiv ({ messages: pubResult.messages,
-                                               tab: 'public',
-                                               title: 'Recent broadcasts',
-                                               getMethod: 'REST_getPlayerMessagePublic',
-                                               verb: 'Sent',
-                                               preposition: 'From',
-                                               object: 'sender',
-                                               showMessage: wm.showMessage.bind(wm) })
+                      wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
+                                                       wm.broadcastProps()))
                     })
                 })
             })

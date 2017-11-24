@@ -140,6 +140,22 @@ module.exports = {
                        gender: player.gender
                      }
   },
+
+  makeHomepage: function (playerID) {
+    var homepagePromise, vars = {}, result = { vars: vars }
+    if (playerID)
+      homepagePromise = Player.findOne({ id: playerID })
+      .then (function (player) {
+        if (player) {
+          vars.initConfig = { player: PlayerService.makeLoginSummary (player) }
+          result.player = player
+        }
+        return result
+      })
+    else
+      homepagePromise = Promise.resolve (result)
+    return homepagePromise
+  },
   
   makeUniquePlayerName: function (prefix, count) {
     prefix = prefix.replace (/[^A-Za-z0-9_]/g, '')

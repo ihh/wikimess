@@ -7,6 +7,9 @@
 
 var passport = require('passport');
 
+var Promise = require('bluebird')
+var extend = require('extend')
+
 module.exports = {
 
   _config: {
@@ -17,20 +20,30 @@ module.exports = {
 
   homepage: function (req, res) {
     var playerID = req.session.passport.user
-    if (playerID)
-      Player.findOne({ id: playerID })
-      .exec (function (err, player) {
-        if (player)
-          return res.view ('homepage',
-                           { loggedIn: true,
-                             player: PlayerService.makeLoginSummary (player) })
-        else
-          return res.view ('homepage',
-                           { loggedIn: false })
+    return PlayerService.makeHomepage (playerID)
+      .then (function (homepage) {
+        res.view ('homepage', homepage.vars)
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
       })
-    else
-      return res.view ('homepage',
-                       { loggedIn: false })
+  },
+
+  broadcastPage: function (req, res) {
+    var playerID = req.session.passport.user
+    var messageID = parseInt (req.params.message)
+    return PlayerService.makeHomepage (playerID)
+      .then (function (homepage) {
+        homepage.vars.initConfig =
+          extend ({},
+                  homepage.vars.initConfig,
+                  { action: 'message',
+                    message: messageID })
+        res.view ('homepage', homepage.vars)
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
+      })
   },
   
   login: function(req, res, next) {
