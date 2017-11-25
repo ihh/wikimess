@@ -14,6 +14,12 @@
     background-color: black;
 }
 
+.wikimess.l33t .subnavbar .button .iconlabel,
+.wikimess.l33t .navbar .navlabel {
+    background-color: rgba(0,0,0,.5);
+    color: green;
+}
+
 .wikimess.l33t .subnavbar,
 .wikimess.l33t body {
     border-color: #333

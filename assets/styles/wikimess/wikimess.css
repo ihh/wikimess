@@ -58,18 +58,36 @@ input {
     border-color: black;
 }
 
+.wikimess .navbar .navtab {
+    position: relative;
+}
+
 .wikimess .navbar .navicon {
     opacity: .6;
     cursor: pointer;
+}
+
+.wikimess .navbar .navlabel {
+    opacity: .8;
+    cursor: pointer;
+    font-size: small;
+    font-style: italic;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
 }
 
 .wikimess .navbar .active .navicon {
     opacity: 1;
 }
 
+.wikimess .navbar .active .navlabel {
+    opacity: 1;
+    font-style: normal;
+}
+
 .wikimess .suggest .button,
-.wikimess .newlhs .button,
-.wikimess .help .button,
 .wikimess .grammarbar .button {
     width: 1em;
     height: 1em;
@@ -760,8 +778,8 @@ input {
 
 .wikimess .subnavbar {
     font-size: xx-large;
-    min-height: 1em;
-    max-height: 1em;
+    min-height: 1.4em;
+    max-height: 1.4em;
     display: flex;
     justify-content: space-between;
     border-top-style: solid;
@@ -770,28 +788,44 @@ input {
     padding-top: 2px;
 }
 
-.wikimess .subnavbar span {
+.wikimess .subnavbar .button {
+    position: relative;
     width: 1em;
-    height: 1em;
     border-style: solid;
     border-width: 0px;
     margin: 1px 0 0 1px;
 }
 
-.wikimess .subnavbar span:active {
+.wikimess .subnavbar .button:active {
     border-width: 1px 0 0 1px;
     margin: 0px;
     opacity: .7;
 }
 
-.wikimess .subnavbar svg {
+.wikimess .subnavbar .button svg {
     width: 1em;
     height: 1em;
     cursor: pointer;
 }
 
+.wikimess .button .iconlabel {
+    display: none;
+}
+
+.wikimess .subnavbar .button .iconlabel {
+    display: inline;
+    position: absolute;
+    font-size: x-small;
+    width: 100%;
+    height: 1.5em;
+    text-align: center;
+    left: 0;
+    bottom: 0;
+}
+
 .wikimess .subnavbar .inactive {
     opacity: .6;
+    font-style: italic;
 }
 
 .wikimess .lhslink.limit,

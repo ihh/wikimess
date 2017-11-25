@@ -102,9 +102,9 @@ var WikiMess = (function() {
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'pencil',
                     backspace: 'backspace',
-                    document: 'copy',
+                    'new': 'copy',
                     create: 'circle-plus',
-                    destroy: 'trash-can',
+                    'delete': 'trash-can',
                     plus: 'circle-plus',
                     minus: 'circle-minus',
                     up: 'up-arrow-button',
@@ -112,7 +112,7 @@ var WikiMess = (function() {
                     help: 'help',
                     locked: 'padlock',
                     hide: 'hide',
-                    randomize: 'rolling-die',
+                    're-roll': 'rolling-die',
                     close: 'close',
                     send: 'send',
                     inbox: 'inbox',
@@ -136,12 +136,12 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'status', method: 'showStatusPage', icon: 'mushroom-house', },
-           { name: 'compose', method: 'showComposePage', icon: 'quill-ink' },
-           { name: 'mailbox', method: 'showMailboxPage', icon: 'envelope' },
-           { name: 'follows', method: 'showFollowsPage', icon: 'backup' },
-           { name: 'grammar', method: 'showGrammarEditPage', icon: 'spell-book' },
-           { name: 'settings', method: 'showSettingsPage', icon: 'pokecog' }],
+    tabs: [{ name: 'status', method: 'showStatusPage', label: 'home', icon: 'mushroom-house', },
+           { name: 'compose', method: 'showComposePage', label: 'write', icon: 'quill-ink' },
+           { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
+           { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
+           { name: 'grammar', method: 'showGrammarEditPage', label: 'defs', icon: 'spell-book' },
+           { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
     
     verbose: { page: false,
                request: true,
@@ -772,7 +772,8 @@ var WikiMess = (function() {
         wm.getIconPromise(tab.icon)
           .done (function (svg) {
             svg = wm.colorizeIcon (svg, wm.themeInfo.navbarIconColor)
-            span.append ($(svg).addClass('navicon'))
+            span.append ($(svg).addClass('navicon'),
+                         $('<div>').addClass('navlabel').text(tab.label || tab.name))
 	    if (isMailbox)
 	      span.append (wm.messageCountDiv)
           })
@@ -1204,7 +1205,7 @@ var WikiMess = (function() {
               .join (' ')
           }
           function textareaAutosuggest (input) {
-            input.focus()  // in case we were triggered by player hitting 'randomize' button
+            input.focus()  // in case we were triggered by player hitting 're-roll' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1423,7 +1424,7 @@ var WikiMess = (function() {
                        wm.stopAnimation()
                        wm.messageComposeDiv.trigger ('click')
                      }),
-                      wm.randomizeButton = wm.makeSubNavIcon ('randomize', function (evt) {
+                      wm.randomizeButton = wm.makeSubNavIcon ('re-roll', function (evt) {
                         evt.stopPropagation()
                         wm.generateMessageBody()
                         delete wm.autosuggestStatus.lastVal
@@ -1431,7 +1432,7 @@ var WikiMess = (function() {
                         wm.autosuggestStatus.temperature++
                         wm.autosuggestStatus.refresh()
                       }),
-                      wm.destroyButton = wm.makeSubNavIcon ('destroy', function (evt) {
+                      wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
                         if (window.confirm ('Delete this draft?'))
                           wm.finishLastSave()
                           .then (function() {
@@ -2196,7 +2197,7 @@ var WikiMess = (function() {
       var div = $('<div class="message">')
           .append ($('<div class="title">').text (message.title || 'Untitled'),
                    (deleteMessage
-                    ? $('<span class="buttons">').append (wm.makeIconButton ('destroy', deleteMessage))
+                    ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
                     : []),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (props.anon || ('No '+props.object))))
           .on ('click', function() {
@@ -2249,7 +2250,7 @@ var WikiMess = (function() {
                                        focus: 'playerSearchInput' })
                                   })
                               }),
-                              props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('destroy',props.destroy)) : []))
+                              props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : []))
 
           var other = message[props.object]
           wm.readMessageDiv
@@ -2500,11 +2501,12 @@ var WikiMess = (function() {
     },
 
     makeIconButton: function (iconName, callback, color) {
-      var button = $('<span>').addClass('button').text(iconName)
+      var iconNameSpan = $('<span>').addClass('iconlabel').text(iconName)
+      var button = $('<span>').addClass('button').html (iconNameSpan)
       this.getIconPromise (this.iconFilename[iconName])
         .done (function (svg) {
           svg = wm.colorizeIcon (svg, color || wm.themeInfo.iconColor)
-          button.html ($(svg))
+          button.prepend ($(svg))
         })
       if (callback)
         button.on ('click', callback)
@@ -2606,7 +2608,7 @@ var WikiMess = (function() {
       } else {
         div.on ('click', editCallback)
         if (props.destroyCallback)
-          buttonsDiv.append (wm.makeIconButton (props.destroyIcon || 'destroy', function (evt) {
+          buttonsDiv.append (wm.makeIconButton (props.destroyIcon || 'delete', function (evt) {
             evt.stopPropagation()
             wm.saveCurrentEdit()
               .then (function() {
@@ -2753,7 +2755,7 @@ var WikiMess = (function() {
                                            content: function() { return symbol.rules[n] },
                                            guessHeight: true,
                                            isConstant: !editable,
-                                           editWarning: "Regrettably, you don't have permission to edit phrase " + hashChar + wm.symbolName[symbol.id] + ". However, if you select 'Duplicate this phrase' from the menu, then you'll have full editing rights for the duplicate.",
+                                           editWarning: "You don't have permission to edit " + hashChar + wm.symbolName[symbol.id] + ". Select 'Duplicate this phrase' from the menu: you'll have full editing rights for the duplicate.",
                                            confirmDestroy: function() {
                                              var rhsText = wm.makeRhsText(symbol.rules[n])
                                              // no need to confirm if this expansion is empty
@@ -2858,7 +2860,7 @@ var WikiMess = (function() {
                 wm.infoPaneLeftControls
                   .empty()
                   .append ($('<span class="hint">').text('Re-roll'),
-                           wm.makeIconButton ('randomize'))
+                           wm.makeIconButton ('re-roll'))
                   .off('click')
                   .on('click',randomize)
                 wm.infoPaneRightControls
@@ -3263,10 +3265,8 @@ var WikiMess = (function() {
                        wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase book')),
                        wm.infoPane.hide(),
                        $('<div class="subnavbar">').append
-                       ($('<span class="newlhs">').html
-                        (wm.makeSubNavIcon ('document', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) })),
-                        $('<span class="help">').html
-                        (wm.makeSubNavIcon ('help', function() {
+                       (wm.makeSubNavIcon ('new', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) }),
+                        wm.makeSubNavIcon ('help', function() {
                           if (wm.showingHelp) {
                             wm.infoPane.hide()
                             wm.showingHelp = false
@@ -3291,7 +3291,7 @@ var WikiMess = (function() {
 		                  wm.infoPane.show()
                                 })
 		            })
-                        }))))
+                        })))
 
             wm.searchInput.attr ('placeholder', 'Search phrases')
             wm.placeIcon (wm.iconFilename.search, searchButton)
