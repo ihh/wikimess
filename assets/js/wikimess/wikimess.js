@@ -1651,7 +1651,7 @@ var WikiMess = (function() {
       varVal = varVal || { me: this.defaultVarText('Sender'),
                            you: this.defaultVarText('Recipient') }
       return html
-        .replace (new RegExp ('\\' + varChar + '([A-Za-z_]\\w*)\\b( *= *\\{([^\\}]*)\\}|)', 'ig'),
+        .replace (new RegExp ('\\' + varChar + '([A-Za-z_]\\w*)\\b(=\\{([^\\}]*)\\}|)', 'ig'),
                   function (match, varName, assignment, assignVal) {
                     if (assignment.length) {
                       varVal[varName] = wm.expandVars (assignVal, varVal)
