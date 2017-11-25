@@ -126,7 +126,9 @@ var WikiMess = (function() {
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
                     compose: 'quill',
-                    settings: 'pokecog',
+                    'compose-tab': 'quill-ink',
+                    'grammar-tab': 'spell-book',
+                    'settings-tab': 'pokecog',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -374,7 +376,11 @@ var WikiMess = (function() {
       return this.logGet ('/html/welcome-guest.html')
     },
 
-    REST_getHelpHtml: function() {
+    REST_getComposeHelpHtml: function() {
+      return this.logGet ('/html/message-compose-help.html')
+    },
+
+    REST_getGrammarHelpHtml: function() {
       return this.logGet ('/html/grammar-editor-help.html')
     },
 
@@ -747,7 +753,8 @@ var WikiMess = (function() {
       
       this.container
         .empty()
-        .append (this.navbar = $('<div class="navbar">'))
+        .append ($('<div class="navlabelspace">'),
+                 this.navbar = $('<div class="navbar">'))
 
       this.drawNavBar (currentTab)
     },
@@ -1109,8 +1116,8 @@ var WikiMess = (function() {
     },
 
     pushView: function (newPage) {
-      var elements = this.container.find(':not(.pushed)').filter(':not(.navbar)')
-          .filter (function() { return $(this).parents('.navbar').length === 0})
+      var elements = this.container.find(':not(.pushed)').filter(':not(.navbar,.navlabelspace)')
+          .filter (function() { return $(this).parents('.navbar,.navlabelspace').length === 0})
       if (this.verbose.page)
 	console.log ("Pushing " + this.page + " view, going to " + newPage)
       var page = this.page
@@ -1132,8 +1139,8 @@ var WikiMess = (function() {
       if (this.verbose.page)
 	console.log ("Popping " + this.page + " view, returning to " + poppedView.page)
       this.container.find('.pushed').find('*').addBack().addClass('pushed')  // make sure any descendants added after the push are flagged as pushed
-      this.container.find(':not(.pushed)').filter(':not(.navbar)')
-        .filter (function() { return $(this).parents('.navbar').length === 0})
+      this.container.find(':not(.pushed)').filter(':not(.navbar,.navlabelspace)')
+        .filter (function() { return $(this).parents('.navbar,.navlabelspace').length === 0})
         .remove()
       poppedView.elements.find('*').addBack().removeClass('pushed').removeClass('already-clicked')
       return this.setPage (poppedView.page)
@@ -1409,6 +1416,8 @@ var WikiMess = (function() {
               })
           }
                     
+          // build the actual compose page UI
+          wm.initInfoPane()
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1425,6 +1434,7 @@ var WikiMess = (function() {
                                        wm.suggestionDiv = $('<div class="suggest">'),
                                        $('<div class="sectiontitle">').text('Expanded text'),
                                        wm.messageBodyDiv)),
+                     wm.infoPane,
                      $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
                        wm.stopAnimation()
@@ -1453,7 +1463,8 @@ var WikiMess = (function() {
                             })
                           })
                       }),
-                      wm.sendButton = wm.makeSubNavIcon ('share', send)))
+                      wm.sendButton = wm.makeSubNavIcon ('share', send),
+                      wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
           if (!wm.playerID) {
             wm.destroyButton.hide()
@@ -3216,6 +3227,47 @@ var WikiMess = (function() {
       })
     },
 
+    initInfoPane: function() {
+      var wm = this
+      wm.infoPane = $('<div class="infopane">')
+      wm.infoPaneContent = $('<div class="content">')
+      wm.infoPaneTitle = $('<div class="title">')
+      wm.infoPane.append ($('<span class="closebutton">').html
+                          (wm.makeIconButton ('close', function() {
+                            wm.infoPane.hide()
+                            wm.showingHelp = false
+                          })),
+                          wm.infoPaneTitle,
+		          wm.infoPaneContent,
+                          wm.infoPaneLeftControls = $('<span class="leftcontrols">'),
+		          wm.infoPaneRightControls = $('<span class="rightcontrols">'))
+      wm.infoPane.hide()
+      wm.restoreScrolling (wm.infoPaneContent)
+      wm.showingHelp = false
+    },
+
+    makeHelpButton: function (helpMethod) {
+      var wm = this
+      return wm.makeSubNavIcon ('help', function() {
+        if (wm.showingHelp) {
+          wm.infoPane.hide()
+          wm.showingHelp = false
+        } else
+	  helpMethod.call(wm).then (function (helpHtml) {
+	    wm.saveCurrentEdit()
+              .then (function() {
+                wm.showingHelp = true
+		wm.infoPaneTitle.text ('Help')
+		wm.infoPaneContent.html (helpHtml.replace (/PHRASE/g, function() { return symCharHtml }))
+                wm.addHelpIcons (wm.infoPaneContent)
+                wm.infoPaneRightControls.empty()
+                wm.infoPaneLeftControls.empty()
+		wm.infoPane.show()
+              })
+	  })
+      })
+    },
+
     showGrammarEditPage: function() {
       var wm = this
       return this.setPage ('grammar')
@@ -3241,22 +3293,8 @@ var WikiMess = (function() {
                                  pageExit: wm.saveCurrentEdit.bind(wm) })
 
             wm.grammarBarDiv = $('<div class="grammarbar">')
-
-            wm.infoPane = $('<div class="grammarinfopane">')
-            wm.infoPaneContent = $('<div class="content">')
-            wm.infoPaneTitle = $('<div class="title">')
-            wm.infoPane.append ($('<span class="closebutton">').html
-                                (wm.makeIconButton ('close', function() {
-                                  wm.infoPane.hide()
-                                  wm.showingHelp = false
-                                })),
-                                wm.infoPaneTitle,
-		                wm.infoPaneContent,
-                                wm.infoPaneLeftControls = $('<span class="leftcontrols">'),
-		                wm.infoPaneRightControls = $('<span class="rightcontrols">'))
-
-            wm.showingHelp = false
-
+            wm.initInfoPane()
+            
             var sanitizer = wm.sanitizer ('searchInput', wm.sanitizeSymbolName)
             wm.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
               .on ('keyup', sanitizer)
@@ -3278,28 +3316,11 @@ var WikiMess = (function() {
                                 wm.symbolSearchResultsDiv)
                        .hide(),
                        wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase book')),
-                       wm.infoPane.hide(),
+                       wm.infoPane,
                        $('<div class="subnavbar">').append
                        (wm.makeSubNavIcon ('new', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) }),
-                        wm.makeSubNavIcon ('help', function() {
-                          if (wm.showingHelp) {
-                            wm.infoPane.hide()
-                            wm.showingHelp = false
-                          } else
-		            wm.REST_getHelpHtml().then (function (helpHtml) {
-		              wm.saveCurrentEdit()
-                                .then (function() {
-                                  wm.showingHelp = true
-		                  wm.infoPaneTitle.text ('Help')
-		                  wm.infoPaneContent.html (helpHtml.replace (/PHRASE/g, function() { return symCharHtml }))
-                                  wm.addHelpIcons (wm.infoPaneContent)
-                                  wm.infoPaneRightControls.empty()
-                                  wm.infoPaneLeftControls.empty()
-		                  wm.infoPane.show()
-                                })
-		            })
-                        })))
-
+                        wm.makeHelpButton (wm.REST_getGrammarHelpHtml)))
+            
             wm.searchInput.attr ('placeholder', 'Search phrases')
             wm.placeIcon (wm.iconFilename.search, searchButton)
             searchButton.addClass('button')
@@ -3311,7 +3332,6 @@ var WikiMess = (function() {
 
             wm.restoreScrolling (wm.symbolSearchResultsDiv)
             wm.restoreScrolling (wm.grammarBarDiv)
-            wm.restoreScrolling (wm.infoPaneContent)
 
             wm.ruleDiv = {}
             wm.grammarBarDiv

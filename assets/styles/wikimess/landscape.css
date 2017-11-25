@@ -9,8 +9,9 @@
 	height: 100%;
     }
 
-    .wikimess .navbar .navlabel {
-	max-height: 5vh;
+    .wikimess .navbar {
+	height: 15vh;
+	min-height: 15vh;
     }
 
     .wikimess .navbar .navicon {
@@ -98,11 +99,11 @@
 	margin: 1vh;
     }
 
-    .wikimess .grammarinfopane {
+    .wikimess .infopane {
 	box-shadow: 1vh -1vh 1vh 0px gray;
     }
 
-    .wikimess .grammarinfopane .content {
+    .wikimess .infopane .content {
 	max-height: 40vh;
 	min-height: 40vh;
     }

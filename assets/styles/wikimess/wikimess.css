@@ -32,6 +32,17 @@ input {
     width: 0  !important;
 }
 
+.wikimess {
+    position: relative;
+}
+
+.wikimess .navlabelspace {
+    width: 100%;
+    font-size: small;
+    min-height: 1.2em;
+    height: 1.2em;
+}
+
 .wikimess .navbar {
     display: flex;
     flex-direction: row;
@@ -64,6 +75,8 @@ input {
 }
 
 .wikimess .navbar .navlabel {
+    position: absolute;
+    top: -1.2em;
     opacity: .8;
     cursor: pointer;
     font-size: small;
@@ -313,7 +326,7 @@ input {
     text-decoration: underline;
 }
 
-.wikimess .grammarinfopane {
+.wikimess .infopane {
     margin-left: 1px;
     margin-bottom: 4px;
     margin-right: 4px;
@@ -325,30 +338,30 @@ input {
     overflow-wrap: break-word;
 }
 
-.wikimess .grammarinfopane .title {
+.wikimess .infopane .title {
     font-weight: bold;
     font-size: large;
     font-style: italic;
 }
 
-.wikimess .grammarinfopane .content {
+.wikimess .infopane .content {
     clear: both;
     overflow-y: auto;
     padding: 1px;
 }
 
-.wikimess .grammarinfopane .rightcontrols {
+.wikimess .infopane .rightcontrols {
     font-size: x-large;
     float: right;
 }
 
-.wikimess .grammarinfopane .leftcontrols {
+.wikimess .infopane .leftcontrols {
     font-size: x-large;
     float: left;
 }
 
-.wikimess .grammarinfopane .leftcontrols .hint,
-.wikimess .grammarinfopane .rightcontrols .hint {
+.wikimess .infopane .leftcontrols .hint,
+.wikimess .infopane .rightcontrols .hint {
     font-size: smaller;
     font-style: italic;
     cursor: pointer;
@@ -755,6 +768,7 @@ input {
 }
 
 .wikimess .compose .suggestlabel {
+    font-style: italic;
 }
 
 .wikimess .compose .suggestions {
