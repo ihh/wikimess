@@ -2332,6 +2332,7 @@ var WikiMess = (function() {
               wm.detailBarDiv
                 .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
                 .append (wm.mailboxDiv = $('<div class="mailbox">'))
+              wm.restoreScrolling (wm.mailboxDiv)
               return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                 .then (function (result) {
                   if (result && result.templates.length)
