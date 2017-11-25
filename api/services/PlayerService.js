@@ -28,7 +28,7 @@ module.exports = {
   },
 
   makeStatus: function (info) {
-    var player = info.player, follower = info.follower, messages = info.messages, before = info.before, limit = info.limit || 10
+    var player = info.player || {}, follower = info.follower, messages = info.messages, before = info.before, limit = info.limit || 10
     
     var status = {}
     if (!before)

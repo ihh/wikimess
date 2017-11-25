@@ -61,6 +61,8 @@ module.exports.policies = {
   'ClientController': {
     // signup
     'createPlayer': true,
+    'byName': true,
+    'getPlayerId': true,
     // symbol expansions
     'searchAllSymbols': true,
     'searchOwnedSymbols': true,

@@ -857,7 +857,7 @@ module.exports = {
 
   // get all symbols owned by a player
   getSymbolsByOwner: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport && req.session.passport.user
     var result = { owner: playerID }
     Player.findOne ({ id: playerID })
       .then (function (player) {

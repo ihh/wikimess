@@ -69,10 +69,10 @@ module.exports.routes = {
   'GET /icon/:icon/:color':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background': 'IconController.getIcon', 
 
+  // client controller
   // player ID lookup
   'POST /id':                     'ClientController.byName',
 
-  // client controller
   // create player
   'POST /p/new':                  'ClientController.createPlayer',
 
