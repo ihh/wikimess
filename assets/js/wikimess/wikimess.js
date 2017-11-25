@@ -1190,7 +1190,7 @@ var WikiMess = (function() {
           
           function markForSave() { wm.composition.needsSave = true }
           wm.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
-            .attr ('placeholder', 'Message subject')
+            .attr ('placeholder', 'Untitled')
             .val (wm.composition.title)
             .on ('keyup', function() {
               wm.composition.title = wm.messageTitleInput.val()
