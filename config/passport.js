@@ -75,8 +75,10 @@ passport.use(new TwitterStrategy({
     callbackURL: "http://wikimess.me/login/twitter/callback"
   },
   function (token, tokenSecret, profile, cb) {
+    console.log ('TwitterStrategy', token, tokenSecret, profile, cb)
     PlayerService.makeUniquePlayerName (profile.screen_name)
       .then (function (name) {
+        console.log ('makeUniquePlayerName', name)
         Player.findOrCreate ({ twitterId: profile.id },
                              { twitterId: profile.id,
                                displayName: profile.name,
@@ -84,6 +86,7 @@ passport.use(new TwitterStrategy({
                                password: Math.random()
                              },
                              function (err, player) {
+                               console.log ('Player.findOrCreate', err, player)
                                if (err || !player)
                                  return done(err)
                                
