@@ -64,21 +64,32 @@ module.exports = {
   composePage: function (req, res) {
     var playerID = req.session.passport.user
     var symname = req.params.symname
+    var content, text = req.query.text
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
-        return Symbol.findOneCached ({ name: symname })
+        var contentPromise
+        if (symname)
+          contentPromise = Symbol.findOneCached ({ name: symname })
           .then (function (symbol) {
-            if (symbol) {
-              homepage.vars.init = true
-              homepage.vars.initConfig =
+            if (symbol)
+              content = [{ id: symbol.id,
+                           name: symbol.name }]
+            else
+              content = [{ name: symname.replace(/[^\w]/g,'') }]
+          })
+        else
+          contentPromise = Promise.resolve (true)
+        contentPromise
+          .then (function() {
+            homepage.vars.init = true
+            homepage.vars.initConfig =
               extend ({},
                       homepage.vars.initConfig,
                       { action: 'compose',
                         recipient: null,
-                        title: symname.replace(/_/g,' '),
-                        content: [{ id: symbol.id,
-                                    name: symbol.name }] })
-            }
+                        title: symname ? symname.replace(/_/g,' ') : (text ? text.substr(0,64) : undefined),  // default title length encoded here
+                        content: content,
+                        text: text })
             res.view ('homepage', homepage.vars)
           })
       }).catch (function (err) {

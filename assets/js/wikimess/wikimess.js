@@ -1938,7 +1938,7 @@ var WikiMess = (function() {
       case 'compose':
         promise = this.showComposePage ({ recipient: config.recipient,
                                           title: config.title,
-                                          template: { content: config.content } })
+                                          template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) } })
         break
       case 'grammar':
         promise = this.showGrammarEditPage()
