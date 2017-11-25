@@ -3218,7 +3218,7 @@ var WikiMess = (function() {
                 $.extend (wm.symbolName, result.name)
               })
 
-          def.then (function() {
+          return def.then (function() {
             
             wm.saveOnPageExit ({ autosave: null,
                                  pageExit: wm.saveCurrentEdit.bind(wm) })
