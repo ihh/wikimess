@@ -102,7 +102,7 @@ var WikiMess = (function() {
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     starColor: 'darkgoldenrod',
-    iconFilename: { edit: 'pencil',
+    iconFilename: { edit: 'quill',
                     backspace: 'backspace',
                     'new': 'copy',
                     create: 'circle-plus',
@@ -117,6 +117,7 @@ var WikiMess = (function() {
                     're-roll': 'rolling-die',
                     close: 'close',
                     send: 'send',
+                    share: 'share',
                     inbox: 'inbox',
                     outbox: 'outbox',
                     drafts: 'scroll-unfurled',
@@ -208,7 +209,7 @@ var WikiMess = (function() {
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
     emptyContentWarning: "Enter phrases here, or pick from the suggestions below.",
-    emptyTemplateWarning: "_The expanded message, with randomly selected definitions substituted for any phrase references, will appear here._",
+    emptyTemplateWarning: "_The message will appear here._",
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],
@@ -774,8 +775,8 @@ var WikiMess = (function() {
         wm.getIconPromise(tab.icon)
           .done (function (svg) {
             svg = wm.colorizeIcon (svg, wm.themeInfo.navbarIconColor)
-            span.append ($(svg).addClass('navicon'),
-                         $('<div>').addClass('navlabel').text(tab.label || tab.name))
+            span.append ($('<div>').addClass('navlabel').text(tab.label || tab.name),
+                         $(svg).addClass('navicon'))
 	    if (isMailbox)
 	      span.append (wm.messageCountDiv)
           })
@@ -1449,7 +1450,7 @@ var WikiMess = (function() {
                             })
                           })
                       }),
-                      wm.sendButton = wm.makeSubNavIcon ('send', send)))
+                      wm.sendButton = wm.makeSubNavIcon ('share', send)))
 
           if (!wm.playerID) {
             wm.destroyButton.hide()
