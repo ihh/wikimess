@@ -1117,9 +1117,11 @@ module.exports = {
         (templates, nSuggestions, function (a, b) { return b.rating - a.rating })
         .map (function (template) {
           return { id: template.id,
-                   author: { id: template.author.id,
-                             name: template.author.name,
-                             displayName: template.author.displayName },
+                   author: (template.author
+                            ? { id: template.author.id,
+                                name: template.author.name,
+                                displayName: template.author.displayName }
+                            : undefined),
                    title: template.title }
         })
         res.json ({ templates: suggestedTemplates })

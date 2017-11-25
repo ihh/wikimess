@@ -87,6 +87,7 @@ var WikiMess = (function() {
     facebookButtonImageUrl: '/images/facebook.png',
     twitterIntentPath: 'https://twitter.com/intent/tweet',
     twitterUsername: 'wikimessage',
+    anonGuest: 'Anonymous guest',
     autotitleLength: 64,
     maxPlayerLoginLength: 16,
     maxPlayerNameLength: 32,
@@ -1371,7 +1372,8 @@ var WikiMess = (function() {
                                                             title: wm.composition.title,
                                                             body: wm.composition.body,
                                                             previous: wm.composition.previousMessage,
-                                                            draft: wm.composition.draft })
+                                                            draft: wm.composition.draft,
+                                                            isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                     .then (function (result) {
                       if (result.message && result.message.path) {
                         var text = wm.makeExpansionText (wm.composition.body)
@@ -2080,7 +2082,7 @@ var WikiMess = (function() {
                verb: 'Sent',
                preposition: 'From',
                object: 'sender',
-               anon: 'Anonymous guest',
+               anon: this.anonGuest,
                showMessage: this.showMessage.bind(this) }
     },
     
@@ -2332,9 +2334,11 @@ var WikiMess = (function() {
                                                          .append ($('<span class="title">')
                                                                   .text (template.title),
                                                                   $('<span class="by">').append (' by ',
-                                                                                                 wm.makePlayerSpan (template.author.name,
-                                                                                                                    null,
-                                                                                                                    wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author))))) }))))
+                                                                                                 template.author
+                                                                                                 ? wm.makePlayerSpan (template.author.name,
+                                                                                                                      null,
+                                                                                                                      wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))
+                                                                                                 : wm.anonGuest)) }))))
                   return wm.REST_getPlayerPublic (wm.playerID)
                     .then (function (pubResult) {
                       wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
@@ -2805,8 +2809,16 @@ var WikiMess = (function() {
       function addToDraft (expansion) {
         return function (evt) {
           evt.stopPropagation()
-          wm.saveCurrentEdit()
-            .then (function() {
+          var expandedPromise = wm.saveCurrentEdit()
+          if (!expansion)
+            expandedPromise = expandedPromise
+            .then (function () {
+              return wm.REST_getPlayerExpand (wm.playerID, symbol.id)
+                .then (function (result) {
+                  expansion = result.expansion
+                })
+            })
+          expandedPromise.then (function() {
               if (wm.composition && wm.composition.template && wm.composition.template.content) {
                 if (expansion && wm.composition.body && wm.composition.body.rhs)
                   wm.composition.body.rhs = wm.composition.body.rhs.concat (expansion.rhs)
