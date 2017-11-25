@@ -2147,7 +2147,6 @@ var WikiMess = (function() {
                          .show()
                      }
 
-                     wm.dummyReplyButton.hide()
                      wm.replyButton
                        .on('click', function (evt) {
                          evt.stopPropagation()
@@ -2247,8 +2246,7 @@ var WikiMess = (function() {
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      wm.popBack()
-                     .append (wm.dummyReplyButton = wm.makeSubNavIcon('dummy'),
-                              wm.replyButton = wm.makeSubNavIcon('reply').hide(),
+                     .append (wm.replyButton = wm.makeSubNavIcon('reply').hide(),
                               wm.forwardButton = wm.makeSubNavIcon ('forward', function (evt) {
                                 evt.stopPropagation()
                                 wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
