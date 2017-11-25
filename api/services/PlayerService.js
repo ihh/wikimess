@@ -159,6 +159,7 @@ module.exports = {
   },
   
   makeUniquePlayerName: function (prefix, count) {
+    console.log('makeUniquePlayerName',prefix,count)
     prefix = prefix.replace (/[^A-Za-z0-9_]/g, '')
     var suffix = (count || '').toString()
     var trialName = prefix.substr (0, Player.maxNameLen - suffix.length) + suffix
