@@ -166,9 +166,6 @@ module.exports = {
   facebookLoginCallback: function (req, res, next) {
     passport.authenticate('facebook',
                           function (err, player) {
-                            //                                console.log("facebookLoginCallback")
-                            //                                console.log(err)
-                            //                                console.log(player)
                             req.logIn(player, function (err) {
                               if (err) return res.send(err)
                               return res.redirect('/')
@@ -189,11 +186,10 @@ module.exports = {
   },
 
   twitterLoginCallback: function (req, res, next) {
+    console.log('in twitterLoginCallback')
     passport.authenticate('twitter',
                           function (err, player) {
-                            //                                console.log("facebookLoginCallback")
-                            //                                console.log(err)
-                            //                                console.log(player)
+                            console.log('twitterLoginCallback',player)
                             req.logIn(player, function (err) {
                               if (err) return res.send(err)
                               return res.redirect('/')
