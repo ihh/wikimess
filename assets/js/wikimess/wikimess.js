@@ -1647,10 +1647,18 @@ var WikiMess = (function() {
     },
     
     expandVars: function (html, varVal) {
+      var wm = this
       varVal = varVal || { me: this.defaultVarText('Sender'),
                            you: this.defaultVarText('Recipient') }
       return html
-        .replace (new RegExp ('\\' + varChar + '([A-Za-z_]\\w*)\\b', 'ig'), function (m, v) { return varVal[v] || m })
+        .replace (new RegExp ('\\' + varChar + '([A-Za-z_]\\w*)\\b( *= *\\{([^\\}]*)\\}|)', 'ig'),
+                  function (match, varName, assignment, assignVal) {
+                    if (assignment.length) {
+                      varVal[varName] = wm.expandVars (assignVal, varVal)
+                      return ''
+                    }
+                    return varVal[varName] || match
+                  })
     },
 
     stopAnimation: function() {
