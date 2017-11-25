@@ -74,7 +74,7 @@ passport.use(new TwitterStrategy({
     consumerSecret: '***REMOVED***',
     callbackURL: "http://wikimess.me/login/twitter/callback"
   },
-  function (token, tokenSecret, profile, cb) {
+  function (token, tokenSecret, profile, done) {
     PlayerService.makeUniquePlayerName (profile.username)
       .then (function (name) {
         Player.findOrCreate ({ twitterId: profile.username },
