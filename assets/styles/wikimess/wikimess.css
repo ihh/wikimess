@@ -681,6 +681,14 @@ input {
     overflow-wrap: break-word;
 }
 
+.wikimess .readmessage .messagebody {
+    -webkit-user-select: text; /* Chrome/Safari */        
+    -moz-user-select: text; /* Firefox */
+    -ms-user-select: text; /* IE10+ */
+    -o-user-select: text;
+    user-select: text;
+}
+
 .wikimess .mailbox .contents,
 .wikimess .messageborder {
     flex-grow: 1;
