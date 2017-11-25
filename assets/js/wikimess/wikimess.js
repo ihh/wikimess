@@ -69,7 +69,7 @@ var WikiMess = (function() {
       this.initPlayerInfo (config.player)
       this.socket_getPlayerSubscribe (this.playerID)
         .then (this.showInitialPage.bind (this, config))
-    } else if (config.action)
+    } else if (config.action && config.action !== 'login')
       this.continueAsGuest (config)
     else
       this.showLoginPage()
@@ -2792,6 +2792,26 @@ var WikiMess = (function() {
       var editable = wm.symbolEditableByPlayer (symbol)
       var owned = wm.symbolOwnedByPlayer (symbol)
 
+      function addToDraft (expansion) {
+        return function (evt) {
+          evt.stopPropagation()
+          wm.saveCurrentEdit()
+            .then (function() {
+              if (wm.composition && wm.composition.template && wm.composition.template.content) {
+                if (expansion && wm.composition.body && wm.composition.body.rhs)
+                  wm.composition.body.rhs = wm.composition.body.rhs.concat (expansion.rhs)
+              wm.composition.template.content.push ({ id: symbol.id })
+              return wm.showComposePage()
+            } else
+              return wm.showComposePage
+            ({ template: { content: [ symbol ] },
+               title: wm.symbolName[symbol.id].replace(/_/g,' '),
+               body: expansion ? { rhs: [expansion] } : undefined,
+               focus: 'playerSearchInput' })
+            })
+        }
+      }
+
       function randomize (evt) {
         evt.stopPropagation()
         wm.saveCurrentEdit()
@@ -2819,22 +2839,7 @@ var WikiMess = (function() {
                   .append ($('<span class="hint">').text('Add to draft'),
                            wm.makeIconButton ('forward'))
                   .off('click')
-                  .on('click', function (evt) {
-                    evt.stopPropagation()
-                    wm.saveCurrentEdit()
-                      .then (function() {
-                        if (wm.composition && wm.composition.template && wm.composition.template.content) {
-                          wm.composition.template.content.push ({ id: symbol.id })
-                          wm.composition.body.rhs = wm.composition.body.rhs.concat (result.expansion.rhs)
-                          wm.showComposePage()
-                        } else
-                          wm.showComposePage
-                        ({ template: { content: [ symbol ] },
-                           title: wm.symbolName[symbol.id].replace(/_/g,' '),
-                           body: { rhs: [ result.expansion ] },
-                           focus: 'playerSearchInput' })
-                      })
-                  })
+                  .on('click', addToDraft (result.expansion))
 		wm.infoPane.show()
               })
           })
@@ -2844,7 +2849,8 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm ('Make a copy of ' + hashChar + wm.symbolName[symbol.id] + '? You will be able to edit the copy.'))
+            if (window.confirm ('Make a copy of ' + hashChar + wm.symbolName[symbol.id] + '?'
+                                + (wm.symbolEditableByPlayer(symbol) ? ' (Unlike the original, you will be able to edit the copy.)' : '')))
               wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
                                               rules: symbol.rules } })
           })
@@ -2904,7 +2910,8 @@ var WikiMess = (function() {
                       return $('<div class="menubutton">').append (wm.makeIconButton ('menu', function (evt) {
                         evt.stopPropagation()
                         menuDiv.empty()
-                          .append (menuSelector ('Show sample text', randomize),
+                          .append (menuSelector ('Add to draft', addToDraft()),
+                                   menuSelector ('Show sample text', randomize),
                                    symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
                                    owned ? menuSelector ('Unlock this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
                           .show()
