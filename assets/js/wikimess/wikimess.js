@@ -87,6 +87,7 @@ var WikiMess = (function() {
     facebookButtonImageUrl: '/images/facebook.png',
     twitterIntentPath: 'https://twitter.com/intent/tweet',
     twitterUsername: 'wikimessage',
+    autotitleLength: 64,
     maxPlayerLoginLength: 16,
     maxPlayerNameLength: 32,
     maxRating: 5,
@@ -1351,13 +1352,18 @@ var WikiMess = (function() {
           function send() {
             wm.saveCurrentEdit()
               .then (function() {
+                var expansionText, expansionTextMatch
                 if (wm.templateIsEmpty())
                   window.alert ("Please enter some message text.")
-                else if (!(wm.composition.body && wm.makeExpansionText(wm.composition.body).match(/\S/)))
+                else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText(wm.composition.body)).match(/\S/))))
                   window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
-                else if (wm.composition.recipient && !(wm.composition.title && wm.composition.title.length))
-                  window.alert ("Please give this message a title.")
                 else {
+                  if (!wm.composition.title) {
+                    if (wm.composition.recipient)
+                      window.alert ("Please give this message a title.")
+                    else
+                      wm.composition.title = expansionText.substr (expansionTextMatch.index, wm.autotitleLength)
+                  }
                   wm.sendButton.off ('click')
                   delete wm.composition.previousTemplate
                   wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient ? wm.composition.recipient.id : null,
@@ -2023,6 +2029,7 @@ var WikiMess = (function() {
                                  verb: 'Sent',
                                  preposition: 'To',
                                  object: 'recipient',
+                                 anon: 'Everyone',
                                  showMessage: wm.showMessage.bind(wm)
                                })
         return result
@@ -2050,6 +2057,7 @@ var WikiMess = (function() {
                                  verb: 'Edited',
                                  preposition: 'To',
                                  object: 'recipient',
+                                 anon: 'Everyone',
                                  showMessage: function (props) {
                                    var draft = props.result.draft
                                    wm.showComposePage ({ recipient: draft.recipient,
@@ -2067,11 +2075,12 @@ var WikiMess = (function() {
 
     broadcastProps: function() {
       return { tab: 'public',
-               title: 'Recent broadcasts',
+               title: 'Recent messages',
                getMethod: 'REST_getPlayerMessagePublic',
                verb: 'Sent',
                preposition: 'From',
                object: 'sender',
+               anon: 'Anonymous guest',
                showMessage: this.showMessage.bind(this) }
     },
     
@@ -2182,7 +2191,7 @@ var WikiMess = (function() {
                    (deleteMessage
                     ? $('<span class="buttons">').append (wm.makeIconButton ('destroy', deleteMessage))
                     : []),
-                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text('No '+props.object)))
+                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (props.anon || ('No '+props.object))))
           .on ('click', function() {
             wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
             var cachedMessage = wm.messageCache[props.tab][message.id]
@@ -2247,10 +2256,10 @@ var WikiMess = (function() {
                                                                                             function (evt) {
                                                                                               wm.showOtherStatusPage (other)
                                                                                             })
-                                                                       : ('No '+props.object))),
+                                                                       : (props.anon || ('No '+props.object)))),
                               $('<div class="row">')
                               .append ($('<span class="label">').text ('Subject'),
-                                       $('<span class="field">').text (message.title && message.title.length ? message.title : 'Untitled')),
+                                       $('<span class="field">').text (message.title || 'Untitled')),
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
                                        $('<span class="field">').text (new Date (message.date).toString()))),
@@ -2330,6 +2339,7 @@ var WikiMess = (function() {
                     .then (function (pubResult) {
                       wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
                                                        wm.broadcastProps()))
+                      // TODO: append 'More...' link to wm.mailboxDiv, bumping up optional limit on /p/public
                     })
                 })
             })
