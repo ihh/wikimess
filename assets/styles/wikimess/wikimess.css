@@ -700,16 +700,30 @@ input {
 
 .wikimess .popular .templates,
 .wikimess .mailbox .contents,
-.wikimess .messageborder {
+.wikimess .readmessage .messageborder {
     border-top-style: solid;
     border-width: 1px;
     margin: 2px;
 }
 
+.wikimess .compose .sectiontitle {
+    border-style: solid solid dashed solid;
+    border-width: 1px;
+    border-radius: 4px 4px 0 0;
+    font-style: italic;
+    padding: 2px;
+    margin-top: 1px;
+}
+    
 .wikimess .compose .messagecompose {
     height: 15vh;
     min-height: 15vh;
     overflow-y: auto;
+    border-style: none solid solid solid;
+    border-width: 1px;
+    border-radius: 0 0 4px 4px;
+    margin-bottom: 1px;
+    padding: 1px;
 }
 
 .wikimess .compose .placeholder {
@@ -727,14 +741,17 @@ input {
     flex-wrap: wrap;
     overflow: auto;
 
-    border-top-style: solid;
-    border-bottom-style: solid;
-    border-width: 1px;
+    padding: 2px;
 }
 
 .wikimess .compose .messagebody {
     flex-grow: 1;
     overflow-y: auto;
+    border-style: none solid solid solid;
+    border-width: 1px;
+    border-radius: 0 0 4px 4px;
+    margin-bottom: 1px;
+    padding: 1px;
 }
 
 .wikimess .compose .suggestlabel {
