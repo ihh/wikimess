@@ -126,6 +126,7 @@ var WikiMess = (function() {
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
                     compose: 'quill',
+                    settings: 'pokecog',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -2419,8 +2420,10 @@ var WikiMess = (function() {
         .append (wm.detailBarDiv = $('<div class="detailbar">'))
       wm.restoreScrolling (wm.detailBarDiv)
 
-      if (status && status.html)
+      if (status && status.html) {
         wm.detailBarDiv.append (status.html)
+        wm.addHelpIcons (wm.detailBarDiv)
+      }
 
       if (status && status.loggedIn) {
         wm.detailBarDiv.append
@@ -3286,15 +3289,7 @@ var WikiMess = (function() {
                                   wm.showingHelp = true
 		                  wm.infoPaneTitle.text ('Help')
 		                  wm.infoPaneContent.html (helpHtml.replace (/PHRASE/g, function() { return symCharHtml }))
-                                  var icons = wm.infoPaneContent.find('.helpicon')
-                                  icons.each (function (n) {
-                                    var iconSpan = icons.slice(n,n+1), iconName = iconSpan.attr('icon')
-                                    wm.getIconPromise(wm.iconFilename[iconName])
-                                      .done (function (svg) {
-                                        svg = wm.colorizeIcon (svg, wm.themeInfo.iconColor)
-                                        iconSpan.append ($(svg))
-                                      })
-                                  })
+                                  wm.addHelpIcons (wm.infoPaneContent)
                                   wm.infoPaneRightControls.empty()
                                   wm.infoPaneLeftControls.empty()
 		                  wm.infoPane.show()
@@ -3330,6 +3325,19 @@ var WikiMess = (function() {
         })
     },
 
+    addHelpIcons: function (div) {
+      var wm = this
+      var icons = div.find('.helpicon')
+      icons.each (function (n) {
+        var iconSpan = icons.slice(n,n+1), iconName = iconSpan.attr('icon')
+        wm.getIconPromise(wm.iconFilename[iconName])
+          .done (function (svg) {
+            svg = wm.colorizeIcon (svg, wm.themeInfo.iconColor)
+            iconSpan.append ($(svg))
+          })
+      })
+    },
+    
     clearSymbolSearch: function() {
       this.searchInput.val('')
       this.doSymbolSearch()
