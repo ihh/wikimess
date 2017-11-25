@@ -1756,7 +1756,7 @@ var WikiMess = (function() {
 
     indefiniteArticle: function (nounPhrase) {
       var article = nounPhrase.match(/^[^A-Za-z]*[aeiou]/i) ? 'an' : 'a'
-      return article + nounPhrase
+      return article + ' ' + nounPhrase
     },
 
     countSymbolNodes: function (node, includeLimitedNodes) {
@@ -2697,24 +2697,24 @@ var WikiMess = (function() {
 
     parseRhs: function (rhs, ignoreText) {
       var wm = this
-      var regex = new RegExp ('(([\\s\\S]*?)\\' + hashChar + '(\\w+)|([\\s\\S]*?)\\' + hashChar + '\((\\w+)\+(\\w+)\)|[\\s\\S]+)', 'g'), match
+      var regex = new RegExp ('(([\\s\\S]*?)\\' + hashChar + '\\((\\w+)\\+(\\w+)\\)|([\\s\\S]*?)\\' + hashChar + '(\\w+)|[\\s\\S]+)', 'g'), match
       var parsed = []
       var name2id = this.symbolNameToID()
       while ((match = regex.exec(rhs)))
         (function() {
           var text = match[1], symbol
-          if (match[6] && match[6].length) {
-            var pre = match[5], post = match[6]
+          if (match[4]) {
+            var pre = match[3], post = match[4]
             if (pre.match(/^(a|an|A|AN)$/)) {
               symbol = { name: post, a: pre }
-              text = match[4]
+              text = match[2]
             } else if (post.match(/^(s|S)$/)) {
               symbol = { name: pre, plural: post }
-              text = match[4]
+              text = match[2]
             }
-          } else if (match[3] && match[3].length) {
-            text = match[2]
-            symbol = { name: match[3] }
+          } else if (match[6]) {
+            text = match[5]
+            symbol = { name: match[6] }
           }
           if (text && !ignoreText)
             parsed.push (text)
