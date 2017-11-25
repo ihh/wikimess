@@ -58,10 +58,6 @@ input {
     border-color: black;
 }
 
-.wikimess .navbar .navtab {
-    position: relative;
-}
-
 .wikimess .navbar .navicon {
     opacity: .6;
     cursor: pointer;
