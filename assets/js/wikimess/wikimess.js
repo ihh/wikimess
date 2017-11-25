@@ -85,6 +85,7 @@ var WikiMess = (function() {
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
+    twitterButtonImageUrl: '/images/twitter.png',
     twitterIntentPath: 'https://twitter.com/intent/tweet',
     twitterUsername: 'wikimessage',
     anonGuest: 'Anonymous guest',
@@ -213,6 +214,10 @@ var WikiMess = (function() {
     // REST API
     REST_loginFacebook: function() {
       window.location.replace ('/login/facebook')
+    },
+
+    REST_loginTwitter: function() {
+      window.location.replace ('/login/twitter')
     },
 
     REST_postPlayer: function (playerName, playerPassword) {
@@ -530,23 +535,20 @@ var WikiMess = (function() {
       }
     },
 
-    makeSilentLink: function (text, callback) {
-      return this.makeLink (text, callback, '', true)
+    makeImageLink: function (src, callback, sfx, allowMultipleClicks) {
+      var img = $('<img>').attr('src', src)
+      return this.makeLink (img, callback, sfx, allowMultipleClicks)
     },
 
-    makeLink: function (text, callback, sfx, allowMultipleClicks) {
+    makeListLink: function (html, callback, sfx, allowMultipleClicks) {
+      var span = $('<span class="listitem">').html (html)
+      return this.makeLink (span, callback, sfx, allowMultipleClicks)
+    },
+
+    makeLink: function (element, callback, sfx, allowMultipleClicks) {
       var wm = this
-      var link = $('<a href="#">')
-          .text (text)
-          .attr ('title', text)
-      link.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && link))
-      return link
-    },
-
-    makeListLink: function (text, callback, sfx, allowMultipleClicks) {
-      var span = $('<span class="listitem">').html(text)
-      span.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && span))
-      return span
+      element.on ('click', this.callWithSoundEffect (callback, sfx, !allowMultipleClicks && element))
+      return element
     },
 
     setPage: function (page) {
@@ -576,6 +578,7 @@ var WikiMess = (function() {
       return this.setPage ('login')
         .then (function() {
           var sanitizeLogin = wm.sanitizer ('nameInput', wm.sanitizePlayerName)
+
           wm.container
             .empty()
             .append ($('<div class="inputbar">')
@@ -593,7 +596,9 @@ var WikiMess = (function() {
                      .append ($('<div class="list">')
                               .append (wm.makeListLink ('Log in', wm.doReturnLogin),
                                        wm.makeListLink ('Sign up', wm.createPlayer),
-                                       wm.makeListLink ($('<div>').html ($('<img>').attr('src',wm.facebookButtonImageUrl), wm.REST_loginFacebook)).addClass("noborder"),
+                                       $('<span class="listitem noborder">')
+                                       .append (wm.makeImageLink (wm.facebookButtonImageUrl, wm.REST_loginFacebook),
+                                                wm.makeImageLink (wm.twitterButtonImageUrl, wm.REST_loginTwitter)),
                                        wm.makeListLink ('Play as Guest', wm.continueAsGuest))))
           if (wm.playerLogin)
             wm.nameInput.val (wm.playerLogin)

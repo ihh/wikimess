@@ -1,6 +1,7 @@
 var passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
     FacebookStrategy = require('passport-facebook').Strategy,
+    TwitterStrategy = require('passport-twitter').Strategy,
     bcrypt = require('bcrypt');
 
 passport.serializeUser(function(player, done) {
@@ -67,3 +68,29 @@ passport.use
                              })
       })
   }))
+
+passport.use(new TwitterStrategy({
+    consumerKey: '***REMOVED***',
+    consumerSecret: '***REMOVED***',
+    callbackURL: "http://wikimess.me/login/twitter/callback"
+  },
+  function (token, tokenSecret, profile, cb) {
+    PlayerService.makeUniquePlayerName (profile.screen_name)
+      .then (function (name) {
+        Player.findOrCreate ({ twitterId: profile.id },
+                             { twitterId: profile.id,
+                               displayName: profile.name,
+                               name: name,
+                               password: Math.random()
+                             },
+                             function (err, player) {
+                               if (err || !player)
+                                 return done(err)
+                               
+                               return done(null, player, {
+                                 message: 'Logged In Successfully'
+                               });
+                             })
+      })
+  }
+));

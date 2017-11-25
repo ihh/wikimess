@@ -133,7 +133,7 @@ module.exports = {
     return player && { id: player.id,
                        name: player.name,
                        displayName: player.displayName,
-                       hidePassword: player.facebookId ? true : false,
+                       hidePassword: (player.facebookId || player.twitterId) ? true : false,
                        noMailUnlessFollowed: player.noMailUnlessFollowed,
                        publicBio: player.publicBio,
                        privateBio: player.privateBio,

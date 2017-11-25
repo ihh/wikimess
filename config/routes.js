@@ -56,6 +56,9 @@ module.exports.routes = {
   'GET /login/facebook':          'AuthController.facebookLogin',
   'GET /login/facebook/callback': 'AuthController.facebookLoginCallback',
 
+  'GET /login/twitter':          'AuthController.twitterLogin',
+  'GET /login/twitter/callback': 'AuthController.twitterLoginCallback',
+
   // icon management
   'GET /icon/:icon.svg':                    'IconController.getIcon',
   'GET /icon/:icon/:color.svg':             'IconController.getIcon',

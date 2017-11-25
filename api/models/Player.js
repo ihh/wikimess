@@ -55,6 +55,12 @@ module.exports = {
       unique: true
     },
 
+    twitterId: {
+      type: 'string',
+      required: false,
+      unique: true
+    },
+
     // administrator?
     admin: {
       type: 'boolean',

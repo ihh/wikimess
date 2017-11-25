@@ -163,6 +163,31 @@ module.exports = {
                               return res.redirect('/')
                             });
                           })(req, res, next);
+  },
+
+  twitterLogin:function (req, res, next) {
+    passport.authenticate('twitter', { failureRedict: '/login' },
+                          function (err, player) {
+                            req.logIn(player, function (err) {
+                              if (err) res.send(err)
+                              return res.send({
+                                player: PlayerService.makeLoginSummary (player)
+                              });
+                            });
+                          })(req, res, next);
+  },
+
+  twitterLoginCallback: function (req, res, next) {
+    passport.authenticate('twitter',
+                          function (err, player) {
+                            //                                console.log("facebookLoginCallback")
+                            //                                console.log(err)
+                            //                                console.log(player)
+                            req.logIn(player, function (err) {
+                              if (err) return res.send(err)
+                              return res.redirect('/')
+                            });
+                          })(req, res, next);
   }
   
 

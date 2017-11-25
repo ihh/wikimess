@@ -522,6 +522,12 @@ input {
 .wikimess .menubar .listitem.noborder {
     border-style: none;
     background: none;
+    flex-direction: row;
+}
+
+.wikimess .menubar .listitem img {
+    width: 64px;
+    height: 64px;
 }
 
 .wikimess .menubar .card {
