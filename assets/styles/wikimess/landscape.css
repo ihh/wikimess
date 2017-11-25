@@ -10,7 +10,11 @@
     }
 
     .wikimess .navbar {
-	min-height: 15vh;
+	min-height: 20vh;
+    }
+
+    .wikimess .navbar .navlabel {
+	max-height: 5vh;
     }
 
     .wikimess .navbar .navicon {
