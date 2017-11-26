@@ -338,8 +338,8 @@ input {
 
 .wikimess .sharepane {
     position: absolute;
-    top: -48px;  /* ugh */
-    left: -48px;  /* double ugh */
+    top: -46px;  /* ugh */
+    left: -44px;  /* double ugh */
     display: flex;
     flex-direction: row;
 }
@@ -349,14 +349,10 @@ input {
 
 .wikimess .sharepane,
 .wikimess .infopane {
-    margin-left: 1px;
-    margin-bottom: 4px;
-    margin-right: 4px;
     border-style: solid;
     border-width: 1px;
     z-index: 1;
-    margin-left: 1px;
-    padding: 2px;
+    padding: 2px 4px 2px 2px;
     overflow-wrap: break-word;
 }
 
@@ -498,7 +494,6 @@ input {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 2em;
 }
 
 .wikimess .detailbar .titlebar {
@@ -597,11 +592,6 @@ input {
     flex-grow: 1;
     overflow-y: auto;
     overflow-x: hidden;
-}
-
-.wikimess .detailbar {
-    display: flex;
-    flex-direction: column;
 }
 
 .wikimess .detailbar .biofact {
@@ -885,7 +875,13 @@ input {
 }
 
 .wikimess img.big-button,
-.wikimess .big-button svg,
+.wikimess .big-button svg {
+    font-size: xx-large;
+    width: 1.2em;
+    height: 1.2em;
+    cursor: pointer;
+}
+
 .wikimess .subnavbar .button svg {
     font-size: xx-large;
     width: 1em;

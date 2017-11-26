@@ -532,6 +532,13 @@ var WikiMess = (function() {
       return window.innerHeight > window.innerWidth
     },
 
+    openLink: function (url) {
+      var newWin = window.open (url)
+
+      if (!newWin || newWin.closed || typeof newWin.closed=='undefined')
+        window.location.replace (url)
+    },
+
     callWithSoundEffect: function (callback, sfx, elementToDisable) {
       var wm = this
       return function (evt) {
@@ -1381,7 +1388,7 @@ var WikiMess = (function() {
           // tweet
           function tweetIntent (info) {
             if (info.url) {
-              window.open (wm.twitterIntentPath
+              wm.openLink (wm.twitterIntentPath
                            + '?text=' + encodeURIComponent((info.title ? (info.title + ': ') : '') + info.text)
                            + '&url=' + encodeURIComponent(info.url)
                            + '&via=' + wm.twitterUsername)
@@ -1391,7 +1398,7 @@ var WikiMess = (function() {
           // facebook
           function facebookIntent (info) {
             if (info.url) {
-              window.open (wm.facebookIntentPath
+              wm.openLink (wm.facebookIntentPath
                            + '?u=' + encodeURIComponent(info.url))
             }
           }
@@ -2425,7 +2432,6 @@ var WikiMess = (function() {
               wm.detailBarDiv
                 .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
                 .append (wm.mailboxDiv = $('<div class="mailbox">'))
-              wm.restoreScrolling (wm.mailboxDiv)
               return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                 .then (function (result) {
                   if (result && result.templates.length)
@@ -3431,7 +3437,7 @@ var WikiMess = (function() {
 
     addHelpIcons: function (div) {
       var wm = this
-      var icons = div.find('.helpicon')
+      var icons = div.find('span.helpicon')
       icons.each (function (n) {
         var iconSpan = icons.slice(n,n+1), iconName = iconSpan.attr('icon')
         wm.getIconPromise(wm.iconFilename[iconName])

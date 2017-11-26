@@ -26,6 +26,10 @@
     border-color: #333
 }
 
+.wikimess.l33t .sharepane {
+    background-color: white;
+}
+
 .wikimess.l33t .messageborder {
     border-color: green;
 }

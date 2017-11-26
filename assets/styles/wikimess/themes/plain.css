@@ -18,6 +18,10 @@
     color: black;
 }
 
+.wikimess.plain .sharepane {
+    background-color: white;
+}
+
 .wikimess.plain .navbar .navlabel {
     background-color: rgba(0,0,0,.5);
     color: white;
