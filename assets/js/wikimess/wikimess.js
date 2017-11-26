@@ -1381,7 +1381,7 @@ var WikiMess = (function() {
           function tweetIntent (info) {
             if (info.url) {
               window.open (wm.twitterIntentPath
-                           + '?text=' + encodeURIComponent(info.text)
+                           + '?text=' + encodeURIComponent((info.title ? (info.title + ': ') : '') + info.text)
                            + '&url=' + encodeURIComponent(info.url)
                            + '&via=' + wm.twitterUsername)
             }
@@ -1396,43 +1396,43 @@ var WikiMess = (function() {
                 .then (function() {
                   var expansionText, expansionTextMatch
                   if (wm.templateIsEmpty())
-                    window.alert ("Please enter some message text.")
+                    window.alert ("Please enter some input text.")
                   else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText(wm.composition.body)).match(/\S/))))
-                    window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
+                    window.alert ("Expanded text is empty. Please vary the input text, or re-roll to generate a new random expanded text.")
+                  else if (wm.composition.isPrivate && !wm.composition.recipient)
+                    window.alert ("Please select the direct message recipient, or make it public.")
                   else {
-                    if (!wm.composition.title) {
-                      if (wm.composition.recipient)
-                        window.alert ("Please give this message a title.")
-                      else
-                        wm.composition.title = expansionText.substr (expansionTextMatch.index, wm.autotitleLength)
-                    }
-                    wm.sendButton.off ('click')
+                      wm.sendButton.off ('click')
                     delete wm.composition.previousTemplate
-                    wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient ? wm.composition.recipient.id : null,
-                                                              template: wm.composition.template,
-                                                              title: wm.composition.title,
-                                                              body: wm.composition.body,
-                                                              previous: wm.composition.previousMessage,
-                                                              draft: wm.composition.draft,
-                                                              isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
-                      .then (function (result) {
-                        if (shareCallback)
-                          shareCallback ({ url: (result.message && result.message.path
-                                                 ? (window.location.origin + result.message.path)
-                                                 : undefined),
-                                           text: wm.makeExpansionText (wm.composition.body) })
-                      }).then (function() {
-                        wm.composition = {}
-                        delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
-                        return (wm.playerID
-                                ? wm.showMailboxPage ({ tab: 'outbox' })
-                                .then (function() {
-                                  // TODO: update wm.mailboxCache.outbox
-                                })
-                                : wm.showStatusPage())
-                      }).catch (function (err) {
-                        wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
-                      })
+                    var origTitle = wm.composition.title
+                    if (!wm.composition.title)
+                          wm.composition.title = expansionText.substr (expansionTextMatch.index, wm.autotitleLength)
+                      wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
+                                                                template: wm.composition.template,
+                                                                title: wm.composition.title,
+                                                                body: wm.composition.body,
+                                                                previous: wm.composition.previousMessage,
+                                                                draft: wm.composition.draft,
+                                                                isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                        .then (function (result) {
+                          if (shareCallback)
+                            shareCallback ({ url: (result.message && result.message.path
+                                                   ? (window.location.origin + result.message.path)
+                                                   : undefined),
+                                             title: origTitle,
+                                             text: wm.makeExpansionText (wm.composition.body) })
+                        }).then (function() {
+                          wm.composition = {}
+                          delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
+                          return (wm.playerID
+                                  ? wm.showMailboxPage ({ tab: 'outbox' })
+                                  .then (function() {
+                                    // TODO: update wm.mailboxCache.outbox
+                                  })
+                                  : wm.showStatusPage())
+                        }).catch (function (err) {
+                          wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
+                        })
                   }
                 })
             }
@@ -1448,18 +1448,36 @@ var WikiMess = (function() {
           function updateSharePane() {
             wm.sharePane
               .empty()
-              .append (wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent)).addClass('big-button'),
-                       wm.makeIconButton (wm.playerID ? 'mailbox-tab' : 'status-tab', makeSendFunction()).addClass('big-button'),
+              .append (wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
+                       wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', makeSendFunction()).addClass('big-button'),
                        '&nbsp;&nbsp;',  // ew
                        wm.makeIconButton ('close', function() { wm.sharePane.hide() }))
           }
           
           // build the actual compose page UI
           wm.initInfoPane()
+          var pubTab, privTab
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
-                              .append ($('<div class="row">')
+                              .append (wm.messagePrivacyDiv = $('<div class="privrow">')
+                                       .append (pubTab = $('<div class="privtab">').text('Public')
+                                                .on('click',function(){
+                                                  wm.messagePrivacyDiv.children().removeClass('active')
+                                                  pubTab.addClass('active')
+                                                  wm.messageRecipientDiv.hide()
+                                                  wm.composition.isPrivate = false
+                                                  updateSharePane()
+                                                }),
+                                                privTab = $('<div class="privtab">').text('Direct')
+                                                .on('click',function(){
+                                                  wm.messagePrivacyDiv.children().removeClass('active')
+                                                  privTab.addClass('active')
+                                                  wm.messageRecipientDiv.show()
+                                                  wm.composition.isPrivate = true
+                                                  updateSharePane()
+                                                })),
+                                       wm.messageRecipientDiv = $('<div class="row">')
                                        .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
                                                                                   wm.playerSearchResultsDiv.hide())),
@@ -1509,8 +1527,15 @@ var WikiMess = (function() {
           updateSharePane()
 
           if (!wm.playerID) {
+            pubTab.click()
             wm.destroyButton.hide()
-            wm.messageHeaderDiv.hide()
+            wm.messagePrivacyDiv.hide()
+            wm.messageRecipientDiv.hide()
+          } else {
+            if (wm.composition.isPrivate)
+              privTab.click()
+            else
+              pubTab.click()
           }
           
           wm.restoreScrolling (wm.messageComposeDiv)
@@ -1522,7 +1547,7 @@ var WikiMess = (function() {
             wm.lastComposePlayerSearchText = config.recipient.name
           }
 
-          wm.playerSearchInput.attr ('placeholder', 'Everyone')
+          wm.playerSearchInput.attr ('placeholder', 'Name of recipient')
             .val (wm.lastComposePlayerSearchText)
           wm.playerSearchInput
             .on ('keyup', wm.doComposePlayerSearch.bind(wm))

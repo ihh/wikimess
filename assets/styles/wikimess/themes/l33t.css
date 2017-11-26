@@ -137,6 +137,16 @@
     color: #0f0;
 }
 
+.wikimess.l33t .messageheader .privrow .privtab {
+    background-color: black;
+    opacity: .4;
+}
+
+.wikimess.l33t .messageheader .privrow .privtab.active {
+    background-color: rgba(0,0,0,0);
+    opacity: 1;
+}
+
 .wikimess.l33t .messageheader .input .results {
     background-color: black;
 }

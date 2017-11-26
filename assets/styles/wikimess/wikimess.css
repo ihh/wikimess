@@ -498,6 +498,7 @@ input {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 2em;
 }
 
 .wikimess .detailbar .titlebar {
@@ -668,13 +669,20 @@ input {
 .wikimess .messageheader {
     border-top-style: solid;
     border-width: 1px;
-    padding-top: 1px;
     padding-bottom: 1px;
 }
 
 .wikimess .messageheader .row {
     width: 100%;
     padding-top: 4px;
+}
+
+.wikimess .messageheader .privrow {
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    text-align: center;
 }
 
 .wikimess .messageheader .label {
@@ -841,6 +849,7 @@ input {
     padding-top: 2px;
 }
 
+.wikimess .subnavbar .sharepanecontainer,
 .wikimess .subnavbar .button {
     position: relative;
     width: 1em;
@@ -917,6 +926,10 @@ input {
      @-o-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
         @keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
 
+
+.wikimess .compose .messageheader .privtab {
+    width: 50%;
+}
 
 .wikimess .compose .messageheader textarea {
     width: 100%;

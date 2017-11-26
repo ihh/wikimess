@@ -117,6 +117,16 @@
     background-color: #90ee90;
 }
 
+.wikimess.plain .messageheader .privrow .privtab {
+    background-color: gray;
+    opacity: .6;
+}
+
+.wikimess.plain .messageheader .privrow .privtab.active {
+    background-color: rgba(0,0,0,0);
+    opacity: 1;
+}
+
 .wikimess.plain .messageheader .input .results {
     background-color: white;
 }
