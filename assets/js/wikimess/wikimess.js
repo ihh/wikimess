@@ -2472,8 +2472,9 @@ var WikiMess = (function() {
                 .append (wm.mailboxDiv = $('<div class="mailbox">'))
               return wm.REST_getPlayerPublic (wm.playerID)
                 .then (function (pubResult) {
-                  wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
-                                                   wm.broadcastProps()))
+                  if (pubResult.messages.length)
+                    wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
+                                                     wm.broadcastProps()))
                   // TODO: append 'More...' link to wm.mailboxDiv, bumping up optional limit on /p/public
                   return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                     .then (function (result) {

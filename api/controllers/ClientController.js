@@ -895,27 +895,40 @@ module.exports = {
     if (req.body.symbol) {
       var name = req.body.symbol.name
       var rules = req.body.symbol.rules
+      var initialized = (rules && rules.length > 0)
       if (rules && !SchemaService.validateRules (rules, res.badRequest.bind(res)))
         return
       extend (symInfo, { prefix: name,
                          rules: rules,
-                         initialized: (rules && rules.length > 0) })
-    Symbol.create (symInfo)
-      .then (function (symbol) {
-        result.symbol = { id: symbol.id,
-                          owner: { id: playerID },
-                          rules: symbol.rules }
-        result.name = {}
-        result.name[symbol.id] = symbol.name
-        Symbol.subscribe (req, symbol.id)
-        res.json (result)
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send ({ message: err })
-      })
-    }
+                         initialized: initialized })
+      Symbol.create (symInfo)
+        .then (function (symbol) {
+          result.symbol = { id: symbol.id,
+                            owner: { id: playerID },
+                            rules: symbol.rules }
+          result.name = {}
+          result.name[symbol.id] = symbol.name
+          var revisionPromise = (initialized
+                                 ? Revision.create ({ symbol: symbol.id,
+                                                      name: symbol.name,
+                                                      owner: playerID,
+                                                      transferable: symbol.transferable,
+                                                      summary: symbol.summary,
+                                                      rules: symbol.rules })
+                                 : Revision.create ({ symbol: symbol.id,
+                                                      name: symbol.name,
+                                                      owner: playerID }))
+          return revisionPromise.then (function() {
+            Symbol.subscribe (req, symbol.id)
+            res.json (result)
+          })
+        }).catch (function (err) {
+          console.log(err)
+          res.status(500).send ({ message: err })
+        })
+      }
   },
-
+  
   // get a particular symbol
   getSymbol: function (req, res) {
     var playerID = req.session.passport.user || null
@@ -939,7 +952,7 @@ module.exports = {
       })
   },
 
-  // get a particular symbol by name, or create it
+  // get a particular symbol by name, or create it (uninitialized)
   getOrCreateSymbolByName: function (req, res) {
     var playerID = req.session.passport.user
     var symbolName = req.params.symname
@@ -994,6 +1007,17 @@ module.exports = {
             result.name[symbolID] = name
             if (symbol.transferable)
               update.owner = playerID
+
+            var revision = { symbol: symbolID }
+            if (name && name !== symbol.name)
+              revision.name = name
+            if (rules)
+              revision.rules = rules
+            if (symbol.transferable && playerID !== symbol.owner)
+              revision.owner = playerID
+
+            return Revision.create (revision)
+          }).then (function() {
             return Symbol.update ({ id: symbolID },
                                   update)
           }).then (function (symbol) {
@@ -1024,15 +1048,19 @@ module.exports = {
           SymbolService.resolveReferences (symbols)
           .then (function (names) {
             var symbol = symbols[0]
-            Symbol.message (symbolID,
-                            { message: "update",
-                              symbol: { id: symbolID,
-                                        name: symbol.name,
-                                        owner: {},
-                                        rules: symbol.rules,
-                                        initialized: symbol.initialized },
-                              name: names })
-            res.ok()
+            return Revision.create ({ symbol: symbolID,
+                                      owner: null })
+              .then (function() {
+                return Symbol.message (symbolID,
+                                       { message: "update",
+                                         symbol: { id: symbolID,
+                                                   name: symbol.name,
+                                                   owner: {},
+                                                   rules: symbol.rules,
+                                                   initialized: symbol.initialized },
+                                         name: names })
+                res.ok()
+              })
           })
       }).catch (function (err) {
         console.log(err)
