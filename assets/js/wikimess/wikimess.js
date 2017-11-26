@@ -664,8 +664,11 @@ var WikiMess = (function() {
               if (wm.selectSound)
                 wm.selectSound.stop()
               wm.initPlayerInfo (data.player)
-              wm.socket_getPlayerSubscribe (wm.playerID)
+              return wm.socket_getPlayerSubscribe (wm.playerID)
                 .then (function() {
+                  showNextPage.call(wm)
+                }).fail (function (err) {
+                  console.error('subscribe failed', err)
                   showNextPage.call(wm)
                 })
 	    }
@@ -870,10 +873,15 @@ var WikiMess = (function() {
       if (this.playerID)
         this.socket_getPlayerUnsubscribe (this.playerID)
 	  .then (function() {
-	    return wm.REST_postLogout()
-          }).then (function() {
-	    wm.continueAsGuest()
-	  })
+	    return wm.REST_postLogout().then (function() {
+	      wm.continueAsGuest()
+            })
+	  }).fail (function (err) {
+            console.error('unsubscribe failed', err)
+	    return wm.REST_postLogout().then (function() {
+	      wm.continueAsGuest()
+            })
+          })
       else
         this.showLoginPage()
     },
