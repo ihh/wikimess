@@ -90,6 +90,7 @@ var WikiMess = (function() {
     twitterButtonImageUrl: '/images/twitter.png',
     twitterIntentPath: 'https://twitter.com/intent/tweet',
     twitterUsername: 'wikimessage',
+    facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
     anonGuest: 'Anonymous guest',
     autotitleLength: 64,
     maxPlayerLoginLength: 16,
@@ -1386,6 +1387,15 @@ var WikiMess = (function() {
                            + '&via=' + wm.twitterUsername)
             }
           }
+
+          // facebook
+          function facebookIntent (info) {
+            if (info.url) {
+              window.open (wm.facebookIntentPath
+                           + '?u=' + encodeURIComponent(info.url))
+            }
+          }
+          
           
           // send message with callback to share method (e.g. tweet intent)
           function makeSendFunction (shareCallback) {
@@ -1448,7 +1458,8 @@ var WikiMess = (function() {
           function updateSharePane() {
             wm.sharePane
               .empty()
-              .append (wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
+              .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction(facebookIntent), undefined, true).addClass('big-button'),
+                       wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', makeSendFunction()).addClass('big-button'),
                        '&nbsp;&nbsp;',  // ew
                        wm.makeIconButton ('close', function() { wm.sharePane.hide() }))

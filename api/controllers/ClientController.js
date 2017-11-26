@@ -473,18 +473,19 @@ module.exports = {
       .populate ('template')
       .populate ('sender')
       .then (function (message) {
-        result.message = { id: message.id,
-                           sender: (message.sender
-                                    ? { id: message.sender.id,
-                                        name: message.sender.name,
-                                        displayName: message.sender.displayName }
-                                    : null),
-                           template: { id: message.template.id,
-                                       content: message.template.content },
-                           title: message.title,
-                           body: message.body,
-                           date: message.createdAt,
-                           rating: message.rating }
+        if (message)
+          result.message = { id: message.id,
+                             sender: (message.sender
+                                      ? { id: message.sender.id,
+                                          name: message.sender.name,
+                                          displayName: message.sender.displayName }
+                                      : null),
+                             template: { id: message.template.id,
+                                         content: message.template.content },
+                             title: message.title,
+                             body: message.body,
+                             date: message.createdAt,
+                             rating: message.rating }
         res.json (result)
       }).catch (function (err) {
         console.log(err)

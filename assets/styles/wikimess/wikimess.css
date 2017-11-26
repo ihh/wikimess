@@ -339,7 +339,7 @@ input {
 .wikimess .sharepane {
     position: absolute;
     top: -48px;  /* ugh */
-    left: -16px;  /* double ugh */
+    left: -48px;  /* double ugh */
     display: flex;
     flex-direction: row;
 }
@@ -686,20 +686,20 @@ input {
     text-align: center;
 }
 
-.wikimess .messageheader .row .label {
+.wikimess .compose .messageheader .row .label {
     display: none;
 }
 
-.wikimess .messageheader .row .input {
+.wikimess .compose .messageheader .row .input {
     padding-left: 1px;
     padding-right: 8px;  /* ugh, weird */
 }
 
-.wikimess .messageheader .row.direct .label {
+.wikimess .compose .messageheader .row.direct .label {
     display: block;
 }
 
-.wikimess .messageheader .row.direct .input {
+.wikimess .compose .messageheader .row.direct .input {
     padding-right: 16px;
 }
 
