@@ -2041,7 +2041,8 @@ var WikiMess = (function() {
           .then (function (result) {
             return wm.showStatusPage()
               .then (function () {
-                wm.showMessage ($.extend ({ result: result },
+                wm.showMessage ($.extend ({ result: result,
+                                            recipient: null },
                                           wm.broadcastProps()))
               })
           })
@@ -2148,7 +2149,10 @@ var WikiMess = (function() {
                                  preposition: 'To',
                                  object: 'recipient',
                                  anon: 'Everyone',
-                                 showMessage: wm.showMessage.bind(wm)
+                                 showMessage: function (props) {
+                                   wm.showMessage ($.extend ({ sender: wm.playerInfo },
+                                                             props))
+                                 }
                                })
         return result
       })
@@ -2195,7 +2199,7 @@ var WikiMess = (function() {
       return { tab: 'public',
                title: 'Recent messages',
                getMethod: 'REST_getPlayerMessagePublic',
-               verb: 'Sent',
+               verb: 'Posted',
                preposition: 'From',
                object: 'sender',
                anon: this.anonGuest,
@@ -2213,7 +2217,8 @@ var WikiMess = (function() {
                preposition: 'From',
                object: 'sender',
                showMessage: function (props) {
-                 wm.showMessage (props)
+                 wm.showMessage ($.extend ({ recipient: wm.playerInfo },
+                                           props))
                    .then (function() {
                      var message = props.result.message
                      if (!message.rating && message.sender.id !== wm.playerID) {
@@ -2339,6 +2344,7 @@ var WikiMess = (function() {
     showMessage: function (props) {
       var wm = this
       var message = props.result.message
+      var sender = message.sender || props.sender, recipient = message.recipient || props.recipient
       return wm.pushView ('read')
         .then (function() {
           wm.container
@@ -2375,14 +2381,15 @@ var WikiMess = (function() {
                                                                        : (props.anon || ('No '+props.object)))),
                               $('<div class="row">')
                               .append ($('<span class="label">').text ('Subject'),
-                                       $('<span class="field">').text (message.title || 'Untitled')),
+                                       $('<span class="field">').text (message.title || 'Untitled'))
+                              .hide(),  // at the moment, we're not really using the title field except as a hint in mailbox view; so, hide it
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
                                        $('<span class="field">').text (new Date (message.date).toString()))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
                                                                                            function (html) {
-                                                                                             return wm.expandVars (html, { me: (wm.playerLogin ? (playerChar + wm.playerLogin) : wm.defaultVarText('Sender')),
-                                                                                                                           you: (other ? (playerChar + other.name) : wm.defaultVarText('Recipient')) })
+                                                                                             return wm.expandVars (html, { me: (sender ? (playerChar + sender.name) : wm.defaultVarText('Sender')),
+                                                                                                                           you: (recipient ? (playerChar + recipient.name) : wm.defaultVarText('Recipient')) })
                                                                                            })))
         })
     },
@@ -2413,11 +2420,11 @@ var WikiMess = (function() {
       var wm = this
       var statusPromise = (wm.playerID
                            ? wm.REST_getPlayerStatus(wm.playerID).then (function (status) {
-                             status.loggedIn = (wm.playerID !== null)
+                             status.hideStatusInfo = (wm.playerID === null)
                              return status
                            })
                            : wm.REST_getWelcomeHtml().then (function (html) {
-                             return { loggedIn: false, html: $('<div class="welcome">').html (html) }
+                             return { hideStatusInfo: true, html: $('<div class="welcome">').html (html) }
                            }))
       return statusPromise
         .then (function (status) {
@@ -2523,7 +2530,7 @@ var WikiMess = (function() {
         wm.addHelpIcons (wm.detailBarDiv)
       }
 
-      if (status && status.loggedIn) {
+      if (status && !status.hideStatusInfo) {
         wm.detailBarDiv.append
         ($('<div class="ratings">')
          .append ($('<div class="ratinginfo">')
