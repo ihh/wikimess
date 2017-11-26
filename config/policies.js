@@ -52,6 +52,7 @@ module.exports.policies = {
   'GrammarController': blueprintPolicy,
   'MessageController': blueprintPolicy,
   'PlayerController': blueprintPolicy,
+  'RevisionController': blueprintPolicy,
   'SymbolController': blueprintPolicy,
   'TemplateController': blueprintPolicy,
 
