@@ -1011,7 +1011,7 @@ module.exports = {
             var revision = { symbol: symbolID }
             if (name && name !== symbol.name)
               revision.name = name
-            if (rules)
+            if (JSON.stringify(rules) !== JSON.stringify(symbol.rules))
               revision.rules = rules
             if (symbol.transferable && playerID !== symbol.owner)
               revision.owner = playerID
