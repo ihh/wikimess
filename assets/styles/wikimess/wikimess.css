@@ -326,6 +326,28 @@ input {
     text-decoration: underline;
 }
 
+.wikimess .sharepanecontainer {
+    position: relative;
+}
+
+.wikimess .sharepanebutton {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.wikimess .sharepane {
+    position: absolute;
+    top: -48px;  /* ugh */
+    left: -16px;  /* double ugh */
+    display: flex;
+    flex-direction: row;
+}
+.wikimess .subnavbar .sharepane span.iconlabel {
+    display: none;
+}
+
+.wikimess .sharepane,
 .wikimess .infopane {
     margin-left: 1px;
     margin-bottom: 4px;
@@ -835,10 +857,26 @@ input {
     opacity: .7;
 }
 
+.wikimess img.big-button,
+.wikimess .big-button svg,
 .wikimess .subnavbar .button svg {
+    font-size: xx-large;
     width: 1em;
     height: 1em;
     cursor: pointer;
+}
+
+.wikimess img.big-button,
+.wikimess .big-button svg {
+    margin: 1px 0 0 1px;
+    border-width: 0px;
+}
+
+.wikimess .big-button:active {
+    border-width: 1px 0 0 1px;
+    border-style: solid;
+    margin: 0px;
+    opacity: .7;
 }
 
 .wikimess .button .iconlabel {

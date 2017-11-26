@@ -87,13 +87,13 @@
 	margin: 1vw;
     }
 
+    .wikimess .sharepane,
     .wikimess .infopane {
 	box-shadow: 1vw -1vw 1vw 0px gray;
     }
 
     .wikimess .infopane .content {
 	max-height: 40vw;
-	min-height: 40vw;
     }
 
     .wikimess .ratinginfo .ratinginfolabel {

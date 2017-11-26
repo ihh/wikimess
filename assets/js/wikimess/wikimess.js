@@ -126,9 +126,11 @@ var WikiMess = (function() {
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
                     compose: 'quill',
+                    'status-tab': 'mushroom-house',
                     'compose-tab': 'quill-ink',
                     'grammar-tab': 'spell-book',
                     'settings-tab': 'pokecog',
+                    'mailbox-tab': 'envelope',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -1366,56 +1368,84 @@ var WikiMess = (function() {
             wm.generateMessageBody()
           else
             wm.showMessageBody()
-          
-          function send() {
-            wm.saveCurrentEdit()
-              .then (function() {
-                var expansionText, expansionTextMatch
-                if (wm.templateIsEmpty())
-                  window.alert ("Please enter some message text.")
-                else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText(wm.composition.body)).match(/\S/))))
-                  window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
-                else {
-                  if (!wm.composition.title) {
-                    if (wm.composition.recipient)
-                      window.alert ("Please give this message a title.")
-                    else
-                      wm.composition.title = expansionText.substr (expansionTextMatch.index, wm.autotitleLength)
-                  }
-                  wm.sendButton.off ('click')
-                  delete wm.composition.previousTemplate
-                  wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient ? wm.composition.recipient.id : null,
-                                                            template: wm.composition.template,
-                                                            title: wm.composition.title,
-                                                            body: wm.composition.body,
-                                                            previous: wm.composition.previousMessage,
-                                                            draft: wm.composition.draft,
-                                                            isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
-                    .then (function (result) {
-                      if (result.message && result.message.path) {
-                        var text = wm.makeExpansionText (wm.composition.body)
-                        var url = window.location.origin + result.message.path
-                        window.open (wm.twitterIntentPath
-                                     + '?text=' + encodeURIComponent(text)
-                                     + '&url=' + encodeURIComponent(url)
-                                     + '&via=' + wm.twitterUsername)
-                      }
-                    }).then (function() {
-                      wm.composition = {}
-                      delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
-                      return (wm.playerID
-                              ? wm.showMailboxPage ({ tab: 'outbox' })
-                              .then (function() {
-                                // TODO: update wm.mailboxCache.outbox
-                              })
-                              : wm.showStatusPage())
-                    }).catch (function (err) {
-                      wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
-                    })
-                }
-              })
+
+          // tweet
+          function tweetIntent (info) {
+            if (info.url) {
+              window.open (wm.twitterIntentPath
+                           + '?text=' + encodeURIComponent(info.text)
+                           + '&url=' + encodeURIComponent(info.url)
+                           + '&via=' + wm.twitterUsername)
+            }
           }
-                    
+          
+          // send message with callback to share method (e.g. tweet intent)
+          function makeSendFunction (shareCallback) {
+            return function (evt) {
+              evt.stopPropagation()
+              evt.preventDefault()
+              wm.saveCurrentEdit()
+                .then (function() {
+                  var expansionText, expansionTextMatch
+                  if (wm.templateIsEmpty())
+                    window.alert ("Please enter some message text.")
+                  else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText(wm.composition.body)).match(/\S/))))
+                    window.alert ("Message is empty. Please vary the message text, or re-roll to generate a new random message.")
+                  else {
+                    if (!wm.composition.title) {
+                      if (wm.composition.recipient)
+                        window.alert ("Please give this message a title.")
+                      else
+                        wm.composition.title = expansionText.substr (expansionTextMatch.index, wm.autotitleLength)
+                    }
+                    wm.sendButton.off ('click')
+                    delete wm.composition.previousTemplate
+                    wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.recipient ? wm.composition.recipient.id : null,
+                                                              template: wm.composition.template,
+                                                              title: wm.composition.title,
+                                                              body: wm.composition.body,
+                                                              previous: wm.composition.previousMessage,
+                                                              draft: wm.composition.draft,
+                                                              isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                      .then (function (result) {
+                        if (shareCallback)
+                          shareCallback ({ url: (result.message && result.message.path
+                                                 ? (window.location.origin + result.message.path)
+                                                 : undefined),
+                                           text: wm.makeExpansionText (wm.composition.body) })
+                      }).then (function() {
+                        wm.composition = {}
+                        delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
+                        return (wm.playerID
+                                ? wm.showMailboxPage ({ tab: 'outbox' })
+                                .then (function() {
+                                  // TODO: update wm.mailboxCache.outbox
+                                })
+                                : wm.showStatusPage())
+                      }).catch (function (err) {
+                        wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
+                      })
+                  }
+                })
+            }
+          }
+
+          // send UI element
+          function send() {
+            wm.showingHelp = false
+            wm.infoPane.hide()
+	    wm.sharePane.toggle()
+          }
+
+          function updateSharePane() {
+            wm.sharePane
+              .empty()
+              .append (wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent)).addClass('big-button'),
+                       wm.makeIconButton (wm.playerID ? 'mailbox-tab' : 'status-tab', makeSendFunction()).addClass('big-button'),
+                       '&nbsp;&nbsp;',  // ew
+                       wm.makeIconButton ('close', function() { wm.sharePane.hide() }))
+          }
+          
           // build the actual compose page UI
           wm.initInfoPane()
           wm.container
@@ -1463,8 +1493,12 @@ var WikiMess = (function() {
                             })
                           })
                       }),
-                      wm.sendButton = wm.makeSubNavIcon ('share', send),
+                      $('<div class="sharepanecontainer">')
+                      .append (wm.sharePane = $('<div class="sharepane">').hide(),
+                               wm.sendButton = wm.makeSubNavIcon ('share', send).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
+
+          updateSharePane()
 
           if (!wm.playerID) {
             wm.destroyButton.hide()
@@ -3249,6 +3283,7 @@ var WikiMess = (function() {
     makeHelpButton: function (helpMethod) {
       var wm = this
       return wm.makeSubNavIcon ('help', function() {
+        if (wm.sharePane) wm.sharePane.hide()
         if (wm.showingHelp) {
           wm.infoPane.hide()
           wm.showingHelp = false
