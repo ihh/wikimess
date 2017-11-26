@@ -1487,10 +1487,10 @@ var WikiMess = (function() {
                                        .append ($('<span class="label">').text ('Subject'),
                                                 $('<span class="input">').append (wm.messageTitleInput))),
                               $('<div class="messageborder">')
-                              .append ($('<div class="sectiontitle">').text('Input text'),
+                              .append ($('<div class="sectiontitle">').text('Input text:'),
                                        wm.messageComposeDiv,
                                        wm.suggestionDiv = $('<div class="suggest">'),
-                                       $('<div class="sectiontitle">').text('Expanded text'),
+                                       $('<div class="sectiontitle">').text('Expanded text:'),
                                        wm.messageBodyDiv)),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
