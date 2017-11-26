@@ -209,7 +209,7 @@ input {
 .wikimess .follow {
     width: 100%;
     cursor: pointer;
-    font-size: x-large;
+    font-size: large;
 }
 
 .wikimess .grammarbar .rule {
@@ -854,6 +854,8 @@ input {
     border-width: 1px;
     padding-bottom: 4px;
     padding-top: 2px;
+    padding-left: 2px;
+    padding-right: 2px;
     min-height: 1.5em;
 }
 

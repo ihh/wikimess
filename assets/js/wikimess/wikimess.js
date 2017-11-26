@@ -92,7 +92,6 @@ var WikiMess = (function() {
     twitterUsername: 'wikimessage',
     facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
     anonGuest: 'Anonymous guest',
-    autotitleLength: 64,
     maxPlayerLoginLength: 16,
     maxPlayerNameLength: 32,
     maxRating: 5,
@@ -902,12 +901,12 @@ var WikiMess = (function() {
         .then (function() {
           wm.showNavBar ('settings')
           var menuDiv = $('<div class="list">')
+              .append (wm.makeListLink ('Log' + (wm.playerID ? ' out' : 'in / signup'), wm.doLogout))
           if (wm.playerID)
             menuDiv.append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
                             wm.makeListLink ('Bio', wm.showPlayerBioPage))
           menuDiv.append (wm.makeListLink ('Colors', wm.showThemesPage),
-                          wm.makeListLink ('Audio', wm.showAudioPage),
-                          wm.makeListLink ('Log' + (wm.playerID ? ' out' : 'in / signup'), wm.doLogout))
+                          wm.makeListLink ('Audio', wm.showAudioPage))
           wm.container
             .append ($('<div class="menubar">').html (menuDiv))
         })
@@ -1297,7 +1296,7 @@ var WikiMess = (function() {
                                              ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
                                              .then (function (result) {
                                                wm.copyModifiers (result.expansion, symbol)
-                                               wm.appendToMessageBody ([spacer, result.expansion])
+                                               wm.appendToMessageBody (spacer.concat (result.expansion))
                                              })
                                              : wm.generateMessageBody())
                                         generatePromise.then (divAutosuggest)
@@ -1421,35 +1420,32 @@ var WikiMess = (function() {
                   else {
                       wm.sendButton.off ('click')
                     delete wm.composition.previousTemplate
-                    var origTitle = wm.composition.title
-                    if (!wm.composition.title)
-                          wm.composition.title = expansionText.substr (expansionTextMatch.index, wm.autotitleLength)
-                      wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
-                                                                template: wm.composition.template,
-                                                                title: wm.composition.title,
-                                                                body: wm.composition.body,
-                                                                previous: wm.composition.previousMessage,
-                                                                draft: wm.composition.draft,
-                                                                isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
-                        .then (function (result) {
-                          if (shareCallback)
-                            shareCallback ({ url: (result.message && result.message.path
-                                                   ? (window.location.origin + result.message.path)
-                                                   : undefined),
-                                             title: origTitle,
-                                             text: wm.makeExpansionText (wm.composition.body) })
-                        }).then (function() {
-                          wm.composition = {}
-                          delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
-                          return (wm.playerID
-                                  ? wm.showMailboxPage ({ tab: 'outbox' })
-                                  .then (function() {
-                                    // TODO: update wm.mailboxCache.outbox
-                                  })
-                                  : wm.showStatusPage())
-                        }).catch (function (err) {
-                          wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
-                        })
+                    wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
+                                                              template: wm.composition.template,
+                                                              title: wm.composition.title,
+                                                              body: wm.composition.body,
+                                                              previous: wm.composition.previousMessage,
+                                                              draft: wm.composition.draft,
+                                                              isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                      .then (function (result) {
+                        if (shareCallback)
+                          shareCallback ({ url: (result.message && result.message.path
+                                                 ? (window.location.origin + result.message.path)
+                                                 : undefined),
+                                           title: wm.composition.title,
+                                           text: wm.makeExpansionText (wm.composition.body) })
+                      }).then (function() {
+                        wm.composition = {}  // delete the composition after sending
+                        delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
+                        return (wm.playerID
+                                ? wm.showMailboxPage ({ tab: 'outbox' })
+                                .then (function() {
+                                  // TODO: update wm.mailboxCache.outbox
+                                })
+                                : wm.showStatusPage())
+                      }).catch (function (err) {
+                        wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
+                      })
                   }
                 })
             }
@@ -1501,9 +1497,10 @@ var WikiMess = (function() {
                                        .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
                                                                                   wm.playerSearchResultsDiv.hide())),
-                                       wm.messageSubjectDiv = $('<div class="row">')
+                                       $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject'),
-                                                $('<span class="input">').append (wm.messageTitleInput))),
+                                                $('<span class="input">').append (wm.messageTitleInput))
+                                       .hide()),  // subject line clutters up the UI and is strictly unnecessary, so leave it out (maybe restore later as player option?)
                               $('<div class="messageborder">')
                               .append ($('<div class="sectiontitle">').text('Input text:'),
                                        wm.messageComposeDiv,
@@ -1546,6 +1543,12 @@ var WikiMess = (function() {
 
           updateSharePane()
 
+          if (config.recipient) {
+            wm.composition.recipient = config.recipient
+            wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null)
+            wm.lastComposePlayerSearchText = config.recipient.name
+          }
+
           if (!wm.playerID) {
             pubTab.click()
             wm.destroyButton.hide()
@@ -1561,11 +1564,6 @@ var WikiMess = (function() {
           wm.restoreScrolling (wm.messageComposeDiv)
           wm.restoreScrolling (wm.messageBodyDiv)
           wm.restoreScrolling (wm.suggestionDiv)
-
-          if (config.recipient) {
-            wm.composition.recipient = config.recipient
-            wm.lastComposePlayerSearchText = config.recipient.name
-          }
 
           wm.playerSearchInput.attr ('placeholder', 'Name of recipient')
             .val (wm.lastComposePlayerSearchText)

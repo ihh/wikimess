@@ -386,7 +386,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title,
+                   title: message.title || PlayerService.summarizeMessage (message.body),
                    sender: { id: message.sender.id,
                              displayName: message.sender.displayName },
                    date: message.createdAt,
@@ -424,7 +424,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title,
+                   title: message.title || PlayerService.summarizeMessage (message.body),
                    recipient: (message.recipient
                                ? { id: message.recipient.id,
                                    displayName: message.recipient.displayName }
@@ -449,7 +449,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title,
+                   title: message.title || PlayerService.summarizeMessage (message.body),
                    sender: (message.sender
                             ? { id: message.sender.id,
                                 displayName: message.sender.displayName }
@@ -535,7 +535,7 @@ module.exports = {
       .populate ('sender')
       .then (function (message) {
         result.message = { id: message.id,
-                           title: message.title,
+                           title: message.title || PlayerService.summarizeMessage (message.body),
                            sender: { id: message.sender.id,
                                      name: message.sender.displayName },
                            date: message.createdAt,
