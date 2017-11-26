@@ -901,7 +901,7 @@ var WikiMess = (function() {
         .then (function() {
           wm.showNavBar ('settings')
           var menuDiv = $('<div class="list">')
-              .append (wm.makeListLink ('Log' + (wm.playerID ? ' out' : 'in / signup'), wm.doLogout))
+              .append (wm.makeListLink ('Log' + (wm.playerID ? ' out' : 'in / Signup'), wm.doLogout))
           if (wm.playerID)
             menuDiv.append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
                             wm.makeListLink ('Bio', wm.showPlayerBioPage))
@@ -1232,6 +1232,8 @@ var WikiMess = (function() {
                        after.map (function (rhsSym) { return rhsSym.name }))
               .join (' ')
           }
+
+          // autosuggest for textarea (typing with keyboard)
           function textareaAutosuggest (input) {
             input.focus()  // in case we were triggered by player hitting 're-roll' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
@@ -1276,6 +1278,7 @@ var WikiMess = (function() {
             }
           }
 
+          // autosuggest for div (point-and-click)
           function divAutosuggest() {
             var before = wm.composition.template.content
                 .filter (function (rhsSym) { return typeof(rhsSym) === 'object' })
@@ -1331,6 +1334,7 @@ var WikiMess = (function() {
           }
           wm.autosuggestStatus = { temperature: 0, refresh: divAutosuggest }
 
+          // build the editable element for the "Input text", i.e. wm.composition.template
           wm.messageComposeDiv = $('<div class="messagecompose">')
           function updateComposeDiv() {
             wm.populateEditableElement
@@ -1613,11 +1617,11 @@ var WikiMess = (function() {
           .append ($('<div class="suggestlabel">').text('Suggestions:'),
                    result.symbols.map (function (symbol) {
                      wm.symbolName[symbol.id] = symbol.name
-                     return wm.makeSymbolSpan (symbol, function (evt) {
+                     return $('<span>').html (wm.makeSymbolSpan (symbol, function (evt) {
                        evt.stopPropagation()
                        wm.suggestionDiv.empty()
                        symbolSelectCallback (symbol)
-                     })
+                     }))
                    }))
       })
     },
@@ -2037,13 +2041,18 @@ var WikiMess = (function() {
       config = config || {}
       switch (config.action) {
       case 'message':
+        wm.container.hide()
         promise = wm.REST_getPlayerMessagePublic (wm.playerID, config.message)
           .then (function (result) {
             return wm.showStatusPage()
-              .then (function () {
-                wm.showMessage ($.extend ({ result: result,
-                                            recipient: null },
-                                          wm.broadcastProps()))
+              .then (function() {
+                return wm.showMessage ($.extend ({ result: result,
+                                                   recipient: null },
+                                                 wm.broadcastProps()))
+              }).then (function() {
+                // presentation hack: monkey-patch the message container
+                wm.readMessageDiv.addClass ('permalink')
+                wm.container.show()
               })
           })
         break
@@ -2053,9 +2062,12 @@ var WikiMess = (function() {
                                           template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) } })
         break
       case 'grammar':
+        wm.container.hide()
         promise = this.showGrammarEditPage()
           .then (function() {
-            wm.loadGrammarSymbol (config.symbol)
+            return wm.loadGrammarSymbol (config.symbol)
+          }).then (function() {
+            wm.container.show()
           })
         break
       case 'home':
@@ -2196,6 +2208,7 @@ var WikiMess = (function() {
     },
 
     broadcastProps: function() {
+      var wm = this
       return { tab: 'public',
                title: 'Recent messages',
                getMethod: 'REST_getPlayerMessagePublic',
@@ -2203,7 +2216,11 @@ var WikiMess = (function() {
                preposition: 'From',
                object: 'sender',
                anon: this.anonGuest,
-               showMessage: this.showMessage.bind(this) }
+               showMessage: function (props) {
+                 wm.showMessage ($.extend ({ recipient: null },
+                                           props))
+               }
+             }
     },
     
     inboxProps: function() {
@@ -2372,7 +2389,7 @@ var WikiMess = (function() {
             .append ($('<div class="messageheader">')
                      .append ($('<div class="row">')
                               .append ($('<span class="label">').text (props.preposition),
-                                       $('<span class="field">').html (other
+                                       $('<span class="field messageplayer">').html (other
                                                                        ? wm.makePlayerSpan (other.name,
                                                                                             other.displayName,
                                                                                             function (evt) {
@@ -2381,11 +2398,11 @@ var WikiMess = (function() {
                                                                        : (props.anon || ('No '+props.object)))),
                               $('<div class="row">')
                               .append ($('<span class="label">').text ('Subject'),
-                                       $('<span class="field">').text (message.title || 'Untitled'))
+                                       $('<span class="field messagetitle">').text (message.title || 'Untitled'))
                               .hide(),  // at the moment, we're not really using the title field except as a hint in mailbox view; so, hide it
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
-                                       $('<span class="field">').text (new Date (message.date).toString()))),
+                                       $('<span class="field messagedate">').text (wm.relativeDateString (new Date (message.date).toString())))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
                                                                                            function (html) {
                                                                                              return wm.expandVars (html, { me: (sender ? (playerChar + sender.name) : wm.defaultVarText('Sender')),
@@ -2394,6 +2411,22 @@ var WikiMess = (function() {
         })
     },
 
+    relativeDateString: function (dateStr) {
+      var weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+      var now = new Date(), date = new Date(dateStr), secsSince = (now - date) / 1000, daysSince = secsSince / 86400
+      var hours = date.getHours(), ampm = hours < 12 ? 'am' : 'pm', minutes = date.getMinutes(), day = date.getDay(), year = date.getFullYear()
+      return ((daysSince < 1 && day === now.getDay()
+               ? ''
+               : ((daysSince < 3
+                   ? weekdays[day]
+                   : (months[date.getMonth()] + ' ' + date.getDate()
+                      + (year === now.getFullYear()
+                         ? ''
+                         : (', ' + year)))) + ' at '))
+              + ((hours % 12) || 12) + ':' + (minutes < 10 ? '0' : '') + minutes + ampm)
+    },
+    
     restoreScrolling: function (elem) {
       // allow scrolling for elem, while preventing bounce at ends
       // http://stackoverflow.com/a/20477023/726581
@@ -3214,7 +3247,7 @@ var WikiMess = (function() {
     
     loadGrammarSymbol: function (symbol) {
       var wm = this
-      wm.saveCurrentEdit()
+      return wm.saveCurrentEdit()
         .then (function() {
           wm.symbolCache = wm.symbolCache || {}
           if (symbol.id) {

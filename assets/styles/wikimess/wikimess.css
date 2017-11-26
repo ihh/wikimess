@@ -664,12 +664,10 @@ input {
 }
 
 .wikimess .messageheader .row {
-    width: 100%;
     padding-top: 4px;
 }
 
 .wikimess .messageheader .privrow {
-    width: 100%;
     position: relative;
     display: flex;
     flex-direction: row;
@@ -729,6 +727,21 @@ input {
 .wikimess .messageheader .field {
     display: table-cell;
     overflow-wrap: break-word;
+}
+
+.wikimess .readmessage.permalink .messageheader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.wikimess .readmessage.permalink .messageheader .displayname,
+.wikimess .readmessage.permalink .messageheader .label {
+    display: none;
+}
+
+.wikimess .readmessage.permalink .messageheader .row {
+    display: inline;
 }
 
 .wikimess .readmessage .messagebody {
