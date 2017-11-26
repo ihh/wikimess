@@ -570,12 +570,13 @@ input {
 .wikimess .menubar .listitem.noborder {
     border-style: none;
     background: none;
-    flex-direction: row;
 }
 
 .wikimess .menubar .listitem img {
     width: 64px;
     height: 64px;
+    min-width: 64px;
+    min-height: 64px;
 }
 
 .wikimess .menubar .card {
@@ -685,6 +686,23 @@ input {
     text-align: center;
 }
 
+.wikimess .messageheader .row .label {
+    display: none;
+}
+
+.wikimess .messageheader .row .input {
+    padding-left: 1px;
+    padding-right: 8px;  /* ugh, weird */
+}
+
+.wikimess .messageheader .row.direct .label {
+    display: block;
+}
+
+.wikimess .messageheader .row.direct .input {
+    padding-right: 16px;
+}
+
 .wikimess .messageheader .label {
     float: left;
     text-align: right;
@@ -705,7 +723,6 @@ input {
 .wikimess .messageheader .input {
     display: block;
     overflow: hidden;
-    padding-right: 16px;
 }
 
 .wikimess .messageheader .input .results {

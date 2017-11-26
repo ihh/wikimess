@@ -69,6 +69,10 @@
 	margin: 3vw 4vw;
     }
 
+    .wikimess .menubar .listitem.noborder {
+	flex-direction: column;
+    }
+
     .wikimess .menubar .rubric {
 	width: 80vw;
     }

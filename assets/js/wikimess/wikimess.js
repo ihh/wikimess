@@ -1464,6 +1464,7 @@ var WikiMess = (function() {
                                        .append (pubTab = $('<div class="privtab">').text('Public')
                                                 .on('click',function(){
                                                   wm.messagePrivacyDiv.children().removeClass('active')
+                                                  wm.messageHeaderDiv.children().removeClass('direct')
                                                   pubTab.addClass('active')
                                                   wm.messageRecipientDiv.hide()
                                                   wm.composition.isPrivate = false
@@ -1472,6 +1473,7 @@ var WikiMess = (function() {
                                                 privTab = $('<div class="privtab">').text('Direct')
                                                 .on('click',function(){
                                                   wm.messagePrivacyDiv.children().removeClass('active')
+                                                  wm.messageHeaderDiv.children().removeClass('direct').addClass('direct')
                                                   privTab.addClass('active')
                                                   wm.messageRecipientDiv.show()
                                                   wm.composition.isPrivate = true
@@ -1481,7 +1483,7 @@ var WikiMess = (function() {
                                        .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
                                                                                   wm.playerSearchResultsDiv.hide())),
-                                       $('<div class="row">')
+                                       wm.messageSubjectDiv = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject'),
                                                 $('<span class="input">').append (wm.messageTitleInput))),
                               $('<div class="messageborder">')
