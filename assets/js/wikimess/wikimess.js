@@ -2432,34 +2432,34 @@ var WikiMess = (function() {
               wm.detailBarDiv
                 .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
                 .append (wm.mailboxDiv = $('<div class="mailbox">'))
-              return wm.REST_getPlayerSuggestTemplates (wm.playerID)
-                .then (function (result) {
-                  if (result && result.templates.length)
-                    wm.detailBarDiv.append ($('<div class="filler">'),
-                                            $('<div class="popular">')
-                                            .append ($('<div class="header">').text("Popular templates"),
-                                                     $('<div class="templates">')
-                                                     .append (result.templates.map (function (template) {
-                                                       return $('<div class="template">')
-                                                         .on ('click', function() {
-                                                           wm.REST_getPlayerTemplate (wm.playerID, template.id)
-                                                             .then (function (templateResult) {
-                                                               wm.showComposePage ({ title: template.title,
-                                                                                     template: templateResult.template,
-                                                                                     focus: 'playerSearchInput' }) }) })
-                                                         .append ($('<span class="title">')
-                                                                  .text (template.title),
-                                                                  $('<span class="by">').append (' by ',
-                                                                                                 template.author
-                                                                                                 ? wm.makePlayerSpan (template.author.name,
-                                                                                                                      null,
-                                                                                                                      wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))
-                                                                                                 : wm.anonGuest)) }))))
-                  return wm.REST_getPlayerPublic (wm.playerID)
-                    .then (function (pubResult) {
-                      wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
-                                                       wm.broadcastProps()))
-                      // TODO: append 'More...' link to wm.mailboxDiv, bumping up optional limit on /p/public
+              return wm.REST_getPlayerPublic (wm.playerID)
+                .then (function (pubResult) {
+                  wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
+                                                   wm.broadcastProps()))
+                  // TODO: append 'More...' link to wm.mailboxDiv, bumping up optional limit on /p/public
+                  return wm.REST_getPlayerSuggestTemplates (wm.playerID)
+                    .then (function (result) {
+                      if (result && result.templates.length)
+                        wm.detailBarDiv.append ($('<div class="filler">'),
+                                                $('<div class="popular">')
+                                                .append ($('<div class="header">').text("Popular templates"),
+                                                         $('<div class="templates">')
+                                                         .append (result.templates.map (function (template) {
+                                                           return $('<div class="template">')
+                                                             .on ('click', function() {
+                                                               wm.REST_getPlayerTemplate (wm.playerID, template.id)
+                                                                 .then (function (templateResult) {
+                                                                   wm.showComposePage ({ title: template.title,
+                                                                                         template: templateResult.template,
+                                                                                         focus: 'playerSearchInput' }) }) })
+                                                             .append ($('<span class="title">')
+                                                                      .text (template.title),
+                                                                      $('<span class="by">').append (' by ',
+                                                                                                     template.author
+                                                                                                     ? wm.makePlayerSpan (template.author.name,
+                                                                                                                          null,
+                                                                                                                          wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))
+                                                                                                     : wm.anonGuest)) }))))
                     })
                 })
             })
