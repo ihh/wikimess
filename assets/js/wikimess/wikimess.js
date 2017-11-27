@@ -535,7 +535,7 @@ var WikiMess = (function() {
       var newWin = window.open (url)
 
       if (!newWin || newWin.closed || typeof newWin.closed=='undefined')
-        window.location.replace (url)
+        window.location.assign (url)
     },
 
     callWithSoundEffect: function (callback, sfx, elementToDisable) {
