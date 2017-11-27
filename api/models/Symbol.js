@@ -72,7 +72,8 @@ module.exports = {
   noun: 'phrase',
   autoname: { defaultPrefix: 'phrase',
               maxSuffix: {},
-              regex: /^(.*?)(\d+)$/ },
+              versionString: '_v',
+              regex: /^(.*?)_v(\d+)$/ },
 
   // cache accessors
   initCache: function() {
@@ -201,11 +202,11 @@ module.exports = {
         var match = Symbol.autoname.regex.exec (prefix)
         if (match)
           prefix = match[1]
-        nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 0) + 1
+        nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 1) + 1
         if (match)
           nextSuffix = Math.max (nextSuffix, parseInt(match[2]))
         do
-          symbol.name = prefix + (nextSuffix++)
+          symbol.name = prefix + Symbol.autoname.versionString + (nextSuffix++)
         while (Symbol.cache.byName[symbol.name])
       } else
         symbol.name = prefix

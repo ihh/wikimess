@@ -2887,7 +2887,7 @@ var WikiMess = (function() {
     },
 
     symbolOwnedByPlayer: function (symbol) {
-      return symbol.owner && symbol.owner.id === this.playerID
+      return symbol.owner && (this.playerID !== null) && symbol.owner.id === this.playerID
     },
 
     symbolEditableByPlayer: function (symbol) {
