@@ -3218,7 +3218,7 @@ var WikiMess = (function() {
     },
 
     makeSymbolSpan: function (sym, callback) {
-      var span = $('<span class="lhslink">').append (symCharHtml, $('<span class="name">').text (this.makeSymbolName(sym) + ' '))
+      var span = $('<span class="lhslink">').append (symCharHtml, $('<span class="name">').text (this.makeSymbolName(sym)))
       if (callback)
         span.on ('click', callback)
       return span
