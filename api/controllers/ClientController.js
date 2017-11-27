@@ -135,7 +135,7 @@ module.exports = {
 
   // search Symbols, preferentially owned, with no pagination
   searchOwnedSymbols: function (req, res) {
-    var searcherID = req.session.passport.user || null
+    var searcherID = req.session.passport ? (req.session.passport.user || null) : null
     var query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
     Symbol.find ({ owner: searcherID,
@@ -577,7 +577,7 @@ module.exports = {
 
   // send message
   sendMessage: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var recipientID = req.body.recipient ? parseInt(req.body.recipient) : null
     var template = req.body.template
     var title = req.body.title
@@ -889,16 +889,47 @@ module.exports = {
 
   // create a new symbol
   newSymbol: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var result = {}
     var symInfo = { owner: playerID }
     if (req.body.symbol) {
       var name = req.body.symbol.name
       var rules = req.body.symbol.rules
-      var initialized = (rules && rules.length > 0)
+      var copiedSymbolId = req.body.symbol.copy
+      var copiedSymbol = copiedSymbolId ? Symbol.cache.byId[copiedSymbolId] : null
+        
       if (rules && !SchemaService.validateRules (rules, res.badRequest.bind(res)))
         return
+
+      if (copiedSymbol && !rules) {
+        // for all "downstream" symbols that are used by copiedSymbol, and have player-owned copies (downstreamCopy), change downstream->downstreamCopy in rules for new symbol
+        var dsCache = {}  // cache the mapping to ensure it's consistent
+        rules = copiedSymbol.rules.map (function (rhs) {
+          return rhs.map (function (rhsSym) {
+            if (typeof(rhsSym) === 'object') {
+              var downstreamSymbol = (rhsSym.id
+                                      ? Symbol.cache.byId[rhsSym.id]
+                                      : Symbol.cache.byName[rhsSym.name])
+              if (downstreamSymbol && downstreamSymbol.owner !== playerID) {
+                if (dsCache[downstreamSymbol.id])  // cached?
+                  return { id: dsCache[downstreamSymbol.id] }
+                var downstreamSymbolCopies = Symbol.getCopies (downstreamSymbol.id)
+                    .filter (function (sym) { return sym.owner === playerID })
+                if (downstreamSymbolCopies.length) {
+                  var downstreamSymbolCopy = downstreamSymbolCopies[0]
+                  dsCache[downstreamSymbol.id] = downstreamSymbolCopy.id
+                  return { id: downstreamSymbolCopy.id }
+                }
+              }
+            }
+            return rhsSym
+          })
+        })
+      }
+      var initialized = (rules && rules.length > 0)
+        
       extend (symInfo, { prefix: name,
+                         copied: copiedSymbolId,
                          rules: rules,
                          initialized: initialized })
       Symbol.create (symInfo)
@@ -908,22 +939,56 @@ module.exports = {
                             rules: symbol.rules }
           result.name = {}
           result.name[symbol.id] = symbol.name
-          // TODO:
-          // if this new symbol N is a duplicate of an existing symbol E (need to pass that info in from the client!)
-          // and if the original (E) is not owned by the player, then:
-          //  1) for all "upstream" symbols U that use E, and are owned by the player, change E->N in rules for U;
-          //  2) for all "downstream" symbols D that are used by E, and have player-owned copies C (need a copyOf link in Symbol object!), change D->C in rules for N.
-          var revisionPromise = (initialized
-                                 ? Revision.create ({ symbol: symbol.id,
-                                                      name: symbol.name,
-                                                      owner: playerID,
-                                                      transferable: symbol.transferable,
-                                                      summary: symbol.summary,
-                                                      rules: symbol.rules })
-                                 : Revision.create ({ symbol: symbol.id,
-                                                      name: symbol.name,
-                                                      owner: playerID }))
-          return revisionPromise.then (function() {
+
+          var revisions = [], symbolUpdate = {}
+          if (copiedSymbol && copiedSymbol.owner !== playerID) {
+            // for all "upstream" symbols that use copiedSymbol, and are owned by the player, change copiedSymbol->newSymbol in rules for upstream symbol
+            Symbol.getUsingSymbols(copiedSymbol.name).forEach (function (upstreamSymbol) {
+              if (upstreamSymbol.owner === playerID) {
+                var newRules = upstreamSymbol.rules.map (function (rhs) {
+                  return rhs.map (function (rhsSym) {
+                    if (typeof(rhsSym) === 'object' && (rhsSym.id === copiedSymbol.id || rhsSym.name === copiedSymbol.name))
+                      return { id: symbol.id }
+                    return rhsSym
+                  })
+                })
+                symbolUpdate[upstreamSymbol.id] = { rules: newRules }
+                revisions.push ({ symbol: upstreamSymbol.id,
+                                  rules: newRules })
+              }
+            })
+          }
+
+          revisions.push (initialized
+                          ? { symbol: symbol.id,
+                              name: symbol.name,
+                              owner: playerID,
+                              transferable: symbol.transferable,
+                              summary: symbol.summary,
+                              rules: symbol.rules }
+                          : { symbol: symbol.id,
+                              name: symbol.name,
+                              owner: playerID })
+
+          var newName = {}
+          newName[symbol.id] = symbol.name
+          return Promise.all (Object.keys(symbolUpdate).map (function (upstreamSymbolId) {
+            return Symbol.update ({ id: upstreamSymbolId },
+                                  symbolUpdate[upstreamSymbolId])
+              .then (function (update) {
+                var upstreamSymbol = Symbol.cache.byId[upstreamSymbolId]
+                Symbol.message (upstreamSymbolId,
+                                { message: "update",
+                                  symbol: { id: upstreamSymbolId,
+                                            name: upstreamSymbol.name,
+                                            owner: { id: upstreamSymbol.owner },
+                                            rules: upstreamSymbol.rules,
+                                            initialized: true },
+                                  name: newName })
+              })
+          }).concat (revisions.map (function (revision) {
+            return Revision.create (revision)
+          }))).then (function() {
             Symbol.subscribe (req, symbol.id)
             res.json (result)
           })
@@ -936,7 +1001,7 @@ module.exports = {
   
   // get a particular symbol
   getSymbol: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = parseInt (req.params.symid)
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
@@ -1096,7 +1161,7 @@ module.exports = {
 
   // get a particular template
   getTemplate: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var templateID = parseInt (req.params.template)
     var result = {}
     Template.findOne ({ id: templateID,

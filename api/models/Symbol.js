@@ -25,6 +25,10 @@ module.exports = {
       defaultsTo: function() { return Player.adminUserId }
     },
 
+    copied: {
+      model: 'symbol'
+    },
+
     ownershipTerm: {
       type: 'integer',  // milliseconds until lock expires
       defaultsTo: 24*60*1000
@@ -60,7 +64,8 @@ module.exports = {
   // in-memory cache
   cache: { byId: {},
            byName: {},
-           isUsedBy: {}  // isUsedBy[x][y]=true iff x is used by y
+           isUsedBy: {},  // isUsedBy[x.name][y.name]=true iff x is used by y
+           isCopiedBy: {},  // isCopiedBy[x.id][y.id]=true iff x is copied by y
          },
 
   // automatic naming
@@ -100,6 +105,13 @@ module.exports = {
     Symbol.cache.byId[symbol.id] = symbol
     Symbol.cache.byName[symbol.name] = symbol
 
+    if (oldSymbol && oldSymbol.copied && oldSymbol.copied !== symbol.copied)
+      throw new Error ("Symbol 'copied' field is not allowed to change")
+    if (symbol.copied && !oldSymbol) {
+      Symbol.cache.isCopiedBy[symbol.copied] = Symbol.cache.isCopiedBy[symbol.copied] || {}
+      Symbol.cache.isCopiedBy[symbol.copied][symbol.id] = true
+    }
+    
     var match = Symbol.autoname.regex.exec (symbol.name)
     if (match)
       Symbol.autoname.maxSuffix[match[1]] = Math.max (Symbol.autoname.maxSuffix[match[1]] || 0, parseInt(match[2]))
@@ -165,6 +177,13 @@ module.exports = {
     return Object.keys (Symbol.getUsedSymbolNames (Symbol.cache.byName[usingSymbolName].rules))
       .map (function (usedSymbolName) {
         return Symbol.cache.byName[usedSymbolName]
+      })
+  },
+
+  getCopies: function (symbolId) {
+    return Object.keys (Symbol.cache.isCopiedBy[symbolId] || {})
+      .map (function (copyId) {
+        return Symbol.cache.byId[copyId]
       })
   },
   

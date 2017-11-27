@@ -3032,7 +3032,7 @@ var WikiMess = (function() {
             if (window.confirm ('Make a copy of ' + symChar + wm.symbolName[symbol.id] + '?'
                                 + (wm.symbolEditableByPlayer(symbol) ? ' (Unlike the original, you will be able to edit the copy.)' : '')))
               wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
-                                              rules: symbol.rules } })
+                                              copy: symbol.id } })
           })
       }
 
