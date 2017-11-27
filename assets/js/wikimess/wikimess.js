@@ -1192,9 +1192,9 @@ var WikiMess = (function() {
                                   title: wm.composition.title,
                                   body: wm.composition.body }
                     if (wm.composition.draft)
-                      wm.lastSavePromise = wm.REST_putPlayerDraft (wm.playerID, wm.composition.draft, draft)
+                      wm.promiseSave (wm.REST_putPlayerDraft (wm.playerID, wm.composition.draft, draft))
                     else
-                      wm.lastSavePromise = wm.REST_postPlayerDraft (wm.playerID, draft)
+                      wm.promiseSave (wm.REST_postPlayerDraft (wm.playerID, draft))
                       .then (function (result) {
                         wm.composition.draft = result.draft.id
                       })
@@ -2602,14 +2602,15 @@ var WikiMess = (function() {
       }
     },
 
-    // edit
+    // edit & auto-save
+    promiseSave: function (savePromise) {
+      this.lastSavePromise = savePromise
+      return this.lastSavePromise
+    },
+    
     finishLastSave: function() {
-      var lastSavePromise
-      if (this.lastSavePromise)
-        lastSavePromise = this.lastSavePromise
-      else
-        lastSavePromise = $.Deferred().resolve()
-      return lastSavePromise
+      this.lastSavePromise = this.lastSavePromise || $.Deferred().resolve()
+      return this.lastSavePromise
     },
     
     saveCurrentEdit: function() {
@@ -2622,8 +2623,7 @@ var WikiMess = (function() {
             delete wm.saveEditableElement
           } else
             def = $.Deferred().resolve()
-          wm.lastSavePromise = def
-          return def
+          return wm.promiseSave (def)
         })
     },
 
@@ -2765,7 +2765,7 @@ var WikiMess = (function() {
               .then (function() {
                 
                 if (props.confirmDestroy())
-                  wm.lastSavePromise = props.destroyCallback()
+                  wm.promiseSave (props.destroyCallback())
               })
           }))
       }
@@ -2793,12 +2793,12 @@ var WikiMess = (function() {
       var wm = this
       return wm.finishLastSave()
         .then (function() {
-          wm.lastSavePromise = wm.REST_putPlayerSymbol (wm.playerID, symbol.id, wm.symbolName[symbol.id], symbol.rules)
-            .then (function (result) {
-              $.extend (wm.symbolName, result.name)
-              return result.symbol
-            })
-          return wm.lastSavePromise
+          return wm.promiseSave
+          (wm.REST_putPlayerSymbol (wm.playerID, symbol.id, wm.symbolName[symbol.id], symbol.rules)
+           .then (function (result) {
+             $.extend (wm.symbolName, result.name)
+             return result.symbol
+           }))
         })
     },
 
@@ -2806,16 +2806,17 @@ var WikiMess = (function() {
       var wm = this
       return wm.finishLastSave()
         .then (function() {
-          wm.lastSavePromise = wm.REST_putPlayerSymbol (wm.playerID, symbol.id, newName, symbol.rules)
-            .then (function (result) {
-              wm.updateSymbolCache (result)
-            }).fail (function (err) {
-              var reload = wm.reloadCurrentTab.bind(wm)
-	      if (err.status == 400)
-                wm.showModalMessage ("You can't rename " + symChar + wm.symbolName[symbol.id] + " to " + symChar + newName + ", because " + symChar + newName + " already exists", reload)
-              else
-                wm.showModalWebError (err, reload)
-            })
+          return wm.promiseSave
+          (wm.REST_putPlayerSymbol (wm.playerID, symbol.id, newName, symbol.rules)
+           .then (function (result) {
+             wm.updateSymbolCache (result)
+           }).fail (function (err) {
+             var reload = wm.reloadCurrentTab.bind(wm)
+	     if (err.status == 400)
+               wm.showModalMessage ("You can't rename " + symChar + wm.symbolName[symbol.id] + " to " + symChar + newName + ", because " + symChar + newName + " already exists", reload)
+             else
+               wm.showModalWebError (err, reload)
+           }))
         })
     },
 
@@ -3041,7 +3042,7 @@ var WikiMess = (function() {
         wm.saveCurrentEdit()
           .then (function() {
             if (window.confirm('Give up your lock on ' + symChar + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) the phrase.'))
-              wm.lastSavePromise = wm.REST_deletePlayerSymbol (wm.playerID, symbol.id)
+              return wm.promiseSave (wm.REST_deletePlayerSymbol (wm.playerID, symbol.id), 'unlockSymbol')
           })
       }
 

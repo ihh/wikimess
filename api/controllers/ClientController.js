@@ -1121,14 +1121,14 @@ module.exports = {
             return Revision.create ({ symbol: symbolID,
                                       owner: null })
               .then (function() {
-                return Symbol.message (symbolID,
-                                       { message: "update",
-                                         symbol: { id: symbolID,
-                                                   name: symbol.name,
-                                                   owner: {},
-                                                   rules: symbol.rules,
-                                                   initialized: symbol.initialized },
-                                         name: names })
+                Symbol.message (symbolID,
+                                { message: "update",
+                                  symbol: { id: symbolID,
+                                            name: symbol.name,
+                                            owner: {},
+                                            rules: symbol.rules,
+                                            initialized: symbol.initialized },
+                                  name: names })
                 res.ok()
               })
           })
