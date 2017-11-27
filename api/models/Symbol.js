@@ -59,7 +59,9 @@ module.exports = {
 
   // in-memory cache
   cache: { byId: {},
-           byName: {} },
+           byName: {},
+           isUsedBy: {}  // isUsedBy[x][y]=true iff x is used by y
+         },
 
   // automatic naming
   noun: 'phrase',
@@ -76,19 +78,49 @@ module.exports = {
     })
   },
 
-  invalidateCache: function (symbol, callback) {
-    delete Symbol.cache.byId[symbol.id]
-    delete Symbol.cache.byName[symbol.name]
-    if (callback)
-      callback()
+  setUsage: function (usingSymbolName, usedSymbolName) {
+    Symbol.cache.isUsedBy[usedSymbolName] = Symbol.cache.isUsedBy[usedSymbolName] || {}
+    Symbol.cache.isUsedBy[usedSymbolName][usingSymbolName] = true
+  },
+
+  clearUsage: function (usingSymbolName, usedSymbolName) {
+    if (Symbol.cache.isUsedBy[usedSymbolName])
+      delete Symbol.cache.isUsedBy[usedSymbolName][usingSymbolName]
   },
 
   updateCache: function (symbol, callback) {
+    var oldSymbol = Symbol.cache.byId[symbol.id]
+
+    var nameChanged = (oldSymbol && oldSymbol.name !== symbol.name)
+    if (nameChanged)
+      delete Symbol.cache.byName[oldSymbol.name]
+    else if (oldSymbol === symbol && Symbol.cache.byName[symbol.name] !== symbol)
+      throw new Error ("Symbol name " + symbol.name + " appears to have been edited in-place, invalidating cache")
+
     Symbol.cache.byId[symbol.id] = symbol
     Symbol.cache.byName[symbol.name] = symbol
+
     var match = Symbol.autoname.regex.exec (symbol.name)
     if (match)
       Symbol.autoname.maxSuffix[match[1]] = Math.max (Symbol.autoname.maxSuffix[match[1]] || 0, parseInt(match[2]))
+
+    var newChild = Symbol.getUsedSymbolNames (symbol.rules)
+    var oldChild = oldSymbol ? Symbol.getUsedSymbolNames (oldSymbol.rules) : {}
+    Object.keys(oldChild).forEach (function (c) {
+      if (nameChanged || !newChild[c])
+        Symbol.clearUsage (oldSymbol.name, c)
+    })
+    Object.keys(newChild).forEach (function (c) {
+      if (nameChanged || !oldChild[c])
+        Symbol.setUsage (symbol.name, c)
+    })
+    if (nameChanged)
+      Symbol.getUsingSymbols (oldSymbol.name)
+      .forEach (function (usingSymbol) {
+        Symbol.clearUsage (usingSymbol.name, oldSymbol.name)
+        Symbol.setUsage (usingSymbol.name, symbol.name)
+      })
+
     if (callback)
       callback()
   },
@@ -103,6 +135,39 @@ module.exports = {
     return Symbol.findOne (query)
   },
 
+  getUsedSymbolNames: function (rules) {
+    var isUsedSymbolName = {}
+    rules.forEach (function (rhs) {
+      rhs.forEach (function (rhsSym) {
+        if (typeof(rhsSym) === 'object') {
+          if (rhsSym.hasOwnProperty('name'))
+            isUsedSymbolName[rhsSym.name] = true
+          else if (rhsSym.hasOwnProperty('id')) {
+            var rhsSymbol = Symbol.cache.byId[rhsSym.id]
+            if (rhsSymbol)
+              isUsedSymbolName[rhsSymbol.name] = true
+          }
+        }
+      })
+    })
+    return isUsedSymbolName
+  },
+
+  getUsingSymbols: function (usedSymbolName) {
+    var isUsedBy = Symbol.cache.isUsedBy[usedSymbolName]
+    var users = isUsedBy ? Object.keys(isUsedBy) : []
+    return users.map (function (usingSymbolName) {
+      return Symbol.cache.byName[usingSymbolName]
+    })
+  },
+
+  getUsedSymbols: function (usingSymbolName) {
+    return Object.keys (Symbol.getUsedSymbolNames (Symbol.cache.byName[usingSymbolName].rules))
+      .map (function (usedSymbolName) {
+        return Symbol.cache.byName[usedSymbolName]
+      })
+  },
+  
   id2name: function (id) {
     var sym = Symbol.cache.byId[id]
     return sym ? sym.name : sym
@@ -137,9 +202,7 @@ module.exports = {
   beforeUpdate: function (symbol, callback) {
     if (!symbol.id) return callback()
     Symbol.findOne ({ id: symbol.id })
-      .then (function (oldSymbol) {
-        Symbol.invalidateCache (oldSymbol, callback)
-      })
+      .then (callback)
   },
 
   afterUpdate: function (symbol, callback) {
