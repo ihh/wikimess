@@ -908,6 +908,11 @@ module.exports = {
                             rules: symbol.rules }
           result.name = {}
           result.name[symbol.id] = symbol.name
+          // TODO:
+          // if this new symbol N is a duplicate of an existing symbol E (need to pass that info in from the client!)
+          // and if the original (E) is not owned by the player, then:
+          //  1) for all "upstream" symbols U that use E, and are owned by the player, change E->N in rules for U;
+          //  2) for all "downstream" symbols D that are used by E, and have player-owned copies C (need a copyOf link in Symbol object!), change D->C in rules for N.
           var revisionPromise = (initialized
                                  ? Revision.create ({ symbol: symbol.id,
                                                       name: symbol.name,
