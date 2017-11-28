@@ -339,7 +339,7 @@ input {
 .wikimess .sharepane {
     position: absolute;
     top: -46px;  /* ugh */
-    left: -44px;  /* double ugh */
+    left: -76px;  /* double ugh */
     display: flex;
     flex-direction: row;
 }
@@ -380,9 +380,9 @@ input {
 
 .wikimess .infopane .leftcontrols .hint,
 .wikimess .infopane .rightcontrols .hint {
-    font-size: smaller;
-    font-style: italic;
+    font-size: x-small;
     cursor: pointer;
+    clear: both;
 }
 
 .wikimess .leftcontrols .button,
@@ -744,7 +744,7 @@ input {
     display: inline;
 }
 
-.wikimess .readmessage .messagebody {
+.wikimess .messagebody {
     -webkit-user-select: text; /* Chrome/Safari */        
     -moz-user-select: text; /* Firefox */
     -ms-user-select: text; /* IE10+ */
@@ -805,6 +805,11 @@ input {
     overflow: auto;
 
     padding: 2px;
+
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    margin-bottom: 1px;
 }
 
 .wikimess .compose .messagebody {

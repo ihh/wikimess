@@ -38,15 +38,27 @@
     background-color: white;
 }
 
+.wikimess.plain .compose .composesectiontitle {
+    background-color: #bbb;
+    border-color: #666;
+}
+
+.wikimess.plain .compose .bodysectiontitle {
+    background-color: #eee;
+    border-color: #666;
+}
+
+.wikimess.plain .compose .messagecompose,
 .wikimess.plain .grammarbar .rule .rhs .content {
     background-color: #ccc;
     border-color: #666;
+}
 
+.wikimess.plain .grammarbar .rule .rhs .content {
     border-top-style: solid;
     border-left-style: solid;
     border-radius: 4px;
     border-width: 1px;
-
     padding: 2px;
 }
 
@@ -122,8 +134,7 @@
 }
 
 .wikimess.plain .messageheader .privrow .privtab {
-    background-color: gray;
-    opacity: .6;
+    background-color: #444;
 }
 
 .wikimess.plain .messageheader .privrow .privtab.active {
@@ -144,10 +155,6 @@
 .wikimess.plain .compose .messageheader,
 .wikimess.plain .compose .suggest {
     background-color: #eee;
-}
-
-.wikimess.plain .compose .messagecompose {
-    background-color: #f8f8ff;
 }
 
 .wikimess.plain .configmenu .option.checked {

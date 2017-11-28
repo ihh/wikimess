@@ -1221,7 +1221,7 @@ module.exports = {
                                 name: template.author.name,
                                 displayName: template.author.displayName }
                             : undefined),
-                   title: template.title }
+                   title: template.title || PlayerService.summarizeTemplate (template)  }
         })
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {
