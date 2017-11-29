@@ -364,6 +364,10 @@ var WikiMess = (function() {
     REST_getPlayerTemplate: function (playerID, templateID) {
       return this.logGet ('/p/template/' + templateID)
     },
+
+    REST_getPlayerSymbolLinks: function (playerID, symbolID) {
+      return this.logGet ('/p/symbol/' + symbolID + '/links')
+    },
     
     REST_getPlayerExpand: function (playerID, symbolID) {
       return this.logGet ('/p/expand/' + symbolID)
@@ -2838,7 +2842,7 @@ var WikiMess = (function() {
     updateSymbolCache: function (result) {
       var wm = this
       var symbol = result.symbol
-      var oldName = this.symbolName[symbol.id]
+      var oldName = symbol ? this.symbolName[symbol.id] : null
       $.extend (this.symbolName, result.name)
       if (oldName) {
         if (oldName !== symbol.name) {
@@ -3061,6 +3065,52 @@ var WikiMess = (function() {
           })
       }
 
+      var linksVisible = false
+      var linksDiv = $('<div class="links">')
+      function showLinks (evt) {
+        evt.stopPropagation()
+        wm.REST_getPlayerSymbolLinks (wm.playerID, symbol.id)
+          .then (function (links) {
+            $.extend (wm.symbolName, links.name)
+            linksVisible = true
+            function makeSymbolSpans (title, symbolIDs) {
+              var listDiv = $('<div class="symbols">')
+              if (symbolIDs) {
+                listDiv.append ($('<span class="title">').text (title))
+                if (symbolIDs.length)
+                  symbolIDs.forEach (function (linkedId) {
+                    var linkedSym = { id: linkedId }
+                    listDiv.append
+                    (' ',
+                     wm.makeSymbolSpan (linkedSym,
+                                        function (evt) {
+                                          evt.stopPropagation()
+                                          wm.loadGrammarSymbol (linkedSym)
+                                        }))
+                  })
+                else
+                  listDiv.append (' ', $('<span>').text ('None'))
+              }
+              return listDiv
+            }
+            linksDiv.empty().append
+            (makeSymbolSpans ('Used by:', links.symbol.using),
+             makeSymbolSpans ('Used:', links.symbol.used),
+             makeSymbolSpans ('Copies:', links.symbol.copies),
+             (links.symbol.copied
+              ? $('<div>').append ('Copy of ',
+                                   wm.makeSymbolSpan (links.symbol.copied))
+              : null))
+              .show()
+          })
+      }
+      
+      function hideLinks (evt) {
+        evt.stopPropagation()
+        linksVisible = false
+        linksDiv.hide()
+      }
+
       function hideSymbol (evt) {
         evt.stopPropagation()
         wm.saveCurrentEdit()
@@ -3103,18 +3153,26 @@ var WikiMess = (function() {
                       return wm.renameSymbol (symbol, newLhs)
                     },
                     beforeContentDiv: function() {
-                      return $('<div class="menubutton">').append (wm.makeIconButton ('menu', function (evt) {
-                        evt.stopPropagation()
-                        menuDiv.empty()
-                          .append (menuSelector ('Add to draft', addToDraft()),
-                                   menuSelector ('Show sample text', randomize),
-                                   symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
-                                   owned ? menuSelector ('Unlock this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
-                          .show()
-                        wm.modalExitDiv.show()
-                        wm.infoPane.hide()
-                        wm.showingHelp = false
-                      }), menuDiv)
+                      return $('<div class="menubutton">')
+                        .append (wm.makeIconButton ('menu', function (evt) {
+                          evt.stopPropagation()
+                          menuDiv.empty()
+                            .append (menuSelector ('Add to draft', addToDraft()),
+                                     menuSelector ('Show sample text', randomize),
+                                     (symbol.summary
+                                      ? null
+                                      : menuSelector ('Duplicate this phrase', copySymbol)),
+                                     (linksVisible
+                                      ? menuSelector ('Hide related phrases', hideLinks)
+                                      : menuSelector ('Show related phrases', showLinks)),
+                                     (owned
+                                      ? menuSelector ('Unlock this phrase', unlockSymbol)
+                                      : menuSelector ('Hide this phrase', hideSymbol)))
+                            .show()
+                          wm.modalExitDiv.show()
+                          wm.infoPane.hide()
+                          wm.showingHelp = false
+                        }), menuDiv)
                     },
                     otherButtonDivs: function() {
                       var divs = []
@@ -3131,8 +3189,10 @@ var WikiMess = (function() {
                       return divs
                     },
                   }),
+                 linksDiv.hide(),
                  (symbol.summary
-                  ? $('<div class="summary">').html (wm.renderMarkdown (symbol.summary))
+                  ? [$('<div class="summary">').html (wm.renderMarkdown (symbol.summary)),
+                     $('<div class="protected">').text ('The owner of this phrase has not published the full definition. You are free to try and deduce it!')]
                   : (((symbol.rules.length || !editable)
                       ? []
                       : [$('<span class="rhs">')

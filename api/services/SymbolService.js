@@ -34,6 +34,36 @@ module.exports = {
       return result
     })
   },
+  
+  makeSymbolLinks: function (symbol, playerID) {
+    var ownerID = symbol.owner
+    var usingSymbols = Symbol.getUsingSymbols (symbol.name)
+    var copySymbols = Symbol.getCopies (symbol.id)
+    var usedSymbols
+    if (ownerID === playerID || symbol.summary === null) {
+      // caller is allowed to see (summaries of) rules
+      usedSymbols = Symbol.getUsedSymbols (symbol.name)
+    }
+    var result = { symbol: { id: symbol.id,
+                             used: (usedSymbols ? usedSymbols.map (function (sym) { return sym.id }) : undefined),
+                             using: usingSymbols.map (function (sym) { return sym.id }),
+                             copies: copySymbols.map (function (sym) { return sym.id }) } }
+    return (symbol.copied
+            ? Symbol.findOneCached (symbol.copied)
+            : copiedSymbolPromise = Promise.resolve (null))
+      .then (function (copiedSymbol) {
+        if (copiedSymbol)
+          result.symbol.copied = copiedSymbol.id
+        var symbols = usingSymbols
+            .concat (usedSymbols || [])
+            .concat (copySymbols)
+            .concat (copiedSymbol ? [copiedSymbol] : [])
+        return SymbolService.resolveReferences (symbols)
+      }).then (function (names) {
+        result.name = names
+        return result
+      })
+  },
 
   makeOwnerID: function (symbol) {
     var result = null

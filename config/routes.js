@@ -132,6 +132,7 @@ module.exports.routes = {
   'POST /p/symbol':          'ClientController.newSymbol',
   'DELETE /p/symbol/:symid': 'ClientController.releaseSymbol',
 
+  'GET /p/symbol/:symid/links':       'ClientController.getSymbolLinks',
   'GET /p/symbol/:symid/unsubscribe': 'ClientController.unsubscribeSymbol',
 
   'GET /p/symname/:symname':   'ClientController.getOrCreateSymbolByName',

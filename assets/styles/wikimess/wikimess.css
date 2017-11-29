@@ -437,6 +437,19 @@ input {
     padding-right: 4px;
 }
 
+.wikimess .grammarbar .rule .protected {
+    font-size: xx-small;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.wikimess .grammarbar .rule .links {
+    font-style: italic;
+    font-size: small;
+    margin: 0px 12px 2px 8px;
+    padding: 1px 2px 1px 2px;
+}
+
 .wikimess .grammarbar .rule .lhs .owner {
     font-size: small;
     font-style: italic;
