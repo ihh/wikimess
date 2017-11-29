@@ -1029,6 +1029,28 @@ module.exports = {
       })
   },
 
+  // get links (uses, used by, copies, copied by) for a symbol
+  getSymbolLinks: function (req, res) {
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var symbolID = parseInt (req.params.symid)
+    var result = {}
+    Symbol.findOneCached ({ id: symbolID })
+      .then (function (symbol) {
+        if (symbol)
+          return SymbolService.makeSymbolLinks (symbol, playerID)
+          .then (function (result) {
+            res.json (result)
+          }).catch (function (err) {
+            console.log(err)
+            res.status(500).send ({ message: err })
+          })
+        res.status(500).send ({ message: "Symbol not found" })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
   // get a particular symbol by name, or create it (uninitialized)
   getOrCreateSymbolByName: function (req, res) {
     var playerID = req.session.passport.user
@@ -1228,7 +1250,7 @@ module.exports = {
                                 name: template.author.name,
                                 displayName: template.author.displayName }
                             : undefined),
-                   title: template.title }
+                   title: template.title || PlayerService.summarizeTemplate (template)  }
         })
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {

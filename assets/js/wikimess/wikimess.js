@@ -28,7 +28,10 @@ var WikiMess = (function() {
     // preload icons
     this.iconPromise = {}
     Object.keys(this.iconFilename).forEach (function (icon) { wm.getIconPromise (wm.iconFilename[icon]) })
-    this.tabs.forEach (function (tab) { wm.getIconPromise (tab.icon) })
+    this.tabs.forEach (function (tab) {
+      wm.getIconPromise (tab.icon)
+      wm.iconFilename[tab.name + '-tab'] = tab.icon
+    })
 
     // initialize Markdown renderer
     var renderer = new marked.Renderer()
@@ -106,6 +109,7 @@ var WikiMess = (function() {
                     backspace: 'backspace',
                     'new': 'copy',
                     create: 'circle-plus',
+                    'copy to clipboard': 'clipboard-copy',
                     'delete': 'trash-can',
                     plus: 'circle-plus',
                     minus: 'circle-minus',
@@ -126,11 +130,6 @@ var WikiMess = (function() {
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
                     compose: 'quill',
-                    'status-tab': 'mushroom-house',
-                    'compose-tab': 'quill-ink',
-                    'grammar-tab': 'spell-book',
-                    'settings-tab': 'pokecog',
-                    'mailbox-tab': 'envelope',
                     forward: 'forward',
                     reply: 'reply',
                     reload: 'refresh',
@@ -144,12 +143,12 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'status', method: 'showStatusPage', label: 'home', icon: 'mushroom-house', },
-           { name: 'compose', method: 'showComposePage', label: 'write', icon: 'quill-ink' },
+    tabs: [{ name: 'compose', method: 'showComposePage', label: 'write', icon: 'quill-ink' },
+           { name: 'grammar', method: 'showGrammarEditPage', label: 'define', icon: 'spell-book' },
+           { name: 'status', method: 'showStatusPage', label: 'announce', icon: 'acoustic-megaphone', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
-           { name: 'grammar', method: 'showGrammarEditPage', label: 'phrases', icon: 'spell-book' },
-           { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
+           { name: 'settings', method: 'showSettingsPage', label: 'setup', icon: 'pokecog' }],
     
     verbose: { page: false,
                request: true,
@@ -364,6 +363,10 @@ var WikiMess = (function() {
 
     REST_getPlayerTemplate: function (playerID, templateID) {
       return this.logGet ('/p/template/' + templateID)
+    },
+
+    REST_getPlayerSymbolLinks: function (playerID, symbolID) {
+      return this.logGet ('/p/symbol/' + symbolID + '/links')
     },
     
     REST_getPlayerExpand: function (playerID, symbolID) {
@@ -1405,10 +1408,20 @@ var WikiMess = (function() {
                            + '?u=' + encodeURIComponent(info.url))
             }
           }
-          
+
+          // copy to clipboard
+          function copyToClipboard (info) {
+            wm.stopAnimation()
+            var range = document.createRange()
+            range.selectNode (wm.messageBodyDiv[0])
+            window.getSelection().removeAllRanges()
+            window.getSelection().addRange (range)
+            document.execCommand ("copy")
+            wm.sharePane.hide()
+          }
           
           // send message with callback to share method (e.g. tweet intent)
-          function makeSendFunction (shareCallback) {
+          function makeSendFunction (shareCallback, preserveMessage) {
             return function (evt) {
               evt.stopPropagation()
               evt.preventDefault()
@@ -1422,7 +1435,7 @@ var WikiMess = (function() {
                   else if (wm.composition.isPrivate && !wm.composition.recipient)
                     window.alert ("Please select the direct message recipient, or make it public.")
                   else {
-                      wm.sendButton.off ('click')
+                    wm.shareButton.off ('click')
                     delete wm.composition.previousTemplate
                     wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
                                                               template: wm.composition.template,
@@ -1439,14 +1452,19 @@ var WikiMess = (function() {
                                            title: wm.composition.title,
                                            text: wm.makeExpansionText (wm.composition.body) })
                       }).then (function() {
-                        wm.composition = {}  // delete the composition after sending
-                        delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
-                        return (wm.playerID
-                                ? wm.showMailboxPage ({ tab: 'outbox' })
-                                .then (function() {
-                                  // TODO: update wm.mailboxCache.outbox
-                                })
-                                : wm.showStatusPage())
+                        if (preserveMessage) {
+                          wm.sharePane.hide()
+                          wm.shareButton.on ('click', toggleSharePane)
+                        } else {
+                          wm.composition = {}  // delete the composition after sending
+                          delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
+                          return (wm.playerID
+                                  ? wm.showMailboxPage ({ tab: 'outbox' })
+                                  .then (function() {
+                                    // TODO: update wm.mailboxCache.outbox
+                                  })
+                                  : wm.showStatusPage())
+                        }
                       }).catch (function (err) {
                         wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                       })
@@ -1455,8 +1473,7 @@ var WikiMess = (function() {
             }
           }
 
-          // send UI element
-          function send() {
+          function toggleSharePane() {
             wm.showingHelp = false
             wm.infoPane.hide()
 	    wm.sharePane.toggle()
@@ -1468,6 +1485,7 @@ var WikiMess = (function() {
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction(facebookIntent), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', makeSendFunction()).addClass('big-button'),
+                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'),
                        '&nbsp;&nbsp;',  // ew
                        wm.makeIconButton ('close', function() { wm.sharePane.hide() }))
           }
@@ -1506,11 +1524,11 @@ var WikiMess = (function() {
                                                 $('<span class="input">').append (wm.messageTitleInput))
                                        .hide()),  // subject line clutters up the UI and is strictly unnecessary, so leave it out (maybe restore later as player option?)
                               $('<div class="messageborder">')
-                              .append ($('<div class="sectiontitle">').text('Input text:'),
+                              .append ($('<div class="sectiontitle composesectiontitle">').text('Input text:'),
                                        wm.messageComposeDiv,
-                                       wm.suggestionDiv = $('<div class="suggest">'),
-                                       $('<div class="sectiontitle">').text('Expanded text:'),
-                                       wm.messageBodyDiv)),
+                                       $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
+                                       wm.messageBodyDiv,
+                                       wm.suggestionDiv = $('<div class="suggest">'))),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
@@ -1542,7 +1560,7 @@ var WikiMess = (function() {
                       }),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
-                               wm.sendButton = wm.makeSubNavIcon ('share', send).addClass('sharepanebutton')),
+                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
           updateSharePane()
@@ -2072,7 +2090,7 @@ var WikiMess = (function() {
         break
       case 'home':
       default:
-        promise = this.showStatusPage()
+        promise = this.showComposePage()
         break
       }
       return promise
@@ -2492,13 +2510,14 @@ var WikiMess = (function() {
                                                                                          template: templateResult.template,
                                                                                          focus: 'playerSearchInput' }) }) })
                                                              .append ($('<span class="title">')
-                                                                      .text (template.title),
-                                                                      $('<span class="by">').append (' by ',
-                                                                                                     template.author
-                                                                                                     ? wm.makePlayerSpan (template.author.name,
-                                                                                                                          null,
-                                                                                                                          wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))
-                                                                                                     : wm.anonGuest)) }))))
+                                                                      .text (template.title || 'Untitled'),
+                                                                      $('<span class="by">').append
+                                                                      (' by ',
+                                                                       template.author
+                                                                       ? wm.makePlayerSpan (template.author.name,
+                                                                                            null,
+                                                                                            wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, template.author)))
+                                                                       : wm.anonGuest)) }))))
                     })
                 })
             })
@@ -2823,7 +2842,7 @@ var WikiMess = (function() {
     updateSymbolCache: function (result) {
       var wm = this
       var symbol = result.symbol
-      var oldName = this.symbolName[symbol.id]
+      var oldName = symbol ? this.symbolName[symbol.id] : null
       $.extend (this.symbolName, result.name)
       if (oldName) {
         if (oldName !== symbol.name) {
@@ -3011,14 +3030,14 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append ($('<span class="hint">').text('Re-roll'),
-                           wm.makeIconButton ('re-roll'))
+                  .append (wm.makeIconButton ('re-roll'),
+                           $('<div class="hint">').text('re-roll'))
                   .off('click')
                   .on('click',randomize)
                 wm.infoPaneRightControls
                   .empty()
-                  .append ($('<span class="hint">').text('Add to draft'),
-                           wm.makeIconButton ('forward'))
+                  .append (wm.makeIconButton ('forward'),
+                           $('<div class="hint">').text('add to draft'))
                   .off('click')
                   .on('click', addToDraft (result.expansion))
 		wm.infoPane.show()
@@ -3044,6 +3063,52 @@ var WikiMess = (function() {
             if (window.confirm('Give up your lock on ' + symChar + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) the phrase.'))
               return wm.promiseSave (wm.REST_deletePlayerSymbol (wm.playerID, symbol.id), 'unlockSymbol')
           })
+      }
+
+      var linksVisible = false
+      var linksDiv = $('<div class="links">')
+      function showLinks (evt) {
+        evt.stopPropagation()
+        wm.REST_getPlayerSymbolLinks (wm.playerID, symbol.id)
+          .then (function (links) {
+            $.extend (wm.symbolName, links.name)
+            linksVisible = true
+            function makeSymbolSpans (title, symbolIDs) {
+              var listDiv = $('<div class="symbols">')
+              if (symbolIDs) {
+                listDiv.append ($('<span class="title">').text (title))
+                if (symbolIDs.length)
+                  symbolIDs.forEach (function (linkedId) {
+                    var linkedSym = { id: linkedId }
+                    listDiv.append
+                    (' ',
+                     wm.makeSymbolSpan (linkedSym,
+                                        function (evt) {
+                                          evt.stopPropagation()
+                                          wm.loadGrammarSymbol (linkedSym)
+                                        }))
+                  })
+                else
+                  listDiv.append (' ', $('<span>').text ('None'))
+              }
+              return listDiv
+            }
+            linksDiv.empty().append
+            (makeSymbolSpans ('Used by:', links.symbol.using),
+             makeSymbolSpans ('Used:', links.symbol.used),
+             makeSymbolSpans ('Copies:', links.symbol.copies),
+             (links.symbol.copied
+              ? $('<div>').append ('Copy of ',
+                                   wm.makeSymbolSpan (links.symbol.copied))
+              : null))
+              .show()
+          })
+      }
+      
+      function hideLinks (evt) {
+        evt.stopPropagation()
+        linksVisible = false
+        linksDiv.hide()
       }
 
       function hideSymbol (evt) {
@@ -3088,18 +3153,26 @@ var WikiMess = (function() {
                       return wm.renameSymbol (symbol, newLhs)
                     },
                     beforeContentDiv: function() {
-                      return $('<div class="menubutton">').append (wm.makeIconButton ('menu', function (evt) {
-                        evt.stopPropagation()
-                        menuDiv.empty()
-                          .append (menuSelector ('Add to draft', addToDraft()),
-                                   menuSelector ('Show sample text', randomize),
-                                   symbol.summary ? null : menuSelector ('Duplicate this phrase', copySymbol),
-                                   owned ? menuSelector ('Unlock this phrase', unlockSymbol) : menuSelector ('Hide this phrase', hideSymbol))
-                          .show()
-                        wm.modalExitDiv.show()
-                        wm.infoPane.hide()
-                        wm.showingHelp = false
-                      }), menuDiv)
+                      return $('<div class="menubutton">')
+                        .append (wm.makeIconButton ('menu', function (evt) {
+                          evt.stopPropagation()
+                          menuDiv.empty()
+                            .append (menuSelector ('Add to draft', addToDraft()),
+                                     menuSelector ('Show sample text', randomize),
+                                     (symbol.summary
+                                      ? null
+                                      : menuSelector ('Duplicate this phrase', copySymbol)),
+                                     (linksVisible
+                                      ? menuSelector ('Hide related phrases', hideLinks)
+                                      : menuSelector ('Show related phrases', showLinks)),
+                                     (owned
+                                      ? menuSelector ('Unlock this phrase', unlockSymbol)
+                                      : menuSelector ('Hide this phrase', hideSymbol)))
+                            .show()
+                          wm.modalExitDiv.show()
+                          wm.infoPane.hide()
+                          wm.showingHelp = false
+                        }), menuDiv)
                     },
                     otherButtonDivs: function() {
                       var divs = []
@@ -3116,8 +3189,10 @@ var WikiMess = (function() {
                       return divs
                     },
                   }),
+                 linksDiv.hide(),
                  (symbol.summary
-                  ? $('<div class="summary">').html (wm.renderMarkdown (symbol.summary))
+                  ? [$('<div class="summary">').html (wm.renderMarkdown (symbol.summary)),
+                     $('<div class="protected">').text ('The owner of this phrase has not published the full definition. You are free to try and deduce it!')]
                   : (((symbol.rules.length || !editable)
                       ? []
                       : [$('<span class="rhs">')
@@ -3375,7 +3450,8 @@ var WikiMess = (function() {
     makeHelpButton: function (helpMethod) {
       var wm = this
       return wm.makeSubNavIcon ('help', function() {
-        if (wm.sharePane) wm.sharePane.hide()
+        if (wm.sharePane)
+          wm.sharePane.hide()
         if (wm.showingHelp) {
           wm.infoPane.hide()
           wm.showingHelp = false

@@ -44,6 +44,12 @@
     color: #0c0;
 }
 
+.wikimess.l33t .compose .composesectiontitle {
+    color: #0a0;
+    background-color: #002800;
+}
+
+.wikimess.l33t .compose .messagecompose,
 .wikimess.l33t .grammarbar .rule .rhs .content {
     color: #0a0;
     background-color: #030;
