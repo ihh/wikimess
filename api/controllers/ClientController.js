@@ -972,26 +972,33 @@ module.exports = {
 
           var newName = {}
           newName[symbol.id] = symbol.name
-          return Promise.all (Object.keys(symbolUpdate).map (function (upstreamSymbolId) {
-            return Symbol.update ({ id: upstreamSymbolId },
-                                  symbolUpdate[upstreamSymbolId])
-              .then (function (update) {
-                var upstreamSymbol = Symbol.cache.byId[upstreamSymbolId]
-                Symbol.message (upstreamSymbolId,
-                                { message: "update",
-                                  symbol: { id: upstreamSymbolId,
-                                            name: upstreamSymbol.name,
-                                            owner: { id: upstreamSymbol.owner },
-                                            rules: upstreamSymbol.rules,
-                                            initialized: true },
-                                  name: newName })
-              })
-          }).concat (revisions.map (function (revision) {
-            return Revision.create (revision)
-          }))).then (function() {
-            Symbol.subscribe (req, symbol.id)
-            res.json (result)
-          })
+          var playerPromise = playerID ? Player.findOne({id:playerID}) : Promise.resolve()
+          return playerPromise
+            .then (function (player) {
+              return Promise.all (Object.keys(symbolUpdate).map (function (upstreamSymbolId) {
+                return Symbol.update ({ id: upstreamSymbolId },
+                                      symbolUpdate[upstreamSymbolId])
+                  .then (function (update) {
+                    var upstreamSymbol = Symbol.cache.byId[upstreamSymbolId]
+                    Symbol.message (upstreamSymbolId,
+                                    { message: "update",
+                                      symbol: { id: upstreamSymbolId,
+                                                name: upstreamSymbol.name,
+                                                owner: (player
+                                                        ? { id: player.id,
+                                                            name: player.name }
+                                                        : null),
+                                                rules: upstreamSymbol.rules,
+                                                initialized: true },
+                                      name: newName })
+                  })
+              }).concat (revisions.map (function (revision) {
+                return Revision.create (revision)
+              })))
+            }).then (function() {
+              Symbol.subscribe (req, symbol.id)
+              res.json (result)
+            })
         }).catch (function (err) {
           console.log(err)
           res.status(500).send ({ message: err })
