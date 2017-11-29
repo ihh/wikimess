@@ -46,13 +46,14 @@ var WikiMess = (function() {
     this.randomizeEmptyMessageWarning()
     
     // monitor connection
-    io.socket.on('disconnect', function() {
-      if (wm.suppressDisconnectWarning)
-        location.reload()
-      else
-        wm.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
-			     location.reload.bind (location, true))
-    })
+    if (wm.reloadOnDisconnect)
+      io.socket.on('disconnect', function() {
+        if (wm.suppressDisconnectWarning)
+          location.reload()
+        else
+          wm.showModalMessage ("You have been disconnected. Attempting to re-establish connection",
+			       location.reload.bind (location, true))
+      })
 
     // prevent scrolling/viewport bump on iOS Safari
     document.addEventListener ('touchmove', function(e){
@@ -214,6 +215,7 @@ var WikiMess = (function() {
                            
     emptyContentWarning: "Enter phrases here, or pick from the suggestions below.",
     emptyTemplateWarning: "_The message will appear here._",
+    reloadOnDisconnect: false,
     suppressDisconnectWarning: true,
 
     preloadSounds: ['error','select','login','logout','gamestart'],

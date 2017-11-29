@@ -1,17 +1,23 @@
 [{"name":"polite_opening",
   "rules":[
-    ["Good Day, ",{"name":"polite_subject"},"!\n\n"],
-    ["Good Morning, ",{"name":"polite_subject"},"!\n\n"],
-    ["Good Evening, ",{"name":"polite_subject"},"!\n\n"],
-    ["Hello, ",{"name":"polite_subject"},",\n\n"],
-    ["Top of the Morning, ",{"name":"polite_subject"},"!\n\n"],
-    ["O ",{"name":"polite_subject"},"!\n\n"],
-    ["Greetings, ",{"name":"polite_subject"},"!\n\n"],
-    ["Dear ",{"name":"polite_subject"},":\n\n"],
-    ["My ",{"name":"polite_subject"},"!\n\n"],
-    ["My Dear ",{"name":"polite_subject"},":\n\n"],
-    ["Felicitations, ",{"name":"polite_subject"},"!\n\n"],
-    ["Salutations, ",{"name":"polite_subject"},"!\n\n"]
+    [{"name":"polite_greeting"},{"name":"polite_subject"},"!\n\n"],
+    [{"name":"polite_greeting"},{"name":"polite_subject"},":\n\n"]
+  ]},
+
+ {"name":"polite_greeting",
+  "rules":[
+    ["Good Day, "],
+    ["Good Morning, "],
+    ["Good Evening, "],
+    ["Hello, "],
+    ["Top of the Morning, "],
+    ["O "],
+    ["Greetings, "],
+    ["Dear "],
+    ["My "],
+    ["My Dear "],
+    ["Felicitations, "],
+    ["Salutations, "]
   ]},
 
  {"name":"polite_subject",
