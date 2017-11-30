@@ -187,6 +187,21 @@ module.exports = {
         return Symbol.cache.byId[copyId]
       })
   },
+
+  getSubgrammar: function (symbolName) {
+    var desc = {}, next = [Symbol.cache.byName[symbolName]]
+    while (next.length) {
+      var symbol = next.pop()
+      if (!desc[symbol.id]) {
+        desc[symbol.id] = symbol
+        next = next.concat (Symbol.getUsedSymbols (symbol.name)
+                            .filter (function (childSymbol) {
+                              return !desc[childSymbol.id]
+                            }))
+      }
+    }
+    return Object.keys(desc).map (function (id) { return desc[id] })
+  },
   
   id2name: function (id) {
     var sym = Symbol.cache.byId[id]

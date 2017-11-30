@@ -2872,14 +2872,14 @@ var WikiMess = (function() {
 
     parseRhs: function (rhs, ignoreText) {
       var wm = this
-      var regex = new RegExp ('(([\\s\\S]*?)\\' + symChar + '\\(([A-Za-z_]\\w*)\\+([A-Za-z_]\\w*)\\)|([\\s\\S]*?)\\' + symChar + '([A-Za-z_]\\w*)|[\\s\\S]+)', 'g'), match
+      var regex = new RegExp ('(([\\s\\S]*?)\\' + symChar + '(\\(([A-Za-z_]\\w*)\\+([A-Za-z_]\\w*)\\)|([A-Za-z_]\\w*))|[\\s\\S]+)', 'g'), match
       var parsed = []
       var name2id = this.symbolNameToID()
       while ((match = regex.exec(rhs)))
         (function() {
           var text = match[1], symbol
-          if (match[4]) {
-            var pre = match[3], post = match[4]
+          if (match[5]) {
+            var pre = match[4], post = match[5]
             if (pre.match(/^(a|an|A|AN)$/)) {
               symbol = { name: post, a: pre }
               text = match[2]
@@ -2888,7 +2888,7 @@ var WikiMess = (function() {
               text = match[2]
             }
           } else if (match[6]) {
-            text = match[5]
+            text = match[2]
             symbol = { name: match[6] }
           }
           if (text && !ignoreText)

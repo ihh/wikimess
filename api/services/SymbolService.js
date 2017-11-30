@@ -289,4 +289,39 @@ module.exports = {
       return Promise.all (updatePromises)
     })
   },
+
+  capitalizeSymRef: function (text) {
+    return text
+      .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+      .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+  },
+
+  makeSymRef: function (rhs, symChar) {
+    return rhs.map (function (node) {
+      if (typeof(node) === 'string')
+        return node.replace(/\n/g,function(){return'\\n'})
+      if (typeof(node) !== 'object')
+        return ''
+      var name
+      if (node.name)
+        name = node.name
+      else if (node.id) {
+        var symbol = Symbol.cache.byId[node.id]
+        if (symbol)
+          name = symbol.name
+      }
+      if (node.cap)
+        name = SymbolService.capitalizeSymRef (name)
+      var expr
+      if (node.plural)
+        expr = '(' + name + '+' + 's)'
+      else if (node.a)
+        expr = '(a' + name + ')'
+      else
+        expr = name
+      if (node.upper)
+        expr = expr.toUpperCase()
+      return symChar + expr
+    }).join('')
+  },
 };

@@ -20,6 +20,7 @@ var defaultTemplateFilename = "$DATA/templates"
 var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(js|json|txt)$'
 var databasePath = '.tmp/localDiskDb.db'
+var symChar = '$'
 
 function defaultPath (subdir, opt) {
   var dataDir = (opt && opt.options.data) || defaultDataDir
@@ -38,9 +39,9 @@ var opt = getopt.create([
   ['u' , 'username=STRING'  , 'admin player name (default="' + defaultUserName + '")'],
   ['w' , 'password=STRING'  , 'admin player password (default="' + defaultPassword + '")'],
   ['D' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
-  ['P' , 'players=PATH+'    , 'path to js/json player file(s) or directories (default=' + defaultPath('Player') + ')'],
-  ['S' , 'symbols=PATH+'    , 'path to js/json grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
-  ['T' , 'templates=PATH+'  , 'path to js/json template file(s) or directories (default=' + defaultPath('Template') + ')'],
+  ['P' , 'players=PATH+'    , 'path to .js or .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
+  ['S' , 'symbols=PATH+'    , 'path to .js, .json or .txt grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
+  ['T' , 'templates=PATH+'  , 'path to .js or .json template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'start'            , "lift (start) Sails, but don't POST anything"],
@@ -130,7 +131,7 @@ promise = promise.then (processFilenameList ({ path: '/player',
 promise = promise.then (processFilenameList ({ path: '/symbol',
                                                schema: schemaPath('symbol'),
                                                handler: genericHandler('Symbol'),
-                                               parsers: [JSON.parse, eval],
+                                               parsers: [JSON.parse, eval, parseSymbolDefs],
                                                list: symbolFilenames.reverse() }))
 
 promise = promise.then (processFilenameList ({ path: '/template',
@@ -374,4 +375,61 @@ function playerHandler (err, data) {
 
 function isArray(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]'
+}
+
+function parseSymbolDefs (text) {
+  try {
+    var nonemptyLineReg = /\S/;
+    var newSymbolDefReg = /^>([A-Za-z_]\w*)\s*$/;
+    var symbolReg = /\$([A-Za-z_]\w*)/;
+    var symbols = [], currentSymbol, newSymbolDefMatch
+    text.split(/\n/).forEach (function (line) {
+      if (nonemptyLineReg.test (line)) {
+        if (currentSymbol)
+          currentSymbol.rules.push (parseRhs (line))
+        else if (newSymbolDefMatch = newSymbolDefReg.exec (line))
+          symbols.push (currentSymbol = { name: newSymbolDefMatch[1],
+                                          rules: [] })
+      } else {
+        // line is empty
+        currentSymbol = undefined
+      }
+    })
+    log(5,"Parsed text file and converted to the following JSON:\n" + JSON.stringify(symbols,null,2))
+    return symbols
+  } catch(e) { console.log(e) }
+}
+
+function parseRhs (rhs) {
+  rhs = rhs.replace (/\\n/g, function() { return '\n' })
+  var regex = new RegExp ('(([\\s\\S]*?)\\' + symChar + '(\\(([A-Za-z_]\\w*)\\+([A-Za-z_]\\w*)\\)|([A-Za-z_]\\w*))|[\\s\\S]+)', 'g'), match
+  var parsed = []
+  while ((match = regex.exec (rhs)))
+    (function() {
+      var text = match[1], symbol
+      if (match[5]) {
+        var pre = match[4], post = match[5]
+        if (pre.match(/^(a|an|A|AN)$/)) {
+          symbol = { name: post, a: pre }
+          text = match[2]
+        } else if (post.match(/^(s|S)$/)) {
+          symbol = { name: pre, plural: post }
+          text = match[2]
+        }
+      } else if (match[6]) {
+        text = match[2]
+        symbol = { name: match[6] }
+      }
+      if (text)
+        parsed.push (text)
+      if (symbol) {
+        if (symbol.name.match(/^[0-9_]*[A-Z][A-Z0-9_]*$/))
+          symbol.upper = true
+        else if (symbol.name.match(/^[0-9_]*[A-Z]\w*$/))
+          symbol.cap = true
+        symbol.name = symbol.name.toLowerCase()
+        parsed.push (symbol)
+      }
+    }) ()
+  return parsed
 }

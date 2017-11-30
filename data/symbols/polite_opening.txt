@@ -1,0 +1,91 @@
+>polite_adjectives
+Esteemed
+Magnificent
+Noble
+Trusted
+Honorable
+Respected
+Important
+Admired
+Beloved
+Honored
+Appreciated
+Valued
+Benevolent
+Generous
+Discreet
+Attentive
+Lettered
+Educated
+Experienced
+Knowledgable
+Intuitive
+Empathic
+Considerate
+Thoughtful
+$polite_adjectives $polite_adjectives
+
+>polite_greeting
+Good Day, 
+Good Morning, 
+Good Evening, 
+Hello, 
+Top of the Morning, 
+O 
+Greetings, 
+Dear 
+My 
+My Dear 
+Felicitations, 
+Salutations, 
+
+>polite_noun
+Friend
+Colleague
+Confidante
+Associate
+Correspondent
+Acquaintance
+Comrade
+Companion
+Interlocutor
+Raconteur
+Ally
+Confederate
+Compatriot
+Consort
+Crony
+Familiar
+Intimate
+Pal
+Pen-Pal
+Partner
+Playmate
+Buddy
+Authority
+Judge
+Confessor
+Parent
+Child
+Brother
+Sister
+Sibling
+Trustee
+Expert
+
+>polite_opening
+$polite_greeting$polite_subject!\n\n
+$polite_greeting$polite_subject:\n\n
+
+>polite_subject
+$polite_noun
+$polite_adjectives $polite_noun
+$polite_adjectives $polite_noun
+$polite_adjectives $polite_noun
+$polite_adjectives $polite_noun
+Most $polite_adjectives $polite_noun
+Truly $polite_adjectives $polite_noun
+Greatly $polite_adjectives $polite_noun
+Assuredly $polite_adjectives $polite_noun
+Deeply $polite_adjectives $polite_noun
+Famously $polite_adjectives $polite_noun

@@ -70,6 +70,7 @@ module.exports.policies = {
     'getSymbolsByOwner': true,
     'getSymbol': true,
     'getSymbolLinks': true,
+    'dumpSymbol': true,
     'putSymbol': true,
     'newSymbol': true,
     'unsubscribeSymbol': true,
