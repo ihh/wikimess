@@ -1057,8 +1057,10 @@ module.exports = {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolName = req.params.symname
     var depSymbols = Symbol.getSubgrammar (symbolName)
+        .filter (function (symbol) { return symbol.owner === playerID || symbol.summary === null })
         .sort (function (a, b) { return (a.name < b.name ? -1 : (a.name === b.name ? 0 : +1)) })
     var symChar = req.params.symchar || '$'
+    res.set('Content-Type', 'text/plain')
     res.send (depSymbols.map (function (symbol) {
       return '>' + symbol.name + '\n' + symbol.rules.map (function (rhs) {
         return SymbolService.makeSymRef (rhs, symChar) + '\n'
