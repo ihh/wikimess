@@ -1052,7 +1052,6 @@ module.exports = {
   },
 
   // get a particular symbol and all symbols it uses, recursively, and convert to compact plaintext format
- 
   dumpSymbol: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolName = req.params.symname
