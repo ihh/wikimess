@@ -94,7 +94,13 @@ input {
     font-style: normal;
 }
 
-.wikimess .suggest .button,
+.wikimess .suggest .button {
+    width: 1.5em;
+    height: 1.5em;
+    cursor: pointer;
+    font-size: x-large;
+}
+
 .wikimess .grammarbar .button {
     width: 1em;
     height: 1em;
@@ -313,7 +319,11 @@ input {
 }
 
 .wikimess .suggest .lhslink {
-    padding-left: 4px;
+    padding: 4px;
+    margin: 1px;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 4px;
 }
 
 .wikimess .var {
@@ -324,6 +334,10 @@ input {
 .wikimess .playerlink .name,
 .wikimess .lhslink .name {
     text-decoration: underline;
+}
+
+.wikimess .suggest .lhslink .name {
+    text-decoration: none;
 }
 
 .wikimess .sharepanecontainer {
@@ -819,8 +833,8 @@ input {
 
     padding: 2px;
 
-    border-radius: 4px;
-    border-style: solid;
+    border-radius: 0 0 4px 4px;
+    border-style: none solid solid solid;
     border-width: 1px;
     margin-bottom: 1px;
 }
@@ -833,10 +847,6 @@ input {
     border-radius: 0 0 4px 4px;
     margin-bottom: 1px;
     padding: 1px;
-}
-
-.wikimess .compose .suggestlabel {
-    font-style: italic;
 }
 
 .wikimess .compose .suggestions {

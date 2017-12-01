@@ -48,6 +48,7 @@
     border-color: #666;
 }
 
+.wikimess.plain .suggest .lhslink,
 .wikimess.plain .compose .messagecompose,
 .wikimess.plain .grammarbar .rule .rhs .content {
     background-color: #ccc;

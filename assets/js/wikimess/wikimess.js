@@ -1530,6 +1530,7 @@ var WikiMess = (function() {
                                        wm.messageComposeDiv,
                                        $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
                                        wm.messageBodyDiv,
+                                       $('<div class="sectiontitle suggestsectiontitle">').text('Suggestions:'),
                                        wm.suggestionDiv = $('<div class="suggest">'))),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
@@ -1634,14 +1635,13 @@ var WikiMess = (function() {
       var wm = this
       return symbolSuggestionPromise.then (function (result) {
         wm.suggestionDiv.empty()
-          .append ($('<div class="suggestlabel">').text('Suggestions:'),
-                   result.symbols.map (function (symbol) {
+          .append (result.symbols.map (function (symbol) {
                      wm.symbolName[symbol.id] = symbol.name
                      return $('<span>').html (wm.makeSymbolSpan (symbol, function (evt) {
                        evt.stopPropagation()
                        wm.suggestionDiv.empty()
                        symbolSelectCallback (symbol)
-                     }))
+                     }, 'div'))
                    }))
       })
     },
@@ -3294,8 +3294,8 @@ var WikiMess = (function() {
       return name
     },
 
-    makeSymbolSpan: function (sym, callback) {
-      var span = $('<span class="lhslink">').append (symCharHtml, $('<span class="name">').text (this.makeSymbolName(sym)))
+    makeSymbolSpan: function (sym, callback, elementType) {
+      var span = $('<' + (elementType || 'span') + ' class="lhslink">').append (symCharHtml, $('<span class="name">').text (this.makeSymbolName(sym)))
       if (callback)
         span.on ('click', callback)
       return span
