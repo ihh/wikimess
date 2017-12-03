@@ -221,7 +221,20 @@ module.exports = {
           nextDepth[symbol.id] = (nextDepth[symbol.id] || 0) + 1
           ++info.nodes
 
-          var rhsSyms = symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : []
+          var rhsSyms = (symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : [])
+              .map (function (rhsSym) {
+                if (typeof(rhsSym) === 'string') {
+                  var altRegExp = new RegExp ('\\[(([^\\]\\|]*\\|)+[^\\]\\|]*)\\]', 'g')
+                  do {
+                    var oldRhsSym = rhsSym
+                    rhsSym = rhsSym.replace (altRegExp, function (_match, optsStr) {
+                      var opts = optsStr.split('|')
+                      return opts[Math.floor(rng() * opts.length)]
+                    })
+                  } while (rhsSym !== oldRhsSym)
+                }
+                return rhsSym
+              })
 
           return SymbolService.expandSymbols (rhsSyms, Symbol.maxRhsSyms, info, nextDepth, rng)
             .then (function (rhsExpansions) {
