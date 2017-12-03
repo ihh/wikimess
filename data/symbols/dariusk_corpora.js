@@ -31,6 +31,10 @@ var targets = [
   { name: 'menu_item',
     path: 'foods/menuItems.json',
     key: 'menuItems' },
+
+  { name: 'mood',
+    path: 'humans/moods.json',
+    key: 'moods' }
 ]
 
 bb.Promise.map (targets, function (target) {
