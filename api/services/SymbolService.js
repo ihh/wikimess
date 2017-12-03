@@ -224,7 +224,7 @@ module.exports = {
           var rhsSyms = (symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : [])
               .map (function (rhsSym) {
                 if (typeof(rhsSym) === 'string') {
-                  var altRegExp = new RegExp ('\\[(([^\\]\\|]*\\|)+[^\\]\\|]*)\\]', 'g')
+                  var altRegExp = new RegExp ('\\[(([^\\[\\]\\|]*\\|)+[^\\[\\]\\|]*)\\]', 'g')
                   do {
                     var oldRhsSym = rhsSym
                     rhsSym = rhsSym.replace (altRegExp, function (_match, optsStr) {
