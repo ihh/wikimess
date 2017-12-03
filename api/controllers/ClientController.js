@@ -970,11 +970,9 @@ module.exports = {
                               name: symbol.name,
                               owner: playerID })
 
-          var newName = {}
-          newName[symbol.id] = symbol.name
           return SymbolService.resolveReferences ([symbol])
             .then (function (names) {
-              extend (newName, names)
+              extend (result.name, names)
               return playerID ? Player.findOne({id:playerID}) : Promise.resolve()
             }).then (function (player) {
               return Promise.all (Object.keys(symbolUpdate).map (function (upstreamSymbolId) {
@@ -992,7 +990,7 @@ module.exports = {
                                                         : null),
                                                 rules: upstreamSymbol.rules,
                                                 initialized: true },
-                                      name: newName })
+                                      name: result.name })
                   })
               }).concat (revisions.map (function (revision) {
                 return Revision.create (revision)
