@@ -1,0 +1,27 @@
+>polite_request
+$Please send me $money.
+I would like to see your petunias.
+Can I borrow your tuning fork?
+Would you remind me of the name of your aunt.
+
+>please
+please
+I $beg you
+
+>beg
+beg
+implore
+beseech
+
+>money
+money
+cash
+bread
+dough
+wage
+notes
+coin
+coinage
+funds
+gold
+gravy
