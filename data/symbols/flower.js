@@ -1,13 +1,14 @@
 var rp = require('request-promise')
-var url = 'https://raw.githubusercontent.com/dariusk/corpora/master/data/animals/common.json'
+var url = 'https://raw.githubusercontent.com/dariusk/corpora/master/data/plants/flowers.json'
 rp (url)
-    .then(function (htmlString) {
+  .then(function (htmlString) {
+//    console.warn (htmlString)
       // Process html...
       var json = JSON.parse (htmlString)
-      var result = {name: "animal",
+      var result = {name: "flower",
 // uncomment the summary to make this private and un-edtable
-//                    summary: "A random animal.",
-                    rules: json.animals.map (function (text) {
+//                    summary: "A flower.",
+                    rules: json.flowers.map (function (text) {
                       return [text]
                     })
                    }
@@ -15,5 +16,5 @@ rp (url)
     })
     .catch(function (err) {
       // Crawling failed...
-      console.error ('Oops - failed')
+      console.error ('Oops - failed', err)
     })
