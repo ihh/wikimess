@@ -3178,12 +3178,14 @@ var WikiMess = (function() {
                     },
                     otherButtonDivs: function() {
                       var divs = []
-                      if (symbol.owner && !symbol.owner.admin) {
+                      if (symbol.owner) {
                         var ownerSpan = $('<span class="owner">')
-                        if (symbol.owner.id)
-                          ownerSpan.html (wm.makePlayerSpan (symbol.owner.name,
-                                                             null,
-                                                             wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))))
+                        if (symbol.owner.id || symbol.owner.admin)
+                          ownerSpan.html (symbol.owner.admin
+                                          ? 'Non-editable'
+                                          : wm.makePlayerSpan (symbol.owner.name,
+                                                               null,
+                                                               wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))))
                         else
                           ownerSpan.text ('no owner')
                         divs.push (ownerSpan)
