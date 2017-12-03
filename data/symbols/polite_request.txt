@@ -1,12 +1,54 @@
 >polite_request
-$Please send me $money.
-I would like to see your petunias.
-Can I borrow your tuning fork?
-Would you remind me of the name of your aunt.
+$Please[:|,|...|] $core_request
+$Core_request
+
+>core_request
+$give_me $money[?|.]
+$give_me your $(flower+s)[?|.]
+$lend_me your $artistic_item[?|.]
+$tell_me $personal_fact[?|.]
+
+>personal_fact
+the [name|birthday|star sign] of your $relative
+
+>relative
+mother
+father
+brother
+sister
+aunt
+uncle
+grandmother
+grandfather
+
+>artistic_item
+tuning fork
+guitar
+plectrum
+music stand
+palette
+scalpel
+paintbrush
+canvas
+yoga mat
+wok
+
+>tell_me
+tell me
+let me know
+remind me of
 
 >please
 please
 I $beg you
+would you$possibly
+could you$possibly
+
+>possibly
+possibly
+please
+by any chance
+ 
 
 >beg
 beg
@@ -25,3 +67,38 @@ coinage
 funds
 gold
 gravy
+
+>show_me
+$i_would_like_to see
+show me
+
+>send_me
+$give_me
+$grant_me
+$lend_me
+
+>give_me
+$i_would_like_to have
+give me
+send me
+let me have
+
+>grant_me
+grant me
+give me
+donate
+release
+
+>lend_me
+$i_would_like_to borrow
+lend me
+
+>i_would_like_to
+I would like to
+I want to
+I wish to
+let me
+allow me to
+permit me to
+$grant_me permission to
+$grant_me your blessing to
