@@ -18,7 +18,7 @@ var defaultPlayerFilename = "$DATA/players"
 var defaultSymbolFilename = "$DATA/symbols"
 var defaultTemplateFilename = "$DATA/templates"
 var defaultVerbosity = 3
-var defaultMatchRegex = '\\.(js|json|txt)$'
+var defaultMatchRegex = '\\.(json|txt)$'
 var databasePath = '.tmp/localDiskDb.db'
 var symChar = '$'
 
