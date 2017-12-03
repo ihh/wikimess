@@ -972,9 +972,11 @@ module.exports = {
 
           var newName = {}
           newName[symbol.id] = symbol.name
-          var playerPromise = playerID ? Player.findOne({id:playerID}) : Promise.resolve()
-          return playerPromise
-            .then (function (player) {
+          return SymbolService.resolveReferences ([symbol])
+            .then (function (names) {
+              extend (newName, names)
+              return playerID ? Player.findOne({id:playerID}) : Promise.resolve()
+            }).then (function (player) {
               return Promise.all (Object.keys(symbolUpdate).map (function (upstreamSymbolId) {
                 return Symbol.update ({ id: upstreamSymbolId },
                                       symbolUpdate[upstreamSymbolId])

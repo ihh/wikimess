@@ -38,6 +38,7 @@
     background-color: white;
 }
 
+.wikimess.plain .compose .suggestsectiontitle,
 .wikimess.plain .compose .composesectiontitle {
     background-color: #bbb;
     border-color: #666;
@@ -45,14 +46,17 @@
 
 .wikimess.plain .compose .bodysectiontitle {
     background-color: #eee;
-    border-color: #666;
 }
 
-.wikimess.plain .suggest .lhslink,
+.wikimess.plain .suggest,
 .wikimess.plain .compose .messagecompose,
 .wikimess.plain .grammarbar .rule .rhs .content {
     background-color: #ccc;
     border-color: #666;
+}
+
+.wikimess.plain .suggest .lhslink {
+    background-color: #eee;
 }
 
 .wikimess.plain .grammarbar .rule .rhs .content {
@@ -153,8 +157,7 @@
 
 .wikimess.plain .menubar .listitem,
 .wikimess.plain .detailbar .titlebar,
-.wikimess.plain .compose .messageheader,
-.wikimess.plain .compose .suggest {
+.wikimess.plain .compose .messageheader {
     background-color: #eee;
 }
 
