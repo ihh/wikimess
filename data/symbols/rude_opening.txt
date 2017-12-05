@@ -1,5 +1,6 @@
 >rude_opening
-$Hey$pling $Animal$pling
+$Hey$pling You $filthy $animal$pling\n\n
+$Filthy $animal$pling\n\n
 
 >hey
 hey
