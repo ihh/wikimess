@@ -41,7 +41,7 @@ var opt = getopt.create([
   ['D' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
   ['P' , 'players=PATH+'    , 'path to .js or .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
   ['S' , 'symbols=PATH+'    , 'path to .js, .json or .txt grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
-  ['T' , 'templates=PATH+'  , 'path to .js or .json template file(s) or directories (default=' + defaultPath('Template') + ')'],
+  ['T' , 'templates=PATH+'  , 'path to .js, .json or .txt template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'start'            , "lift (start) Sails, but don't POST anything"],
@@ -137,7 +137,7 @@ promise = promise.then (processFilenameList ({ path: '/symbol',
 promise = promise.then (processFilenameList ({ path: '/template',
                                                schema: schemaPath('template'),
                                                handler: makeHandler('Template',hasID,getTitle),
-                                               parsers: [JSON.parse, eval],
+                                               parsers: [JSON.parse, eval, parseTemplateDefs],
                                                list: templateFilenames.reverse() }))
 
 promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
@@ -379,12 +379,10 @@ function isArray(obj) {
 
 function parseSymbolDefs (text) {
   try {
-    var nonemptyLineReg = /\S/;
     var newSymbolDefReg = /^>([A-Za-z_]\w*)\s*$/;
-    var symbolReg = /\$([A-Za-z_]\w*)/;
     var symbols = [], currentSymbol, newSymbolDefMatch
     text.split(/\n/).forEach (function (line) {
-      if (nonemptyLineReg.test (line)) {
+      if (line.length) {
         if (currentSymbol)
           currentSymbol.rules.push (parseRhs (line))
         else if (newSymbolDefMatch = newSymbolDefReg.exec (line))
@@ -397,6 +395,27 @@ function parseSymbolDefs (text) {
     })
     log(5,"Parsed text file and converted to the following JSON:\n" + JSON.stringify(symbols,null,2))
     return symbols
+  } catch(e) { console.log(e) }
+}
+
+function parseTemplateDefs (text) {
+  try {
+    var newTemplateDefReg = /^>(.*)$/;
+    var templates = [], currentTemplate, newTemplateDefMatch
+    text.split(/\n/).forEach (function (line) {
+      if (line.length) {
+        if (currentTemplate)
+          currentTemplate.content = currentTemplate.content.concat (parseRhs (line + '\n'))
+        else if (newTemplateDefMatch = newTemplateDefReg.exec (line))
+          templates.push (currentTemplate = { title: newTemplateDefMatch[1],
+					      content: [] })
+      } else {
+        // line is empty
+        currentTemplate = undefined
+      }
+    })
+    log(5,"Parsed text file and converted to the following JSON:\n" + JSON.stringify(templates,null,2))
+    return templates
   } catch(e) { console.log(e) }
 }
 
