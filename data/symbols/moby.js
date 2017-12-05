@@ -1,7 +1,7 @@
 var fs = require('fs')
 var readline = require('readline')
 var filename = 'mobythes.aur'
-var words = ['delightful', 'rabid']
+var words = ['crap', 'delightful', 'rabid']
 
 if (fs.existsSync (filename)) {
   var lineReader = readline.createInterface({

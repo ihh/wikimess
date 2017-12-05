@@ -1,15 +1,20 @@
 >polite_request
-$Please[:|,|...|] $core_request
-$Core_request
+$Please$comma$basic_request
+$Basic_request
 
->core_request
+>basic_request
 $give_me $money[?|.]
 $give_me your $(flower+s)[?|.]
 $lend_me your $artistic_item[?|.]
 $tell_me $personal_fact[?|.]
 
 >personal_fact
-the [name|birthday|star sign] of your $relative
+the $personal_detail of your $relative
+
+>personal_detail
+name
+birthday
+star sign
 
 >relative
 mother
@@ -20,6 +25,9 @@ aunt
 uncle
 grandmother
 grandfather
+cousin
+nephew
+niece
 
 >artistic_item
 tuning fork
@@ -41,8 +49,8 @@ remind me of
 >please
 please
 I $beg you
-would you$possibly
-could you$possibly
+would you $possibly
+could you $possibly
 
 >possibly
 possibly
