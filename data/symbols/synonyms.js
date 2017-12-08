@@ -4,7 +4,7 @@ var filename = 'mobythes.aur'
 
 var words
 // uncomment for opt-in list of words to include
-words = ['crap', 'delightful', 'filthy', 'rabid']
+// words = ['crap', 'delightful', 'filthy', 'rabid']
 
 if (fs.existsSync (filename)) {
   var lineReader = readline.createInterface({

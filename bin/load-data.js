@@ -284,19 +284,24 @@ function post (info) {
     })
     
     // Set up the request
-    var req = request(post_options, function (err, res, body) {
+    var reqCallback = function (err, res, body) {
       if (err)
-        handler(err)
+        handler(filename,err)
       else if (res.statusCode != 200 && res.statusCode != 201 && res.statusCode != 400)
-        handler(JSON.stringify(res))
+        handler(filename,JSON.stringify(res))
       else
-        handler(null,body)
+        handler(filename,null,body)
       callback()
-    })
+    }
 
     // post the data
-    req.write(post_data)
-    req.end()
+    if (sailsApp) {
+      sailsApp.request (post_options, array, reqCallback)
+    } else {
+      var req = request (post_options, reqCallback)
+      req.write(post_data)
+      req.end()
+    }
   }
 }
 
@@ -307,30 +312,33 @@ function plural (n, singular, plural) {
 }
 
 function makeHandler (model, filter, toString) {
-  return function (err, data) {
+  return function (filename, err, data) {
     if (err)
       log (err)
     else {
       var obj, results = []
-      try {
-	obj = JSON.parse (data)
-      } catch (err) {
-	log ("Warning: couldn't parse " + model + " response as JSON")
-      }
+      if (typeof(data) === 'object')
+        obj = data
+      else
+        try {
+	  obj = JSON.parse (data)
+        } catch (err) {
+	  log ("Warning: When parsing " + filename + ": couldn't parse " + model + " response as JSON")
+        }
       if (obj) {
 	if (obj.status == 400
 	    && obj.code == "E_VALIDATION"
 	    && obj.invalidAttributes.name
 	    && obj.invalidAttributes.name[0].rule == "unique")
-	  log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
+	  log (3, ' ' + filename + ' ' + obj.invalidAttributes.name[0].value + ' already created')
 	else {
 	  var json = isArray(obj) ? obj : [obj]
 	  results = json.filter (filter) 
 	  if (results.length)
-	    log (3, ' ' + results.map(toString).join("\n "))
+	    log (3, ' ' + filename + ': ' + results.map(toString).join("\n " + filename + ': '))
 	  else {
 	    log (JSON.stringify(obj))
-	    log ("Warning: zero " + model + "s created")
+	    log ("Warning: When parsing " + filename + ": Zero " + model + "s created")
 	  }
 	}
       }
@@ -347,33 +355,6 @@ function hasName (obj) { return typeof(obj.name) === 'string' }
 function getTitle (obj) { return obj.title }
 function hasID (obj) { return typeof(obj.id) === 'number' }
 function hasNameAndID (obj) { return hasName(obj) && hasID(obj) }
-
-function playerHandler (err, data) {
-  if (err)
-    log(err)
-  else {
-    var obj
-    try {
-      obj = JSON.parse (data)
-    } catch (err) {
-      log ("Warning: couldn't parse player response as JSON list")
-    }
-    if (obj.status == 400
-        && obj.code == "E_VALIDATION"
-        && obj.invalidAttributes.name
-        && obj.invalidAttributes.name[0].rule == "unique")
-      log (3, ' ' + obj.invalidAttributes.name[0].value + ' already created')
-    else {
-      if (typeof(obj) !== 'undefined') {
-        if (!( typeof(obj.name) === 'string' && typeof(obj.id) === 'number' ))
-          log ("This doesn't look like a Player")
-        else
-          log (3, ' ' + obj.name + '\t(id=' + obj.id + ')')
-      } else
-        log ("Warning: Player not created")
-    }
-  }
-}
 
 function isArray(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]'

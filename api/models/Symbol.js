@@ -207,7 +207,7 @@ module.exports = {
     var sym = Symbol.cache.byId[id]
     return sym ? sym.name : sym
   },
-  
+
   // lifecycle callbacks to update cache
   beforeCreate: function (symbol, callback) {
     if (!symbol.name) {

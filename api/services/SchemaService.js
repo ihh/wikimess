@@ -13,107 +13,161 @@ module.exports = {
 
   // schemas
   playerSchema: {
-    "type": "object",
-    "required": [
-      "name",
-      "password"
-    ],
-    "properties": {
-      "name": {
-        "type": "string"
+    "definitions": {
+      "player-or-list": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/player"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/player"
+            }
+          }
+        ]
       },
-      "displayName": {
-        "type": "string"
-      },
-      "password": {
-        "type": "string"
-      },
-      "admin": {
-        "type": "boolean"
-      },
-      "human": {
-        "type": "boolean"
-      },
-      "newSignUp": {
-        "type": "boolean"
+      "player": {
+        "type": "object",
+        "required": [
+          "name",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "human": {
+            "type": "boolean"
+          },
+          "newSignUp": {
+            "type": "boolean"
+          }
+        }
       }
     },
+    "$ref": "#/definitions/player-or-list",
     "additionalProperties": false,
     "$schema": "http://json-schema.org/schema#",
     "id": "http://wikimess.me/schemas/player.json"
   },
 
   templateSchema:{
-    "type": "object",
-    "required": ["title","content"],
-    "properties": {
-      "title": {
-        "type": "string"
+    "definitions": {
+      "template-or-list": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/template"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/template"
+            }
+          }
+        ]
       },
-      "content": {
-        "type": "array",
-        "items": {
-          "oneOf":
-          [{ "type": "string" },
-           { "type": "object",
-             "properties": {
-               "id": { "type": "integer" },
-               "name": { "type": "string" },
-               "upper": { "type": "boolean" },
-               "cap": { "type": "boolean" },
-               "a": { "type": "string" },
-               "plural": { "type": "string" }
-             },
-             "additionalProperties": false
-           }]
+      "template": {
+        "type": "object",
+        "required": ["title","content"],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "oneOf":
+              [{ "type": "string" },
+               { "type": "object",
+                 "properties": {
+                   "id": { "type": "integer" },
+                   "name": { "type": "string" },
+                   "upper": { "type": "boolean" },
+                   "cap": { "type": "boolean" },
+                   "a": { "type": "string" },
+                   "plural": { "type": "string" }
+                 },
+                 "additionalProperties": false
+               }]
+            }
+          }
         }
       }
     },
+    "$ref": "#/definitions/template-or-list",
     "additionalProperties": false,
     "$schema": "http://json-schema.org/schema#",
     "id": "http://wikimess.me/schemas/template.json"
   },
 
   symbolSchema: {
-    "type": "object",
-    "properties": {
-      "id": {
-        "type": "integer"
+    "definitions": {
+      "symbol-or-list": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/symbol"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/symbol"
+            }
+          }
+        ]
       },
-      "name": {
-        "type": "string"
-      },
-      "owner": {
-        "type": ["string", "null"]
-      },
-      "transferable": {
-        "type": "boolean"
-      },
-      "summary": {
-        "type": "string"
-      },
-      "rules": {
-        "type": "array",
-        "items": {
-          "type": "array",
-          "items": {
-            "oneOf":
-            [{ "type": "string" },
-             { "type": "object",
-               "properties": {
-                 "id": { "type": "integer" },
-                 "name": { "type": "string" },
-                 "upper": { "type": "boolean" },
-                 "cap": { "type": "boolean" },
-                 "a": { "type": "string" },
-                 "plural": { "type": "string" }
-               },
-               "additionalProperties": false
-             }]
+      "symbol": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": ["string", "null"]
+          },
+          "transferable": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "oneOf":
+                [{ "type": "string" },
+                 { "type": "object",
+                   "properties": {
+                     "id": { "type": "integer" },
+                     "name": { "type": "string" },
+                     "upper": { "type": "boolean" },
+                     "cap": { "type": "boolean" },
+                     "a": { "type": "string" },
+                     "plural": { "type": "string" }
+                   },
+                   "additionalProperties": false
+                 }]
+              }
+            }
           }
         }
       }
     },
+    "$ref": "#/definitions/symbol-or-list",
     "additionalProperties": false,
     "$schema": "http://json-schema.org/schema#",
     "id": "http://wikimess.me/schemas/symbol.json"
