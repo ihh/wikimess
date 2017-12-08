@@ -5,6 +5,12 @@ var extend = require('extend')
 
 module.exports = {
 
+  parseID: function (idString) {
+    if (idString.length >= 10)   // hack to catch MongoDB hexadecimal IDs...
+      return idString
+    return parseInt (idString)
+  },
+  
   makeSymbolInfo: function (symbol, playerID) {
     var ownerID = symbol.owner
     var result = { symbol: { id: symbol.id } }

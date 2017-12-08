@@ -93,7 +93,7 @@ module.exports = {
     if (Symbol.cache.isUsedBy[usedSymbolName])
       delete Symbol.cache.isUsedBy[usedSymbolName][usingSymbolName]
   },
-
+  
   updateCache: function (symbol, callback) {
     var oldSymbol = Symbol.cache.byId[symbol.id]
 

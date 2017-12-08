@@ -100,48 +100,50 @@ if (opt.options.lift || opt.options.start || opt.options.erase) {
   }
 }
 
-promise = promise.then (function() {
-  return new Promise (function (resolve) {
-    var url = urlPrefix + '/login'
-    log (1, "Logging into " + url)
-    request.post ({ jar: jar,
-                    url: url,
-                    json: true,
-                    body: { name: adminUser, password: adminPass } },
-                  function (err, res, body) {
-                    if (err)
-                      throw err
-                    else if (!body) {
-                      console.log (res)
-                      log (0, "no body")
-                    } else if (!body.player)
-                      log (0, body.message)
-                    else {
-                      log (2, "Logged in as '" + adminUser + "'")
-                      resolve()
-                  }
-                  })
+if (!dryRun && !start) {
+  promise = promise.then (function() {
+    return new Promise (function (resolve) {
+      var url = urlPrefix + '/login'
+      log (1, "Logging into " + url)
+      request.post ({ jar: jar,
+                      url: url,
+                      json: true,
+                      body: { name: adminUser, password: adminPass } },
+                    function (err, res, body) {
+                      if (err)
+                        throw err
+                      else if (!body) {
+                        console.log (res)
+                        log (0, "no body")
+                      } else if (!body.player)
+                        log (0, body.message)
+                      else {
+                        log (2, "Logged in as '" + adminUser + "'")
+                        resolve()
+                      }
+                    })
+    })
   })
-})
 
-var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
-promise = promise.then (processFilenameList ({ path: '/player',
-                                               schema: schemaPath('player'),
-                                               handler: playerHandler,
-                                               parsers: [JSON.parse, eval],
-                                               list: playerFilenames.reverse() }))
+  var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
+  promise = promise.then (processFilenameList ({ path: '/player',
+                                                 schema: schemaPath('player'),
+                                                 handler: playerHandler,
+                                                 parsers: [JSON.parse, eval],
+                                                 list: playerFilenames.reverse() }))
 
-promise = promise.then (processFilenameList ({ path: '/symbol',
-                                               schema: schemaPath('symbol'),
-                                               handler: genericHandler('Symbol'),
-                                               parsers: [JSON.parse, eval, parseSymbolDefs],
-                                               list: symbolFilenames.reverse() }))
+  promise = promise.then (processFilenameList ({ path: '/symbol',
+                                                 schema: schemaPath('symbol'),
+                                                 handler: genericHandler('Symbol'),
+                                                 parsers: [JSON.parse, eval, parseSymbolDefs],
+                                                 list: symbolFilenames.reverse() }))
 
-promise = promise.then (processFilenameList ({ path: '/template',
-                                               schema: schemaPath('template'),
-                                               handler: makeHandler('Template',hasID,getTitle),
-                                               parsers: [JSON.parse, eval, parseTemplateDefs],
-                                               list: templateFilenames.reverse() }))
+  promise = promise.then (processFilenameList ({ path: '/template',
+                                                 schema: schemaPath('template'),
+                                                 handler: makeHandler('Template',hasID,getTitle),
+                                                 parsers: [JSON.parse, eval, parseTemplateDefs],
+                                                 list: templateFilenames.reverse() }))
+}
 
 promise.then (function() { log (1, "Loading complete - point your browser at " + urlPrefix + '/') })
 
@@ -363,7 +365,7 @@ function genericHandler (model) {
 function getName (obj) { return obj.name }
 function hasName (obj) { return typeof(obj.name) === 'string' }
 function getTitle (obj) { return obj.title }
-function hasID (obj) { return typeof(obj.id) === 'number' }
+function hasID (obj) { return typeof(obj.id) === 'number' || typeof(obj.id) === 'string' }
 function hasNameAndID (obj) { return hasName(obj) && hasID(obj) }
 
 function isArray(obj) {

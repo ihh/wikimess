@@ -3407,7 +3407,9 @@ var WikiMess = (function() {
       var wm = this
       var name2id = {}
       Object.keys(this.symbolName).forEach (function (id) {
-        name2id[wm.symbolName[id]] = parseInt (id)
+        name2id[wm.symbolName[id]] = (id.length >= 10   // hack to catch MongoDB hexadecimal IDs...
+                                      ? id
+                                      : parseInt (id))
       })
       return name2id
     },
