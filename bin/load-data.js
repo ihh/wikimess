@@ -21,6 +21,7 @@ var defaultVerbosity = 3
 var defaultMatchRegex = '\\.(json|txt)$'
 var databasePath = '.tmp/localDiskDb.db'
 var symChar = '$'
+var maxUploadChunkCount = 100   // max number of records that will be uploaded in any single request
 
 function defaultPath (subdir, opt) {
   var dataDir = (opt && opt.options.data) || defaultDataDir
@@ -219,18 +220,26 @@ function processFile (info) {
       log(4, 'Validated ' + filename)
     }
   }
-  var promise
-  if (json)
-    promise = new Promise (function (resolve) {
-      post ({ array: json,
-              filename: filename,
-              schema: schema,
-              path: info.path,
-              handler: info.handler,
-              callback: resolve })
+  var promise = Promise.resolve()
+  if (json) {
+    var chunkedJson = []
+    for (var n = 0; n < json.length; n += maxUploadChunkCount)
+      chunkedJson.push (json.slice (n, n + maxUploadChunkCount))
+    chunkedJson.forEach (function (chunk, nChunk) {
+      promise = promise.then (function() {
+        return new Promise (function (resolve) {
+          log (5, 'Starting chunk #' + (nChunk+1) + ' of ' + filename)
+          post ({ array: chunk,
+                  offset: nChunk * maxUploadChunkCount,
+                  filename: filename,
+                  schema: schema,
+                  path: info.path,
+                  handler: info.handler,
+                  callback: resolve })
+        })
+      })
     })
-  else
-    promise = Promise.resolve()
+  }
   return promise
 }
 
@@ -256,6 +265,7 @@ function readJsonFileSync (filename, altParsers) {
 
 function post (info) {
   var array = info.array,
+      offset = info.offset,
       handler = info.handler,
       path = info.path,
       filename = info.filename,
@@ -280,7 +290,7 @@ function post (info) {
     callback()
   } else {
     array.forEach (function (elem, n) {
-      log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+1) + ' in ' + filename + ')')
+      log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+offset+1) + ' in ' + filename + ')')
     })
     
     // Set up the request
