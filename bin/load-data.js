@@ -43,8 +43,8 @@ var opt = getopt.create([
   ['S' , 'symbols=PATH+'    , 'path to .js, .json or .txt grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
   ['T' , 'templates=PATH+'  , 'path to .js, .json or .txt template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
+  ['V' , 'validate'         , 'validate uploaded items against schemas before uploading'],
   ['E' , 'validate-each'    , 'validate each uploaded item against schema individually, even if many items in file'],
-  ['N' , 'validate-none'    , 'do not validate uploaded items against schema'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'start'            , "lift (start) Sails, but don't POST anything"],
   ['l' , 'lift'             , 'lift Sails & POST'],
@@ -193,7 +193,7 @@ function processFile (info) {
   json = isArray(json) ? json : [json]
   log (5, 'Parsed ' + filename)
   log (8, JSON.stringify(json))
-  if (json && schemaFilename && !opt.options['validate-none']) {
+  if (json && schemaFilename && opt.options['validate']) {
     var schema = JSON.parse (fs.readFileSync (schemaFilename))
     var validator = new jsonschema.Validator()
     log (4, 'Validating ' + filename + ' against ' + schemaFilename)
