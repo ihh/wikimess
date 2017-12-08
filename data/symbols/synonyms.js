@@ -1,7 +1,10 @@
 var fs = require('fs')
 var readline = require('readline')
 var filename = 'mobythes.aur'
-var words = ['crap', 'delightful', 'filthy', 'rabid']
+
+var words
+// uncomment for opt-in list of words to include
+words = ['crap', 'delightful', 'filthy', 'rabid']
 
 if (fs.existsSync (filename)) {
   var lineReader = readline.createInterface({
@@ -18,6 +21,8 @@ if (fs.existsSync (filename)) {
   })
 
   lineReader.on('close', function() {
+
+    words = words || Object.keys(rules).sort()
     var result = words.map (function (name) {
       return { name: name,
                rules: rules[name] }
