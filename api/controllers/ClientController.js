@@ -442,7 +442,7 @@ module.exports = {
   getRecentBroadcasts: function (req, res) {
     var limit = req.params.limit ? parseInt(req.params.limit) : 10
     var result = { }
-    Message.find ({ recipient: null })
+    Message.find ({ isBroadcast: true })
       .sort ('id DESC')
       .limit (limit)
       .populate ('sender')
@@ -468,11 +468,12 @@ module.exports = {
   getBroadcastMessage: function (req, res) {
     var messageID = SymbolService.parseID (req.params.message)
     var result = {}
-    Message.findOne ({ recipient: null,
+    Message.findOne ({ isBroadcast: true,
                        id: messageID })
       .populate ('template')
       .populate ('sender')
       .then (function (message) {
+        console.log(messageID,message)
         if (message)
           result.message = { id: message.id,
                              sender: (message.sender
@@ -625,6 +626,7 @@ module.exports = {
                                     author: playerID,
                                     content: content,
                                     previous: previousTemplate,
+                                    isRoot: (previousTemplate ? false : true),
                                     isPublic: isPublic })
             .then (function (template) {
               // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
@@ -641,6 +643,7 @@ module.exports = {
         // create the Message
         return Message.create ({ sender: playerID,
                                  recipient: recipientID,
+                                 isBroadcast: !recipientID,
                                  template: template,
                                  previous: previous,
                                  title: title,
@@ -1250,7 +1253,7 @@ module.exports = {
   // suggest best N templates
   suggestTemplates: function (req, res) {
     var nSuggestions = 5
-    return Template.find ({ previous: null,
+    return Template.find ({ isRoot: true,
                             isPublic: true })
       .populate ('author')
       .then (function (templates) {

@@ -1277,7 +1277,7 @@ var WikiMess = (function() {
                   var updatedNewValBefore = newValBefore + getInsertText (symbol)
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input, updatedNewValBefore.length)
-//                  input.focus()
+                  input.focus()
                   textareaAutosuggest (input)
                 })
             }
@@ -2879,14 +2879,14 @@ var WikiMess = (function() {
         (function() {
           var text = match[1], symbol
           if (match[5]) {
+            text = match[2]
             var pre = match[4], post = match[5]
-            if (pre.match(/^(a|an|A|AN)$/)) {
+            if (pre.match(/^(a|an|A|AN)$/))
               symbol = { name: post, a: pre }
-              text = match[2]
-            } else if (post.match(/^(s|S)$/)) {
+            else if (post.match(/^(s|S)$/))
               symbol = { name: pre, plural: post }
-              text = match[2]
-            }
+            else
+              symbol = { name: pre }
           } else if (match[6]) {
             text = match[2]
             symbol = { name: match[6] }

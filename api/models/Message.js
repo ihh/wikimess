@@ -42,6 +42,7 @@ module.exports = {
       required: true
     },
     
+    isBroadcast: { type: 'boolean', defaultsTo: false },
     read: { type: 'boolean', defaultsTo: false },
     senderDeleted: { type: 'boolean', defaultsTo: false },
     recipientDeleted: { type: 'boolean', defaultsTo: false },

@@ -35,6 +35,12 @@ module.exports = {
       defaultsTo: null
     },
 
+    // root of reply chain?
+    isRoot: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
     // privacy
     isPublic: {
       type: 'boolean',
