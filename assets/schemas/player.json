@@ -1,29 +1,47 @@
 {
-  "type": "object",
-  "required": [
-    "name",
-    "password"
-  ],
-  "properties": {
-    "name": {
-      "type": "string"
+  "definitions": {
+    "player-or-list": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/player"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/player"
+          }
+        }
+      ]
     },
-    "displayName": {
-      "type": "string"
-    },
-    "password": {
-      "type": "string"
-    },
-    "admin": {
-      "type": "boolean"
-    },
-    "human": {
-      "type": "boolean"
-    },
-    "newSignUp": {
-      "type": "boolean"
+    "player": {
+      "type": "object",
+      "required": [
+        "name",
+        "password"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "admin": {
+          "type": "boolean"
+        },
+        "human": {
+          "type": "boolean"
+        },
+        "newSignUp": {
+          "type": "boolean"
+        }
+      }
     }
   },
+  "$ref": "#/definitions/player-or-list",
   "additionalProperties": false,
   "$schema": "http://json-schema.org/schema#",
   "id": "http://localhost:1337/schemas/player.json"

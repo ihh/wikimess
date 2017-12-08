@@ -1,47 +1,66 @@
 {
-  "type": "object",
-  "required": [
-    "content"
-  ],
-  "properties": {
-    "title": {
-      "type": "string"
-    },
-    "content": {
-      "type": "array",
-      "items": {
-        "oneOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "integer"
-              },
-              "name": {
-                "type": "string"
-              },
-              "upper": {
-                "type": "boolean"
-              },
-              "cap": {
-                "type": "boolean"
-              },
-              "a": {
-                "type": "string"
-              },
-              "plural": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
+  "definitions": {
+    "template-or-list": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/template"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/template"
           }
-        ]
+        }
+      ]
+    },
+    "template": {
+
+      "type": "object",
+      "required": [
+        "content"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "upper": {
+                    "type": "boolean"
+                  },
+                  "cap": {
+                    "type": "boolean"
+                  },
+                  "a": {
+                    "type": "string"
+                  },
+                  "plural": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
       }
     }
   },
+  "$ref": "#/definitions/template-or-list",
   "additionalProperties": false,
   "$schema": "http://json-schema.org/schema#",
   "id": "http://localhost:1337/schemas/template.json"

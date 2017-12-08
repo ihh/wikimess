@@ -43,6 +43,8 @@ var opt = getopt.create([
   ['S' , 'symbols=PATH+'    , 'path to .js, .json or .txt grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
   ['T' , 'templates=PATH+'  , 'path to .js, .json or .txt template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
+  ['E' , 'validate-each'    , 'validate each uploaded item against schema individually, even if many items in file'],
+  ['N' , 'validate-none'    , 'do not validate uploaded items against schema'],
   ['n' , 'dryrun'           , 'dummy run; do not POST anything'],
   ['s' , 'start'            , "lift (start) Sails, but don't POST anything"],
   ['l' , 'lift'             , 'lift Sails & POST'],
@@ -189,26 +191,38 @@ function processFile (info) {
     log (1, 'Processing ' + filename)
   var json = readJsonFileSync (filename, parsers)
   json = isArray(json) ? json : [json]
+  log (5, 'Parsed ' + filename)
   log (8, JSON.stringify(json))
-  if (json && schemaFilename) {
+  if (json && schemaFilename && !opt.options['validate-none']) {
     var schema = JSON.parse (fs.readFileSync (schemaFilename))
     var validator = new jsonschema.Validator()
-    json = json.filter (function (item, n) {
-      var result = validator.validate (item, schema, {nestedErrors: true})
+    log (4, 'Validating ' + filename + ' against ' + schemaFilename)
+    if (opt.options['validate-each'])
+      json = json.filter (function (item, n) {
+        log (5, 'Validating ' + filename + ' (array element #' + n + ')')
+        var result = validator.validate (item, schema, {nestedErrors: true})
+        if (result.errors.length) {
+          log(3, 'Error validating array element #' + n + ' '+ (item.name || ''))
+          log (result.errors.map (function (ve) { return ve.stack }).join("\n"))
+          return false
+        }
+        log(4, 'Validated array element #' + n + ' '+ ((item && item.name) || ''))
+        return true
+      })
+    else {
+      var result = validator.validate (json, schema, {nestedErrors: true})
       if (result.errors.length) {
-        log(3, 'Error validating array element #' + n + ' '+ (item.name || ''))
+        log(3, 'Error validating ' + filename)
         log (result.errors.map (function (ve) { return ve.stack }).join("\n"))
-        return false
+        return Promise.resolve()
       }
-      log(4, 'Validated array element #' + n + ' '+ ((item && item.name) || ''))
-      return true
-    })
+      log(4, 'Validated ' + filename)
+    }
   }
   var promise
   if (json)
     promise = new Promise (function (resolve) {
-      post ({ index: 0,
-              array: json,
+      post ({ array: json,
               filename: filename,
               schema: schema,
               path: info.path,
@@ -241,20 +255,15 @@ function readJsonFileSync (filename, altParsers) {
 }
 
 function post (info) {
-  var n = info.index,
-      array = info.array,
+  var array = info.array,
       handler = info.handler,
       path = info.path,
       filename = info.filename,
       callback = info.callback
 
-  if (n >= array.length) {
-    callback()
-    return
-  }
-
-  var elem = array[n]
-  var post_data = JSON.stringify (elem)
+  log (5, 'Stringifying POST data')
+  var post_data = JSON.stringify (array)
+  log (5, 'POST data length = ' + post_data.length)
   var post_options = {
     url: urlPrefix + path,
     jar: jar,
@@ -265,21 +274,14 @@ function post (info) {
     }
   }
 
-  var post_next = function() {
-    post ({ index: n+1,
-            array: array,
-            handler: handler,
-            path: path,
-            filename: filename,
-            callback: callback })
-  }
-
   if (dryRun || start) {
     if (dryRun)
       log(3,post_data)
-    post_next()
+    callback()
   } else {
-    log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+1) + ' in ' + filename + ')')
+    array.forEach (function (elem, n) {
+      log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+1) + ' in ' + filename + ')')
+    })
     
     // Set up the request
     var req = request(post_options, function (err, res, body) {
@@ -289,7 +291,7 @@ function post (info) {
         handler(JSON.stringify(res))
       else
         handler(null,body)
-      post_next()
+      callback()
     })
 
     // post the data

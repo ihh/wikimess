@@ -1,62 +1,80 @@
 {
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "integer"
-    },
-    "name": {
-      "type": "string"
-    },
-    "owner": {
-      "type": [
-        "string",
-        "null"
+  "definitions": {
+    "symbol-or-list": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/symbol"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/symbol"
+          }
+        }
       ]
     },
-    "transferable": {
-      "type": "boolean"
-    },
-    "summary": {
-      "type": "string"
-    },
-    "rules": {
-      "type": "array",
-      "items": {
-        "type": "array",
-        "items": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "integer"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "upper": {
-                  "type": "boolean"
-                },
-                "cap": {
-                  "type": "boolean"
-                },
-                "a": {
-                  "type": "string"
-                },
-                "plural": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
+    "symbol": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
           ]
+        },
+        "transferable": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "upper": {
+                      "type": "boolean"
+                    },
+                    "cap": {
+                      "type": "boolean"
+                    },
+                    "a": {
+                      "type": "string"
+                    },
+                    "plural": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
         }
       }
     }
   },
+  "$ref": "#/definitions/symbol-or-list",
   "additionalProperties": false,
   "$schema": "http://json-schema.org/schema#",
   "id": "http://localhost:1337/schemas/symbol.json"
