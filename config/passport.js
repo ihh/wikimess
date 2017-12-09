@@ -9,7 +9,9 @@ passport.serializeUser(function(player, done) {
 });
 
 passport.deserializeUser(function(id, done) {
+  console.warn('id:',id)
   Player.findOne({ id: id } , function (err, player) {
+    console.warn (err, player)
     done(err, player);
   });
 });

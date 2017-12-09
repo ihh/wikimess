@@ -45,7 +45,7 @@ module.exports = {
 
   broadcastPage: function (req, res) {
     var playerID = req.session.passport.user
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
         homepage.vars.init = true

@@ -260,7 +260,7 @@ module.exports = {
   // get a conversation thread
   getThread: function (req, res) {
     var playerID = req.session.passport.user
-    var otherID = SymbolService.parseID (req.params.id)
+    var otherID = req.params.id
     Player.findOne ({ id: otherID })
       .then (function (other) {
         return PlayerService.makeStatus ({ player: other,
@@ -277,8 +277,8 @@ module.exports = {
   // get a conversation thread (subsequent page)
   getThreadBefore: function (req, res) {
     var playerID = req.session.passport.user
-    var otherID = SymbolService.parseID (req.params.id)
-    var beforeID = SymbolService.parseID (req.params.before)
+    var otherID = req.params.id
+    var beforeID = req.params.before
     Player.findOne ({ id: otherID })
       .then (function (other) {
         return PlayerService.makeStatus ({ player: other,
@@ -466,7 +466,7 @@ module.exports = {
 
   // get broadcast message
   getBroadcastMessage: function (req, res) {
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     var result = {}
     Message.findOne ({ isBroadcast: true,
                        id: messageID })
@@ -497,7 +497,7 @@ module.exports = {
   // get received message
   getReceivedMessage: function (req, res) {
     var playerID = req.session.passport.user
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     var result = {}
     Message.update ({ recipient: playerID,
                       id: messageID,
@@ -528,7 +528,7 @@ module.exports = {
   // get received message header
   getReceivedMessageHeader: function (req, res) {
     var playerID = req.session.passport.user
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     var result = {}
     Message.findOne ({ recipient: playerID,
                        id: messageID,
@@ -551,7 +551,7 @@ module.exports = {
   // get sent message
   getSentMessage: function (req, res) {
     var playerID = req.session.passport.user
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     var result = {}
     Message.findOne ({ sender: playerID,
                        id: messageID,
@@ -579,7 +579,7 @@ module.exports = {
   // send message
   sendMessage: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var recipientID = req.body.recipient ? SymbolService.parseID(req.body.recipient) : null
+    var recipientID = req.body.recipient ? req.body.recipient : null
     var template = req.body.template
     var title = req.body.title
     var body = req.body.body
@@ -676,7 +676,7 @@ module.exports = {
   // delete message
   deleteMessage: function (req, res) {
     var playerID = req.session.passport.user
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     Message.findOne ({ id: messageID,
                        or: [ { sender: playerID },
                              { recipient: playerID } ] })
@@ -704,7 +704,7 @@ module.exports = {
   // rate message
   rateMessage: function (req, res) {
     var playerID = req.session.passport.user
-    var messageID = SymbolService.parseID (req.params.message)
+    var messageID = req.params.message
     var rating = parseInt (req.body.rating)
     Message.update ({ id: messageID,
                       sender: { '!': playerID },
@@ -785,7 +785,7 @@ module.exports = {
   // get draft
   getDraft: function (req, res) {
     var playerID = req.session.passport.user
-    var draftID = SymbolService.parseID (req.params.draft)
+    var draftID = req.params.draft
     var result = {}
     Draft.findOne ({ id: draftID,
                      sender: playerID })
@@ -832,7 +832,7 @@ module.exports = {
   // update draft
   updateDraft: function (req, res) {
     var playerID = req.session.passport.user
-    var draftID = SymbolService.parseID (req.params.draft)
+    var draftID = req.params.draft
     var draft = req.body.draft
     Draft.update ({ id: draftID,
                     sender: playerID },
@@ -848,7 +848,7 @@ module.exports = {
   // delete draft
   deleteDraft: function (req, res) {
     var playerID = req.session.passport.user
-    var draftID = SymbolService.parseID (req.params.draft)
+    var draftID = req.params.draft
     Draft.destroy ({ id: draftID,
                      sender: playerID })
       .then (function (destroyed) {
@@ -1012,7 +1012,7 @@ module.exports = {
   // get a particular symbol
   getSymbol: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var symbolID = SymbolService.parseID (req.params.symid)
+    var symbolID = req.params.symid
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
       .then (function (symbol) {
@@ -1035,7 +1035,7 @@ module.exports = {
   // get links (uses, used by, copies, copied by) for a symbol
   getSymbolLinks: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var symbolID = SymbolService.parseID (req.params.symid)
+    var symbolID = req.params.symid
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
       .then (function (symbol) {
@@ -1096,7 +1096,7 @@ module.exports = {
   // store a particular symbol
   putSymbol: function (req, res) {
     var playerID = req.session.passport.user
-    var symbolID = SymbolService.parseID (req.params.symid)
+    var symbolID = req.params.symid
     var name = req.body.name
     var rules = req.body.rules
     if (SchemaService.validateRules (rules, res.badRequest.bind(res))) {
@@ -1157,7 +1157,7 @@ module.exports = {
   // release ownership of a symbol
   releaseSymbol: function (req, res) {
     var playerID = req.session.passport.user
-    var symbolID = SymbolService.parseID (req.params.symid)
+    var symbolID = req.params.symid
     Symbol.update ({ id: symbolID,
                      owner: playerID },
                    { owner: null })
@@ -1202,7 +1202,7 @@ module.exports = {
 
   // unsubscribe from notifications for a symbol
   unsubscribeSymbol: function (req, res) {
-    var symbolID = SymbolService.parseID (req.params.symid)
+    var symbolID = req.params.symid
     Symbol.unsubscribe (req, symbolID)
     res.ok()
   },
@@ -1210,7 +1210,7 @@ module.exports = {
   // get a particular template
   getTemplate: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var templateID = SymbolService.parseID (req.params.template)
+    var templateID = req.params.template
     var result = {}
     Template.findOne ({ id: templateID,
                         or: [{ author: playerID },
@@ -1228,7 +1228,7 @@ module.exports = {
 
   // expand a symbol using the grammar
   expandSymbol: function (req, res) {
-    var symbolID = SymbolService.parseID (req.params.symid)
+    var symbolID = req.params.symid
     SymbolService.expandSymbol ({ id: symbolID })
       .then (function (expansion) {
         res.json ({ expansion: expansion })
@@ -1281,7 +1281,7 @@ module.exports = {
   // suggest random reply
   suggestReply: function (req, res) {
     var playerID = req.session.passport.user
-    var previousID = SymbolService.parseID (req.params.template)
+    var previousID = req.params.template
     return Template.find ({ previous: previousID,
                             or: [{ author: playerID },
                                  { isPublic: true }] })

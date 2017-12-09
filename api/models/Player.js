@@ -6,14 +6,12 @@
  */
 
 var bcrypt = require('bcrypt');
-// var Faces = require('../../assets/js/ext/facesjs/faces.js')
 
 module.exports = {
 
   attributes: {
     id: {
-      type: 'integer',
-      autoIncrement: true,
+      type: 'string',
       unique: true,
       primaryKey: true
     },
