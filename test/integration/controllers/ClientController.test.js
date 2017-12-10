@@ -41,12 +41,14 @@ describe('ClientController', function() {
           return done();
         });
     });
-    
+
+/*
     it('should access a restricted page', function (done) {
       authenticatedSession.get('/p/drafts')
         .expect(200)
         .end(done)
     });
+*/
   })
 
 });
