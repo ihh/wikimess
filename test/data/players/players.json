@@ -1,0 +1,17 @@
+[
+    {
+        name: "bot",
+        password: "test",
+        human: false
+    },
+    {
+        name: "fred",
+        password: "test",
+        newSignUp: false
+    },
+    {
+        name: "sheila",
+        password: "test",
+        newSignUp: false
+    }
+]
