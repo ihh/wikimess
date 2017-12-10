@@ -9,7 +9,8 @@ module.exports = {
 
   attributes: {
     id: {
-      type: 'string',
+      type: 'integer',
+      autoIncrement: true,
       unique: true,
       primaryKey: true
     },
@@ -57,6 +58,8 @@ module.exports = {
       .then (function() {
         callback()
       })
-  }
+  },
+
+  parseID: function (text) { return parseInt(text) },
 };
 
