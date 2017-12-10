@@ -37,7 +37,8 @@
     "sails": "~0.12.4",
     "sails-disk": "~0.10.9",
     "sails-mongo": "^0.12.2",
-    "skipper": "^0.8.4"
+    "skipper": "^0.8.4",
+    "supertest-session": "^3.1.0"
   },
   "devDependencies": {
     "mocha": "~3.2.0",
