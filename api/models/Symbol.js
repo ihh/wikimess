@@ -20,20 +20,20 @@ module.exports = {
       unique: true
     },
 
+    copied: {
+      model: 'symbol'
+    },
+
     owner: {
       model: 'player',
       defaultsTo: function() { return Player.adminUserId }
     },
 
-    copied: {
-      model: 'symbol'
+    owned: {
+      type: 'boolean',
+      defaultsTo: false
     },
 
-    ownershipTerm: {
-      type: 'integer',  // milliseconds until lock expires
-      defaultsTo: 24*60*1000
-    },
-    
     transferable: {
       type: 'boolean',
       defaultsTo: true
@@ -241,6 +241,8 @@ module.exports = {
   },
 
   afterUpdate: function (symbol, callback) {
+    if (typeof(symbol.rules) === 'string')  // workaround for MySQL adapter's serialization of JSON
+      symbol.rules = JSON.parse(symbol.rules)
     Symbol.updateCache (symbol, callback)
   },
 

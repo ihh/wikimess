@@ -3177,20 +3177,21 @@ var WikiMess = (function() {
                         }), menuDiv)
                     },
                     otherButtonDivs: function() {
-                      var divs = []
+                      var ownerSpan = $('<span class="owner">').text ('Editable')
                       if (symbol.owner) {
-                        var ownerSpan = $('<span class="owner">')
-                        if (symbol.owner.id || symbol.owner.admin)
-                          ownerSpan.html (symbol.owner.admin
-                                          ? 'Non-editable'
-                                          : wm.makePlayerSpan (symbol.owner.name,
-                                                               null,
-                                                               wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))))
-                        else
-                          ownerSpan.text ('no owner')
-                        divs.push (ownerSpan)
+                        if (symbol.owner.id === wm.playerID)
+                          ownerSpan.text ('Editable by you')
+                        else if (symbol.owner.admin)
+                          ownerSpan.text ('Non-editable')
+                        else if (symbol.owner.id)
+                          ownerSpan.empty()
+                          .append ('Non-editable (except by ',
+                                   wm.makePlayerSpan (symbol.owner.name,
+                                                      null,
+                                                      wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))),
+                                   ')')
                       }
-                      return divs
+                      return [ownerSpan]
                     },
                   }),
                  linksDiv.hide(),

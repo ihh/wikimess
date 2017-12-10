@@ -66,9 +66,8 @@ module.exports = {
   },
 
   makeOwnerID: function (symbol) {
-    var result = null
-    var locked = (Date.parse(symbol.updatedAt) + symbol.ownershipTerm > Date.now())
-    if (symbol.owner && locked) {
+    var result = null  // passing 'null' to the client signifies that this symbol is not owned by anyone
+    if (symbol.owned && symbol.owner) {
       if (typeof(symbol.owner) === 'object')
         result = { id: symbol.owner.id,
                    login: symbol.owner.name,

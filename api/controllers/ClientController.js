@@ -52,7 +52,7 @@ module.exports = {
 
   // search all Players, with pagination
   searchAllPlayers: function (req, res) {
-    var searcherID = req.session.passport.user, query = req.body.query, page = parseInt(req.body.page) || 0
+    var searcherID = req.session.passport.user || null, query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
     Player.find ({ or: [{ displayName: { contains: query } },
                         { name: { contains: query } }],
@@ -83,7 +83,7 @@ module.exports = {
 
   // search Players who are reachable, preferentially followed or following, with no pagination
   searchFollowedPlayers: function (req, res) {
-    var searcherID = req.session.passport.user, query = req.body.query
+    var searcherID = req.session.passport.user || null, query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
     var lowerCaseQuery = query.toLowerCase()
     var matches = []
@@ -138,8 +138,11 @@ module.exports = {
     var searcherID = req.session.passport ? (req.session.passport.user || null) : null
     var query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
-    Symbol.find ({ owner: searcherID,
-                   name: query.name })
+    Symbol.find (_.extend ({ name: query.name },
+                           searcherID
+                           ? { owned: true,
+                               owner: searcherID }
+                           : { owned: false }))
       .populate ('owner')
       .then (function (ownedSymbols) {
         var symbolPromise
@@ -147,8 +150,11 @@ module.exports = {
           symbolPromise = new Promise (function (resolve, reject) { resolve([]) })
         else
           symbolPromise = Symbol
-          .find ({ owner: { '!': searcherID },
-                   name: query.name })
+          .find (_.extend ({ name: query.name },
+                           searcherID
+                           ? { or: [ { owned: false },
+                                     { owned: true, owner: { '!': searcherID } } ] }
+                           : { owned: true }))
           .limit (maxResults - ownedSymbols.length)
           .populate ('owner')
         symbolPromise.then (function (unownedSymbols) {
@@ -182,7 +188,7 @@ module.exports = {
 
   // configure Player info
   configurePlayer: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed', 'createsPublicTemplates']
     var name = req.body.name
     var nameClashPromise = (typeof(name) === 'undefined'
@@ -244,7 +250,7 @@ module.exports = {
 
   // get player status
   selfStatus: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     Player.findOne ({ id: playerID })
       .then (function (player) {
         return PlayerService.makeStatus ({ player: player,
@@ -259,7 +265,7 @@ module.exports = {
 
   // get a conversation thread
   getThread: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var otherID = Player.parseID (req.params.id)
     Player.findOne ({ id: otherID })
       .then (function (other) {
@@ -276,7 +282,7 @@ module.exports = {
 
   // get a conversation thread (subsequent page)
   getThreadBefore: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var otherID = Player.parseID (req.params.id)
     var beforeID = Player.parseID (req.params.before)
     Player.findOne ({ id: otherID })
@@ -295,7 +301,7 @@ module.exports = {
 
   // find player ID
   getPlayerId: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var otherName = req.params.name
     var result = {}
     Player.findOne ({ name: otherName })
@@ -316,7 +322,7 @@ module.exports = {
 
   // list followers
   listFollowed: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var result = { id: playerID }
     var followInfo = {}
     Follow.find ({ follower: playerID })
@@ -345,7 +351,7 @@ module.exports = {
 
   // add follower
   follow: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var otherID = Player.parseID (req.params.other)
     if (playerID === otherID)
       res.status(500).send (new Error ("You can't follow yourself"))
@@ -378,7 +384,7 @@ module.exports = {
 
   // inbox
   getInbox: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var result = { player: playerID }
     Message.find ({ recipient: playerID,
                     recipientDeleted: false })
@@ -401,7 +407,7 @@ module.exports = {
 
   // inbox count
   getInboxCount: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var result = { player: playerID }
     Message.count ({ recipient: playerID,
                      recipientDeleted: false,
@@ -416,7 +422,7 @@ module.exports = {
   
   // outbox
   getOutbox: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var result = { player: playerID }
     Message.find ({ sender: playerID,
                     senderDeleted: false })
@@ -495,7 +501,7 @@ module.exports = {
 
   // get received message
   getReceivedMessage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var messageID = Message.parseID (req.params.message)
     var result = {}
     Message.update ({ recipient: playerID,
@@ -526,7 +532,7 @@ module.exports = {
 
   // get received message header
   getReceivedMessageHeader: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var messageID = Message.parseID (req.params.message)
     var result = {}
     Message.findOne ({ recipient: playerID,
@@ -549,7 +555,7 @@ module.exports = {
 
   // get sent message
   getSentMessage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var messageID = Message.parseID (req.params.message)
     var result = {}
     Message.findOne ({ sender: playerID,
@@ -674,7 +680,7 @@ module.exports = {
 
   // delete message
   deleteMessage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var messageID = Message.parseID (req.params.message)
     Message.findOne ({ id: messageID,
                        or: [ { sender: playerID },
@@ -702,7 +708,7 @@ module.exports = {
 
   // rate message
   rateMessage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var messageID = Message.parseID (req.params.message)
     var rating = parseInt (req.body.rating)
     Message.update ({ id: messageID,
@@ -762,7 +768,7 @@ module.exports = {
 
   // get drafts
   getDrafts: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var result = {}
     Draft.find ({ sender: playerID })
       .populate ('recipient')
@@ -783,7 +789,7 @@ module.exports = {
   
   // get draft
   getDraft: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var draftID = Draft.parseID (req.params.draft)
     var result = {}
     Draft.findOne ({ id: draftID,
@@ -809,7 +815,7 @@ module.exports = {
   
   // save draft
   saveDraft: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var draft = Draft.parseID (req.body.draft)
     var result = {}
     Draft.create ({ sender: playerID,
@@ -830,7 +836,7 @@ module.exports = {
   
   // update draft
   updateDraft: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var draftID = Draft.parseID (req.params.draft)
     var draft = req.body.draft
     Draft.update ({ id: draftID,
@@ -869,7 +875,8 @@ module.exports = {
           result.symbols = []
           return []
         }
-        return Symbol.find ({ owner: playerID })
+        return Symbol.find ({ owned: true,
+                              owner: playerID })
           .then (function (symbols) {
             result.symbols = symbols.map (function (symbol) {
               symbol.owner = player
@@ -893,7 +900,8 @@ module.exports = {
   newSymbol: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var result = {}
-    var symInfo = { owner: playerID }
+    var symInfo = { owned: true,
+                    owner: playerID }
     if (req.body.symbol) {
       var name = req.body.symbol.name
       var rules = req.body.symbol.rules
@@ -964,12 +972,14 @@ module.exports = {
           revisions.push (initialized
                           ? { symbol: symbol.id,
                               name: symbol.name,
+                              owned: (playerID ? true : false),
                               owner: playerID,
                               transferable: symbol.transferable,
                               summary: symbol.summary,
                               rules: symbol.rules }
                           : { symbol: symbol.id,
                               name: symbol.name,
+                              owned: (playerID ? true : false),
                               owner: playerID })
 
           return SymbolService.resolveReferences ([symbol])
@@ -1071,7 +1081,7 @@ module.exports = {
 
   // get a particular symbol by name, or create it (uninitialized)
   getOrCreateSymbolByName: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var symbolName = req.params.symname
     var result = {}
     Symbol.findOneCached ({ name: symbolName })
@@ -1080,6 +1090,7 @@ module.exports = {
           return symbol
         else
           return Symbol.create ({ name: symbolName,
+                                  owned: false,
                                   owner: null })
       }).then (function (symbol) {
         return SymbolService.makeSymbolInfo (symbol, playerID)
@@ -1094,7 +1105,7 @@ module.exports = {
 
   // store a particular symbol
   putSymbol: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport.user || null
     var symbolID = Symbol.parseID (req.params.symid)
     var name = req.body.name
     var rules = req.body.rules
@@ -1119,19 +1130,27 @@ module.exports = {
               result.name[rhsSymbol.id] = rhsSymbol.name
             })
             return Symbol.findOne ({ id: symbolID,
-                                     owner: [ playerID, null ] })
+                                     or: ([ { owned: false } ].concat
+                                          (playerID
+                                           ? [{ owned: true,
+                                                owner: playerID }]
+                                           : [])) })
           }).then (function (symbol) {
             result.name[symbolID] = name
-            if (symbol.transferable)
+            if (symbol.transferable) {
+              update.owned = (playerID ? true : false)
               update.owner = playerID
+            }
 
             var revision = { symbol: symbolID }
             if (name && name !== symbol.name)
               revision.name = name
             if (JSON.stringify(rules) !== JSON.stringify(symbol.rules))
               revision.rules = rules
-            if (symbol.transferable && playerID !== symbol.owner)
+            if (symbol.transferable && playerID !== symbol.owner) {
+              revision.owned = update.owned
               revision.owner = playerID
+            }
 
             return Revision.create (revision)
           }).then (function() {
@@ -1158,14 +1177,17 @@ module.exports = {
     var playerID = req.session.passport.user
     var symbolID = Symbol.parseID (req.params.symid)
     Symbol.update ({ id: symbolID,
+                     owned: true,
                      owner: playerID },
-                   { owner: null })
+                   { owned: false,
+                     owner: null })
       .then (function (symbols) {
         if (symbols && symbols.length === 1)
           SymbolService.resolveReferences (symbols)
           .then (function (names) {
             var symbol = symbols[0]
             return Revision.create ({ symbol: symbolID,
+                                      owned: false,
                                       owner: null })
               .then (function() {
                 Symbol.message (symbolID,

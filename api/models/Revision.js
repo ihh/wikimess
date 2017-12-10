@@ -22,10 +22,14 @@ module.exports = {
     name: {
       type: 'string'
     },
-
+    
     owner: {
       model: 'player',
       defaultsTo: null
+    },
+
+    owned: {
+      type: 'boolean'
     },
 
     transferable: {

@@ -3,7 +3,7 @@ var readline = require('readline')
 var filename = 'mobythes.aur'
 
 var words
-// uncomment for opt-in list of words to include
+// uncomment for opt-in list of words to include; comment out to import entire thesaurus
 words = ['crap', 'delightful', 'filthy', 'rabid']
 
 if (fs.existsSync (filename)) {
@@ -25,6 +25,7 @@ if (fs.existsSync (filename)) {
     words = words || Object.keys(rules).sort()
     var result = words.map (function (name) {
       return { name: name,
+               owner: null,
                rules: rules[name] }
     })
     console.log (JSON.stringify (result))
