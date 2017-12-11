@@ -363,6 +363,14 @@ var WikiMess = (function() {
       return this.logDelete ('/p/symbol/' + symbolID)
     },
 
+    REST_getPlayerSymbolRevisions: function (playerID, symbolID) {
+      return this.logGet ('/p/symbol/' + symbolID + '/revisions')
+    },
+
+    REST_getPlayerSymbolDiff: function (playerID, symbolID, revisionID) {
+      return this.logGet ('/p/symbol/' + symbolID + '/diff/' + revisionID)
+    },
+
     REST_getPlayerTemplate: function (playerID, templateID) {
       return this.logGet ('/p/template/' + templateID)
     },
@@ -2422,7 +2430,7 @@ var WikiMess = (function() {
                               .hide(),  // at the moment, we're not really using the title field except as a hint in mailbox view; so, hide it
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
-                                       $('<span class="field messagedate">').text (wm.relativeDateString (new Date (message.date).toString())))),
+                                       $('<span class="field messagedate">').text (wm.relativeDateString (message.date)))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
                                                                                            function (html) {
                                                                                              return wm.expandVars (html, { me: (sender ? (playerChar + sender.name) : wm.defaultVarText('Sender')),
@@ -2431,10 +2439,10 @@ var WikiMess = (function() {
         })
     },
 
-    relativeDateString: function (dateStr) {
+    relativeDateString: function (dateInitializer) {
       var weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
       var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-      var now = new Date(), date = new Date(dateStr), secsSince = (now - date) / 1000, daysSince = secsSince / 86400
+      var now = new Date(), date = new Date (dateInitializer), secsSince = (now - date) / 1000, daysSince = secsSince / 86400
       var hours = date.getHours(), ampm = hours < 12 ? 'am' : 'pm', minutes = date.getMinutes(), day = date.getDay(), year = date.getFullYear()
       return ((daysSince < 1 && day === now.getDay()
                ? ''
@@ -3113,6 +3121,67 @@ var WikiMess = (function() {
         linksDiv.hide()
       }
 
+      function showRecentRevisions (evt) {
+        evt.stopPropagation()
+        menuDiv.hide()
+        wm.REST_getPlayerSymbolRevisions (wm.playerID, symbol.id)
+          .then (function (result) {
+            return wm.pushView ('revisions')
+              .then (function() {
+                var revisionsBar = $('<div class="revisionsbar">')
+                    .append (result.revisions.map (function (revision) {
+                      return $('<div class="revision">')
+                        .append (revision.authored ? wm.makePlayerSpan (revision.author.name) : $('<span>').text(wm.anonGuest),
+                                 $('<span class="date">').html (wm.relativeDateString (revision.date)),
+                                 $('<span class="diff">').html ($('<a href="#">')
+                                                                .text('Compare to current')
+                                                                .on ('click', function (e) {
+                                                                  e.preventDefault()
+                                                                })))
+                        .on ('click', function() { showRevision (revision.id) })
+                    }))
+                var backBar = wm.popBack (function (backButton) {
+                  backButton.off()
+                  wm.popView()
+                })
+                wm.container
+                  .append (wm.makePageTitle ('Revisions of ' + symChar + wm.symbolName[symbol.id]),
+                           revisionsBar,
+                           backBar)
+                wm.restoreScrolling (revisionsBar)
+              })
+          }).fail (function (err) {
+            wm.showModalWebError (err, wm.popView.bind(wm))
+          })
+      }
+
+      function showRevision (revisionID) {
+        wm.REST_getPlayerSymbolDiff (wm.playerID, symbol.id, revisionID)
+          .then (function (result) {
+            return wm.pushView ('diff')
+              .then (function() {
+                var pre = $('<pre>')
+                    .append (result.diff.map (function (change) {
+                      return $('<span>')
+                        .addClass (change.added ? 'added' : (change.removed ? 'removed' : 'unchanged'))
+                        .text (change.value)
+                    }))
+                var diffBar = $('<div class="diffbar">').html (pre)
+                var backBar = wm.popBack (function (backButton) {
+                  backButton.off()
+                  wm.popView()
+                })
+                wm.container
+                  .append (wm.makePageTitle ('Revision of ' + symChar + wm.symbolName[symbol.id]),
+                           diffBar,
+                           backBar)
+                wm.restoreScrolling (diffBar)
+              })
+          }).fail (function (err) {
+            wm.showModalWebError (err, wm.popView.bind(wm))
+          })
+      }
+      
       function hideSymbol (evt) {
         evt.stopPropagation()
         wm.saveCurrentEdit()
@@ -3167,6 +3236,7 @@ var WikiMess = (function() {
                                      (linksVisible
                                       ? menuSelector ('Hide related phrases', hideLinks)
                                       : menuSelector ('Show related phrases', showLinks)),
+                                     menuSelector ('Show revision history', showRecentRevisions),
                                      (owned
                                       ? menuSelector ('Unlock this phrase', unlockSymbol)
                                       : menuSelector ('Hide this phrase', hideSymbol)))
@@ -3177,7 +3247,7 @@ var WikiMess = (function() {
                         }), menuDiv)
                     },
                     otherButtonDivs: function() {
-                      var ownerSpan = $('<span class="owner">').text ('Editable')
+                      var ownerSpan = $('<span class="owner">').text ('Editable by anyone')
                       if (symbol.owner) {
                         if (symbol.owner.id !== null && symbol.owner.id === wm.playerID)
                           ownerSpan.text ('Editable by you')

@@ -901,7 +901,8 @@ module.exports = {
   newSymbol: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var result = {}
-    var symInfo = { owned: true,
+    var gotPlayerID = (playerID ? true : false)
+    var symInfo = { owned: gotPlayerID,
                     owner: playerID }
     if (req.body.symbol) {
       var name = req.body.symbol.name
@@ -966,7 +967,7 @@ module.exports = {
                 symbolUpdate[upstreamSymbol.id] = { rules: newRules }
                 revisions.push ({ symbol: upstreamSymbol.id,
                                   author: playerID,
-                                  authored: (playerID ? true : false),
+                                  authored: gotPlayerID,
                                   rules: deepcopy(newRules) })
               }
             })
@@ -976,18 +977,18 @@ module.exports = {
                           ? { symbol: symbol.id,
                               name: symbol.name,
                               owner: playerID,
-                              owned: (playerID ? true : false),
+                              owned: gotPlayerID,
                               author: playerID,
-                              authored: (playerID ? true : false),
+                              authored: gotPlayerID,
                               transferable: symbol.transferable,
                               summary: symbol.summary,
                               rules: deepcopy(symbol.rules) }
                           : { symbol: symbol.id,
                               name: symbol.name,
-                              owned: (playerID ? true : false),
+                              owned: gotPlayerID,
                               owner: playerID,
                               author: playerID,
-                              authored: (playerID ? true : false) })
+                              authored: gotPlayerID })
 
           return SymbolService.resolveReferences ([symbol])
             .then (function (names) {
@@ -1068,13 +1069,30 @@ module.exports = {
           revisions = revisions.slice (0, resultsPerPage)
           result.more = true
         }
-        result.revisions = revisions.map (function (revision) {
-          return { id: revision.id,
-                   author: revision.author,
-                   authored: revision.authored,
-                   date: revision.createdAt }
-        })
-        res.json (result)
+        return Player.find
+        ({ id: revisions.filter
+           (function (revision) {
+             return revision.author
+           }).map (function (revision) {
+             return revision.author
+           })
+         }).then (function (players) {
+           var playerName = {}
+           if (players)
+             players.forEach (function (player) {
+               playerName[player.id] = player.name
+             })
+           result.revisions = revisions.map (function (revision) {
+             var summary =  { id: revision.id,
+                              authored: revision.authored,
+                              date: revision.createdAt }
+             if (revision.authored)
+               summary.authored = { id: revision.author,
+                                    name: playerName[revision.author] }
+             return summary
+           })
+           res.json (result)
+         })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -1193,6 +1211,7 @@ module.exports = {
   // store a particular symbol
   putSymbol: function (req, res) {
     var playerID = req.session.passport.user || null
+    var gotPlayerID = (playerID ? true : false)
     var symbolID = Symbol.parseID (req.params.symid)
     var name = req.body.name
     var rules = req.body.rules
@@ -1225,7 +1244,7 @@ module.exports = {
           }).then (function (symbol) {
             result.name[symbolID] = name
             if (symbol.transferable) {
-              symbol.owned = update.owned = (playerID ? true : false)
+              symbol.owned = update.owned = gotPlayerID
               symbol.owner = update.owner = playerID
             }
 
@@ -1236,7 +1255,7 @@ module.exports = {
                              rules: rules,
                              name: name,
                              author: playerID,
-                             authored: (playerID ? true : false),
+                             authored: gotPlayerID,
                              owned: symbol.owned,
                              owner: symbol.owner }
 

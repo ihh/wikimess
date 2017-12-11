@@ -614,6 +614,8 @@ input {
     text-align: center;
 }
 
+.wikimess .diffbar,
+.wikimess .revisionsbar,
 .wikimess .grammarbar,
 .wikimess .detailbar {
     flex-grow: 1;
@@ -643,9 +645,16 @@ input {
     overflow-wrap: break-word;
 }
 
-
 .wikimess .detailbar .filler {
     flex-grow: 1;
+}
+
+.wikimess .diffbar .added {
+    background-color: lightgreen;
+}
+
+.wikimess .diffbar .removed {
+    background-color: pink;
 }
 
 .wikimess .ratings {
@@ -771,6 +780,7 @@ input {
     display: inline;
 }
 
+.wikimess .diffbar,
 .wikimess .messagebody {
     -webkit-user-select: text; /* Chrome/Safari */        
     -moz-user-select: text; /* Firefox */
