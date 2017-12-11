@@ -367,6 +367,10 @@ var WikiMess = (function() {
       return this.logGet ('/p/symbol/' + symbolID + '/revisions')
     },
 
+    REST_getPlayerSymbolRevisionsPage: function (playerID, symbolID, page) {
+      return this.logGet ('/p/symbol/' + symbolID + '/revisions/' + page)
+    },
+
     REST_getPlayerSymbolDiff: function (playerID, symbolID, revisionID) {
       return this.logGet ('/p/symbol/' + symbolID + '/diff/' + revisionID)
     },
@@ -2928,6 +2932,12 @@ var WikiMess = (function() {
                   && !(symbol.owner && symbol.owner.admin)))
     },
 
+    summarizeText: function (text, len) {
+      len = len || 20
+      var summ = text.replace (/\s+/g, ' ')
+      return summ.length <= len ? summ : (summ.substr(0,20) + '...')
+    },
+    
     makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
       var wm = this
       var editable = wm.symbolEditableByPlayer (symbol)
@@ -2948,7 +2958,7 @@ var WikiMess = (function() {
                                              confirmed = confirmed ||
                                                window.confirm('Delete ' + (symbol.rules.length === 1
                                                                            ? 'the only definition'
-                                                                           : ('definition '+(n+1)))
+                                                                           : ('definition "'+wm.summarizeText(rhsText)+'"'))
                                                               + ' for ' + symChar + wm.symbolName[symbol.id] + '?')
                                              return confirmed
                                            },
@@ -3128,25 +3138,51 @@ var WikiMess = (function() {
           .then (function (result) {
             return wm.pushView ('revisions')
               .then (function() {
+                var revisionsDiv = $('<div class="revisions">')
                 var revisionsBar = $('<div class="revisionsbar">')
-                    .append (result.revisions.map (function (revision) {
-                      return $('<div class="revision">')
-                        .append (revision.authored ? wm.makePlayerSpan (revision.author.name) : $('<span>').text(wm.anonGuest),
-                                 $('<span class="date">').html (wm.relativeDateString (revision.date)),
-                                 $('<span class="diff">').html ($('<a href="#">')
+                    .append (wm.makePageTitle ('Revisions of ' + symChar + wm.symbolName[symbol.id]),
+                             revisionsDiv)
+                var page = 0
+                function addRevisions (result) {
+                  revisionsDiv.append (result.revisions.map (function (revision) {
+                    var div = $('<div class="revision">')
+                        .append ($('<span class="summary">')
+                                 .append ('Revision ',
+                                          $('<span class="number">').text (revision.number),
+                                          ': ',
+                                          $('<span class="date">').html (wm.relativeDateString (revision.date)),
+                                          ' (',
+                                          revision.authored ? wm.makePlayerSpan (revision.author.name) : $('<span>').text(wm.anonGuest),
+                                          ')'),
+                                 $('<span class="diff">').html (revision.current
+                                                                ? '(current)'
+                                                                : $('<a href="#">')
                                                                 .text('Compare to current')
                                                                 .on ('click', function (e) {
                                                                   e.preventDefault()
                                                                 })))
-                        .on ('click', function() { showRevision (revision.id) })
-                    }))
+                    if (!revision.current)
+                      div.on ('click', function() { showRevision (revision.id) })
+                    return div
+                  }))
+                  if (result.more) {
+                    var moreLink = $('<a href="#">').text('Show older revisions')
+                        .on ('click', function (evt) {
+                          evt.preventDefault()
+                          moreLink.remove()
+                          wm.REST_getPlayerSymbolRevisionsPage (wm.playerID, symbol.id, ++page)
+                            .then (addRevisions)
+                        })
+                    revisionsBar.append (moreLink)
+                  }
+                }
+                addRevisions (result)
                 var backBar = wm.popBack (function (backButton) {
                   backButton.off()
                   wm.popView()
                 })
                 wm.container
-                  .append (wm.makePageTitle ('Revisions of ' + symChar + wm.symbolName[symbol.id]),
-                           revisionsBar,
+                  .append (revisionsBar,
                            backBar)
                 wm.restoreScrolling (revisionsBar)
               })
@@ -3158,23 +3194,47 @@ var WikiMess = (function() {
       function showRevision (revisionID) {
         wm.REST_getPlayerSymbolDiff (wm.playerID, symbol.id, revisionID)
           .then (function (result) {
+            var diff = result.diff, revision = result.revision
             return wm.pushView ('diff')
               .then (function() {
                 var pre = $('<pre>')
-                    .append (result.diff.map (function (change) {
+                    .append (diff.map (function (change) {
                       return $('<span>')
                         .addClass (change.added ? 'added' : (change.removed ? 'removed' : 'unchanged'))
                         .text (change.value)
                     }))
-                var diffBar = $('<div class="diffbar">').html (pre)
+                var symNameText = symChar + wm.symbolName[symbol.id]
+                var diffBar = $('<div class="diffbar">')
+                    .append (wm.makePageTitle (symNameText),
+                             $('<span class="diffinfo">')
+                             .append ('Comparing revision ' + revision.number + ' (',
+                                      revision.authored ? wm.makePlayerSpan (revision.author.name) : $('<span>').text(wm.anonGuest),
+                                      ', ',
+                                      $('<span class="date">').html (wm.relativeDateString (revision.date)),
+                                      ') to current revision'),
+                             pre,
+                             (wm.symbolEditableByPlayer(symbol)
+                              ? $('<a href="#">').text ('Restore this revision')
+                              .on ('click', function (evt) {
+                                evt.preventDefault()
+                                if (window.confirm ('Restore old revision of ' + symNameText + '?')) {
+                                  // save symbol
+                                  wm.saveSymbol ({ id: symbol.id,
+                                                   name: symbol.name,
+                                                   rules: revision.rules })
+                                    .then (function() {
+                                      return wm.showGrammarEditPage()
+                                    }).then (function() {
+                                      return wm.loadGrammarSymbol (symbol)
+                                    })
+                                }
+                              })
+                              : null))
                 var backBar = wm.popBack (function (backButton) {
                   backButton.off()
                   wm.popView()
                 })
-                wm.container
-                  .append (wm.makePageTitle ('Revision of ' + symChar + wm.symbolName[symbol.id]),
-                           diffBar,
-                           backBar)
+                wm.container.append (diffBar, backBar)
                 wm.restoreScrolling (diffBar)
               })
           }).fail (function (err) {
@@ -3236,7 +3296,9 @@ var WikiMess = (function() {
                                      (linksVisible
                                       ? menuSelector ('Hide related phrases', hideLinks)
                                       : menuSelector ('Show related phrases', showLinks)),
-                                     menuSelector ('Show revision history', showRecentRevisions),
+                                     (symbol.summary
+                                      ? null
+                                      : menuSelector ('Show revision history', showRecentRevisions)),
                                      (owned
                                       ? menuSelector ('Unlock this phrase', unlockSymbol)
                                       : menuSelector ('Hide this phrase', hideSymbol)))

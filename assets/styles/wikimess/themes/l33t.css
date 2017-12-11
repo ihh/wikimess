@@ -120,6 +120,7 @@
     color: #2c2;
 }
 
+.wikimess.l33t .revisions .revision:nth-child(odd),
 .wikimess.l33t .templates .template:nth-child(odd),
 .wikimess.l33t .followsection .follow:nth-child(odd),
 .wikimess.l33t .mailbox .contents .message:nth-child(odd) {

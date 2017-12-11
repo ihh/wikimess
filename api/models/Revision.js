@@ -52,6 +52,24 @@ module.exports = {
     rules: {
       type: 'json'
     },
+
+    // Revision number is purely decorative: a denormalized count of Revisions of the same Symbol at the time of creation (including this one)
+    // It should NOT be used as an identifier!
+    number: {
+      type: 'integer',
+      defaultsTo: 1
+    },
+  },
+
+  beforeCreate: function (revision, cb) {
+    if (revision.firstRevision)
+      cb()
+    else
+      return RevisionService.findLatestRevision (revision.symbol)
+      .then (function (prevRevision) {
+        revision.number = (prevRevision ? (prevRevision.number || 0) : 0) + 1
+        cb()
+      })
   },
 
   parseID: function (text) { return parseInt(text) },

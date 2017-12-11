@@ -112,6 +112,7 @@
     color: white;
 }
 
+.wikimess.plain .revisions .revision:nth-child(odd),
 .wikimess.plain .templates .template:nth-child(odd),
 .wikimess.plain .followsection .follow:nth-child(odd),
 .wikimess.plain .mailbox .contents .message:nth-child(odd) {

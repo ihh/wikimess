@@ -623,6 +623,15 @@ input {
     overflow-x: hidden;
 }
 
+.wikimess .revisionsbar .revision {
+    display: flex;
+    justify-content: space-between;
+}
+
+.wikimess .revisionsbar .revision .diff {
+    text-align: right;
+}
+
 .wikimess .detailbar .biofact {
     padding-top: 4px;
 }

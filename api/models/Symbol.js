@@ -72,8 +72,8 @@ module.exports = {
   noun: 'phrase',
   autoname: { defaultPrefix: 'phrase',
               maxSuffix: {},
-              versionString: '_v',
-              regex: /^(.*?)_v(\d+)$/ },
+              versionString: '_',
+              regex: /^(.*?)_(\d+)$/ },
 
   // cache accessors
   initCache: function() {

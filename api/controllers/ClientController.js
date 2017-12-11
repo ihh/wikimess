@@ -978,6 +978,7 @@ module.exports = {
                               name: symbol.name,
                               owner: playerID,
                               owned: gotPlayerID,
+                              firstRevision: true,
                               author: playerID,
                               authored: gotPlayerID,
                               transferable: symbol.transferable,
@@ -985,6 +986,7 @@ module.exports = {
                               rules: deepcopy(symbol.rules) }
                           : { symbol: symbol.id,
                               name: symbol.name,
+                              firstRevision: true,
                               owned: gotPlayerID,
                               owner: playerID,
                               author: playerID,
@@ -1012,9 +1014,9 @@ module.exports = {
                                                 initialized: true },
                                       name: result.name })
                   })
-              }).concat (revisions.map (function (revision) {
-                return Revision.create (revision)
-              })))
+              }))
+            }).then (function() {
+              return Revision.create (revisions)
             }).then (function() {
               Symbol.subscribe (req, symbol.id)
               res.json (result)
@@ -1082,13 +1084,10 @@ module.exports = {
              players.forEach (function (player) {
                playerName[player.id] = player.name
              })
-           result.revisions = revisions.map (function (revision) {
-             var summary =  { id: revision.id,
-                              authored: revision.authored,
-                              date: revision.createdAt }
-             if (revision.authored)
-               summary.authored = { id: revision.author,
-                                    name: playerName[revision.author] }
+           result.revisions = revisions.map (function (revision, n) {
+             var summary = RevisionService.makeRevisionSummary (revision, playerName)
+             if (page === 0 && n === 0)
+               summary.current = true
              return summary
            })
            res.json (result)
@@ -1132,16 +1131,8 @@ module.exports = {
           return Revision.findOne ({ id: revisionID,
                                      symbol: symbolID })
           .then (function (revision) {
-            return Revision.find ({ symbol: symbolID })
-              .sort ('createdAt DESC')
-              .limit (1)
-              .then (function (latestRevisions) {
-                if (latestRevisions && latestRevisions.length) {
-                  var currentRevision = latestRevisions[0]
-                  result.revision = RevisionService.makeRevisionInfo (revision)
-                  result.diff = RevisionService.makeDiff (revision, currentRevision)
-                }
-              })
+            result.revision = RevisionService.makeRevisionInfo (revision)
+            result.diff = RevisionService.makeDiff (revision, symbol)
           })
       }).then (function() {
         res.json (result)
@@ -1275,7 +1266,7 @@ module.exports = {
             console.log(err)
             res.status(500).send ({ message: err })
           })
-            }
+      }
     }
   },
 
