@@ -18,11 +18,20 @@ module.exports = {
     symbol: {
       model: 'symbol'
     },
-
+    
     name: {
       type: 'string'
     },
     
+    author: {
+      model: 'player',
+      defaultsTo: null
+    },
+
+    authored: {
+      type: 'boolean'
+    },
+
     owner: {
       model: 'player',
       defaultsTo: null
@@ -43,6 +52,8 @@ module.exports = {
     rules: {
       type: 'json'
     },
-  }
+  },
+
+  parseID: function (text) { return parseInt(text) },
 };
 

@@ -308,7 +308,16 @@ module.exports = {
       .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
   },
 
+  defaultSymChar: '>',
+  makeSymText: function (symbol, symChar) {
+    symChar = symChar || SymbolService.defaultSymChar
+    return symChar + symbol.name + '\n' + symbol.rules.map (function (rhs) {
+      return SymbolService.makeSymRef (rhs, symChar) + '\n'
+      }).join('') + '\n'
+  },
+  
   makeSymRef: function (rhs, symChar) {
+    symChar = symChar || SymbolService.defaultSymChar
     return rhs.map (function (node) {
       if (typeof(node) === 'string')
         return node.replace(/\n/g,function(){return'\\n'})

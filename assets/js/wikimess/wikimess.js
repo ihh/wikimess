@@ -3179,13 +3179,13 @@ var WikiMess = (function() {
                     otherButtonDivs: function() {
                       var ownerSpan = $('<span class="owner">').text ('Editable')
                       if (symbol.owner) {
-                        if (symbol.owner.id === wm.playerID)
+                        if (symbol.owner.id !== null && symbol.owner.id === wm.playerID)
                           ownerSpan.text ('Editable by you')
                         else if (symbol.owner.admin)
-                          ownerSpan.text ('Non-editable')
+                          ownerSpan.text ('Duplicate to edit')
                         else if (symbol.owner.id)
                           ownerSpan.empty()
-                          .append ('Non-editable (except by ',
+                          .append ('Duplicate to edit (locked by ',
                                    wm.makePlayerSpan (symbol.owner.name,
                                                       null,
                                                       wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))),

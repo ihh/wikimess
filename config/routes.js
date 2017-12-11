@@ -102,6 +102,7 @@ module.exports.routes = {
   'GET /p/inbox/count':     'ClientController.getInboxCount',
   'GET /p/outbox':          'ClientController.getOutbox',
   'GET /p/public':          'ClientController.getRecentBroadcasts',
+  'GET /p/public/:page':    'ClientController.getRecentBroadcasts',
 
   'GET /p/thread/:id':              'ClientController.getThread',
   'GET /p/thread/:id/before/:date': 'ClientController.getThreadBefore',
@@ -133,6 +134,11 @@ module.exports.routes = {
   'DELETE /p/symbol/:symid': 'ClientController.releaseSymbol',
 
   'GET /dump/:symname':      'ClientController.dumpSymbol',
+
+  'GET /p/symbol/:symid/revisions':       'ClientController.getRecentSymbolRevisions',
+  'GET /p/symbol/:symid/revisions/:page': 'ClientController.getRecentSymbolRevisions',
+  'GET /p/symbol/:symid/rev/:revid':      'ClientController.getSymbolRevision',
+  'GET /p/symbol/:symid/diff/:revid':     'ClientController.getSymbolRevisionDiff',
 
   'GET /p/symbol/:symid/links':       'ClientController.getSymbolLinks',
   'GET /p/symbol/:symid/unsubscribe': 'ClientController.unsubscribeSymbol',

@@ -7,6 +7,7 @@
 
 var Promise = require('bluebird')
 var extend = require('extend')
+var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
 module.exports = {
@@ -964,7 +965,9 @@ module.exports = {
                 })
                 symbolUpdate[upstreamSymbol.id] = { rules: newRules }
                 revisions.push ({ symbol: upstreamSymbol.id,
-                                  rules: newRules })
+                                  author: playerID,
+                                  authored: (playerID ? true : false),
+                                  rules: deepcopy(newRules) })
               }
             })
           }
@@ -972,15 +975,19 @@ module.exports = {
           revisions.push (initialized
                           ? { symbol: symbol.id,
                               name: symbol.name,
-                              owned: (playerID ? true : false),
                               owner: playerID,
+                              owned: (playerID ? true : false),
+                              author: playerID,
+                              authored: (playerID ? true : false),
                               transferable: symbol.transferable,
                               summary: symbol.summary,
-                              rules: symbol.rules }
+                              rules: deepcopy(symbol.rules) }
                           : { symbol: symbol.id,
                               name: symbol.name,
                               owned: (playerID ? true : false),
-                              owner: playerID })
+                              owner: playerID,
+                              author: playerID,
+                              authored: (playerID ? true : false) })
 
           return SymbolService.resolveReferences ([symbol])
             .then (function (names) {
@@ -1041,6 +1048,91 @@ module.exports = {
       })
   },
 
+  // get recent revisions of a symbol
+  getRecentSymbolRevisions: function (req, res) {
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var symbolID = Symbol.parseID (req.params.symid)
+    var resultsPerPage = req.params.n ? parseInt(req.params.n) : 10
+    var page = req.params.page ? parseInt(req.params.page) : 0
+    var result = { }
+    Symbol.find ({ id: symbolID })
+      .then (function (symbol) {
+        if (!symbol.owned || symbol.owner === playerID || !symbol.summary)
+          return Revision.find ({ symbol: symbolID })
+          .sort ('createdAt DESC')
+          .skip (page * resultsPerPage)
+          .limit (resultsPerPage + 1)
+        return []
+      }).then (function (revisions) {
+        if (revisions.length > resultsPerPage) {
+          revisions = revisions.slice (0, resultsPerPage)
+          result.more = true
+        }
+        result.revisions = revisions.map (function (revision) {
+          return { id: revision.id,
+                   author: revision.author,
+                   authored: revision.authored,
+                   date: revision.createdAt }
+        })
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  getSymbolRevision: function (req, res) {
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var symbolID = Symbol.parseID (req.params.symid)
+    var revisionID = Symbol.parseID (req.params.revid)
+    var result = {}
+    Symbol.findOne ({ id: symbolID })
+      .then (function (symbol) {
+        if (!symbol.owned || symbol.owner === playerID || !symbol.summary)
+          return Revision.findOne ({ id: revisionID,
+                                  symbol: symbolID })
+          .then (function (revision) {
+            if (revision)
+              result.revision = RevisionService.makeRevisionInfo (revision)
+          })
+      }).then (function() {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  getSymbolRevisionDiff: function (req, res) {
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var symbolID = Symbol.parseID (req.params.symid)
+    var revisionID = Symbol.parseID (req.params.revid)
+    var result = {}
+    Symbol.findOne ({ id: symbolID })
+      .then (function (symbol) {
+        if (!symbol.owned || symbol.owner === playerID || !symbol.summary)
+          return Revision.findOne ({ id: revisionID,
+                                     symbol: symbolID })
+          .then (function (revision) {
+            return Revision.find ({ symbol: symbolID })
+              .sort ('createdAt DESC')
+              .limit (1)
+              .then (function (latestRevisions) {
+                if (latestRevisions && latestRevisions.length) {
+                  var currentRevision = latestRevisions[0]
+                  result.revision = RevisionService.makeRevisionInfo (revision)
+                  result.diff = RevisionService.makeDiff (revision, currentRevision)
+                }
+              })
+          })
+      }).then (function() {
+        res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+  
   // get links (uses, used by, copies, copied by) for a symbol
   getSymbolLinks: function (req, res) {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
@@ -1068,15 +1160,10 @@ module.exports = {
     var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolName = req.params.symname
     var depSymbols = Symbol.getSubgrammar (symbolName)
-        .filter (function (symbol) { return symbol.owner === playerID || symbol.summary === null })
+        .filter (function (symbol) { return symbol.owner === playerID || !symbol.summary })
         .sort (function (a, b) { return (a.name < b.name ? -1 : (a.name === b.name ? 0 : +1)) })
-    var symChar = req.params.symchar || '$'
     res.set('Content-Type', 'text/plain')
-    res.send (depSymbols.map (function (symbol) {
-      return '>' + symbol.name + '\n' + symbol.rules.map (function (rhs) {
-        return SymbolService.makeSymRef (rhs, symChar) + '\n'
-      }).join('')
-    }).join('\n'))
+    res.send (depSymbols.map (SymbolService.makeSymText).join(''))
   },
 
   // get a particular symbol by name, or create it (uninitialized)
@@ -1138,19 +1225,20 @@ module.exports = {
           }).then (function (symbol) {
             result.name[symbolID] = name
             if (symbol.transferable) {
-              update.owned = (playerID ? true : false)
-              update.owner = playerID
+              symbol.owned = update.owned = (playerID ? true : false)
+              symbol.owner = update.owner = playerID
             }
 
-            var revision = { symbol: symbolID }
-            if (name && name !== symbol.name)
-              revision.name = name
-            if (JSON.stringify(rules) !== JSON.stringify(symbol.rules))
-              revision.rules = rules
-            if (symbol.transferable && playerID !== symbol.owner) {
-              revision.owned = update.owned
-              revision.owner = playerID
-            }
+            if (JSON.stringify(rules) === JSON.stringify(symbol.rules))
+              return Promise.resolve()
+
+            var revision = { symbol: symbolID,
+                             rules: rules,
+                             name: name,
+                             author: playerID,
+                             authored: (playerID ? true : false),
+                             owned: symbol.owned,
+                             owner: symbol.owner }
 
             return Revision.create (revision)
           }).then (function() {
@@ -1186,20 +1274,15 @@ module.exports = {
           SymbolService.resolveReferences (symbols)
           .then (function (names) {
             var symbol = symbols[0]
-            return Revision.create ({ symbol: symbolID,
-                                      owned: false,
-                                      owner: null })
-              .then (function() {
-                Symbol.message (symbolID,
-                                { message: "update",
-                                  symbol: { id: symbolID,
-                                            name: symbol.name,
-                                            owner: {},
-                                            rules: symbol.rules,
-                                            initialized: symbol.initialized },
-                                  name: names })
-                res.ok()
-              })
+            Symbol.message (symbolID,
+                            { message: "update",
+                              symbol: { id: symbolID,
+                                        name: symbol.name,
+                                        owner: {},
+                                        rules: symbol.rules,
+                                        initialized: symbol.initialized },
+                              name: names })
+            res.ok()
           })
       }).catch (function (err) {
         console.log(err)

@@ -8,6 +8,7 @@
     "bcrypt": "^1.0.3",
     "deepcopy": "~0.6.3",
     "deepmerge": "0.2.10",
+    "diff": "^3.4.0",
     "ejs": "2.5.5",
     "extend": "3.0.0",
     "grunt": "1.0.1",
@@ -36,7 +37,6 @@
     "request-promise": "~4.2.2",
     "sails": "~0.12.4",
     "sails-disk": "~0.10.9",
-    "sails-mongo": "^0.12.2",
     "sails-mysql": "^0.11.5",
     "skipper": "^0.8.4",
     "supertest-session": "^3.1.0"
