@@ -6,6 +6,7 @@
   "keywords": [],
   "dependencies": {
     "bcrypt": "^1.0.3",
+    "connect-redis": "^3.3.2",
     "deepcopy": "~0.6.3",
     "deepmerge": "0.2.10",
     "diff": "^3.4.0",
