@@ -1113,8 +1113,10 @@ var WikiMess = (function() {
       return function() {
 	wm.themes.forEach (function (oldTheme) {
           wm.container.removeClass (oldTheme.style)
+          wm.pageContainer.removeClass (oldTheme.style)
 	})
         wm.container.addClass (theme.style)
+        wm.pageContainer.addClass (theme.style)
         wm.theme = theme.style
         wm.themeInfo = theme
         wm.writeLocalStorage ('theme')
