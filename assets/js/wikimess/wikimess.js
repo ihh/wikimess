@@ -1394,7 +1394,10 @@ var WikiMess = (function() {
           updateComposeDiv()
           
           wm.messageBodyDiv = $('<div class="messagebody">')
-            .on ('click', wm.stopAnimation.bind(wm))
+            .on ('click', function() {
+              wm.stopAnimation()
+              wm.saveCurrentEdit()
+            })
 
           delete wm.animationExpansion
           if (config.body && config.body.rhs && config.body.rhs.find (function (x) { return typeof(x) === 'string' && x.match(/\S/) })) {
@@ -2941,60 +2944,61 @@ var WikiMess = (function() {
     makeGrammarRhsDiv: function (symbol, ruleDiv, n) {
       var wm = this
       var editable = wm.symbolEditableByPlayer (symbol)
-      var span = wm.makeEditableElement ({ element: 'span',
-                                           className: 'rhs',
-                                           content: function() { return symbol.rules[n] },
-                                           guessHeight: true,
-                                           isConstant: !editable,
-                                           editWarning: "You don't have permission to edit " + symChar + wm.symbolName[symbol.id] + ". Select 'Duplicate this phrase' from the menu: you'll have full editing rights for the duplicate.",
-                                           confirmDestroy: function() {
-                                             var rhsText = wm.makeRhsText(symbol.rules[n])
-                                             // no need to confirm if this expansion is empty
-                                             var confirmed = !symbol.rules[n].length
-                                             // no need to confirm if this is a duplicate of an adjacent expansion
-                                             confirmed = confirmed || 
-                                               ((n > 0 && rhsText === wm.makeRhsText(symbol.rules[n-1]))
-                                                || (n+1 < symbol.rules.length && rhsText === wm.makeRhsText(symbol.rules[n+1])))
-                                             confirmed = confirmed ||
-                                               window.confirm('Delete ' + (symbol.rules.length === 1
-                                                                           ? 'the only definition'
-                                                                           : ('definition "'+wm.summarizeText(rhsText)+'"'))
-                                                              + ' for ' + symChar + wm.symbolName[symbol.id] + '?')
-                                             return confirmed
-                                           },
-                                           destroyIcon: 'minus',
-                                           destroyCallback: function() {
-                                             symbol.rules.splice(n,1)
-                                             wm.populateGrammarRuleDiv (ruleDiv, symbol)
-                                             return wm.saveSymbol (symbol)
-                                           },
-                                           updateCallback: function (newRhs) {
-                                             symbol.rules[n] = newRhs
-                                             return wm.saveSymbol (symbol)
-                                               .then (function (newSymbol) {
-                                                 return newSymbol.rules[n]
-                                               })
-                                           },
-                                           locateSpan: function() {
-                                             return wm.ruleDiv[symbol.id].find('.rhs').eq(n)
-                                           },
-                                           otherButtonDivs: function() {
-                                             return editable ? [wm.makeIconButton ('plus', function(evt) {
-                                               evt.stopPropagation()
-                                               wm.saveCurrentEdit()
-                                                 .then (function() {
-                                                   var newRhs = symbol.rules[n]
-                                                   symbol.rules.splice (n, 0, newRhs)
-                                                   wm.populateGrammarRuleDiv (ruleDiv, symbol)
-                                                   wm.selectGrammarRule (symbol)
-                                                   wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
-                                                 })
-                                             })] : []
-                                           },
-                                           parse: wm.parseRhs.bind(wm),
-                                           renderText: wm.makeRhsText.bind(wm),
-                                           renderHtml: wm.makeRhsSpan.bind(wm)
-                                         })
+      var span = wm.makeEditableElement
+      ({ element: 'span',
+         className: 'rhs',
+         content: function() { return symbol.rules[n] },
+         guessHeight: true,
+         isConstant: !editable,
+         editWarning: "You don't have permission to edit " + symChar + wm.symbolName[symbol.id] + ". Select 'Duplicate this phrase' from the menu: you'll have full editing rights for the duplicate.",
+         confirmDestroy: function() {
+           var rhsText = wm.makeRhsText(symbol.rules[n])
+           // no need to confirm if this expansion is empty
+           var confirmed = !symbol.rules[n].length
+           // no need to confirm if this is a duplicate of an adjacent expansion
+           confirmed = confirmed || 
+             ((n > 0 && rhsText === wm.makeRhsText(symbol.rules[n-1]))
+              || (n+1 < symbol.rules.length && rhsText === wm.makeRhsText(symbol.rules[n+1])))
+           confirmed = confirmed ||
+             window.confirm('Delete ' + (symbol.rules.length === 1
+                                         ? 'the only definition'
+                                         : ('definition "'+wm.summarizeText(rhsText)+'"'))
+                            + ' for ' + symChar + wm.symbolName[symbol.id] + '?')
+           return confirmed
+         },
+         destroyIcon: 'minus',
+         destroyCallback: function() {
+           symbol.rules.splice(n,1)
+           wm.populateGrammarRuleDiv (ruleDiv, symbol)
+           return wm.saveSymbol (symbol)
+         },
+         updateCallback: function (newRhs) {
+           symbol.rules[n] = newRhs
+           return wm.saveSymbol (symbol)
+             .then (function (newSymbol) {
+               return newSymbol.rules[n]
+             })
+         },
+         locateSpan: function() {
+           return wm.ruleDiv[symbol.id].find('.rhs').eq(n)
+         },
+         otherButtonDivs: function() {
+           return editable ? [wm.makeIconButton ('plus', function(evt) {
+             evt.stopPropagation()
+             wm.saveCurrentEdit()
+               .then (function() {
+                 var newRhs = symbol.rules[n]
+                 symbol.rules.splice (n, 0, newRhs)
+                 wm.populateGrammarRuleDiv (ruleDiv, symbol)
+                 wm.selectGrammarRule (symbol)
+                 wm.saveSymbol (symbol)  // should probably give focus to new RHS instead, here
+               })
+           })] : []
+         },
+         parse: wm.parseRhs.bind(wm),
+         renderText: wm.makeRhsText.bind(wm),
+         renderHtml: wm.makeRhsSpan.bind(wm)
+       })
       return span
     },
 
