@@ -3093,11 +3093,11 @@ var WikiMess = (function() {
           .then (function (links) {
             $.extend (wm.symbolName, links.name)
             linksVisible = true
-            function makeSymbolSpans (title, symbolIDs) {
+            function makeSymbolSpans (title, symbolIDs, emptyStr) {
               var listDiv = $('<div class="symbols">')
               if (symbolIDs) {
-                listDiv.append ($('<span class="title">').text (title))
-                if (symbolIDs.length)
+                if (symbolIDs.length) {
+                  listDiv.append ($('<span class="title">').text (title))
                   symbolIDs.forEach (function (linkedId) {
                     var linkedSym = { id: linkedId }
                     listDiv.append
@@ -3108,17 +3108,17 @@ var WikiMess = (function() {
                                           wm.loadGrammarSymbol (linkedSym)
                                         }))
                   })
-                else
-                  listDiv.append (' ', $('<span>').text ('None'))
+                } else
+                  listDiv.append ($('<span>').text (emptyStr))
               }
               return listDiv
             }
             linksDiv.empty().append
-            (makeSymbolSpans ('Used by:', links.symbol.using),
-             makeSymbolSpans ('Used:', links.symbol.used),
-             makeSymbolSpans ('Copies:', links.symbol.copies),
+            (makeSymbolSpans ('The following phrases refer to this phrase:', links.symbol.using, 'No other phrases refer to this phrase.'),
+             makeSymbolSpans ('This phrase refers to the following phrases:', links.symbol.used, 'This phrase does not refer to any other phrases.'),
+             makeSymbolSpans ('The following phrases are derived from copies this phrase:', links.symbol.copies, 'There are no copies of this phrase.'),
              (links.symbol.copied
-              ? $('<div>').append ('Copy of ',
+              ? $('<div>').append ('This phrase was derived from ',
                                    wm.makeSymbolSpan ({ id: links.symbol.copied }))
               : null))
               .show()

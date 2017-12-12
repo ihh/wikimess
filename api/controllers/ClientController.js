@@ -907,7 +907,7 @@ module.exports = {
     if (req.body.symbol) {
       var name = req.body.symbol.name
       var rules = req.body.symbol.rules
-      var copiedSymbolId = Symbol.parseID (req.body.symbol.copy)
+      var copiedSymbolId = typeof(req.body.symbol.copy) !== 'undefined' ? Symbol.parseID(req.body.symbol.copy) : null
       var copiedSymbol = copiedSymbolId ? Symbol.cache.byId[copiedSymbolId] : null
         
       if (rules && !SchemaService.validateRules (rules, res.badRequest.bind(res)))
@@ -944,6 +944,7 @@ module.exports = {
                          copied: copiedSymbolId,
                          rules: rules,
                          initialized: initialized })
+
       Symbol.create (symInfo)
         .then (function (symbol) {
           result.symbol = { id: symbol.id,
@@ -1062,7 +1063,7 @@ module.exports = {
       .then (function (symbol) {
         if (!symbol.owned || symbol.owner === playerID || !symbol.summary)
           return Revision.find ({ symbol: symbolID })
-          .sort ('createdAt DESC')
+          .sort ('number DESC')
           .skip (page * resultsPerPage)
           .limit (resultsPerPage + 1)
         return []

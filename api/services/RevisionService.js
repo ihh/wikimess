@@ -31,7 +31,7 @@ module.exports = {
 
   findLatestRevision: function (symbolID) {
     return Revision.find ({ symbol: symbolID })
-      .sort ('createdAt DESC')
+      .sort ('number DESC')
       .limit (1)
       .then (function (latestRevisions) {
         if (latestRevisions && latestRevisions.length)

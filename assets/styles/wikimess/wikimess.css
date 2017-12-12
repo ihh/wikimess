@@ -614,7 +614,12 @@ input {
     text-align: center;
 }
 
-.wikimess .diffbar,
+.wikimess .diffbar {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
 .wikimess .revisionsbar,
 .wikimess .grammarbar,
 .wikimess .detailbar {
