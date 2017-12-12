@@ -1,4 +1,8 @@
 /* Colors, plain theme */
+.wikimess-page.plain {
+    background-color: black;
+}
+
 .wikimess.plain {
     background-color: #f8f8f8;
     color: black;

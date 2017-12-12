@@ -5,8 +5,10 @@ var WikiMess = (function() {
     config = config || {}
     $.extend (this, config)
 
-    this.container = $('#'+this.containerID)
-      .addClass("wikimess")
+    this.container = $('<div class="wikimess">')
+    this.pageContainer = $('#'+this.containerID)
+      .addClass("wikimess-page")
+      .html (this.container)
 
     this.localStorage = { playerLogin: undefined,
                           soundVolume: .5,

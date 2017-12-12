@@ -1,20 +1,24 @@
-/* Portrait view */
-@media all and (orientation:portrait) and (max-width: 800px) {
+/* Desktop view */
+@media (min-width: 801px) {
     .wikimess {
 	display: flex;
 	flex-direction: column;
-	width: 100%;
+	width: 800px;
+	max-width: 800px
 	height: 100%;
     }
 
     .wikimess .navbar {
-	height: 15vw;
-	min-height: 15vw;
+	height: 15vh;
+	min-height: 15vh;
+	max-height: 120px;
     }
 
     .wikimess .navbar .navicon {
-	width: 15vw;
-	height: 15vw;
+	width: 15vh;
+	height: 15vh;
+	max-width: 120px;
+	max-height: 120px;
     }
 
     .wikimess .menubar .list {
@@ -28,17 +32,17 @@
 
     /* Menu views */
     .wikimess .inputbar {
-	width: 100vw;
+	width: 800px;
 	display: flex;
 	justify-content: center;
     }
 
     .wikimess .inputbar form {
-	width: 60vw;
+	width: 480px;
     }
 
     .wikimess .titlebar {
-	width: 100vw;
+	width: 800px;
 	height: 6vh;
 	text-align: center;
     }
@@ -49,7 +53,7 @@
     }
 
     .wikimess .menubar {
-	width: 100vw;
+	width: 800px;
 	flex-grow: 1;
 
 	display: flex;
@@ -69,41 +73,41 @@
     }
     
     .wikimess .menubar .rubric {
-	width: 80vw;
+	width: 640px;
     }
 
     .wikimess .whobar .search .followsection {
-	box-shadow: 1vw 1vw 1vw 0px gray;
+	box-shadow: 8px 8px 8px 0px gray;
     }
 
     .wikimess .symbolsearch {
-	box-shadow: 1vw 1vw 1vw 0px gray;
+	box-shadow: 8px 8px 8px 0px gray;
     }
 
     .wikimess .grammarbar .rule .rhs {
-	margin: 1vw;
+	margin: 8px;
     }
 
     .wikimess .grammarbar .rule .lhs,
     .wikimess .grammarbar .rule .rulecontrols {
-	margin: 1vw;
+	margin: 8px;
     }
 
     .wikimess .sharepane,
     .wikimess .infopane {
-	box-shadow: 1vw -1vw 1vw 0px gray;
+	box-shadow: 8px -8px 8px 0px gray;
     }
 
     .wikimess .infopane .content {
-	max-height: 40vw;
+	max-height: 320px;
     }
 
     .wikimess .ratinginfo .ratinginfolabel {
-	width: 30vw;
+	width: 240px;
     }
 
     .wikimess .messageheader .label {
-	width: 25vw;
+	width: 200px;
     }
 
     .wikimess .messageheader .input {
@@ -111,6 +115,6 @@
     }
 
     .wikimess .messageheader .input .results {
-	box-shadow: 1vw 1vw 1vw 0px gray;
+	box-shadow: 8px 8px 8px 0px gray;
     }
 }
