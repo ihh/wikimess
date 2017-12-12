@@ -1278,7 +1278,8 @@ module.exports = {
                      owned: true,
                      owner: playerID },
                    { owned: false,
-                     owner: null })
+                     owner: null,
+                     transferable: false })
       .then (function (symbols) {
         if (symbols && symbols.length === 1)
           SymbolService.resolveReferences (symbols)

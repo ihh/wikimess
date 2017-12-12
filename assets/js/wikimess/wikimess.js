@@ -3070,7 +3070,7 @@ var WikiMess = (function() {
         wm.saveCurrentEdit()
           .then (function() {
             if (window.confirm ('Make a copy of ' + symChar + wm.symbolName[symbol.id] + '?'
-                                + (wm.symbolEditableByPlayer(symbol) ? ' (Unlike the original, you will be able to edit the copy.)' : '')))
+                                + (wm.symbolEditableByPlayer(symbol) ? '' : ' (Unlike the original, you will be able to edit the copy.)')))
               wm.createNewSymbol ({ symbol: { name: wm.symbolName[symbol.id],
                                               copy: symbol.id } })
           })
@@ -3080,7 +3080,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            if (window.confirm('Give up your lock on ' + symChar + wm.symbolName[symbol.id] + '? Anyone will be able to edit (and lock) the phrase.'))
+            if (window.confirm('Give up your lock on ' + symChar + wm.symbolName[symbol.id] + '? Anyone will be able to edit the phrase.'))
               return wm.promiseSave (wm.REST_deletePlayerSymbol (wm.playerID, symbol.id), 'unlockSymbol')
           })
       }
@@ -3119,7 +3119,7 @@ var WikiMess = (function() {
              makeSymbolSpans ('Copies:', links.symbol.copies),
              (links.symbol.copied
               ? $('<div>').append ('Copy of ',
-                                   wm.makeSymbolSpan (links.symbol.copied))
+                                   wm.makeSymbolSpan ({ id: links.symbol.copied }))
               : null))
               .show()
           })
