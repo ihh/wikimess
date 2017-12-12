@@ -1288,7 +1288,7 @@ var WikiMess = (function() {
                 wm.populateSuggestions (symbolSuggestionPromise, function (symbol) {
                   var updatedNewValBefore = newValBefore + getInsertText (symbol)
                   input.val (updatedNewValBefore + newValAfter)
-                  wm.setCaretToPos (input, updatedNewValBefore.length)
+                  wm.setCaretToPos (input[0], updatedNewValBefore.length)
                   input.focus()
                   textareaAutosuggest (input)
                 })
@@ -3314,14 +3314,14 @@ var WikiMess = (function() {
                         if (symbol.owner.id !== null && symbol.owner.id === wm.playerID)
                           ownerSpan.text ('Editable by you')
                         else if (symbol.owner.admin)
-                          ownerSpan.text ('Duplicate to edit')
+                          ownerSpan.text ('Not editable, but you can make your own copy')
                         else if (symbol.owner.id)
                           ownerSpan.empty()
-                          .append ('Duplicate to edit (locked by ',
+                          .append ('Not editable (locked by ',
                                    wm.makePlayerSpan (symbol.owner.name,
                                                       null,
                                                       wm.callWithSoundEffect (wm.showOtherStatusPage.bind (wm, symbol.owner))),
-                                   ')')
+                                   '), but you can make a copy')
                       }
                       return [ownerSpan]
                     },
@@ -3670,7 +3670,7 @@ var WikiMess = (function() {
             wm.searchInput.on ('keyup', function(event) {
               wm.doSymbolSearch()
             })
-            wm.showSymbolSearchResults()
+            wm.showSymbolSearchResults (true)
 
             wm.restoreScrolling (wm.symbolSearchResultsDiv)
             wm.restoreScrolling (wm.grammarBarDiv)
@@ -3736,8 +3736,9 @@ var WikiMess = (function() {
         this.doSymbolSearch()
     },
 
-    showSymbolSearchResults: function() {
-      this.searchInput.val (this.lastSymbolSearch || '')
+    showSymbolSearchResults: function (initSearchInput) {
+      if (initSearchInput)
+        this.searchInput.val (this.lastSymbolSearch || '')
       this.symbolSearchResults = this.symbolSearchResults || { results: [] }
       this.symbolSearchResultsDiv.empty()
       this.symbolSearchDiv.hide()
