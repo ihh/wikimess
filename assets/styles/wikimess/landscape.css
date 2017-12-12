@@ -1,6 +1,5 @@
-
 /* Landscape view */
-@media all and (orientation:landscape) and (max-width: 800px) {
+@media all and (orientation:landscape) and (max-width:600px) {
     /* Game view */
     .wikimess {
 	display: flex;
