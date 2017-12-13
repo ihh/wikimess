@@ -1018,6 +1018,7 @@ input {
 
 .wikimess .compose .messageheader .privtab {
     width: 50%;
+    cursor: pointer;
 }
 
 .wikimess .compose .messageheader textarea {
