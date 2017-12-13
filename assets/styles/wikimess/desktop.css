@@ -5,6 +5,12 @@
     }
 }
 
+@media (min-width:600px) and (min-height:600px) {
+    .wikimess .navbar {
+	min-height: 90px;
+    }
+}
+
 @media (min-width:600px) {
     .wikimess {
 	display: flex;
