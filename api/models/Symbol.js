@@ -38,6 +38,11 @@ module.exports = {
       type: 'boolean',
       defaultsTo: true
     },
+
+    renamable: {
+      type: 'boolean',
+      defaultsTo: true
+    },
     
     initialized: {
       type: 'boolean',

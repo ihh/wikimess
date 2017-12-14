@@ -1253,7 +1253,11 @@ module.exports = {
 
             return Revision.create (revision)
           }).then (function() {
-            return Symbol.update ({ id: symbolID },
+            var query = { id: symbolID }
+            if (name)
+              query.or = [{ name: name },
+                          { renamable: true }]
+            return Symbol.update (query,
                                   update)
           }).then (function (symbol) {
             return Player.findOne ({ id: playerID })
