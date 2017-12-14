@@ -8,6 +8,8 @@ module.exports = {
   makeSymbolInfo: function (symbol, playerID) {
     var ownerID = symbol.owner
     var result = { symbol: { id: symbol.id } }
+    if (!symbol.renamable)
+      result.symbol.fixname = true
     if (ownerID === playerID || symbol.summary === null)
       result.symbol.rules = symbol.rules
     else {

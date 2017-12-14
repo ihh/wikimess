@@ -27,6 +27,8 @@ if (fs.existsSync (filename)) {
     var result = words.map (function (name) {
       return { name: name,
                owner: null,
+               renamable: false,
+               transferable: false,
                rules: rules[name] }
     })
     console.log (JSON.stringify (result))

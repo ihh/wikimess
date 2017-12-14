@@ -3290,7 +3290,7 @@ var WikiMess = (function() {
                         || (keycode === 37 || keycode === 39)  // left, right arrow
                         || (keycode === 8)  // backspace/delete
                     },
-                    isConstant: !editable,
+                    isConstant: (!editable || symbol.fixname),
                     updateCallback: function (newLhs) {
                       return wm.renameSymbol (symbol, newLhs)
                     },

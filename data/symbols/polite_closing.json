@@ -1,4 +1,6 @@
 [{"name":"polite_closing",
+  "owner": null,
+  "renamable": false,
   "rules":[
     ["\nYours,\n\n^me\n"],
     ["\nIn Closing, etc.,\n\n^me\n"],
