@@ -3501,11 +3501,13 @@ var WikiMess = (function() {
       this.ruleDiv[symbol.id].remove()
       delete this.ruleDiv[symbol.id]
       delete this.symbolCache[symbol.id]
+      if (Object.keys(this.ruleDiv).length === 0)
+        this.emptyGrammarSpan.show()
     },
 
     makeGrammarRuleDiv: function (symbol) {
       if (Object.keys(this.ruleDiv).length === 0 && this.emptyGrammarSpan)
-        this.emptyGrammarSpan.remove()  // remove the placerholder message
+        this.emptyGrammarSpan.hide()  // remove the placerholder message
 
       var ruleDiv = $('<div class="rule">')
       this.populateGrammarRuleDiv (ruleDiv, symbol)
@@ -3656,6 +3658,10 @@ var WikiMess = (function() {
             
             var searchButton = $('<span>')
 
+            function newSymbol() {
+              wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } })
+            }
+            
             wm.container
 	      .append ($('<div class="search">')
                        .append ($('<div class="query">')
@@ -3671,7 +3677,7 @@ var WikiMess = (function() {
                        wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Thesaurus')),
                        wm.infoPane,
                        $('<div class="subnavbar">').append
-                       (wm.makeSubNavIcon ('new', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) }),
+                       (wm.makeSubNavIcon ('new', newSymbol),
                         wm.makeHelpButton (wm.REST_getGrammarHelpHtml)))
             
             wm.searchInput.attr ('placeholder', 'Search words and phrases')
@@ -3688,15 +3694,20 @@ var WikiMess = (function() {
 
             wm.ruleDiv = {}
             wm.grammarBarDiv
-              .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
-            if (Object.keys(wm.ruleDiv).length === 0)
-              wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">')
-                                       .append ($('<div>')
-                                                .append ('To search, enter text beside ',
-                                                         wm.makeIconButton('search')),
-                                                $('<div>')
-                                                .append ('To define new phrases, tap ',
-                                                         wm.makeIconButton('new'))))
+              .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)),
+                       wm.emptyGrammarSpan = $('<span class="emptygrammar">')
+                       .append ($('<p>'),
+                                wm.makeIconButton ('search', function() { wm.searchInput.focus() }),
+                                'To search the thesaurus for word or phrase definitions, enter text beside the "Search" icon.',
+                                $('<p>'),
+                                wm.makeIconButton ('new', newSymbol),
+                                'To enter definitions for a new phrase, tap the "New" icon.',
+                                $('<p>'),
+                                wm.makeHelpButton (wm.REST_getGrammarHelpHtml),
+                                'For more help, tap the "Help" icon.'))
+
+            if (Object.keys(wm.ruleDiv).length)
+              wm.emptyGrammarSpan.hide()
 
             wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
                                  .on ('click', function() {
