@@ -1,6 +1,6 @@
 <div>
-  This is the help text for the message composer tab <span class="helpicon" icon="compose-tab"/>. The message composer allows you to build messages consisting of phrases and text.
-  You build the messages either by tapping on one of the automatically-suggested phrases, or by directly typing in text.
+  This is the help text for the message composer tab <span class="helpicon" icon="compose-tab"/>. The message composer allows you to build messages consisting of text and synonym expansions from the thesaurus.
+  You build the messages either by tapping on one of the auto-suggestions, or by directly typing in text.
 </div>
 
 <div>
@@ -17,19 +17,21 @@ In general, tap <span class="helpicon" icon="help"/> to switch between open/clos
 </div>
 
 <div>
-  The <em>Input text</em> can include regular text as well as <em>phrases</em>.
-  Phrase names can include alphanumeric characters (case-insensitive) or underscores, and must be preceded by the 'PHRASE' symbol, like this: <span class="lhslink">PHRASEan_example_phrase</span>
+  The <em>Input text</em> can include regular text as well as <em>synonym expansions</em>, which must be preceded by the 'PHRASE' symbol, like this: <span class="lhslink">PHRASEan_example_phrase</span>
+  This will look up 'an_example_phrase' in the thesaurus, and (if an entry for that phrase exists) it will randomly select one of the synonyms defined for that phrase, and insert that random definition into the <em>Expanded text</em>.
+  Phrase names can include alphanumeric characters (case-insensitive) or underscores.
 
   <div>
     To add to the <em>Input text</em>, tap one of the phrases in the <em>Suggestions</em> region.
     To delete a phrase added in this way, tap the <span class="helpicon" icon="backspace"/> which appears in <em>Suggestions</em>.
     Alternatively, tap <span class="helpicon" icon="edit"/> to edit the <em>Input text</em> manually with the keyboard, or just tap the <em>Input text</em> itself
-    (but be careful not to tap a phrase link in the <em>Input text</em>, as this will take you to the definition for that phrase in the phrasebook tab <span class="helpicon" icon="grammar-tab"/>).
+    (but be careful not to tap a synonym-expansion link in the <em>Input text</em>, as this will take you to the definition for the corresponding phrase in the thesaurus tab <span class="helpicon" icon="grammar-tab"/>).
 
 </div><div>
-  When you change the <em>Input text</em>, the <em>Expanded text</em> is automatically (and randomly) updated using the definitions in the phrase book.
-  The update of the <em>Expanded text</em> is a random generative process, and may not come out the same way twice.
-  If you don't happen to like how it came out, you can at any time tap <span class="helpicon" icon="re-roll"/> for another roll of the dice to re-randomize the <em>Expanded text</em>.
+  When you change the <em>Input text</em>, the <em>Expanded text</em> is automatically (and randomly) updated using the definitions in the thesaurus.
+  The update of the <em>Expanded text</em> is a random generative process, using different random synonyms each time, and may not come out the same way twice in a row.
+  If you don't happen to like how it came out, you can at any time tap <span class="helpicon" icon="re-roll"/> for another roll of the dice to re-randomize the <em>Expanded text</em>
+  using different synonyms from the thesaurus.
   
 </div><div>
   When you are satisfied with the <em>Expanded text</em>, tap <span class="helpicon" icon="share"/> to post it.

@@ -4,7 +4,8 @@ var filename = 'mobythes.aur'
 
 var words
 // uncomment for opt-in list of words to include; comment out to import entire thesaurus
-words = ['crap', 'delightful', 'filthy', 'rabid']
+words = ['cat', 'osculate',  // mentioned by the helptext
+         'crap', 'delightful', 'filthy', 'rabid']
 
 if (fs.existsSync (filename)) {
   var lineReader = readline.createInterface({

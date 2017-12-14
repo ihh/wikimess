@@ -148,10 +148,10 @@ var WikiMess = (function() {
 
     tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
            { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
-           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'acoustic-megaphone', },
+           { name: 'status', method: 'showStatusPage', label: 'announcements', icon: 'acoustic-megaphone', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
-           { name: 'settings', method: 'showSettingsPage', label: 'setup', icon: 'pokecog' }],
+           { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
     
     verbose: { page: false,
                request: true,
@@ -215,7 +215,7 @@ var WikiMess = (function() {
                            "It is good to say it aloud: 'Nothing has happened.' Once again: 'Nothing has happened.' Does that help?",
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
-    emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'. The thesaurus is editable.",
+    emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'. (You can edit the lists of synonyms via the thesaurus tab.)",
     emptyTemplateWarning: "_The message will appear here._",
     reloadOnDisconnect: false,
     suppressDisconnectWarning: true,
