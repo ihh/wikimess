@@ -15,7 +15,7 @@ if (fs.existsSync (filename)) {
   lineReader.on('line', function (line) {
     var defs = line.split(',')
     var name = defs[0].toLowerCase().replace(/[\s\-,]/g,'_')
-    rules[name] = defs.slice(1)
+    rules[name] = defs
       .filter (function (text) { return text.length })
       .map (function (text) { return [text] })
   })

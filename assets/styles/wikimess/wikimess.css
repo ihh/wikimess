@@ -694,6 +694,7 @@ input {
     font-style: italic;
 }
 
+.wikimess .emptygrammar svg,
 .wikimess .menubutton .button svg,
 .wikimess .ratinginfo .button svg {
     width: 1em;
@@ -861,7 +862,7 @@ input {
     flex-direction: row;
     justify-content: space-between;
     flex-wrap: wrap;
-    overflow: auto;
+    overflow: hidden;
 
     padding: 2px;
 

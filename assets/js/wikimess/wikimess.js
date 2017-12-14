@@ -146,9 +146,9 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'compose', method: 'showComposePage', label: 'write', icon: 'quill-ink' },
-           { name: 'grammar', method: 'showGrammarEditPage', label: 'define', icon: 'spell-book' },
-           { name: 'status', method: 'showStatusPage', label: 'announce', icon: 'acoustic-megaphone', },
+    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
+           { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
+           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'acoustic-megaphone', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'settings', method: 'showSettingsPage', label: 'setup', icon: 'pokecog' }],
@@ -215,7 +215,7 @@ var WikiMess = (function() {
                            "It is good to say it aloud: 'Nothing has happened.' Once again: 'Nothing has happened.' Does that help?",
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
-    emptyContentWarning: "Enter phrases here, or pick from the suggestions below.",
+    emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'. The thesaurus is editable.",
     emptyTemplateWarning: "_The message will appear here._",
     reloadOnDisconnect: false,
     suppressDisconnectWarning: true,
@@ -1718,6 +1718,8 @@ var WikiMess = (function() {
       // first, intercept whitespace strings and return them unmodified
       if (!markdown.match (/\S/))
         return markdown
+      // convert leading and trailing whitespace to '&ensp;'
+      markdown = markdown.replace(/^\s/,function(){return'&ensp;'}).replace(/\s$/,function(){return'&ensp;'})
       // next, call marked library to convert Markdown to HTML string
       var renderedHtml = marked (markdown, this.markedConfig)
           .replace (new RegExp ('\\' + playerChar + '(\\w+)', 'g'), function (match, name) {
@@ -1726,7 +1728,8 @@ var WikiMess = (function() {
       // next, call optional transform method on HTML string (e.g. to put animation styling on symbols)
       if (transform)
         renderedHtml = transform.call (wm, renderedHtml)
-      // next, convert HTML string to JQuery object, and use JQuery to add player-tag styling
+      // next, convert HTML string to JQuery object,
+      // use JQuery to add player-tag styling,
       // and asynchronously resolve player names
       var rendered = $(renderedHtml)
       $(rendered).find('.playertag')
@@ -3665,13 +3668,13 @@ var WikiMess = (function() {
                                                              wm.clearSymbolSearch.bind(wm)))),
                                 wm.symbolSearchResultsDiv)
                        .hide(),
-                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Phrase book')),
+                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Thesaurus')),
                        wm.infoPane,
                        $('<div class="subnavbar">').append
                        (wm.makeSubNavIcon ('new', function() { wm.createNewSymbol ({ symbol: { rules: [[wm.newRhsText()]] } }) }),
                         wm.makeHelpButton (wm.REST_getGrammarHelpHtml)))
             
-            wm.searchInput.attr ('placeholder', 'Search phrases')
+            wm.searchInput.attr ('placeholder', 'Search words and phrases')
             wm.placeIcon (wm.iconFilename.search, searchButton)
             searchButton.addClass('button')
               .on ('click', wm.doSymbolSearch.bind(wm))
@@ -3687,7 +3690,13 @@ var WikiMess = (function() {
             wm.grammarBarDiv
               .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
             if (Object.keys(wm.ruleDiv).length === 0)
-              wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">').text ('Search existing phrases, or add a new one.'))
+              wm.grammarBarDiv.append (wm.emptyGrammarSpan = $('<span class="emptygrammar">')
+                                       .append ($('<div>')
+                                                .append ('To search, enter text beside ',
+                                                         wm.makeIconButton('search')),
+                                                $('<div>')
+                                                .append ('To define new phrases, tap ',
+                                                         wm.makeIconButton('new'))))
 
             wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
                                  .on ('click', function() {
