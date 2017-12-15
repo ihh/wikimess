@@ -38,7 +38,7 @@ module.exports = {
     // root of reply chain?
     isRoot: {
       type: 'boolean',
-      defaultsTo: false
+      defaultsTo: true
     },
 
     // privacy

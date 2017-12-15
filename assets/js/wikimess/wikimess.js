@@ -2036,6 +2036,19 @@ var WikiMess = (function() {
     randomElement: function (array) {
       return array[Math.floor (Math.random() * array.length)]
     },
+
+    nRandomElements: function (array, n) {
+      var gotObj = {}, result = []
+      while (result.length < Math.min(array.length,n)) {
+        var i, obj
+        do {
+          i = Math.floor (Math.random() * array.length)
+        } while (gotObj[i])
+        gotObj[i] = true
+        result.push (array[i])
+      }
+      return result
+    },
     
     randomizeEmptyMessageWarning: function() {
       this.emptyMessageWarning = '_' + this.randomElement (this.emptyMessageWarnings) + '_'
@@ -3262,6 +3275,7 @@ var WikiMess = (function() {
           })
       }
 
+      var menuDiv = $('<div class="rulemenu">').hide()
       function menuSelector (name, func) {
         return $('<div class="option">')
           .text (name)
@@ -3272,7 +3286,20 @@ var WikiMess = (function() {
           })
       }
 
-      var expansionsDiv
+      var expansionsDiv, minimizeButton, maximizeButton
+      function minimize() {
+        minimizeButton.hide()
+        maximizeButton.show()
+        expansionsDiv.hide()
+	symbol.minimized = true
+      }
+      function maximize() {
+        minimizeButton.show()
+        maximizeButton.hide()
+        expansionsDiv.show()
+	symbol.minimized = false
+      }
+      
       ruleDiv.empty()
         .append (this.makeEditableElement
                  ({ element: 'div',
@@ -3296,19 +3323,10 @@ var WikiMess = (function() {
                       return wm.renameSymbol (symbol, newLhs)
                     },
                     beforeContentDiv: function() {
-                      var menuDiv = $('<div class="rulemenu">').hide()
-                      var minimizeButton = $('<span class="menubutton">')
-                          .append (wm.makeIconButton ('minimize', function (evt) {
-                            minimizeButton.hide()
-                            maximizeButton.show()
-                            expansionsDiv.hide()
-                          }))
-                      var maximizeButton = $('<span class="menubutton">')
-                          .append (wm.makeIconButton ('maximize', function (evt) {
-                            minimizeButton.show()
-                            maximizeButton.hide()
-                            expansionsDiv.show()
-                          }))
+                      minimizeButton = $('<span class="menubutton">')
+                          .append (wm.makeIconButton ('minimize', minimize))
+                      maximizeButton = $('<span class="menubutton">')
+                          .append (wm.makeIconButton ('maximize', maximize))
                       var menuButton = $('<span class="menubutton">')
                           .append (wm.makeIconButton ('menu', function (evt) {
                             menuDiv.empty()
@@ -3333,7 +3351,7 @@ var WikiMess = (function() {
                           }), menuDiv)
                       return $('<div class="menubuttons">')
                         .append (minimizeButton,
-                                 maximizeButton.hide(),
+                                 maximizeButton,
                                  menuButton)
                         .on ('click', function(evt) { evt.stopPropagation() })
                     },
@@ -3383,6 +3401,11 @@ var WikiMess = (function() {
                               .concat (symbol.rules.map (function (rhs, n) {
                                 return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
                               })))]))
+
+      if (symbol.minimized)
+	minimize()
+      else
+	maximize()
     },
 
     makeRhsText: function (rhs) {
@@ -3714,23 +3737,16 @@ var WikiMess = (function() {
             wm.restoreScrolling (wm.symbolSearchResultsDiv)
             wm.restoreScrolling (wm.grammarBarDiv)
 
-            var exampleSymbolNames = [], gotName = {}, nExamples = 3
-            for (var n = 0; n < nExamples; ++n) {
-              var i, name
-              do {
-                i = Math.floor (Math.random() * wm.exampleSymbolNames.length)
-                name = wm.exampleSymbolNames[i]
-              } while (gotName[name])
-              gotName[name] = true
-              exampleSymbolNames.push (name)
-            }
+	    var nSymbolExamples = 3, nTemplateExamples = 2
+            var exampleSymbolNames = wm.nRandomElements (wm.exampleSymbolNames, nSymbolExamples)
+	    var exampleTemplatesSpan
             
             wm.ruleDiv = {}
             wm.grammarBarDiv
               .append (wm.emptyGrammarSpan = $('<span class="emptygrammar">')
                        .append ($('<div class="grammartitle">')
                                 .append ('Wiki Messenger'),
-                                'A publicly editable, dynamic, recursive thesaurus and text generator.',
+                                'A publicly editable thesaurus and procedural text generator.',
                                 $('<p>'),
                                 wm.makeIconButton ('search', function() { wm.searchInput.focus() }),
                                 'To search the thesaurus for words or phrases, enter text beside the "Search" icon. Or, try these examples: ',
@@ -3744,7 +3760,8 @@ var WikiMess = (function() {
                                 }),
                                 $('<p>'),
                                 wm.makeIconButton ('compose-tab', function() { wm.showComposePage() }),
-                                'To generate a message using synonyms from the thesaurus, tap the "Composer" icon.',
+                                'To write a message using synonyms from the thesaurus, tap the "Composer" icon.',
+				exampleTemplatesSpan = $('<span>'),
                                 $('<p>'),
                                 wm.makeIconButton ('new', newSymbol),
                                 'To enter definitions for a new phrase, tap the "New" icon.',
@@ -3753,6 +3770,26 @@ var WikiMess = (function() {
                                 'For more help, tap the "Help" icon.'),
                        wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
 
+	    wm.REST_getPlayerSuggestTemplates (wm.playerID)
+              .then (function (result) {
+                if (result && result.templates.length)
+                  exampleTemplatesSpan.append (' Or, try one of these templates: ',
+					       wm.nRandomElements (result.templates, nTemplateExamples)
+					       .map (function (template, n) {
+                                                 return $('<span>')
+						   .append (n ? ', ' : undefined,
+							    $('<a href="#">')
+							    .text (template.title)
+							    .on ('click', function (evt) {
+							      evt.preventDefault()
+                                                              wm.REST_getPlayerTemplate (wm.playerID, template.id)
+								.then (function (templateResult) {
+								  wm.showComposePage ({ title: template.title,
+											template: templateResult.template,
+											focus: 'playerSearchInput' }) }) }))
+					       }))
+              })
+	    
             wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
                                  .on ('click', function() {
                                    $('.rulemenu').hide()
