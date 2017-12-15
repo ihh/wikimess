@@ -141,7 +141,9 @@ var WikiMess = (function() {
                     emptyStar: 'star-empty',
                     filledStar: 'star-filled',
                     halfStar: 'star-half',
-                    menu: 'menu' },
+                    menu: 'menu',
+                    minimize: 'minimize',
+                    maximize: 'maximize' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
@@ -3269,8 +3271,8 @@ var WikiMess = (function() {
             func (evt)
           })
       }
-      
-      var menuDiv = $('<div class="rulemenu">').hide()
+
+      var expansionsDiv
       ruleDiv.empty()
         .append (this.makeEditableElement
                  ({ element: 'div',
@@ -3294,32 +3296,50 @@ var WikiMess = (function() {
                       return wm.renameSymbol (symbol, newLhs)
                     },
                     beforeContentDiv: function() {
-                      return $('<div class="menubutton">')
-                        .append (wm.makeIconButton ('menu', function (evt) {
-                          evt.stopPropagation()
-                          menuDiv.empty()
-                            .append (menuSelector ('Add to draft', addToDraft()),
-                                     menuSelector ('Show sample text', randomize),
-                                     (symbol.summary
-                                      ? null
-                                      : menuSelector ('Duplicate this phrase', copySymbol)),
-                                     (linksVisible
-                                      ? menuSelector ('Hide related phrases', hideLinks)
-                                      : menuSelector ('Show related phrases', showLinks)),
-                                     (symbol.summary
-                                      ? null
-                                      : menuSelector ('Show revision history', showRecentRevisions)),
-                                     (owned
-                                      ? menuSelector ('Unlock this phrase', unlockSymbol)
-                                      : menuSelector ('Hide this phrase', hideSymbol)))
-                            .show()
-                          wm.modalExitDiv.show()
-                          wm.infoPane.hide()
-                          wm.showingHelp = false
-                        }), menuDiv)
+                      var menuDiv = $('<div class="rulemenu">').hide()
+                      var minimizeButton = $('<span class="menubutton">')
+                          .append (wm.makeIconButton ('minimize', function (evt) {
+                            minimizeButton.hide()
+                            maximizeButton.show()
+                            expansionsDiv.hide()
+                          }))
+                      var maximizeButton = $('<span class="menubutton">')
+                          .append (wm.makeIconButton ('maximize', function (evt) {
+                            minimizeButton.show()
+                            maximizeButton.hide()
+                            expansionsDiv.show()
+                          }))
+                      var menuButton = $('<span class="menubutton">')
+                          .append (wm.makeIconButton ('menu', function (evt) {
+                            menuDiv.empty()
+                              .append (menuSelector ('Add to draft', addToDraft()),
+                                       menuSelector ('Show sample text', randomize),
+                                       (symbol.summary
+                                        ? null
+                                        : menuSelector ('Duplicate this phrase', copySymbol)),
+                                       (linksVisible
+                                        ? menuSelector ('Hide related phrases', hideLinks)
+                                        : menuSelector ('Show related phrases', showLinks)),
+                                       (symbol.summary
+                                        ? null
+                                        : menuSelector ('Show revision history', showRecentRevisions)),
+                                       (owned
+                                        ? menuSelector ('Unlock this phrase', unlockSymbol)
+                                        : menuSelector ('Hide this phrase', hideSymbol)))
+                              .show()
+                            wm.modalExitDiv.show()
+                            wm.infoPane.hide()
+                            wm.showingHelp = false
+                          }), menuDiv)
+                      return $('<div class="menubuttons">')
+                        .append (minimizeButton,
+                                 maximizeButton.hide(),
+                                 menuButton)
+                        .on ('click', function(evt) { evt.stopPropagation() })
                     },
                     otherButtonDivs: function() {
-                      var ownerSpan = $('<span class="owner">').text ('Editable by anyone')
+                      var ownerSpan = $('<span class="owner">').text ('Editable by anyone'
+                                                                      + (symbol.fixname ? ' (but not renamable)' : ''))
                       if (symbol.owner) {
                         if (symbol.owner.id !== null && symbol.owner.id === wm.playerID)
                           ownerSpan.text ('Editable by you')
@@ -3340,28 +3360,29 @@ var WikiMess = (function() {
                  (symbol.summary
                   ? [$('<div class="summary">').html (wm.renderMarkdown (symbol.summary)),
                      $('<div class="protected">').text ('The owner of this phrase has not published the full definition. You are free to try and deduce it!')]
-                  : (((symbol.rules.length || !editable)
-                      ? []
-                      : [$('<span class="rhs">')
-                         .append ($('<span class="placeholder">').text (wm.noRhsWarning),
-                                  $('<span class="buttons">')
-                                  .html (wm.makeIconButton
-                                         ('plus', function (evt) {
-                                           evt.stopPropagation()
-                                           wm.saveCurrentEdit()
-                                             .then (function() {
-                                               symbol.rules = [[wm.newRhsText()]]
-                                               wm.saveSymbol(symbol)
-                                                 .then (function() {
-                                                   wm.populateGrammarRuleDiv (ruleDiv, symbol)
-                                                   wm.selectGrammarRule (symbol)
-                                                   // should probably give focus to new RHS here
-                                                 })
-                                             })
-                                         })))])
-                     .concat (symbol.rules.map (function (rhs, n) {
-                       return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
-                     })))))
+                  : [expansionsDiv = $('<div class="expansions">')
+                     .append (((symbol.rules.length || !editable)
+                               ? []
+                               : [$('<span class="rhs">')
+                                  .append ($('<span class="placeholder">').text (wm.noRhsWarning),
+                                           $('<span class="buttons">')
+                                           .html (wm.makeIconButton
+                                                  ('plus', function (evt) {
+                                                    evt.stopPropagation()
+                                                    wm.saveCurrentEdit()
+                                                      .then (function() {
+                                                        symbol.rules = [[wm.newRhsText()]]
+                                                        wm.saveSymbol(symbol)
+                                                          .then (function() {
+                                                            wm.populateGrammarRuleDiv (ruleDiv, symbol)
+                                                            wm.selectGrammarRule (symbol)
+                                                            // should probably give focus to new RHS here
+                                                          })
+                                                      })
+                                                  })))])
+                              .concat (symbol.rules.map (function (rhs, n) {
+                                return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
+                              })))]))
     },
 
     makeRhsText: function (rhs) {
@@ -3502,9 +3523,6 @@ var WikiMess = (function() {
     },
 
     makeGrammarRuleDiv: function (symbol) {
-      if (Object.keys(this.ruleDiv).length === 0 && this.emptyGrammarSpan)
-        this.emptyGrammarSpan.hide()  // remove the placerholder message
-
       var ruleDiv = $('<div class="rule">')
       this.populateGrammarRuleDiv (ruleDiv, symbol)
       this.ruleDiv[symbol.id] = ruleDiv
@@ -3709,8 +3727,7 @@ var WikiMess = (function() {
             
             wm.ruleDiv = {}
             wm.grammarBarDiv
-              .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)),
-                       wm.emptyGrammarSpan = $('<span class="emptygrammar">')
+              .append (wm.emptyGrammarSpan = $('<span class="emptygrammar">')
                        .append ($('<div class="grammartitle">')
                                 .append ('Wiki Messenger'),
                                 'A publicly editable, dynamic, recursive thesaurus and text generator.',
@@ -3722,7 +3739,7 @@ var WikiMess = (function() {
                                     .append (n ? ', ' : undefined,
                                              wm.makeSymbolSpan ({ name: name},
                                                                 function() {
-                                                                  wm.showGrammarLoadSymbol ({ name: name })
+                                                                  wm.loadGrammarSymbol ({ name: name })
                                                                 }))
                                 }),
                                 $('<p>'),
@@ -3733,13 +3750,8 @@ var WikiMess = (function() {
                                 'To enter definitions for a new phrase, tap the "New" icon.',
                                 $('<p>'),
                                 wm.makeHelpButton (wm.REST_getGrammarHelpHtml),
-                                'For more help, tap the "Help" icon.')
-                       .hide())
-
-            window.setTimeout (function() {
-              if (Object.keys(wm.ruleDiv).length === 0)
-                wm.emptyGrammarSpan.show()
-            }, wm.exampleSymbolDelay)
+                                'For more help, tap the "Help" icon.'),
+                       wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)))
 
             wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
                                  .on ('click', function() {

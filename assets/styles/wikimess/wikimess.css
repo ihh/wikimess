@@ -233,9 +233,13 @@ input {
     width: 98%;
 }
 
-.wikimess .grammarbar .rule .menubutton {
+.wikimess .grammarbar .rule .menubuttons {
     position: relative;
     float: right;
+}
+
+.wikimess .grammarbar .rule .menubuttons .menubutton {
+    padding-left: 4px;
 }
 
 .wikimess .grammarbar .rule .rulemenu {
@@ -628,8 +632,13 @@ input {
     overflow-x: auto;
 }
 
+.wikimess .grammarbar {
+    flex-grow: 1;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
 .wikimess .revisionsbar,
-.wikimess .grammarbar,
 .wikimess .detailbar {
     flex-grow: 1;
     overflow-y: auto;
