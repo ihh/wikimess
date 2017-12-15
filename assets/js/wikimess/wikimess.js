@@ -146,9 +146,9 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
-           { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
-           { name: 'status', method: 'showStatusPage', label: 'announcements', icon: 'acoustic-megaphone', },
+    tabs: [{ name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
+           { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
+           { name: 'status', method: 'showStatusPage', label: 'messages', icon: 'acoustic-megaphone', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
@@ -215,6 +215,9 @@ var WikiMess = (function() {
                            "It is good to say it aloud: 'Nothing has happened.' Once again: 'Nothing has happened.' Does that help?",
                            "We are nothing; less than nothing, and dreams. We are only what might have been..."],
                            
+    exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
+    exampleSymbolDelay: 200,
+    
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'. (You can edit the lists of synonyms via the thesaurus tab.)",
     emptyTemplateWarning: "_The message will appear here._",
     reloadOnDisconnect: false,
@@ -2105,16 +2108,14 @@ var WikiMess = (function() {
         break
       case 'grammar':
         wm.container.hide()
-        promise = this.showGrammarEditPage()
+        promise = this.showGrammarLoadSymbol (config.symbol)
           .then (function() {
-            return wm.loadGrammarSymbol (config.symbol)
-          }).then (function() {
             wm.container.show()
           })
         break
       case 'home':
       default:
-        promise = this.showComposePage()
+        promise = this.showGrammarEditPage()
         break
       }
       return promise
@@ -3234,9 +3235,7 @@ var WikiMess = (function() {
                                                    name: symbol.name,
                                                    rules: revision.rules })
                                     .then (function() {
-                                      return wm.showGrammarEditPage()
-                                    }).then (function() {
-                                      return wm.loadGrammarSymbol (symbol)
+                                      return wm.showGrammarLoadSymbol (symbol)
                                     })
                                 }
                               })
@@ -3399,10 +3398,7 @@ var WikiMess = (function() {
                                        function (evt) {
                                          wm.saveCurrentEdit()
                                            .then (function() {
-                                             wm.showGrammarEditPage()
-                                               .then (function() {
-                                                 wm.loadGrammarSymbol (rhsSym)
-                                               })
+                                             return wm.showGrammarLoadSymbol (rhsSym)
                                            })
                                        })
                   : $('<span>').html (wm.renderMarkdown (rhsSym)))
@@ -3623,6 +3619,14 @@ var WikiMess = (function() {
       })
     },
 
+    showGrammarLoadSymbol: function (symbol) {
+      var wm = this
+      return wm.showGrammarEditPage()
+        .then (function() {
+          wm.loadGrammarSymbol (symbol)
+        })
+    },
+    
     showGrammarEditPage: function() {
       var wm = this
       return this.setPage ('grammar')
@@ -3674,7 +3678,7 @@ var WikiMess = (function() {
                                                              wm.clearSymbolSearch.bind(wm)))),
                                 wm.symbolSearchResultsDiv)
                        .hide(),
-                       wm.grammarBarDiv.append ($('<div class="grammartitle">').text ('Thesaurus')),
+                       wm.grammarBarDiv,
                        wm.infoPane,
                        $('<div class="subnavbar">').append
                        (wm.makeSubNavIcon ('new', newSymbol),
@@ -3692,22 +3696,50 @@ var WikiMess = (function() {
             wm.restoreScrolling (wm.symbolSearchResultsDiv)
             wm.restoreScrolling (wm.grammarBarDiv)
 
+            var exampleSymbolNames = [], gotName = {}, nExamples = 3
+            for (var n = 0; n < nExamples; ++n) {
+              var i, name
+              do {
+                i = Math.floor (Math.random() * wm.exampleSymbolNames.length)
+                name = wm.exampleSymbolNames[i]
+              } while (gotName[name])
+              gotName[name] = true
+              exampleSymbolNames.push (name)
+            }
+            
             wm.ruleDiv = {}
             wm.grammarBarDiv
               .append (wm.cachedSymbols().map (wm.makeGrammarRuleDiv.bind (wm)),
                        wm.emptyGrammarSpan = $('<span class="emptygrammar">')
-                       .append ($('<p>'),
+                       .append ($('<div class="grammartitle">')
+                                .append ('Wiki Messenger'),
+                                'A publicly editable, dynamic, recursive thesaurus and text generator.',
+                                $('<p>'),
                                 wm.makeIconButton ('search', function() { wm.searchInput.focus() }),
-                                'To search the thesaurus for word or phrase definitions, enter text beside the "Search" icon.',
+                                'To search the thesaurus for words or phrases, enter text beside the "Search" icon. Or, try these examples: ',
+                                exampleSymbolNames.map (function (name, n) {
+                                  return $('<span>')
+                                    .append (n ? ', ' : undefined,
+                                             wm.makeSymbolSpan ({ name: name},
+                                                                function() {
+                                                                  wm.showGrammarLoadSymbol ({ name: name })
+                                                                }))
+                                }),
+                                $('<p>'),
+                                wm.makeIconButton ('compose-tab', function() { wm.showComposePage() }),
+                                'To generate a message using synonyms from the thesaurus, tap the "Composer" icon.',
                                 $('<p>'),
                                 wm.makeIconButton ('new', newSymbol),
                                 'To enter definitions for a new phrase, tap the "New" icon.',
                                 $('<p>'),
                                 wm.makeHelpButton (wm.REST_getGrammarHelpHtml),
-                                'For more help, tap the "Help" icon.'))
+                                'For more help, tap the "Help" icon.')
+                       .hide())
 
-            if (Object.keys(wm.ruleDiv).length)
-              wm.emptyGrammarSpan.hide()
+            window.setTimeout (function() {
+              if (Object.keys(wm.ruleDiv).length === 0)
+                wm.emptyGrammarSpan.show()
+            }, wm.exampleSymbolDelay)
 
             wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
                                  .on ('click', function() {

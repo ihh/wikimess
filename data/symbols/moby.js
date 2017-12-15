@@ -4,8 +4,8 @@ var filename = 'mobythes.aur'
 
 var words
 // uncomment for opt-in list of words to include; comment out to import entire thesaurus
-words = ['cat', 'osculate',  // mentioned by the helptext
-         'crap', 'delightful', 'filthy', 'rabid']
+words = ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal',  // mentioned by the helptext
+         'crap', 'delightful', 'filthy', 'rabid']  // used by intro data
 
 if (fs.existsSync (filename)) {
   var lineReader = readline.createInterface({
