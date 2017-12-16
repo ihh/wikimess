@@ -1187,6 +1187,7 @@ module.exports = {
           return symbol
         else
           return Symbol.create ({ name: symbolName,
+                                  rules: [[symbolName.replace(/_/g,' ')]],
                                   owned: false,
                                   owner: null })
       }).then (function (symbol) {
