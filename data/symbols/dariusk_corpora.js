@@ -88,6 +88,24 @@ var targets = [
     key: 'colors',
     rhs: function (entry) { return [entry.color.toLowerCase()] }
   },
+
+  { name: 'disease_diagnosis',
+    path: 'medicine/diagnoses.json',
+    key: 'codes',
+    rhs: function (entry) { return [entry.desc] }
+  },
+
+  { name: 'hebrew_god',
+    path: 'mythology/hebrew_god.json',
+    key: 'names',
+    rhs: function (entry) { return [entry.name] }
+  },
+
+  { name: 'harry_potter_spell',
+    path: 'words/spells.json',
+    key: 'spells',
+    rhs: function (entry) { return [entry.incantation] }
+  },
 ]
 
 // 12/15/2017 IH added code to autodetect key, so we can represent targets as a hash
@@ -124,6 +142,44 @@ var symbolPath = {
   federal_agency: 'governments/us_federal_agencies.json',
   military_operation: 'governments/us_mil_operations.json',
   nsa_project: 'governments/nsa_projects.json',
+  bodily_fluid: 'materials/abridged-body-fluids.json',
+  building_material: 'materials/building-materials.json',
+  decorative_stone: 'materials/decorative-stones.json',
+  common_fabric: 'materials/fabrics.json',
+  common_fiber: 'materials/fibers.json',
+  gemstone: 'materials/gemstones.json',
+  common_metal: 'materials/layperson-metals.json',
+  packaging_material: 'materials/packaging.json',
+  sculpture_material: 'materials/sculpture-materials.json',
+  pharma_drug: 'medicine/drugs.json',
+  hospital_name: 'medicine/hospitals.json',
+  greek_god: 'mythology/greek_gods.json',
+  greek_monster: 'mythology/greek_monsters.json',
+  greek_titan: 'mythology/greek_titans.json',
+  mythic_monster: 'mythology/monsters.json',
+  common_clothing: 'objects/clothing.json',
+  common_object: 'objects/objects.json',
+  home_appliance: 'technology/appliances.json',
+  software_technology: 'technology/computer_sciences.json',
+  firework: 'technology/fireworks.json',
+  brand_of_gun: 'technology/guns_n_rifles.json',
+  common_knot: 'technology/knots.json',
+  new_technology: 'technology/new_technologies.json',
+  programming_language: 'technology/programming_languages.json',
+  social_networking_website: 'technology/social_networking_websites.json',
+  video_hosting_website: 'technology/video_hosting_websites.json',
+  common_adjective: 'words/adjs.json',
+  common_adverb: 'words/adverbs.json',
+  encouraging_word: 'words/encouraging_words.json',
+  common_expletive: 'words/expletives.json',
+  common_interjection: 'words/interjections.json',
+  common_noun: 'words/nouns.json',
+  oprah_quote: 'words/oprah_quotes.json',
+  personal_noun: 'words/personal_nouns.json',
+  common_preposition: 'words/prepositions.json',
+  drunken_state: 'words/states_of_drunkenness.json',
+  emoji: 'words/emoji/emoji.json',
+  cute_kaomoji: 'words/emoji/cute_kaomoji.json',
 }
 
 Object.keys(symbolPath).forEach (function (symbol) {
@@ -135,17 +191,25 @@ bb.Promise.map (targets, function (target) {
   return rp (baseUrl + target.path)
     .then (function (htmlString) {
       var json = JSON.parse (htmlString)
-      var keys = Object.keys(json)
-	  .filter (function (key) {
-	    return _.isArray (json[key])
-	  })
-      var key = target.key || (keys.length === 1 ? keys[0] : undefined)
-      if (typeof(key) === 'undefined')
-	throw new Error ('Error autodetecting key for ' + target.path)
+      var array
+      if (target.key)
+        array = json[target.key]
+      else if (_.isArray(json))
+        array = json
+      else {
+        var keys = Object.keys(json)
+	    .filter (function (key) {
+	      return _.isArray (json[key])
+	    })
+        if (keys.length === 1)
+          array = json[keys[0]]
+      }
+      if (!array)
+        throw new Error ('Error autodetecting key for ' + target.path)
       console.warn ('$' + target.name + ' <-- ' + target.path)
       var result = { name: target.name,
                      summary: target.summary,
-                     rules: json[key].map (function (text) {
+                     rules: array.map (function (text) {
                        return target.rhs ? target.rhs(text) : [text]
                      })
                    }
