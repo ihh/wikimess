@@ -1785,11 +1785,15 @@ var WikiMess = (function() {
     },
 
     linkSymbols: function (html) {
+      // more than slightly hacky, this method...
       var nSymbols = 0
       return html.replace
       (new RegExp (symCharHtml + '([A-Za-z_]\\w*)\.([a-z]+)', 'g'),
        function (_match, name, className) {
-         return '<span class="lhslink ' + className + (nSymbols++ ? '' : ' animating') + '">' + symCharHtml + '<span class="name">' + name + '</span></span>'
+         var notFound = (className === 'notfound')
+         return '<span class="lhslink ' + className
+           + ((!notFound && nSymbols++ === 0) ? ' animating' : '')
+           + '">' + symCharHtml + '<span class="name">' + name + '</span></span>'
        })
     },
 
@@ -1844,7 +1848,7 @@ var WikiMess = (function() {
           expansion = node
         else if (node.rhs) {
           if (leaveSymbolsUnexpanded && node.name)
-            expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : 'unexpanded')
+            expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
           else {
             expansion = node.rhs.map (function (rhsSym) {
               return wm.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
@@ -1935,7 +1939,7 @@ var WikiMess = (function() {
     firstNamedSymbol: function (node) {
       var wm = this
       if (typeof(node) === 'object') {
-        if (node.name)
+        if (node.name && !node.notfound)
           return node
         if (node.rhs)
           for (var n = 0; n < node.rhs.length; ++n) {
@@ -1997,10 +2001,13 @@ var WikiMess = (function() {
             if (typeof(rhsSym) === 'string')
               return rhsSym
             var expansion = result.expansions[n++]
-            if (expansion && typeof(expansion.id) !== 'undefined') {
-              rhsSym.id = expansion.id
-              wm.symbolName[expansion.id] = expansion.name
-              wm.copyModifiers (expansion, rhsSym)
+            if (expansion) {
+              if (typeof(expansion.id) !== 'undefined') {
+                rhsSym.id = expansion.id
+                wm.symbolName[expansion.id] = expansion.name
+                wm.copyModifiers (expansion, rhsSym)
+              } else
+                rhsSym.notfound = expansion.notfound
               return expansion
             }
             return rhsSym

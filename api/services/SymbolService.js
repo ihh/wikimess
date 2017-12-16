@@ -205,7 +205,7 @@ module.exports = {
           var symInfo = extend ({ rhs: [] },
                                 (symbol
                                  ? { id: symbol.id, name: symbol.name }
-                                 : { id: query.id, name: query.name }))
+                                 : { id: query.id, name: query.name, notfound: true }))
           if (!symbol)
             return Promise.resolve (symInfo)
 

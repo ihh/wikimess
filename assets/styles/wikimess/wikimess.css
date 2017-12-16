@@ -1004,12 +1004,14 @@ input {
 }
 
 .wikimess .lhslink.limit,
+.wikimess .lhslink.notfound,
 .wikimess .lhslink.unexpanded {
     opacity: .8;
     margin-left: 2px;
     margin-right: 2px;
 }
 
+.wikimess .lhslink.notfound,
 .wikimess .lhslink.animating {
     display: inline-block;
     transform-origin: center;

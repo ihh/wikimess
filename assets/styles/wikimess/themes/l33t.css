@@ -143,6 +143,10 @@
     background-color: red;
 }
 
+.wikimess.l33t .lhslink.notfound {
+    background-color: #fdd;
+}
+
 .wikimess.l33t .lhslink.unexpanded {
     background-color: #003200;
     color: #cfc;
