@@ -5,27 +5,27 @@ var _ = require('lodash')
 var baseUrl = 'https://raw.githubusercontent.com/dariusk/corpora/master/data/'
 
 var targets = [
-  { name: 'animal',
+  { name: 'common_animal',
     path: 'animals/common.json',
     key: 'animals' },
 
-  { name: 'flower',
+  { name: 'common_flower',
     path: 'plants/flowers.json',
     key: 'flowers' },
 
-  { name: 'fruit',
+  { name: 'common_fruit',
     path: 'foods/fruits.json',
     key: 'fruits' },
 
-  { name: 'condiment',
+  { name: 'common_condiment',
     path: 'foods/condiments.json',
     key: 'condiments' },
 
-  { name: 'bread',
+  { name: 'common_bread',
     path: 'foods/breads_and_pastries.json',
     key: 'breads' },
 
-  { name: 'pastry',
+  { name: 'common_pastry',
     path: 'foods/breads_and_pastries.json',
     key: 'pastries' },
 
@@ -33,14 +33,14 @@ var targets = [
     path: 'foods/menuItems.json',
     key: 'menuItems' },
 
-  { name: 'mood',
+  { name: 'human_mood',
     path: 'humans/moods.json',
     key: 'moods' },
 
   { name: 'rich_person',
     path: 'humans/richpeople.json',
     key: 'richPeople',
-    filter: function (entry) { return [entry.name] }
+    rhs: function (entry) { return [entry.name] }
   },
 
   { name: 'lovecraftian_god',
@@ -54,6 +54,40 @@ var targets = [
   { name: 'famous_duo',
     path: 'humans/famousDuos.json',
     key: 'famousDuos' },
+
+  { name: 'english_town',
+    path: 'geography/english_towns_cities.json',
+    key: 'towns' },
+
+  { name: 'english_city',
+    path: 'geography/english_towns_cities.json',
+    key: 'cities' },
+
+  { name: 'american_city',
+    path: 'geography/us_cities.json',
+    key: 'cities',
+    rhs: function (entry) { return [entry.city] } },
+
+  { name: 'london_underground_station',
+    path: 'geography/london_underground_stations.json',
+    key: 'stations',
+    rhs: function (entry) { return [entry.name] } },
+
+  { name: 'major_sea',
+    path: 'geography/oceans.json',
+    key: 'seas',
+    rhs: function (entry) { return [entry.name] } },
+
+  { name: 'major_river',
+    path: 'geography/rivers.json',
+    key: 'rivers',
+    rhs: function (entry) { return [entry.name] } },
+  
+  { name: 'crayola_color',
+    path: 'colors/crayola.json',
+    key: 'colors',
+    rhs: function (entry) { return [entry.color.toLowerCase()] }
+  },
 ]
 
 // 12/15/2017 IH added code to autodetect key, so we can represent targets as a hash
@@ -75,6 +109,21 @@ var symbolPath = {
   famous_scientist: 'humans/scientists.json',
   music_genre: 'music/genres.json',
   musical_instrument: 'music/instruments.json',
+  random_room: 'architecture/rooms.json',
+  art_genre: 'art/isms.json',
+  car_manufacturer: 'corporations/cars.json',
+  fortune500_company: 'corporations/fortune500.json',
+  american_industry: 'corporations/industries.json',
+  american_newspaper: 'corporations/newspapers.json',
+  tv_show: 'film-tv/tv_shows.json',
+  pizza_topping: 'foods/pizzaToppings.json',
+  cocktail_name: 'foods/iba_cocktails.json',
+  common_vegetable: 'foods/vegetables.json',
+  wrestling_move: 'games/wrestling_moves.json',
+  major_country: 'geography/countries.json',
+  federal_agency: 'governments/us_federal_agencies.json',
+  military_operation: 'governments/us_mil_operations.json',
+  nsa_project: 'governments/nsa_projects.json',
 }
 
 Object.keys(symbolPath).forEach (function (symbol) {
@@ -97,7 +146,7 @@ bb.Promise.map (targets, function (target) {
       var result = { name: target.name,
                      summary: target.summary,
                      rules: json[key].map (function (text) {
-                       return target.filter ? target.filter(text) : [text]
+                       return target.rhs ? target.rhs(text) : [text]
                      })
                    }
       return result
