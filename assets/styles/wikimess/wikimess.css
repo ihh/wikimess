@@ -122,7 +122,8 @@ input {
 }
 
 .wikimess .whobar {
-    overflow-y: auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
 }
 
 .wikimess .popular .header,
@@ -390,7 +391,8 @@ input {
 
 .wikimess .infopane .content {
     clear: both;
-    overflow-y: auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
     padding: 1px;
 }
 
@@ -628,21 +630,18 @@ input {
 
 .wikimess .diffbar {
     flex-grow: 1;
-    overflow-y: auto;
     overflow-x: auto;
-}
-
-.wikimess .grammarbar {
-    flex-grow: 1;
     overflow-y: scroll;
-    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
+.wikimess .grammarbar,
 .wikimess .revisionsbar,
 .wikimess .detailbar {
     flex-grow: 1;
-    overflow-y: auto;
     overflow-x: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
 }
 
 .wikimess .revisionsbar .revision {
