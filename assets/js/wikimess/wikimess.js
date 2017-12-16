@@ -1939,7 +1939,7 @@ var WikiMess = (function() {
     firstNamedSymbol: function (node) {
       var wm = this
       if (typeof(node) === 'object') {
-        if (node.name && !node.notfound)
+        if (node.name) // && !node.notfound
           return node
         if (node.rhs)
           for (var n = 0; n < node.rhs.length; ++n) {
