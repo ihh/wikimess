@@ -1,0 +1,35 @@
+NodeList
+  = head:Node tail:NodeList {
+      return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
+     	? [head + tail[0]].concat(tail.slice(1))
+        : [head].concat(tail)
+    }
+  / head:Node { return [head] }
+
+Node
+  = "\\" escaped:[\s\S] { return escaped }
+  / text:[^\$&]+ { return text.join("") }
+  / Symbol
+  / "&" func:Identifier "{" args:NodeList "}" { return { func: func, args: args } }
+  / "&" func:Identifier sym:Symbol { return { func: func, args: [sym] } }
+  / char:[\s\S] { return char }
+
+Symbol
+  = "$" sym:UpperCaseIdentifier { return { func: 'uc', args: [{ name: sym.toLowerCase() }] } }
+  / "$" sym:CappedIdentifier { return { func: 'cap', args: [{ name: sym.toLowerCase() }] } }
+  / "$" sym:Identifier { return { name: sym.toLowerCase() } }
+  / "$(" _ sym:UpperCaseIdentifier _ ")" { return { func: 'uc', args: [{ name: sym.toLowerCase() }] } }
+  / "$(" _ sym:CappedIdentifier _ ")" { return { func: 'cap', args: [{ name: sym.toLowerCase() }] } }
+  / "$(" _ sym:Identifier _ ")" { return { name: sym.toLowerCase() } }
+
+UpperCaseIdentifier
+  = firstChar:[A-Z_] rest:[A-Z_0-9]* { return firstChar + rest.join("") }
+
+CappedIdentifier
+  = firstChar:[A-Z] rest:[A-Za-z_0-9]* { return firstChar + rest.join("") }
+
+Identifier
+  = firstChar:[A-Za-z_] rest:[A-Za-z_0-9]* { return firstChar + rest.join("") }
+
+_ "whitespace"
+  = [ \t\n\r]*
