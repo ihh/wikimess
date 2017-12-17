@@ -21,6 +21,7 @@ NodeList
         : [head].concat(tail)
     }
   / head:Node { return [head] }
+  / "" { return [] }
 
 Node
   = "\\n" { return "\n" }
@@ -64,7 +65,7 @@ VarAssignment
   / "^" varname:Identifier "=" lookup:VarLookup { return makeAssign (varname, [lookup]) }
 
 Alternation
-  = "{" opts:AltList "}" { return makeAlternation (opts) }
+  = "{" head:NodeList "|" tail:AltList "}" { return makeAlternation ([head].concat(tail)) }
 
 AltList
   = head:NodeList "|" tail:AltList { return [head].concat(tail) }
