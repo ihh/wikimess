@@ -1,3 +1,19 @@
+{
+  function makeSymbol (name) { return { type: 'sym', name: name.toLowerCase() } }
+  function makeFunction (name, args) { return { type: 'func', name: name, args: args } }
+  function makeLookup (name) { return { type: 'lookup', varname: name } }
+  function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
+  function makeAlternation (opts) { return { type: 'alt', opts: opts } }
+}
+
+OuterNodeList
+  = head:OuterNode tail:OuterNodeList {
+      return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
+     	? [head + tail[0]].concat(tail.slice(1))
+        : [head].concat(tail)
+    }
+  / head:OuterNode { return [head] }
+
 NodeList
   = head:Node tail:NodeList {
       return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
@@ -7,20 +23,52 @@ NodeList
   / head:Node { return [head] }
 
 Node
-  = "\\" escaped:[\s\S] { return escaped }
-  / text:[^\$&]+ { return text.join("") }
+  = "\\n" { return "\n" }
+  / "\\" escaped:[\s\S] { return escaped }
+  / text:[^\$&\^\{\}\|]+ { return text.join("") }
   / Symbol
-  / "&" func:Identifier "{" args:NodeList "}" { return { func: func, args: args } }
-  / "&" func:Identifier sym:Symbol { return { func: func, args: [sym] } }
-  / char:[\s\S] { return char }
+  / Function
+  / VarAssignment
+  / VarLookup
+  / Alternation
+  / char:[\$&\^] { return char }
+
+OuterNode
+  = Node
+  / char:. { return char}
 
 Symbol
-  = "$" sym:UpperCaseIdentifier { return { func: 'uc', args: [{ name: sym.toLowerCase() }] } }
-  / "$" sym:CappedIdentifier { return { func: 'cap', args: [{ name: sym.toLowerCase() }] } }
-  / "$" sym:Identifier { return { name: sym.toLowerCase() } }
-  / "$(" _ sym:UpperCaseIdentifier _ ")" { return { func: 'uc', args: [{ name: sym.toLowerCase() }] } }
-  / "$(" _ sym:CappedIdentifier _ ")" { return { func: 'cap', args: [{ name: sym.toLowerCase() }] } }
-  / "$(" _ sym:Identifier _ ")" { return { name: sym.toLowerCase() } }
+  = "$" sym:UpperCaseIdentifier { return makeFunction ('uc', [makeSymbol(sym)]) }
+  / "$" sym:CappedIdentifier { return makeFunction ('cap', [makeSymbol(sym)]) }
+  / "$" sym:Identifier { return makeSymbol (sym) }
+  / "${" _ sym:UpperCaseIdentifier _ "}" { return makeFunction ('uc', [makeSymbol(sym)]) }
+  / "${" _ sym:CappedIdentifier _ "}" { return makeFunction ('cap', [makeSymbol(sym)]) }
+  / "${" _ sym:Identifier _ "}" { return makeSymbol (sym) }
+
+Function
+  = "&" func:Identifier "{" args:NodeList "}" { return makeFunction (func, args) }
+  / "&" func:Identifier sym:Symbol { return makeFunction (func, [sym]) }
+  / "&" func:Identifier alt:Alternation { return makeFunction (func, [alt]) }
+  / "&" func:Identifier lookup:VarLookup { return makeFunction (func, [lookup]) }
+  / "&" func:Identifier innerFunc:Function { return makeFunction (func, [innerFunc]) }
+
+VarLookup
+  = "^" varname:Identifier { return makeLookup (varname) }
+  / "^{" _ varname:Identifier _ "}" { return makeLookup (varname) }
+
+VarAssignment
+  = "^" varname:Identifier "={" args:NodeList "}" { return makeAssign (varname, args) }
+  / "^" varname:Identifier "=" alt:Alternation { return makeAssign (varname, [alt]) }
+  / "^" varname:Identifier "=" sym:Symbol { return makeAssign (varname, [sym]) }
+  / "^" varname:Identifier "=" func:Function { return makeAssign (varname, [func]) }
+  / "^" varname:Identifier "=" lookup:VarLookup { return makeAssign (varname, [lookup]) }
+
+Alternation
+  = "{" opts:AltList "}" { return makeAlternation (opts) }
+
+AltList
+  = head:NodeList "|" tail:AltList { return [head].concat(tail) }
+  / head:NodeList { return [head] }
 
 UpperCaseIdentifier
   = firstChar:[A-Z_] rest:[A-Z_0-9]* { return firstChar + rest.join("") }
