@@ -2917,40 +2917,7 @@ var WikiMess = (function() {
 
     parseRhs: function (rhs, ignoreText) {
       var wm = this
-      var regex = new RegExp ('(([\\s\\S]*?)\\' + symChar + '(\\(([A-Za-z_]\\w*)\\+([A-Za-z_]\\w*)\\)|([A-Za-z_]\\w*))|[\\s\\S]+)', 'g'), match
-      var parsed = []
-      var name2id = this.symbolNameToID()
-      while ((match = regex.exec(rhs)))
-        (function() {
-          var text = match[1], symbol
-          if (match[5]) {
-            text = match[2]
-            var pre = match[4], post = match[5]
-            if (pre.match(/^(a|an|A|AN)$/))
-              symbol = { name: post, a: pre }
-            else if (post.match(/^(s|S)$/))
-              symbol = { name: pre, plural: post }
-            else
-              symbol = { name: pre }
-          } else if (match[6]) {
-            text = match[2]
-            symbol = { name: match[6] }
-          }
-          if (text && !ignoreText)
-            parsed.push (text)
-          if (symbol) {
-            if (symbol.name.match(/^[0-9_]*[A-Z][A-Z0-9_]*$/))
-              symbol.upper = true
-            else if (symbol.name.match(/^[0-9_]*[A-Z]\w*$/))
-              symbol.cap = true
-            symbol.name = symbol.name.toLowerCase()
-            var id = name2id[symbol.name]
-            if (id)
-              symbol.id = id
-            parsed.push (symbol)
-          }
-        }) ()
-      return parsed
+      return rhsParser.parse (rhs)
     },
 
     symbolOwnedByPlayer: function (symbol) {
