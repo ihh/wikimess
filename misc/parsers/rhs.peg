@@ -1,9 +1,12 @@
 {
   function makeSymbol (name) { return { type: 'sym', name: name.toLowerCase() } }
-  function makeFunction (name, args) { return { type: 'func', name: name, args: args } }
   function makeLookup (name) { return { type: 'lookup', varname: name } }
   function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
   function makeAlternation (opts) { return { type: 'alt', opts: opts } }
+  function makeFunction (name, args) { return { type: 'func', name: name, args: args } }
+
+  function makeCapped (args) { return makeFunction ('cap', args) }
+  function makeUpperCase (args) { return makeFunction ('uc', args) }
 }
 
 OuterNodeList
@@ -36,14 +39,14 @@ Node
 
 OuterNode
   = Node
-  / char:. { return char}
+  / char:. { return char }
 
 Symbol
-  = "$" sym:UpperCaseIdentifier { return makeFunction ('uc', [makeSymbol(sym)]) }
-  / "$" sym:CappedIdentifier { return makeFunction ('cap', [makeSymbol(sym)]) }
+  = "$" sym:UpperCaseIdentifier { return makeUpperCase ([makeSymbol(sym)]) }
+  / "$" sym:CappedIdentifier { return makeCapped ([makeSymbol(sym)]) }
   / "$" sym:Identifier { return makeSymbol (sym) }
-  / "${" _ sym:UpperCaseIdentifier _ "}" { return makeFunction ('uc', [makeSymbol(sym)]) }
-  / "${" _ sym:CappedIdentifier _ "}" { return makeFunction ('cap', [makeSymbol(sym)]) }
+  / "${" _ sym:UpperCaseIdentifier _ "}" { return makeUpperCase ([makeSymbol(sym)]) }
+  / "${" _ sym:CappedIdentifier _ "}" { return makeCapped ([makeSymbol(sym)]) }
   / "${" _ sym:Identifier _ "}" { return makeSymbol (sym) }
 
 Function

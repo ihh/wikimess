@@ -94,7 +94,10 @@
                 "$ref": "#/definitions/rhs"
               },
               "name": {
-                "type": "string"
+                "enum": [
+                  "cap",
+                  "uc"
+                ]
               }
             },
             "required": [

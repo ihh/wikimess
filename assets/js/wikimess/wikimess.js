@@ -2916,8 +2916,14 @@ var WikiMess = (function() {
     },
 
     parseRhs: function (rhs, ignoreText) {
-      var wm = this
-      return rhsParser.parse (rhs)
+      var wm = this, result
+      try {
+        result = rhsParser.parse (rhs)
+      } catch (e) {
+        console.warn(e)
+        result = [rhs]
+      }
+      return result
     },
 
     symbolOwnedByPlayer: function (symbol) {
