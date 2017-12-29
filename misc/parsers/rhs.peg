@@ -42,11 +42,11 @@ OuterNode
   / char:. { return char }
 
 Symbol
-  = "$" sym:UpperCaseIdentifier { return makeUpperCase ([makeSymbol(sym)]) }
-  / "$" sym:CappedIdentifier { return makeCapped ([makeSymbol(sym)]) }
+  = "$" sym:CappedIdentifier { return makeCapped ([makeSymbol(sym)]) }
+  / "$" sym:UpperCaseIdentifier { return makeUpperCase ([makeSymbol(sym)]) }
   / "$" sym:Identifier { return makeSymbol (sym) }
-  / "${" _ sym:UpperCaseIdentifier _ "}" { return makeUpperCase ([makeSymbol(sym)]) }
   / "${" _ sym:CappedIdentifier _ "}" { return makeCapped ([makeSymbol(sym)]) }
+  / "${" _ sym:UpperCaseIdentifier _ "}" { return makeUpperCase ([makeSymbol(sym)]) }
   / "${" _ sym:Identifier _ "}" { return makeSymbol (sym) }
 
 Function
@@ -74,11 +74,11 @@ AltList
   = head:NodeList "|" tail:AltList { return [head].concat(tail) }
   / head:NodeList { return [head] }
 
-UpperCaseIdentifier
-  = firstChar:[A-Z_] rest:[A-Z_0-9]* { return firstChar + rest.join("") }
-
 CappedIdentifier
-  = firstChar:[A-Z] rest:[A-Za-z_0-9]* { return firstChar + rest.join("") }
+  = firstChar:[A-Z] mid:[A-Za-z_0-9]* lc:[a-z] rest:[A-Za-z_0-9]* { return firstChar + mid.join("") + lc + rest.join("") }
+
+UpperCaseIdentifier
+  = firstChar:[A-Z] rest:[A-Z_0-9]* { return firstChar + rest.join("") }
 
 Identifier
   = firstChar:[A-Za-z_] rest:[A-Za-z_0-9]* { return firstChar + rest.join("") }
