@@ -83,8 +83,7 @@ var WikiMess = (function() {
 
   // config, defaults
   var symChar = '$', symCharHtml = '&#36;'
-  var playerChar = '@'
-  var varChar = '^'
+  var playerChar = '@', varChar = '^', funcChar = '&', leftBracketChar = '{', rightBracketChar = '}', assignChar = '='
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -3390,24 +3389,62 @@ var WikiMess = (function() {
 
     makeRhsText: function (rhs) {
       var wm = this
-      return rhs.map (function (rhsSym) {
-        return (typeof(rhsSym) === 'object'
-                ? (symChar + wm.makeSymbolName(rhsSym))
-                : rhsSym)
+      return rhs.map (function (tok, n) {
+        if (typeof(tok) === 'string')
+          return tok
+        var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
+        switch (tok.type) {
+        case 'lookup':
+          return (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                  ? (varChar + leftBracketChar + tok.name + rightBracketChar)
+                  : (varChar + tok.name))
+        case 'assign':
+          return varChar + tok.name + assignChar + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
+        case 'alt':
+          return leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
+        case 'func':
+          return funcChar + tok.name + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
+        default:
+        case 'sym':
+          return (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                  ? (symChar + leftBracketChar + wm.makeSymbolName(tok) + rightBracketChar)
+                  : (symChar + wm.makeSymbolName(tok)))
+        }
       }).join('')
     },
-    
+
     makeRhsSpan: function (rhs) {
       var wm = this
       return $('<span>')
-        .append (rhs.map (function (rhsSym) {
-          return (typeof(rhsSym) === 'object'
-                  ? wm.makeSymbolSpan (rhsSym,
-                                       function (evt) {
-                                         evt.stopPropagation()
-                                         wm.loadGrammarSymbol (rhsSym)
-                                       })
-                  : $('<span>').html (wm.renderMarkdown (rhsSym)))
+        .append (rhs.map (function (tok, n) {
+          if (typeof(tok) === 'string')
+            return $('<span>').html (wm.renderMarkdown (tok))
+          var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
+          switch (tok.type) {
+          case 'lookup':
+            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                                     ? (varChar + leftBracketChar + tok.name + rightBracketChar)
+                                     : (varChar + tok.name))
+          case 'assign':
+            return $('<span>').append (varChar + tok.name + assignChar + leftBracketChar,
+                                       wm.makeRhsSpan (tok.args),
+                                       rightBracketChar)
+          case 'alt':
+            return $('<span>').append (leftBracketChar,
+                                       tok.opts.map (function (opt) { return $('<span>').append (wm.makeRhsText(opt), '|') }),
+                                       rightBracketChar)
+          case 'func':
+            return $('<span>').append (funcChar + tok.name + leftBracketChar,
+                                       wm.makeRhsSpan (tok.args),
+                                       rightBracketChar)
+          default:
+          case 'sym':
+            return wm.makeSymbolSpan (tok,
+                                      function (evt) {
+                                        evt.stopPropagation()
+                                        wm.loadGrammarSymbol (tok)
+                                      })
+          }
         }))
     },
 
