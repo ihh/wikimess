@@ -1305,8 +1305,7 @@ var WikiMess = (function() {
 
           // autosuggest for div (point-and-click)
           function divAutosuggest() {
-            var before = wm.composition.template.content
-                .filter (function (rhsSym) { return typeof(rhsSym) === 'object' })
+            var before = wm.getSymbolNodes (wm.composition.template.content)
                 .map (function (sym) { return { id: sym.id, name: sym.name } })
             var key = autosuggestKey (before, [])
             if (wm.autosuggestStatus.lastKey !== key) {
@@ -1987,9 +1986,7 @@ var WikiMess = (function() {
 
       return templatePromise.then (function() {
         if (wm.composition.template && wm.composition.template.content) {
-          var symbolQueries = wm.composition.template.content.filter (function (rhsSym) {
-            return typeof(rhsSym) === 'object'
-          })
+          var symbolQueries = wm.getSymbolNodes (wm.composition.template.content)
           return wm.REST_postPlayerExpand (wm.playerID, symbolQueries)
         } else
           return null
@@ -2896,11 +2893,10 @@ var WikiMess = (function() {
           wm.ruleDiv[symbol.id].remove()
           wm.placeGrammarRuleDiv (symbol)
           wm.referringSymbols(symbol).forEach (function (lhsSymbol) {
-            lhsSymbol.rules = lhsSymbol.rules.map (function (rule) {
-              return rule.map (function (rhsSym) {
-                if (typeof(rhsSym) === 'object' && rhsSym.id === symbol.id)
+            lhsSymbol.rules.forEach (function (rhs) {
+              wm.getSymbolNodes(rhs).forEach (function (rhsSym) {
+                if (rhsSym.id === symbol.id)
                   rhsSym.name = symbol.name
-                return rhsSym
               })
             })
             if (lhsSymbol.id !== symbol.id)
@@ -3387,6 +3383,34 @@ var WikiMess = (function() {
 	maximize()
     },
 
+    getSymbolNodes: function (rhs) {
+      var wm = this
+      return rhs.reduce (function (result, node) {
+        var r
+        if (typeof(node) === 'object')
+          switch (node.type) {
+          case 'lookup':
+            break
+          case 'assign':
+            r = wm.getSymbolNodes (tok.args)
+            break
+          case 'alt':
+            r = tok.opts.reduce (function (altResults, opt) {
+              return altResults.concat (wm.getSymbolNodes (opt))
+            }, [])
+            break
+          case 'func':
+            r = wm.getSymbolNodes (tok.args)
+            break
+          default:
+          case 'sym':
+            r = [node]
+            break
+          }
+        return r ? result.concat(r) : result
+      }, [])
+    },
+
     makeRhsText: function (rhs) {
       var wm = this
       return rhs.map (function (tok, n) {
@@ -3431,7 +3455,7 @@ var WikiMess = (function() {
                                        rightBracketChar)
           case 'alt':
             return $('<span>').append (leftBracketChar,
-                                       tok.opts.map (function (opt) { return $('<span>').append (wm.makeRhsText(opt), '|') }),
+                                       tok.opts.map (function (opt) { return $('<span>').append (wm.makeRhsSpan(opt), '|') }),
                                        rightBracketChar)
           case 'func':
             return $('<span>').append (funcChar + tok.name + leftBracketChar,
@@ -3448,23 +3472,43 @@ var WikiMess = (function() {
         }))
     },
 
-    makeTemplateSpan: function (content) {
+    makeTemplateSpan: function (rhs) {
       var wm = this
-      if (!content || !content.filter (function (rhsSym) { return typeof(rhsSym) === 'object' || rhsSym.match(/\S/) }).length)
-        return $('<p>').html ($('<span class="placeholder">').text (wm.emptyContentWarning))
       return $('<span>')
-        .append (content.map (function (rhsSym) {
-          return (typeof(rhsSym) === 'object'
-                  ? wm.makeSymbolSpan (rhsSym,
-                                       function (evt) {
+        .append (rhs.map (function (tok, n) {
+          if (typeof(tok) === 'string')
+            return $('<span>').html (wm.renderMarkdown (tok))
+          var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
+          switch (tok.type) {
+          case 'lookup':
+            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                                     ? (varChar + leftBracketChar + tok.name + rightBracketChar)
+                                     : (varChar + tok.name))
+          case 'assign':
+            return $('<span>').append (varChar + tok.name + assignChar + leftBracketChar,
+                                       wm.makeTemplateSpan (tok.args),
+                                       rightBracketChar)
+          case 'alt':
+            return $('<span>').append (leftBracketChar,
+                                       tok.opts.map (function (opt) { return $('<span>').append (wm.makeTemplateSpan(opt), '|') }),
+                                       rightBracketChar)
+          case 'func':
+            return $('<span>').append (funcChar + tok.name + leftBracketChar,
+                                       wm.makeTemplateSpan (tok.args),
+                                       rightBracketChar)
+          default:
+          case 'sym':
+            return wm.makeSymbolSpan (tok,
+                                      function (evt) {
                                          wm.saveCurrentEdit()
                                            .then (function() {
-                                             return wm.showGrammarLoadSymbol (rhsSym)
+                                             return wm.showGrammarLoadSymbol (tok)
                                            })
-                                       })
-                  : $('<span>').html (wm.renderMarkdown (rhsSym)))
+                                      })
+          }
         }))
     },
+    
 
     makePlayerSpan: function (name, displayName, callback) {
       var nameSpan = $('<span class="name">')
@@ -3620,9 +3664,10 @@ var WikiMess = (function() {
     },
     
     lhsRefersTo: function (lhsSymbol, rhsSymbol) {
+      var wm = this
       return lhsSymbol.rules.find (function (rhs) {
-        return rhs.find (function (rhsSym) {
-          return typeof(rhsSym) === 'object' && rhsSym.id === rhsSymbol.id
+        return wm.getSymbolNodes(rhs).filter (function (rhsSym) {
+          return rhsSym.id === rhsSymbol.id
         })
       })
     },
