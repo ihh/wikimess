@@ -1984,9 +1984,14 @@ var WikiMess = (function() {
       else
         templatePromise = $.Deferred().resolve()
 
+      var symbolNodes
       return templatePromise.then (function() {
         if (wm.composition.template && wm.composition.template.content) {
-          var symbolQueries = wm.getSymbolNodes (wm.composition.template.content)
+          symbolNodes = wm.getSymbolNodes (wm.composition.template.content)
+          var symbolQueries = symbolNodes.map (function (sym) {
+            return { id: sym.id,
+                     name: sym.name }
+          })
           return wm.REST_postPlayerExpand (wm.playerID, symbolQueries)
         } else
           return null
@@ -3392,7 +3397,7 @@ var WikiMess = (function() {
           case 'lookup':
             break
           case 'assign':
-            r = wm.getSymbolNodes (tok.args)
+            r = wm.getSymbolNodes (tok.value)
             break
           case 'alt':
             r = tok.opts.reduce (function (altResults, opt) {
@@ -3410,7 +3415,7 @@ var WikiMess = (function() {
         return r ? result.concat(r) : result
       }, [])
     },
-
+          
     makeRhsText: function (rhs) {
       var wm = this
       return rhs.map (function (tok, n) {
@@ -3423,7 +3428,7 @@ var WikiMess = (function() {
                   ? (varChar + leftBracketChar + tok.name + rightBracketChar)
                   : (varChar + tok.name))
         case 'assign':
-          return varChar + tok.name + assignChar + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
+          return varChar + tok.name + assignChar + leftBracketChar + wm.makeRhsText(tok.value) + rightBracketChar
         case 'alt':
           return leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
         case 'func':
@@ -3451,7 +3456,7 @@ var WikiMess = (function() {
                                      : (varChar + tok.name))
           case 'assign':
             return $('<span>').append (varChar + tok.name + assignChar + leftBracketChar,
-                                       wm.makeRhsSpan (tok.args),
+                                       wm.makeRhsSpan (tok.value),
                                        rightBracketChar)
           case 'alt':
             return $('<span>').append (leftBracketChar,
@@ -3486,7 +3491,7 @@ var WikiMess = (function() {
                                      : (varChar + tok.name))
           case 'assign':
             return $('<span>').append (varChar + tok.name + assignChar + leftBracketChar,
-                                       wm.makeTemplateSpan (tok.args),
+                                       wm.makeTemplateSpan (tok.value),
                                        rightBracketChar)
           case 'alt':
             return $('<span>').append (leftBracketChar,
