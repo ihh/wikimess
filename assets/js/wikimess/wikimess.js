@@ -1322,7 +1322,6 @@ var WikiMess = (function() {
                                             (wm.animationExpansion
                                              ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
                                              .then (function (result) {
-                                               wm.copyModifiers (result.expansion, symbol)
                                                wm.appendToMessageBody (spacer.concat (result.expansion))
                                              })
                                              : wm.generateMessageBody())
@@ -1867,11 +1866,6 @@ var WikiMess = (function() {
       return expansion
     },
 
-    copyModifiers: function (target, source) {
-      var mods = ['cap', 'upper', 'plural', 'a']
-      mods.forEach (function (mod) { target[mod] = source[mod] })
-    },
-    
     capitalize: function (text) {
       return text
         .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
@@ -1922,32 +1916,6 @@ var WikiMess = (function() {
       var article = nounPhrase.match(/^[^A-Za-z]*[aeiou]/i) ? 'an' : 'a'
       return article + ' ' + nounPhrase
     },
-
-    countSymbolNodes: function (node, includeLimitedNodes) {
-      var wm = this
-      return (typeof(node) === 'string'
-              ? 0
-              : (node.rhs
-                 ? node.rhs.reduce (function (total, child) {
-                   return total + wm.countSymbolNodes (child, includeLimitedNodes)
-                 }, ((node.id || node.name) && (includeLimitedNodes || !node.limit)) ? 1 : 0)
-                 : 0))
-    },
-
-    firstNamedSymbol: function (node) {
-      var wm = this
-      if (typeof(node) === 'object') {
-        if (node.name) // && !node.notfound
-          return node
-        if (node.rhs)
-          for (var n = 0; n < node.rhs.length; ++n) {
-            var s = this.firstNamedSymbol (node.rhs[n])
-            if (s)
-              return s
-          }
-      }
-      return false
-    },
     
     deleteFirstSymbolName: function (node) {
       var namedNode = this.firstNamedSymbol (node)
@@ -1956,15 +1924,6 @@ var WikiMess = (function() {
         return true
       }
       return false
-    },
-
-    deleteAllSymbolNames: function (node) {
-      if (typeof(node) === 'object') {
-        if (node.name)
-          delete node.name
-        if (node.rhs)
-          node.rhs.forEach (this.deleteAllSymbolNames.bind (this))
-      }
     },
 
     generateMessageBody: function() {
@@ -1984,10 +1943,11 @@ var WikiMess = (function() {
       else
         templatePromise = $.Deferred().resolve()
 
-      var symbolNodes
+      var sampledTree, symbolNodes
       return templatePromise.then (function() {
         if (wm.composition.template && wm.composition.template.content) {
-          symbolNodes = wm.getSymbolNodes (wm.composition.template.content)
+	  sampledTree = wm.sampleParseTree (wm.composition.template.content)
+          symbolNodes = wm.getSymbolNodes (sampledTree)
           var symbolQueries = symbolNodes.map (function (sym) {
             return { id: sym.id,
                      name: sym.name }
@@ -1996,23 +1956,20 @@ var WikiMess = (function() {
         } else
           return null
       }).then (function (result) {
-        if (result) {
-          var n = 0
-          wm.composition.body = { rhs: wm.composition.template.content.map (function (rhsSym) {
-            if (typeof(rhsSym) === 'string')
-              return rhsSym
-            var expansion = result.expansions[n++]
+        if (result && result.expansions) {
+	  symbolNodes.forEach (function (symbolNode, n) {
+            var expansion = result.expansions[n]
             if (expansion) {
               if (typeof(expansion.id) !== 'undefined') {
-                rhsSym.id = expansion.id
+                symbolNode.orig.id = expansion.id
+		symbolNode.rhs = expansion.rhs
                 wm.symbolName[expansion.id] = expansion.name
-                wm.copyModifiers (expansion, rhsSym)
               } else
-                rhsSym.notfound = expansion.notfound
+                symbolNode.notfound = expansion.notfound
               return expansion
             }
-            return rhsSym
-          }) }
+	  })
+          wm.composition.body = { rhs: sampledTree }
           wm.showMessageBody ({ animate: true })
         } else
           wm.showMessageBody()
@@ -3052,7 +3009,7 @@ var WikiMess = (function() {
                                                             wm.loadGrammarSymbol (symbol)
                                                           }))
 		wm.showMessageBody ({ div: wm.infoPaneContent,
-                                      expansion: result.expansion,
+                                      expansion: { rhs: [result.expansion] },
                                       inEditor: true,
                                       animate: true })
                 wm.infoPaneLeftControls
@@ -3388,6 +3345,60 @@ var WikiMess = (function() {
 	maximize()
     },
 
+    sampleParseTree: function (rhs) {
+      var wm = this
+      return rhs.map (function (node, n) {
+	var result
+	if (typeof(node) === 'string')
+	  result = node
+	else
+	  switch (node.type) {
+	  case 'assign':
+	    result = { type: 'assign',
+		       value: wm.sampleParseTree (node.value) }
+            break
+	  case 'alt':
+	    result = wm.sampleParseTree ([wm.randomElement (node.opts)])
+            break
+	  case 'func':
+	    result = { type: 'func',
+		       args: wm.sampleParseTree (node.args) }
+            break
+	  case 'lookup':
+	    result = node
+            break
+	  default:
+	  case 'sym':
+	    result = { type: 'sym',
+		       orig: node,
+		       name: node.name }
+	    break
+	  }
+	return result
+      })
+    },
+
+    countSymbolNodes: function (node, includeLimitedNodes) {
+      var nodes = this.getSymbolNodes (node.rhs)
+      if (!includeLimitedNodes)
+	nodes = nodes.filter (function (node) {
+	  return !node.limit
+	})
+      return nodes.length
+    },
+    
+    firstNamedSymbol: function (node) {
+      var nodes = this.getSymbolNodes (node.rhs)
+	  .filter (function (node) { return node.name })
+      return nodes.length ? nodes[0] : null
+    },
+
+    deleteAllSymbolNames: function (node) {
+      this.getSymbolNodes (node.rhs).forEach (function (node) {
+	delete node.name
+      })
+    },
+
     getSymbolNodes: function (rhs) {
       var wm = this
       return rhs.reduce (function (result, node) {
@@ -3397,15 +3408,15 @@ var WikiMess = (function() {
           case 'lookup':
             break
           case 'assign':
-            r = wm.getSymbolNodes (tok.value)
+            r = wm.getSymbolNodes (node.value)
             break
           case 'alt':
-            r = tok.opts.reduce (function (altResults, opt) {
+            r = node.opts.reduce (function (altResults, opt) {
               return altResults.concat (wm.getSymbolNodes (opt))
             }, [])
             break
           case 'func':
-            r = wm.getSymbolNodes (tok.args)
+            r = wm.getSymbolNodes (node.args)
             break
           default:
           case 'sym':
