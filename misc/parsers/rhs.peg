@@ -7,6 +7,14 @@
 
   function makeCapped (args) { return makeFunction ('cap', args) }
   function makeUpperCase (args) { return makeFunction ('uc', args) }
+
+  function makeSugaredSymbol (name) {
+    if (name.match(/^[0-9_]*[A-Z].*[a-z]/))
+      return makeCapped ([makeSymbol (name)])
+    if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
+      return makeUpperCase ([makeSymbol (name)])
+    return makeSymbol (name)
+  }
 }
 
 OuterNodeList
@@ -16,6 +24,7 @@ OuterNodeList
         : [head].concat(tail)
     }
   / head:OuterNode { return [head] }
+  / "" { return [] }
 
 NodeList
   = head:Node tail:NodeList {
@@ -42,12 +51,8 @@ OuterNode
   / char:. { return char }
 
 Symbol
-  = "$" sym:CappedIdentifier { return makeCapped ([makeSymbol(sym)]) }
-  / "$" sym:UpperCaseIdentifier { return makeUpperCase ([makeSymbol(sym)]) }
-  / "$" sym:Identifier { return makeSymbol (sym) }
-  / "${" _ sym:CappedIdentifier _ "}" { return makeCapped ([makeSymbol(sym)]) }
-  / "${" _ sym:UpperCaseIdentifier _ "}" { return makeUpperCase ([makeSymbol(sym)]) }
-  / "${" _ sym:Identifier _ "}" { return makeSymbol (sym) }
+  = "$" sym:Identifier { return makeSugaredSymbol (sym) }
+  / "${" _ sym:Identifier _ "}" { return makeSugaredSymbol (sym) }
 
 Function
   = "&" func:Identifier "{" args:NodeList "}" { return makeFunction (func, args) }

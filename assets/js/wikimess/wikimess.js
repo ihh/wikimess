@@ -1283,8 +1283,8 @@ var WikiMess = (function() {
                 }
               } else {
                 // symbol suggestions
-                var beforeSymbols = wm.parseRhs (newValBefore, true).map (function (sym) { return { id: sym.id, name: sym.name } })
-                var afterSymbols = wm.parseRhs (newValAfter, true).map (function (sym) { return { id: sym.id, name: sym.name } })
+                var beforeSymbols = wm.getSymbolNodes (wm.parseRhs (newValBefore)).map (function (sym) { return { id: sym.id, name: sym.name } })
+                var afterSymbols = wm.getSymbolNodes (wm.parseRhs (newValAfter)).map (function (sym) { return { id: sym.id, name: sym.name } })
                 var key = autosuggestKey (beforeSymbols, afterSymbols)
                 if (wm.autosuggestStatus.lastKey !== key) {
                   wm.autosuggestStatus.lastKey = key
@@ -2870,7 +2870,7 @@ var WikiMess = (function() {
       }
     },
 
-    parseRhs: function (rhs, ignoreText) {
+    parseRhs: function (rhs) {
       var wm = this, result
       try {
         result = rhsParser.parse (rhs)
@@ -3471,9 +3471,10 @@ var WikiMess = (function() {
           result = tok
 	else {
           var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
+	  var nextIsAlpha = typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
           switch (tok.type) {
           case 'lookup':
-            result = (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+            result = (nextIsAlpha
                       ? (varChar + leftBracketChar + tok.name + rightBracketChar)
                       : (varChar + tok.name))
 	    break
@@ -3484,11 +3485,17 @@ var WikiMess = (function() {
             result = leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
 	    break
           case 'func':
-            result = funcChar + tok.name + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
+	    var sugaredName = wm.makeSugaredName (tok)
+	    if (sugaredName)
+	      result = (nextIsAlpha
+			? (symChar + leftBracketChar + sugaredName + rightBracketChar)
+			: (symChar + sugaredName))
+	    else
+              result = funcChar + tok.name + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
 	    break
           default:
           case 'sym':
-            result = (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+            result = (nextIsAlpha
                       ? (symChar + leftBracketChar + wm.makeSymbolName(tok) + rightBracketChar)
                       : (symChar + wm.makeSymbolName(tok)))
 	    break
@@ -3519,6 +3526,14 @@ var WikiMess = (function() {
                                        tok.opts.map (function (opt) { return $('<span>').append (wm.makeRhsSpan(opt), '|') }),
                                        rightBracketChar)
           case 'func':
+	    var sugaredName = wm.makeSugaredName (tok)
+	    if (sugaredName)
+              return wm.makeSymbolSpanWithName (tok.args[0],
+						sugaredName,
+						function (evt) {
+						  evt.stopPropagation()
+						  wm.loadGrammarSymbol (tok.args[0])
+						})
             return $('<span>').append (funcChar + tok.name + leftBracketChar,
                                        wm.makeRhsSpan (tok.args),
                                        rightBracketChar)
@@ -3554,6 +3569,14 @@ var WikiMess = (function() {
                                        tok.opts.map (function (opt) { return $('<span>').append (wm.makeTemplateSpan(opt), '|') }),
                                        rightBracketChar)
           case 'func':
+	    var sugaredName = wm.makeSugaredName (tok)
+	    if (sugaredName)
+              return wm.makeSymbolSpanWithName (tok.args[0],
+						sugaredName,
+						function (evt) {
+						  evt.stopPropagation()
+						  wm.showGrammarLoadSymbol (tok.args[0])
+						})
             return $('<span>').append (funcChar + tok.name + leftBracketChar,
                                        wm.makeTemplateSpan (tok.args),
                                        rightBracketChar)
@@ -3569,7 +3592,18 @@ var WikiMess = (function() {
           }
         }))
     },
-    
+
+    makeSugaredName: function (funcNode) {
+      var sugaredName
+      if (funcNode.args.length === 1 && typeof(funcNode.args[0]) === 'object' && funcNode.args[0].type === 'sym') {
+	var symName = wm.makeSymbolName(funcNode.args[0])
+	if (funcNode.name === 'cap' && symName.match(/[a-z]/))
+	  sugaredName = symName.replace(/[a-z]/,function(c){return c.toUpperCase()})
+	if (funcNode.name === 'uc' && symName.match(/[a-z]/))
+	  sugaredName = symName.toUpperCase()
+      }
+      return sugaredName
+    },
 
     makePlayerSpan: function (name, displayName, callback) {
       var nameSpan = $('<span class="name">')
@@ -3603,7 +3637,11 @@ var WikiMess = (function() {
     },
 
     makeSymbolSpan: function (sym, callback, elementType) {
-      var span = $('<' + (elementType || 'span') + ' class="lhslink">').append (symCharHtml, $('<span class="name">').text (this.makeSymbolName(sym)))
+      return this.makeSymbolSpanWithName (sym, this.makeSymbolName(sym), callback, elementType)
+    },
+
+    makeSymbolSpanWithName: function (sym, name, callback, elementType) {
+      var span = $('<' + (elementType || 'span') + ' class="lhslink">').append (symCharHtml, $('<span class="name">').text (name))
       if (callback)
         span.on ('click', callback)
       return span
