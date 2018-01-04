@@ -2,7 +2,7 @@
 $polite_opening $i_love_you $polite_closing
 
 >I hate you
-$polite_opening $i_hate_you $polite_ closing
+$polite_opening $i_hate_you $polite_closing
 
 >I loathe you
 $rude_opening $i_hate_you $polite_closing

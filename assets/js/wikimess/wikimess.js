@@ -459,55 +459,75 @@ var WikiMess = (function() {
     // helpers to log ajax calls
     logGet: function (url) {
       var wm = this
-      if (wm.verbose.request)
+      var before
+      if (wm.verbose.request) {
         console.log ('GET ' + url + ' request')
+	before = new Date()
+      }
       return $.get (url)
         .then (function (result) {
-          if (wm.verbose.response)
-            console.log ('GET ' + url + ' response', result)
+          if (wm.verbose.response) {
+	    var after = new Date()
+            console.log ('GET ' + url + ' response (' + (after-before) + ' ms)', result)
+	  }
           return result
         })
     },
 
     logPost: function (url, data) {
       var wm = this
-      if (wm.verbose.request)
+      var before
+      if (wm.verbose.request) {
         console.log ('POST ' + url + ' request', data)
+	before = new Date()
+      }
       return $.ajax ({ url: url,
                        method: 'POST',
                        contentType: 'application/json',
                        data: JSON.stringify(data) })
         .then (function (result) {
-          if (wm.verbose.response)
-            console.log ('POST ' + url + ' response', result)
+          if (wm.verbose.response) {
+	    var after = new Date()
+            console.log ('POST ' + url + ' response (' + (after-before) + ' ms)', result)
+	  }
           return result
         })
     },
 
     logPut: function (url, data) {
       var wm = this
-      if (wm.verbose.request)
+      var before
+      if (wm.verbose.request) {
         console.log ('PUT ' + url + ' request', data)
+	before = new Date()
+      }
       return $.ajax ({ url: url,
                        method: 'PUT',
                        contentType: 'application/json',
                        data: JSON.stringify(data) })
         .then (function (result) {
-          if (wm.verbose.response)
-            console.log ('PUT ' + url + ' response', result)
+          if (wm.verbose.response) {
+	    var after = new Date()
+            console.log ('PUT ' + url + ' response (' + (after-before) + ' ms)', result)
+	  }
           return result
         })
     },
 
     logDelete: function (url) {
       var wm = this
-      if (wm.verbose.request)
+      var before
+      if (wm.verbose.request) {
         console.log ('DELETE ' + url + ' request')
+	before = new Date()
+      }
       return $.ajax ({ url: url,
                        method: 'DELETE' })
         .then (function (result) {
-          if (wm.verbose.response)
-            console.log ('DELETE ' + url + ' response', result)
+          if (wm.verbose.response) {
+	    var after = new Date()
+            console.log ('DELETE ' + url + ' response (' + (after-before) + ' ms)', result)
+	  }
           return result
         })
     },
@@ -516,12 +536,17 @@ var WikiMess = (function() {
     socketGetPromise: function (url) {
       var wm = this
       var def = $.Deferred()
-      if (wm.verbose.request)
+      var before
+      if (wm.verbose.request) {
         console.log ('socket GET ' + url + ' request')
+	before = new Date()
+      }
       io.socket.get (url, function (resData, jwres) {
         if (jwres.statusCode == 200) {
-          if (wm.verbose.response)
-            console.log ('socket GET ' + url + ' response', resData)
+          if (wm.verbose.response) {
+	    var after = new Date()
+            console.log ('socket GET ' + url + ' response (' + (after-before) + ' ms)', resData)
+	  }
           def.resolve (resData)
         } else
           def.reject (jwres)
@@ -532,11 +557,16 @@ var WikiMess = (function() {
     socketPostPromise: function (url, data) {
       var wm = this
       var def = $.Deferred()
-      if (wm.verbose.request)
+      var before
+      if (wm.verbose.request) {
         console.log ('socket POST ' + url + ' request', data)
+	before = new Date()
+      }
       io.socket.post (url, data, function (resData, jwres) {
-        if (wm.verbose.response)
-            console.log ('socket POST ' + url + ' response', resData)
+        if (wm.verbose.response) {
+	  var after = new Date()
+          console.log ('socket POST ' + url + ' response (' + (after-before) + ' ms', resData)
+	}
         if (jwres.statusCode == 200)
           def.resolve (resData)
         else

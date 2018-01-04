@@ -8,7 +8,8 @@ var fs = require('fs'),
     extend = require('extend'),
     jsonschema = require('jsonschema'),
     Promise = require('bluebird'),
-    Sails = require('sails').constructor
+    Sails = require('sails').constructor,
+    rhsParser = require('../misc/parsers/rhs.js')
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"
@@ -415,35 +416,6 @@ function parseTemplateDefs (text) {
 }
 
 function parseRhs (rhs) {
-  rhs = rhs.replace (/\\n/g, function() { return '\n' })
-  var regex = new RegExp ('(([\\s\\S]*?)\\' + symChar + '(\\(([A-Za-z_]\\w*)\\+([A-Za-z_]\\w*)\\)|([A-Za-z_]\\w*))|[\\s\\S]+)', 'g'), match
-  var parsed = []
-  while ((match = regex.exec (rhs)))
-    (function() {
-      var text = match[1], symbol
-      if (match[5]) {
-        var pre = match[4], post = match[5]
-        if (pre.match(/^(a|an|A|AN)$/)) {
-          symbol = { name: post, a: pre }
-          text = match[2]
-        } else if (post.match(/^(s|S)$/)) {
-          symbol = { name: pre, plural: post }
-          text = match[2]
-        }
-      } else if (match[6]) {
-        text = match[2]
-        symbol = { name: match[6] }
-      }
-      if (text)
-        parsed.push (text)
-      if (symbol) {
-        if (symbol.name.match(/^[0-9_]*[A-Z][A-Z0-9_]*$/))
-          symbol.upper = true
-        else if (symbol.name.match(/^[0-9_]*[A-Z]\w*$/))
-          symbol.cap = true
-        symbol.name = symbol.name.toLowerCase()
-        parsed.push (symbol)
-      }
-    }) ()
+  var parsed = rhsParser.parse (rhs)
   return parsed
 }
