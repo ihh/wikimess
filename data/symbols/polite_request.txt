@@ -3,10 +3,10 @@ $Please$comma$basic_request
 $Basic_request
 
 >basic_request
-$give_me $money[?|.]
-$give_me your $(flower+s)[?|.]
-$lend_me your $artistic_item[?|.]
-$tell_me $personal_fact[?|.]
+$give_me $money{?|.}
+$give_me your &plural$flower{?|.}
+$lend_me your $artistic_item{?|.}
+$tell_me $personal_fact{?|.}
 
 >personal_fact
 the $personal_detail of your $relative

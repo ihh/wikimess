@@ -187,7 +187,7 @@ Object.keys(symbolPath).forEach (function (symbol) {
   targets.push ({ name: symbol,
 		  path: symbolPath[symbol] })
 })
-    
+
 bb.Promise.map (targets, function (target) {
   return rp (baseUrl + target.path)
     .then (function (htmlString) {

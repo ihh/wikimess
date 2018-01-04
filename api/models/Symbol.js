@@ -154,16 +154,29 @@ module.exports = {
   },
 
   getUsedSymbolNames: function (rules) {
+    var svc = this
     var isUsedSymbolName = {}
     rules.forEach (function (rhs) {
       rhs.forEach (function (rhsSym) {
         if (typeof(rhsSym) === 'object') {
-          if (rhsSym.hasOwnProperty('name'))
-            isUsedSymbolName[rhsSym.name] = true
-          else if (rhsSym.hasOwnProperty('id')) {
+          switch (rhsSym.type) {
+          case 'assign':
+            _.extend (isUsedSymbolName, svc.getUsedSymbolNames ([rhsSym.value]))
+            break
+          case 'alt':
+            _.extend (isUsedSymbolName, svc.getUsedSymbolNames (rhsSym.opts))
+            break
+          case 'func':
+            _.extend (isUsedSymbolName, svc.getUsedSymbolNames ([rhsSym.args]))
+            break
+          case 'sym':
             var rhsSymbol = Symbol.cache.byId[rhsSym.id]
             if (rhsSymbol)
               isUsedSymbolName[rhsSymbol.name] = true
+            break
+          case 'lookup':
+          default:
+            break
           }
         }
       })
@@ -246,7 +259,7 @@ module.exports = {
   },
 
   afterUpdate: function (symbol, callback) {
-    if (typeof(symbol.rules) === 'string')  // workaround for MySQL adapter's serialization of JSON
+    if (typeof(symbol.rules) === 'string')  // disgusting hacky workaround for MySQL adapter's serialization of JSON
       symbol.rules = JSON.parse(symbol.rules)
     Symbol.updateCache (symbol, callback)
   },

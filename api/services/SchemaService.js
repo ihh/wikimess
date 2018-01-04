@@ -177,8 +177,8 @@ module.exports = {
              "properties": {
                "type": { "const": "func" },
                "args": { "$ref": "#/definitions/rhs" },
-               "name": { "enum": ["cap", "uc"] } },
-             "required": ["type", "name", "args"],
+               "funcname": { "enum": ["uc", "cap", "plural", "a"] } },
+             "required": ["type", "funcname", "args"],
              "additionalProperties": false },
 
            { "type": "object",

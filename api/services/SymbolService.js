@@ -276,7 +276,6 @@ module.exports = {
   },
 
   updateAdjacencies: function (rhs, weight) {
-//    sails.log.debug ('Awarding '+weight+' stars to rhs ('+rhs.filter((r)=>typeof(r)==='object').map((r)=>r.id||r.name).join(',')+')')
     var symbolIDsPromise = Promise.map (rhs.filter (function (rhsSym) {
       return typeof(rhsSym) === 'object'
     }), function (rhsSym) {

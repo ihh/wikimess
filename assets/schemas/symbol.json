@@ -93,16 +93,18 @@
               "args": {
                 "$ref": "#/definitions/rhs"
               },
-              "name": {
+              "funcname": {
                 "enum": [
+                  "uc",
                   "cap",
-                  "uc"
+                  "plural",
+                  "a"
                 ]
               }
             },
             "required": [
               "type",
-              "name",
+              "funcname",
               "args"
             ],
             "additionalProperties": false

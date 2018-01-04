@@ -1352,7 +1352,8 @@ var WikiMess = (function() {
                                             (wm.animationExpansion
                                              ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
                                              .then (function (result) {
-                                               wm.appendToMessageBody (spacer.concat (result.expansion))
+                                               wm.appendToMessageBody (spacer.concat ($.extend ({ type: 'sym' },
+                                                                                                result.expansion)))
                                              })
                                              : wm.generateMessageBody())
                                         generatePromise.then (divAutosuggest)
@@ -1815,8 +1816,9 @@ var WikiMess = (function() {
       // more than slightly hacky, this method...
       var nSymbols = 0
       return html.replace
-      (new RegExp (symCharHtml + '([A-Za-z_]\\w*)\.([a-z]+)', 'g'),
+      (new RegExp (symCharHtml + '([A-Za-z_]\\w*)\.([A-Za-z]+)', 'g'),
        function (_match, name, className) {
+         className = className.toLowerCase()
          var notFound = (className === 'notfound')
          return '<span class="lhslink ' + className
            + ((!notFound && nSymbols++ === 0) ? ' animating' : '')
@@ -1919,7 +1921,7 @@ var WikiMess = (function() {
               return expansion
             }
 	  })
-          wm.composition.body = { rhs: sampledTree }
+          wm.composition.body = { type: 'root', rhs: sampledTree }
           wm.showMessageBody ({ animate: true })
         } else
           wm.showMessageBody()
@@ -2940,7 +2942,7 @@ var WikiMess = (function() {
               return wm.showComposePage
             ({ template: { content: [ symbol ] },
                title: wm.symbolName[symbol.id].replace(/_/g,' '),
-               body: expansion ? { rhs: [expansion] } : undefined,
+               body: expansion ? { type: 'root', rhs: [expansion] } : undefined,
                focus: 'playerSearchInput' })
             })
         }
@@ -3305,6 +3307,7 @@ var WikiMess = (function() {
 	  switch (node.type) {
 	  case 'assign':
 	    result = { type: 'assign',
+                       varname: node.varname,
 		       value: wm.sampleParseTree (node.value) }
             break
 	  case 'alt':
@@ -3312,6 +3315,7 @@ var WikiMess = (function() {
             break
 	  case 'func':
 	    result = { type: 'func',
+                       funcname: node.funcname,
 		       args: wm.sampleParseTree (node.args) }
             break
 	  case 'lookup':
@@ -3425,11 +3429,11 @@ var WikiMess = (function() {
           switch (tok.type) {
           case 'lookup':
             result = (nextIsAlpha
-                      ? (varChar + leftBracketChar + tok.name + rightBracketChar)
-                      : (varChar + tok.name))
+                      ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
+                      : (varChar + tok.varname))
 	    break
           case 'assign':
-            result = varChar + tok.name + assignChar + leftBracketChar + wm.makeRhsText(tok.value) + rightBracketChar
+            result = varChar + tok.varname + assignChar + leftBracketChar + wm.makeRhsText(tok.value) + rightBracketChar
 	    break
           case 'alt':
             result = leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
@@ -3441,7 +3445,7 @@ var WikiMess = (function() {
 			? (symChar + leftBracketChar + sugaredName + rightBracketChar)
 			: (symChar + sugaredName))
 	    else
-              result = funcChar + tok.name + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
+              result = funcChar + tok.funcname + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
 	    break
           default:
           case 'sym':
@@ -3465,10 +3469,10 @@ var WikiMess = (function() {
           switch (tok.type) {
           case 'lookup':
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (varChar + leftBracketChar + tok.name + rightBracketChar)
-                                     : (varChar + tok.name))
+                                     ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
+                                     : (varChar + tok.varname))
           case 'assign':
-            return $('<span>').append (varChar + tok.name + assignChar + leftBracketChar,
+            return $('<span>').append (varChar + tok.varname + assignChar + leftBracketChar,
                                        wm.makeRhsSpan (tok.value),
                                        rightBracketChar)
           case 'alt':
@@ -3484,7 +3488,7 @@ var WikiMess = (function() {
 						  evt.stopPropagation()
 						  wm.loadGrammarSymbol (tok.args[0])
 						})
-            return $('<span>').append (funcChar + tok.name + leftBracketChar,
+            return $('<span>').append (funcChar + tok.funcname + leftBracketChar,
                                        wm.makeRhsSpan (tok.args),
                                        rightBracketChar)
           default:
@@ -3508,10 +3512,10 @@ var WikiMess = (function() {
           switch (tok.type) {
           case 'lookup':
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (varChar + leftBracketChar + tok.name + rightBracketChar)
-                                     : (varChar + tok.name))
+                                     ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
+                                     : (varChar + tok.varname))
           case 'assign':
-            return $('<span>').append (varChar + tok.name + assignChar + leftBracketChar,
+            return $('<span>').append (varChar + tok.varname + assignChar + leftBracketChar,
                                        wm.makeTemplateSpan (tok.value),
                                        rightBracketChar)
           case 'alt':
@@ -3527,7 +3531,7 @@ var WikiMess = (function() {
 						  evt.stopPropagation()
 						  wm.showGrammarLoadSymbol (tok.args[0])
 						})
-            return $('<span>').append (funcChar + tok.name + leftBracketChar,
+            return $('<span>').append (funcChar + tok.funcname + leftBracketChar,
                                        wm.makeTemplateSpan (tok.args),
                                        rightBracketChar)
           default:
@@ -3547,47 +3551,71 @@ var WikiMess = (function() {
       var sugaredName
       if (funcNode.args.length === 1 && typeof(funcNode.args[0]) === 'object' && funcNode.args[0].type === 'sym') {
 	var symName = wm.makeSymbolName(funcNode.args[0])
-	if (funcNode.name === 'cap' && symName.match(/[a-z]/))
+	if (funcNode.funcname === 'cap' && symName.match(/[a-z]/))
 	  sugaredName = symName.replace(/[a-z]/,function(c){return c.toUpperCase()})
-	if (funcNode.name === 'uc' && symName.match(/[a-z]/))
+	if (funcNode.funcname === 'uc' && symName.match(/[a-z]/))
 	  sugaredName = symName.toUpperCase()
       }
       return sugaredName
     },
 
-    makeExpansionText: function (node, leaveSymbolsUnexpanded) {
+    makeRhsExpansionText: function (rhs, leaveSymbolsUnexpanded, varVal) {
+      return rhs.map (function (child) { return wm.makeExpansionText (child, leaveSymbolsUnexpanded, varVal) })
+        .join('')
+    },
+
+    makeExpansionText: function (node, leaveSymbolsUnexpanded, varVal) {
       var wm = this
+      varVal = varVal || {}
       var expansion = ''
       if (node) {
         if (typeof(node) === 'string')
           expansion = node
-        else if (node.rhs) {
-          if (leaveSymbolsUnexpanded && node.name)
-            expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
-          else {
-            expansion = node.rhs.map (function (rhsSym) {
-              return wm.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
-            }).join('')
-            if (!leaveSymbolsUnexpanded || !wm.firstNamedSymbol(node)) {
-              if (node.cap)
-                expansion = wm.capitalize (expansion)
-              if (node.upper)
-                expansion = expansion.toUpperCase()
-              if (node.plural)
-                expansion = wm.pluralForm (expansion)
-              if (node.a)
-                expansion = wm.indefiniteArticle (expansion)
+        else
+          switch (node.type) {
+          case 'assign':
+            varVal[node.varname] = wm.makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
+            break
+          case 'lookup':
+            expansion = varVal[expansion.varname]
+            break
+          case 'func':
+            var arg = wm.makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
+            switch (node.funcname) {
+            case 'cap':
+              expansion = wm.capitalize (arg)
+              break
+            case 'uc':
+              expansion = arg.toUpperCase()
+              break
+            case 'plural':
+              expansion = wm.pluralForm (arg)
+              break
+            case 'a':
+              expansion = wm.indefiniteArticle (arg)
+              break
+            default:
+              expansion = arg
+              break
             }
+            break
+          case 'root':
+          case 'sym':
+            if (leaveSymbolsUnexpanded && node.name)
+              expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
+            else if (node.rhs)
+              expansion = wm.makeRhsExpansionText (node.rhs, leaveSymbolsUnexpanded, varVal)
+            break
+          case 'alt':
+          default:
+            break
           }
-        }
       }
       return expansion
     },
 
     capitalize: function (text) {
-      return text
-        .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
-        .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+      return text.replace (/\b[a-z]/, function (m) { return m.toUpperCase() })
     },
 
     matchCase: function (model, text) {

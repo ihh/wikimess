@@ -3,7 +3,7 @@
   function makeLookup (name) { return { type: 'lookup', varname: name } }
   function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
   function makeAlternation (opts) { return { type: 'alt', opts: opts } }
-  function makeFunction (name, args) { return { type: 'func', name: name, args: args } }
+  function makeFunction (name, args) { return { type: 'func', funcname: name, args: args } }
 
   function makeCapped (args) { return makeFunction ('cap', args) }
   function makeUpperCase (args) { return makeFunction ('uc', args) }
@@ -55,11 +55,13 @@ Symbol
   / "${" _ sym:Identifier _ "}" { return makeSugaredSymbol (sym) }
 
 Function
-  = "&" func:Identifier "{" args:NodeList "}" { return makeFunction (func, args) }
-  / "&" func:Identifier sym:Symbol { return makeFunction (func, [sym]) }
-  / "&" func:Identifier alt:Alternation { return makeFunction (func, [alt]) }
-  / "&" func:Identifier lookup:VarLookup { return makeFunction (func, [lookup]) }
-  / "&" func:Identifier innerFunc:Function { return makeFunction (func, [innerFunc]) }
+  = "&" func:FunctionName "{" args:NodeList "}" { return makeFunction (func, args) }
+  / "&" func:FunctionName sym:Symbol { return makeFunction (func, [sym]) }
+  / "&" func:FunctionName alt:Alternation { return makeFunction (func, [alt]) }
+  / "&" func:FunctionName lookup:VarLookup { return makeFunction (func, [lookup]) }
+  / "&" func:FunctionName innerFunc:Function { return makeFunction (func, [innerFunc]) }
+
+FunctionName = "uc" / "cap" / "plural" / "a"
 
 VarLookup
   = "^" varname:Identifier { return makeLookup (varname) }
