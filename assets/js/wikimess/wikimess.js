@@ -1837,86 +1837,6 @@ var WikiMess = (function() {
       }, delay)
     },
     
-    makeExpansionText: function (node, leaveSymbolsUnexpanded) {
-      var wm = this
-      var expansion = ''
-      if (node) {
-        if (typeof(node) === 'string')
-          expansion = node
-        else if (node.rhs) {
-          if (leaveSymbolsUnexpanded && node.name)
-            expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
-          else {
-            expansion = node.rhs.map (function (rhsSym) {
-              return wm.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
-            }).join('')
-            if (!leaveSymbolsUnexpanded || !wm.firstNamedSymbol(node)) {
-              if (node.cap)
-                expansion = wm.capitalize (expansion)
-              if (node.upper)
-                expansion = expansion.toUpperCase()
-              if (node.plural)
-                expansion = wm.pluralForm (expansion)
-              if (node.a)
-                expansion = wm.indefiniteArticle (expansion)
-            }
-          }
-        }
-      }
-      return expansion
-    },
-
-    capitalize: function (text) {
-      return text
-        .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
-        .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
-    },
-
-    matchCase: function (model, text) {
-      return model.match(/[A-Z]/) ? text.toUpperCase() : text
-    },
-    
-    plural: function (num, singular) {
-      if (num === 1)
-        return '1 ' + singular
-      return num + ' ' + this.pluralForm (singular)
-    },
-
-    // this list needs beefing up...
-    irregularPlural: {
-      addendum: 'addenda', alga: 'algae', alumnus: 'alumni', amoeba: 'amoebae', antenna: 'antennae', bacterium: 'bacteria', cactus: 'cacti', curriculum: 'curricula', datum: 'data', fungus: 'fungi', genus: 'genera', larva: 'larvae', memorandum: 'memoranda', stimulus: 'stimuli', syllabus: 'syllabi', vertebra: 'vertebrae',
-      echo: 'echoes', embargo: 'embargoes', hero: 'heroes', potato: 'potatoes', tomato: 'tomatoes', torpedo: 'torpedoes', veto: 'vetoes', volcano: 'volcanoes',
-      child: 'children', dormouse: 'dormice', foot: 'feet', goose: 'geese', louse: 'lice', man: 'men', mouse: 'mice', ox: 'oxen', tooth: 'teeth', woman: 'women',
-      axis: 'axes', analysis: 'analyses', basis: 'bases', crisis: 'crises', diagnosis: 'diagnoses', ellipsis: 'ellipses', emphasis: 'emphases', hypothesis: 'hypotheses', neurosis: 'neuroses', oasis: 'oases', paralysis: 'paralyses', parenthesis: 'parentheses', thesis: 'theses',
-      appendix: 'appendices', index: 'indices', matrix: 'matrices',
-      barracks: 'barracks', deer: 'deer', fish: 'fish', gallows: 'gallows', means: 'means', offspring: 'offspring', series: 'series', sheep: 'sheep', species: 'species'
-    },
-
-    pluralForm: function (singular) {
-      var wm = this
-      var match
-      if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && wm.irregularPlural[match[2]])
-        return match[1] + wm.matchCase (match[2], wm.irregularPlural[match[2]]) + match[3]
-      else if (singular.match(/(ch|sh|s|x|z)\s*$/i))
-        return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + wm.matchCase(ending,'es') + spacer })
-      else if (singular.match(/[aeiou]y\s*$/i))
-        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ys') + spacer })
-      else if (singular.match(/y\s*$/i))
-        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ies') + spacer })
-      else if (singular.match(/fe?\s*$/i))
-        return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return wm.matchCase(fe,'ves') + spacer })
-      else if (singular.match(/o\s*$/i))
-        return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return wm.matchCase(o,'os') + spacer })
-      else if (singular.match(/[a-zA-Z]\s*$/i))
-        return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + wm.matchCase(c,'s') + spacer })
-      return singular
-    },
-
-    indefiniteArticle: function (nounPhrase) {
-      var article = nounPhrase.match(/^[^A-Za-z]*[aeiou]/i) ? 'an' : 'a'
-      return article + ' ' + nounPhrase
-    },
-    
     deleteFirstSymbolName: function (node) {
       var namedNode = this.firstNamedSymbol (node)
       if (namedNode && namedNode.name) {
@@ -3603,6 +3523,86 @@ var WikiMess = (function() {
 	  sugaredName = symName.toUpperCase()
       }
       return sugaredName
+    },
+
+    makeExpansionText: function (node, leaveSymbolsUnexpanded) {
+      var wm = this
+      var expansion = ''
+      if (node) {
+        if (typeof(node) === 'string')
+          expansion = node
+        else if (node.rhs) {
+          if (leaveSymbolsUnexpanded && node.name)
+            expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
+          else {
+            expansion = node.rhs.map (function (rhsSym) {
+              return wm.makeExpansionText (rhsSym, leaveSymbolsUnexpanded)
+            }).join('')
+            if (!leaveSymbolsUnexpanded || !wm.firstNamedSymbol(node)) {
+              if (node.cap)
+                expansion = wm.capitalize (expansion)
+              if (node.upper)
+                expansion = expansion.toUpperCase()
+              if (node.plural)
+                expansion = wm.pluralForm (expansion)
+              if (node.a)
+                expansion = wm.indefiniteArticle (expansion)
+            }
+          }
+        }
+      }
+      return expansion
+    },
+
+    capitalize: function (text) {
+      return text
+        .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+        .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
+    },
+
+    matchCase: function (model, text) {
+      return model.match(/[A-Z]/) ? text.toUpperCase() : text
+    },
+    
+    plural: function (num, singular) {
+      if (num === 1)
+        return '1 ' + singular
+      return num + ' ' + this.pluralForm (singular)
+    },
+
+    // this list needs beefing up...
+    irregularPlural: {
+      addendum: 'addenda', alga: 'algae', alumnus: 'alumni', amoeba: 'amoebae', antenna: 'antennae', bacterium: 'bacteria', cactus: 'cacti', curriculum: 'curricula', datum: 'data', fungus: 'fungi', genus: 'genera', larva: 'larvae', memorandum: 'memoranda', stimulus: 'stimuli', syllabus: 'syllabi', vertebra: 'vertebrae',
+      echo: 'echoes', embargo: 'embargoes', hero: 'heroes', potato: 'potatoes', tomato: 'tomatoes', torpedo: 'torpedoes', veto: 'vetoes', volcano: 'volcanoes',
+      child: 'children', dormouse: 'dormice', foot: 'feet', goose: 'geese', louse: 'lice', man: 'men', mouse: 'mice', ox: 'oxen', tooth: 'teeth', woman: 'women',
+      axis: 'axes', analysis: 'analyses', basis: 'bases', crisis: 'crises', diagnosis: 'diagnoses', ellipsis: 'ellipses', emphasis: 'emphases', hypothesis: 'hypotheses', neurosis: 'neuroses', oasis: 'oases', paralysis: 'paralyses', parenthesis: 'parentheses', thesis: 'theses',
+      appendix: 'appendices', index: 'indices', matrix: 'matrices',
+      barracks: 'barracks', deer: 'deer', fish: 'fish', gallows: 'gallows', means: 'means', offspring: 'offspring', series: 'series', sheep: 'sheep', species: 'species'
+    },
+
+    pluralForm: function (singular) {
+      var wm = this
+      var match
+      if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && wm.irregularPlural[match[2]])
+        return match[1] + wm.matchCase (match[2], wm.irregularPlural[match[2]]) + match[3]
+      else if (singular.match(/(ch|sh|s|x|z)\s*$/i))
+        return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + wm.matchCase(ending,'es') + spacer })
+      else if (singular.match(/[aeiou]y\s*$/i))
+        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ys') + spacer })
+      else if (singular.match(/y\s*$/i))
+        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ies') + spacer })
+      else if (singular.match(/fe?\s*$/i))
+        return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return wm.matchCase(fe,'ves') + spacer })
+      else if (singular.match(/o\s*$/i))
+        return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return wm.matchCase(o,'os') + spacer })
+      else if (singular.match(/[a-zA-Z]\s*$/i))
+        return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + wm.matchCase(c,'s') + spacer })
+      return singular
+    },
+
+    indefiniteArticle: function (nounPhrase) {
+      var article = nounPhrase.match(/^[^A-Za-z]*[aeiou]/i) ? 'an' : 'a'
+      return article + ' ' + nounPhrase
     },
 
     makePlayerSpan: function (name, displayName, callback) {
