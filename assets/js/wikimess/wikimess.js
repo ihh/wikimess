@@ -5,6 +5,8 @@ var WikiMess = (function() {
     config = config || {}
     $.extend (this, config)
 
+    this.ParseTree = window.parseTree
+
     this.container = $('<div class="wikimess">')
     this.pageContainer = $('#'+this.containerID)
       .addClass("wikimess-page")
@@ -82,8 +84,9 @@ var WikiMess = (function() {
   }
 
   // config, defaults
-  var symChar = '$', symCharHtml = '&#36;'
-  var playerChar = '@', varChar = '^', funcChar = '&', leftBracketChar = '{', rightBracketChar = '}', assignChar = '='
+  var symChar = parseTree.symChar, symCharHtml = parseTree.symCharHtml
+  var playerChar = parseTree.playerChar
+  var varChar = parseTree.varChar, funcChar = parseTree.funcChar, leftBracketChar = parseTree.leftBracketChar, rightBracketChar = parseTree.rightBracketChar, assignChar = parseTree.assignChar
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -907,10 +910,6 @@ var WikiMess = (function() {
 	this.messageCountDiv.hide()
     },
 
-    capitalize: function (text) {
-      return text.charAt(0).toUpperCase() + text.substr(1)
-    },
-    
     makePageTitle: function (text, titleBarClass) {
       var titleBar = $('<div class="titlebar">')
           .append ($('<span>')
@@ -1313,8 +1312,8 @@ var WikiMess = (function() {
                 }
               } else {
                 // symbol suggestions
-                var beforeSymbols = wm.getSymbolNodes (wm.parseRhs (newValBefore)).map (function (sym) { return { id: sym.id, name: sym.name } })
-                var afterSymbols = wm.getSymbolNodes (wm.parseRhs (newValAfter)).map (function (sym) { return { id: sym.id, name: sym.name } })
+                var beforeSymbols = wm.ParseTree.getSymbolNodes (wm.parseRhs (newValBefore)).map (function (sym) { return { id: sym.id, name: sym.name } })
+                var afterSymbols = wm.ParseTree.getSymbolNodes (wm.parseRhs (newValAfter)).map (function (sym) { return { id: sym.id, name: sym.name } })
                 var key = autosuggestKey (beforeSymbols, afterSymbols)
                 if (wm.autosuggestStatus.lastKey !== key) {
                   wm.autosuggestStatus.lastKey = key
@@ -1335,7 +1334,7 @@ var WikiMess = (function() {
 
           // autosuggest for div (point-and-click)
           function divAutosuggest() {
-            var before = wm.getSymbolNodes (wm.composition.template.content)
+            var before = wm.ParseTree.getSymbolNodes (wm.composition.template.content)
                 .map (function (sym) { return { id: sym.id, name: sym.name } })
             var key = autosuggestKey (before, [])
             if (wm.autosuggestStatus.lastKey !== key) {
@@ -1898,8 +1897,8 @@ var WikiMess = (function() {
       var sampledTree, symbolNodes
       return templatePromise.then (function() {
         if (wm.composition.template && wm.composition.template.content) {
-	  sampledTree = wm.sampleParseTree (wm.composition.template.content)
-          symbolNodes = wm.getSymbolNodes (sampledTree)
+	  sampledTree = wm.ParseTree.sampleParseTree (wm.composition.template.content)
+          symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
           var symbolQueries = symbolNodes.map (function (sym) {
             return { id: sym.id,
                      name: sym.name }
@@ -2806,7 +2805,7 @@ var WikiMess = (function() {
           wm.placeGrammarRuleDiv (symbol)
           wm.referringSymbols(symbol).forEach (function (lhsSymbol) {
             lhsSymbol.rules.forEach (function (rhs) {
-              wm.getSymbolNodes(rhs).forEach (function (rhsSym) {
+              wm.ParseTree.getSymbolNodes(rhs).forEach (function (rhsSym) {
                 if (rhsSym.id === symbol.id)
                   rhsSym.name = symbol.name
               })
@@ -2961,7 +2960,7 @@ var WikiMess = (function() {
                                                             wm.loadGrammarSymbol (symbol)
                                                           }))
 		wm.showMessageBody ({ div: wm.infoPaneContent,
-                                      expansion: { rhs: [result.expansion] },
+                                      expansion: { type: 'root', rhs: [result.expansion] },
                                       inEditor: true,
                                       animate: true })
                 wm.infoPaneLeftControls
@@ -3297,44 +3296,8 @@ var WikiMess = (function() {
 	maximize()
     },
 
-    sampleParseTree: function (rhs) {
-      var wm = this
-      return rhs.map (function (node, n) {
-	var result
-	if (typeof(node) === 'string')
-	  result = node
-	else
-	  switch (node.type) {
-	  case 'assign':
-	    result = { type: 'assign',
-                       varname: node.varname,
-		       value: wm.sampleParseTree (node.value) }
-            break
-	  case 'alt':
-	    result = wm.sampleParseTree ([wm.randomElement (node.opts)])
-            break
-	  case 'func':
-	    result = { type: 'func',
-                       funcname: node.funcname,
-		       args: wm.sampleParseTree (node.args) }
-            break
-	  case 'lookup':
-	    result = node
-            break
-	  default:
-	  case 'sym':
-	    result = { type: 'sym',
-		       orig: node,
-		       id: node.id,
-		       name: node.name }
-	    break
-	  }
-	return result
-      })
-    },
-
     countSymbolNodes: function (node, includeLimitedNodes) {
-      var nodes = this.getSymbolNodes (node.rhs)
+      var nodes = this.ParseTree.getSymbolNodes (node.rhs)
       if (!includeLimitedNodes)
 	nodes = nodes.filter (function (node) {
 	  return !node.limit
@@ -3343,120 +3306,19 @@ var WikiMess = (function() {
     },
     
     firstNamedSymbol: function (node) {
-      var nodes = this.getSymbolNodes (node.rhs)
+      var nodes = this.ParseTree.getSymbolNodes (node.rhs)
 	  .filter (function (node) { return node.name })
       return nodes.length ? nodes[0] : null
     },
 
     deleteAllSymbolNames: function (node) {
-      this.getSymbolNodes (node.rhs).forEach (function (node) {
+      this.ParseTree.getSymbolNodes (node.rhs).forEach (function (node) {
 	delete node.name
       })
     },
 
-    getSymbolNodes: function (rhs) {
-      var wm = this
-      return rhs.reduce (function (result, node) {
-        var r
-        if (typeof(node) === 'object')
-          switch (node.type) {
-          case 'lookup':
-            break
-          case 'assign':
-            r = wm.getSymbolNodes (node.value)
-            break
-          case 'alt':
-            r = node.opts.reduce (function (altResults, opt) {
-              return altResults.concat (wm.getSymbolNodes (opt))
-            }, [])
-            break
-          case 'func':
-            r = wm.getSymbolNodes (node.args)
-            break
-          default:
-          case 'sym':
-            r = [node]
-	    if (node.rhs)
-	      r = r.concat (wm.getSymbolNodes (node.rhs))
-            break
-          }
-        return r ? result.concat(r) : result
-      }, [])
-    },
-
-    parseTreeEmpty: function (rhs) {
-      var wm = this
-      return rhs.reduce (function (result, node) {
-	if (result) {
-          if (typeof(node) === 'string' && node.match(/\S/))
-	    result = false
-	  else {
-            switch (node.type) {
-            case 'assign':
-              result = wm.parseTreeEmpty (node.value)
-              break
-            case 'alt':
-              result = node.opts.reduce (function (r, opt) {
-		return r && wm.parseTreeEmpty (opt)
-              }, true)
-              break
-            case 'func':
-              result = wm.parseTreeEmpty (node.args)
-              break
-            case 'lookup':
-              break
-            default:
-            case 'sym':
-	      if (node.rhs)
-		result = wm.parseTreeEmpty (node.rhs)
-	      break
-            }
-	  }
-	}
-        return result
-      }, true)
-    },
-    
     makeRhsText: function (rhs) {
-      var wm = this
-      return rhs.map (function (tok, n) {
-	var result
-        if (typeof(tok) === 'string')
-          result = tok
-	else {
-          var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
-	  var nextIsAlpha = typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-          switch (tok.type) {
-          case 'lookup':
-            result = (nextIsAlpha
-                      ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
-                      : (varChar + tok.varname))
-	    break
-          case 'assign':
-            result = varChar + tok.varname + assignChar + leftBracketChar + wm.makeRhsText(tok.value) + rightBracketChar
-	    break
-          case 'alt':
-            result = leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
-	    break
-          case 'func':
-	    var sugaredName = wm.makeSugaredName (tok)
-	    if (sugaredName)
-	      result = (nextIsAlpha
-			? (symChar + leftBracketChar + sugaredName + rightBracketChar)
-			: (symChar + sugaredName))
-	    else
-              result = funcChar + tok.funcname + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
-	    break
-          default:
-          case 'sym':
-            result = (nextIsAlpha
-                      ? (symChar + leftBracketChar + wm.makeSymbolName(tok) + rightBracketChar)
-                      : (symChar + wm.makeSymbolName(tok)))
-	    break
-          }
-	}
-	return result
-      }).join('')
+      return this.ParseTree.makeRhsText (rhs, this.makeSymbolName.bind(this))
     },
 
     makeRhsSpan: function (rhs) {
@@ -3480,7 +3342,7 @@ var WikiMess = (function() {
                                        tok.opts.map (function (opt) { return $('<span>').append (wm.makeRhsSpan(opt), '|') }),
                                        rightBracketChar)
           case 'func':
-	    var sugaredName = wm.makeSugaredName (tok)
+	    var sugaredName = wm.ParseTree.makeSugaredName (tok)
 	    if (sugaredName)
               return wm.makeSymbolSpanWithName (tok.args[0],
 						sugaredName,
@@ -3523,7 +3385,7 @@ var WikiMess = (function() {
                                        tok.opts.map (function (opt) { return $('<span>').append (wm.makeTemplateSpan(opt), '|') }),
                                        rightBracketChar)
           case 'func':
-	    var sugaredName = wm.makeSugaredName (tok)
+	    var sugaredName = wm.ParseTree.makeSugaredName (tok)
 	    if (sugaredName)
               return wm.makeSymbolSpanWithName (tok.args[0],
 						sugaredName,
@@ -3545,18 +3407,6 @@ var WikiMess = (function() {
                                       })
           }
         }))
-    },
-
-    makeSugaredName: function (funcNode) {
-      var sugaredName
-      if (funcNode.args.length === 1 && typeof(funcNode.args[0]) === 'object' && funcNode.args[0].type === 'sym') {
-	var symName = wm.makeSymbolName(funcNode.args[0])
-	if (funcNode.funcname === 'cap' && symName.match(/[a-z]/))
-	  sugaredName = symName.replace(/[a-z]/,function(c){return c.toUpperCase()})
-	if (funcNode.funcname === 'uc' && symName.match(/[a-z]/))
-	  sugaredName = symName.toUpperCase()
-      }
-      return sugaredName
     },
 
     makeRhsExpansionText: function (rhs, leaveSymbolsUnexpanded, varVal) {
@@ -3583,16 +3433,16 @@ var WikiMess = (function() {
             var arg = wm.makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
             switch (node.funcname) {
             case 'cap':
-              expansion = wm.capitalize (arg)
+              expansion = wm.ParseTree.capitalize (arg)
               break
             case 'uc':
               expansion = arg.toUpperCase()
               break
             case 'plural':
-              expansion = wm.pluralForm (arg)
+              expansion = wm.ParseTree.pluralForm (arg)
               break
             case 'a':
-              expansion = wm.indefiniteArticle (arg)
+              expansion = wm.ParseTree.indefiniteArticle (arg)
               break
             default:
               expansion = arg
@@ -3614,55 +3464,10 @@ var WikiMess = (function() {
       return expansion
     },
 
-    capitalize: function (text) {
-      return text.replace (/\b[a-z]/, function (m) { return m.toUpperCase() })
-    },
-
     matchCase: function (model, text) {
       return model.match(/[A-Z]/) ? text.toUpperCase() : text
     },
     
-    plural: function (num, singular) {
-      if (num === 1)
-        return '1 ' + singular
-      return num + ' ' + this.pluralForm (singular)
-    },
-
-    // this list needs beefing up...
-    irregularPlural: {
-      addendum: 'addenda', alga: 'algae', alumnus: 'alumni', amoeba: 'amoebae', antenna: 'antennae', bacterium: 'bacteria', cactus: 'cacti', curriculum: 'curricula', datum: 'data', fungus: 'fungi', genus: 'genera', larva: 'larvae', memorandum: 'memoranda', stimulus: 'stimuli', syllabus: 'syllabi', vertebra: 'vertebrae',
-      echo: 'echoes', embargo: 'embargoes', hero: 'heroes', potato: 'potatoes', tomato: 'tomatoes', torpedo: 'torpedoes', veto: 'vetoes', volcano: 'volcanoes',
-      child: 'children', dormouse: 'dormice', foot: 'feet', goose: 'geese', louse: 'lice', man: 'men', mouse: 'mice', ox: 'oxen', tooth: 'teeth', woman: 'women',
-      axis: 'axes', analysis: 'analyses', basis: 'bases', crisis: 'crises', diagnosis: 'diagnoses', ellipsis: 'ellipses', emphasis: 'emphases', hypothesis: 'hypotheses', neurosis: 'neuroses', oasis: 'oases', paralysis: 'paralyses', parenthesis: 'parentheses', thesis: 'theses',
-      appendix: 'appendices', index: 'indices', matrix: 'matrices',
-      barracks: 'barracks', deer: 'deer', fish: 'fish', gallows: 'gallows', means: 'means', offspring: 'offspring', series: 'series', sheep: 'sheep', species: 'species'
-    },
-
-    pluralForm: function (singular) {
-      var wm = this
-      var match
-      if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && wm.irregularPlural[match[2]])
-        return match[1] + wm.matchCase (match[2], wm.irregularPlural[match[2]]) + match[3]
-      else if (singular.match(/(ch|sh|s|x|z)\s*$/i))
-        return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + wm.matchCase(ending,'es') + spacer })
-      else if (singular.match(/[aeiou]y\s*$/i))
-        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ys') + spacer })
-      else if (singular.match(/y\s*$/i))
-        return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ies') + spacer })
-      else if (singular.match(/fe?\s*$/i))
-        return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return wm.matchCase(fe,'ves') + spacer })
-      else if (singular.match(/o\s*$/i))
-        return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return wm.matchCase(o,'os') + spacer })
-      else if (singular.match(/[a-zA-Z]\s*$/i))
-        return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + wm.matchCase(c,'s') + spacer })
-      return singular
-    },
-
-    indefiniteArticle: function (nounPhrase) {
-      var article = nounPhrase.match(/^[^A-Za-z]*[aeiou]/i) ? 'an' : 'a'
-      return article + ' ' + nounPhrase
-    },
-
     makePlayerSpan: function (name, displayName, callback) {
       var nameSpan = $('<span class="name">')
       var span = $('<span class="player">').addClass(callback ? 'playerlink' : 'playertag').append (playerChar, nameSpan)
@@ -3683,14 +3488,6 @@ var WikiMess = (function() {
         name = sym.name
       else if (typeof(sym.id) !== 'undefined')
         name = wm.symbolName[sym.id]
-      if (sym.upper)
-        name = name.toUpperCase()
-      else if (sym.cap)
-        name = name.replace (/([a-z])/, function (c) { return c.toUpperCase() })
-      if (sym.a)
-        name = '(' + sym.a + '+' + name + ')'
-      else if (sym.plural)
-        name = '(' + name + '+' + sym.plural + ')'
       return name
     },
 
