@@ -26,7 +26,8 @@ module.exports = {
             res.json (symbols)
           })
         }).catch (function (err) {
-          console.log(err)
+          console.log (JSON.stringify (req.body))
+          console.log (err)
           res.status(500).send ({ message: err })
         })
     } else

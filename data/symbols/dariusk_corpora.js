@@ -178,8 +178,9 @@ var symbolPath = {
   personal_noun: 'words/personal_nouns.json',
   common_preposition: 'words/prepositions.json',
   drunken_state: 'words/states_of_drunkenness.json',
-  emoji: 'words/emoji/emoji.json',
-  cute_kaomoji: 'words/emoji/cute_kaomoji.json',
+// Commented out the emoji; Unicode makes Sails barf, apparently
+//  emoji: 'words/emoji/emoji.json',
+//  cute_kaomoji: 'words/emoji/cute_kaomoji.json',
 }
 
 Object.keys(symbolPath).forEach (function (symbol) {
