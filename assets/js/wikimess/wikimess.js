@@ -1406,7 +1406,7 @@ var WikiMess = (function() {
             })
 
           delete wm.animationExpansion
-          if (config.body && config.body.rhs && config.body.rhs.find (function (x) { return typeof(x) === 'string' && x.match(/\S/) })) {
+          if (config.body && config.body.rhs && !wm.parseTreeEmpty (config.body.rhs)) {
             wm.composition.body = config.body
             wm.showMessageBody()
           } else if (config.template)
@@ -1963,7 +1963,7 @@ var WikiMess = (function() {
               if (typeof(expansion.id) !== 'undefined') {
                 symbolNode.orig.id = expansion.id
 		symbolNode.rhs = expansion.rhs
-                wm.symbolName[expansion.id] = expansion.name
+                symbolNode.name = wm.symbolName[expansion.id] = expansion.name
               } else
                 symbolNode.notfound = expansion.notfound
               return expansion
@@ -1988,7 +1988,8 @@ var WikiMess = (function() {
         delete wm.animationSteps
         this.startAnimatingExpansion()
       } else {
-        wm.deleteAllSymbolNames (wm.animationExpansion)
+	if (wm.animationExpansion)
+          wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
         div.html (this.renderMarkdown (wm.makeExpansionText (expansion)
                                        .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
@@ -2053,10 +2054,7 @@ var WikiMess = (function() {
     },
 
     templateIsEmpty: function() {
-      return !wm.composition.template.content
-        || !wm.composition.template.content.filter (function (rhsSym) {
-          return typeof(rhsSym) === 'object' || rhsSym.match(/\S/)
-        }).length
+      return !this.composition || !this.composition.template || !this.composition.template.content || this.parseTreeEmpty (this.composition.template.content)
     },
 
     // initial page
@@ -2981,9 +2979,11 @@ var WikiMess = (function() {
                 })
             })
           expandedPromise.then (function() {
-              if (wm.composition && wm.composition.template && wm.composition.template.content) {
-                if (expansion && wm.composition.body && wm.composition.body.rhs)
-                  wm.composition.body.rhs = wm.composition.body.rhs.concat (expansion.rhs)
+	    if (expansion)
+	      expansion = $.extend ({ type: 'sym' }, expansion)
+            if (!wm.templateIsEmpty()) {
+              if (expansion && wm.composition.body && wm.composition.body.rhs)
+                wm.composition.body.rhs.push (expansion)
               wm.composition.template.content.push ({ id: symbol.id })
               return wm.showComposePage()
             } else
@@ -3371,6 +3371,7 @@ var WikiMess = (function() {
 	  case 'sym':
 	    result = { type: 'sym',
 		       orig: node,
+		       id: node.id,
 		       name: node.name }
 	    break
 	  }
@@ -3421,35 +3422,79 @@ var WikiMess = (function() {
           default:
           case 'sym':
             r = [node]
+	    if (node.rhs)
+	      r = r.concat (wm.getSymbolNodes (node.rhs))
             break
           }
         return r ? result.concat(r) : result
       }, [])
     },
-          
+
+    parseTreeEmpty: function (rhs) {
+      var wm = this
+      return rhs.reduce (function (result, node) {
+	if (result) {
+          if (typeof(node) === 'string' && node.match(/\S/))
+	    result = false
+	  else {
+            switch (node.type) {
+            case 'assign':
+              result = wm.parseTreeEmpty (node.value)
+              break
+            case 'alt':
+              result = node.opts.reduce (function (r, opt) {
+		return r && wm.parseTreeEmpty (opt)
+              }, true)
+              break
+            case 'func':
+              result = wm.parseTreeEmpty (node.args)
+              break
+            case 'lookup':
+              break
+            default:
+            case 'sym':
+	      if (node.rhs)
+		result = wm.parseTreeEmpty (node.rhs)
+	      break
+            }
+	  }
+	}
+        return result
+      }, true)
+    },
+    
     makeRhsText: function (rhs) {
       var wm = this
       return rhs.map (function (tok, n) {
+	var result
         if (typeof(tok) === 'string')
-          return tok
-        var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
-        switch (tok.type) {
-        case 'lookup':
-          return (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                  ? (varChar + leftBracketChar + tok.name + rightBracketChar)
-                  : (varChar + tok.name))
-        case 'assign':
-          return varChar + tok.name + assignChar + leftBracketChar + wm.makeRhsText(tok.value) + rightBracketChar
-        case 'alt':
-          return leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
-        case 'func':
-          return funcChar + tok.name + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
-        default:
-        case 'sym':
-          return (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                  ? (symChar + leftBracketChar + wm.makeSymbolName(tok) + rightBracketChar)
-                  : (symChar + wm.makeSymbolName(tok)))
-        }
+          result = tok
+	else {
+          var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
+          switch (tok.type) {
+          case 'lookup':
+            result = (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                      ? (varChar + leftBracketChar + tok.name + rightBracketChar)
+                      : (varChar + tok.name))
+	    break
+          case 'assign':
+            result = varChar + tok.name + assignChar + leftBracketChar + wm.makeRhsText(tok.value) + rightBracketChar
+	    break
+          case 'alt':
+            result = leftBracketChar + tok.opts.map (function (opt) { return wm.makeRhsText(opt) }).join('|') + rightBracketChar
+	    break
+          case 'func':
+            result = funcChar + tok.name + leftBracketChar + wm.makeRhsText(tok.args) + rightBracketChar
+	    break
+          default:
+          case 'sym':
+            result = (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                      ? (symChar + leftBracketChar + wm.makeSymbolName(tok) + rightBracketChar)
+                      : (symChar + wm.makeSymbolName(tok)))
+	    break
+          }
+	}
+	return result
       }).join('')
     },
 
