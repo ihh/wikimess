@@ -1436,7 +1436,7 @@ var WikiMess = (function() {
             })
 
           delete wm.animationExpansion
-          if (config.body && config.body.rhs && !wm.parseTreeEmpty (config.body.rhs)) {
+          if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs)) {
             wm.composition.body = config.body
             wm.showMessageBody()
           } else if (config.template)
@@ -2005,7 +2005,7 @@ var WikiMess = (function() {
     },
 
     templateIsEmpty: function() {
-      return !this.composition || !this.composition.template || !this.composition.template.content || this.parseTreeEmpty (this.composition.template.content)
+      return !this.composition || !this.composition.template || !this.composition.template.content || this.ParseTree.parseTreeEmpty (this.composition.template.content)
     },
 
     // initial page
