@@ -12,7 +12,7 @@ This works for me on my late-2014 iMac (OS X El Capitan 10.11.16)
 
 Then point your browser to [localhost:1337](http://localhost:1337/).
 
-You will also need MySQL and Redis running on localhost.
+You will also need MySQL (for the database) and Redis (for the session store) running on localhost.
 
 The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-e` to the [load-data.js](bin/load-data.js) script
 

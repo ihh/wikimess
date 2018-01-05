@@ -4,7 +4,7 @@ $Basic_request
 
 >basic_request
 $give_me $money{?|.}
-$give_me your &plural$flower{?|.}
+$give_me your &plural$common_flower{?|.}
 $lend_me your $artistic_item{?|.}
 $tell_me $personal_fact{?|.}
 

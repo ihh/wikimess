@@ -164,7 +164,7 @@ module.exports = {
     rng = rng || Math.random
 
     var results = []
-
+    
     function* symGenerator() {
       var n = 0
       while (n < symbols.length)
@@ -208,6 +208,7 @@ module.exports = {
                                 (symbol
                                  ? { id: symbol.id, name: symbol.name }
                                  : { id: query.id, name: query.name, notfound: true }))
+
           if (!symbol)
             return Promise.resolve (symInfo)
             
@@ -221,7 +222,12 @@ module.exports = {
           var rhs = parseTree.sampleParseTree (symbol.rules.length ? parseTree.randomElement(symbol.rules,rng) : [], rng)
           var rhsSyms = parseTree.getSymbolNodes (rhs)
           
-          return SymbolService.expandSymbols (rhsSyms.map (function (rhsSym) { return { id: rhsSym.id } }), Symbol.maxRhsSyms, info, nextDepth, rng)
+          return SymbolService.expandSymbols (rhsSyms.map (function (rhsSym) { return { id: rhsSym.id,
+                                                                                        name: rhsSym.name } }),
+                                              Symbol.maxRhsSyms,
+                                              info,
+                                              nextDepth,
+                                              rng)
             .then (function (rhsExpansions) {
               rhsExpansions.forEach (function (rhsExpansion, n) {
                 extend (rhsSyms[n], rhsExpansion)
