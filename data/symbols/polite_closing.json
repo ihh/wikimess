@@ -2,13 +2,13 @@
   "owner": null,
   "renamable": false,
   "rules":[
-    ["\nYours,\n\n^me\n"],
-    ["\nIn Closing, etc.,\n\n^me\n"],
-    ["\nYours Faithfully,\n\n^me\n"],
-    ["\nYours Sincerely,\n\n^me\n"],
-    ["\nYours in Good Faith,\n\n^me\n"],
-    ["\nYours Honorably,\n\n^me\n"],
-    ["\nYours as Always,\n\n^me\n"],
-    ["\nEver Yours,\n\n^me\n"],
+    ["\nYours,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nIn Closing, etc.,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nYours Faithfully,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nYours Sincerely,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nYours in Good Faith,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nYours Honorably,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nYours as Always,\n\n", {"type":"lookup","varname":"me"}],
+    ["\nEver Yours,\n\n", {"type":"lookup","varname":"me"}],
     ["\nYours....\n"]
   ]}]

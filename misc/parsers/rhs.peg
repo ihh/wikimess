@@ -38,7 +38,7 @@ NodeList
 Node
   = "\\n" { return "\n" }
   / "\\" escaped:[\s\S] { return escaped }
-  / text:[^\$&\^\{\}\|]+ { return text.join("") }
+  / text:[^\$&\^\{\}\|\\]+ { return text.join("") }
   / Symbol
   / Function
   / VarAssignment

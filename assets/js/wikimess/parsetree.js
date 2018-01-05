@@ -201,13 +201,9 @@
     return sugaredName
   }
 
-  function defaultVarText (text) {
-    return '<span class="var">' + text + '</span>'
-  }
-
   function defaultVarVal() {
-    return { me: defaultVarText('Sender'),
-             you: defaultVarText('Recipient') }
+    return { me: '_Sender_',
+             you: '_Recipient_' }
   }
 
   var defaultSummaryLen = 64
@@ -233,7 +229,7 @@
           varVal[node.varname] = makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
           break
         case 'lookup':
-          expansion = varVal[expansion.varname]
+          expansion = varVal[node.varname]
           break
         case 'func':
           var arg = makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
@@ -475,7 +471,6 @@
     makeSugaredName: makeSugaredName,
     makeExpansionText: makeExpansionText,
     summarizeExpansion: summarizeExpansion,
-    defaultVarText: defaultVarText,
     // English grammar
     conjugate: conjugate,
     was: was,

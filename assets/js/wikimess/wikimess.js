@@ -2345,8 +2345,12 @@ var WikiMess = (function() {
     },
 
     messageVarVal: function (sender, recipient) {
-      return { me: (sender ? (playerChar + sender.name) : wm.ParseTree.defaultVarText('Sender')),
-               you: (recipient ? (playerChar + recipient.name) : wm.ParseTree.defaultVarText('Recipient')) }
+      var varVal = this.ParseTree.defaultVarVal()
+      if (sender)
+        varVal.me = playerChar + sender.name
+      if (recipient)
+        varVal.you = playerChar + recipient.name
+      return varVal
     },
     
     relativeDateString: function (dateInitializer) {
