@@ -1483,7 +1483,7 @@ var WikiMess = (function() {
                   var expansionText, expansionTextMatch
                   if (wm.templateIsEmpty())
                     window.alert ("Please enter some input text.")
-                  else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText(wm.composition.body)).match(/\S/))))
+                  else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
                     window.alert ("Expanded text is empty. Please vary the input text, or re-roll to generate a new random expanded text.")
                   else if (wm.composition.isPrivate && !wm.composition.recipient)
                     window.alert ("Please select the direct message recipient, or make it public.")
@@ -1503,7 +1503,7 @@ var WikiMess = (function() {
                                                  ? (window.location.origin + result.message.path)
                                                  : undefined),
                                            title: wm.composition.title,
-                                           text: wm.makeExpansionText (wm.composition.body) })
+                                           text: wm.ParseTree.makeExpansionText (wm.composition.body) })
                       }).then (function() {
                         if (preserveMessage) {
                           wm.sharePane.hide()
@@ -1799,9 +1799,9 @@ var WikiMess = (function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
       var markdown = this.renderMarkdown
-      (this.makeExpansionText (this.animationExpansion, true)
+      (this.ParseTree.makeExpansionText (this.animationExpansion, true)
        .replace (/^\s*$/, wm.emptyMessageWarning),
-       function (html) { return wm.linkSymbols (wm.expandVars (html)) })
+       function (html) { return wm.linkSymbols (html) })
       
       this.animationDiv.html (markdown)
                
@@ -1825,28 +1825,9 @@ var WikiMess = (function() {
        })
     },
 
-    defaultVarText: function (text) {
-      return '<span class="var">' + text + '</span>'
-    },
-    
-    expandVars: function (html, varVal) {
-      var wm = this
-      varVal = varVal || { me: this.defaultVarText('Sender'),
-                           you: this.defaultVarText('Recipient') }
-      return html
-        .replace (new RegExp ('\\' + varChar + '([A-Za-z_]\\w*)\\b(=\\{([^\\}]*)\\}|)', 'ig'),
-                  function (match, varName, assignment, assignVal) {
-                    if (assignment.length) {
-                      varVal[varName] = wm.expandVars (assignVal, varVal)
-                      return ''
-                    }
-                    return varVal[varName] || match
-                  })
-    },
-
     stopAnimation: function() {
       if (this.expansionAnimationTimer) {
-        this.animationDiv.html (this.renderMarkdown (this.makeExpansionText (this.animationExpansion), this.expandVars))
+        this.animationDiv.html (this.renderMarkdown (this.ParseTree.makeExpansionText (this.animationExpansion)))
         this.clearTimer ('expansionAnimationTimer')
         return true
       }
@@ -1942,33 +1923,15 @@ var WikiMess = (function() {
 	if (wm.animationExpansion)
           wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
-        div.html (this.renderMarkdown (wm.makeExpansionText (expansion)
+        div.html (this.renderMarkdown (wm.ParseTree.makeExpansionText (expansion)
                                        .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
                                                            ? wm.emptyTemplateWarning
-                                                           : wm.emptyMessageWarning)),
-                                       this.expandVars))
+                                                           : wm.emptyMessageWarning))))
       }
-    },
-
-    randomElement: function (array) {
-      return array[Math.floor (Math.random() * array.length)]
-    },
-
-    nRandomElements: function (array, n) {
-      var gotObj = {}, result = []
-      while (result.length < Math.min(array.length,n)) {
-        var i, obj
-        do {
-          i = Math.floor (Math.random() * array.length)
-        } while (gotObj[i])
-        gotObj[i] = true
-        result.push (array[i])
-      }
-      return result
     },
     
     randomizeEmptyMessageWarning: function() {
-      this.emptyMessageWarning = '_' + this.randomElement (this.emptyMessageWarnings) + '_'
+      this.emptyMessageWarning = '_' + this.ParseTree.randomElement (this.emptyMessageWarnings) + '_'
     },
 
     newRhsText: function() {
@@ -1985,7 +1948,7 @@ var WikiMess = (function() {
           var rhs = grammar[symbol.toLowerCase()]
           if (rhs) {
             changed = true
-            var expansion = wm.randomElement(rhs)
+            var expansion = wm.ParseTree.randomElement(rhs)
             if (symbol.match (/^[A-Z]/))
               expansion = expansion.replace(/[a-z]/,function(m){return m.toUpperCase()})
             return expansion
@@ -2375,14 +2338,17 @@ var WikiMess = (function() {
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
                                        $('<span class="field messagedate">').text (wm.relativeDateString (message.date)))),
-                     $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.makeExpansionText (message.body),
-                                                                                           function (html) {
-                                                                                             return wm.expandVars (html, { me: (sender ? (playerChar + sender.name) : wm.defaultVarText('Sender')),
-                                                                                                                           you: (recipient ? (playerChar + recipient.name) : wm.defaultVarText('Recipient')) })
-                                                                                           })))
+                     $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
+                                                                                                                           false,
+                                                                                                                           wm.messageVarVal(sender,recipient)))))
         })
     },
 
+    messageVarVal: function (sender, recipient) {
+      return { me: (sender ? (playerChar + sender.name) : wm.ParseTree.defaultVarText('Sender')),
+               you: (recipient ? (playerChar + recipient.name) : wm.ParseTree.defaultVarText('Recipient')) }
+    },
+    
     relativeDateString: function (dateInitializer) {
       var weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
       var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -3187,6 +3153,12 @@ var WikiMess = (function() {
         expansionsDiv.show()
 	symbol.minimized = false
       }
+      function initMinMax() {
+        if (symbol.minimized)
+	  minimize()
+        else
+	  maximize()
+      }
       
       ruleDiv.empty()
         .append (this.makeEditableElement
@@ -3210,11 +3182,12 @@ var WikiMess = (function() {
                     updateCallback: function (newLhs) {
                       return wm.renameSymbol (symbol, newLhs)
                     },
+                    hideCallback: initMinMax,
                     beforeContentDiv: function() {
                       minimizeButton = $('<span class="menubutton">')
-                          .append (wm.makeIconButton ('minimize', minimize))
+                        .append (wm.makeIconButton ('minimize', minimize))
                       maximizeButton = $('<span class="menubutton">')
-                          .append (wm.makeIconButton ('maximize', maximize))
+                        .append (wm.makeIconButton ('maximize', maximize))
                       var menuButton = $('<span class="menubutton">')
                           .append (wm.makeIconButton ('menu', function (evt) {
                             menuDiv.empty()
@@ -3289,11 +3262,7 @@ var WikiMess = (function() {
                               .concat (symbol.rules.map (function (rhs, n) {
                                 return wm.makeGrammarRhsDiv (symbol, ruleDiv, n)
                               })))]))
-
-      if (symbol.minimized)
-	minimize()
-      else
-	maximize()
+      initMinMax()
     },
 
     countSymbolNodes: function (node, includeLimitedNodes) {
@@ -3339,10 +3308,10 @@ var WikiMess = (function() {
                                        rightBracketChar)
           case 'alt':
             return $('<span>').append (leftBracketChar,
-                                       tok.opts.map (function (opt) { return $('<span>').append (wm.makeRhsSpan(opt), '|') }),
+                                       tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeRhsSpan(opt)) }),
                                        rightBracketChar)
           case 'func':
-	    var sugaredName = wm.ParseTree.makeSugaredName (tok)
+	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
               return wm.makeSymbolSpanWithName (tok.args[0],
 						sugaredName,
@@ -3350,9 +3319,10 @@ var WikiMess = (function() {
 						  evt.stopPropagation()
 						  wm.loadGrammarSymbol (tok.args[0])
 						})
-            return $('<span>').append (funcChar + tok.funcname + leftBracketChar,
+            var noBrackets = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            return $('<span>').append (funcChar + tok.funcname + (noBrackets ? '' : leftBracketChar),
                                        wm.makeRhsSpan (tok.args),
-                                       rightBracketChar)
+                                       noBrackets ? '' : rightBracketChar)
           default:
           case 'sym':
             return wm.makeSymbolSpan (tok,
@@ -3385,7 +3355,7 @@ var WikiMess = (function() {
                                        tok.opts.map (function (opt) { return $('<span>').append (wm.makeTemplateSpan(opt), '|') }),
                                        rightBracketChar)
           case 'func':
-	    var sugaredName = wm.ParseTree.makeSugaredName (tok)
+	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
               return wm.makeSymbolSpanWithName (tok.args[0],
 						sugaredName,
@@ -3409,65 +3379,6 @@ var WikiMess = (function() {
         }))
     },
 
-    makeRhsExpansionText: function (rhs, leaveSymbolsUnexpanded, varVal) {
-      return rhs.map (function (child) { return wm.makeExpansionText (child, leaveSymbolsUnexpanded, varVal) })
-        .join('')
-    },
-
-    makeExpansionText: function (node, leaveSymbolsUnexpanded, varVal) {
-      var wm = this
-      varVal = varVal || {}
-      var expansion = ''
-      if (node) {
-        if (typeof(node) === 'string')
-          expansion = node
-        else
-          switch (node.type) {
-          case 'assign':
-            varVal[node.varname] = wm.makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
-            break
-          case 'lookup':
-            expansion = varVal[expansion.varname]
-            break
-          case 'func':
-            var arg = wm.makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
-            switch (node.funcname) {
-            case 'cap':
-              expansion = wm.ParseTree.capitalize (arg)
-              break
-            case 'uc':
-              expansion = arg.toUpperCase()
-              break
-            case 'plural':
-              expansion = wm.ParseTree.pluralForm (arg)
-              break
-            case 'a':
-              expansion = wm.ParseTree.indefiniteArticle (arg)
-              break
-            default:
-              expansion = arg
-              break
-            }
-            break
-          case 'root':
-          case 'sym':
-            if (leaveSymbolsUnexpanded && node.name)
-              expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
-            else if (node.rhs)
-              expansion = wm.makeRhsExpansionText (node.rhs, leaveSymbolsUnexpanded, varVal)
-            break
-          case 'alt':
-          default:
-            break
-          }
-      }
-      return expansion
-    },
-
-    matchCase: function (model, text) {
-      return model.match(/[A-Z]/) ? text.toUpperCase() : text
-    },
-    
     makePlayerSpan: function (name, displayName, callback) {
       var nameSpan = $('<span class="name">')
       var span = $('<span class="player">').addClass(callback ? 'playerlink' : 'playertag').append (playerChar, nameSpan)
@@ -3754,7 +3665,7 @@ var WikiMess = (function() {
             wm.restoreScrolling (wm.grammarBarDiv)
 
 	    var nSymbolExamples = 3, nTemplateExamples = 2
-            var exampleSymbolNames = wm.nRandomElements (wm.exampleSymbolNames, nSymbolExamples)
+            var exampleSymbolNames = wm.ParseTree.nRandomElements (wm.exampleSymbolNames, nSymbolExamples)
 	    var exampleTemplatesSpan
             
             wm.ruleDiv = {}
@@ -3790,7 +3701,7 @@ var WikiMess = (function() {
               .then (function (result) {
                 if (result && result.templates.length)
                   exampleTemplatesSpan.append (' Or, try one of these templates: ',
-					       wm.nRandomElements (result.templates, nTemplateExamples)
+					       wm.ParseTree.nRandomElements (result.templates, nTemplateExamples)
 					       .map (function (template, n) {
                                                  return $('<span>')
 						   .append (n ? ', ' : undefined,

@@ -170,31 +170,4 @@ module.exports = {
       })
   },
 
-  defaultSummaryLen: 64,
-  summarizeMessage: function (body, summaryLen, summaryPrefix) {
-    var service = this
-    summaryLen = summaryLen || service.defaultSummaryLen
-    var rhs = body.rhs || []
-    var summary = rhs.reduce (function (summarySoFar, node) {
-      return (summarySoFar.length >= summaryLen
-              ? summarySoFar
-              : (typeof(node) === 'object'
-                 ? service.summarizeMessage (node, summaryLen, summarySoFar)
-                 : (summarySoFar + node).replace (/^\s+/, '')))
-    }, summaryPrefix || '')
-    return summary.substr (0, summaryLen)
-  },
-  summarizeTemplate: function (template, summaryLen, summaryPrefix) {
-    var service = this
-    summaryLen = summaryLen || service.defaultSummaryLen
-    var rhs = template.content || []
-    var summary = rhs.reduce (function (summarySoFar, node) {
-      return (summarySoFar.length >= summaryLen
-              ? summarySoFar
-              : (typeof(node) === 'object'
-                 ? (summarySoFar + node.name)
-                 : (summarySoFar + node)).replace (/^\s+/, ''))
-    }, summaryPrefix || '')
-    return summary.substr (0, summaryLen)
-  },
 }

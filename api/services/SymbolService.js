@@ -3,6 +3,8 @@
 var Promise = require('bluebird')
 var extend = require('extend')
 
+var parseTree = require('../../assets/js/wikimess/parsetree.js')
+
 module.exports = {
   
   makeSymbolInfo: function (symbol, playerID) {
@@ -100,8 +102,8 @@ module.exports = {
   createReferences: function (rules) {
     var refs = {}
     rules.forEach (function (rhs) {
-      rhs.forEach (function (rhsSym) {
-        if (typeof(rhsSym) === 'object' && rhsSym.name && typeof(rhsSym.id) === 'undefined') {
+      parseTree.getSymbolNodes(rhs).forEach (function (rhsSym) {
+        if (rhsSym.name && typeof(rhsSym.id) === 'undefined') {
           refs[rhsSym.name] = refs[rhsSym.name] || []
           refs[rhsSym.name].push (rhsSym)
         }
@@ -132,8 +134,8 @@ module.exports = {
     symbols.forEach (function (symbol) {
       name[symbol.id] = symbol.name
       symbol.rules.forEach (function (rhs) {
-        rhs.forEach (function (rhsSym) {
-          if (typeof(rhsSym) === 'object' && rhsSym.id)
+        parseTree.getSymbolNodes(rhs).forEach (function (rhsSym) {
+          if (rhsSym.id)
             referenced[rhsSym.id] = true
         })
       })
@@ -202,18 +204,12 @@ module.exports = {
       
       return Symbol.findOneCached (query)
         .then (function (symbol) {
-          var symInfo = extend ({ rhs: [] },
+          var symInfo = extend ({ type: 'sym', rhs: [] },
                                 (symbol
                                  ? { id: symbol.id, name: symbol.name }
                                  : { id: query.id, name: query.name, notfound: true }))
           if (!symbol)
             return Promise.resolve (symInfo)
-
-          if (typeof(symbolQueryOrString) === 'object')
-            ['cap', 'upper', 'plural', 'a'].forEach (function (key) {
-              if (symbolQueryOrString[key])
-                symInfo[key] = symbolQueryOrString[key]
-            })
             
           if (depth[symbol.id] >= Symbol.maxDepth)
             return Promise.resolve (extend (symInfo, { limit: { type: 'depth', n: Symbol.maxDepth } }))
@@ -222,25 +218,16 @@ module.exports = {
           nextDepth[symbol.id] = (nextDepth[symbol.id] || 0) + 1
           ++info.nodes
 
-          var rhsSyms = (symbol.rules.length ? symbol.rules[Math.floor(rng() * symbol.rules.length)] : [])
-              .map (function (rhsSym) {
-                if (typeof(rhsSym) === 'string') {
-                  var altRegExp = new RegExp ('\\[(([^\\[\\]\\|]*\\|)+[^\\[\\]\\|]*)\\]', 'g')
-                  do {
-                    var oldRhsSym = rhsSym
-                    rhsSym = rhsSym.replace (altRegExp, function (_match, optsStr) {
-                      var opts = optsStr.split('|')
-                      return opts[Math.floor(rng() * opts.length)]
-                    })
-                  } while (rhsSym !== oldRhsSym)
-                }
-                return rhsSym
-              })
-
-          return SymbolService.expandSymbols (rhsSyms, Symbol.maxRhsSyms, info, nextDepth, rng)
+          var rhs = parseTree.sampleParseTree (symbol.rules.length ? parseTree.randomElement(symbol.rules,rng) : [], rng)
+          var rhsSyms = parseTree.getSymbolNodes (rhs)
+          
+          return SymbolService.expandSymbols (rhsSyms.map (function (rhsSym) { return { id: rhsSym.id } }), Symbol.maxRhsSyms, info, nextDepth, rng)
             .then (function (rhsExpansions) {
-              symInfo.rhs = rhsExpansions
-              return Promise.resolve (symInfo)
+              rhsExpansions.forEach (function (rhsExpansion, n) {
+                extend (rhsSyms[n], rhsExpansion)
+              })
+              symInfo.rhs = rhs
+              return symInfo
             })
         })
     }
@@ -250,17 +237,10 @@ module.exports = {
 
   expansionSymbols: function (expansion) {
     var symID = {}
-    SymbolService.tagExpansionSymbols (expansion, symID)
-    return Object.keys(symID)
-  },
-  
-  tagExpansionSymbols: function (expansion, symID) {
-    if (typeof(expansion) === 'object' && typeof(expansion.id) !== 'undefined') {
-      symID[expansion.id] = true
-      expansion.rhs.forEach (function (rhsSym) {
-        SymbolService.tagExpansionSymbols (rhsSym, symID)
-      })
-    }
+    parseTree.getSymbolNodes(expansion).forEach (function (rhsSym) {
+      symID[rhsSym.id] = true
+    })
+    return Object.keys(symID).map (function (x) { return parseInt(x) })
   },
 
   expansionAuthors: function (expansion) {
@@ -276,14 +256,13 @@ module.exports = {
   },
 
   updateAdjacencies: function (rhs, weight) {
-    var symbolIDsPromise = Promise.map (rhs.filter (function (rhsSym) {
-      return typeof(rhsSym) === 'object'
-    }), function (rhsSym) {
-      return (typeof(rhsSym.id) !== 'undefined'
-              ? Promise.resolve (rhsSym.id)
-              : Symbol.findOneCached ({ name: rhsSym.name })
-              .then (function (symbol) { return symbol ? symbol.id : null }))
-    })
+    var symbolIDsPromise = Promise.map (parseTree.getSymbolNodes(rhs),
+                                        function (rhsSym) {
+                                          return (typeof(rhsSym.id) !== 'undefined'
+                                                  ? Promise.resolve (rhsSym.id)
+                                                  : Symbol.findOneCached ({ name: rhsSym.name })
+                                                  .then (function (symbol) { return symbol ? symbol.id : null }))
+                                        })
 
     return symbolIDsPromise.then (function (symbolIDs) {
       var paddedSymbolIDs = [null].concat(symbolIDs).concat([null])
@@ -301,50 +280,5 @@ module.exports = {
       })
       return Promise.all (updatePromises)
     })
-  },
-
-  capitalizeSymRef: function (text) {
-    return text
-      .replace (/^(\s*)([a-z])/, function (m, g1, g2) { return g1 + g2.toUpperCase() })
-      .replace (/([\.\!\?]\s*)([a-z])/g, function (m, g1, g2) { return g1 + g2.toUpperCase() })
-  },
-
-  defaultSymDefChar: '>',
-  defaultSymRefChar: '$',
-  makeSymText: function (symbol, symDefChar, symRefChar) {
-    symDefChar = symDefChar || SymbolService.defaultSymDefChar
-    return symDefChar + symbol.name + '\n' + symbol.rules.map (function (rhs) {
-      return SymbolService.makeSymRef (rhs, symRefChar) + '\n'
-      }).join('') + '\n'
-  },
-  
-  makeSymRef: function (rhs, symChar) {
-    symChar = symChar || SymbolService.defaultSymRefChar
-    return rhs.map (function (node) {
-      if (typeof(node) === 'string')
-        return node.replace(/\n/g,function(){return'\\n'})
-      if (typeof(node) !== 'object')
-        return ''
-      var name
-      if (node.name)
-        name = node.name
-      else if (node.id) {
-        var symbol = Symbol.cache.byId[node.id]
-        if (symbol)
-          name = symbol.name
-      }
-      if (node.cap)
-        name = SymbolService.capitalizeSymRef (name)
-      var expr
-      if (node.plural)
-        expr = '(' + name + '+' + 's)'
-      else if (node.a)
-        expr = '(a' + name + ')'
-      else
-        expr = name
-      if (node.upper)
-        expr = expr.toUpperCase()
-      return symChar + expr
-    }).join('')
   },
 };

@@ -14,13 +14,32 @@
 }(this, function () {
   "use strict";
 
+  // randomness
+  function randomElement (array, rng) {
+    rng = rng || Math.random
+    return array[Math.floor (rng() * array.length)]
+  }
+
+  function nRandomElements (array, n, rng) {
+    rng = rng || Math.random
+    var result = []
+    var index = array.map (function (_dummy, k) { return k })
+    for (var i = 0; i < n && i < array.length - 1; ++i) {
+      var j = Math.floor (rng() * (array.length - i)) + i
+      result.push (array[index[j]])
+      index[j] = index[i]
+    }
+    return result
+  }
+  
   // Parse tree constants
   var symChar = '$', symCharHtml = '&#36;'
   var playerChar = '@', varChar = '^', funcChar = '&', leftBracketChar = '{', rightBracketChar = '}', assignChar = '='
   
   // Parse tree manipulations
-  function sampleParseTree (rhs) {
+  function sampleParseTree (rhs, rng) {
     var pt = this
+    rng = rng || Math.random
     return rhs.map (function (node, n) {
       var result
       if (typeof(node) === 'string')
@@ -30,15 +49,16 @@
 	case 'assign':
 	  result = { type: 'assign',
                      varname: node.varname,
-		     value: pt.sampleParseTree (node.value) }
+		     value: pt.sampleParseTree (node.value, rng) }
           break
 	case 'alt':
-	  result = pt.sampleParseTree ([pt.randomElement (node.opts)])
+	  result = { type: 'opt',
+                     rhs: pt.sampleParseTree (pt.randomElement (node.opts), rng) }
           break
 	case 'func':
 	  result = { type: 'func',
                      funcname: node.funcname,
-		     args: pt.sampleParseTree (node.args) }
+		     args: pt.sampleParseTree (node.args, rng) }
           break
 	case 'lookup':
 	  result = node
@@ -74,6 +94,10 @@
         case 'func':
           r = pt.getSymbolNodes (node.args)
           break
+        case 'root':
+        case 'opt':
+          r = pt.getSymbolNodes (node.rhs)
+          break
         default:
         case 'sym':
           r = [node]
@@ -107,6 +131,7 @@
           case 'lookup':
             break
           default:
+          case 'opt':
           case 'sym':
 	    if (node.rhs)
 	      result = pt.parseTreeEmpty (node.rhs)
@@ -140,14 +165,18 @@
           result = leftBracketChar + tok.opts.map (function (opt) { return pt.makeRhsText(opt,makeSymbolName) }).join('|') + rightBracketChar
 	  break
         case 'func':
-	  var sugaredName = pt.makeSugaredName (tok)
+	  var sugaredName = pt.makeSugaredName (tok, makeSymbolName)
 	  if (sugaredName)
 	    result = (nextIsAlpha
 		      ? (symChar + leftBracketChar + sugaredName + rightBracketChar)
 		      : (symChar + sugaredName))
-	  else
-            result = funcChar + tok.funcname + leftBracketChar + pt.makeRhsText(tok.args,makeSymbolName) + rightBracketChar
+	  else {
+            var noBrackets = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            result = funcChar + tok.funcname + (noBrackets ? '' : leftBracketChar) + pt.makeRhsText(tok.args,makeSymbolName) + (noBrackets ? '' : rightBracketChar)
+          }
 	  break
+        case 'opt':
+          break
         default:
         case 'sym':
           result = (nextIsAlpha
@@ -160,17 +189,86 @@
     }).join('')
   }
 
-
-  function makeSugaredName (funcNode) {
+  function makeSugaredName (funcNode, makeSymbolName) {
     var sugaredName
     if (funcNode.args.length === 1 && typeof(funcNode.args[0]) === 'object' && funcNode.args[0].type === 'sym') {
-      var symName = wm.makeSymbolName(funcNode.args[0])
+      var symName = makeSymbolName(funcNode.args[0])
       if (funcNode.funcname === 'cap' && symName.match(/[a-z]/))
 	sugaredName = symName.replace(/[a-z]/,function(c){return c.toUpperCase()})
       if (funcNode.funcname === 'uc' && symName.match(/[a-z]/))
 	sugaredName = symName.toUpperCase()
     }
     return sugaredName
+  }
+
+  function defaultVarText (text) {
+    return '<span class="var">' + text + '</span>'
+  }
+
+  function defaultVarVal() {
+    return { me: defaultVarText('Sender'),
+             you: defaultVarText('Recipient') }
+  }
+
+  var defaultSummaryLen = 64
+  function summarizeExpansion (rhs, summaryLen) {
+    summaryLen = summaryLen || defaultSummaryLen
+    return makeExpansionText(rhs).substr (0, summaryLen)
+  }
+
+  function makeRhsExpansionText (rhs, leaveSymbolsUnexpanded, varVal) {
+    return rhs.map (function (child) { return makeExpansionText (child, leaveSymbolsUnexpanded, varVal) })
+      .join('')
+  }
+
+  function makeExpansionText (node, leaveSymbolsUnexpanded, varVal) {
+    varVal = varVal || defaultVarVal()
+    var expansion = ''
+    if (node) {
+      if (typeof(node) === 'string')
+        expansion = node
+      else
+        switch (node.type) {
+        case 'assign':
+          varVal[node.varname] = makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
+          break
+        case 'lookup':
+          expansion = varVal[expansion.varname]
+          break
+        case 'func':
+          var arg = makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
+          switch (node.funcname) {
+          case 'cap':
+            expansion = capitalize (arg)
+            break
+          case 'uc':
+            expansion = arg.toUpperCase()
+            break
+          case 'plural':
+            expansion = pluralForm (arg)
+            break
+          case 'a':
+            expansion = indefiniteArticle (arg)
+            break
+          default:
+            expansion = arg
+            break
+          }
+          break
+        case 'root':
+        case 'opt':
+        case 'sym':
+          if (leaveSymbolsUnexpanded && node.name)
+            expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
+          else if (node.rhs)
+            expansion = makeRhsExpansionText (node.rhs, leaveSymbolsUnexpanded, varVal)
+          break
+        case 'alt':
+        default:
+          break
+        }
+    }
+    return expansion
   }
   
   // General helper functions
@@ -275,23 +373,27 @@
   function pluralForm (singular) {
     var wm = this
     var match
-    if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && wm.irregularPlural[match[2]])
-      return match[1] + wm.matchCase (match[2], wm.irregularPlural[match[2]]) + match[3]
+    if ((match = singular.match(/^([\s\S]*)\b(\w+)(\s*)$/)) && irregularPlural[match[2]])
+      return match[1] + matchCase (match[2], irregularPlural[match[2]]) + match[3]
     else if (singular.match(/(ch|sh|s|x|z)\s*$/i))
-      return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + wm.matchCase(ending,'es') + spacer })
+      return singular.replace(/(ch|sh|s|x|z)(\s*)$/i, function (match, ending, spacer) { return ending + matchCase(ending,'es') + spacer })
     else if (singular.match(/[aeiou]y\s*$/i))
-      return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ys') + spacer })
+      return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return matchCase(y,'ys') + spacer })
     else if (singular.match(/y\s*$/i))
-      return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return wm.matchCase(y,'ies') + spacer })
+      return singular.replace (/(y)(\s*)$/i, function (match, y, spacer) { return matchCase(y,'ies') + spacer })
     else if (singular.match(/fe?\s*$/i))
-      return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return wm.matchCase(fe,'ves') + spacer })
+      return singular.replace (/(fe?)(\s*)$/i, function (match, fe, spacer) { return matchCase(fe,'ves') + spacer })
     else if (singular.match(/o\s*$/i))
-      return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return wm.matchCase(o,'os') + spacer })
+      return singular.replace (/(o)(\s*)$/i, function (match, o, spacer) { return matchCase(o,'os') + spacer })
     else if (singular.match(/[a-zA-Z]\s*$/i))
-      return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + wm.matchCase(c,'s') + spacer })
+      return singular.replace (/([a-zA-Z])(\s*)$/i, function (match, c, spacer) { return c + matchCase(c,'s') + spacer })
     return singular
   }
 
+  function matchCase (model, text) {
+    return model.match(/[A-Z]/) ? text.toUpperCase() : text
+  }
+  
   // from http://stackoverflow.com/a/8843915
   function countSyllables(word) {
     word = word.toLowerCase()
@@ -371,6 +473,9 @@
     parseTreeEmpty: parseTreeEmpty,
     makeRhsText: makeRhsText,
     makeSugaredName: makeSugaredName,
+    makeExpansionText: makeExpansionText,
+    summarizeExpansion: summarizeExpansion,
+    defaultVarText: defaultVarText,
     // English grammar
     conjugate: conjugate,
     was: was,
@@ -389,7 +494,9 @@
     ordinal: ordinal,
     nPlurals: nPlurals,
     // general utility
-    isArray: isArray
+    isArray: isArray,
+    randomElement: randomElement,
+    nRandomElements: nRandomElements
   }
 
   return api

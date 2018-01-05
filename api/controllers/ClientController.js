@@ -10,6 +10,8 @@ var extend = require('extend')
 var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
+var parseTree = require('../../assets/js/wikimess/parsetree.js')
+
 module.exports = {
 
   // actions
@@ -393,7 +395,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title || PlayerService.summarizeMessage (message.body),
+                   title: message.title || parseTree.summarizeMessage (message.body.rhs),
                    sender: { id: message.sender.id,
                              displayName: message.sender.displayName },
                    date: message.createdAt,
@@ -917,25 +919,29 @@ module.exports = {
         // for all "downstream" symbols that are used by copiedSymbol, and have player-owned copies (downstreamCopy), change downstream->downstreamCopy in rules for new symbol
         var dsCache = {}  // cache the mapping to ensure it's consistent
         rules = copiedSymbol.rules.map (function (rhs) {
-          return rhs.map (function (rhsSym) {
-            if (typeof(rhsSym) === 'object') {
+          var rhsCopy = deepcopy(rhs)
+          parseTree.getSymbolNodes(rhsCopy)
+            .forEach (function (rhsSym) {
               var downstreamSymbol = (rhsSym.id
                                       ? Symbol.cache.byId[rhsSym.id]
                                       : Symbol.cache.byName[rhsSym.name])
               if (downstreamSymbol && downstreamSymbol.owner !== playerID) {
-                if (dsCache[downstreamSymbol.id])  // cached?
-                  return { id: dsCache[downstreamSymbol.id] }
-                var downstreamSymbolCopies = Symbol.getCopies (downstreamSymbol.id)
-                    .filter (function (sym) { return sym.owner === playerID })
-                if (downstreamSymbolCopies.length) {
-                  var downstreamSymbolCopy = downstreamSymbolCopies[0]
-                  dsCache[downstreamSymbol.id] = downstreamSymbolCopy.id
-                  return { id: downstreamSymbolCopy.id }
+                if (dsCache[downstreamSymbol.id]) {  // cached?
+                  rhsSym.id = dsCache[downstreamSymbol.id]
+                  delete rhsSym.name
+                } else {
+                  var downstreamSymbolCopies = Symbol.getCopies (downstreamSymbol.id)
+                      .filter (function (sym) { return sym.owner === playerID })
+                  if (downstreamSymbolCopies.length) {
+                    var downstreamSymbolCopy = downstreamSymbolCopies[0]
+                    dsCache[downstreamSymbol.id] = downstreamSymbolCopy.id
+                    rhsSym.id = downstreamSymbolCopy.id
+                    delete rhsSym.name
+                  }
                 }
               }
-            }
-            return rhsSym
-          })
+            })
+          return rhsCopy
         })
       }
       var initialized = (rules && rules.length > 0)
@@ -959,11 +965,14 @@ module.exports = {
             Symbol.getUsingSymbols(copiedSymbol.name).forEach (function (upstreamSymbol) {
               if (upstreamSymbol.owner === playerID) {
                 var newRules = upstreamSymbol.rules.map (function (rhs) {
-                  return rhs.map (function (rhsSym) {
-                    if (typeof(rhsSym) === 'object' && (rhsSym.id === copiedSymbol.id || rhsSym.name === copiedSymbol.name))
-                      return { id: symbol.id }
-                    return rhsSym
+                  var rhsCopy = deepcopy(rhs)
+                  parseTree.getSymbolNodes(rhsCopy).forEach (function (rhsSym) {
+                    if (rhsSym.id === copiedSymbol.id || rhsSym.name === copiedSymbol.name) {
+                      rhsSym.id = symbol.id
+                      delete rhsSym.name
+                    }
                   })
+                  return rhsCopy
                 })
                 symbolUpdate[upstreamSymbol.id] = { rules: newRules }
                 revisions.push ({ symbol: upstreamSymbol.id,
@@ -1163,17 +1172,6 @@ module.exports = {
         console.log(err)
         res.status(500).send ({ message: err })
       })
-  },
-
-  // get a particular symbol and all symbols it uses, recursively, and convert to compact plaintext format
-  dumpSymbol: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var symbolName = req.params.symname
-    var depSymbols = Symbol.getSubgrammar (symbolName)
-        .filter (function (symbol) { return symbol.owner === playerID || !symbol.summary })
-        .sort (function (a, b) { return (a.name < b.name ? -1 : (a.name === b.name ? 0 : +1)) })
-    res.set('Content-Type', 'text/plain')
-    res.send (depSymbols.map (SymbolService.makeSymText).join(''))
   },
 
   // get a particular symbol by name, or create it (uninitialized)
