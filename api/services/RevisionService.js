@@ -2,6 +2,8 @@
 
 var JsDiff = require('diff')
 
+var parseTree = require('../../assets/js/wikimess/parsetree.js')
+
 module.exports = {
   makeRevisionSummary: function (revision, playerName) {
     var summary = { id: revision.id,
@@ -26,7 +28,8 @@ module.exports = {
   },
 
   makeDiff: function (oldRevision, newRevision) {
-    return JsDiff.diffChars (SymbolService.makeSymText (oldRevision), SymbolService.makeSymText (newRevision))
+    return JsDiff.diffChars (RevisionService.makeRevText (oldRevision),
+                             RevisionService.makeRevText (newRevision))
   },
 
   findLatestRevision: function (symbolID) {
@@ -38,5 +41,15 @@ module.exports = {
           return latestRevisions[0]
         return null
       })
+  },
+
+  makeRevText: function (revision) {
+    return '>' + revision.name + '\n'
+      + revision.rules.map (function (rhs) {
+        return parseTree.makeRhsText (rhs, function (rhsSym) {
+          return Symbol.cache.byId[rhsSym.id]
+        }).replace(/\n/g,function(){return"\\n"})
+          + '\n'
+      }).join('')
   }
 };

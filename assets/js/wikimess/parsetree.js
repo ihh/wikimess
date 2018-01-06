@@ -148,7 +148,7 @@
     return rhs.map (function (tok, n) {
       var result
       if (typeof(tok) === 'string')
-        result = tok
+        result = tok.replace(/[\$&\^\{\}\|\\]/g,function(m){return'\\'+m})
       else {
         var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
 	var nextIsAlpha = typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)

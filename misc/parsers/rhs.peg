@@ -37,6 +37,7 @@ NodeList
 
 Node
   = "\\n" { return "\n" }
+  / "\\t" { return "\t" }
   / "\\" escaped:[\s\S] { return escaped }
   / text:[^\$&\^\{\}\|\\]+ { return text.join("") }
   / Symbol
