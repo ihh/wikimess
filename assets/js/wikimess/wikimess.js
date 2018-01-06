@@ -3721,11 +3721,11 @@ var WikiMess = (function() {
 					       }))
               })
 	    
-            wm.container.append (wm.modalExitDiv = $('<div class="modalexit">')
-                                 .on ('click', function() {
-                                   $('.rulemenu').hide()
-                                   wm.modalExitDiv.hide()
-                                 }).hide())
+            wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="modalexit">')
+                                     .on ('click', function() {
+                                       $('.rulemenu').hide()
+                                       wm.modalExitDiv.hide()
+                                     }).hide())
           })
         })
     },
