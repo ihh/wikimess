@@ -3108,6 +3108,7 @@ var WikiMess = (function() {
                                                    name: symbol.name,
                                                    rules: revision.rules })
                                     .then (function() {
+                                      symbol.rules = revision.rules
                                       return wm.showGrammarLoadSymbol (symbol)
                                     })
                                 }
