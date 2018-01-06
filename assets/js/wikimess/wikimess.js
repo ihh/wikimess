@@ -2513,11 +2513,11 @@ var WikiMess = (function() {
          .append ($('<div class="ratinginfo">')
                   .append ($('<span class="ratinginfolabel">').text ("Messages:"),
                            wm.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                           $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nSenderRatings, "rating") + ")")),
+                           $('<span class="ratinginfocount">').text (" (" + wm.ParseTree.nPlurals (status.nSenderRatings, "rating") + ")")),
                   $('<div class="ratinginfo">')
                   .append ($('<span class="ratinginfolabel">').text ("Phrases:"),
                            wm.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                           $('<span class="ratinginfocount">').text (" (" + wm.plural (status.nAuthorRatings, "rating") + ")"))))
+                           $('<span class="ratinginfocount">').text (" (" + wm.ParseTree.nPlurals (status.nAuthorRatings, "rating") + ")"))))
 
         wm.detailBarDiv.append
         ($('<div class="biofact">')
