@@ -66,7 +66,6 @@
 	default:
 	case 'sym':
 	  result = { type: 'sym',
-		     orig: node,
 		     id: node.id,
 		     name: node.name }
 	  break
@@ -109,6 +108,7 @@
     }, [])
   }
   
+  // parseTreeEmpty returns true if a tree contains no nonwhite characters OR unexpanded symbols
   function parseTreeEmpty (rhs) {
     var pt = this
     return rhs.reduce (function (result, node) {
@@ -130,11 +130,17 @@
             break
           case 'lookup':
             break
-          default:
+          case 'root':
           case 'opt':
+	    if (node.rhs)
+	      result = pt.parseTreeEmpty (node.rhs)
+	    break
+          default:
           case 'sym':
 	    if (node.rhs)
 	      result = pt.parseTreeEmpty (node.rhs)
+            else if (!node.notfound && !node.limit)
+              result = false
 	    break
           }
 	}
@@ -202,14 +208,20 @@
   }
 
   function defaultVarVal() {
-    return { me: '_Sender_',
-             you: '_Recipient_' }
+    return { me: '_Anonymous_',
+             you: '_Everyone_' }
   }
 
   var defaultSummaryLen = 64
-  function summarizeExpansion (rhs, summaryLen) {
+  function summarize (text, summaryLen) {
     summaryLen = summaryLen || defaultSummaryLen
-    return makeExpansionText(rhs).substr (0, summaryLen)
+    return text.replace(/^\s*/,'').substr (0, summaryLen)
+  }
+  function summarizeExpansion (expansion, summaryLen) {
+    return summarize (makeExpansionText(expansion), summaryLen)
+  }
+  function summarizeRhs (rhs, makeSymbolName, summaryLen) {
+    return summarize (makeRhsText(rhs,makeSymbolName), summaryLen)
   }
 
   function makeRhsExpansionText (rhs, leaveSymbolsUnexpanded, varVal) {
@@ -470,7 +482,9 @@
     makeRhsText: makeRhsText,
     makeSugaredName: makeSugaredName,
     makeExpansionText: makeExpansionText,
+    summarizeRhs: summarizeRhs,
     summarizeExpansion: summarizeExpansion,
+    defaultVarVal: defaultVarVal,
     // English grammar
     conjugate: conjugate,
     was: was,

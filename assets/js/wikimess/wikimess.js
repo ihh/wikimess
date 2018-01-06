@@ -929,6 +929,7 @@ var WikiMess = (function() {
       delete this.lastSymbolSearch
       delete this.symbolSearchResults
       delete this.messageCount
+      delete this.lastMailboxTab
       if (this.playerID)
         this.socket_getPlayerUnsubscribe (this.playerID)
 	  .then (function() {
@@ -1771,7 +1772,7 @@ var WikiMess = (function() {
             .then (function (player) {
               if (player)
                 $(playerTag).removeClass('playertag').addClass('playerlink')
-                .on ('click', wm.showOtherStatusPage.bind (wm, player))
+                .on ('click', wm.showOtherStatusPage.bind (wm, { id: player }))
             })
         })
       return rendered
@@ -1893,7 +1894,7 @@ var WikiMess = (function() {
             var expansion = result.expansions[n]
             if (expansion) {
               if (typeof(expansion.id) !== 'undefined') {
-                symbolNode.orig.id = expansion.id
+                symbolNode.id = expansion.id
 		symbolNode.rhs = expansion.rhs
                 symbolNode.name = wm.symbolName[expansion.id] = expansion.name
               } else
@@ -3873,7 +3874,8 @@ var WikiMess = (function() {
       if (wm.playerID)
         wm.REST_getPlayerFollow (wm.playerID)
 	.done (function (data) {
-          wm.addressBookDiv
+          if (wm.addressBookDiv)
+            wm.addressBookDiv
             .empty()
             .append ($('<div class="followsection">')
                      .append ($('<div class="title">').text("Address book"))

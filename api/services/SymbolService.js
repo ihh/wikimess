@@ -243,10 +243,11 @@ module.exports = {
 
   expansionSymbols: function (expansion) {
     var symID = {}
-    parseTree.getSymbolNodes(expansion).forEach (function (rhsSym) {
+    parseTree.getSymbolNodes(expansion.rhs).forEach (function (rhsSym) {
       symID[rhsSym.id] = true
     })
-    return Object.keys(symID).map (function (x) { return parseInt(x) })
+    var ids = Object.keys(symID).map (function (x) { return parseInt(x) })
+    return ids
   },
 
   expansionAuthors: function (expansion) {

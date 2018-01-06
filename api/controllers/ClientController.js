@@ -395,7 +395,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title || parseTree.summarizeMessage (message.body.rhs),
+                   title: message.title || parseTree.summarizeExpansion (message.body),
                    sender: { id: message.sender.id,
                              displayName: message.sender.displayName },
                    date: message.createdAt,
@@ -433,7 +433,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title || PlayerService.summarizeMessage (message.body),
+                   title: message.title || parseTree.summarizeExpansion (message.body),
                    recipient: (message.recipient
                                ? { id: message.recipient.id,
                                    displayName: message.recipient.displayName }
@@ -458,7 +458,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
-                   title: message.title || PlayerService.summarizeMessage (message.body),
+                   title: message.title || parseTree.summarizeExpansion (message.body),
                    sender: (message.sender
                             ? { id: message.sender.id,
                                 displayName: message.sender.displayName }
@@ -544,9 +544,10 @@ module.exports = {
       .populate ('sender')
       .then (function (message) {
         result.message = { id: message.id,
-                           title: message.title || PlayerService.summarizeMessage (message.body),
+                           title: message.title || PlayerService.summarizeMessage (message.body.rhs),
                            sender: { id: message.sender.id,
-                                     name: message.sender.displayName },
+                                     name: message.sender.name,
+                                     displayName: message.sender.displayName },
                            date: message.createdAt,
                            unread: !message.read }
         res.json (result)
@@ -1388,7 +1389,8 @@ module.exports = {
                                 name: template.author.name,
                                 displayName: template.author.displayName }
                             : undefined),
-                   title: template.title || PlayerService.summarizeTemplate (template)  }
+                   title: template.title || parseTree.summarizeRhs (template.content.rhs,
+                                                                    function (sym) { return Symbol.cache.byId[sym.id] })  }
         })
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {
