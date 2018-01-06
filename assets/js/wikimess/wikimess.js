@@ -2234,7 +2234,7 @@ var WikiMess = (function() {
             wm.messageHeaderCache[result.message.id] = result.message
             wm.mailboxCache.inbox.messages.push (result.message)
             if (wm.page === 'inbox')
-              wm.mailboxContentsDiv.append (wm.makeMailboxEntryDiv (wm.inboxProps(), result.message))
+              wm.mailboxContentsDiv.prepend (wm.makeMailboxEntryDiv (wm.inboxProps(), result.message))
           }
         })
     },
@@ -2247,7 +2247,9 @@ var WikiMess = (function() {
         .empty()
         .append ($('<span class="mailboxname">').text (props.title),
                  wm.mailboxContentsDiv = $('<span class="contents">')
-                 .append (props.messages.map (wm.makeMailboxEntryDiv.bind (wm, props))))
+                 .append (props.messages
+                          .sort (function (a, b) { return new Date(b.date) - new Date(a.date) })  // newest first
+                          .map (wm.makeMailboxEntryDiv.bind (wm, props))))
     },
 
     makeMailboxEntryDiv: function (props, message) {
