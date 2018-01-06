@@ -250,8 +250,8 @@ module.exports = {
 
   afterDestroy: function (symbols, callback) {
     symbols.forEach (function (symbol) {
-      delete cache.byId[symbol.id]
-      delete cache.byName[symbol.name]
+      delete Symbol.cache.byId[symbol.id]
+      delete Symbol.cache.byName[symbol.name]
     })
     callback()
   },
