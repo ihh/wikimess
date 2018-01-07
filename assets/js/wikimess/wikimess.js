@@ -109,6 +109,7 @@ var WikiMess = (function() {
     maxExpansionAnimationTime: 5000,
     autosuggestDelay: 500,
     unfocusDelay: 1000,
+    menuPopupDelay: 500,
     starColor: 'darkgoldenrod',
     iconFilename: { edit: 'quill',
                     backspace: 'backspace',
@@ -3410,17 +3411,43 @@ var WikiMess = (function() {
       return name
     },
 
-    makeSymbolSpan: function (sym, callback, elementType) {
-      return this.makeSymbolSpanWithName (sym, this.makeSymbolName(sym), callback, elementType)
+    makeSymbolSpan: function (sym, callback, elementType, menu) {
+      return this.makeSymbolSpanWithName (sym, this.makeSymbolName(sym), callback, elementType, menu)
     },
 
-    makeSymbolSpanWithName: function (sym, name, callback, elementType) {
+    makeSymbolSpanWithName: function (sym, name, callback, elementType, menu) {
+      var wm = this
       var span = $('<' + (elementType || 'span') + ' class="lhslink">').append (symCharHtml, $('<span class="name">').text (name))
+      var preventClick
       if (callback)
-        span.on ('click', callback)
+        span.on ('click', function (evt) {
+          if (preventClick)
+            preventClick = false
+          else
+            callback (evt)
+        })
+      if (menu)
+        span.on ('mousedown', function (evt) {
+          window.setTimeout (function() {
+            preventClick = true
+            console.log(menu)
+          }, wm.menuPopupDelay)
+        })
       return span
     },
 
+    positionRelativeTo: function (element, ancestor) {
+      ancestor = ancestor || this.container
+      var x = 0, y = 0
+      while (element.length && !element.is(ancestor)) {
+        var pos = element.position()
+        x += pos.left
+        y += pos.top
+        element = element.offsetParent()
+      }
+      return { left: x, top: y }
+    },
+    
     sanitizeCharSymbolName: function (text) {
       return symChar + text.replace(/\s/g,'_').replace(/\W/g,'')
     },
