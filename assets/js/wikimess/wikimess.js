@@ -3461,7 +3461,8 @@ var WikiMess = (function() {
       var preventClick = 0, menuTimer
       function initClick() {
         if (callback)
-          span.on ('click', function (evt) {
+          span.off('click')
+          .on ('click', function (evt) {
             evt.stopPropagation()
             if (preventClick)
               --preventClick   // hack, ugh
@@ -3500,19 +3501,21 @@ var WikiMess = (function() {
                 })
             }))
             wm.container.append (menuDiv)
-            wm.pageContainer.append (exitDiv)
+            span.one ('mouseup', function() {
+              wm.pageContainer.append (exitDiv)
+            })
             window.setTimeout (function() {
               var spanPos = wm.relativePosition (span)
               var spanWidth = span.outerWidth()
               var menuWidth = menuDiv.outerWidth()
               var menuHeight = menuDiv.outerHeight()
               var containerWidth = wm.container.outerWidth()
-              var x = Math.min (Math.max (spanPos.left + spanWidth/2 - menuWidth/2, 0),
-                                containerWidth - menuWidth)
+              var x = Math.min (Math.max (spanPos.left + spanWidth/2 - menuWidth/2, 2),
+                                containerWidth - menuWidth - 2)
               menuDiv
                 .css ('opacity', 1)
-                .css ('left', x)
-                .css ('top', spanPos.top - menuHeight)
+                .css ('left', Math.round(x))
+                .css ('top', Math.round(spanPos.top - menuHeight))
             }, 1)
           }, wm.menuPopupDelay)
         }
