@@ -3477,6 +3477,7 @@ var WikiMess = (function() {
       }
       initClick()
       if (menu) {
+        var isTouch = wm.isTouchDevice()
         function openMenu (evt) {
           menuTimer = window.setTimeout (function() {
             ++preventClick
@@ -3501,7 +3502,7 @@ var WikiMess = (function() {
                 })
             }))
             wm.container.append (menuDiv)
-            span.one ('mouseup', function() {
+            span.one (isTouch ? 'touchend' : 'mouseup', function() {
               wm.pageContainer.append (exitDiv)
             })
             window.setTimeout (function() {
@@ -3519,7 +3520,7 @@ var WikiMess = (function() {
             }, 1)
           }, wm.menuPopupDelay)
         }
-        span.on (wm.isTouchDevice() ? 'touchstart' : 'mousedown', openMenu)
+        span.on (isTouch ? 'touchstart' : 'mousedown', openMenu)
       }
       return span
     },
