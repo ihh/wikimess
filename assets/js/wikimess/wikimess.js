@@ -3458,8 +3458,9 @@ var WikiMess = (function() {
     makeSymbolSpanWithName: function (sym, name, callback, elementType, menu) {
       var wm = this
       var span = $('<' + (elementType || 'span') + ' class="lhslink">').append (symCharHtml, $('<span class="name">').text (name))
-      var preventClick = 0, menuTimer
+      var preventClick, menuTimer
       function initClick() {
+        preventClick = 0
         if (callback)
           span.off('click')
           .on ('click', function (evt) {
@@ -3503,7 +3504,9 @@ var WikiMess = (function() {
             }))
             wm.container.append (menuDiv)
             span.one (isTouch ? 'touchend' : 'mouseup', function() {
-              wm.pageContainer.append (exitDiv)
+              window.setTimeout (function() {
+                wm.pageContainer.append (exitDiv)
+              }, 10)
             })
             window.setTimeout (function() {
               var spanPos = wm.relativePosition (span)
