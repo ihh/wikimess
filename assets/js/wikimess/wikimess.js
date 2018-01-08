@@ -631,6 +631,11 @@ var WikiMess = (function() {
       var wm = this
       if (this.verbose.page)
 	console.log ("Changing view from " + this.page + " to " + page)
+
+      if (wm.modalExitDiv) {
+        wm.modalExitDiv.remove()
+        delete wm.modalExitDiv
+      }
       
       var def
       if (this.pageExit) {
@@ -3484,7 +3489,7 @@ var WikiMess = (function() {
             }
             var menuDiv = $('<div class="symbolmenu">')
                 .css ('opacity', 0)
-            var exitDiv = $('<div class="modalexit">')
+            var exitDiv = $('<div class="wikimess-modalexit">')
                 .on ('click', removeMenu)
             menuDiv.append (menu.map (function (menuItem) {
               return $('<div class="option">')
@@ -3494,7 +3499,8 @@ var WikiMess = (function() {
                   menuItem[1] (evt)
                 })
             }))
-            wm.container.append (menuDiv, exitDiv)
+            wm.container.append (menuDiv)
+            wm.pageContainer.append (exitDiv)
             window.setTimeout (function() {
               var spanPos = wm.relativePosition (span)
               var spanWidth = span.outerWidth()
@@ -3510,8 +3516,7 @@ var WikiMess = (function() {
             }, 1)
           }, wm.menuPopupDelay)
         }
-        span.on ('mousedown', openMenu)
-        span.on ('touchstart', openMenu)
+        span.on (wm.isTouchDevice() ? 'touchstart' : 'mousedown', openMenu)
       }
       return span
     },
@@ -3832,7 +3837,7 @@ var WikiMess = (function() {
 					       }))
               })
 	    
-            wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="modalexit">')
+            wm.pageContainer.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')
                                      .on ('click', function() {
                                        $('.rulemenu').hide()
                                        wm.modalExitDiv.hide()
