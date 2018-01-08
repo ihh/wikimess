@@ -38,6 +38,7 @@
     box-shadow: 2px 2px 2px 0px #444;
 }
 
+.wikimess.plain .symbolmenu,
 .wikimess.plain .grammarbar .rule .rulemenu {
     background-color: white;
 }
@@ -116,6 +117,7 @@
     color: white;
 }
 
+.wikimess.plain .symbolmenu .option:nth-child(odd),
 .wikimess.plain .revisions .revision:nth-child(odd),
 .wikimess.plain .templates .template:nth-child(odd),
 .wikimess.plain .followsection .follow:nth-child(odd),

@@ -43,6 +43,7 @@
     background-color: #001800;
 }
 
+.wikimess.l33t .symbolmenu,
 .wikimess.l33t .grammarbar .rule .rulemenu {
     background-color: black;
     color: #0c0;
@@ -124,6 +125,7 @@
     color: #2c2;
 }
 
+.wikimess.l33t .symbolmenu .option:nth-child(odd),
 .wikimess.l33t .revisions .revision:nth-child(odd),
 .wikimess.l33t .templates .template:nth-child(odd),
 .wikimess.l33t .followsection .follow:nth-child(odd),

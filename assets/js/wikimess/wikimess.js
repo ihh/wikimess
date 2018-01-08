@@ -1310,7 +1310,7 @@ var WikiMess = (function() {
                 wm.autosuggestStatus.temperature = 0
                 symbolSuggestionPromise = wm.REST_postPlayerSearchSymbolsOwned (wm.playerID, { name: { startsWith: prefix } })
                 getInsertText = function (symbol) {
-                  return symbol.name.substr (prefix.length) + ' '
+                  return symbol.name.substr (prefix.length)
                 }
               } else {
                 // symbol suggestions
@@ -1320,21 +1320,41 @@ var WikiMess = (function() {
                 if (wm.autosuggestStatus.lastKey !== key) {
                   wm.autosuggestStatus.lastKey = key
                   symbolSuggestionPromise = wm.REST_postPlayerSuggestSymbol (wm.playerID, beforeSymbols, afterSymbols, wm.autosuggestStatus.temperature)
-                  getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : symChar) + symbol.name + ' ' }
+                  getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : symChar) + symbol.name }
                 }
               }
-              if (symbolSuggestionPromise)
-                wm.populateSuggestions (symbolSuggestionPromise, function (symbol) {
-                  var updatedNewValBefore = newValBefore + getInsertText (symbol)
+              if (symbolSuggestionPromise) {
+                wm.populateSuggestions (symbolSuggestionPromise, function (symbol, wrappedFuncs) {
+                  var insertText = getInsertText (symbol)
+                  if (wrappedFuncs) {
+                    if (wrappedFuncs.length === 1 && wrappedFuncs[0] === 'uc')
+                      insertText = insertText.toUpperCase()
+                    else if (wrappedFuncs.length === 1 && wrappedFuncs[0] === 'cap')
+                      insertText = wm.ParseTree.capitalize (insertText)
+                    else
+                      wrappedFuncs.forEach (function (func) {
+                        insertText = funcChar + func + leftBracketChar + insertText + rightBracketChar
+                      })
+                  }
+                  insertText += ' '
+                  var updatedNewValBefore = newValBefore + insertText
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input[0], updatedNewValBefore.length)
                   input.focus()
                   textareaAutosuggest (input)
                 })
+              }
             }
           }
 
           // autosuggest for div (point-and-click)
+          function wrapNode (node, wrappedFuncs) {
+            if (wrappedFuncs)
+              wrappedFuncs.forEach (function (func) {
+                node = { type: 'func', funcname: func, args: [node] }
+              })
+            return node
+          }
           function divAutosuggest() {
             var before = wm.ParseTree.getSymbolNodes (wm.composition.template.content)
                 .map (function (sym) { return { id: sym.id, name: sym.name } })
@@ -1342,19 +1362,20 @@ var WikiMess = (function() {
             if (wm.autosuggestStatus.lastKey !== key) {
               wm.autosuggestStatus.lastKey = key
               wm.populateSuggestions (wm.REST_postPlayerSuggestSymbol (wm.playerID, before, [], wm.autosuggestStatus.temperature),
-                                      function (symbol) {
+                                      function (symbol, wrappedFuncs) {
                                         // prepend a space only if we're nonempty & don't already end in a space
                                         var content = wm.composition.template.content, lastTok = content.length && content[content.length-1]
                                         var spacer = (lastTok && !(typeof(lastTok) === 'string' && lastTok.match(/\s$/))) ? [' '] : []
-                                        wm.updateComposeContent (content.concat (spacer.concat ([{ id: symbol.id,
-                                                                                                   name: symbol.name }])))
+                                        wm.updateComposeContent (content.concat (spacer.concat ([wrapNode ({ type: 'sym',
+                                                                                                             id: symbol.id,
+                                                                                                             name: symbol.name },
+                                                                                                           wrappedFuncs)])))
                                         updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
                                              ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
                                              .then (function (result) {
-                                               wm.appendToMessageBody (spacer.concat ($.extend ({ type: 'sym' },
-                                                                                                result.expansion)))
+                                               wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
                                              : wm.generateMessageBody())
                                         generatePromise.then (divAutosuggest)
@@ -1694,8 +1715,14 @@ var WikiMess = (function() {
                        evt.stopPropagation()
                        wm.suggestionDiv.empty()
                        symbolSelectCallback (symbol)
-                     }, 'div'))
-                   }))
+                     }, 'div', [[symChar + symbol.name, function() { symbolSelectCallback (symbol) }],
+                                [symChar + wm.ParseTree.capitalize(symbol.name), function() { symbolSelectCallback (symbol, ['cap']) }],
+                                [symChar + symbol.name.toUpperCase(), function() { symbolSelectCallback (symbol, ['uc']) }],
+                                ['a ' + symChar + symbol.name, function() { symbolSelectCallback (symbol, ['a']) }],
+                                ['A ' + symChar + symbol.name, function() { symbolSelectCallback (symbol, ['a','cap']) }],
+                                ['Go to thesaurus definition', function() { wm.showGrammarLoadSymbol (symbol) }]
+                               ]))
+          }))
       })
     },
     
@@ -2577,7 +2604,7 @@ var WikiMess = (function() {
     saveOnPageExit: function (config) {
       var wm = this
       config = config || {}
-      var unfocusCallback = typeof(config.unfocus) !== 'undefined' ? config.unfocus : wm.saveCurrentEdit.bind(wm)
+      wm.unfocusCallback = typeof(config.unfocus) !== 'undefined' ? config.unfocus : wm.saveCurrentEdit.bind(wm)
       var autosaveCallback = typeof(config.autosave) !== 'undefined' ? config.autosave : unfocusCallback
       var pageExitCallback = typeof(config.pageExit) !== 'undefined' ? config.pageExit : autosaveCallback
       wm.pageExit = function() {
@@ -2595,7 +2622,15 @@ var WikiMess = (function() {
                        })
       }
       setAutosaveTimer()
-      wm.container.on ('click', unfocusCallback)
+      wm.setUnfocusCallback()
+    },
+
+    setUnfocusCallback: function() {
+      wm.pageContainer.on ('click', wm.unfocusCallback)
+    },
+
+    clearUnfocusCallback: function() {
+      wm.pageContainer.off ('click')
     },
 
     makeIconButton: function (iconName, callback, color) {
@@ -2652,7 +2687,7 @@ var WikiMess = (function() {
               })
 
             // reacting to focusout/focusin is problematic for debugging and touchy(heh) on mobile devices, so commented out...
-            /*
+/*
             input.on ('focusout', function() {
               wm.setTimer ('unfocusTimer', wm.unfocusDelay, wm.saveEditableElement.bind(wm))
             })
@@ -3418,28 +3453,70 @@ var WikiMess = (function() {
     makeSymbolSpanWithName: function (sym, name, callback, elementType, menu) {
       var wm = this
       var span = $('<' + (elementType || 'span') + ' class="lhslink">').append (symCharHtml, $('<span class="name">').text (name))
-      var preventClick
-      if (callback)
-        span.on ('click', function (evt) {
-          if (preventClick)
-            preventClick = false
-          else
-            callback (evt)
-        })
+      var preventClick = 0, menuTimer
+      function initClick() {
+        if (callback)
+          span.on ('click', function (evt) {
+            evt.stopPropagation()
+            if (preventClick)
+              --preventClick   // hack, ugh
+            else {
+              if (menuTimer) {
+                window.clearTimeout (menuTimer)
+                menuTimer = null
+              }
+              callback (evt)
+            }
+          })
+      }
+      initClick()
       if (menu)
         span.on ('mousedown', function (evt) {
-          window.setTimeout (function() {
-            preventClick = true
-            console.log(menu)
+          menuTimer = window.setTimeout (function() {
+            ++preventClick
+            wm.clearUnfocusCallback()
+            function removeMenu (evt) {
+              evt.stopPropagation()
+              menuDiv.remove()
+              exitDiv.remove()
+              wm.setUnfocusCallback()
+              initClick()
+            }
+            var menuDiv = $('<div class="symbolmenu">')
+                .css ('opacity', 0)
+            var exitDiv = $('<div class="modalexit">')
+                .on ('click', removeMenu)
+            menuDiv.append (menu.map (function (menuItem) {
+              return $('<div class="option">')
+                .text (menuItem[0])
+                .on ('click', function (evt) {
+                  removeMenu (evt)
+                  menuItem[1] (evt)
+                })
+            }))
+            wm.container.append (menuDiv, exitDiv)
+            window.setTimeout (function() {
+              var spanPos = wm.relativePosition (span)
+              var spanWidth = span.outerWidth()
+              var menuWidth = menuDiv.outerWidth()
+              var menuHeight = menuDiv.outerHeight()
+              var containerWidth = wm.container.outerWidth()
+              var x = Math.min (Math.max (spanPos.left + spanWidth/2 - menuWidth/2, 0),
+                                containerWidth - menuWidth)
+              menuDiv
+                .css ('opacity', 1)
+                .css ('left', x)
+                .css ('top', spanPos.top - menuHeight)
+            }, 1)
           }, wm.menuPopupDelay)
         })
       return span
     },
 
-    positionRelativeTo: function (element, ancestor) {
+    relativePosition: function (element, ancestor) {
       ancestor = ancestor || this.container
       var x = 0, y = 0
-      while (element.length && !element.is(ancestor)) {
+      while (element.length && !element.is(ancestor) && !element.is('html')) {
         var pos = element.position()
         x += pos.left
         y += pos.top
@@ -3708,7 +3785,7 @@ var WikiMess = (function() {
               .append (wm.emptyGrammarSpan = $('<span class="emptygrammar">')
                        .append ($('<div class="grammartitle">')
                                 .append ('Wiki Messenger'),
-                                'A publicly editable thesaurus and procedural text generator.',
+                                'An editable thesaurus and procedural text generator.',
                                 $('<p>'),
                                 wm.makeIconButton ('search', function() { wm.searchInput.focus() }),
                                 'To search the thesaurus for words or phrases, enter text beside the "Search" icon. Or, try these examples: ',
