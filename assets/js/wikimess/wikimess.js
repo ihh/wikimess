@@ -3241,7 +3241,6 @@ var WikiMess = (function() {
                         .append (wm.makeIconButton ('maximize', maximize))
                       var menuButton = $('<span class="menubutton">')
                           .append (wm.makeIconButton ('menu', function (evt) {
-                            wm.pageContainer.on ('click', wm.hideMenu)
                             menuDiv.empty()
                               .append (menuSelector ('Add to draft', addToDraft()),
                                        menuSelector ('Show sample text', randomize),
@@ -3258,6 +3257,7 @@ var WikiMess = (function() {
                                         ? menuSelector ('Unlock this phrase', unlockSymbol)
                                         : menuSelector ('Hide this phrase', hideSymbol)))
                               .show()
+                            wm.pageContainer.on ('click', wm.hideMenu)
                             wm.modalExitDiv.show()
                             wm.infoPane.hide()
                             wm.showingHelp = false
@@ -3850,7 +3850,7 @@ var WikiMess = (function() {
             wm.hideMenu = function() {
               $('.rulemenu').hide()
               wm.modalExitDiv.hide()
-              wm.clearUnfocusCallback()
+              wm.setUnfocusCallback()
             }
             wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')
                                      .on ('click', wm.hideMenu)
