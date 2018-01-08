@@ -1531,7 +1531,9 @@ var WikiMess = (function() {
                                                  ? (window.location.origin + result.message.path)
                                                  : undefined),
                                            title: wm.composition.title,
-                                           text: wm.ParseTree.makeExpansionText (wm.composition.body) })
+                                           text: wm.ParseTree.makeExpansionText (wm.composition.body,
+                                                                                 false,
+                                                                                 wm.compositionVarVal()) })
                       }).then (function() {
                         if (preserveMessage) {
                           wm.sharePane.hide()
@@ -1833,7 +1835,7 @@ var WikiMess = (function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
       var markdown = this.renderMarkdown
-      (this.ParseTree.makeExpansionText (this.animationExpansion, true)
+      (this.ParseTree.makeExpansionText (this.animationExpansion, true, this.compositionVarVal())
        .replace (/^\s*$/, wm.emptyMessageWarning),
        function (html) { return wm.linkSymbols (html) })
       
@@ -1861,7 +1863,7 @@ var WikiMess = (function() {
 
     stopAnimation: function() {
       if (this.expansionAnimationTimer) {
-        this.animationDiv.html (this.renderMarkdown (this.ParseTree.makeExpansionText (this.animationExpansion)))
+        this.animationDiv.html (this.renderMarkdown (this.ParseTree.makeExpansionText (this.animationExpansion, false, this.compositionVarVal())))
         this.clearTimer ('expansionAnimationTimer')
         return true
       }
@@ -1957,7 +1959,7 @@ var WikiMess = (function() {
 	if (wm.animationExpansion)
           wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
-        div.html (this.renderMarkdown (wm.ParseTree.makeExpansionText (expansion)
+        div.html (this.renderMarkdown (wm.ParseTree.makeExpansionText (expansion, false, wm.compositionVarVal())
                                        .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
                                                            ? wm.emptyTemplateWarning
                                                            : wm.emptyMessageWarning))))
@@ -2387,6 +2389,11 @@ var WikiMess = (function() {
       if (recipient)
         varVal.you = playerChar + recipient.name
       return varVal
+    },
+
+    compositionVarVal: function() {
+      return this.messageVarVal (this.playerID ? this.playerInfo : null,
+                                 this.composition.isPrivate ? this.composition.recipient : null)
     },
     
     relativeDateString: function (dateInitializer) {
