@@ -3843,12 +3843,16 @@ var WikiMess = (function() {
 											focus: 'playerSearchInput' }) }) }))
 					       }))
               })
-	    
-            wm.pageContainer.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')
-                                     .on ('click', function() {
-                                       $('.rulemenu').hide()
-                                       wm.modalExitDiv.hide()
-                                     }).hide())
+
+            wm.unfocusCallback = function() {
+              $('.rulemenu').hide()
+              wm.modalExitDiv.hide()
+              wm.clearUnfocusCallback()
+            }
+            wm.setUnfocusCallback()
+            wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')
+                                     .on ('click', wm.unfocusCallback)
+                                     .hide())
           })
         })
     },
