@@ -3470,8 +3470,8 @@ var WikiMess = (function() {
           })
       }
       initClick()
-      if (menu)
-        span.on ('mousedown', function (evt) {
+      if (menu) {
+        function openMenu (evt) {
           menuTimer = window.setTimeout (function() {
             ++preventClick
             wm.clearUnfocusCallback()
@@ -3509,7 +3509,10 @@ var WikiMess = (function() {
                 .css ('top', spanPos.top - menuHeight)
             }, 1)
           }, wm.menuPopupDelay)
-        })
+        }
+        span.on ('mousedown', openMenu)
+        span.on ('touchstart', openMenu)
+      }
       return span
     },
 
