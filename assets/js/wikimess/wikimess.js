@@ -149,7 +149,7 @@ var WikiMess = (function() {
                     maximize: 'maximize' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
-              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
+              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
     tabs: [{ name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
            { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
