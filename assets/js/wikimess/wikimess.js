@@ -2631,11 +2631,13 @@ var WikiMess = (function() {
     },
 
     setUnfocusCallback: function() {
-      wm.pageContainer.on ('click', wm.unfocusCallback)
+      this.pageContainer
+        .off ('click')
+        .on ('click', wm.unfocusCallback)
     },
 
     clearUnfocusCallback: function() {
-      wm.pageContainer.off ('click')
+      this.pageContainer.off ('click')
     },
 
     makeIconButton: function (iconName, callback, color) {
@@ -3239,6 +3241,7 @@ var WikiMess = (function() {
                         .append (wm.makeIconButton ('maximize', maximize))
                       var menuButton = $('<span class="menubutton">')
                           .append (wm.makeIconButton ('menu', function (evt) {
+                            wm.pageContainer.on ('click', wm.hideMenu)
                             menuDiv.empty()
                               .append (menuSelector ('Add to draft', addToDraft()),
                                        menuSelector ('Show sample text', randomize),
@@ -3844,14 +3847,13 @@ var WikiMess = (function() {
 					       }))
               })
 
-            wm.unfocusCallback = function() {
+            wm.hideMenu = function() {
               $('.rulemenu').hide()
               wm.modalExitDiv.hide()
               wm.clearUnfocusCallback()
             }
-            wm.setUnfocusCallback()
             wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')
-                                     .on ('click', wm.unfocusCallback)
+                                     .on ('click', wm.hideMenu)
                                      .hide())
           })
         })
