@@ -1295,7 +1295,7 @@ var WikiMess = (function() {
           }
 
           // autosuggest for textarea (typing with keyboard)
-          function textareaAutosuggest (input) {
+          wm.textareaAutosuggest = function (input) {
             input.focus()  // in case we were triggered by player hitting 're-roll' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
@@ -1346,7 +1346,7 @@ var WikiMess = (function() {
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input[0], updatedNewValBefore.length)
                   input.focus()
-                  textareaAutosuggest (input)
+                  wm.textareaAutosuggest (input)
                 })
               }
             }
@@ -1360,7 +1360,7 @@ var WikiMess = (function() {
               })
             return node
           }
-          function divAutosuggest() {
+          wm.divAutosuggest = function() {
             var before = wm.ParseTree.getSymbolNodes (wm.composition.template.content)
                 .map (function (sym) { return { id: sym.id, name: sym.name } })
             var key = autosuggestKey (before, [])
@@ -1375,7 +1375,7 @@ var WikiMess = (function() {
                                                                                                              id: symbol.id,
                                                                                                              name: symbol.name },
                                                                                                            wrappedFuncs)])))
-                                        updateComposeDiv()
+                                        wm.updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
                                              ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
@@ -1383,7 +1383,7 @@ var WikiMess = (function() {
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
                                              : wm.generateMessageBody())
-                                        generatePromise.then (divAutosuggest)
+                                        generatePromise.then (wm.divAutosuggest)
                                       })
                 .then (function() {
                   if (wm.composition.template.content.length) {
@@ -1398,7 +1398,7 @@ var WikiMess = (function() {
                           break
                       }
                       wm.updateComposeContent (newContent)
-                      updateComposeDiv()
+                      wm.updateComposeDiv()
                       if (wm.composition.body) {
                         wm.composition.body.rhs.splice
                         (wm.composition.template.content.length,
@@ -1406,56 +1406,18 @@ var WikiMess = (function() {
                         wm.showMessageBody()
                       } else
                         wm.generateMessageBody()
-                      divAutosuggest()
+                      wm.divAutosuggest()
                     }
                     wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
                   }
                 })
             }
           }
-          wm.autosuggestStatus = { temperature: 0, refresh: divAutosuggest }
+          wm.autosuggestStatus = { temperature: 0, refresh: wm.divAutosuggest }
 
           // build the editable element for the "Input text", i.e. wm.composition.template
           wm.messageComposeDiv = $('<div class="messagecompose">')
-          function updateComposeDiv() {
-            wm.populateEditableElement
-            (wm.messageComposeDiv,
-             { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
-               changeCallback: function (input) {
-                 wm.composition.needsSave = true
-                 wm.autosuggestStatus.temperature = 0
-                 wm.setTimer ('autosuggestTimer',
-                              wm.autosuggestDelay,
-                              textareaAutosuggest.bind (wm, input))
-               },
-               showCallback: function (input) {
-                 delete wm.autosuggestStatus.lastKey
-                 delete wm.autosuggestStatus.lastVal
-                 wm.autosuggestStatus.temperature = 0
-                 wm.autosuggestStatus.refresh = textareaAutosuggest.bind (wm, input)
-                 wm.clearTimer ('autosuggestTimer')
-                 wm.suggestionDiv
-                   .empty()
-                   .off ('click')
-                   .on ('click', function() { input.focus() })
-                 textareaAutosuggest (input)
-               },
-               hideCallback: function() {
-                 delete wm.autosuggestStatus.lastKey
-                 wm.autosuggestStatus.temperature = 0
-                 wm.autosuggestStatus.refresh = divAutosuggest
-                 divAutosuggest()
-               },
-               alwaysUpdate: true,
-               updateCallback: function (newContent) {
-                 return wm.updateComposeContent (newContent) ? wm.generateMessageBody() : $.Deferred().resolve()
-               },
-               parse: wm.parseRhs.bind(wm),
-               renderText: wm.makeRhsText.bind(wm),
-               renderHtml: wm.makeTemplateSpan.bind(wm)
-             })
-          }
-          updateComposeDiv()
+          wm.updateComposeDiv()
           
           wm.messageBodyDiv = $('<div class="messagebody">')
             .on ('click', function() {
@@ -1688,7 +1650,7 @@ var WikiMess = (function() {
           if (config.draft)
             wm.composition.draft = config.draft
 
-          divAutosuggest()
+          wm.divAutosuggest()
           wm.randomizeButton.show()
           
           if (config.focus)
@@ -1699,7 +1661,47 @@ var WikiMess = (function() {
           return true
         })
     },
-    
+
+    updateComposeDiv: function() {
+      var wm = this
+      wm.populateEditableElement
+      (wm.messageComposeDiv,
+       { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
+         changeCallback: function (input) {
+           wm.composition.needsSave = true
+           wm.autosuggestStatus.temperature = 0
+           wm.setTimer ('autosuggestTimer',
+                        wm.autosuggestDelay,
+                        wm.textareaAutosuggest.bind (wm, input))
+         },
+         showCallback: function (input) {
+           delete wm.autosuggestStatus.lastKey
+           delete wm.autosuggestStatus.lastVal
+           wm.autosuggestStatus.temperature = 0
+           wm.autosuggestStatus.refresh = wm.textareaAutosuggest.bind (wm, input)
+           wm.clearTimer ('autosuggestTimer')
+           wm.suggestionDiv
+             .empty()
+             .off ('click')
+             .on ('click', function() { input.focus() })
+           wm.textareaAutosuggest (input)
+         },
+         hideCallback: function() {
+           delete wm.autosuggestStatus.lastKey
+           wm.autosuggestStatus.temperature = 0
+           wm.autosuggestStatus.refresh = wm.divAutosuggest
+           wm.divAutosuggest()
+         },
+         alwaysUpdate: true,
+         updateCallback: function (newContent) {
+           return wm.updateComposeContent (newContent) ? wm.generateMessageBody() : $.Deferred().resolve()
+         },
+         parse: wm.parseRhs.bind(wm),
+         renderText: wm.makeRhsText.bind(wm),
+         renderHtml: wm.makeTemplateSpan.bind(wm)
+       })
+    },
+
     updateComposeContent: function (newContent) {
       if (JSON.stringify(this.composition.template.content) !== JSON.stringify(newContent)) {
         delete this.composition.template.id
@@ -1903,8 +1905,10 @@ var WikiMess = (function() {
       if (wm.composition.previousTemplate)
         templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id)
         .then (function (result) {
-          if (result.template)
+          if (result.template) {
             wm.composition.template = result.template
+            wm.updateComposeDiv()
+          }
           if (!result.more)
             delete wm.composition.previousTemplate
         })

@@ -396,15 +396,26 @@ function parseSymbolDefs (text) {
 
 function parseTemplateDefs (text) {
   try {
-    var newTemplateDefReg = /^>(.*)$/;
-    var templates = [], currentTemplate, newTemplateDefMatch
+    var newTemplateDefReg = /^(>+)(.*)$/;
+    var templates = [], replyChain = [], currentTemplate, newTemplateDefMatch
     text.split(/\n/).forEach (function (line) {
       if (line.length) {
         if (currentTemplate)
           currentTemplate.content = currentTemplate.content.concat (parseRhs (line + '\n'))
-        else if (newTemplateDefMatch = newTemplateDefReg.exec (line))
-          templates.push (currentTemplate = { title: newTemplateDefMatch[1],
-					      content: [] })
+        else if (newTemplateDefMatch = newTemplateDefReg.exec (line)) {
+          var depth = newTemplateDefMatch[1].length - 1
+          currentTemplate = { title: newTemplateDefMatch[2],
+			      content: [],
+                              replies: [] }
+          if (depth > replyChain.length)
+            throw new Error ("Missing replies in chain")
+          replyChain = replyChain.slice (0, depth)
+          if (depth > 0)
+            replyChain[depth-1].replies.push (currentTemplate)
+          else
+            templates.push (currentTemplate)
+          replyChain.push (currentTemplate)
+        }
       } else {
         // line is empty
         currentTemplate = undefined
