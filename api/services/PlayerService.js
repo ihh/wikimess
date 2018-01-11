@@ -43,7 +43,7 @@ module.exports = {
                 nAuthorRatings: player.nAuthorRatings,
                 sumAuthorRatings: player.sumAuthorRatings,
                 sumAuthorRatingWeights: player.sumAuthorRatingWeights,
-                human: player.human })
+                searchable: player.searchable })
 
     if (follower) {
       if (!player.noMailUnlessFollowed)
@@ -122,7 +122,7 @@ module.exports = {
 
   makePlayerSummary: function (player, following) {
     return { id: player.id,
-             human: player.human,
+             searchable: player.searchable,
              name: player.name,
              displayName: player.displayName,
              reachable: !player.noMailUnlessFollowed,

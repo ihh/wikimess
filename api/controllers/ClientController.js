@@ -11,6 +11,7 @@ var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
+var botMachine = require('../../misc/parsers/bot.js')
 
 module.exports = {
 
@@ -60,7 +61,7 @@ module.exports = {
     Player.find ({ or: [{ displayName: { contains: query } },
                         { name: { contains: query } }],
 		   admin: false,
-		   human: true })
+		   searchable: true })
       .limit (resultsPerPage + 1)
       .skip (resultsPerPage * page)
       .then (function (players) {
@@ -93,7 +94,7 @@ module.exports = {
     function matchFilter (player) {
       return (player.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0
               || player.name.toLowerCase().indexOf (lowerCaseQuery) >= 0)
-        && !player.admin && player.human
+        && !player.admin && player.searchable
     }
     // find players we're following who match the search criteria
     Follow.find ({ follower: searcherID })
@@ -119,7 +120,7 @@ module.exports = {
                                      { name: { contains: query } }],
                                 noMailUnlessFollowed: false,
 		                admin: false,
-		                human: true })
+		                searchable: true })
           .limit (maxResults)
           .then (function (players) {
             matches = matches.concat (players)
@@ -249,6 +250,22 @@ module.exports = {
       console.log(err)
       res.status(500).send ({ message: err })
     })
+  },
+
+  // configure Player's bot
+  configureMachine: function (req, res) {
+    var playerID = req.session.passport.user || null
+    var text = req.body.text
+    var machine
+    try {
+      machine = botMachine.parse (text)
+      if (machine)
+        return Player.update ({ id: playerID },
+                              { machineStartState: machine.state || 'start',
+                                machineTransitions: machine.out || {} })
+    } catch (err) {
+      res.status(500).send ({ message: err })
+    }
   },
 
   // get player status

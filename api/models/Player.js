@@ -46,6 +46,7 @@ module.exports = {
     // privacy controls
     noMailUnlessFollowed: { type: 'boolean', defaultsTo: false },
     createsPublicTemplates: { type: 'boolean', defaultsTo: false },
+    searchable: { type: 'boolean', defaultsTo: true },
     
     // social networks
     facebookId: {
@@ -67,11 +68,17 @@ module.exports = {
     },
     
     // bot players
-    human: {
-      type: 'boolean',
-      defaultsTo: true
+    machineStartState: {
+      type: 'string',
+      defaultsTo: 'start'
     },
-    
+
+    machineTransitions: {
+      type: 'json',
+      defaultsTo: {}
+    },
+
+    // show signup flow?
     newSignUp: {
       type: 'boolean',
       defaultsTo: true
