@@ -225,24 +225,6 @@ function peg$parse(input, options) {
       peg$c76 = peg$otherExpectation("whitespace"),
       peg$c77 = /^[ \t\n\r]/,
       peg$c78 = peg$classExpectation([" ", "\t", "\n", "\r"], false, false),
-      peg$c79 = function() {
-        function makeSymbol (name) { return { type: 'sym', name: name.toLowerCase() } }
-        function makeLookup (name) { return { type: 'lookup', varname: name } }
-        function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
-        function makeAlternation (opts) { return { type: 'alt', opts: opts } }
-        function makeFunction (name, args) { return { type: 'func', funcname: name, args: args } }
-
-        function makeCapped (args) { return makeFunction ('cap', args) }
-        function makeUpperCase (args) { return makeFunction ('uc', args) }
-
-        function makeSugaredSymbol (name) {
-          if (name.match(/^[0-9_]*[A-Z].*[a-z]/))
-            return makeCapped ([makeSymbol (name)])
-          if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
-            return makeUpperCase ([makeSymbol (name)])
-          return makeSymbol (name)
-        }
-      },
 
       peg$currPos          = 0,
       peg$savedPos         = 0,
@@ -1496,33 +1478,27 @@ function peg$parse(input, options) {
   }
 
   function peg$parse_() {
-    var s0, s1, s2;
+    var s0, s1;
 
     peg$silentFails++;
-    s0 = peg$currPos;
-    s1 = [];
+    s0 = [];
     if (peg$c77.test(input.charAt(peg$currPos))) {
-      s2 = input.charAt(peg$currPos);
+      s1 = input.charAt(peg$currPos);
       peg$currPos++;
     } else {
-      s2 = peg$FAILED;
+      s1 = peg$FAILED;
       if (peg$silentFails === 0) { peg$fail(peg$c78); }
     }
-    while (s2 !== peg$FAILED) {
-      s1.push(s2);
+    while (s1 !== peg$FAILED) {
+      s0.push(s1);
       if (peg$c77.test(input.charAt(peg$currPos))) {
-        s2 = input.charAt(peg$currPos);
+        s1 = input.charAt(peg$currPos);
         peg$currPos++;
       } else {
-        s2 = peg$FAILED;
+        s1 = peg$FAILED;
         if (peg$silentFails === 0) { peg$fail(peg$c78); }
       }
     }
-    if (s1 !== peg$FAILED) {
-      peg$savedPos = s0;
-      s1 = peg$c79();
-    }
-    s0 = s1;
     peg$silentFails--;
     if (s0 === peg$FAILED) {
       s1 = peg$FAILED;
@@ -1531,6 +1507,25 @@ function peg$parse(input, options) {
 
     return s0;
   }
+
+
+  function makeSymbol (name) { return { type: 'sym', name: name.toLowerCase() } }
+  function makeLookup (name) { return { type: 'lookup', varname: name } }
+  function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
+  function makeAlternation (opts) { return { type: 'alt', opts: opts } }
+  function makeFunction (name, args) { return { type: 'func', funcname: name, args: args } }
+
+  function makeCapped (args) { return makeFunction ('cap', args) }
+  function makeUpperCase (args) { return makeFunction ('uc', args) }
+
+  function makeSugaredSymbol (name) {
+    if (name.match(/^[0-9_]*[A-Z].*[a-z]/))
+      return makeCapped ([makeSymbol (name)])
+    if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
+      return makeUpperCase ([makeSymbol (name)])
+    return makeSymbol (name)
+  }
+
 
   peg$result = peg$startRuleFunction();
 

@@ -5,13 +5,26 @@ PEGFILES = $(wildcard *.peg.js)
 all: $(subst .peg.js,.dep,$(PEGFILES))
 
 clean:
-	rm $(subst .peg.js,.js,$(PEGFILES)) *.input.js *.shim.js *.browser.js
-
-%.input.js: %.peg.js %.header.js
-	cat $*.peg.js $*.header.js >$@
+	rm $(subst .peg.js,.js,$(PEGFILES)) || true
+	rm *.body.js *.header.js *.input.js *.shim.js *.browser.js || true
 
 %.js: %.input.js
 	cat $< | pegjs >$@
+
+%.input.js: %.header.js %.body.js
+	(echo "{"; cat $*.header.js; echo "}"; cat $*.body.js) >$@
+
+rhs.body.js: rhs.peg.js
+	cat $< >$@
+
+rhs.header.js: rhs.defs.js
+	cat $< >$@
+
+%.body.js: %.peg.js rhs.peg.js
+	cat $^ >$@
+
+%.header.js: %.defs.js rhs.defs.js
+	cat $^ >$@
 
 %.shim.js:
 	echo "window.$*Parser = require('./$*.js');" >$@
