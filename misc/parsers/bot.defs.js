@@ -10,4 +10,5 @@ function addToMachine (machine, md) {
   })
   if (ml.length)
     machine.start = ml[0]
+  return machine
 }
