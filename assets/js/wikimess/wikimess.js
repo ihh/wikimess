@@ -153,7 +153,7 @@ var WikiMess = (function() {
 
     tabs: [{ name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
            { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
-           { name: 'status', method: 'showStatusPage', label: 'messages', icon: 'acoustic-megaphone', },
+           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
@@ -3832,7 +3832,7 @@ var WikiMess = (function() {
 				exampleTemplatesSpan = $('<span>'),
                                 $('<p>'),
                                 wm.makeIconButton ('new', newSymbol),
-                                'To enter definitions for a new phrase, tap the "New" icon.',
+                                'To add a new phrase to the thesaurus, tap the "New" icon.',
                                 $('<p>'),
                                 wm.makeHelpButton (wm.REST_getGrammarHelpHtml),
                                 'For more help, tap the "Help" icon.'),
