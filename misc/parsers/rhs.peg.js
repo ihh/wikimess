@@ -1,39 +1,5 @@
-{
-  function makeSymbol (name) { return { type: 'sym', name: name.toLowerCase() } }
-  function makeLookup (name) { return { type: 'lookup', varname: name } }
-  function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
-  function makeAlternation (opts) { return { type: 'alt', opts: opts } }
-  function makeFunction (name, args) { return { type: 'func', funcname: name, args: args } }
-
-  function makeCapped (args) { return makeFunction ('cap', args) }
-  function makeUpperCase (args) { return makeFunction ('uc', args) }
-
-  function makeSugaredSymbol (name) {
-    if (name.match(/^[0-9_]*[A-Z].*[a-z]/))
-      return makeCapped ([makeSymbol (name)])
-    if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
-      return makeUpperCase ([makeSymbol (name)])
-    return makeSymbol (name)
-  }
-}
-
-OuterNodeList
-  = head:OuterNode tail:OuterNodeList {
-      return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
-     	? [head + tail[0]].concat(tail.slice(1))
-        : [head].concat(tail)
-    }
-  / head:OuterNode { return [head] }
-  / "" { return [] }
-
-NodeList
-  = head:Node tail:NodeList {
-      return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
-     	? [head + tail[0]].concat(tail.slice(1))
-        : [head].concat(tail)
-    }
-  / head:Node { return [head] }
-  / "" { return [] }
+RHS
+  = OuterNodeList
 
 Node
   = "\\n" { return "\n" }
@@ -47,9 +13,27 @@ Node
   / Alternation
   / char:[\$&\^] { return char }
 
+NodeList
+  = head:Node tail:NodeList {
+      return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
+     	? [head + tail[0]].concat(tail.slice(1))
+        : [head].concat(tail)
+    }
+  / head:Node { return [head] }
+  / "" { return [] }
+
 OuterNode
   = Node
   / char:. { return char }
+
+OuterNodeList
+  = head:OuterNode tail:OuterNodeList {
+      return typeof(head) === 'string' && tail.length && typeof(tail[0]) === 'string'
+     	? [head + tail[0]].concat(tail.slice(1))
+        : [head].concat(tail)
+    }
+  / head:OuterNode { return [head] }
+  / "" { return [] }
 
 Symbol
   = "$" sym:Identifier { return makeSugaredSymbol (sym) }
