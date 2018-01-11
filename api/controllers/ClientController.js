@@ -260,9 +260,11 @@ module.exports = {
     try {
       machine = botMachine.parse (text)
       if (machine)
-        return Player.update ({ id: playerID },
-                              { machineStartState: machine.state || 'start',
-                                machineTransitions: machine.out || {} })
+        Player.update ({ id: playerID },
+                       { machineStartState: machine.state || 'start',
+                         machineTransitions: machine.out || {} })
+        .then (function() { res.ok() })
+        .catch (function (err) { res.status(500).send ({ message: err }) })
     } catch (err) {
       res.status(500).send ({ message: err })
     }
