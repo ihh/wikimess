@@ -4,9 +4,11 @@ PEGFILES = $(wildcard *.peg.js)
 
 all: $(subst .peg.js,.dep,$(PEGFILES))
 
-clean:
-	rm $(subst .peg.js,.js,$(PEGFILES)) || true
+tidy:
 	rm *.body.js *.header.js *.input.js *.shim.js *.browser.js || true
+
+clean: tidy
+	rm $(subst .peg.js,.js,$(PEGFILES)) || true
 
 %.js: %.input.js
 	cat $< | pegjs >$@
