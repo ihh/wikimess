@@ -68,24 +68,8 @@ module.exports = {
     },
     
     // bot players
-    machineStartState: {
-      type: 'string',
-      defaultsTo: 'start'
-    },
-
-    machineTransitions: {
-      type: 'json',
-      defaultsTo: {}
-    },
-
-    publicState: {
-      type: 'string',
-      defaultsTo: 'start'
-    },
-
-    privateState: {
-      type: 'json',
-      defaultsTo: {}
+    bot: {
+      model: 'bot'
     },
     
     // show signup flow?
