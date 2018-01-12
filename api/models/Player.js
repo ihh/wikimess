@@ -78,6 +78,16 @@ module.exports = {
       defaultsTo: {}
     },
 
+    publicState: {
+      type: 'string',
+      defaultsTo: 'start'
+    },
+
+    privateState: {
+      type: 'json',
+      defaultsTo: {}
+    },
+    
     // show signup flow?
     newSignUp: {
       type: 'boolean',
