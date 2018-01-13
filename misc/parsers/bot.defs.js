@@ -1,6 +1,6 @@
 function initMachine (md) { return addToMachine ({ out: {} }, md) }
 function addToMachine (machine, md) {
-  var ml = md[0], tl = md[1]
+  var ml = md.ml, tl = md.tl
   ml.forEach (function (mood) {
     var out = machine.out[mood] || []
     machine.out[mood] = out
