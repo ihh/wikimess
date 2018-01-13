@@ -258,7 +258,7 @@ module.exports = {
     var text = req.body.text
     var machine
     try {
-      machine = botMachine.parse (text)
+      machine = botMachine.parse (text)a
       if (machine)
         Bot.findOrCreate ({ player: playerID })
         .then (function (bot) {
@@ -270,6 +270,16 @@ module.exports = {
     } catch (err) {
       res.status(500).send ({ message: err })
     }
+  },
+
+  deleteMachine: function (req, res) {
+    var playerID = req.session.passport.user || null
+    Bot.destroy ({ player: playerID })
+      .then (function() {
+        res.ok()
+      }).catch (function (err) {
+        res.status(500).send ({ message: err })
+      })
   },
 
   // get player status

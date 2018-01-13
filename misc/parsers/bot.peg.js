@@ -20,7 +20,7 @@ Transitions
   / t:Transition { return [t] }
 
 Transition
-  = input:Input _ "=>" _ reaction:Reaction _ weight:Weight { return { input: input, dest: reaction.dest, output: reaction.output, weight: weight } }
+  = input:Input _ "=>" _ reaction:Reaction _ weight:Weight _ "," { return { input: input, dest: reaction.dest, output: reaction.output, weight: weight } }
 
 Reaction
   = dest:Mood _ "{" output:NodeList "}" { return { dest: dest, output: output } }
@@ -28,7 +28,7 @@ Reaction
   / "{" output:NodeList "}" { return { output: output } }
 
 Input
-  = "{" _ kl:Keywords _ "}"  { return kl }
+  = "?{" _ kl:Keywords _ "}"  { return kl }
   / ""  { return [] }
 
 Keywords

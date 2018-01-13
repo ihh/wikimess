@@ -88,7 +88,9 @@ module.exports.routes = {
 
   // config
   'POST /p/config':       'ClientController.configurePlayer',
+
   'POST /p/machine':      'ClientController.configureMachine',
+  'DELETE /p/machine':    'ClientController.deleteMachine',
 
   // follow/unfollow
   'GET /p/follow':          'ClientController.listFollowed',

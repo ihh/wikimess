@@ -4,6 +4,7 @@ var Promise = require('bluebird')
 var extend = require('extend')
 
 module.exports = {
+
   sampleTransition: function (transitions, state, input) {
     var trans = transitions[state]
     var transWeight = trans.map (function (t) {
@@ -13,5 +14,9 @@ module.exports = {
       return matchesAllKeywords ? t.weight : 0
     })
     return trans[SortService.sampleByWeight (transWeight)]
+  },
+
+  answerMessages: function() {
+    
   }
 }
