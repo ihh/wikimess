@@ -170,4 +170,96 @@ module.exports = {
       })
   },
 
+  sendMessage: function (config) {
+    var playerID = config.playerID || null
+    var recipientID = config.recipientID || null
+    var template = config.template
+    var title = config.title
+    var body = config.body
+    var previous = config.previous
+    var draftID = Draft.parseID (config.draft)
+    var isPublic = config.isPublic || false
+    var result = {}, notification = {}
+    // check that the recipient is reachable
+    var reachablePromise
+    if (recipientID === null)
+      reachablePromise = Promise.resolve()
+    else
+      reachablePromise = Follow.find ({ follower: recipientID,
+                                        followed: playerID })
+      .then (function (follows) {
+        if (!follows.length)
+          return Player.find ({ id: recipientID,
+                                noMailUnlessFollowed: false })
+          .then (function (players) {
+            if (!players.length)
+              throw new Error ("Recipient unreachable")
+          })
+      })
+    return reachablePromise.then (function() {
+      // find, or create, the template
+      var templatePromise
+      if (typeof(template.id) !== 'undefined')
+        templatePromise = Template.findOne ({ id: template.id,
+                                              or: [{ author: playerID },
+                                                   { isPublic: true }] })
+      else {
+        // impose limits
+        SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
+        // find previous Message
+        var previousPromise = (typeof(previous) === 'undefined'
+                               ? new Promise (function (resolve, reject) { resolve(null) })
+                               : (Message.findOne ({ id: previous })
+                                  .populate ('template')
+                                  .then (function (message) { return message.template })))
+        templatePromise = previousPromise.then (function (previousTemplate) {
+          // create the Template
+          var content = template.content
+          return Template.create ({ title: title,
+                                    author: playerID,
+                                    content: content,
+                                    previous: previousTemplate,
+                                    isRoot: (previousTemplate ? false : true),
+                                    isPublic: isPublic })
+            .then (function (template) {
+              // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
+              return Template.update ({ id: template.id },
+                                      { content: content })
+                .then (function() {
+                  return template
+                })
+            })
+        })
+      }
+      templatePromise.then (function (template) {
+        result.template = { id: template.id }
+        // create the Message
+        return Message.create ({ sender: playerID,
+                                 recipient: recipientID,
+                                 isBroadcast: !recipientID,
+                                 template: template,
+                                 previous: previous,
+                                 title: title,
+                                 body: body })
+      }).then (function (message) {
+        result.message = { id: message.id }
+        notification.message = "incoming"
+        notification.id = message.id
+        // delete the Draft
+        var draftPromise
+        if (draftID)
+          draftPromise = Draft.destroy ({ id: draftID,
+                                          sender: playerID })
+        else
+          draftPromise = Promise.resolve()
+        return draftPromise
+      }).then (function() {
+        if (recipientID === null)
+          result.message.path = '/m/' + result.message.id  // broadcast; give sender a URL to advertise
+        else
+          Player.message (recipientID, notification)    // send the good news to recipient
+        return result
+      })
+    })
+  }
 }

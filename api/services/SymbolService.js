@@ -241,6 +241,18 @@ module.exports = {
     return remainingExpansionPromise (symGenerator())
   },
 
+  expandRhs: function (rhs, rng) {
+    var sampledRhs = parseTree.sampleParseTree (rhs, rng)
+    var symNodes = parseTree.getSymbolNodes (sampledRhs)
+    return SymbolService.expandSymbols (symNodes, null, null, null, rng)
+      .then (function (expandedSymbols) {
+        symNodes.forEach (function (node, n) {
+          node.rhs = expandedSymbols[n].rhs
+        })
+        return sampledRhs
+      })
+  },
+  
   expansionSymbols: function (expansion) {
     var symID = {}
     parseTree.getSymbolNodes(expansion.rhs).forEach (function (rhsSym) {

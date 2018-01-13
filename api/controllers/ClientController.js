@@ -258,7 +258,7 @@ module.exports = {
     var text = req.body.text
     var machine
     try {
-      machine = botMachine.parse (text)a
+      machine = botMachine.parse (text)
       if (machine)
         Bot.findOrCreate ({ player: playerID })
         .then (function (bot) {
@@ -618,100 +618,22 @@ module.exports = {
 
   // send message
   sendMessage: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var recipientID = req.body.recipient ? Player.parseID (req.body.recipient) : null
-    var template = req.body.template
-    var title = req.body.title
-    var body = req.body.body
-    var previous = req.body.previous
-    var draftID = Draft.parseID (req.body.draft)
-    var isPublic = req.body.isPublic || false
-    var result = {}, notification = {}
-    // check that the recipient is reachable
-    var reachablePromise
-    if (recipientID === null)
-      reachablePromise = Promise.resolve()
-    else
-      reachablePromise = Follow.find ({ follower: recipientID,
-                                        followed: playerID })
-      .then (function (follows) {
-        if (!follows.length)
-          return Player.find ({ id: recipientID,
-                                noMailUnlessFollowed: false })
-          .then (function (players) {
-            if (!players.length)
-              throw new Error ("Recipient unreachable")
-          })
-      })
-    reachablePromise.then (function() {
-      // find, or create, the template
-      var templatePromise
-      if (typeof(template.id) !== 'undefined')
-        templatePromise = Template.findOne ({ id: template.id,
-                                              or: [{ author: playerID },
-                                                   { isPublic: true }] })
-      else {
-        // impose limits
-        SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
-        // find previous Message
-        var previousPromise = (typeof(previous) === 'undefined'
-                               ? new Promise (function (resolve, reject) { resolve(null) })
-                               : (Message.findOne ({ id: previous })
-                                  .populate ('template')
-                                  .then (function (message) { return message.template })))
-        templatePromise = previousPromise.then (function (previousTemplate) {
-          // create the Template
-          var content = template.content
-          return Template.create ({ title: title,
-                                    author: playerID,
-                                    content: content,
-                                    previous: previousTemplate,
-                                    isRoot: (previousTemplate ? false : true),
-                                    isPublic: isPublic })
-            .then (function (template) {
-              // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
-              return Template.update ({ id: template.id },
-                                      { content: content })
-                .then (function() {
-                  return template
-                })
-            })
-        })
-      }
-      templatePromise.then (function (template) {
-        result.template = { id: template.id }
-        // create the Message
-        return Message.create ({ sender: playerID,
-                                 recipient: recipientID,
-                                 isBroadcast: !recipientID,
-                                 template: template,
-                                 previous: previous,
-                                 title: title,
-                                 body: body })
-      }).then (function (message) {
-        result.message = { id: message.id }
-        notification.message = "incoming"
-        notification.id = message.id
-        // delete the Draft
-        var draftPromise
-        if (draftID)
-          draftPromise = Draft.destroy ({ id: draftID,
-                                          sender: playerID })
-        else
-          draftPromise = Promise.resolve()
-        return draftPromise
-      }).then (function() {
-        if (recipientID === null)
-          result.message.path = '/m/' + result.message.id  // broadcast; give sender a URL to advertise
-        else
-          Player.message (recipientID, notification)    // send the good news to recipient
-        res.json (result)
-      })
+    PlayerService.sendMessage ({
+      playerID: req.session.passport ? (req.session.passport.user || null) : null,
+      recipientID: req.body.recipient ? Player.parseID (req.body.recipient) : null,
+      template: req.body.template,
+      title: req.body.title,
+      body: req.body.body,
+      previous: req.body.previous,
+      draftID: Draft.parseID (req.body.draft),
+      isPublic: req.body.isPublic || false
+    }).then (function (result) {
+      res.json (result)
     }).catch (function (err) {
       console.log(err)
       res.status(500).send ({ message: err })
     })
-      },
+  },
 
   // delete message
   deleteMessage: function (req, res) {
