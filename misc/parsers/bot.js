@@ -158,14 +158,14 @@ function peg$parse(input, options) {
       peg$c14 = function(t) { return [t] },
       peg$c15 = "=>",
       peg$c16 = peg$literalExpectation("=>", false),
-      peg$c17 = function(input, reaction, delay) { return { input: input, dest: reaction[0], output: reaction[1], rate: 1 / delay} },
+      peg$c17 = function(input, reaction, weight) { return { input: input, dest: reaction.dest, output: reaction.output, weight: weight } },
       peg$c18 = "{",
       peg$c19 = peg$literalExpectation("{", false),
       peg$c20 = "}",
       peg$c21 = peg$literalExpectation("}", false),
-      peg$c22 = function(dest, output) { return [dest, output] },
-      peg$c23 = function(dest) { return [dest, null] },
-      peg$c24 = function(output) { return [null, output] },
+      peg$c22 = function(dest, output) { return { dest: dest, output: output } },
+      peg$c23 = function(dest) { return { dest: dest } },
+      peg$c24 = function(output) { return { output: output } },
       peg$c25 = function(kl) { return kl },
       peg$c26 = "",
       peg$c27 = function() { return [] },
@@ -651,7 +651,7 @@ function peg$parse(input, options) {
             if (s5 !== peg$FAILED) {
               s6 = peg$parse_();
               if (s6 !== peg$FAILED) {
-                s7 = peg$parseDelay();
+                s7 = peg$parseWeight();
                 if (s7 !== peg$FAILED) {
                   peg$savedPos = s0;
                   s1 = peg$c17(s1, s5, s7);
@@ -939,7 +939,7 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parseDelay() {
+  function peg$parseWeight() {
     var s0, s1, s2;
 
     s0 = peg$currPos;

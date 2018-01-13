@@ -20,12 +20,12 @@ Transitions
   / t:Transition { return [t] }
 
 Transition
-  = input:Input _ "=>" _ reaction:Reaction _ delay:Delay { return { input: input, dest: reaction[0], output: reaction[1], rate: 1 / delay} }
+  = input:Input _ "=>" _ reaction:Reaction _ weight:Weight { return { input: input, dest: reaction.dest, output: reaction.output, weight: weight } }
 
 Reaction
-  = dest:Mood _ "{" output:NodeList "}" { return [dest, output] }
-  / dest:Mood { return [dest, null] }
-  / "{" output:NodeList "}" { return [null, output] }
+  = dest:Mood _ "{" output:NodeList "}" { return { dest: dest, output: output } }
+  / dest:Mood { return { dest: dest } }
+  / "{" output:NodeList "}" { return { output: output } }
 
 Input
   = "{" _ kl:Keywords _ "}"  { return kl }
@@ -38,6 +38,6 @@ Keywords
 Keyword
   = kc:[a-zA-Z]+  { return kc.join("") }
 
-Delay
+Weight
   = nc:[0-9\+\-\.eE]+ { return parseFloat(nc.join("")) || 0 }
   / ""  { return 1 }
