@@ -69,7 +69,8 @@ module.exports = {
     
     // bot players
     bot: {
-      model: 'bot'
+      collection: 'bot',
+      via: 'player'
     },
     
     // show signup flow?

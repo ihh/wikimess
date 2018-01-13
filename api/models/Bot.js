@@ -11,7 +11,7 @@ module.exports = {
 
     player: {
       model: 'player',
-      defaultsTo: function() { return Player.adminUserId }
+      unique: true
     },
     
     startState: {
