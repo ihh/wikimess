@@ -87,10 +87,11 @@ module.exports.routes = {
   'POST /p/search/symbols/owned':    'ClientController.searchOwnedSymbols',
 
   // config
-  'POST /p/config':       'ClientController.configurePlayer',
+  'POST /p/config':         'ClientController.configurePlayer',
 
-  'POST /p/machine':      'ClientController.configureMachine',
-  'DELETE /p/machine':    'ClientController.deleteMachine',
+  'GET /p/machine':         'ClientController.readMachine',
+  'POST /p/machine':        'ClientController.configureMachine',
+  'DELETE /p/machine':      'ClientController.deleteMachine',
 
   // follow/unfollow
   'GET /p/follow':          'ClientController.listFollowed',

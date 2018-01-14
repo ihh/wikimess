@@ -24,6 +24,9 @@ module.exports = {
       defaultsTo: {}
     },
 
+    code: {
+      type: 'string'
+    },
   }
 };
 
