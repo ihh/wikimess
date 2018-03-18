@@ -89,7 +89,7 @@ module.exports.routes = {
   // config
   'POST /p/config':         'ClientController.configurePlayer',
 
-  'GET /p/machine':         'ClientController.readMachine',
+  'GET /p/machine':         'ClientController.getMachine',
   'POST /p/machine':        'ClientController.configureMachine',
   'DELETE /p/machine':      'ClientController.deleteMachine',
 
