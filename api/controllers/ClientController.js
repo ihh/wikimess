@@ -1142,7 +1142,7 @@ module.exports = {
 
   // get a particular symbol by name, or create it (uninitialized)
   getOrCreateSymbolByName: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolName = req.params.symname
     var result = {}
     Symbol.findOneCached ({ name: symbolName })
@@ -1167,7 +1167,7 @@ module.exports = {
 
   // store a particular symbol
   putSymbol: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var gotPlayerID = (playerID ? true : false)
     var symbolID = Symbol.parseID (req.params.symid)
     var name = req.body.name
@@ -1242,7 +1242,7 @@ module.exports = {
 
   // release ownership of a symbol
   releaseSymbol: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     Symbol.update ({ id: symbolID,
                      owned: true,
