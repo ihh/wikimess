@@ -1575,10 +1575,10 @@ var WikiMess = (function() {
                               $('<div class="messageborder">')
                               .append ($('<div class="sectiontitle composesectiontitle">').text('Input text:'),
                                        wm.messageComposeDiv,
-                                       $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
-                                       wm.messageBodyDiv,
                                        $('<div class="sectiontitle suggestsectiontitle">').text('Suggestions:'),
-                                       wm.suggestionDiv = $('<div class="suggest">'))),
+                                       wm.suggestionDiv = $('<div class="suggest">'),
+				       $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
+                                       wm.messageBodyDiv)),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
@@ -1610,7 +1610,7 @@ var WikiMess = (function() {
                       }),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
-                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
+                               wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
           updateSharePane()
@@ -1792,6 +1792,8 @@ var WikiMess = (function() {
       // first, intercept whitespace strings and return them unmodified
       if (!markdown.match (/\S/))
         return markdown
+      // convert \n to newline
+      markdown = markdown.replace(/\\n/g,function(){return"\n"})
       // convert leading and trailing whitespace to '&ensp;'
       markdown = markdown.replace(/^\s/,function(){return'&ensp;'}).replace(/\s$/,function(){return'&ensp;'})
       // next, call marked library to convert Markdown to HTML string
