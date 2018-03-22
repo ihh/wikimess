@@ -591,24 +591,6 @@ var WikiMess = (function() {
     inPortraitMode: function() {
       return window.innerHeight > window.innerWidth
     },
-
-    copyTextToClipboard: function (text) {
-      var successful
-      var textArea = document.createElement ("textarea")
-      textArea.value = text
-      document.body.appendChild (textArea)
-      textArea.focus()
-      textArea.select()
-      try {
-        successful = document.execCommand('copy')
-        if (!successful)
-          console.error ('Failed to copy text "' + text + '" to clipboard')
-      } catch (err) {
-        console.error ('Failed to copy text "' + text + '" to clipboard', err)
-      }
-      document.body.removeChild (textArea)
-      return successful
-    },
     
     openLink: function (url) {
       var newWin = window.open (url)
@@ -3049,10 +3031,10 @@ var WikiMess = (function() {
           })
       }
 
-      function copyLinkToSymbol (evt) {
+      function linkToSymbol (evt) {
         evt.stopPropagation()
         wm.saveCurrentEdit()
-        wm.copyTextToClipboard (wm.REST_makeSymbolUrl (wm.symbolName[symbol.id]))
+        window.open (wm.REST_makeSymbolUrl (wm.symbolName[symbol.id]))
       }
 
       var linksVisible = false
@@ -3292,7 +3274,7 @@ var WikiMess = (function() {
                                        (symbol.summary
                                         ? null
                                         : menuSelector ('Show revision history', showRecentRevisions)),
-                                       menuSelector ('Copy link to phrase', copyLinkToSymbol),
+                                       menuSelector ('Link to phrase', linkToSymbol),
                                        (owned
                                         ? menuSelector ('Unlock this phrase', unlockSymbol)
                                         : menuSelector ('Hide this phrase', hideSymbol)))
