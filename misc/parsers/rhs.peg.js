@@ -5,13 +5,13 @@ Node
   = "\\n" { return "\n" }
   / "\\t" { return "\t" }
   / "\\" escaped:[\s\S] { return escaped }
-  / text:[^\$&\^\{\}\|\\]+ { return text.join("") }
+  / text:[^\$\#&\^\{\}\|\\]+ { return text.join("") }
   / Symbol
   / Function
   / VarAssignment
   / VarLookup
   / Alternation
-  / char:[\$&\^] { return char }
+  / char:[\$\#&\^] { return char }
 
 NodeList
   = head:Node tail:NodeList {
@@ -38,6 +38,7 @@ OuterNodeList
 Symbol
   = "$" sym:Identifier { return makeSugaredSymbol (sym) }
   / "${" _ sym:Identifier _ "}" { return makeSugaredSymbol (sym) }
+  / "#" sym:Identifier "#" { return makeSugaredSymbol (sym) }
 
 Function
   = "&" func:FunctionName "{" args:NodeList "}" { return makeFunction (func, args) }
