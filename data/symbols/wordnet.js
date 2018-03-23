@@ -63,7 +63,7 @@ bluebird.Promise.all
       return (nSynonyms[indexify(a)] - nSynonyms[indexify(b)]) || (a.length - b.length) || (order[a] - order[b])
     })
     var indexWord = words.reduce (function (iw, word) {
-      return iw || (word.match(/^[A-Za-z][A-Za-z0-9_]+$/) ? word.toLowerCase() : null)
+      return iw || (word.match(/^[A-Za-z][A-Za-z_]+$/) ? word.toLowerCase() : null)
     }, null)
     if (indexWord)
       result.push ({ name: indexWord,
