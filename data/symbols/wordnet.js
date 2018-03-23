@@ -26,16 +26,17 @@ bluebird.Promise.all
       lineReader.on('line', function (line) {
         if (line[0] !== ' ') {
           var field = line.split(' ')
-          var words = []
+          var words = [], exclude = false
           for (var i = 0; i < field[3]; ++i) {
             var word = field[2*i+4]
-            var exclude = word.split('_').reduce (function (ex, subword) {
-              ex = ex || isExcluded[subword]
-            }, false)
-            if (!exclude)
-              words.push (word)
+            exclude = word.split('_').reduce (function (ex, subword) {
+              return ex || isExcluded[md5(subword.toLowerCase())]
+            }, exclude)
+            words.push (word)
           }
-          if (words.length >= minSynonyms)
+          if (exclude)
+            console.warn ('Excluding ' + words.join(','))
+          else if (words.length >= minSynonyms)
             data.push (words)
         }
       })

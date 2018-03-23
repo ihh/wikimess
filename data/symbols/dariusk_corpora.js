@@ -171,7 +171,7 @@ var symbolPath = {
   common_adjective: 'words/adjs.json',
   common_adverb: 'words/adverbs.json',
   encouraging_word: 'words/encouraging_words.json',
-  common_expletive: 'words/expletives.json',
+//  common_expletive: 'words/expletives.json',
   common_interjection: 'words/interjections.json',
   common_noun: 'words/nouns.json',
   oprah_quote: 'words/oprah_quotes.json',

@@ -175,7 +175,8 @@ module.exports = {
   searchAllSymbols: function (req, res) {
     var query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
-    Symbol.find ({ name: { contains: query } })
+    Symbol.find ({ or: [{ name: { contains: query } },
+                        { rules: { like: '%' + query + '%' } }] })
       .limit (resultsPerPage + 1)
       .skip (resultsPerPage * page)
       .populate ('owner')
