@@ -231,7 +231,7 @@ module.exports = {
             })
         })
       }
-      templatePromise.then (function (template) {
+      return templatePromise.then (function (template) {
         result.template = { id: template.id }
         // create the Message
         return Message.create ({ sender: playerID,

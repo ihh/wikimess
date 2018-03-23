@@ -43,7 +43,11 @@
     background-color: white;
 }
 
-.wikimess.plain .compose .suggestsectiontitle,
+.wikimess.plain .compose .suggestsectiontitle {
+    background-color: #eee;
+    border-color: #444;
+}
+
 .wikimess.plain .compose .composesectiontitle {
     background-color: #bbb;
     border-color: #666;
@@ -53,7 +57,11 @@
     background-color: #eee;
 }
 
-.wikimess.plain .suggest,
+.wikimess.plain .suggest {
+    background-color: #fff;
+    border-color: #444;
+}
+
 .wikimess.plain .compose .messagecompose,
 .wikimess.plain .grammarbar .rule .rhs .content {
     background-color: #ccc;
