@@ -107,6 +107,7 @@ var WikiMess = (function() {
     autosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
+    symbolSearchResultsPerPage: 10,
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     menuPopupDelay: 500,
@@ -259,8 +260,8 @@ var WikiMess = (function() {
       return this.logPost ('/p/search/players/followed', { query: queryText })
     },
 
-    REST_postPlayerSearchSymbolsAll: function (playerID, query, page) {
-      return this.logPost ('/p/search/symbols/all', { query: query, page: page })
+    REST_postPlayerSearchSymbolsAll: function (playerID, query, nPerPage, page) {
+      return this.logPost ('/p/search/symbols/all', { query: query, n: nPerPage, page: page })
     },
 
     REST_postPlayerSearchSymbolsOwned: function (playerID, query) {
@@ -3907,7 +3908,7 @@ var WikiMess = (function() {
       if (searchText !== this.lastSymbolSearch) {
         this.lastSymbolSearch = searchText
         delete this.symbolSearchResults
-        this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
+        this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText, wm.symbolSearchResultsPerPage)
           .then (function (ret) {
             wm.symbolSearchResults = ret
             wm.showSymbolSearchResults()
@@ -3918,7 +3919,7 @@ var WikiMess = (function() {
     continueSymbolSearch: function() {
       var wm = this
       if (this.searchInput.val() === this.lastSymbolSearch) {
-        this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
+        this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, wm.symbolSearchResultsPerPage, this.symbolSearchResults.page + 1)
           .then (function (ret) {
             wm.symbolSearchResults.symbols = wm.symbolSearchResults.symbols.concat (ret.symbols)
             wm.symbolSearchResults.more = ret.more

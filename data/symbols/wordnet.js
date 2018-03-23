@@ -60,7 +60,7 @@ bluebird.Promise.all
     var order = {}
     words.forEach (function (word, n) { order[word] = n })
     words = words.sort (function (a, b) {
-      return (nSynonyms[indexify(a)] - nSynonyms[indexify(b)]) || (order[a] - order[b])
+      return (nSynonyms[indexify(a)] - nSynonyms[indexify(b)]) || (a.length - b.length) || (order[a] - order[b])
     })
     var indexWord = words.reduce (function (iw, word) {
       return iw || (word.match(/^[A-Za-z][A-Za-z0-9_]+$/) ? word.toLowerCase() : null)

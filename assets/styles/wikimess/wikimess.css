@@ -179,8 +179,7 @@ input {
 }
 
 .wikimess .symbolsearch {
-    min-height: 7em;
-    max-height: 8em;
+    min-height: 33%;
     overflow: hidden;
     border-bottom-style: solid;
     border-width: 1px;
