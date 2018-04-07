@@ -873,6 +873,7 @@ input {
 
 .wikimess .compose .composesectiontitle .button {
     float: right;
+    cursor: pointer;
 }
 
 .wikimess .compose .composesectiontitle .button svg {
