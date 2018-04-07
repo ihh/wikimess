@@ -1368,8 +1368,8 @@ module.exports = {
                                 name: template.author.name,
                                 displayName: template.author.displayName }
                             : undefined),
-                   title: template.title || parseTree.summarizeRhs (template.content.rhs,
-                                                                    function (sym) { return Symbol.cache.byId[sym.id] })  }
+                   title: template.title || parseTree.summarizeRhs (template.content,
+                                                                    function (sym) { return Symbol.cache.byId[sym.id].name })  }
         })
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {
