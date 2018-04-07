@@ -1282,7 +1282,7 @@ var WikiMess = (function() {
 
           function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName) {
             if (typeof(config[compositionAttrName]) !== 'undefined')
-              wm.composition[compositionAttrName] = config[compositionAttrName]
+              wm.composition[compositionAttrName] = config[compositionAttrName].replace(/^\s*/,'').replace(/\s*$/,'')
             wm[controlName] = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
               .addClass (className)
               .attr ('placeholder', placeholderText)
