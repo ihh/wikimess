@@ -638,6 +638,8 @@ module.exports = {
       title: req.body.title,
       body: req.body.body,
       previous: req.body.previous,
+      tags: req.body.tags,
+      previousTags: req.body.previousTags,
       draftID: Draft.parseID (req.body.draft),
       isPublic: req.body.isPublic || false
     }).then (function (result) {
@@ -772,6 +774,8 @@ module.exports = {
                                                          displayName: draft.recipient.displayName },
                          previous: draft.previous,
                          previousTemplate: draft.previousTemplate,
+                         tags: tags,
+                         previousTags: previousTags,
                          template: draft.template,
                          title: draft.title,
                          body: draft.body,
@@ -792,6 +796,8 @@ module.exports = {
                     recipient: draft.recipient,
                     previous: draft.previous,
                     previousTemplate: draft.previousTemplate,
+                    tags: draft.tags,
+                    previousTags: draft.previousTags,
                     template: draft.template,
                     title: draft.title,
                     body: draft.body })
@@ -1369,9 +1375,13 @@ module.exports = {
   suggestReply: function (req, res) {
     var playerID = req.session.passport.user
     var previousID = Template.parseID (req.params.template)
-    return Template.find ({ previous: previousID,
-                            or: [{ author: playerID },
+    var previousTags = req.params.tags ? req.params.tags.split(/\s+/) : []
+    return Template.find ({ or: [{ author: playerID },
                                  { isPublic: true }] })
+      .where ({ or: [{ previous: previousID }]
+                .concat (previousTags.map (function (tag) {
+                  return { previousTags: { contains: ' ' + tag + ' ' } }
+                })) })
       .then (function (templates) {
         var result = {}
         if (templates.length) {

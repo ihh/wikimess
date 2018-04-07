@@ -177,6 +177,8 @@ module.exports = {
     var title = config.title
     var body = config.body
     var previous = config.previous
+    var tags = config.tags || ''
+    var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
     var result = {}, notification = {}
@@ -219,6 +221,8 @@ module.exports = {
                                     author: playerID,
                                     content: content,
                                     previous: previousTemplate,
+                                    tags: tags.split(/\s+/).filter (function (tag) { return tag !== '' }).join(' '),
+                                    previousTags: ' ' + previousTags + ' ',
                                     isRoot: (previousTemplate ? false : true),
                                     isPublic: isPublic })
             .then (function (template) {
