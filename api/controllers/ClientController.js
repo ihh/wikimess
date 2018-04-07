@@ -534,7 +534,8 @@ module.exports = {
                                           displayName: message.sender.displayName }
                                       : null),
                              template: { id: message.template.id,
-                                         content: message.template.content },
+                                         content: message.template.content,
+                                         tags: message.template.tags },
                              title: message.title,
                              body: message.body,
                              date: message.createdAt,
@@ -565,7 +566,8 @@ module.exports = {
                                      name: message.sender.name,
                                      displayName: message.sender.displayName },
                            template: { id: message.template.id,
-                                       content: message.template.content },
+                                       content: message.template.content,
+                                       tags: message.template.tags },
                            title: message.title,
                            body: message.body,
                            date: message.createdAt,
@@ -618,7 +620,9 @@ module.exports = {
                                              name: message.recipient.name,
                                              displayName: message.recipient.displayName }
                                          : undefined),
-                             template: { id: message.template },
+                             template: { id: message.template,
+                                         content: message.template.content,
+                                         tags: message.template.tags },
                              title: message.title,
                              body: message.body,
                              date: message.createdAt }
@@ -774,8 +778,8 @@ module.exports = {
                                                          displayName: draft.recipient.displayName },
                          previous: draft.previous,
                          previousTemplate: draft.previousTemplate,
-                         tags: tags,
-                         previousTags: previousTags,
+                         tags: draft.tags,
+                         previousTags: draft.previousTags,
                          template: draft.template,
                          title: draft.title,
                          body: draft.body,
@@ -1310,7 +1314,10 @@ module.exports = {
       .then (function (template) {
         if (template)
           result.template = { id: template.id,
-                              content: template.content }
+                              content: template.content,
+                              title: template.title,
+                              tags: template.tags,
+                              previousTags: template.previousTags }
         res.json (result)
       }).catch (function (err) {
         console.log(err)

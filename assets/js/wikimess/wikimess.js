@@ -1254,6 +1254,8 @@ var WikiMess = (function() {
                     var draft = { recipient: wm.composition.recipient && wm.composition.recipient.id,
                                   previous: wm.composition.previousMessage,
                                   previousTemplate: wm.composition.previousTemplate,
+                                  tags: wm.composition.tags,
+                                  previousTags: wm.composition.previousTags,
                                   template: wm.composition.template,
                                   title: wm.composition.title,
                                   body: wm.composition.body }
@@ -1275,18 +1277,25 @@ var WikiMess = (function() {
 
           wm.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
           wm.playerSearchResultsDiv = $('<div class="results">')
-
-          if (config.title)
-            wm.composition.title = config.title
           
           function markForSave() { wm.composition.needsSave = true }
-          wm.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
-            .attr ('placeholder', 'Untitled')
-            .val (wm.composition.title)
-            .on ('keyup', function() {
-              wm.composition.title = wm.messageTitleInput.val()
-            }).on ('change', markForSave)
 
+          function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName) {
+            if (typeof(config[compositionAttrName]) !== 'undefined')
+              wm.composition[compositionAttrName] = config[compositionAttrName]
+            wm[controlName] = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
+              .addClass (className)
+              .attr ('placeholder', placeholderText)
+              .val (wm.composition[compositionAttrName])
+              .on ('keyup', function() {
+                wm.composition[compositionAttrName] = wm[controlName].val()
+              }).on ('change', markForSave)
+          }
+
+          makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput')
+          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput')
+          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput')
+ 
           wm.composition.previousTemplate = config.previousTemplate
           wm.composition.template = config.template || wm.composition.template || {}
           wm.composition.template.content = wm.composition.template.content || []
@@ -1490,6 +1499,8 @@ var WikiMess = (function() {
                                                               title: wm.composition.title,
                                                               body: wm.composition.body,
                                                               previous: wm.composition.previousMessage,
+                                                              tags: wm.composition.tags,
+                                                              previousTags: wm.composition.previousTags,
                                                               draft: wm.composition.draft,
                                                               isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                       .then (function (result) {
@@ -1543,6 +1554,7 @@ var WikiMess = (function() {
           // build the actual compose page UI
           wm.initInfoPane()
           var pubTab, privTab
+          var titleRow, tagsRow, prevTagsRow, revealButton, hideButton
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1569,12 +1581,20 @@ var WikiMess = (function() {
                                        .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
                                                                                   wm.playerSearchResultsDiv.hide())),
-                                       $('<div class="row">')
+                                       titleRow = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject'),
-                                                $('<span class="input">').append (wm.messageTitleInput))
-                                       .hide()),  // subject line clutters up the UI and is strictly unnecessary, so leave it out (maybe restore later as player option?)
+                                                $('<span class="input">').append (wm.messageTitleInput)).hide(),
+                                       prevTagsRow = $('<div class="row">')
+                                       .append ($('<span class="label">').text ('Tags'),
+                                                $('<span class="input">').append (wm.messagePrevTagsInput)).hide(),
+                                       tagsRow = $('<div class="row">')
+                                       .append ($('<span class="label">').text ('Reply tags'),
+                                                $('<span class="input">').append (wm.messageTagsInput)).hide()),
                               $('<div class="messageborder">')
-                              .append ($('<div class="sectiontitle composesectiontitle">').text('Input text:'),
+                              .append ($('<div class="sectiontitle composesectiontitle">')
+                                       .append ($('<span>').text('Input text:'),
+                                                revealButton = wm.makeIconButton ('down', function() { titleRow.show(); tagsRow.show(); prevTagsRow.show(); revealButton.hide(); hideButton.show() }),
+                                                hideButton = wm.makeIconButton ('up', function() { titleRow.hide(); tagsRow.hide(); prevTagsRow.hide(); revealButton.show(); hideButton.hide() }).hide()),
                                        wm.messageComposeDiv,
                                        $('<div class="sectiontitle suggestsectiontitle">').text('Suggestions:'),
                                        wm.suggestionDiv = $('<div class="suggest">'),
@@ -2180,6 +2200,8 @@ var WikiMess = (function() {
                                                          title: draft.title,
                                                          previousMessage: draft.previous,
                                                          previousTemplate: draft.previousTemplate,
+                                                         tags: draft.tags,
+                                                         previousTags: draft.previousTags,
                                                          template: draft.template,
                                                          body: draft.body,
                                                          draft: draft.id })
@@ -2215,6 +2237,7 @@ var WikiMess = (function() {
                verb: 'Received',
                preposition: 'From',
                object: 'sender',
+               replyDirect: true,
                showMessage: function (props) {
                  wm.showMessage ($.extend ({ recipient: wm.playerInfo },
                                            props))
@@ -2249,23 +2272,6 @@ var WikiMess = (function() {
                                          stars))
                          .show()
                      }
-
-                     wm.replyButton
-                       .on('click', function (evt) {
-                         evt.stopPropagation()
-                         var replyTitle = message.title
-                         if (!replyTitle.match(/^re:/i))
-                           replyTitle = 'Re: ' + replyTitle
-                         wm.showComposePage
-                         ({ recipient: message.sender,
-                            title: replyTitle,
-                            previousMessage: message.id,
-                            previousTemplate: message.template,
-                            focus: 'messageTitleInput'
-                          }).then (function() {
-                            wm.generateMessageBody()
-                          })
-                       }).show()
                    })
                }}
     },
@@ -2352,19 +2358,39 @@ var WikiMess = (function() {
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      wm.popBack()
-                     .append (wm.replyButton = wm.makeSubNavIcon('reply').hide(),
-                              wm.forwardButton = wm.makeSubNavIcon ('forward', function (evt) {
-                                evt.stopPropagation()
-                                wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
-                                  .then (function (templateResult) {
-                                    return wm.showComposePage
-                                    ({ title: message.title,
-                                       template: templateResult.template,
-                                       body: message.body,
-                                       previousMessage: message.id,
-                                       focus: 'playerSearchInput' })
-                                  })
-                              }),
+                     .append (wm.replyButton = wm.makeSubNavIcon ('reply',
+                                                                  function (evt) {
+                                                                    evt.stopPropagation()
+                                                                    var replyTitle = message.title
+                                                                    if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+                                                                      replyTitle = 'Re: ' + replyTitle
+                                                                    wm.showComposePage
+                                                                    ({ recipient: props.replyDirect ? message.sender : null,
+                                                                       title: replyTitle,
+                                                                       previousMessage: message.id,
+                                                                       previousTemplate: message.template,
+                                                                       tags: '',
+                                                                       previousTags: message.template ? (message.template.tags || '') : '',
+                                                                       focus: 'messageTitleInput'
+                                                                     }).then (function() {
+                                                                       wm.generateMessageBody()
+                                                                     })
+                                                                  }),
+                              wm.forwardButton = wm.makeSubNavIcon ('forward',
+                                                                    function (evt) {
+                                                                      evt.stopPropagation()
+                                                                      wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
+                                                                        .then (function (templateResult) {
+                                                                          return wm.showComposePage
+                                                                          ({ title: message.title,
+                                                                             template: templateResult.template,
+                                                                             body: message.body,
+                                                                             previousMessage: message.id,
+                                                                             tags: templateResult.template.tags || '',
+                                                                             previousTags: templateResult.template.previousTags || '',
+                                                                             focus: 'playerSearchInput' })
+                                                                        })
+                                                                    }),
                               props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : []))
 
           var other = message[props.object]

@@ -773,6 +773,7 @@ input {
     padding-right: 8px;  /* ugh, weird */
 }
 
+/*
 .wikimess .compose .messageheader .row.direct .label {
     display: block;
 }
@@ -780,6 +781,7 @@ input {
 .wikimess .compose .messageheader .row.direct .input {
     padding-right: 16px;
 }
+*/
 
 .wikimess .messageheader .label {
     float: left;
@@ -868,7 +870,16 @@ input {
     padding: 2px;
     margin-top: 1px;
 }
-    
+
+.wikimess .compose .composesectiontitle .button {
+    float: right;
+}
+
+.wikimess .compose .composesectiontitle .button svg {
+    width: 1em;
+    height: 1em;
+}
+
 .wikimess .compose .messagecompose {
     height: 15vh;
     min-height: 15vh;
@@ -1066,8 +1077,15 @@ input {
 
 .wikimess .compose .messageheader textarea.title {
     resize: vertical;
-    max-height: 4em;
+    min-height: 1em;
+    max-height: 3em;
 }
+
+.wikimess .compose .messageheader textarea.prevtags,
+.wikimess .compose .messageheader textarea.tags {
+    resize: none;
+}
+
 
 .wikimess .messagecompose textarea,
 .wikimess .grammarbar textarea {
