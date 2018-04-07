@@ -1280,7 +1280,7 @@ var WikiMess = (function() {
           
           function markForSave() { wm.composition.needsSave = true }
 
-          function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName) {
+          function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName, lowercase) {
             if (typeof(config[compositionAttrName]) !== 'undefined')
               wm.composition[compositionAttrName] = config[compositionAttrName].replace(/^\s*/,'').replace(/\s*$/,'')
             wm[controlName] = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
@@ -1288,13 +1288,18 @@ var WikiMess = (function() {
               .attr ('placeholder', placeholderText)
               .val (wm.composition[compositionAttrName])
               .on ('keyup', function() {
-                wm.composition[compositionAttrName] = wm[controlName].val()
+                var text = wm[controlName].val()
+                if (lowercase) {
+                  text = text.toLowerCase()
+                  wm[controlName].val (text)
+                }
+                wm.composition[compositionAttrName] = text
               }).on ('change', markForSave)
           }
 
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput')
-          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput')
-          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput')
+          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput', true)
+          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput', true)
  
           wm.composition.previousTemplate = config.previousTemplate
           wm.composition.template = config.template || wm.composition.template || {}
@@ -1356,6 +1361,9 @@ var WikiMess = (function() {
                       })
                   }
                   insertText += ' '
+                  // recompute newValBefore & newValAfter, in case caret has changed
+                  var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
+                  var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
                   var updatedNewValBefore = newValBefore + insertText
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input[0], updatedNewValBefore.length)

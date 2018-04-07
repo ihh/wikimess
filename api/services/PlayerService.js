@@ -221,8 +221,8 @@ module.exports = {
                                     author: playerID,
                                     content: content,
                                     previous: previousTemplate,
-                                    tags: tags.split(/\s+/).filter (function (tag) { return tag !== '' }).join(' '),
-                                    previousTags: ' ' + previousTags + ' ',
+                                    tags: tags.toLowerCase().split(/\s+/).filter (function (tag) { return tag !== '' }).join(' '),
+                                    previousTags: ' ' + previousTags.toLowerCase() + ' ',
                                     isRoot: (previousTemplate ? false : true),
                                     isPublic: isPublic })
             .then (function (template) {
