@@ -1638,8 +1638,8 @@ var WikiMess = (function() {
 
           if (config.recipient) {
             wm.composition.recipient = config.recipient
-            wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null)
-            wm.lastComposePlayerSearchText = config.recipient.name
+            wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null && !config.defaultToPublic)
+            wm.lastComposePlayerSearchText = playerChar + config.recipient.name
           }
 
           if (!wm.playerID) {
@@ -2365,7 +2365,8 @@ var WikiMess = (function() {
                                                                     if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
                                                                       replyTitle = 'Re: ' + replyTitle
                                                                     wm.showComposePage
-                                                                    ({ recipient: props.replyDirect ? message.sender : null,
+                                                                    ({ recipient: message.sender,
+                                                                       defaultToPublic: !props.replyDirect,
                                                                        title: replyTitle,
                                                                        previousMessage: message.id,
                                                                        previousTemplate: message.template,

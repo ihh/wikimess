@@ -590,7 +590,8 @@ module.exports = {
       .populate ('sender')
       .then (function (message) {
         result.message = { id: message.id,
-                           title: message.title || PlayerService.summarizeMessage (message.body.rhs),
+                           title: message.title || parseTree.summarizeExpansion ({ type: 'root',
+                                                                                   rhs: message.body.rhs }),
                            sender: { id: message.sender.id,
                                      name: message.sender.name,
                                      displayName: message.sender.displayName },
