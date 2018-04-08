@@ -3393,9 +3393,10 @@ var WikiMess = (function() {
     },
 
     deleteAllSymbolNames: function (node) {
-      this.ParseTree.getSymbolNodes (node.rhs).forEach (function (node) {
-	delete node.name
-      })
+      if (node.rhs)
+        this.ParseTree.getSymbolNodes (node.rhs).forEach (function (node) {
+	  delete node.name
+        })
     },
 
     makeRhsText: function (rhs) {
