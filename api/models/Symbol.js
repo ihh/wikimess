@@ -64,9 +64,9 @@ module.exports = {
 
   // limits for expansions
   maxDepth: 3,
-  maxNodes: 100,
-  maxRhsSyms: 20,
-  maxTemplateSyms: 20,
+  maxNodes: 600,
+  maxRhsSyms: 100,
+  maxTemplateSyms: 100,
 
   // in-memory cache
   cache: { byId: {},

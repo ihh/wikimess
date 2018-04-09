@@ -329,7 +329,7 @@ input {
 }
 
 .wikimess .compose .messagecompose p {
-    display: inline-block;
+    display: inline;
 }
 
 .wikimess .grammarbar .rule .summary p,
