@@ -1208,7 +1208,12 @@ var WikiMess = (function() {
                                page: page,
                                suspend: this.pageSuspend,
                                resume: this.pageResume,
-                               exit: this.pageExit })
+                               exit: this.pageExit,
+			       modalExitDiv: this.modalExitDiv })
+      if (this.modalExitDiv) {
+	this.modalExitDiv.hide()
+	delete this.modalExitDiv
+      }
       if (this.pageSuspend)
         this.pageSuspend()
       this.pageSuspend = this.pageResume = this.pageExit = undefined
@@ -1231,6 +1236,7 @@ var WikiMess = (function() {
           wm.pageSuspend = poppedView.pageSuspend
           wm.pageResume = poppedView.pageResume
           wm.pageExit = poppedView.pageExit
+	  wm.modalExitDiv = poppedView.modalExitDiv
           if (wm.pageResume)
             wm.pageResume()
         })
@@ -3465,7 +3471,7 @@ var WikiMess = (function() {
                                        rightBracketChar)
           case 'alt':
             return $('<span>').append (leftBracketChar,
-                                       tok.opts.map (function (opt) { return $('<span>').append (wm.makeTemplateSpan(opt), '|') }),
+                                       tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeTemplateSpan(opt)) }),
                                        rightBracketChar)
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
@@ -3606,10 +3612,6 @@ var WikiMess = (function() {
     
     sanitizeCharSymbolName: function (text) {
       return symChar + text.replace(/\s/g,'_').replace(/\W/g,'')
-    },
-
-    sanitizeSymbolName: function (text) {
-      return text.replace(/\s/g,'_').replace(/\W/g,'')
     },
 
     sanitizePlayerName: function (text) {
@@ -3813,10 +3815,7 @@ var WikiMess = (function() {
             wm.grammarBarDiv = $('<div class="grammarbar">')
             wm.initInfoPane()
             
-            var sanitizer = wm.sanitizer ('searchInput', wm.sanitizeSymbolName)
             wm.searchInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
-              .on ('keyup', sanitizer)
-              .on ('change', sanitizer)
             wm.symbolSearchResultsDiv = $('<div class="results">')
             
             var searchButton = $('<span>')
@@ -3910,7 +3909,8 @@ var WikiMess = (function() {
 
             wm.hideMenu = function() {
               $('.rulemenu').hide()
-              wm.modalExitDiv.hide()
+	      if (wm.modalExitDiv)
+		wm.modalExitDiv.hide()
               wm.setUnfocusCallback()
             }
             wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')

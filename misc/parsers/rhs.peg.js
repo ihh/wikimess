@@ -4,8 +4,8 @@ RHS
 Node
   = "\\n" { return "\n" }
   / "\\t" { return "\t" }
-  / "\\" escaped:[\s\S] { return escaped }
-  / text:[^\$\#&\^\{\}\|\\]+ { return text.join("") }
+  / "\\" escaped:. { return escaped }
+  / text:[^\$\#&\^\{\}\[\]\|\\]+ { return text.join("") }
   / Symbol
   / Function
   / VarAssignment
@@ -62,6 +62,7 @@ VarAssignment
 
 Alternation
   = "{" head:NodeList "|" tail:AltList "}" { return makeAlternation ([head].concat(tail)) }
+  / "[" head:NodeList "|" tail:AltList "]" { return makeAlternation ([head].concat(tail)) }
 
 AltList
   = head:NodeList "|" tail:AltList { return [head].concat(tail) }

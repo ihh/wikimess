@@ -308,9 +308,11 @@ function post (info) {
     }
 
     // post the data
-    if (sailsApp) {
+    if (false && sailsApp) {  // disabled this clause because it doesn't seem to work with cookies
+      console.warn (post_options)
       sailsApp.request (post_options, array, reqCallback)
     } else {
+      // fall back to HTTP
       var req = request (post_options, reqCallback)
       req.write(post_data)
       req.end()

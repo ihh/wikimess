@@ -47,7 +47,7 @@ module.exports = {
     return '>' + revision.name + '\n'
       + revision.rules.map (function (rhs) {
         return parseTree.makeRhsText (rhs, function (rhsSym) {
-          return Symbol.cache.byId[rhsSym.id]
+          return Symbol.cache.byId[rhsSym.id].name
         }).replace(/\n/g,function(){return"\\n"})
           + '\n'
       }).join('')
