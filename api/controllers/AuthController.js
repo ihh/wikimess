@@ -19,7 +19,7 @@ module.exports = {
   },
 
   loginOrHomepage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
         res.view ('homepage', homepage.vars)
@@ -30,7 +30,7 @@ module.exports = {
   },
 
   homepage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
         homepage.vars.init = true
@@ -44,7 +44,7 @@ module.exports = {
   },
 
   broadcastPage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
@@ -62,7 +62,7 @@ module.exports = {
   },
 
   composePage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var symname = req.params.symname
     var content, text = req.query.text
     return PlayerService.makeHomepage (playerID)
@@ -99,7 +99,7 @@ module.exports = {
   },
 
   grammarPage: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var symname = req.params.symname
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {

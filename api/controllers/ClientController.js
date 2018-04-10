@@ -56,7 +56,8 @@ module.exports = {
 
   // search all Players, with pagination
   searchAllPlayers: function (req, res) {
-    var searcherID = req.session.passport.user || null, query = req.body.query, page = parseInt(req.body.page) || 0
+    var searcherID = req.session && req.session.passport ? (req.session.passport.user || null) : null
+    var query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
     Player.find ({ or: [{ displayName: { contains: query } },
                         { name: { contains: query } }],
@@ -87,7 +88,8 @@ module.exports = {
 
   // search Players who are reachable, preferentially followed or following, with no pagination
   searchFollowedPlayers: function (req, res) {
-    var searcherID = req.session.passport.user || null, query = req.body.query
+    var searcherID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    var query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
     var lowerCaseQuery = query.toLowerCase()
     var matches = []
@@ -139,7 +141,7 @@ module.exports = {
 
   // search Symbols, preferentially owned, with no pagination
   searchOwnedSymbols: function (req, res) {
-    var searcherID = req.session.passport ? (req.session.passport.user || null) : null
+    var searcherID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var query = req.body.query
     var maxResults = req.body.n ? parseInt(req.body.n) : 3
     Symbol.find (_.extend ({ name: query.name },
@@ -193,7 +195,7 @@ module.exports = {
 
   // configure Player info
   configurePlayer: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed', 'createsPublicTemplates']
     var name = req.body.name
     var nameClashPromise = (typeof(name) === 'undefined'
@@ -255,7 +257,7 @@ module.exports = {
 
   // configure Player's bot
   getMachine: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     return Bot.findOne ({ player: playerID })
       .then (function (bot) {
         if (bot)
@@ -266,7 +268,7 @@ module.exports = {
   },
 
   configureMachine: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var code = req.body.code
     var machine
     try {
@@ -286,7 +288,7 @@ module.exports = {
   },
 
   deleteMachine: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     Bot.destroy ({ player: playerID })
       .then (function() {
         res.ok()
@@ -297,7 +299,7 @@ module.exports = {
 
   // get player status
   selfStatus: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     Player.findOne ({ id: playerID })
       .then (function (player) {
         return PlayerService.makeStatus ({ player: player,
@@ -312,7 +314,7 @@ module.exports = {
 
   // get a conversation thread
   getThread: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var otherID = Player.parseID (req.params.id)
     Player.findOne ({ id: otherID })
       .then (function (other) {
@@ -329,7 +331,7 @@ module.exports = {
 
   // get a conversation thread (subsequent page)
   getThreadBefore: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var otherID = Player.parseID (req.params.id)
     var beforeID = Player.parseID (req.params.before)
     Player.findOne ({ id: otherID })
@@ -348,7 +350,7 @@ module.exports = {
 
   // find player ID
   getPlayerId: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var otherName = req.params.name
     var result = {}
     Player.findOne ({ name: otherName })
@@ -369,7 +371,7 @@ module.exports = {
 
   // list followers
   listFollowed: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var result = { id: playerID }
     var followInfo = {}
     Follow.find ({ follower: playerID })
@@ -398,7 +400,7 @@ module.exports = {
 
   // add follower
   follow: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var otherID = Player.parseID (req.params.other)
     if (playerID === otherID)
       res.status(500).send (new Error ("You can't follow yourself"))
@@ -417,7 +419,8 @@ module.exports = {
 
   // remove follower
   unfollow: function (req, res) {
-    Follow.destroy ({ follower: req.session.passport.user,
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    Follow.destroy ({ follower: playerID,
                       followed: req.params.other })
       .exec (function (err, deleted) {
         if (err)
@@ -425,13 +428,13 @@ module.exports = {
         else if (deleted.length)
           res.ok()
         else
-          res.status(404).send ({error: "Player " + req.session.passport.user + " does not follow player " + req.params.other})
+          res.status(404).send ({error: "Player " + playerID + " does not follow player " + req.params.other})
       })
   },
 
   // inbox
   getInbox: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var result = { player: playerID }
     Message.find ({ recipient: playerID,
                     recipientDeleted: false })
@@ -454,7 +457,7 @@ module.exports = {
 
   // inbox count
   getInboxCount: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var result = { player: playerID }
     Message.count ({ recipient: playerID,
                      recipientDeleted: false,
@@ -469,7 +472,7 @@ module.exports = {
   
   // outbox
   getOutbox: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var result = { player: playerID }
     Message.find ({ sender: playerID,
                     senderDeleted: false })
@@ -549,7 +552,7 @@ module.exports = {
 
   // get received message
   getReceivedMessage: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     var result = {}
     Message.update ({ recipient: playerID,
@@ -581,7 +584,7 @@ module.exports = {
 
   // get received message header
   getReceivedMessageHeader: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     var result = {}
     Message.findOne ({ recipient: playerID,
@@ -606,7 +609,7 @@ module.exports = {
 
   // get sent message
   getSentMessage: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     var result = {}
     Message.findOne ({ sender: playerID,
@@ -637,7 +640,7 @@ module.exports = {
   // send message
   sendMessage: function (req, res) {
     PlayerService.sendMessage ({
-      playerID: req.session.passport ? (req.session.passport.user || null) : null,
+      playerID: req.session && req.session.passport ? (req.session.passport.user || null) : null,
       recipientID: req.body.recipient ? Player.parseID (req.body.recipient) : null,
       template: req.body.template,
       title: req.body.title,
@@ -657,7 +660,7 @@ module.exports = {
 
   // delete message
   deleteMessage: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     Message.findOne ({ id: messageID,
                        or: [ { sender: playerID },
@@ -685,7 +688,7 @@ module.exports = {
 
   // rate message
   rateMessage: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     var rating = parseInt (req.body.rating)
     Message.update ({ id: messageID,
@@ -745,7 +748,7 @@ module.exports = {
 
   // get drafts
   getDrafts: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var result = {}
     Draft.find ({ sender: playerID })
       .populate ('recipient')
@@ -766,7 +769,7 @@ module.exports = {
   
   // get draft
   getDraft: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var draftID = Draft.parseID (req.params.draft)
     var result = {}
     Draft.findOne ({ id: draftID,
@@ -794,7 +797,7 @@ module.exports = {
   
   // save draft
   saveDraft: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var draft = Draft.parseID (req.body.draft)
     var result = {}
     Draft.create ({ sender: playerID,
@@ -817,7 +820,7 @@ module.exports = {
   
   // update draft
   updateDraft: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var draftID = Draft.parseID (req.params.draft)
     var draft = req.body.draft
     Draft.update ({ id: draftID,
@@ -833,7 +836,7 @@ module.exports = {
   
   // delete draft
   deleteDraft: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var draftID = Draft.parseID (req.params.draft)
     Draft.destroy ({ id: draftID,
                      sender: playerID })
@@ -847,7 +850,7 @@ module.exports = {
 
   // get all symbols owned by a player
   getSymbolsByOwner: function (req, res) {
-    var playerID = req.session.passport && req.session.passport.user
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var result = { owner: playerID }
     Player.findOne ({ id: playerID })
       .then (function (player) {
@@ -879,7 +882,7 @@ module.exports = {
 
   // create a new symbol
   newSymbol: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var result = {}
     var gotPlayerID = (playerID ? true : false)
     var symInfo = { owned: gotPlayerID,
@@ -1018,7 +1021,7 @@ module.exports = {
   
   // get a particular symbol
   getSymbol: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
@@ -1041,7 +1044,7 @@ module.exports = {
 
   // get recent revisions of a symbol
   getRecentSymbolRevisions: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     var resultsPerPage = req.params.n ? parseInt(req.params.n) : 10
     var page = req.params.page ? parseInt(req.params.page) : 0
@@ -1087,7 +1090,7 @@ module.exports = {
   },
 
   getSymbolRevision: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     var revisionID = Symbol.parseID (req.params.revid)
     var result = {}
@@ -1109,7 +1112,7 @@ module.exports = {
   },
 
   getSymbolRevisionDiff: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     var revisionID = Symbol.parseID (req.params.revid)
     var result = {}
@@ -1132,7 +1135,7 @@ module.exports = {
   
   // get links (uses, used by, copies, copied by) for a symbol
   getSymbolLinks: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     var result = {}
     Symbol.findOneCached ({ id: symbolID })
@@ -1154,7 +1157,7 @@ module.exports = {
 
   // get a particular symbol by name, or create it (uninitialized)
   getOrCreateSymbolByName: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolName = req.params.symname
     var result = {}
     Symbol.findOneCached ({ name: symbolName })
@@ -1179,7 +1182,7 @@ module.exports = {
 
   // store a particular symbol
   putSymbol: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var gotPlayerID = (playerID ? true : false)
     var symbolID = Symbol.parseID (req.params.symid)
     var name = req.body.name
@@ -1254,7 +1257,7 @@ module.exports = {
 
   // release ownership of a symbol
   releaseSymbol: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     Symbol.update ({ id: symbolID,
                      owned: true,
@@ -1285,14 +1288,14 @@ module.exports = {
 
   // subscribe to notifications for a player
   subscribePlayer: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session && req.session.passport ? req.session.passport.user : null
     Player.subscribe (req, playerID)
     res.ok()
   },
 
   // unsubscribe from notifications for a player
   unsubscribePlayer: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session && req.session.passport ? req.session.passport.user : null
     Player.unsubscribe (req, playerID)
     res.ok()
   },
@@ -1306,7 +1309,7 @@ module.exports = {
 
   // get a particular template
   getTemplate: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
+    var playerID = req.session && req.session.passport ? (req.session.passport.user || null) : null
     var templateID = Template.parseID (req.params.template)
     var result = {}
     Template.findOne ({ id: templateID,
@@ -1381,7 +1384,7 @@ module.exports = {
 
   // suggest random reply
   suggestReply: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session && req.session.passport ? req.session.passport.user : null
     var previousID = Template.parseID (req.params.template)
     var previousTags = req.params.tags ? req.params.tags.toLowerCase().split(/\s+/).filter(function(tag){return tag.length>0}) : []
     return Template.find ({ or: [{ author: playerID },
