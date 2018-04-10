@@ -49,9 +49,22 @@
     color: #0c0;
 }
 
+.wikimess.l33t .compose .suggestsectiontitle {
+    color: #0b0;
+    background-color: #003800;
+}
+
 .wikimess.l33t .compose .composesectiontitle {
     color: #0a0;
     background-color: #002800;
+}
+
+.wikimess.l33t .compose .bodysectiontitle {
+    
+}
+
+.wikimess.l33t .compose .suggest {
+    background-color: #004400;
 }
 
 .wikimess.l33t .suggest .lhslink,
@@ -179,8 +192,7 @@
 
 .wikimess.l33t .menubar .listitem,
 .wikimess.l33t .detailbar .titlebar,
-.wikimess.l33t .compose .messageheader,
-.wikimess.l33t .compose .suggest {
+.wikimess.l33t .compose .messageheader {
     background-color: #002200;
 }
 

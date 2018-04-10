@@ -35,6 +35,16 @@ module.exports = {
       defaultsTo: null
     },
 
+    tags: {
+      type: 'string',
+      defaultsTo: '',
+    },
+
+    previousTags: {
+      type: 'string',
+      defaultsTo: '',
+    },
+
     // root of reply chain?
     isRoot: {
       type: 'boolean',

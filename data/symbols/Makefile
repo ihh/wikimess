@@ -18,3 +18,8 @@ mobythes.aur:
 	tar xvzf mthes.tar.Z
 	mv mthes/$@ $@
 	rm -rf mthes*
+
+dict:
+	curl -L -O http://wordnetcode.princeton.edu/wn3.1.dict.tar.gz
+	tar xvzf wn3.1.dict.tar.gz
+

@@ -20,6 +20,7 @@ module.exports.bootstrap = function (callback) {
       // initialize Adjacency cache
       return Adjacency.initCache()
     }).then (function() {
+      BotService.startBots()
       callback()
     }).catch (function (err) {
       throw (err)

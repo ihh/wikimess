@@ -8,6 +8,103 @@ var Player = require('../models/Player')
 var Template = require('../models/Template')
 var Symbol = require('../models/Symbol')
 
+var symbolSchemaDefs = {
+  "symbol-or-list": {
+    "oneOf": [
+      {
+        "$ref": "#/definitions/symbol"
+      },
+      {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/symbol"
+        }
+      }
+    ]
+  },
+  "symbol": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "name": {
+        "type": "string"
+      },
+      "owner": {
+        "type": ["string", "null"]
+      },
+      "transferable": {
+        "type": "boolean"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "rules": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/rhs"
+        }
+      }
+    }
+  },
+
+  "rhs": {
+    "type": "array",
+    "items": {
+      "oneOf":
+      [{ "type": "string" },
+       
+       { "type": "object",
+         "properties": {
+           "type": { "const": "sym" },
+           "name": { "type": "string" } },
+         "required": ["type", "name"],
+         "additionalProperties": false },
+       
+       { "type": "object",
+         "properties": {
+           "type": { "const": "sym" },
+           "id": { "type": "integer" },
+           "name": { "type": "string" } },
+         "required": ["type", "id"],
+         "additionalProperties": false },
+
+       { "type": "object",
+         "properties": {
+           "type": { "const": "func" },
+           "args": { "$ref": "#/definitions/rhs" },
+           "funcname": { "enum": ["uc", "cap", "plural", "a"] } },
+         "required": ["type", "funcname", "args"],
+         "additionalProperties": false },
+
+       { "type": "object",
+         "properties": {
+           "type": { "const": "lookup" },
+           "varname": { "type": "string" } },
+         "required": ["type", "varname"],
+         "additionalProperties": false },
+
+       { "type": "object",
+         "properties": {
+           "type": { "const": "assign" },
+           "value": { "$ref": "#/definitions/rhs" },
+           "varname": { "type": "string" } },
+         "required": ["type", "varname", "value"],
+         "additionalProperties": false },
+
+       { "type": "object",
+         "properties": {
+           "type": { "const": "alt" },
+           "opts": {
+             "type": "array",
+             "items": { "$ref": "#/definitions/rhs" } } },
+         "required": ["type", "opts"],
+         "additionalProperties": false } ]
+    }
+  }
+}
+
 // SchemaService
 module.exports = {
 
@@ -62,7 +159,7 @@ module.exports = {
   },
 
   templateSchema:{
-    "definitions": {
+    "definitions": extend ({
       "template-or-list": {
         "oneOf": [
           {
@@ -84,26 +181,18 @@ module.exports = {
             "type": "string"
           },
           "content": {
+            "$ref": "#/definitions/rhs"
+          },
+          "replies": {
             "type": "array",
             "items": {
-              "oneOf":
-              [{ "type": "string" },
-               { "type": "object",
-                 "properties": {
-                   "id": { "type": "integer" },
-                   "name": { "type": "string" },
-                   "upper": { "type": "boolean" },
-                   "cap": { "type": "boolean" },
-                   "a": { "type": "string" },
-                   "plural": { "type": "string" }
-                 },
-                 "additionalProperties": false
-               }]
+              "$ref": "#/definitions/template"
             }
           }
-        }
+        },
+        "additionalProperties": false
       }
-    },
+    }, symbolSchemaDefs),
     "$ref": "#/definitions/template-or-list",
     "additionalProperties": false,
     "$schema": "http://json-schema.org/schema#",
@@ -111,102 +200,7 @@ module.exports = {
   },
 
   symbolSchema: {
-    "definitions": {
-      "symbol-or-list": {
-        "oneOf": [
-          {
-            "$ref": "#/definitions/symbol"
-          },
-          {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/symbol"
-            }
-          }
-        ]
-      },
-      "symbol": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "owner": {
-            "type": ["string", "null"]
-          },
-          "transferable": {
-            "type": "boolean"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/rhs"
-            }
-          }
-        }
-      },
-
-      "rhs": {
-        "type": "array",
-        "items": {
-          "oneOf":
-          [{ "type": "string" },
-           
-           { "type": "object",
-             "properties": {
-               "type": { "const": "sym" },
-               "name": { "type": "string" } },
-             "required": ["type", "name"],
-             "additionalProperties": false },
-                 
-           { "type": "object",
-             "properties": {
-               "type": { "const": "sym" },
-               "id": { "type": "integer" },
-               "name": { "type": "string" } },
-             "required": ["type", "id"],
-             "additionalProperties": false },
-
-           { "type": "object",
-             "properties": {
-               "type": { "const": "func" },
-               "args": { "$ref": "#/definitions/rhs" },
-               "funcname": { "enum": ["uc", "cap", "plural", "a"] } },
-             "required": ["type", "funcname", "args"],
-             "additionalProperties": false },
-
-           { "type": "object",
-             "properties": {
-               "type": { "const": "lookup" },
-               "varname": { "type": "string" } },
-             "required": ["type", "varname"],
-             "additionalProperties": false },
-
-           { "type": "object",
-             "properties": {
-               "type": { "const": "assign" },
-               "value": { "$ref": "#/definitions/rhs" },
-               "varname": { "type": "string" } },
-             "required": ["type", "varname", "value"],
-             "additionalProperties": false },
-
-           { "type": "object",
-             "properties": {
-               "type": { "const": "alt" },
-               "opts": {
-                 "type": "array",
-                 "items": { "$ref": "#/definitions/rhs" } } },
-             "required": ["type", "opts"],
-             "additionalProperties": false } ]
-        }
-      }
-    },
+    "definitions": symbolSchemaDefs,
 
     "$ref": "#/definitions/symbol-or-list",
     "additionalProperties": false,

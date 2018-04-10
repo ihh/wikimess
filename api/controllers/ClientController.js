@@ -11,6 +11,7 @@ var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
+var botMachine = require('../../misc/parsers/bot.js')
 
 module.exports = {
 
@@ -60,7 +61,7 @@ module.exports = {
     Player.find ({ or: [{ displayName: { contains: query } },
                         { name: { contains: query } }],
 		   admin: false,
-		   human: true })
+		   searchable: true })
       .limit (resultsPerPage + 1)
       .skip (resultsPerPage * page)
       .then (function (players) {
@@ -93,7 +94,7 @@ module.exports = {
     function matchFilter (player) {
       return (player.displayName.toLowerCase().indexOf (lowerCaseQuery) >= 0
               || player.name.toLowerCase().indexOf (lowerCaseQuery) >= 0)
-        && !player.admin && player.human
+        && !player.admin && player.searchable
     }
     // find players we're following who match the search criteria
     Follow.find ({ follower: searcherID })
@@ -119,7 +120,7 @@ module.exports = {
                                      { name: { contains: query } }],
                                 noMailUnlessFollowed: false,
 		                admin: false,
-		                human: true })
+		                searchable: true })
           .limit (maxResults)
           .then (function (players) {
             matches = matches.concat (players)
@@ -174,7 +175,8 @@ module.exports = {
   searchAllSymbols: function (req, res) {
     var query = req.body.query, page = parseInt(req.body.page) || 0
     var resultsPerPage = req.body.n ? parseInt(req.body.n) : 3
-    Symbol.find ({ name: { contains: query } })
+    Symbol.find ({ or: [{ name: { contains: query } },
+                        { rules: { like: '%' + query + '%' } }] })
       .limit (resultsPerPage + 1)
       .skip (resultsPerPage * page)
       .populate ('owner')
@@ -249,6 +251,48 @@ module.exports = {
       console.log(err)
       res.status(500).send ({ message: err })
     })
+  },
+
+  // configure Player's bot
+  getMachine: function (req, res) {
+    var playerID = req.session.passport.user || null
+    return Bot.findOne ({ player: playerID })
+      .then (function (bot) {
+        if (bot)
+          res.json ({ code: bot.code })
+        else
+          res.notFound()
+      }).catch (function (err) { res.status(500).send ({ message: err }) })
+  },
+
+  configureMachine: function (req, res) {
+    var playerID = req.session.passport.user || null
+    var code = req.body.code
+    var machine
+    try {
+      machine = botMachine.parse (code)
+      if (machine)
+        Bot.findOrCreate ({ player: playerID })
+        .then (function (bot) {
+          Bot.update (bot,
+                      { code: code,
+                        startState: machine.state || 'start',
+                        transitions: machine.out || {} })
+        }).then (function() { res.ok() })
+        .catch (function (err) { res.status(500).send ({ message: err }) })
+    } catch (err) {
+      res.status(500).send ({ message: err })
+    }
+  },
+
+  deleteMachine: function (req, res) {
+    var playerID = req.session.passport.user || null
+    Bot.destroy ({ player: playerID })
+      .then (function() {
+        res.ok()
+      }).catch (function (err) {
+        res.status(500).send ({ message: err })
+      })
   },
 
   // get player status
@@ -490,7 +534,8 @@ module.exports = {
                                           displayName: message.sender.displayName }
                                       : null),
                              template: { id: message.template.id,
-                                         content: message.template.content },
+                                         content: message.template.content,
+                                         tags: message.template.tags },
                              title: message.title,
                              body: message.body,
                              date: message.createdAt,
@@ -521,7 +566,8 @@ module.exports = {
                                      name: message.sender.name,
                                      displayName: message.sender.displayName },
                            template: { id: message.template.id,
-                                       content: message.template.content },
+                                       content: message.template.content,
+                                       tags: message.template.tags },
                            title: message.title,
                            body: message.body,
                            date: message.createdAt,
@@ -544,7 +590,8 @@ module.exports = {
       .populate ('sender')
       .then (function (message) {
         result.message = { id: message.id,
-                           title: message.title || PlayerService.summarizeMessage (message.body.rhs),
+                           title: message.title || parseTree.summarizeExpansion ({ type: 'root',
+                                                                                   rhs: message.body.rhs }),
                            sender: { id: message.sender.id,
                                      name: message.sender.name,
                                      displayName: message.sender.displayName },
@@ -574,7 +621,9 @@ module.exports = {
                                              name: message.recipient.name,
                                              displayName: message.recipient.displayName }
                                          : undefined),
-                             template: { id: message.template },
+                             template: { id: message.template,
+                                         content: message.template.content,
+                                         tags: message.template.tags },
                              title: message.title,
                              body: message.body,
                              date: message.createdAt }
@@ -587,100 +636,24 @@ module.exports = {
 
   // send message
   sendMessage: function (req, res) {
-    var playerID = req.session.passport ? (req.session.passport.user || null) : null
-    var recipientID = req.body.recipient ? Player.parseID (req.body.recipient) : null
-    var template = req.body.template
-    var title = req.body.title
-    var body = req.body.body
-    var previous = req.body.previous
-    var draftID = Draft.parseID (req.body.draft)
-    var isPublic = req.body.isPublic || false
-    var result = {}, notification = {}
-    // check that the recipient is reachable
-    var reachablePromise
-    if (recipientID === null)
-      reachablePromise = Promise.resolve()
-    else
-      reachablePromise = Follow.find ({ follower: recipientID,
-                                        followed: playerID })
-      .then (function (follows) {
-        if (!follows.length)
-          return Player.find ({ id: recipientID,
-                                noMailUnlessFollowed: false })
-          .then (function (players) {
-            if (!players.length)
-              throw new Error ("Recipient unreachable")
-          })
-      })
-    reachablePromise.then (function() {
-      // find, or create, the template
-      var templatePromise
-      if (typeof(template.id) !== 'undefined')
-        templatePromise = Template.findOne ({ id: template.id,
-                                              or: [{ author: playerID },
-                                                   { isPublic: true }] })
-      else {
-        // impose limits
-        SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
-        // find previous Message
-        var previousPromise = (typeof(previous) === 'undefined'
-                               ? new Promise (function (resolve, reject) { resolve(null) })
-                               : (Message.findOne ({ id: previous })
-                                  .populate ('template')
-                                  .then (function (message) { return message.template })))
-        templatePromise = previousPromise.then (function (previousTemplate) {
-          // create the Template
-          var content = template.content
-          return Template.create ({ title: title,
-                                    author: playerID,
-                                    content: content,
-                                    previous: previousTemplate,
-                                    isRoot: (previousTemplate ? false : true),
-                                    isPublic: isPublic })
-            .then (function (template) {
-              // this is a pain in the arse, but Waterline's create() method unwraps single-element arrays (!??!?#$@#?) so we have to do an update() to be sure
-              return Template.update ({ id: template.id },
-                                      { content: content })
-                .then (function() {
-                  return template
-                })
-            })
-        })
-      }
-      templatePromise.then (function (template) {
-        result.template = { id: template.id }
-        // create the Message
-        return Message.create ({ sender: playerID,
-                                 recipient: recipientID,
-                                 isBroadcast: !recipientID,
-                                 template: template,
-                                 previous: previous,
-                                 title: title,
-                                 body: body })
-      }).then (function (message) {
-        result.message = { id: message.id }
-        notification.message = "incoming"
-        notification.id = message.id
-        // delete the Draft
-        var draftPromise
-        if (draftID)
-          draftPromise = Draft.destroy ({ id: draftID,
-                                          sender: playerID })
-        else
-          draftPromise = Promise.resolve()
-        return draftPromise
-      }).then (function() {
-        if (recipientID === null)
-          result.message.path = '/m/' + result.message.id  // broadcast; give sender a URL to advertise
-        else
-          Player.message (recipientID, notification)    // send the good news to recipient
-        res.json (result)
-      })
+    PlayerService.sendMessage ({
+      playerID: req.session.passport ? (req.session.passport.user || null) : null,
+      recipientID: req.body.recipient ? Player.parseID (req.body.recipient) : null,
+      template: req.body.template,
+      title: req.body.title,
+      body: req.body.body,
+      previous: req.body.previous,
+      tags: req.body.tags,
+      previousTags: req.body.previousTags,
+      draftID: Draft.parseID (req.body.draft),
+      isPublic: req.body.isPublic || false
+    }).then (function (result) {
+      res.json (result)
     }).catch (function (err) {
       console.log(err)
       res.status(500).send ({ message: err })
     })
-      },
+  },
 
   // delete message
   deleteMessage: function (req, res) {
@@ -806,6 +779,8 @@ module.exports = {
                                                          displayName: draft.recipient.displayName },
                          previous: draft.previous,
                          previousTemplate: draft.previousTemplate,
+                         tags: draft.tags,
+                         previousTags: draft.previousTags,
                          template: draft.template,
                          title: draft.title,
                          body: draft.body,
@@ -826,6 +801,8 @@ module.exports = {
                     recipient: draft.recipient,
                     previous: draft.previous,
                     previousTemplate: draft.previousTemplate,
+                    tags: draft.tags,
+                    previousTags: draft.previousTags,
                     template: draft.template,
                     title: draft.title,
                     body: draft.body })
@@ -1177,7 +1154,7 @@ module.exports = {
 
   // get a particular symbol by name, or create it (uninitialized)
   getOrCreateSymbolByName: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolName = req.params.symname
     var result = {}
     Symbol.findOneCached ({ name: symbolName })
@@ -1202,7 +1179,7 @@ module.exports = {
 
   // store a particular symbol
   putSymbol: function (req, res) {
-    var playerID = req.session.passport.user || null
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var gotPlayerID = (playerID ? true : false)
     var symbolID = Symbol.parseID (req.params.symid)
     var name = req.body.name
@@ -1277,7 +1254,7 @@ module.exports = {
 
   // release ownership of a symbol
   releaseSymbol: function (req, res) {
-    var playerID = req.session.passport.user
+    var playerID = req.session.passport ? (req.session.passport.user || null) : null
     var symbolID = Symbol.parseID (req.params.symid)
     Symbol.update ({ id: symbolID,
                      owned: true,
@@ -1338,7 +1315,10 @@ module.exports = {
       .then (function (template) {
         if (template)
           result.template = { id: template.id,
-                              content: template.content }
+                              content: template.content,
+                              title: template.title,
+                              tags: template.tags,
+                              previousTags: template.previousTags }
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -1389,8 +1369,8 @@ module.exports = {
                                 name: template.author.name,
                                 displayName: template.author.displayName }
                             : undefined),
-                   title: template.title || parseTree.summarizeRhs (template.content.rhs,
-                                                                    function (sym) { return Symbol.cache.byId[sym.id] })  }
+                   title: template.title || parseTree.summarizeRhs (template.content,
+                                                                    function (sym) { return Symbol.cache.byId[sym.id].name })  }
         })
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {
@@ -1403,9 +1383,13 @@ module.exports = {
   suggestReply: function (req, res) {
     var playerID = req.session.passport.user
     var previousID = Template.parseID (req.params.template)
-    return Template.find ({ previous: previousID,
-                            or: [{ author: playerID },
+    var previousTags = req.params.tags ? req.params.tags.toLowerCase().split(/\s+/).filter(function(tag){return tag.length>0}) : []
+    return Template.find ({ or: [{ author: playerID },
                                  { isPublic: true }] })
+      .where ({ or: [{ previous: previousID }]
+                .concat (previousTags.map (function (tag) {
+                  return { previousTags: { contains: ' ' + tag + ' ' } }
+                })) })
       .then (function (templates) {
         var result = {}
         if (templates.length) {

@@ -31,6 +31,16 @@ module.exports = {
     previousTemplate: {
       model: 'template'
     },
+
+    tags: {
+      type: 'string',
+      defaultsTo: '',
+    },
+
+    previousTags: {
+      type: 'string',
+      defaultsTo: '',
+    },
     
     template: {
       type: 'json'

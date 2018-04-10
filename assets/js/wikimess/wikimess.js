@@ -107,6 +107,7 @@ var WikiMess = (function() {
     autosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
+    symbolSearchResultsPerPage: 10,
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     menuPopupDelay: 500,
@@ -149,11 +150,11 @@ var WikiMess = (function() {
                     maximize: 'maximize' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
-              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'darkgreen', subnavbarIconColor: 'darkgreen' } ],
+              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
     tabs: [{ name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
            { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
-           { name: 'status', method: 'showStatusPage', label: 'messages', icon: 'acoustic-megaphone', },
+           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
@@ -259,8 +260,8 @@ var WikiMess = (function() {
       return this.logPost ('/p/search/players/followed', { query: queryText })
     },
 
-    REST_postPlayerSearchSymbolsAll: function (playerID, query, page) {
-      return this.logPost ('/p/search/symbols/all', { query: query, page: page })
+    REST_postPlayerSearchSymbolsAll: function (playerID, query, nPerPage, page) {
+      return this.logPost ('/p/search/symbols/all', { query: query, n: nPerPage, page: page })
     },
 
     REST_postPlayerSearchSymbolsOwned: function (playerID, query) {
@@ -427,6 +428,10 @@ var WikiMess = (function() {
                                                   temperature: temperature })
     },
     
+    REST_makeSymbolUrl: function (symname) {
+      return window.location.origin + '/define/' + symname
+    },
+
     // WebSockets interface
     socket_onPlayer: function (callback) {
       io.socket.on ('player', callback)
@@ -587,7 +592,7 @@ var WikiMess = (function() {
     inPortraitMode: function() {
       return window.innerHeight > window.innerWidth
     },
-
+    
     openLink: function (url) {
       var newWin = window.open (url)
 
@@ -1249,6 +1254,8 @@ var WikiMess = (function() {
                     var draft = { recipient: wm.composition.recipient && wm.composition.recipient.id,
                                   previous: wm.composition.previousMessage,
                                   previousTemplate: wm.composition.previousTemplate,
+                                  tags: wm.composition.tags,
+                                  previousTags: wm.composition.previousTags,
                                   template: wm.composition.template,
                                   title: wm.composition.title,
                                   body: wm.composition.body }
@@ -1270,18 +1277,30 @@ var WikiMess = (function() {
 
           wm.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
           wm.playerSearchResultsDiv = $('<div class="results">')
-
-          if (config.title)
-            wm.composition.title = config.title
           
           function markForSave() { wm.composition.needsSave = true }
-          wm.messageTitleInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="title">')
-            .attr ('placeholder', 'Untitled')
-            .val (wm.composition.title)
-            .on ('keyup', function() {
-              wm.composition.title = wm.messageTitleInput.val()
-            }).on ('change', markForSave)
 
+          function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName, lowercase) {
+            if (typeof(config[compositionAttrName]) !== 'undefined')
+              wm.composition[compositionAttrName] = config[compositionAttrName].replace(/^\s*/,'').replace(/\s*$/,'')
+            wm[controlName] = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
+              .addClass (className)
+              .attr ('placeholder', placeholderText)
+              .val (wm.composition[compositionAttrName])
+              .on ('keyup', function() {
+                var text = wm[controlName].val()
+                if (lowercase) {
+                  text = text.toLowerCase()
+                  wm[controlName].val (text)
+                }
+                wm.composition[compositionAttrName] = text
+              }).on ('change', markForSave)
+          }
+
+          makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput')
+          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput', true)
+          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput', true)
+ 
           wm.composition.previousTemplate = config.previousTemplate
           wm.composition.template = config.template || wm.composition.template || {}
           wm.composition.template.content = wm.composition.template.content || []
@@ -1295,7 +1314,7 @@ var WikiMess = (function() {
           }
 
           // autosuggest for textarea (typing with keyboard)
-          function textareaAutosuggest (input) {
+          wm.textareaAutosuggest = function (input) {
             input.focus()  // in case we were triggered by player hitting 're-roll' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
@@ -1342,11 +1361,14 @@ var WikiMess = (function() {
                       })
                   }
                   insertText += ' '
+                  // recompute newValBefore & newValAfter, in case caret has changed
+                  var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
+                  var newValBefore = newVal.substr(0,caretPos), newValAfter = newVal.substr(caretPos)
                   var updatedNewValBefore = newValBefore + insertText
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input[0], updatedNewValBefore.length)
                   input.focus()
-                  textareaAutosuggest (input)
+                  wm.textareaAutosuggest (input)
                 })
               }
             }
@@ -1360,7 +1382,7 @@ var WikiMess = (function() {
               })
             return node
           }
-          function divAutosuggest() {
+          wm.divAutosuggest = function() {
             var before = wm.ParseTree.getSymbolNodes (wm.composition.template.content)
                 .map (function (sym) { return { id: sym.id, name: sym.name } })
             var key = autosuggestKey (before, [])
@@ -1375,7 +1397,7 @@ var WikiMess = (function() {
                                                                                                              id: symbol.id,
                                                                                                              name: symbol.name },
                                                                                                            wrappedFuncs)])))
-                                        updateComposeDiv()
+                                        wm.updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
                                              ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
@@ -1383,7 +1405,7 @@ var WikiMess = (function() {
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
                                              : wm.generateMessageBody())
-                                        generatePromise.then (divAutosuggest)
+                                        generatePromise.then (wm.divAutosuggest)
                                       })
                 .then (function() {
                   if (wm.composition.template.content.length) {
@@ -1398,7 +1420,7 @@ var WikiMess = (function() {
                           break
                       }
                       wm.updateComposeContent (newContent)
-                      updateComposeDiv()
+                      wm.updateComposeDiv()
                       if (wm.composition.body) {
                         wm.composition.body.rhs.splice
                         (wm.composition.template.content.length,
@@ -1406,56 +1428,18 @@ var WikiMess = (function() {
                         wm.showMessageBody()
                       } else
                         wm.generateMessageBody()
-                      divAutosuggest()
+                      wm.divAutosuggest()
                     }
                     wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
                   }
                 })
             }
           }
-          wm.autosuggestStatus = { temperature: 0, refresh: divAutosuggest }
+          wm.autosuggestStatus = { temperature: 0, refresh: wm.divAutosuggest }
 
           // build the editable element for the "Input text", i.e. wm.composition.template
           wm.messageComposeDiv = $('<div class="messagecompose">')
-          function updateComposeDiv() {
-            wm.populateEditableElement
-            (wm.messageComposeDiv,
-             { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
-               changeCallback: function (input) {
-                 wm.composition.needsSave = true
-                 wm.autosuggestStatus.temperature = 0
-                 wm.setTimer ('autosuggestTimer',
-                              wm.autosuggestDelay,
-                              textareaAutosuggest.bind (wm, input))
-               },
-               showCallback: function (input) {
-                 delete wm.autosuggestStatus.lastKey
-                 delete wm.autosuggestStatus.lastVal
-                 wm.autosuggestStatus.temperature = 0
-                 wm.autosuggestStatus.refresh = textareaAutosuggest.bind (wm, input)
-                 wm.clearTimer ('autosuggestTimer')
-                 wm.suggestionDiv
-                   .empty()
-                   .off ('click')
-                   .on ('click', function() { input.focus() })
-                 textareaAutosuggest (input)
-               },
-               hideCallback: function() {
-                 delete wm.autosuggestStatus.lastKey
-                 wm.autosuggestStatus.temperature = 0
-                 wm.autosuggestStatus.refresh = divAutosuggest
-                 divAutosuggest()
-               },
-               alwaysUpdate: true,
-               updateCallback: function (newContent) {
-                 return wm.updateComposeContent (newContent) ? wm.generateMessageBody() : $.Deferred().resolve()
-               },
-               parse: wm.parseRhs.bind(wm),
-               renderText: wm.makeRhsText.bind(wm),
-               renderHtml: wm.makeTemplateSpan.bind(wm)
-             })
-          }
-          updateComposeDiv()
+          wm.updateComposeDiv()
           
           wm.messageBodyDiv = $('<div class="messagebody">')
             .on ('click', function() {
@@ -1523,6 +1507,8 @@ var WikiMess = (function() {
                                                               title: wm.composition.title,
                                                               body: wm.composition.body,
                                                               previous: wm.composition.previousMessage,
+                                                              tags: wm.composition.tags,
+                                                              previousTags: wm.composition.previousTags,
                                                               draft: wm.composition.draft,
                                                               isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                       .then (function (result) {
@@ -1531,7 +1517,9 @@ var WikiMess = (function() {
                                                  ? (window.location.origin + result.message.path)
                                                  : undefined),
                                            title: wm.composition.title,
-                                           text: wm.ParseTree.makeExpansionText (wm.composition.body) })
+                                           text: wm.ParseTree.makeExpansionText (wm.composition.body,
+                                                                                 false,
+                                                                                 wm.compositionVarVal()) })
                       }).then (function() {
                         if (preserveMessage) {
                           wm.sharePane.hide()
@@ -1574,6 +1562,7 @@ var WikiMess = (function() {
           // build the actual compose page UI
           wm.initInfoPane()
           var pubTab, privTab
+          var titleRow, tagsRow, prevTagsRow, revealButton, hideButton
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1600,17 +1589,25 @@ var WikiMess = (function() {
                                        .append ($('<span class="label">').text ('To'),
                                                 $('<span class="input">').append (wm.playerSearchInput,
                                                                                   wm.playerSearchResultsDiv.hide())),
-                                       $('<div class="row">')
+                                       titleRow = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject'),
-                                                $('<span class="input">').append (wm.messageTitleInput))
-                                       .hide()),  // subject line clutters up the UI and is strictly unnecessary, so leave it out (maybe restore later as player option?)
+                                                $('<span class="input">').append (wm.messageTitleInput)).hide(),
+                                       prevTagsRow = $('<div class="row">')
+                                       .append ($('<span class="label">').text ('Tags'),
+                                                $('<span class="input">').append (wm.messagePrevTagsInput)).hide(),
+                                       tagsRow = $('<div class="row">')
+                                       .append ($('<span class="label">').text ('Reply tags'),
+                                                $('<span class="input">').append (wm.messageTagsInput)).hide()),
                               $('<div class="messageborder">')
-                              .append ($('<div class="sectiontitle composesectiontitle">').text('Input text:'),
+                              .append ($('<div class="sectiontitle composesectiontitle">')
+                                       .append ($('<span>').text('Input text:'),
+                                                revealButton = wm.makeIconButton ('down', function() { titleRow.show(); tagsRow.show(); prevTagsRow.show(); revealButton.hide(); hideButton.show() }),
+                                                hideButton = wm.makeIconButton ('up', function() { titleRow.hide(); tagsRow.hide(); prevTagsRow.hide(); revealButton.show(); hideButton.hide() }).hide()),
                                        wm.messageComposeDiv,
-                                       $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
-                                       wm.messageBodyDiv,
                                        $('<div class="sectiontitle suggestsectiontitle">').text('Suggestions:'),
-                                       wm.suggestionDiv = $('<div class="suggest">'))),
+                                       wm.suggestionDiv = $('<div class="suggest">'),
+				       $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
+                                       wm.messageBodyDiv)),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
@@ -1642,15 +1639,15 @@ var WikiMess = (function() {
                       }),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
-                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
+                               wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
           updateSharePane()
 
           if (config.recipient) {
             wm.composition.recipient = config.recipient
-            wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null)
-            wm.lastComposePlayerSearchText = config.recipient.name
+            wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null && !config.defaultToPublic)
+            wm.lastComposePlayerSearchText = playerChar + config.recipient.name
           }
 
           if (!wm.playerID) {
@@ -1686,7 +1683,7 @@ var WikiMess = (function() {
           if (config.draft)
             wm.composition.draft = config.draft
 
-          divAutosuggest()
+          wm.divAutosuggest()
           wm.randomizeButton.show()
           
           if (config.focus)
@@ -1697,7 +1694,47 @@ var WikiMess = (function() {
           return true
         })
     },
-    
+
+    updateComposeDiv: function() {
+      var wm = this
+      wm.populateEditableElement
+      (wm.messageComposeDiv,
+       { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
+         changeCallback: function (input) {
+           wm.composition.needsSave = true
+           wm.autosuggestStatus.temperature = 0
+           wm.setTimer ('autosuggestTimer',
+                        wm.autosuggestDelay,
+                        wm.textareaAutosuggest.bind (wm, input))
+         },
+         showCallback: function (input) {
+           delete wm.autosuggestStatus.lastKey
+           delete wm.autosuggestStatus.lastVal
+           wm.autosuggestStatus.temperature = 0
+           wm.autosuggestStatus.refresh = wm.textareaAutosuggest.bind (wm, input)
+           wm.clearTimer ('autosuggestTimer')
+           wm.suggestionDiv
+             .empty()
+             .off ('click')
+             .on ('click', function() { input.focus() })
+           wm.textareaAutosuggest (input)
+         },
+         hideCallback: function() {
+           delete wm.autosuggestStatus.lastKey
+           wm.autosuggestStatus.temperature = 0
+           wm.autosuggestStatus.refresh = wm.divAutosuggest
+           wm.divAutosuggest()
+         },
+         alwaysUpdate: true,
+         updateCallback: function (newContent) {
+           return wm.updateComposeContent (newContent) ? wm.generateMessageBody() : $.Deferred().resolve()
+         },
+         parse: wm.parseRhs.bind(wm),
+         renderText: wm.makeRhsText.bind(wm),
+         renderHtml: wm.makeTemplateSpan.bind(wm)
+       })
+    },
+
     updateComposeContent: function (newContent) {
       if (JSON.stringify(this.composition.template.content) !== JSON.stringify(newContent)) {
         delete this.composition.template.id
@@ -1784,6 +1821,8 @@ var WikiMess = (function() {
       // first, intercept whitespace strings and return them unmodified
       if (!markdown.match (/\S/))
         return markdown
+      // convert \n to newline
+      markdown = markdown.replace(/\\n/g,function(){return"\n"})
       // convert leading and trailing whitespace to '&ensp;'
       markdown = markdown.replace(/^\s/,function(){return'&ensp;'}).replace(/\s$/,function(){return'&ensp;'})
       // next, call marked library to convert Markdown to HTML string
@@ -1833,7 +1872,7 @@ var WikiMess = (function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
       var markdown = this.renderMarkdown
-      (this.ParseTree.makeExpansionText (this.animationExpansion, true)
+      (this.ParseTree.makeExpansionText (this.animationExpansion, true, this.compositionVarVal())
        .replace (/^\s*$/, wm.emptyMessageWarning),
        function (html) { return wm.linkSymbols (html) })
       
@@ -1861,7 +1900,7 @@ var WikiMess = (function() {
 
     stopAnimation: function() {
       if (this.expansionAnimationTimer) {
-        this.animationDiv.html (this.renderMarkdown (this.ParseTree.makeExpansionText (this.animationExpansion)))
+        this.animationDiv.html (this.renderMarkdown (this.ParseTree.makeExpansionText (this.animationExpansion, false, this.compositionVarVal())))
         this.clearTimer ('expansionAnimationTimer')
         return true
       }
@@ -1901,8 +1940,10 @@ var WikiMess = (function() {
       if (wm.composition.previousTemplate)
         templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id)
         .then (function (result) {
-          if (result.template)
+          if (result.template) {
             wm.composition.template = result.template
+            wm.updateComposeDiv()
+          }
           if (!result.more)
             delete wm.composition.previousTemplate
         })
@@ -1957,7 +1998,7 @@ var WikiMess = (function() {
 	if (wm.animationExpansion)
           wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
-        div.html (this.renderMarkdown (wm.ParseTree.makeExpansionText (expansion)
+        div.html (this.renderMarkdown (wm.ParseTree.makeExpansionText (expansion, false, wm.compositionVarVal())
                                        .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
                                                            ? wm.emptyTemplateWarning
                                                            : wm.emptyMessageWarning))))
@@ -2167,6 +2208,8 @@ var WikiMess = (function() {
                                                          title: draft.title,
                                                          previousMessage: draft.previous,
                                                          previousTemplate: draft.previousTemplate,
+                                                         tags: draft.tags,
+                                                         previousTags: draft.previousTags,
                                                          template: draft.template,
                                                          body: draft.body,
                                                          draft: draft.id })
@@ -2202,6 +2245,7 @@ var WikiMess = (function() {
                verb: 'Received',
                preposition: 'From',
                object: 'sender',
+               replyDirect: true,
                showMessage: function (props) {
                  wm.showMessage ($.extend ({ recipient: wm.playerInfo },
                                            props))
@@ -2236,23 +2280,6 @@ var WikiMess = (function() {
                                          stars))
                          .show()
                      }
-
-                     wm.replyButton
-                       .on('click', function (evt) {
-                         evt.stopPropagation()
-                         var replyTitle = message.title
-                         if (!replyTitle.match(/^re:/i))
-                           replyTitle = 'Re: ' + replyTitle
-                         wm.showComposePage
-                         ({ recipient: message.sender,
-                            title: replyTitle,
-                            previousMessage: message.id,
-                            previousTemplate: message.template,
-                            focus: 'messageTitleInput'
-                          }).then (function() {
-                            wm.generateMessageBody()
-                          })
-                       }).show()
                    })
                }}
     },
@@ -2339,19 +2366,40 @@ var WikiMess = (function() {
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      wm.popBack()
-                     .append (wm.replyButton = wm.makeSubNavIcon('reply').hide(),
-                              wm.forwardButton = wm.makeSubNavIcon ('forward', function (evt) {
-                                evt.stopPropagation()
-                                wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
-                                  .then (function (templateResult) {
-                                    return wm.showComposePage
-                                    ({ title: message.title,
-                                       template: templateResult.template,
-                                       body: message.body,
-                                       previousMessage: message.id,
-                                       focus: 'playerSearchInput' })
-                                  })
-                              }),
+                     .append (wm.replyButton = wm.makeSubNavIcon ('reply',
+                                                                  function (evt) {
+                                                                    evt.stopPropagation()
+                                                                    var replyTitle = message.title
+                                                                    if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+                                                                      replyTitle = 'Re: ' + replyTitle
+                                                                    wm.showComposePage
+                                                                    ({ recipient: message.sender,
+                                                                       defaultToPublic: !props.replyDirect,
+                                                                       title: replyTitle,
+                                                                       previousMessage: message.id,
+                                                                       previousTemplate: message.template,
+                                                                       tags: '',
+                                                                       previousTags: message.template ? (message.template.tags || '') : '',
+                                                                       focus: 'messageTitleInput'
+                                                                     }).then (function() {
+                                                                       wm.generateMessageBody()
+                                                                     })
+                                                                  }),
+                              wm.forwardButton = wm.makeSubNavIcon ('forward',
+                                                                    function (evt) {
+                                                                      evt.stopPropagation()
+                                                                      wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
+                                                                        .then (function (templateResult) {
+                                                                          return wm.showComposePage
+                                                                          ({ title: message.title,
+                                                                             template: templateResult.template,
+                                                                             body: message.body,
+                                                                             previousMessage: message.id,
+                                                                             tags: templateResult.template.tags || '',
+                                                                             previousTags: templateResult.template.previousTags || '',
+                                                                             focus: 'playerSearchInput' })
+                                                                        })
+                                                                    }),
                               props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : []))
 
           var other = message[props.object]
@@ -2387,6 +2435,11 @@ var WikiMess = (function() {
       if (recipient)
         varVal.you = playerChar + recipient.name
       return varVal
+    },
+
+    compositionVarVal: function() {
+      return this.messageVarVal (this.playerID ? this.playerInfo : null,
+                                 this.composition.isPrivate ? this.composition.recipient : null)
     },
     
     relativeDateString: function (dateInitializer) {
@@ -3016,6 +3069,12 @@ var WikiMess = (function() {
           })
       }
 
+      function linkToSymbol (evt) {
+        evt.stopPropagation()
+        wm.saveCurrentEdit()
+        window.open (wm.REST_makeSymbolUrl (wm.symbolName[symbol.id]))
+      }
+
       var linksVisible = false
       var linksDiv = $('<div class="links">')
       function showLinks (evt) {
@@ -3253,6 +3312,7 @@ var WikiMess = (function() {
                                        (symbol.summary
                                         ? null
                                         : menuSelector ('Show revision history', showRecentRevisions)),
+                                       menuSelector ('Link to phrase', linkToSymbol),
                                        (owned
                                         ? menuSelector ('Unlock this phrase', unlockSymbol)
                                         : menuSelector ('Hide this phrase', hideSymbol)))
@@ -3333,9 +3393,10 @@ var WikiMess = (function() {
     },
 
     deleteAllSymbolNames: function (node) {
-      this.ParseTree.getSymbolNodes (node.rhs).forEach (function (node) {
-	delete node.name
-      })
+      if (node.rhs)
+        this.ParseTree.getSymbolNodes (node.rhs).forEach (function (node) {
+	  delete node.name
+        })
     },
 
     makeRhsText: function (rhs) {
@@ -3821,7 +3882,7 @@ var WikiMess = (function() {
 				exampleTemplatesSpan = $('<span>'),
                                 $('<p>'),
                                 wm.makeIconButton ('new', newSymbol),
-                                'To enter definitions for a new phrase, tap the "New" icon.',
+                                'To add a new phrase to the thesaurus, tap the "New" icon.',
                                 $('<p>'),
                                 wm.makeHelpButton (wm.REST_getGrammarHelpHtml),
                                 'For more help, tap the "Help" icon.'),
@@ -3883,7 +3944,7 @@ var WikiMess = (function() {
       if (searchText !== this.lastSymbolSearch) {
         this.lastSymbolSearch = searchText
         delete this.symbolSearchResults
-        this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText)
+        this.REST_postPlayerSearchSymbolsAll (this.playerID, searchText, wm.symbolSearchResultsPerPage)
           .then (function (ret) {
             wm.symbolSearchResults = ret
             wm.showSymbolSearchResults()
@@ -3894,7 +3955,7 @@ var WikiMess = (function() {
     continueSymbolSearch: function() {
       var wm = this
       if (this.searchInput.val() === this.lastSymbolSearch) {
-        this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, this.symbolSearchResults.page + 1)
+        this.REST_postPlayerSearchSymbolsAll (this.playerID, this.lastSymbolSearch, wm.symbolSearchResultsPerPage, this.symbolSearchResults.page + 1)
           .then (function (ret) {
             wm.symbolSearchResults.symbols = wm.symbolSearchResults.symbols.concat (ret.symbols)
             wm.symbolSearchResults.more = ret.more

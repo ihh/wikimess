@@ -6,6 +6,16 @@
  */
 
 module.exports = {
-	
+
+  // override blueprint for create, to allow inline specification of reply chains
+  create: function (req, res) {
+    return TemplateService.createTemplates (req.body)
+      .then (function (templates) {
+        res.send (templates)
+      }).catch (function (err) {
+        res.status(500).send ({ message: err })
+      })
+  }
+
 };
 
