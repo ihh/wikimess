@@ -1373,7 +1373,9 @@ module.exports = {
                                 displayName: template.author.displayName }
                             : undefined),
                    title: template.title || parseTree.summarizeRhs (template.content,
-                                                                    function (sym) { return Symbol.cache.byId[sym.id].name })  }
+                                                                    function (sym) { return Symbol.cache.byId[sym.id].name }),
+                   tags: template.tags,
+                   previousTags: template.previousTags }
         })
         res.json ({ templates: suggestedTemplates })
       }).catch (function (err) {
@@ -1386,12 +1388,12 @@ module.exports = {
   suggestReply: function (req, res) {
     var playerID = req.session && req.session.passport ? req.session.passport.user : null
     var previousID = Template.parseID (req.params.template)
-    var previousTags = req.params.tags ? req.params.tags.toLowerCase().split(/\s+/).filter(function(tag){return tag.length>0}) : []
+    var previousTags = req.param('tags','').toLowerCase().split(/\s+/).filter(function(tag){return tag.length>0})
     return Template.find ({ or: [{ author: playerID },
                                  { isPublic: true }] })
       .where ({ or: [{ previous: previousID }]
                 .concat (previousTags.map (function (tag) {
-                  return { previousTags: { contains: ' ' + tag + ' ' } }
+		  return { previousTags: { contains: ' ' + tag + ' ' } }
                 })) })
       .then (function (templates) {
         var result = {}
@@ -1402,6 +1404,8 @@ module.exports = {
           var template = templates[SortService.sampleByWeight (templateRating)]
           result.template = { id: template.id,
                               title: template.title,
+			      tags: template.tags,
+			      previousTags: template.previousTags,
                               content: template.content }
           result.more = (templates.length > 1)
         }

@@ -418,8 +418,8 @@ var WikiMess = (function() {
       return this.logGet ('/p/suggest/templates')
     },
 
-    REST_getPlayerSuggestReply: function (playerID, templateID) {
-      return this.logGet ('/p/suggest/reply/' + templateID)
+    REST_getPlayerSuggestReply: function (playerID, templateID, tags) {
+      return this.logGet ('/p/suggest/reply/' + templateID + (tags ? ('?tags=' + encodeURIComponent(tags)) : ''))
     },
 
     REST_postPlayerSuggestSymbol: function (playerID, beforeSymbols, afterSymbols, temperature) {
@@ -477,7 +477,8 @@ var WikiMess = (function() {
         .then (function (result) {
           if (wm.verbose.response) {
 	    var after = new Date()
-            console.log ('GET ' + url + ' response (' + (after-before) + ' ms)', result)
+            console.log ('GET ' + url + ' response (' + (after-before) + ' ms)')
+	    console.log (result) // for some reason, if url contains substrings like '%20i' (which happens when query params with spaces next to 'i' characters are passed through) then console.log will try to evaluate this as a number or something, UNLESS we split this into two console.log calls. Thanks, JavaScript!
 	  }
           return result
         })
@@ -691,10 +692,14 @@ var WikiMess = (function() {
         })
     },
 
+    stripLeadingAndTrailingWhitespace: function (text) {
+      return text.replace(/^\s*/,'').replace(/\s*$/,'')
+    },
+    
     validatePlayerName: function (success, failure) {
       this.playerLogin = this.nameInput.val()
       this.playerPassword = this.passwordInput.val()
-      this.playerLogin = this.playerLogin.replace(/^\s*/,'').replace(/\s*$/,'')
+      this.playerLogin = this.stripLeadingAndTrailingWhitespace (this.playerLogin)
       if (!/\S/.test(this.playerLogin)) {
         this.showModalMessage ("Please enter a player login name", failure)
 	return
@@ -1292,7 +1297,7 @@ var WikiMess = (function() {
 	    else if (wm.composition.template && typeof(wm.composition.template[compositionAttrName]) !== 'undefined')
               wm.composition[compositionAttrName] = wm.composition.template[compositionAttrName]
 	    if (wm.composition[compositionAttrName])
-	      wm.composition[compositionAttrName] = wm.composition[compositionAttrName].replace(/^\s*/,'').replace(/\s*$/,'')
+	      wm.composition[compositionAttrName] = wm.stripLeadingAndTrailingWhitespace (wm.composition[compositionAttrName])
             wm[controlName] = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
               .addClass (className)
               .attr ('placeholder', placeholderText)
@@ -1948,10 +1953,15 @@ var WikiMess = (function() {
       
       var templatePromise
       if (wm.composition.previousTemplate)
-        templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id)
+        templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (wm.composition.previousTemplate.tags))
         .then (function (result) {
           if (result.template) {
             wm.composition.template = result.template
+            wm.composition.tags = wm.stripLeadingAndTrailingWhitespace (result.template.tags)
+            wm.composition.previousTags = wm.stripLeadingAndTrailingWhitespace (result.template.previousTags)
+
+	    wm.messageTagsInput.val (wm.composition.tags)
+	    wm.messagePrevTagsInput.val (wm.composition.previousTags)
             wm.updateComposeDiv()
           }
           if (!result.more)

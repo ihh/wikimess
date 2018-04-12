@@ -19,15 +19,15 @@
 
 // Set restPolicy to:
 // 'isAdmin' to prevent unauthorized modification of all database tables
-//  to true for unrestricted access
+//  true for unrestricted access
 var restPolicy = 'isAdmin'
-//var restPolicy = true // debug
+restPolicy = true // debug
 
 // Set findPolicy to:
 // 'isAdmin' to prevent unauthorized inspection of all database tables
 //  true for unrestricted access
 var findPolicy = 'isAdmin'
-//var findPolicy = true // debug
+// findPolicy = true // debug
 
 // Set clientPolicy to:
 // 'isAuthenticated' to prevent unauthenticated client operations (gameplay, config, etc)
@@ -83,6 +83,7 @@ module.exports.policies = {
     // compose, autosuggest, send
     'getTemplate': true,
     'suggestTemplates': true,
+    'suggestReply': true,
     'suggestSymbol': true,
     'sendMessage': true,
     // broadcasts
