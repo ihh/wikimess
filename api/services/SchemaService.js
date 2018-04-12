@@ -183,6 +183,12 @@ module.exports = {
           "content": {
             "$ref": "#/definitions/rhs"
           },
+          "tags": {
+            "type": "string"
+          },
+          "previousTags": {
+            "type": "string"
+          },
           "replies": {
             "type": "array",
             "items": {

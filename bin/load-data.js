@@ -234,6 +234,7 @@ function processFile (info) {
           log (5, 'Starting chunk #' + (nChunk+1) + ' of ' + filename)
           post ({ array: chunk,
                   offset: nChunk * maxUploadChunkCount,
+		  total: json.length,
                   filename: filename,
                   schema: schema,
                   path: info.path,
@@ -269,6 +270,7 @@ function readJsonFileSync (filename, altParsers) {
 function post (info) {
   var array = info.array,
       offset = info.offset,
+      total = info.total,
       handler = info.handler,
       path = info.path,
       filename = info.filename,
@@ -293,7 +295,7 @@ function post (info) {
     callback()
   } else {
     array.forEach (function (elem, n) {
-      log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+offset+1) + ' in ' + filename + ')')
+      log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+offset+1) + ' of ' + total + ' in ' + filename + ')')
     })
     
     // Set up the request
@@ -396,17 +398,28 @@ function parseSymbolDefs (text) {
   } catch(e) { console.log(e) }
 }
 
+function makeTagString (text) {
+  return (text
+          ? (' ' + text.replace (/^\s*(.*?)\s*$/, function (_m, g) { return g }).split(/\s+/).join(' ') + ' ')
+	  : '')
+}
+
 function parseTemplateDefs (text) {
   try {
-    var newTemplateDefReg = /^(>+)(.*)$/;
+    var newTemplateDefReg = /^(>+)\s*(.*?)\s*(#\s*(.*?)\s*(#\s*(.*?)\s*|)|)$/;
     var templates = [], replyChain = [], currentTemplate, newTemplateDefMatch
     text.split(/\n/).forEach (function (line) {
       if (line.length) {
         if (currentTemplate)
           currentTemplate.content = currentTemplate.content.concat (parseRhs (line + '\n'))
         else if (newTemplateDefMatch = newTemplateDefReg.exec (line)) {
-          var depth = newTemplateDefMatch[1].length - 1
-          currentTemplate = { title: newTemplateDefMatch[2],
+          var depth = newTemplateDefMatch[1].length - 1,
+	      title = newTemplateDefMatch[2],
+	      prevTags = makeTagString (newTemplateDefMatch[4]),
+	      tags = makeTagString (newTemplateDefMatch[6])
+          currentTemplate = { title: title,
+			      previousTags: prevTags,
+			      tags: tags,
 			      content: [],
                               replies: [] }
           if (depth > replyChain.length)

@@ -1,10 +1,10 @@
->I love you
+>I love you # i_love_you # i_love_you i_hate_you
 $polite_opening $i_love_you $polite_closing
 
->I hate you
+>I hate you # i_hate_you # i_love_you i_hate_you i_loathe_you
 $polite_opening $i_hate_you $polite_closing
 
->I loathe you
+>I loathe you # i_loathe_you # i_love_you i_loathe_you
 $rude_opening $i_hate_you $polite_closing
 
 >>Whatever

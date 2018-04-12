@@ -1288,7 +1288,11 @@ var WikiMess = (function() {
 
           function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName, lowercase) {
             if (typeof(config[compositionAttrName]) !== 'undefined')
-              wm.composition[compositionAttrName] = config[compositionAttrName].replace(/^\s*/,'').replace(/\s*$/,'')
+              wm.composition[compositionAttrName] = config[compositionAttrName]
+	    else if (wm.composition.template && typeof(wm.composition.template[compositionAttrName]) !== 'undefined')
+              wm.composition[compositionAttrName] = wm.composition.template[compositionAttrName]
+	    if (wm.composition[compositionAttrName])
+	      wm.composition[compositionAttrName] = wm.composition[compositionAttrName].replace(/^\s*/,'').replace(/\s*$/,'')
             wm[controlName] = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">')
               .addClass (className)
               .attr ('placeholder', placeholderText)
@@ -1303,14 +1307,14 @@ var WikiMess = (function() {
               }).on ('change', markForSave)
           }
 
-          makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput')
-          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput', true)
-          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput', true)
- 
           wm.composition.previousTemplate = config.previousTemplate
           wm.composition.template = config.template || wm.composition.template || {}
           wm.composition.template.content = wm.composition.template.content || []
 
+          makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput')
+          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput', true)
+          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput', true)
+ 
           wm.clearTimer ('autosuggestTimer')
           function autosuggestKey (before, after) {
             return before.map (function (rhsSym) { return rhsSym.name })

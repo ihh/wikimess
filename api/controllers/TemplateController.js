@@ -13,6 +13,7 @@ module.exports = {
       .then (function (templates) {
         res.send (templates)
       }).catch (function (err) {
+	console.warn(err)
         res.status(500).send ({ message: err })
       })
   }
