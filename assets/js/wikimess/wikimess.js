@@ -86,7 +86,9 @@ var WikiMess = (function() {
   // config, defaults
   var symChar = parseTree.symChar, symCharHtml = parseTree.symCharHtml
   var playerChar = parseTree.playerChar
-  var varChar = parseTree.varChar, funcChar = parseTree.funcChar, leftBracketChar = parseTree.leftBracketChar, rightBracketChar = parseTree.rightBracketChar, assignChar = parseTree.assignChar
+  var varChar = parseTree.varChar, funcChar = parseTree.funcChar, assignChar = parseTree.assignChar
+  var leftBraceChar = parseTree.leftBraceChar, rightBraceChar = parseTree.rightBraceChar
+  var leftSquareBraceChar = parseTree.leftSquareBraceChar, rightSquareBraceChar = parseTree.rightSquareBraceChar
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -1372,7 +1374,7 @@ var WikiMess = (function() {
                       insertText = wm.ParseTree.capitalize (insertText)
                     else
                       wrappedFuncs.forEach (function (func) {
-                        insertText = funcChar + func + leftBracketChar + insertText + rightBracketChar
+                        insertText = funcChar + func + leftBraceChar + insertText + rightBraceChar
                       })
                   }
                   insertText += ' '
@@ -3433,16 +3435,16 @@ var WikiMess = (function() {
           switch (tok.type) {
           case 'lookup':
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
+                                     ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
           case 'assign':
-            return $('<span>').append (varChar + tok.varname + assignChar + leftBracketChar,
+            return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeRhsSpan (tok.value),
-                                       rightBracketChar)
+                                       rightBraceChar)
           case 'alt':
-            return $('<span>').append (leftBracketChar,
+            return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeRhsSpan(opt)) }),
-                                       rightBracketChar)
+                                       rightSquareBraceChar)
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
@@ -3452,10 +3454,10 @@ var WikiMess = (function() {
 						  evt.stopPropagation()
 						  wm.loadGrammarSymbol (tok.args[0])
 						})
-            var noBrackets = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
-            return $('<span>').append (funcChar + tok.funcname + (noBrackets ? '' : leftBracketChar),
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
                                        wm.makeRhsSpan (tok.args),
-                                       noBrackets ? '' : rightBracketChar)
+                                       noBraces ? '' : rightBraceChar)
           default:
           case 'sym':
             return wm.makeSymbolSpan (tok,
@@ -3477,16 +3479,16 @@ var WikiMess = (function() {
           switch (tok.type) {
           case 'lookup':
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
+                                     ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
           case 'assign':
-            return $('<span>').append (varChar + tok.varname + assignChar + leftBracketChar,
+            return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeTemplateSpan (tok.value),
-                                       rightBracketChar)
+                                       rightBraceChar)
           case 'alt':
-            return $('<span>').append (leftBracketChar,
+            return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeTemplateSpan(opt)) }),
-                                       rightBracketChar)
+                                       rightSquareBraceChar)
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
@@ -3496,9 +3498,9 @@ var WikiMess = (function() {
 						  evt.stopPropagation()
 						  wm.showGrammarLoadSymbol (tok.args[0])
 						})
-            return $('<span>').append (funcChar + tok.funcname + leftBracketChar,
+            return $('<span>').append (funcChar + tok.funcname + leftBraceChar,
                                        wm.makeTemplateSpan (tok.args),
-                                       rightBracketChar)
+                                       rightBraceChar)
           default:
           case 'sym':
             return wm.makeSymbolSpan (tok,

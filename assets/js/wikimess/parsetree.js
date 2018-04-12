@@ -34,7 +34,7 @@
   
   // Parse tree constants
   var symChar = '$', symCharHtml = '&#36;'
-  var playerChar = '@', varChar = '^', funcChar = '&', leftBracketChar = '{', rightBracketChar = '}', assignChar = '='
+  var playerChar = '@', varChar = '^', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '='
   
   // Parse tree manipulations
   function sampleParseTree (rhs, rng) {
@@ -161,24 +161,24 @@
         switch (tok.type) {
         case 'lookup':
           result = (nextIsAlpha
-                    ? (varChar + leftBracketChar + tok.varname + rightBracketChar)
+                    ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                     : (varChar + tok.varname))
 	  break
         case 'assign':
-          result = varChar + tok.varname + assignChar + leftBracketChar + pt.makeRhsText(tok.value,makeSymbolName) + rightBracketChar
+          result = varChar + tok.varname + assignChar + leftBraceChar + pt.makeRhsText(tok.value,makeSymbolName) + rightBraceChar
 	  break
         case 'alt':
-          result = leftBracketChar + tok.opts.map (function (opt) { return pt.makeRhsText(opt,makeSymbolName) }).join('|') + rightBracketChar
+          result = leftSquareBraceChar + tok.opts.map (function (opt) { return pt.makeRhsText(opt,makeSymbolName) }).join('|') + rightSquareBraceChar
 	  break
         case 'func':
 	  var sugaredName = pt.makeSugaredName (tok, makeSymbolName)
 	  if (sugaredName)
 	    result = (nextIsAlpha
-		      ? (symChar + leftBracketChar + sugaredName + rightBracketChar)
+		      ? (symChar + leftBraceChar + sugaredName + rightBraceChar)
 		      : (symChar + sugaredName))
 	  else {
-            var noBrackets = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
-            result = funcChar + tok.funcname + (noBrackets ? '' : leftBracketChar) + pt.makeRhsText(tok.args,makeSymbolName) + (noBrackets ? '' : rightBracketChar)
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            result = funcChar + tok.funcname + (noBraces ? '' : leftBraceChar) + pt.makeRhsText(tok.args,makeSymbolName) + (noBraces ? '' : rightBraceChar)
           }
 	  break
         case 'opt':
@@ -186,7 +186,7 @@
         default:
         case 'sym':
           result = (nextIsAlpha
-                    ? (symChar + leftBracketChar + makeSymbolName(tok) + rightBracketChar)
+                    ? (symChar + leftBraceChar + makeSymbolName(tok) + rightBraceChar)
                     : (symChar + makeSymbolName(tok)))
 	  break
         }
@@ -472,8 +472,10 @@
     playerChar: playerChar,
     varChar: varChar,
     funcChar: funcChar,
-    leftBracketChar: leftBracketChar,
-    rightBracketChar: rightBracketChar,
+    leftBraceChar: leftBraceChar,
+    rightBraceChar: rightBraceChar,
+    leftSquareBraceChar: leftSquareBraceChar,
+    rightSquareBraceChar: rightSquareBraceChar,
     assignChar: assignChar,
     // parse tree manipulations
     sampleParseTree: sampleParseTree,
