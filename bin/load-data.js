@@ -417,9 +417,11 @@ function parseTemplateDefs (text) {
 	      title = newTemplateDefMatch[2],
 	      prevTags = makeTagString (newTemplateDefMatch[4]),
 	      tags = makeTagString (newTemplateDefMatch[6])
+          var isRoot = !prevTags.match(/\S/) || (prevTags.search(' root ') >= 0)
           currentTemplate = { title: title,
 			      previousTags: prevTags,
 			      tags: tags,
+                              isRoot: isRoot,
 			      content: [],
                               replies: [] }
           if (depth > replyChain.length)

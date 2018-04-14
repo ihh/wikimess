@@ -1,0 +1,50 @@
+>Hey baby #root opener #opener gambit
+I am the great seducer
+
+>I have opinions #root opener #opener gambit
+I have opinions
+
+>So... #root opener #opener gambit
+I'm a nut
+
+>Concerns #root opener #gambit
+I worry about the world
+
+>Check me out #root opener #gambit
+I'm a superior breed
+
+>#gambit reject #reject
+[Nope|Yawn|Go away]
+
+>#opener #opener gambit
+Tell me more about yourself
+
+>#opener #call gambit
+Let's go on a date
+
+>#call place #place gambit
+I know where to go
+
+>#place activity #activity gambit
+I know what we can do
+
+>#activity gatekeeper #gatekeeper
+We'll have to get past the gatekeeper
+
+>#gatekeeper challenge #challenge
+I have a bad feeling about this
+
+>#gatekeeper challenge abyss #abyss
+Worst date ever
+
+>#challenge abyss revelation #revelation
+I see a way out
+
+>#abyss revelation rebirth #rebirth
+I feel alive
+
+>#rebirth atonement #atonement
+I am redeemed
+
+>#atonement return #return
+Goodbye

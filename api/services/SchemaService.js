@@ -189,6 +189,9 @@ module.exports = {
           "previousTags": {
             "type": "string"
           },
+          "isRoot": {
+            "type": "boolean"
+          },
           "replies": {
             "type": "array",
             "items": {
