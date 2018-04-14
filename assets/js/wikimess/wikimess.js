@@ -3151,7 +3151,11 @@ var WikiMess = (function() {
              makeSymbolSpans ('The following phrases are derived from copies this phrase:', links.symbol.copies, 'There are no copies of this phrase.'),
              (links.symbol.copied
               ? $('<div>').append ('This phrase was derived from ',
-                                   wm.makeSymbolSpan ({ id: links.symbol.copied }))
+                                   wm.makeSymbolSpan ({ id: links.symbol.copied },
+                                                      function (evt) {
+                                                        evt.stopPropagation()
+                                                        wm.loadGrammarSymbol ({ id: links.symbol.copied })
+                                                      }))
               : null))
               .show()
           })
