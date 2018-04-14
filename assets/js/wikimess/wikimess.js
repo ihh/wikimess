@@ -1741,6 +1741,7 @@ var WikiMess = (function() {
                   wm.messageTitleInput.val (wm.composition.title = templateResult.template.title)
                   wm.messageTagsInput.val (wm.composition.tags = templateResult.template.tags)
                   wm.messagePrevTagsInput.val (wm.composition.previousTags = templateResult.template.previousTags)
+                  wm.updateComposeDiv()
                   wm.generateMessageBody(true)
                     .then (function() {
                       wm.composition.randomTemplate = true
@@ -1782,6 +1783,7 @@ var WikiMess = (function() {
       (wm.messageComposeDiv,
        { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
          changeCallback: function (input) {
+           delete wm.composition.randomTemplate
            wm.composition.needsSave = true
            wm.autosuggestStatus.temperature = 0
            wm.setTimer ('autosuggestTimer',
