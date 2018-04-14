@@ -53,6 +53,11 @@
     border-color: #666;
 }
 
+.wikimess.plain .compose .stack .card {
+    background-color: #fff;
+    border-color: #000;
+}
+
 .wikimess.plain .compose .bodysectiontitle {
     background-color: #eee;
 }

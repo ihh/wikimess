@@ -59,6 +59,11 @@
     background-color: #002800;
 }
 
+.wikimess.l33t .compose .stack .card {
+    background-color: #000;
+    border-color: #green;
+}
+
 .wikimess.l33t .compose .bodysectiontitle {
     
 }

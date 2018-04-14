@@ -114,6 +114,8 @@ var WikiMess = (function() {
     unfocusDelay: 1000,
     menuPopupDelay: 500,
     starColor: 'darkgoldenrod',
+    scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
+    cardScrollTime: 2000,
     iconFilename: { edit: 'quill',
                     backspace: 'backspace',
                     'new': 'copy',
@@ -1188,7 +1190,7 @@ var WikiMess = (function() {
           wm.container
             .append (wm.makePageTitle ("Audio settings"))
             .append ($('<div class="menubar">')
-                     .append ($('<div class="card">')
+                     .append ($('<div class="menubutton">')
                               .append (soundInput = $('<input type="range" value="50" min="0" max="100">'))
                               .append ($('<span>').text("Sound FX volume"))))
             .append (wm.popBack())
@@ -1463,21 +1465,6 @@ var WikiMess = (function() {
           wm.messageComposeDiv = $('<div class="messagecompose">')
           wm.updateComposeDiv()
           
-          wm.messageBodyDiv = $('<div class="messagebody">')
-            .on ('click', function() {
-              wm.stopAnimation()
-              wm.saveCurrentEdit()
-            })
-
-          delete wm.animationExpansion
-          if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs)) {
-            wm.composition.body = config.body
-            wm.showMessageBody()
-          } else if (config.template)
-            wm.generateMessageBody()
-          else
-            wm.showMessageBody()
-
           // tweet
           function tweetIntent (info) {
             if (info.url) {
@@ -1510,11 +1497,13 @@ var WikiMess = (function() {
           // send message with callback to share method (e.g. tweet intent)
           function makeSendFunction (shareCallback, preserveMessage) {
             return function (evt) {
-              evt.stopPropagation()
-              evt.preventDefault()
+              if (evt) {
+                evt.stopPropagation()
+                evt.preventDefault()
+              }
               wm.saveCurrentEdit()
                 .then (function() {
-                  var expansionText, expansionTextMatch
+                  var expansionText, expansionTextMatch, sent
                   if (wm.templateIsEmpty())
                     window.alert ("Please enter some input text.")
                   else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
@@ -1522,6 +1511,7 @@ var WikiMess = (function() {
                   else if (wm.composition.isPrivate && !wm.composition.recipient)
                     window.alert ("Please select the direct message recipient, or make it public.")
                   else {
+                    sent = true
                     wm.shareButton.off ('click')
                     delete wm.composition.previousTemplate
                     wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
@@ -1560,6 +1550,8 @@ var WikiMess = (function() {
                         wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                       })
                   }
+                  if (!sent)
+                    wm.dealCard()
                 })
             }
           }
@@ -1575,7 +1567,7 @@ var WikiMess = (function() {
               .empty()
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction(facebookIntent), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
-                       wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', makeSendFunction()).addClass('big-button'),
+                       wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', wm.sendMessage = makeSendFunction()).addClass('big-button'),
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'),
                        '&nbsp;&nbsp;',  // ew
                        wm.makeIconButton ('close', function() { wm.sharePane.hide() }))
@@ -1584,7 +1576,15 @@ var WikiMess = (function() {
           // build the actual compose page UI
           wm.initInfoPane()
           var pubTab, privTab
-          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, expansionRow, revealButton, hideButton, toggler
+          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, revealButton, hideButton
+          wm.makeHeaderToggler = function (container) {
+            wm.headerToggler = wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
+                                                container: container,
+                                                hidden: !wm.headerToggler || wm.headerToggler.hidden,
+                                                hideIcon: 'up',
+                                                showIcon: 'down' })
+          }
+
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1620,27 +1620,25 @@ var WikiMess = (function() {
                                                          $('<span class="input">').append (wm.messagePrevTagsInput)),
                                                 tagsRow = $('<div class="tagcol">')
                                                 .append ($('<span class="label">').text ('Future tags'),
-                                                         $('<span class="input">').append (wm.messageTagsInput)))),
-                              $('<div class="messageborder">')
-                              .append (templateRow = $('<div class="sectiontitle composesectiontitle">')
+                                                         $('<span class="input">').append (wm.messageTagsInput))),
+                                       templateRow = $('<div class="sectiontitle composesectiontitle">')
                                        .text('Template text:'),
                                        wm.messageComposeDiv,
                                        suggestRow = $('<div class="sectiontitle suggestsectiontitle">')
                                        .text('Suggestions:'),
-                                       wm.suggestionDiv = $('<div class="suggest">'),
-				       expansionRow = $('<div class="sectiontitle bodysectiontitle">')
-                                       .append ($('<span>').text('Message text:')),
-                                       wm.messageBodyDiv)),
+                                       wm.suggestionDiv = $('<div class="suggest">')),
+                              $('<div class="messageborder">')
+                              .append (wm.stackDiv = $('<div class="stack">'))),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
                        wm.stopAnimation()
-                       toggler.showFunction()
+                       wm.headerToggler.showFunction()
                        wm.messageComposeDiv.trigger ('click')
                      }),
                       wm.randomizeButton = wm.makeSubNavIcon ('re-roll', function (evt) {
                         evt.stopPropagation()
-                        wm.generateMessageBody()
+                        wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
                         delete wm.autosuggestStatus.lastVal
                         delete wm.autosuggestStatus.lastKey
                         wm.autosuggestStatus.temperature++
@@ -1666,10 +1664,6 @@ var WikiMess = (function() {
                                wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
-          toggler = wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
-                                     container: expansionRow,
-                                     hideIcon: 'up',
-                                     showIcon: 'down' })
           updateSharePane()
 
           if (config.recipient) {
@@ -1689,11 +1683,24 @@ var WikiMess = (function() {
             else
               pubTab.click()
           }
+
+          var throwOutConfidence = function (xOffset, yOffset, element) {
+            return Math.min(Math.abs(xOffset) / element.offsetWidth, 1)
+          }
+          var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
+            return throwOutConfidence > .25
+          }
+          wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
+				    throwOutDistance: function() { return wm.throwXOffset() },
+				    allowedDirections: [
+				      swing.Direction.LEFT,
+				      swing.Direction.RIGHT
+				    ],
+                                    isThrowOut: isThrowOut })
           
           wm.restoreScrolling (wm.messageComposeDiv)
-          wm.restoreScrolling (wm.messageBodyDiv)
           wm.restoreScrolling (wm.suggestionDiv)
-
+          
           wm.playerSearchInput.attr ('placeholder', 'Name of recipient')
             .val (wm.lastComposePlayerSearchText)
           wm.playerSearchInput
@@ -1714,6 +1721,13 @@ var WikiMess = (function() {
           wm.divAutosuggest()
           wm.randomizeButton.show()
           
+          var generate = false
+          if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs))
+            wm.composition.body = config.body
+          else if (config.template)
+            generate = true
+          wm.dealCard (generate)
+
           if (config.focus)
             wm[config.focus].focus().trigger ('click')
           if (config.click)
@@ -1724,6 +1738,115 @@ var WikiMess = (function() {
           return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
         })
       // end of showComposePage
+    },
+
+    throwXOffset: function() {
+      return this.container.width() * 2 / 3
+    },
+
+    throwYOffset: function() {
+      return this.container.height() / 4
+    },
+
+    dealCard: function (generateContent) {
+      var wm = this
+      var expansionRow = $('<div class="sectiontitle bodysectiontitle">')
+          .append ($('<span>').text('Message text:'))
+      wm.messageBodyDiv = $('<div class="messagebody">')
+        .on ('click', function() {
+          wm.stopAnimation()
+          wm.saveCurrentEdit()
+        })
+      var messageBodyElem = wm.messageBodyDiv[0]
+      wm.makeHeaderToggler (expansionRow)
+
+      var cardDiv = $('<div class="card">').append (expansionRow, wm.messageBodyDiv)
+      wm.stackDiv.append (cardDiv)
+
+      // add scroll buttons
+      var scrollUpDiv, scrollDownDiv, cardControlsDiv
+      function showScrollButton (buttonDiv, enabled) {
+        if (enabled)
+          buttonDiv.show()
+        else
+          buttonDiv.hide()
+      }
+      function hideScrollButtons() {
+        scrollUpDiv.hide()
+        scrollDownDiv.hide()
+      }
+      function showScrollButtons() {
+        if (cardControlsDiv)
+          cardControlsDiv.remove()
+        scrollUpDiv = $('<div class="scrollup">').append (wm.makeIconButton ('up', scrollUp, 'white'))
+        scrollDownDiv = $('<div class="scrolldown">').append (wm.makeIconButton ('down', scrollDown, 'white'))
+        cardControlsDiv = $('<div class="cardcontrols">').append (scrollUpDiv, scrollDownDiv)
+        wm.messageBodyDiv.append (cardControlsDiv)
+        showScrollButton (scrollUpDiv, messageBodyElem.scrollTop > 0)
+        showScrollButton (scrollDownDiv, Math.ceil (messageBodyElem.scrollTop + wm.messageBodyDiv.height() + 4) < messageBodyElem.scrollHeight)  // DEBUG
+        wm.restoreScrolling (wm.messageBodyDiv)
+      }
+      function doScroll (dir) {
+        hideScrollButtons()
+        wm.messageBodyDiv.animate
+        ({ scrollTop: messageBodyElem.scrollTop + dir * wm.messageBodyDiv.height() * wm.scrollButtonDelta },
+         wm.cardScrollTime)
+      }
+      function scrollUp() { doScroll (-1) }
+      function scrollDown() { doScroll (+1) }
+      showScrollButtons()
+      var scrollButtonTimer
+      wm.messageBodyDiv.on ('scroll', function() {
+        if (scrollButtonTimer)
+          window.clearTimeout (scrollButtonTimer)
+        scrollButtonTimer = window.setTimeout (showScrollButtons, 100)
+      })
+      wm.showScrollButtons = showScrollButtons
+
+      // create the swing card
+      var card = wm.stack.createCard (cardDiv[0])
+      card.on ('throwoutleft', function() {
+        wm.fadeCard (cardDiv, card, wm.dealCard.bind (wm, true))
+      })
+      card.on ('throwoutright', function() {
+        wm.fadeCard (cardDiv, card, wm.sendMessage.bind (wm))
+      })
+      wm.currentCard = card
+      wm.currentCardDiv = cardDiv
+      
+      // render the text
+      delete wm.animationExpansion
+      cardDiv.hide()
+      if (generateContent)
+        wm.generateMessageBody()
+      else
+        wm.showMessageBody()
+
+      // allow scrolling if using a scroll wheel
+      wm.restoreScrolling (wm.messageBodyDiv)
+    },
+
+    fadeCard: function (element, card, callback) {
+      var wm = this
+      element.find('*').off()
+      card.destroy()
+      element.fadeOut (wm.cardFadeTime, function() {
+	if (wm.verbose.stack)
+	  console.log ("Card removed after fade: " + element.html())
+	element.remove()
+	if (wm.verbose.stack)
+	  wm.logStack()
+        if (callback)
+          callback()
+      })
+    },
+
+    logStack: function() {
+      var wm = this
+      console.log ($.map (wm.stackList.children(), function (elem, idx) {
+	var c = elem.getAttribute('class')
+	return (c ? ("("+c+") ") : "") + elem.innerHTML
+      }))
     },
 
     selectRandomTemplate: function (randomizeCondition, fixFlag) {
@@ -1758,23 +1881,29 @@ var WikiMess = (function() {
     },
     
     addToggler: function (config) {
-      var showButton, hideButton, showFunction, hideFunction
+      var showButton, hideButton, showFunction, hideFunction, toggler
       showButton = wm.makeIconButton (config.showIcon, showFunction = function() {
         config.elements.forEach (function (element) { element.show() })
         hideButton.show()
         showButton.hide()
+        toggler.hidden = false
       })
       hideButton = wm.makeIconButton (config.hideIcon, hideFunction = function() {
         config.elements.forEach (function (element) { element.hide() })
         hideButton.hide()
         showButton.show()
+        toggler.hidden = true
       })
       config.container.append (showButton, hideButton)
-      hideFunction()
-      return { showButton: showButton,
-               hideButton: hideButton,
-               showFunction: showFunction,
-               hideFunction: hideFunction }
+      toggler = { showButton: showButton,
+                  hideButton: hideButton,
+                  showFunction: showFunction,
+                  hideFunction: hideFunction }
+      if (config.hidden)
+        hideFunction()
+      else
+        showFunction()
+      return toggler
     },
 
     updateComposeDiv: function() {
@@ -1960,7 +2089,8 @@ var WikiMess = (function() {
        function (html) { return wm.linkSymbols (html) })
       
       this.animationDiv.html (markdown)
-               
+      this.showScrollButtons()
+      
       if (this.deleteFirstSymbolName (this.animationExpansion) || this.extraAnimationSteps-- > 0)
         this.setTimer ('expansionAnimationTimer',
                        Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)),
@@ -2093,7 +2223,12 @@ var WikiMess = (function() {
                                        .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
                                                            ? wm.emptyTemplateWarning
                                                            : wm.emptyMessageWarning))))
+        wm.showScrollButtons()
       }
+      if (expansion)
+        wm.currentCardDiv.show()
+      if (config.animate)
+        wm.currentCard.throwIn (-wm.throwXOffset(), -wm.throwYOffset())
     },
     
     randomizeEmptyMessageWarning: function() {
