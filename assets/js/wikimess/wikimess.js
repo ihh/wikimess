@@ -1454,7 +1454,7 @@ var WikiMess = (function() {
           }
           wm.autosuggestStatus = { temperature: 0, refresh: wm.divAutosuggest }
 
-          // build the editable element for the "Input text", i.e. wm.composition.template
+          // build the editable element for the "Template text", i.e. wm.composition.template
           wm.messageComposeDiv = $('<div class="messagecompose">')
           wm.updateComposeDiv()
           
@@ -1564,7 +1564,7 @@ var WikiMess = (function() {
             wm.infoPane.hide()
 	    wm.sharePane.toggle()
           }
-
+          
           function updateSharePane() {
             wm.sharePane
               .empty()
@@ -1579,7 +1579,7 @@ var WikiMess = (function() {
           // build the actual compose page UI
           wm.initInfoPane()
           var pubTab, privTab
-          var titleRow, tagsRow, prevTagsRow, revealButton, hideButton
+          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, expansionRow, revealButton, hideButton
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1608,22 +1608,22 @@ var WikiMess = (function() {
                                                                                   wm.playerSearchResultsDiv.hide())),
                                        titleRow = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject'),
-                                                $('<span class="input">').append (wm.messageTitleInput)).hide(),
+                                                $('<span class="input">').append (wm.messageTitleInput)),
                                        prevTagsRow = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Tags'),
-                                                $('<span class="input">').append (wm.messagePrevTagsInput)).hide(),
+                                                $('<span class="input">').append (wm.messagePrevTagsInput)),
                                        tagsRow = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Reply tags'),
-                                                $('<span class="input">').append (wm.messageTagsInput)).hide()),
+                                                $('<span class="input">').append (wm.messageTagsInput))),
                               $('<div class="messageborder">')
-                              .append ($('<div class="sectiontitle composesectiontitle">')
-                                       .append ($('<span>').text('Input text:'),
-                                                revealButton = wm.makeIconButton ('down', function() { titleRow.show(); tagsRow.show(); prevTagsRow.show(); revealButton.hide(); hideButton.show() }),
-                                                hideButton = wm.makeIconButton ('up', function() { titleRow.hide(); tagsRow.hide(); prevTagsRow.hide(); revealButton.show(); hideButton.hide() }).hide()),
+                              .append (templateRow = $('<div class="sectiontitle composesectiontitle">')
+                                       .text('Template text:'),
                                        wm.messageComposeDiv,
-                                       $('<div class="sectiontitle suggestsectiontitle">').text('Suggestions:'),
+                                       suggestRow = $('<div class="sectiontitle suggestsectiontitle">')
+                                       .text('Suggestions:'),
                                        wm.suggestionDiv = $('<div class="suggest">'),
-				       $('<div class="sectiontitle bodysectiontitle">').text('Expanded text:'),
+				       expansionRow = $('<div class="sectiontitle bodysectiontitle">')
+                                       .append ($('<span>').text('Expanded text:')),
                                        wm.messageBodyDiv)),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
@@ -1659,6 +1659,10 @@ var WikiMess = (function() {
                                wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
+          wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
+                           container: expansionRow,
+                           hideIcon: 'up',
+                           showIcon: 'down' })
           updateSharePane()
 
           if (config.recipient) {
@@ -1710,6 +1714,22 @@ var WikiMess = (function() {
 
           return true
         })
+    },
+
+    addToggler: function (config) {
+      var showButton, hideButton, hideFunction
+      showButton = wm.makeIconButton (config.showIcon, function() {
+        config.elements.forEach (function (element) { element.show() })
+        hideButton.show()
+        showButton.hide()
+      })
+      hideButton = wm.makeIconButton (config.hideIcon, hideFunction = function() {
+        config.elements.forEach (function (element) { element.hide() })
+        hideButton.hide()
+        showButton.show()
+      })
+      config.container.append (showButton, hideButton)
+      hideFunction()
     },
 
     updateComposeDiv: function() {

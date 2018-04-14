@@ -871,12 +871,12 @@ input {
     margin-top: 1px;
 }
 
-.wikimess .compose .composesectiontitle .button {
+.wikimess .compose .bodysectiontitle .button {
     float: right;
     cursor: pointer;
 }
 
-.wikimess .compose .composesectiontitle .button svg {
+.wikimess .compose .bodysectiontitle .button svg {
     width: 1em;
     height: 1em;
 }
