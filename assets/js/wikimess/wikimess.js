@@ -1491,6 +1491,7 @@ var WikiMess = (function() {
             window.getSelection().removeAllRanges()
             window.getSelection().addRange (range)
             document.execCommand ("copy")
+            window.alert ('Message copied to clipboard')
             wm.sharePane.hide()
           }
           
@@ -1550,8 +1551,10 @@ var WikiMess = (function() {
                         wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                       })
                   }
-                  if (!sent)
+                  if (!sent) {
+                    wm.currentCardDiv.remove()
                     wm.dealCard()
+                  }
                 })
             }
           }
@@ -1568,9 +1571,7 @@ var WikiMess = (function() {
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction(facebookIntent), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', wm.sendMessage = makeSendFunction()).addClass('big-button'),
-                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'),
-                       '&nbsp;&nbsp;',  // ew
-                       wm.makeIconButton ('close', function() { wm.sharePane.hide() }))
+                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
           
           // build the actual compose page UI
