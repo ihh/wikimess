@@ -25,6 +25,7 @@ var WikiMess = (function() {
 
     this.socket_onPlayer (this.handlePlayerMessage.bind (this))
     this.socket_onSymbol (this.handleSymbolMessage.bind (this))
+    this.socket_onMessage (this.handleBroadcastMessage.bind (this))
 
     // preload sounds
     this.preloadSounds.forEach (this.loadSound)
@@ -129,7 +130,10 @@ var WikiMess = (function() {
                     help: 'help',
                     locked: 'padlock',
                     hide: 'hide',
-                    're-roll': 'rolling-die',
+                    reroll: 'rolling-die',
+                    randomcard: 'card-random',
+                    dealcard: 'card-deal',
+                    shuffle: 'card-hand',
                     close: 'close',
                     send: 'send',
                     share: 'share',
@@ -316,10 +320,6 @@ var WikiMess = (function() {
       return this.logGet ('/p/outbox')
     },
 
-    REST_getPlayerPublic: function (playerID) {
-      return this.logGet ('/p/public')
-    },
-
     REST_getPlayerMessage: function (playerID, messageID) {
       return this.logGet ('/p/message/' + messageID)
     },
@@ -445,6 +445,10 @@ var WikiMess = (function() {
       io.socket.on ('symbol', callback)
     },
 
+    socket_onMessage: function (callback) {
+      io.socket.on ('message', callback)
+    },
+
     socket_getPlayerSubscribe: function (playerID) {
       return this.socketGetPromise ('/p/subscribe')
     },
@@ -452,7 +456,7 @@ var WikiMess = (function() {
     socket_getPlayerUnsubscribe: function (playerID) {
       return this.socketGetPromise ('/p/unsubscribe')
     },
-    
+
     socket_postPlayerSymbolNew: function (playerID, symbol) {
       return this.socketPostPromise ('/p/symbol', symbol)
     },
@@ -467,6 +471,14 @@ var WikiMess = (function() {
 
     socket_getPlayerSymname: function (playerID, symbolName) {
       return this.socketGetPromise ('/p/symname/' + symbolName)
+    },
+
+    socket_getPlayerPublic: function (playerID) {
+      return this.socketGetPromise ('/p/public')
+    },
+
+    socket_getPlayerPublicUnsubscribe: function (playerID) {
+      return this.socketGetPromise ('/p/public/unsubscribe')
     },
 
     // helpers to log ajax calls
@@ -952,16 +964,16 @@ var WikiMess = (function() {
       delete this.lastMailboxTab
       if (this.playerID)
         this.socket_getPlayerUnsubscribe (this.playerID)
-	  .then (function() {
-	    return wm.REST_postLogout().then (function() {
-	      wm.continueAsGuest()
-            })
-	  }).fail (function (err) {
-            console.error('unsubscribe failed', err)
-	    return wm.REST_postLogout().then (function() {
-	      wm.continueAsGuest()
-            })
+	.then (function() {
+	  return wm.REST_postLogout().then (function() {
+	    wm.continueAsGuest()
           })
+	}).fail (function (err) {
+          console.error('unsubscribe failed', err)
+	  return wm.REST_postLogout().then (function() {
+	    wm.continueAsGuest()
+          })
+        })
       else
         this.showLoginPage()
     },
@@ -1339,7 +1351,7 @@ var WikiMess = (function() {
 
           // autosuggest for textarea (typing with keyboard)
           wm.textareaAutosuggest = function (input) {
-            input.focus()  // in case we were triggered by player hitting 're-roll' button
+            input.focus()  // in case we were triggered by player hitting 'shuffle' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1514,7 +1526,7 @@ var WikiMess = (function() {
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
                     else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
-                      window.alert ("Expanded text is empty. Please vary the input text, or re-roll to generate a new random expanded text.")
+                      window.alert ("Expanded text is empty. Please vary the input text, or shuffle to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
                     else {
@@ -1647,7 +1659,7 @@ var WikiMess = (function() {
                        wm.headerToggler.showFunction()
                        wm.messageComposeDiv.trigger ('click')
                      }),
-                      wm.randomizeButton = wm.makeSubNavIcon ('re-roll', function (evt) {
+                      wm.randomizeButton = wm.makeSubNavIcon ('shuffle', function (evt) {
                         evt.stopPropagation()
                         wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
                         delete wm.autosuggestStatus.lastVal
@@ -2539,6 +2551,12 @@ var WikiMess = (function() {
         })
     },
 
+    updateBroadcasts: function (message) {
+      var wm = this
+      if (wm.page === 'status' && wm.mailboxDiv)
+        wm.mailboxContentsDiv.prepend (wm.makeMailboxEntryDiv (wm.broadcastProps(), message))
+    },
+
     populateMailboxDiv: function (props) {
       var wm = this
       wm.lastMailboxTab = props.tab
@@ -2741,12 +2759,15 @@ var WikiMess = (function() {
               wm.detailBarDiv
                 .prepend (wm.makePageTitle ('Welcome to Wiki Messenger'))
                 .append (wm.mailboxDiv = $('<div class="mailbox">'))
-              return wm.REST_getPlayerPublic (wm.playerID)
+              return wm.socket_getPlayerPublic (wm.playerID)
                 .then (function (pubResult) {
+                  wm.pageExit = function() {
+                    return wm.socket_getPlayerPublicUnsubscribe (wm.playerID)
+                  }
                   if (pubResult.messages.length)
                     wm.populateMailboxDiv ($.extend ({ messages: pubResult.messages },
                                                      wm.broadcastProps()))
-                  // TODO: append 'More...' link to wm.mailboxDiv, bumping up optional limit on /p/public
+                  // TODO: append 'More...' link to wm.mailboxDiv, bumping up optional limit on /p/public/page
                   return wm.REST_getPlayerSuggestTemplates (wm.playerID)
                     .then (function (result) {
                       if (result && result.templates.length)
@@ -3244,6 +3265,7 @@ var WikiMess = (function() {
               if (expansion && wm.composition.body && wm.composition.body.rhs)
                 wm.composition.body.rhs.push (expansion)
               wm.composition.template.content.push ({ id: symbol.id })
+              delete wm.composition.randomTemplate
               return wm.showComposePage()
             } else
               return wm.showComposePage
@@ -3273,8 +3295,8 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ('re-roll'),
-                           $('<div class="hint">').text('re-roll'))
+                  .append (wm.makeIconButton ('shuffle'),
+                           $('<div class="hint">').text('shuffle'))
                   .off('click')
                   .on('click',randomize)
                 wm.infoPaneRightControls
@@ -4477,7 +4499,7 @@ var WikiMess = (function() {
       if (this.verbose.messages)
         console.log (msg)
       switch (msg.data.message) {
-      case "update":
+      case 'update':
         // Symbol updated
         this.updateSymbolCache (msg.data)
         break
@@ -4488,6 +4510,13 @@ var WikiMess = (function() {
         }
         break
       }
+    },
+
+    handleBroadcastMessage: function (msg) {
+      var wm = this
+      if (this.verbose.messages)
+        console.log (msg)
+      this.updateBroadcasts (msg)
     },
 
     // audio

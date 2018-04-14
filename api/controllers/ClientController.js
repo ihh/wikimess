@@ -510,10 +510,13 @@ module.exports = {
                             ? { id: message.sender.id,
                                 displayName: message.sender.displayName }
                             : undefined),
-                   date: message.createdAt,
-                   unread: false }
+                   date: message.createdAt }
         })
-        res.json (result)
+        var sailsSocketsJoin = Promise.promisify (sails.sockets.join)
+        return sailsSocketsJoin (req, 'news')
+          .then (function() {
+            res.json (result)
+          })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -544,6 +547,18 @@ module.exports = {
                              date: message.createdAt,
                              rating: message.rating }
         res.json (result)
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  // unsubscribe from broadcasts
+  unsubscribeBroadcasts: function (req, res) {
+    var sailsSocketsLeave = Promise.promisify (sails.sockets.leave)
+    sailsSocketsLeave (req, 'news')
+      .then (function() {
+        res.ok()
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -642,6 +657,7 @@ module.exports = {
     PlayerService.sendMessage ({
       playerID: req.session && req.session.passport ? (req.session.passport.user || null) : null,
       recipientID: req.body.recipient ? Player.parseID (req.body.recipient) : null,
+      player: req.user,
       template: req.body.template,
       title: req.body.title,
       body: req.body.body,

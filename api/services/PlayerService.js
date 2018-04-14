@@ -173,6 +173,7 @@ module.exports = {
   sendMessage: function (config) {
     var playerID = config.playerID || null
     var recipientID = config.recipientID || null
+    var player = config.player
     var template = config.template
     var title = config.title
     var body = config.body
@@ -247,8 +248,16 @@ module.exports = {
                                  body: body })
       }).then (function (message) {
         result.message = { id: message.id }
-        notification.message = "incoming"
         notification.id = message.id
+        if (recipientID === null) {
+          result.message.path = '/m/' + result.message.id  // broadcast, so give sender a URL to advertise
+          notification.title = message.title || parseTree.summarizeExpansion (message.body)
+          notification.sender = (player
+                                 ? { id: playerID,
+                                     displayName: player.displayName }
+                                 : undefined)
+          notification.date = message.createdAt
+        }
         // delete the Draft
         var draftPromise
         if (draftID)
@@ -259,9 +268,11 @@ module.exports = {
         return draftPromise
       }).then (function() {
         if (recipientID === null)
-          result.message.path = '/m/' + result.message.id  // broadcast; give sender a URL to advertise
-        else
+          sails.sockets.broadcast ('news', notification)  // send the good news to everyone
+        else {
+          notification.message = 'incoming'
           Player.message (recipientID, notification)    // send the good news to recipient
+        }
         return result
       })
     })

@@ -102,11 +102,12 @@ module.exports.routes = {
   'GET /p/id/:name':                'ClientController.getPlayerId',
 
   // mailboxes
-  'GET /p/inbox':           'ClientController.getInbox',
-  'GET /p/inbox/count':     'ClientController.getInboxCount',
-  'GET /p/outbox':          'ClientController.getOutbox',
-  'GET /p/public':          'ClientController.getRecentBroadcasts',
-  'GET /p/public/:page':    'ClientController.getRecentBroadcasts',
+  'GET /p/inbox':              'ClientController.getInbox',
+  'GET /p/inbox/count':        'ClientController.getInboxCount',
+  'GET /p/outbox':             'ClientController.getOutbox',
+  'GET /p/public':             'ClientController.getRecentBroadcasts',
+  'GET /p/public/page/:page':  'ClientController.getRecentBroadcasts',
+  'GET /p/public/unsubscribe': 'ClientController.unsubscribeBroadcasts',
 
   'GET /p/thread/:id':              'ClientController.getThread',
   'GET /p/thread/:id/before/:date': 'ClientController.getThreadBefore',
