@@ -1496,7 +1496,11 @@ var WikiMess = (function() {
           }
           
           // send message with callback to share method (e.g. tweet intent)
-          function makeSendFunction (shareCallback, preserveMessage) {
+          function makeSendFunction (config) {
+            config = config || {}
+            var shareCallback = config.callback
+            var preserveMessage = config.preserve
+            var confirm = config.confirm
             return function (evt) {
               if (evt) {
                 evt.stopPropagation()
@@ -1504,52 +1508,55 @@ var WikiMess = (function() {
               }
               wm.saveCurrentEdit()
                 .then (function() {
-                  var expansionText, expansionTextMatch, sent
-                  if (wm.templateIsEmpty())
-                    window.alert ("Please enter some input text.")
-                  else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
-                    window.alert ("Expanded text is empty. Please vary the input text, or re-roll to generate a new random expanded text.")
-                  else if (wm.composition.isPrivate && !wm.composition.recipient)
-                    window.alert ("Please select the direct message recipient, or make it public.")
-                  else {
-                    sent = true
-                    wm.shareButton.off ('click')
-                    delete wm.composition.previousTemplate
-                    wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
-                                                              template: wm.composition.template,
-                                                              title: wm.composition.title,
-                                                              body: wm.composition.body,
-                                                              previous: wm.composition.previousMessage,
-                                                              tags: wm.composition.tags,
-                                                              previousTags: wm.composition.previousTags,
-                                                              draft: wm.composition.draft,
-                                                              isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
-                      .then (function (result) {
-                        if (shareCallback)
-                          shareCallback ({ url: (result.message && result.message.path
-                                                 ? (window.location.origin + result.message.path)
-                                                 : undefined),
-                                           title: wm.composition.title,
-                                           text: wm.ParseTree.makeExpansionText (wm.composition.body,
-                                                                                 false,
-                                                                                 wm.compositionVarVal()) })
-                      }).then (function() {
-                        if (preserveMessage) {
-                          wm.sharePane.hide()
-                          wm.shareButton.on ('click', toggleSharePane)
-                        } else {
-                          wm.composition = {}  // delete the composition after sending
-                          delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
-                          return (wm.playerID
-                                  ? wm.showMailboxPage ({ tab: 'outbox' })
-                                  .then (function() {
-                                    // TODO: update wm.mailboxCache.outbox
-                                  })
-                                  : wm.showStatusPage())
-                        }
-                      }).catch (function (err) {
-                        wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
-                      })
+                  var sent = false
+                  if (!confirm || window.confirm ('Send message?')) {
+                    var expansionText, expansionTextMatch
+                    if (wm.templateIsEmpty())
+                      window.alert ("Please enter some input text.")
+                    else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
+                      window.alert ("Expanded text is empty. Please vary the input text, or re-roll to generate a new random expanded text.")
+                    else if (wm.composition.isPrivate && !wm.composition.recipient)
+                      window.alert ("Please select the direct message recipient, or make it public.")
+                    else {
+                      sent = true
+                      wm.shareButton.off ('click')
+                      delete wm.composition.previousTemplate
+                      wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
+                                                                template: wm.composition.template,
+                                                                title: wm.composition.title,
+                                                                body: wm.composition.body,
+                                                                previous: wm.composition.previousMessage,
+                                                                tags: wm.composition.tags,
+                                                                previousTags: wm.composition.previousTags,
+                                                                draft: wm.composition.draft,
+                                                                isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                        .then (function (result) {
+                          if (shareCallback)
+                            shareCallback ({ url: (result.message && result.message.path
+                                                   ? (window.location.origin + result.message.path)
+                                                   : undefined),
+                                             title: wm.composition.title,
+                                             text: wm.ParseTree.makeExpansionText (wm.composition.body,
+                                                                                   false,
+                                                                                   wm.compositionVarVal()) })
+                        }).then (function() {
+                          if (preserveMessage) {
+                            wm.sharePane.hide()
+                            wm.shareButton.on ('click', toggleSharePane)
+                          } else {
+                            wm.composition = {}  // delete the composition after sending
+                            delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
+                            return (wm.playerID
+                                    ? wm.showMailboxPage ({ tab: 'outbox' })
+                                    .then (function() {
+                                      // TODO: update wm.mailboxCache.outbox
+                                    })
+                                    : wm.showStatusPage())
+                          }
+                        }).catch (function (err) {
+                          wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
+                        })
+                      }
                   }
                   if (!sent) {
                     wm.currentCardDiv.remove()
@@ -1568,8 +1575,8 @@ var WikiMess = (function() {
           function updateSharePane() {
             wm.sharePane
               .empty()
-              .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction(facebookIntent), undefined, true).addClass('big-button'),
-                       wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction(tweetIntent), undefined, true).addClass('big-button'),
+              .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction ({ callback: facebookIntent }), undefined, true).addClass('big-button'),
+                       wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction ({ callback: tweetIntent }), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', wm.sendMessage = makeSendFunction()).addClass('big-button'),
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
@@ -1689,7 +1696,7 @@ var WikiMess = (function() {
             return Math.min(Math.abs(xOffset) / element.offsetWidth, 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            return throwOutConfidence > .25
+            return throwOutConfidence > .25 && (xOffset < 0 || window.confirm ('Send message?'))
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				    throwOutDistance: function() { return wm.throwXOffset() },
@@ -2788,8 +2795,7 @@ var WikiMess = (function() {
       callback = callback || wm.popView.bind(wm)
       var button
       return (wm.popBackDiv = $('<div class="subnavbar backbar">'))
-	.append ($('<span>')
-		 .html (button = wm.makeSubNavIcon ('back', function() { callback(button) })))
+	.append (button = wm.makeSubNavIcon ('back', function() { callback(button) }))
     },
 
     redrawPopBack: function (callback) {
