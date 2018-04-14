@@ -1324,8 +1324,8 @@ var WikiMess = (function() {
           wm.composition.template.content = wm.composition.template.content || []
 
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput')
-          makeMessageHeaderInput ('prevtags', 'No tags', 'previousTags', 'messagePrevTagsInput', true)
-          makeMessageHeaderInput ('tags', 'No reply tags', 'tags', 'messageTagsInput', true)
+          makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
+          makeMessageHeaderInput ('tags', 'No future tags', 'tags', 'messageTagsInput', true)
  
           wm.clearTimer ('autosuggestTimer')
           function autosuggestKey (before, after) {
@@ -1615,10 +1615,10 @@ var WikiMess = (function() {
                                        .append ($('<span class="label">').text ('Subject'),
                                                 $('<span class="input">').append (wm.messageTitleInput)),
                                        prevTagsRow = $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Tags'),
+                                       .append ($('<span class="label">').text ('Past tags'),
                                                 $('<span class="input">').append (wm.messagePrevTagsInput)),
                                        tagsRow = $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Reply tags'),
+                                       .append ($('<span class="label">').text ('Future tags'),
                                                 $('<span class="input">').append (wm.messageTagsInput))),
                               $('<div class="messageborder">')
                               .append (templateRow = $('<div class="sectiontitle composesectiontitle">')
