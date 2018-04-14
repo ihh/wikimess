@@ -1343,7 +1343,7 @@ var WikiMess = (function() {
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
-                wm.generateMessageBody()
+                wm.generateMessageBody ({ useCurrentCard: true })
             if (caretPos === caretEnd && (newVal !== wm.autosuggestStatus.lastVal || caretPos !== wm.autosuggestStatus.lastCaretPos)) {
               wm.autosuggestStatus.lastVal = newVal
               wm.autosuggestStatus.lastCaretPos = caretPos
@@ -1428,7 +1428,7 @@ var WikiMess = (function() {
                                              .then (function (result) {
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
-                                             : wm.generateMessageBody())
+                                             : wm.generateMessageBody ({ useCurrentCard: true }))
                                         generatePromise.then (wm.divAutosuggest)
                                       })
                 .then (function() {
@@ -1449,9 +1449,9 @@ var WikiMess = (function() {
                         wm.composition.body.rhs.splice
                         (wm.composition.template.content.length,
                          wm.composition.body.rhs.length - wm.composition.template.content.length)
-                        wm.showMessageBody()
+                        wm.showMessageBody ({ useCurrentCard: true })
                       } else
-                        wm.generateMessageBody()
+                        wm.generateMessageBody ({ useCurrentCard: true })
                       wm.divAutosuggest()
                     }
                     wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
@@ -1876,7 +1876,7 @@ var WikiMess = (function() {
                   wm.messageTagsInput.val (wm.composition.tags = templateResult.template.tags)
                   wm.messagePrevTagsInput.val (wm.composition.previousTags = templateResult.template.previousTags)
                   wm.updateComposeDiv()
-                  wm.generateMessageBody(true)
+                  wm.generateMessageBody ({ useCurrentTemplate: true })
                     .then (function() {
                       wm.composition.randomTemplate = true
                     })
@@ -2155,8 +2155,11 @@ var WikiMess = (function() {
       return false
     },
 
-    generateMessageBody: function (useCurrentTemplate) {
+    generateMessageBody: function (config) {
       var wm = this
+      config = config || {}
+      var useCurrentTemplate = config.useCurrentTemplate
+      
       wm.composition.body = {}
       wm.composition.needsSave = true
       
@@ -2209,7 +2212,7 @@ var WikiMess = (function() {
             }
 	  })
           wm.composition.body = { type: 'root', rhs: sampledTree }
-          wm.showMessageBody ({ animate: true })
+          wm.showMessageBody ({ animate: true, useCurrentCard: config.useCurrentCard })
         } else
           wm.showMessageBody()
       })
@@ -2238,7 +2241,7 @@ var WikiMess = (function() {
       }
       if (expansion)
         wm.currentCardDiv.show()
-      if (config.animate)
+      if (config.animate && !config.useCurrentCard)
         wm.currentCard.throwIn (-wm.throwXOffset(), -wm.throwYOffset())
     },
     
