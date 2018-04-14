@@ -742,9 +742,16 @@ input {
     display: none;
 }
 
-.wikimess .messageheader,
-.wikimess .messageheader textarea {
+.wikimess .messageheader {
     font-size: large;
+}
+
+.wikimess .messageheader .row textarea {
+    font-size: x-small;
+}
+
+.wikimess .messageheader .tagrow textarea {
+    font-size: xx-small;
 }
 
 .wikimess .messageheader {
@@ -754,7 +761,7 @@ input {
 }
 
 .wikimess .messageheader .row {
-    padding-top: 4px;
+    font-size: xx-small;
 }
 
 .wikimess .messageheader .privrow {
@@ -764,13 +771,25 @@ input {
     text-align: center;
 }
 
-.wikimess .compose .messageheader .row .label {
+.wikimess .compose .messageheader .row .label,
+.wikimess .compose .messageheader .tagrow .label {
     display: none;
 }
 
-.wikimess .compose .messageheader .row .input {
+.wikimess .compose .messageheader .row .input,
+.wikimess .compose .messageheader .tagrow .input {
+    padding-top: 1px;
     padding-left: 1px;
     padding-right: 8px;  /* ugh, weird */
+}
+
+.wikimess .messageheader .tagrow {
+    display: flex;
+    flex-direction: row;
+}
+
+.wikimess .messageheader .tagcol {
+    flex-grow: 1;
 }
 
 /*

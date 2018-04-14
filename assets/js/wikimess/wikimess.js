@@ -1614,12 +1614,13 @@ var WikiMess = (function() {
                                        titleRow = $('<div class="row">')
                                        .append ($('<span class="label">').text ('Subject'),
                                                 $('<span class="input">').append (wm.messageTitleInput)),
-                                       prevTagsRow = $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Past tags'),
-                                                $('<span class="input">').append (wm.messagePrevTagsInput)),
-                                       tagsRow = $('<div class="row">')
-                                       .append ($('<span class="label">').text ('Future tags'),
-                                                $('<span class="input">').append (wm.messageTagsInput))),
+                                       $('<div class="tagrow">')
+                                       .append (prevTagsRow = $('<div class="tagcol">')
+                                                .append ($('<span class="label">').text ('Past tags'),
+                                                         $('<span class="input">').append (wm.messagePrevTagsInput)),
+                                                tagsRow = $('<div class="tagcol">')
+                                                .append ($('<span class="label">').text ('Future tags'),
+                                                         $('<span class="input">').append (wm.messageTagsInput)))),
                               $('<div class="messageborder">')
                               .append (templateRow = $('<div class="sectiontitle composesectiontitle">')
                                        .text('Template text:'),
