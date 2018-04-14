@@ -1584,7 +1584,7 @@ var WikiMess = (function() {
           // build the actual compose page UI
           wm.initInfoPane()
           var pubTab, privTab
-          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, expansionRow, revealButton, hideButton
+          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, expansionRow, revealButton, hideButton, toggler
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1634,6 +1634,7 @@ var WikiMess = (function() {
                      $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
                        wm.stopAnimation()
+                       toggler.showFunction()
                        wm.messageComposeDiv.trigger ('click')
                      }),
                       wm.randomizeButton = wm.makeSubNavIcon ('re-roll', function (evt) {
@@ -1664,10 +1665,10 @@ var WikiMess = (function() {
                                wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
-          wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
-                           container: expansionRow,
-                           hideIcon: 'up',
-                           showIcon: 'down' })
+          toggler = wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
+                                     container: expansionRow,
+                                     hideIcon: 'up',
+                                     showIcon: 'down' })
           updateSharePane()
 
           if (config.recipient) {
@@ -1755,8 +1756,8 @@ var WikiMess = (function() {
     },
     
     addToggler: function (config) {
-      var showButton, hideButton, hideFunction
-      showButton = wm.makeIconButton (config.showIcon, function() {
+      var showButton, hideButton, showFunction, hideFunction
+      showButton = wm.makeIconButton (config.showIcon, showFunction = function() {
         config.elements.forEach (function (element) { element.show() })
         hideButton.show()
         showButton.hide()
@@ -1768,6 +1769,10 @@ var WikiMess = (function() {
       })
       config.container.append (showButton, hideButton)
       hideFunction()
+      return { showButton: showButton,
+               hideButton: hideButton,
+               showFunction: showFunction,
+               hideFunction: hideFunction }
     },
 
     updateComposeDiv: function() {
