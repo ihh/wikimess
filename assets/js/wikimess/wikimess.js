@@ -1573,11 +1573,14 @@ var WikiMess = (function() {
           }
           
           function updateSharePane() {
+            wm.sendMessage = makeSendFunction()
             wm.sharePane
               .empty()
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction ({ callback: facebookIntent }), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction ({ callback: tweetIntent }), undefined, true).addClass('big-button'),
-                       wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', wm.sendMessage = makeSendFunction()).addClass('big-button'),
+                       wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
+                         wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
+                       }).addClass('big-button'),
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
           
