@@ -1712,10 +1712,40 @@ var WikiMess = (function() {
           if (config.click)
             wm[config.click].trigger ('click')
 
-          return true
+          // compose page is now completely built.
+          // If the content is empty, ping the server for a random popular template, and show that.
+          return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length })
         })
+      // end of showComposePage
     },
 
+    selectRandomTemplate: function (randomizeCondition) {
+      var wm = this
+      randomizeCondition = randomizeCondition || function() { return true }
+      if (randomizeCondition())
+        return wm.REST_getPlayerSuggestTemplates (wm.playerID)
+        .then (function (result) {
+          if (result && result.templates.length && randomizeCondition()) {
+            var template = wm.ParseTree.randomElement (result.templates)
+            return wm.REST_getPlayerTemplate (wm.playerID, template.id)
+              .then (function (templateResult) {
+                if (templateResult && templateResult.template && randomizeCondition()) {
+                  wm.composition.template = templateResult.template
+                  wm.messageTitleInput.val (wm.composition.title = templateResult.template.title)
+                  wm.messageTagsInput.val (wm.composition.tags = templateResult.template.tags)
+                  wm.messagePrevTagsInput.val (wm.composition.previousTags = templateResult.template.previousTags)
+                  wm.generateMessageBody(true)
+                    .then (function() {
+                      wm.composition.templateRandomized = true
+                    })
+                }
+              })
+          }
+        })
+      delete wm.composition.templateRandomized
+      return $.Deferred().resolve()
+    },
+    
     addToggler: function (config) {
       var showButton, hideButton, hideFunction
       showButton = wm.makeIconButton (config.showIcon, function() {
@@ -1968,13 +1998,15 @@ var WikiMess = (function() {
       return false
     },
 
-    generateMessageBody: function() {
+    generateMessageBody: function (useCurrentTemplate) {
       var wm = this
       wm.composition.body = {}
       wm.composition.needsSave = true
       
       var templatePromise
-      if (wm.composition.previousTemplate)
+      if (useCurrentTemplate)
+        templatePromise = $.Deferred().resolve()
+      else if (wm.composition.previousTemplate)
         templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (wm.composition.previousTemplate.tags))
         .then (function (result) {
           if (result.template) {
@@ -1990,7 +2022,7 @@ var WikiMess = (function() {
             delete wm.composition.previousTemplate
         })
       else
-        templatePromise = $.Deferred().resolve()
+        templatePromise = wm.selectRandomTemplate (function() { return wm.composition.templateRandomized })
 
       var sampledTree, symbolNodes
       return templatePromise.then (function() {
