@@ -154,11 +154,11 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
-           { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
+    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
            { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven', },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
+           { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
            { name: 'settings', method: 'showSettingsPage', label: 'settings', icon: 'pokecog' }],
     
     verbose: { page: false,
@@ -1314,7 +1314,12 @@ var WikiMess = (function() {
               }).on ('change', markForSave)
           }
 
-          wm.composition.previousTemplate = config.previousTemplate
+          wm.composition.previousTemplate = config.previousTemplate || wm.composition.previousTemplate
+          if (config.template) {
+            wm.composition.template = config.template
+            delete wm.composition.randomTemplate
+          }
+          wm.composition.template = wm.composition.template || {}
           wm.composition.template = config.template || wm.composition.template || {}
           wm.composition.template.content = wm.composition.template.content || []
 
@@ -1623,7 +1628,7 @@ var WikiMess = (function() {
                                        .text('Suggestions:'),
                                        wm.suggestionDiv = $('<div class="suggest">'),
 				       expansionRow = $('<div class="sectiontitle bodysectiontitle">')
-                                       .append ($('<span>').text('Expanded text:')),
+                                       .append ($('<span>').text('Message text:')),
                                        wm.messageBodyDiv)),
                      wm.infoPane,
                      $('<div class="subnavbar">').append
@@ -1714,12 +1719,12 @@ var WikiMess = (function() {
 
           // compose page is now completely built.
           // If the content is empty, ping the server for a random popular template, and show that.
-          return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length })
+          return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
         })
       // end of showComposePage
     },
 
-    selectRandomTemplate: function (randomizeCondition) {
+    selectRandomTemplate: function (randomizeCondition, fixFlag) {
       var wm = this
       randomizeCondition = randomizeCondition || function() { return true }
       if (randomizeCondition())
@@ -1736,13 +1741,16 @@ var WikiMess = (function() {
                   wm.messagePrevTagsInput.val (wm.composition.previousTags = templateResult.template.previousTags)
                   wm.generateMessageBody(true)
                     .then (function() {
-                      wm.composition.templateRandomized = true
+                      wm.composition.randomTemplate = true
                     })
-                }
+                } else if (fixFlag)
+                  delete wm.composition.randomTemplate
               })
-          }
+          } else if (fixFlag)
+            delete wm.composition.randomTemplate
         })
-      delete wm.composition.templateRandomized
+      else if (fixFlag)
+        delete wm.composition.randomTemplate
       return $.Deferred().resolve()
     },
     
@@ -2010,6 +2018,7 @@ var WikiMess = (function() {
         templatePromise = wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (wm.composition.previousTemplate.tags))
         .then (function (result) {
           if (result.template) {
+            delete wm.composition.randomTemplate
             wm.composition.template = result.template
             wm.composition.tags = wm.stripLeadingAndTrailingWhitespace (result.template.tags)
             wm.composition.previousTags = wm.stripLeadingAndTrailingWhitespace (result.template.previousTags)
@@ -2022,7 +2031,7 @@ var WikiMess = (function() {
             delete wm.composition.previousTemplate
         })
       else
-        templatePromise = wm.selectRandomTemplate (function() { return wm.composition.templateRandomized })
+        templatePromise = wm.selectRandomTemplate (function() { return wm.composition.randomTemplate }, false)
 
       var sampledTree, symbolNodes
       return templatePromise.then (function() {
@@ -2156,7 +2165,7 @@ var WikiMess = (function() {
         break
       case 'home':
       default:
-        promise = this.showGrammarEditPage()
+        promise = this.showComposePage()
         break
       }
       return promise
