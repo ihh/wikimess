@@ -939,6 +939,7 @@ input {
     height: 15vh;
     min-height: 15vh;
     overflow-y: auto;
+    overflow-wrap: break-word;
     border-style: none solid solid solid;
     border-width: 1px;
     border-radius: 0 0 4px 4px;

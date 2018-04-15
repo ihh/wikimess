@@ -1,8 +1,9 @@
 >Hey baby #root opener #opener gambit
-Is your [^they={she}$mom|^they={he}$dad] a [thief|burglar|robber|cat burglar]? Because ^they [took|stole] the [^it={it}[$moonlight|sunlight|dew|mist|rainbow|air]|^it={them}[sunbeams|stars]] [|from the [sky|earth|world]] and put ^it [in|into|on] your [eyes|ears|lips|mouth|tongue|fingernails].
+Is your [^they={she}$mom|^they={he}$dad] &a[$human_occupation|[thief|burglar|robber|cat burglar]]? Because ^they [took|stole] the [^it={it}[$moonlight|sunlight|dew|mist|rainbow|air]|^it={them}[sunbeams|stars]] [|from the [sky|earth|world]] and put ^it [in|into|on] your [eyes|ears|lips|mouth|tongue|fingernails|$body_part|$body_part|$body_part].
 
 >I have opinions #root opener #opener gambit
-I have opinions
+^subject={^is={is}^its={their}$famous_celebrity|^is={is}^its={its}$common_metal|^is={are}^its={its}&plural{$common_animal|$common_flower|$common_fruit|$common_condiment|$common_bread|$common_pastry|$common_vegetable|$common_fabric|$common_fibre|$common_clothing|$common_object|$common_noun}}
+&cap{^subject} ^is [overrated|underrated|awesome|passe|so [over|last year|[five|ten|fifteen] minutes ago|[past|entering|ready for] ^its [prime|best|peak|[interesting|cool|disruptive|innovative] phase]]]...
 
 >So... #root opener #opener gambit
 I'm a nut
