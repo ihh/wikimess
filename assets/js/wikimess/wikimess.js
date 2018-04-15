@@ -606,6 +606,10 @@ var WikiMess = (function() {
       return 'ontouchstart' in document.documentElement
     },
 
+    useThrowAnimations: function() {
+      return this.isTouchDevice()
+    },
+
     inPortraitMode: function() {
       return window.innerHeight > window.innerWidth
     },
@@ -1591,7 +1595,10 @@ var WikiMess = (function() {
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction ({ callback: facebookIntent }), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction ({ callback: tweetIntent }), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
-                         wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
+                         if (wm.useThrowAnimations())
+                           wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
+                         else
+                           wm.sendMessage()
                        }).addClass('big-button'),
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
@@ -1661,7 +1668,10 @@ var WikiMess = (function() {
                      }),
                       wm.randomizeButton = wm.makeSubNavIcon ('shuffle', function (evt) {
                         evt.stopPropagation()
-                        wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+                        if (wm.useThrowAnimations())
+                          wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+                        else
+                          wm.generateMessageBody()
                         delete wm.autosuggestStatus.lastVal
                         delete wm.autosuggestStatus.lastKey
                         wm.autosuggestStatus.temperature++
@@ -2253,7 +2263,7 @@ var WikiMess = (function() {
       }
       if (expansion)
         wm.currentCardDiv.show()
-      if (config.animate && !config.useCurrentCard)
+      if (config.animate && !config.useCurrentCard && wm.useThrowAnimations())
         wm.currentCard.throwIn (-wm.throwXOffset(), -wm.throwYOffset())
     },
     
