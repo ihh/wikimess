@@ -2587,33 +2587,40 @@ var WikiMess = (function() {
                     ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
                     : []),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (props.anon || ('No '+props.object))))
-          .on ('click', function() {
-            wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
-            var cachedMessage = wm.messageCache[props.tab][message.id]
-            var messagePromise = (cachedMessage
-                                  ? $.Deferred().resolve(cachedMessage)
-                                  : (wm[props.getMethod] (wm.playerID, message.id)
-                                     .then (function (result) {
-                                       wm.messageCache[props.tab][message.id] = result
-                                       return result
-                                     })))
-            messagePromise.then (function (result) {
-              if (message.unread) {
-                div.removeClass('unread').addClass('read')
-                delete message.unread
-                --wm.messageCount
-                wm.updateMessageCountDiv()
-              }
-              props.showMessage ($.extend
-                                 ({ result: result,
-                                    destroy: deleteMessage },
-                                  props))
-            })
-          })
+          .on ('click', wm.makeGetMessage (props, message, deleteMessage))
       div.addClass (message.unread ? 'unread' : 'read')
       return div
     },
 
+    makeGetMessage: function (props, message, deleteMessage) {
+      return function (evt) {
+        if (evt)
+          evt.preventDefault()
+        wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
+        var cachedMessage = wm.messageCache[props.tab][message.id]
+        var messagePromise = (cachedMessage
+                              ? $.Deferred().resolve(cachedMessage)
+                              : (wm[props.getMethod] (wm.playerID, message.id)
+                                 .then (function (result) {
+                                   wm.messageCache[props.tab][message.id] = result
+                                   return result
+                                 })))
+        messagePromise.then (function (result) {
+          if (message.unread) {
+            div.removeClass('unread').addClass('read')
+            delete message.unread
+            --wm.messageCount
+            wm.updateMessageCountDiv()
+          }
+          props.showMessage ($.extend
+                             ({},
+                              props,
+                              { result: result,
+                                destroy: deleteMessage }))
+        })
+      }
+    },
+    
     showMessage: function (props) {
       var wm = this
       var message = props.result.message
@@ -2679,7 +2686,16 @@ var WikiMess = (function() {
                               .hide(),  // at the moment, we're not really using the title field except as a hint in mailbox view; so, hide it
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
-                                       $('<span class="field messagedate">').text (wm.relativeDateString (message.date)))),
+                                       $('<span class="messagedate">').text (wm.relativeDateString (message.date))),
+                              $('<div class="row">')
+                              .append ($('<span class="threadnav">')
+                                       .append ((message.previous
+                                                 ? $('<a href="#">').text('Previous').on('click',wm.makeGetMessage (props, { id: message.previous }))
+                                                 : 'Previous'),
+                                                ' / ',
+                                                (message.next && message.next.length
+                                                 ? $('<a href="#">').text('Next').on('click',wm.makeGetMessage (props, { id: message.next[0] }))
+                                                 : 'Next')))),
                      $('<div class="messagebody messageborder">').html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
                                                                                                                            false,
                                                                                                                            wm.messageVarVal(sender,recipient)))))

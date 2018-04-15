@@ -744,6 +744,7 @@ input {
 
 .wikimess .messageheader {
     font-size: large;
+    position: relative;
 }
 
 .wikimess .messageheader .row textarea {
@@ -760,7 +761,7 @@ input {
     padding-bottom: 1px;
 }
 
-.wikimess .messageheader .row {
+.wikimess .compose .messageheader .row {
     font-size: xx-small;
 }
 
@@ -838,6 +839,22 @@ input {
 .wikimess .messageheader .field {
     display: table-cell;
     overflow-wrap: break-word;
+}
+
+.wikimess .messageheader .threadnav {
+    float: right;
+    font-size: x-small;
+    padding-right: 4px;
+}
+
+.wikimess .messageheader .threadnav {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.wikimess .readmessage.permalink .messageheader .threadnav {
+    position: inherit;
 }
 
 .wikimess .readmessage.permalink .messageheader {

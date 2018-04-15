@@ -531,9 +531,14 @@ module.exports = {
                        id: messageID })
       .populate ('template')
       .populate ('sender')
+      .populate ('replies')
       .then (function (message) {
         if (message)
           result.message = { id: message.id,
+                             previous: message.previous,
+                             next: message.replies.map (function (reply) {
+                               return reply.id
+                             }),
                              sender: (message.sender
                                       ? { id: message.sender.id,
                                           name: message.sender.name,
@@ -578,8 +583,13 @@ module.exports = {
         return Message.findOne ({ id: messageID })
           .populate ('template')
           .populate ('sender')
+          .populate ('replies')
       }).then (function (message) {
         result.message = { id: message.id,
+                           previous: message.previous,
+                           next: message.replies.map (function (reply) {
+                             return reply.id
+                           }),
                            sender: { id: message.sender.id,
                                      name: message.sender.name,
                                      displayName: message.sender.displayName },
@@ -631,9 +641,14 @@ module.exports = {
                        id: messageID,
                        senderDeleted: false })
       .populate ('recipient')
+      .populate ('replies')
       .then (function (message) {
         if (message)
           result.message = { id: message.id,
+                             previous: message.previous,
+                             next: message.replies.map (function (reply) {
+                               return reply.id
+                             }),
                              recipient: (message.recipient
                                          ? { id: message.recipient.id,
                                              name: message.recipient.name,

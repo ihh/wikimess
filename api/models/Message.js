@@ -26,6 +26,11 @@ module.exports = {
     previous: {
       model: 'message',
     },
+
+    replies: {
+      collection: 'message',
+      via: 'previous'
+    },
     
     template: {
       model: 'template',
