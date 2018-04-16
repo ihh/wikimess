@@ -128,4 +128,30 @@
     .wikimess .messageheader .input .results {
 	box-shadow: 6px 6px 6px 0px gray;
     }
+
+    @media all and (orientation:portrait) {
+	.wikimess .readmessage .messagebody,
+	.wikimess .messagebody.big {
+	    font-size: 4vh;
+	    line-height: 5vh;
+	}
+
+	.wikimess .messagebody.small {
+	    font-size: 3vh;
+	    line-height: 3.8vh;
+	}
+    }
+
+    @media all and (orientation:landscape) {
+	.wikimess .readmessage .messagebody,
+	.wikimess .messagebody.big {
+	    font-size: 4vw;
+	    line-height: 5vw;
+	}
+
+	.wikimess .messagebody.small {
+	    font-size: 3vw;
+	    line-height: 3.8vw;
+	}
+    }
 }

@@ -975,6 +975,7 @@ input {
     display: flex;
     flex-direction: column;
     z-index: 3;
+    padding: 4px;
 }
 
 .wikimess .compose .stack .card {
@@ -984,6 +985,10 @@ input {
     border-radius: 4px;
     border-width: 1px;
     border-style: solid;
+
+    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
 .wikimess .cardcontrols {
@@ -996,6 +1001,7 @@ input {
 
 .wikimess .cardcontrols .scrollup,
 .wikimess .cardcontrols .scrolldown {
+    font-size: large;
     position: absolute;
     background-color: rgba(0,0,0,.5);
     border-radius: 4px;
@@ -1003,6 +1009,13 @@ input {
     height: 20px;
     padding: 2px;
     pointer-events: all;
+    display: flex;
+}
+
+.wikimess .cardcontrols .scrollup span,
+.wikimess .cardcontrols .scrolldown span {
+    display: flex;
+    flex-grow: 1;
 }
 
 .wikimess .cardcontrols .scrollup {
@@ -1015,19 +1028,23 @@ input {
     right: 4px;
 }
 
-.wikimess .cardcontrols .scrollup .button svg,
-.wikimess .cardcontrols .scrolldown .button svg {
-/*
-    width: 16px;
-    height: 16px;
-*/
+.wikimess .cardcontrols .button svg,
+.wikimess .cardcontrols .button svg {
+    width: 20px;
+    height: 20px;
 }
 
+.wikimess .cardcontrols .button .iconlabel {
+    display: none;
+}
+
+.wikimess .readmessage .messagebody,
 .wikimess .compose .messagebody {
+    text-align: center;
     flex-grow: 1;
     overflow-y: auto;
     margin-bottom: 1px;
-    padding: 1px;
+    padding: 4px;
 }
 
 .wikimess .compose .suggestions {

@@ -6,6 +6,7 @@ Is your [^they={she}$mom|^they={he}$dad] &a[$human_occupation|[thief|burglar|rob
 [[[Possibly|Could be|May be] an u|U]npopular opinion[, but|]|Random thought|Just putting [it|this|something] out there[|, for what it's[| ever[| [gonna|going to] be]] worth]][:|...]
 ^overrated={overrated|underrated|awesome|passe|so [over|last year|[five|ten|fifteen] minutes ago|[past|entering|ready for] ^its [prime|best|peak|[interesting|cool|disruptive|innovative] phase]]}
 [&cap{^subject} ^is [so|SO|sooo|Sooo] ^overrated...|[I|You] [just|totally|have to] [hate|love] ^subject: ^overrated!|&cap{^subject}[.|:|...] &cap{^overrated}[?|!|??|?!]|[Am I|Am I really|I can't be|Surely I can't be] the only who who thinks ^subject ^is ^overrated?]
+
 [If I never see ^subject again it'll be too soon.|I just can't [stand|handle|deal with|abide|get enough of] ^subject.|I really[|, really] [hate|love] ^subject. [|Sorry....|OK?|That's just how it is.]]
 
 >So... #root opener #opener gambit

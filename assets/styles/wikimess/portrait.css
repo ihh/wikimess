@@ -113,4 +113,15 @@
     .wikimess .messageheader .input .results {
 	box-shadow: 1vw 1vw 1vw 0px gray;
     }
+
+    .wikimess .readmessage .messagebody,
+    .wikimess .messagebody.big {
+	font-size: 4vh;
+	line-height: 5vh;
+    }
+
+    .wikimess .messagebody.small {
+	font-size: 3vh;
+	line-height: 3.8vh;
+    }
 }
