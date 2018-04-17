@@ -1074,13 +1074,13 @@ input {
     margin-bottom: 1px;
     padding: 4px;
 
-    font-size: 4vh;
-    line-height: 5vh;
+    font-size: 3vh;
+    line-height: 3.75vh;
 }
 
 .wikimess .messagebody.small {
-    font-size: 3vh;
-    line-height: 3.8vh;
+    font-size: 2vh;
+    line-height: 2.5vh;
 }
 
 .wikimess .compose .suggestions {
