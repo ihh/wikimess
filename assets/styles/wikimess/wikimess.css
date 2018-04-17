@@ -999,6 +999,28 @@ input {
     box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
+.wikimess .compose .stack .helpcard {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+
+    justify-content: center;
+    font-weight: bold;
+    font-style: italic;
+
+    background: #fee;
+    border-color: #100;
+    
+    -webkit-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
+    -moz-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
+    box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
+}
+
+
 .wikimess .cardcontrols {
     position: absolute;
     top: 0;
@@ -1046,6 +1068,7 @@ input {
     display: none;
 }
 
+.wikimess .helpcard,
 .wikimess .readmessage .messagebody,
 .wikimess .compose .messagebody {
     text-align: center;
@@ -1104,6 +1127,10 @@ input {
     padding-right: 2px;
     min-height: 1.2em;
     max-height: 1.2em;
+}
+
+.wikimess .subnavbar.help .button {
+    display: none;
 }
 
 .wikimess .subnavbar .sharepanecontainer,

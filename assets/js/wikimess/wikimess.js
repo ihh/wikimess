@@ -72,6 +72,8 @@ var WikiMess = (function() {
 
     this.symbolName = {}
     this.playerNameCache = {}
+
+    this.showHelpCard = true
     
     // log in
     if (config.player) {
@@ -1234,6 +1236,7 @@ var WikiMess = (function() {
                                suspend: this.pageSuspend,
                                resume: this.pageResume,
                                exit: this.pageExit,
+                               subnavbar: this.subnavbar,
 			       modalExitDiv: this.modalExitDiv })
       if (this.modalExitDiv) {
 	this.modalExitDiv.hide()
@@ -1262,6 +1265,7 @@ var WikiMess = (function() {
           wm.pageResume = poppedView.pageResume
           wm.pageExit = poppedView.pageExit
 	  wm.modalExitDiv = poppedView.modalExitDiv
+          wm.subnavbar = poppedView.subnavbar
           if (wm.pageResume)
             wm.pageResume()
         })
@@ -1610,13 +1614,13 @@ var WikiMess = (function() {
           var pubTab, privTab
           var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, revealButton, hideButton
           wm.makeHeaderToggler = function (container) {
-            wm.headerToggler = wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
-                                                container: container,
-                                                hidden: !wm.headerToggler || wm.headerToggler.hidden,
-                                                hideIcon: 'up',
-                                                showIcon: 'down',
-						hideCallback: function() { wm.messageBodyDiv.removeClass('small').addClass('big') },
-						showCallback: function() { wm.messageBodyDiv.removeClass('big').addClass('small') } })
+            return wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
+                                    container: container,
+                                    hidden: !wm.headerToggler || wm.headerToggler.hidden,
+                                    hideIcon: 'up',
+                                    showIcon: 'down',
+				    hideCallback: function() { if (wm.messageBodyDiv) wm.messageBodyDiv.removeClass('small').addClass('big') },
+				    showCallback: function() { if (wm.messageBodyDiv) wm.messageBodyDiv.removeClass('big').addClass('small') } })
           }
 
           wm.container
@@ -1664,7 +1668,7 @@ var WikiMess = (function() {
                               $('<div class="messageborder">')
                               .append (wm.stackDiv = $('<div class="stack">'))),
                      wm.infoPane,
-                     $('<div class="subnavbar">').append
+                     wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.editButton = wm.makeSubNavIcon ('edit', function() {
                        wm.stopAnimation()
                        wm.headerToggler.showFunction()
@@ -1725,7 +1729,7 @@ var WikiMess = (function() {
             return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            return throwOutConfidence > .25 && (xOffset < 0 || window.confirm ('Send message?'))
+            return throwOutConfidence > .25 && (xOffset < 0 || window.confirm ('Send message?') || wm.showHelpCard)
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				    throwOutDistance: function() { return wm.throwXOffset() },
@@ -1765,16 +1769,36 @@ var WikiMess = (function() {
             wm.composition.body = config.body
           else if (config.template)
             generate = true
-          wm.dealCard (generate)
 
           if (config.focus)
             wm[config.focus].focus().trigger ('click')
           if (config.click)
             wm[config.click].trigger ('click')
 
-          // compose page is now completely built.
-          // If the content is empty, ping the server for a random popular template, and show that.
-          return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
+          function dealFirstCard() {
+            return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
+              .then (function() {
+                wm.dealCard (generate)
+              })
+          }
+          if (wm.showHelpCard) {
+            wm.makeHeaderToggler().hideFunction()
+            wm.subnavbar.addClass ('help')
+            var cardDiv = $('<div class="helpcard">')
+                .append (marked ("Swipe left<br>for new text\n\nSwipe right<br>to post\n\nSwipe this card<br>any direction<br>to start"))
+            wm.stackDiv.append (cardDiv)
+            var card = wm.stack.createCard (cardDiv[0])
+            function swipe() {
+              wm.showHelpCard = false
+              wm.fadeCard (cardDiv, card, function() {
+                wm.subnavbar.removeClass ('help')
+                dealFirstCard()
+              })
+            }
+            card.on ('throwout', swipe)
+            card.throwIn (0, -wm.throwYOffset())
+          } else
+            return dealFirstCard()
         })
       // end of showComposePage
     },
@@ -1798,7 +1822,7 @@ var WikiMess = (function() {
           wm.saveCurrentEdit()
         })
       var messageBodyElem = wm.messageBodyDiv[0]
-      wm.makeHeaderToggler (expansionRow)
+      wm.headerToggler = wm.makeHeaderToggler (expansionRow)
 
       var cardDiv = $('<div class="card">').append (expansionRow, wm.messageBodyDiv)
       wm.stackDiv.append (cardDiv)
@@ -1942,7 +1966,8 @@ var WikiMess = (function() {
 	if (config.hideCallback)
 	  config.hideCallback()
       })
-      container.append (showButton, hideButton)
+      if (container)
+        container.append (showButton, hideButton)
       toggler = { showButton: showButton,
                   hideButton: hideButton,
                   showFunction: showFunction,
@@ -2390,7 +2415,7 @@ var WikiMess = (function() {
           }
           wm.container
             .append (wm.mailboxDiv = $('<div class="mailbox">'),
-                     $('<div class="subnavbar">').append
+                     wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.subnavButton.inbox = makeSubNavIcon ('inbox', function() {
                        wm.showInbox()
                       }),
@@ -4145,7 +4170,7 @@ var WikiMess = (function() {
                        .hide(),
                        wm.grammarBarDiv,
                        wm.infoPane,
-                       $('<div class="subnavbar">').append
+                       wm.subnavbar = $('<div class="subnavbar">').append
                        (wm.makeSubNavIcon ('new', newSymbol),
                         wm.makeHelpButton (wm.REST_getGrammarHelpHtml)))
             

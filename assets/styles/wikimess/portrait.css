@@ -114,6 +114,7 @@
 	box-shadow: 1vw 1vw 1vw 0px gray;
     }
 
+    .wikimess .helpcard,
     .wikimess .readmessage .messagebody,
     .wikimess .messagebody.big {
 	font-size: 4vh;
