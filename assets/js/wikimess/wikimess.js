@@ -416,6 +416,10 @@ var WikiMess = (function() {
       return this.logGet ('/html/message-compose-help.html')
     },
 
+    REST_getComposeTipsHtml: function() {
+      return this.logGet ('/html/message-compose-tips.html')
+    },
+
     REST_getGrammarHelpHtml: function() {
       return this.logGet ('/html/grammar-editor-help.html')
     },
@@ -1695,7 +1699,7 @@ var WikiMess = (function() {
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
                                wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
-                      wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
+                      wm.makeTipButton()))
 
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
@@ -1721,7 +1725,7 @@ var WikiMess = (function() {
             return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            return throwOutConfidence > .25 && (wm.showHelpCard || xOffset < Math.abs(yOffset) || window.confirm ('Send message?'))
+            return throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm ('Send message?'))
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				    throwOutDistance: function() { return wm.throwXOffset() },
@@ -1795,7 +1799,7 @@ var WikiMess = (function() {
                                   }),
                                   $('<br>'),
                                   $('<em>').text('to begin')))
-            wm.stackDiv.append (cardDiv)
+	    wm.addToStack (cardDiv)
             card = wm.stack.createCard (cardDiv[0])
             function swipe() {
               wm.showHelpCard = false
@@ -1812,6 +1816,43 @@ var WikiMess = (function() {
       // end of showComposePage
     },
 
+    dealHelpCard: function() {
+      var wm = this
+      var helpPromise
+      if (wm.helpHtml)
+	helpPromise = $.Deferred().resolve()
+      else
+	helpPromise = wm.REST_getComposeTipsHtml()
+	.then (function (result) {
+	  var html = result.replace (/PHRASE/g, function() { return symCharHtml })
+	  wm.helpHtml = $.parseHTML (html)
+	  wm.addHelpIcons ($(wm.helpHtml))
+	})
+      return helpPromise.then (function() {
+	wm.subnavbar.addClass ('help')
+	var cardDiv = $(wm.ParseTree.randomElement (wm.helpHtml))
+	    .removeAttr ('style')
+	    .addClass ('helpcard')
+	wm.addToStack (cardDiv)
+	var card = wm.stack.createCard (cardDiv[0])
+	function swipe() {
+          wm.showHelpCard = false
+          wm.fadeCard (cardDiv, card, function() {
+            wm.subnavbar.removeClass ('help')
+          })
+	}
+	card.on ('throwout', swipe)
+	card.throwIn (0, -wm.throwYOffset())
+      })
+    },
+
+    addToStack: function (cardDiv) {
+      var wm = this
+      wm.stackDiv.append (cardDiv)
+      cardDiv.width (wm.stackDiv.innerWidth() - parseInt(cardDiv.css('border-left-width')) - parseInt(cardDiv.css('border-right-width')) - parseInt(cardDiv.css('padding-left')) - parseInt(cardDiv.css('padding-right')))
+      cardDiv.height (wm.stackDiv.innerHeight() - parseInt(cardDiv.css('border-top-width')) - parseInt(cardDiv.css('border-bottom-width')) - parseInt(cardDiv.css('padding-top')) - parseInt(cardDiv.css('padding-bottom')))
+    },
+    
     deleteDraft: function() {
       if (wm.composition.randomTemplate || window.confirm ('Delete this draft?')) {
         if (wm.playerID === null) {
@@ -1851,6 +1892,7 @@ var WikiMess = (function() {
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv)
       var cardDiv = $('<div class="card">').append (expansionRow, innerDiv)
       wm.stackDiv.html (cardDiv)  // make sure this is the only card in the stack
+      wm.subnavbar.removeClass ('help')  // just in case we skipped a help card
 
       // allow scrolling if using a scroll wheel
       wm.restoreScrolling (wm.messageBodyDiv)
@@ -4152,6 +4194,13 @@ var WikiMess = (function() {
       wm.showingHelp = false
     },
 
+    makeTipButton: function() {
+      var wm = this
+      return wm.makeSubNavIcon ('help', function() {
+	wm.dealHelpCard()
+      })
+    },
+
     makeHelpButton: function (helpMethod) {
       var wm = this
       return wm.makeSubNavIcon ('help', function() {
@@ -4175,7 +4224,7 @@ var WikiMess = (function() {
 	  })
       })
     },
-
+    
     showGrammarLoadSymbol: function (symbol) {
       var wm = this
       return wm.showGrammarEditPage()

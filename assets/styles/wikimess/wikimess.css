@@ -903,6 +903,7 @@ input {
     display: flex;
     flex-direction: column;
     overflow-wrap: break-word;
+    margin: 4px 20px;
 }
 
 .wikimess .popular .templates,
@@ -986,7 +987,7 @@ input {
     display: flex;
     flex-direction: column;
     z-index: 6;
-    padding: 4px 20px;
+    position: relative;
 }
 
 .wikimess .compose .stack .card {
@@ -1003,7 +1004,7 @@ input {
 }
 
 .wikimess .compose .stack .helpcard {
-    flex-grow: 1;
+    position: absolute;
     display: flex;
     flex-direction: column;
 
