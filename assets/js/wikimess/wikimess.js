@@ -611,11 +611,19 @@ var WikiMess = (function() {
     useThrowAnimations: function() {
       return this.isTouchDevice()
     },
+    
+    throwXOffset: function() {
+      return this.container.width() * 2 / 3
+    },
+
+    throwYOffset: function() {
+      return this.container.height() / 4
+    },
 
     inPortraitMode: function() {
       return window.innerHeight > window.innerWidth
     },
-    
+
     openLink: function (url) {
       var newWin = window.open (url)
 
@@ -1365,7 +1373,7 @@ var WikiMess = (function() {
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
-                wm.generateMessageBody ({ useCurrentCard: true })
+                wm.generateMessageBody()
             if (caretPos === caretEnd && (newVal !== wm.autosuggestStatus.lastVal || caretPos !== wm.autosuggestStatus.lastCaretPos)) {
               wm.autosuggestStatus.lastVal = newVal
               wm.autosuggestStatus.lastCaretPos = caretPos
@@ -1451,7 +1459,7 @@ var WikiMess = (function() {
                                              .then (function (result) {
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
-                                             : wm.generateMessageBody ({ useCurrentCard: true }))
+                                             : wm.generateMessageBody())
                                         generatePromise.then (wm.divAutosuggest)
                                       })
                 .then (function() {
@@ -1472,9 +1480,9 @@ var WikiMess = (function() {
                         wm.composition.body.rhs.splice
                         (wm.composition.template.content.length,
                          wm.composition.body.rhs.length - wm.composition.template.content.length)
-                        wm.showMessageBody ({ useCurrentCard: true })
+                        wm.showMessageBody()
                       } else
-                        wm.generateMessageBody ({ useCurrentCard: true })
+                        wm.generateMessageBody()
                       wm.divAutosuggest()
                     }
                     wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
@@ -1610,17 +1618,6 @@ var WikiMess = (function() {
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
 
-          function nextCard() {
-            if (wm.useThrowAnimations())
-              wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
-            else
-              wm.generateMessageBody()
-            delete wm.autosuggestStatus.lastVal
-            delete wm.autosuggestStatus.lastKey
-            wm.autosuggestStatus.temperature++
-            wm.autosuggestStatus.refresh()
-          }
-          
           // build the actual compose page UI
           wm.initInfoPane()
           wm.headerToggler = wm.makeToggler ({ hidden: !wm.headerToggler || wm.headerToggler.hidden,
@@ -1689,28 +1686,11 @@ var WikiMess = (function() {
                       wm.headerToggler.hideButton,
                       wm.randomizeButton = wm.makeSubNavIcon ('shuffle', function (evt) {
                         evt.stopPropagation()
-                        nextCard()
+                        wm.throwAndRefresh()
                       }),
                       wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
                         evt.stopPropagation()
-                        if (wm.composition.randomTemplate || window.confirm ('Delete this draft?')) {
-                          if (wm.playerID === null) {
-                            wm.composition.randomTemplate = true
-                            nextCard()
-                          } else
-                              wm.finishLastSave()
-                            .then (function() {
-                              var def = (wm.composition.draft
-                                         ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
-                                         : $.Deferred().resolve())
-                              def.then (function() {
-                                wm.showMailboxPage ({ tab: 'drafts' })
-                                  .then (function() {
-                                    // TODO: update wm.mailboxCache.drafts
-                                  })
-                              })
-                            })
-                        }
+			wm.deleteDraft()
                       }),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
@@ -1741,7 +1721,7 @@ var WikiMess = (function() {
             return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            return throwOutConfidence > .25 && (wm.showHelpCard || xOffset < 0 || window.confirm ('Send message?'))
+            return throwOutConfidence > .25 && (wm.showHelpCard || xOffset < Math.abs(yOffset) || window.confirm ('Send message?'))
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				    throwOutDistance: function() { return wm.throwXOffset() },
@@ -1790,7 +1770,7 @@ var WikiMess = (function() {
           function dealFirstCard() {
             return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
               .then (function() {
-                wm.dealCard (generate)
+                wm.dealCard ({ generate: true })
               })
           }
           if (wm.showHelpCard) {
@@ -1801,7 +1781,7 @@ var WikiMess = (function() {
                 .append ($('<p>')
                          .append ($('<strong>').text('Swipe cards left'),
                                   $('<br>'),
-                                  $('<em>').text('to generate new text')),
+                                  $('<em>').text('to get new text')),
                          $('<p>')
                          .append ($('<strong>').text('Swipe cards right'),
                                   $('<br>'),
@@ -1809,7 +1789,8 @@ var WikiMess = (function() {
                          $('<p>')
                          .append ($('<a href="#">')
                                   .html ($('<strong>').text('Remove this card'))
-                                  .on ('click', function() {
+                                  .on ('click', function (evt) {
+				    evt.preventDefault()
                                     card.throwOut (-wm.throwXOffset(), wm.throwYOffset())
                                   }),
                                   $('<br>'),
@@ -1831,16 +1812,32 @@ var WikiMess = (function() {
       // end of showComposePage
     },
 
-    throwXOffset: function() {
-      return this.container.width() * 2 / 3
+    deleteDraft: function() {
+      if (wm.composition.randomTemplate || window.confirm ('Delete this draft?')) {
+        if (wm.playerID === null) {
+          wm.composition.randomTemplate = true
+          wm.dealCard ({ generate: true })
+        } else
+          wm.finishLastSave()
+          .then (function() {
+            var def = (wm.composition.draft
+                       ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
+                       : $.Deferred().resolve())
+            def.then (function() {
+              wm.showMailboxPage ({ tab: 'drafts' })
+                .then (function() {
+                  // TODO: update wm.mailboxCache.drafts
+                })
+            })
+          })
+	return true
+      }
+      return false
     },
 
-    throwYOffset: function() {
-      return this.container.height() / 4
-    },
-
-    dealCard: function (generateContent) {
+    dealCard: function (config) {
       var wm = this
+      config = config || {}
       wm.messageTitleSpan = $('<span>')
       wm.updateMessageTitle()
       var expansionRow = $('<div class="sectiontitle bodysectiontitle">').append (wm.messageTitleSpan)
@@ -1853,9 +1850,12 @@ var WikiMess = (function() {
 
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv)
       var cardDiv = $('<div class="card">').append (expansionRow, innerDiv)
-      wm.stackDiv.append (cardDiv)
+      wm.stackDiv.html (cardDiv)  // make sure this is the only card in the stack
 
-      // add scroll buttons
+      // allow scrolling if using a scroll wheel
+      wm.restoreScrolling (wm.messageBodyDiv)
+
+      // add scroll buttons in case we aren't using a scroll wheel (mouse swipe gestures won't work on the card)
       var scrollUpDiv, scrollDownDiv, cardControlsDiv
       function showScrollButton (buttonDiv, enabled) {
         if (enabled)
@@ -1897,28 +1897,62 @@ var WikiMess = (function() {
 
       // create the swing card
       var card = wm.stack.createCard (cardDiv[0])
-      var nextCard = function() {
-        wm.fadeCard (cardDiv, card, wm.dealCard.bind (wm, true))
+      function fadeAndDealCard() {
+        wm.fadeCard (cardDiv, card, wm.dealCard.bind (wm, { generate: true }))
       }
-      card.on ('throwoutleft', nextCard)
-      card.on ('throwoutup', nextCard)
-      card.on ('throwoutdown', nextCard)
-      card.on ('throwoutright', function() {
+      function fadeAndDeleteDraft() {
+        wm.fadeCard (cardDiv, card, function() { wm.deleteDraft() || wm.dealCard() })
+      }
+      function fadeAndSendMessage() {
         wm.fadeCard (cardDiv, card, wm.sendMessage.bind (wm))
-      })
+      }
+      function redealAndToggleEdit() {
+	wm.destroyCard (cardDiv, card)
+        wm.dealCard ({ generate: false,
+		       alwaysAnimate: wm.headerToggler.hidden })
+	  .then (wm.headerToggler.toggle)
+      }
+      card.on ('throwoutleft', fadeAndDealCard)
+      card.on ('throwoutdown', fadeAndDeleteDraft)
+      card.on ('throwoutright', fadeAndSendMessage)
+      card.on ('throwoutup', redealAndToggleEdit)
       wm.currentCard = card
       wm.currentCardDiv = cardDiv
       
-      // render the text
+      // return a promise, fulfilled when content is rendered & the card is dealt
       delete wm.animationExpansion
       cardDiv.hide()
-      if (generateContent)
-        wm.generateMessageBody()
-      else
-        wm.showMessageBody()
+      var contentPromise
+      if (config.generate)
+        contentPromise = wm.generateMessageBody()
+      else {
+        wm.showMessageBody ({ animate: config.alwaysAnimate })
+	contentPromise = $.Deferred().resolve()
+      }
 
-      // allow scrolling if using a scroll wheel
-      wm.restoreScrolling (wm.messageBodyDiv)
+      return contentPromise
+	.then (function() {
+	  // throw-in effect
+	  if (wm.useThrowAnimations())
+            card.throwIn (0, -wm.throwYOffset())
+	})
+    },
+
+    throwAndRefresh: function() {
+      if (wm.useThrowAnimations())
+        wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+      else
+        wm.generateMessageBody()
+      delete wm.autosuggestStatus.lastVal
+      delete wm.autosuggestStatus.lastKey
+      wm.autosuggestStatus.temperature++
+      wm.autosuggestStatus.refresh()
+    },
+
+    destroyCard: function (element, card) {
+      var wm = this
+      element.remove()
+      card.destroy()
     },
 
     fadeCard: function (element, card, callback) {
@@ -1998,6 +2032,7 @@ var WikiMess = (function() {
                   hideButton: hideButton,
                   show: showFunction,
                   hide: hideFunction,
+		  toggle: function() { toggler.hidden ? showFunction() : hideFunction() },
                   init: function (elements) {
                     config.elements = elements
                     if (config.hidden)
@@ -2192,9 +2227,10 @@ var WikiMess = (function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
       var markdown = this.renderMarkdown
-      (this.ParseTree.makeExpansionText (this.animationExpansion, true, this.compositionVarVal())
-       .replace (/^\s*$/, wm.emptyMessageWarning),
-       function (html) { return wm.linkSymbols (html) })
+      (this.ParseTree.makeExpansionText (this.animationExpansion, true, this.compositionVarVal()),
+       function (html) {
+	 return wm.linkSymbols (html)
+       })
       
       this.animationDiv.html (markdown)
       this.showScrollButtons()
@@ -2309,7 +2345,7 @@ var WikiMess = (function() {
             }
 	  })
           wm.composition.body = { type: 'root', rhs: sampledTree }
-          wm.showMessageBody ({ animate: true, useCurrentCard: config.useCurrentCard })
+          wm.showMessageBody ({ animate: true })
         } else
           wm.showMessageBody()
       })
@@ -2330,16 +2366,15 @@ var WikiMess = (function() {
 	if (wm.animationExpansion)
           wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
-        div.html (this.renderMarkdown (wm.ParseTree.makeExpansionText (expansion, false, wm.compositionVarVal())
-                                       .replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
-                                                           ? wm.emptyTemplateWarning
-                                                           : wm.emptyMessageWarning))))
+	var rawExpansion = wm.ParseTree.makeExpansionText (expansion, false, wm.compositionVarVal())
+	var processedExpansion = rawExpansion.replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
+								 ? wm.emptyTemplateWarning
+								 : wm.emptyMessageWarning))
+        div.html (this.renderMarkdown (processedExpansion))
         wm.showScrollButtons()
       }
       if (expansion)
         wm.currentCardDiv.show()
-      if (config.animate && !config.useCurrentCard && wm.useThrowAnimations())
-        wm.currentCard.throwIn (0, -wm.throwYOffset())
     },
     
     randomizeEmptyMessageWarning: function() {
