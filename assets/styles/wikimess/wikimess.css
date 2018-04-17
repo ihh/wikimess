@@ -1003,6 +1003,36 @@ input {
     box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
+.wikimess .compose .stack .card:not(.dragging) {
+    animation: jiggle 5s ease 0s infinite;
+    -moz-animation: jiggle 5s ease 0s infinite;
+    -webkit-animation: jiggle 5s ease 0s infinite;
+}
+
+@-webkit-keyframes jiggle {
+    0% { transform: rotate(0deg); }
+    95% { transform: rotate(0deg); }
+    97% { transform: rotate(1deg); }
+    99% { transform: rotate(-0.5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@-moz-keyframes jiggle {
+    0% { transform: rotate(0deg); }
+    95% { transform: rotate(0deg); }
+    97% { transform: rotate(1deg); }
+    99% { transform: rotate(-0.5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes jiggle {
+    0% { transform: rotate(0deg); }
+    95% { transform: rotate(0deg); }
+    97% { transform: rotate(1deg); }
+    99% { transform: rotate(-0.5deg); }
+    100% { transform: rotate(0deg); }
+}
+
 .wikimess .compose .stack .helpcard {
     position: absolute;
 
