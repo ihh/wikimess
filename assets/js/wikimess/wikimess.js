@@ -1958,6 +1958,12 @@ var WikiMess = (function() {
       card.on ('throwoutdown', fadeAndDeleteDraft)
       card.on ('throwoutright', fadeAndSendMessage)
       card.on ('throwoutup', redealAndToggleEdit)
+      card.on ('dragstart', function() {
+        cardDiv.addClass ('dragging')
+      })
+      card.on ('dragend', function() {
+        cardDiv.removeClass ('dragging')
+      })
       wm.currentCard = card
       wm.currentCardDiv = cardDiv
       
