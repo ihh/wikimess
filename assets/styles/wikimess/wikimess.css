@@ -962,8 +962,8 @@ input {
 }
 
 .wikimess .compose .suggest {
-    height: 15vh;
-    min-height: 15vh;
+    height: 10vh;
+    min-height: 10vh;
     font-size: 2vh;
     line-height: 2vh;
     

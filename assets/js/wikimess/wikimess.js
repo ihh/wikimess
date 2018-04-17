@@ -1609,6 +1609,17 @@ var WikiMess = (function() {
                        }).addClass('big-button'),
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
+
+          function nextCard() {
+            if (wm.useThrowAnimations())
+              wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+            else
+              wm.generateMessageBody()
+            delete wm.autosuggestStatus.lastVal
+            delete wm.autosuggestStatus.lastKey
+            wm.autosuggestStatus.temperature++
+            wm.autosuggestStatus.refresh()
+          }
           
           // build the actual compose page UI
           wm.initInfoPane()
@@ -1678,29 +1689,28 @@ var WikiMess = (function() {
                       wm.headerToggler.hideButton,
                       wm.randomizeButton = wm.makeSubNavIcon ('shuffle', function (evt) {
                         evt.stopPropagation()
-                        if (wm.useThrowAnimations())
-                          wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
-                        else
-                          wm.generateMessageBody()
-                        delete wm.autosuggestStatus.lastVal
-                        delete wm.autosuggestStatus.lastKey
-                        wm.autosuggestStatus.temperature++
-                        wm.autosuggestStatus.refresh()
+                        nextCard()
                       }),
                       wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
-                        if (window.confirm ('Delete this draft?'))
-                          wm.finishLastSave()
-                          .then (function() {
-                            var def = (wm.composition.draft
-                                       ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
-                                       : $.Deferred().resolve())
-                            def.then (function() {
-                              wm.showMailboxPage ({ tab: 'drafts' })
-                                .then (function() {
-                                  // TODO: update wm.mailboxCache.drafts
-                                })
+                        evt.stopPropagation()
+                        if (wm.composition.randomTemplate || window.confirm ('Delete this draft?')) {
+                          if (wm.playerID === null) {
+                            wm.composition.randomTemplate = true
+                            nextCard()
+                          } else
+                              wm.finishLastSave()
+                            .then (function() {
+                              var def = (wm.composition.draft
+                                         ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
+                                         : $.Deferred().resolve())
+                              def.then (function() {
+                                wm.showMailboxPage ({ tab: 'drafts' })
+                                  .then (function() {
+                                    // TODO: update wm.mailboxCache.drafts
+                                  })
+                              })
                             })
-                          })
+                        }
                       }),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
@@ -1718,7 +1728,6 @@ var WikiMess = (function() {
 
           if (!wm.playerID) {
             pubTab.click()
-            wm.destroyButton.hide()
             wm.messagePrivacyDiv.hide()
             wm.messageRecipientDiv.hide()
           } else {
@@ -1787,10 +1796,26 @@ var WikiMess = (function() {
           if (wm.showHelpCard) {
             wm.headerToggler.hide()
             wm.subnavbar.addClass ('help')
+            var card
             var cardDiv = $('<div class="helpcard">')
-                .append (marked ("**Swipe cards left**<br>_for new text_\n\n**Swipe cards right**<br>_to post_\n\n**Swipe this card**<br>_left or right to start_"))
+                .append ($('<p>')
+                         .append ($('<strong>').text('Swipe cards left'),
+                                  $('<br>'),
+                                  $('<em>').text('to generate new text')),
+                         $('<p>')
+                         .append ($('<strong>').text('Swipe cards right'),
+                                  $('<br>'),
+                                  $('<em>').text('to share the text')),
+                         $('<p>')
+                         .append ($('<a href="#">')
+                                  .html ($('<strong>').text('Remove this card'))
+                                  .on ('click', function() {
+                                    card.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+                                  }),
+                                  $('<br>'),
+                                  $('<em>').text('to begin')))
             wm.stackDiv.append (cardDiv)
-            var card = wm.stack.createCard (cardDiv[0])
+            card = wm.stack.createCard (cardDiv[0])
             function swipe() {
               wm.showHelpCard = false
               wm.fadeCard (cardDiv, card, function() {
