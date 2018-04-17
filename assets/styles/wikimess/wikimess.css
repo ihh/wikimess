@@ -1012,7 +1012,8 @@ input {
     font-weight: bold;
     font-style: italic;
 
-    background: #fee;
+    background: #eee;
+    color: #800;
     border-color: #100;
     
     -webkit-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
