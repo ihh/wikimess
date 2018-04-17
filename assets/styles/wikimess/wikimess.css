@@ -1005,16 +1005,12 @@ input {
     flex-direction: column;
 
     border-radius: 4px;
-    border-width: 1px;
+    border-width: 2px;
     border-style: solid;
 
     justify-content: center;
-    font-weight: bold;
-    font-style: italic;
 
-    background: #eee;
-    color: #800;
-    border-color: #100;
+    border-color: #800;
     
     -webkit-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
     -moz-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
@@ -1077,6 +1073,14 @@ input {
     overflow-y: auto;
     margin-bottom: 1px;
     padding: 4px;
+
+    font-size: 4vh;
+    line-height: 5vh;
+}
+
+.wikimess .messagebody.small {
+    font-size: 3vh;
+    line-height: 3.8vh;
 }
 
 .wikimess .compose .suggestions {

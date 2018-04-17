@@ -58,6 +58,10 @@
     border-color: #000;
 }
 
+.wikimess.plain .compose .stack .helpcard {
+    background: #eee;
+}
+
 .wikimess.plain .compose .bodysectiontitle {
     background-color: #eee;
 }

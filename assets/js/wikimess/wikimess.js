@@ -1729,7 +1729,7 @@ var WikiMess = (function() {
             return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            return throwOutConfidence > .25 && (xOffset < 0 || window.confirm ('Send message?') || wm.showHelpCard)
+            return throwOutConfidence > .25 && (wm.showHelpCard || xOffset < 0 || window.confirm ('Send message?'))
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				    throwOutDistance: function() { return wm.throwXOffset() },
@@ -1785,7 +1785,7 @@ var WikiMess = (function() {
             wm.makeHeaderToggler().hideFunction()
             wm.subnavbar.addClass ('help')
             var cardDiv = $('<div class="helpcard">')
-                .append (marked ("Swipe left<br>for new text\n\nSwipe right<br>to post\n\nSwipe this card<br>any direction<br>to start"))
+                .append (marked ("**Swipe cards left**<br>_for new text_\n\n**Swipe cards right**<br>_to post_\n\n**Swipe this card**<br>_left or right to start_"))
             wm.stackDiv.append (cardDiv)
             var card = wm.stack.createCard (cardDiv[0])
             function swipe() {

@@ -128,16 +128,4 @@
     .wikimess .messageheader .input .results {
 	box-shadow: 6px 6px 6px 0px gray;
     }
-
-    .wikimess .helpcard,
-    .wikimess .readmessage .messagebody,
-    .wikimess .messagebody.big {
-	font-size: 4vh;
-	line-height: 5vh;
-    }
-
-    .wikimess .messagebody.small {
-	font-size: 3vh;
-	line-height: 3.8vh;
-    }
 }
