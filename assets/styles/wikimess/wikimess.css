@@ -406,6 +406,14 @@ input {
     overflow-wrap: break-word;
 }
 
+.wikimess .sharepane {
+    z-index: 10;
+}
+
+.wikimess .infopane {
+    z-index: 5;
+}
+
 .wikimess .infopane .title {
     font-weight: bold;
     font-size: large;
@@ -974,7 +982,7 @@ input {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    z-index: 3;
+    z-index: 6;
     padding: 4px;
 }
 

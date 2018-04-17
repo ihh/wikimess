@@ -1722,7 +1722,7 @@ var WikiMess = (function() {
           }
 
           var throwOutConfidence = function (xOffset, yOffset, element) {
-            return Math.min(Math.abs(xOffset) / element.offsetWidth, 1)
+            return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
             return throwOutConfidence > .25 && (xOffset < 0 || window.confirm ('Send message?'))
@@ -1731,7 +1731,9 @@ var WikiMess = (function() {
 				    throwOutDistance: function() { return wm.throwXOffset() },
 				    allowedDirections: [
 				      swing.Direction.LEFT,
-				      swing.Direction.RIGHT
+				      swing.Direction.RIGHT,
+				      swing.Direction.UP,
+				      swing.Direction.DOWN
 				    ],
                                     isThrowOut: isThrowOut })
           
@@ -1843,9 +1845,12 @@ var WikiMess = (function() {
 
       // create the swing card
       var card = wm.stack.createCard (cardDiv[0])
-      card.on ('throwoutleft', function() {
+      var nextCard = function() {
         wm.fadeCard (cardDiv, card, wm.dealCard.bind (wm, true))
-      })
+      }
+      card.on ('throwoutleft', nextCard)
+      card.on ('throwoutup', nextCard)
+      card.on ('throwoutdown', nextCard)
       card.on ('throwoutright', function() {
         wm.fadeCard (cardDiv, card, wm.sendMessage.bind (wm))
       })

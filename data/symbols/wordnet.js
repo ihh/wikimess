@@ -69,7 +69,6 @@ bluebird.Promise.all
       result.push ({ name: indexWord,
                      owner: null,
                      renamable: false,
-                     transferable: false,
                      rules: words.reverse().map (function (text) { return [text.replace(/_/g,' ')] }) })
   })
   
