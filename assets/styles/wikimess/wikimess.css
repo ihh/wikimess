@@ -983,7 +983,7 @@ input {
     display: flex;
     flex-direction: column;
     z-index: 6;
-    padding: 4px;
+    padding: 4px 20px;
 }
 
 .wikimess .compose .stack .card {
