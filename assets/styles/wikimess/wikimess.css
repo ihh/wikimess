@@ -1123,6 +1123,7 @@ input {
     line-height: 3.75vh;
 }
 
+.wikimess .small .helpcard,
 .wikimess .small .messagebody {
     font-size: 2vh;
     line-height: 2.5vh;
