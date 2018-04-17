@@ -1725,7 +1725,8 @@ var WikiMess = (function() {
             return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            return throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm ('Send message?'))
+            var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm ('Send message?'))
+            return throwOut
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
 				    throwOutDistance: function() { return wm.throwXOffset() },
@@ -1961,7 +1962,7 @@ var WikiMess = (function() {
       card.on ('dragstart', function() {
         cardDiv.addClass ('dragging')
       })
-      card.on ('dragend', function() {
+      card.on ('throwinend', function() {
         cardDiv.removeClass ('dragging')
       })
       wm.currentCard = card
