@@ -1443,6 +1443,7 @@ var WikiMess = (function() {
                                                                                                              id: symbol.id,
                                                                                                              name: symbol.name },
                                                                                                            wrappedFuncs)])))
+                                        delete wm.composition.randomTemplate
                                         wm.updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion

@@ -23,7 +23,8 @@ textarea,
 input {
     -webkit-appearance: none;
     -moz-appearance: none;
-    font-size: large;
+    font-size: 2vh;
+    line-height: 2.5vh;
 }
 
 .wikimess-page {
@@ -751,7 +752,8 @@ input {
 }
 
 .wikimess .messageheader {
-    font-size: large;
+    font-size: 1.5vh;
+    line-height: 2vh;
     position: relative;
 }
 
@@ -962,7 +964,8 @@ input {
 .wikimess .compose .suggest {
     height: 15vh;
     min-height: 15vh;
-    font-size: larger;
+    font-size: 2vh;
+    line-height: 2vh;
     
     display: flex;
     flex-direction: row;
