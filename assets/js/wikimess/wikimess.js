@@ -4352,17 +4352,18 @@ var WikiMess = (function() {
 					       }))
               })
 
-            wm.hideMenu = function() {
-              $('.rulemenu').hide()
-	      if (wm.modalExitDiv)
-		wm.modalExitDiv.hide()
-              wm.setUnfocusCallback()
-            }
             wm.grammarBarDiv.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">')
                                      .on ('click', wm.hideMenu)
                                      .hide())
           })
         })
+    },
+
+    hideMenu: function() {
+      $('.rulemenu').hide()
+      if (wm.modalExitDiv)
+	wm.modalExitDiv.hide()
+      wm.setUnfocusCallback()
     },
 
     addHelpIcons: function (div) {
