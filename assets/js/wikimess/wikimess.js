@@ -1993,8 +1993,10 @@ var WikiMess = (function() {
       return contentPromise
 	.then (function() {
 	  // throw-in effect
-	  if (wm.useThrowAnimations())
+	  if (wm.useThrowAnimations()) {
+            cardDiv.addClass ('dragging')
             card.throwIn (0, -wm.throwYOffset())
+          }
 	})
     },
 
