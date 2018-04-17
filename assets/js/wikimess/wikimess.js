@@ -116,6 +116,7 @@ var WikiMess = (function() {
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     menuPopupDelay: 500,
+    alwaysThrowInHelpCards: true,
     starColor: 'darkgoldenrod',
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
@@ -1780,12 +1781,10 @@ var WikiMess = (function() {
             wm[config.click].trigger ('click')
 
           function dealFirstCard() {
-            return (getRandomTemplate
-                    ? wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
-                    : $.Deferred().resolve())
-              .then (function() {
-                return wm.dealCard ({ generate: getRandomTemplate || generateNewContent })
-              })
+	    if (getRandomTemplate)
+	      wm.composition.randomTemplate = true
+            return wm.dealCard ({ generate: getRandomTemplate || generateNewContent,
+				  noThrowIn: !(getRandomTemplate || generateNewContent) })
           }
           if (wm.showHelpCard) {
             wm.headerToggler.hide()
@@ -1819,7 +1818,8 @@ var WikiMess = (function() {
               })
             }
             card.on ('throwout', swipe)
-            card.throwIn (0, -wm.throwYOffset())
+	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
+              card.throwIn (0, -wm.throwYOffset())
           } else
             return dealFirstCard()
         })
@@ -1851,7 +1851,8 @@ var WikiMess = (function() {
           })
 	}
 	card.on ('throwout', swipe)
-	card.throwIn (0, -wm.throwYOffset())
+	if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
+	  card.throwIn (0, -wm.throwYOffset())
 	wm.subnavbar.addClass ('help')
       })
     },
@@ -1875,7 +1876,7 @@ var WikiMess = (function() {
                        ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
                        : $.Deferred().resolve())
             def.then (function() {
-              wm.composition.randomTemplate = true
+              wm.composition = { randomTemplate: true }
               wm.showMailboxPage ({ tab: 'drafts' })
                 .then (function() {
                   // TODO: update wm.mailboxCache.drafts
@@ -1994,7 +1995,7 @@ var WikiMess = (function() {
       return contentPromise
 	.then (function() {
 	  // throw-in effect
-	  if (wm.useThrowAnimations()) {
+	  if (wm.useThrowAnimations() && !config.noThrowIn) {
             cardDiv.addClass ('dragging')
             card.throwIn (0, -wm.throwYOffset())
           }
