@@ -1612,18 +1612,22 @@ var WikiMess = (function() {
           
           // build the actual compose page UI
           wm.initInfoPane()
-          var pubTab, privTab
-          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow, revealButton, hideButton
-          wm.makeHeaderToggler = function (container) {
-            return wm.addToggler ({ elements: [ titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv ],
-                                    container: container,
-                                    hidden: !wm.headerToggler || wm.headerToggler.hidden,
-                                    hideIcon: 'up',
-                                    showIcon: 'down',
-				    hideCallback: function() { if (wm.messageBodyDiv) wm.messageBodyDiv.removeClass('small').addClass('big') },
-				    showCallback: function() { if (wm.messageBodyDiv) wm.messageBodyDiv.removeClass('big').addClass('small') } })
-          }
+          wm.headerToggler = wm.makeToggler ({ hidden: !wm.headerToggler || wm.headerToggler.hidden,
+                                               showIcon: 'edit',
+                                               hideIcon: 'edit',
+				               hideCallback: function() {
+                                                 if (wm.messageBodyDiv)
+                                                   wm.stackDiv.removeClass('small').addClass('big')
+                                               },
+				               showCallback: function() {
+                                                 if (wm.messageBodyDiv)
+                                                   wm.stackDiv.removeClass('big').addClass('small')
+                                                 // uncomment next line to automatically start editing template when 'edit' is pressed
+                                                 // wm.messageComposeDiv.trigger ('click')
+                                               } })
 
+          var pubTab, privTab
+          var titleRow, tagsRow, prevTagsRow, templateRow, suggestRow
           wm.container
             .append (wm.composeDiv = $('<div class="compose">')
                      .append (wm.messageHeaderDiv = $('<div class="messageheader">')
@@ -1670,11 +1674,8 @@ var WikiMess = (function() {
                               .append (wm.stackDiv = $('<div class="stack">'))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.editButton = wm.makeSubNavIcon ('edit', function() {
-                       wm.stopAnimation()
-                       wm.headerToggler.showFunction()
-                       wm.messageComposeDiv.trigger ('click')
-                     }),
+                     (wm.headerToggler.showButton,
+                      wm.headerToggler.hideButton,
                       wm.randomizeButton = wm.makeSubNavIcon ('shuffle', function (evt) {
                         evt.stopPropagation()
                         if (wm.useThrowAnimations())
@@ -1707,7 +1708,8 @@ var WikiMess = (function() {
                       wm.makeHelpButton (wm.REST_getComposeHelpHtml)))
 
           updateSharePane()
-
+          wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
+          
           if (config.recipient) {
             wm.composition.recipient = config.recipient
             wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null && !config.defaultToPublic)
@@ -1783,7 +1785,7 @@ var WikiMess = (function() {
               })
           }
           if (wm.showHelpCard) {
-            wm.makeHeaderToggler().hideFunction()
+            wm.headerToggler.hide()
             wm.subnavbar.addClass ('help')
             var cardDiv = $('<div class="helpcard">')
                 .append (marked ("**Swipe cards left**<br>_for new text_\n\n**Swipe cards right**<br>_to post_\n\n**Swipe this card**<br>_left or right to start_"))
@@ -1823,9 +1825,9 @@ var WikiMess = (function() {
           wm.saveCurrentEdit()
         })
       var messageBodyElem = wm.messageBodyDiv[0]
-      wm.headerToggler = wm.makeHeaderToggler (expansionRow)
 
-      var cardDiv = $('<div class="card">').append (expansionRow, wm.messageBodyDiv)
+      var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv)
+      var cardDiv = $('<div class="card">').append (expansionRow, innerDiv)
       wm.stackDiv.append (cardDiv)
 
       // add scroll buttons
@@ -1846,7 +1848,7 @@ var WikiMess = (function() {
         scrollUpDiv = $('<div class="scrollup">').append (wm.makeIconButton ('up', scrollUp, 'white'))
         scrollDownDiv = $('<div class="scrolldown">').append (wm.makeIconButton ('down', scrollDown, 'white'))
         cardControlsDiv = $('<div class="cardcontrols">').append (scrollUpDiv, scrollDownDiv)
-        wm.messageBodyDiv.append (cardControlsDiv)
+        innerDiv.append (cardControlsDiv)
         showScrollButton (scrollUpDiv, messageBodyElem.scrollTop > 0)
         showScrollButton (scrollDownDiv, Math.ceil (messageBodyElem.scrollTop + wm.messageBodyDiv.outerHeight()) < messageBodyElem.scrollHeight)
         wm.restoreScrolling (wm.messageBodyDiv)
@@ -1948,10 +1950,9 @@ var WikiMess = (function() {
       return $.Deferred().resolve()
     },
     
-    addToggler: function (config) {
-      var container = config.container
+    makeToggler: function (config) {
       var showButton, hideButton, showFunction, hideFunction, toggler
-      showButton = wm.makeIconButton (config.showIcon, showFunction = function() {
+      showButton = wm.makeSubNavIcon (config.showIcon, showFunction = function() {
         config.elements.forEach (function (element) { element.show() })
         hideButton.show()
         showButton.hide()
@@ -1959,7 +1960,7 @@ var WikiMess = (function() {
 	if (config.showCallback)
 	  config.showCallback()
       })
-      hideButton = wm.makeIconButton (config.hideIcon, hideFunction = function() {
+      hideButton = wm.makeSubNavIcon (config.hideIcon, hideFunction = function() {
         config.elements.forEach (function (element) { element.hide() })
         hideButton.hide()
         showButton.show()
@@ -1967,16 +1968,18 @@ var WikiMess = (function() {
 	if (config.hideCallback)
 	  config.hideCallback()
       })
-      if (container)
-        container.append (showButton, hideButton)
-      toggler = { showButton: showButton,
+      toggler = { config: config,
+                  showButton: showButton,
                   hideButton: hideButton,
-                  showFunction: showFunction,
-                  hideFunction: hideFunction }
-      if (config.hidden)
-        hideFunction()
-      else
-        showFunction()
+                  show: showFunction,
+                  hide: hideFunction,
+                  init: function (elements) {
+                    config.elements = elements
+                    if (config.hidden)
+                      hideFunction()
+                    else
+                      showFunction()
+                  } }
       return toggler
     },
 

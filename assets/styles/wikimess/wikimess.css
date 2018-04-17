@@ -23,8 +23,6 @@ textarea,
 input {
     -webkit-appearance: none;
     -moz-appearance: none;
-    font-size: 2vh;
-    line-height: 2.5vh;
 }
 
 .wikimess-page {
@@ -751,6 +749,7 @@ input {
     display: none;
 }
 
+.wikimess .compose .bodysectiontitle,
 .wikimess .messageheader {
     font-size: 1.5vh;
     line-height: 2vh;
@@ -915,6 +914,7 @@ input {
 }
 
 .wikimess .compose .bodysectiontitle {
+    text-align: center;
     border-style: none none dashed none;
     border-width: 1px;
     border-radius: 4px 4px 0 0;
@@ -1020,6 +1020,12 @@ input {
     box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
+.wikimess .inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
 
 .wikimess .cardcontrols {
     position: absolute;
@@ -1049,7 +1055,7 @@ input {
 }
 
 .wikimess .cardcontrols .scrollup {
-    top: 2em;
+    top: 4px;
     right: 4px;
 }
 
@@ -1081,7 +1087,7 @@ input {
     line-height: 3.75vh;
 }
 
-.wikimess .messagebody.small {
+.wikimess .small .messagebody {
     font-size: 2vh;
     line-height: 2.5vh;
 }
@@ -1234,7 +1240,7 @@ input {
 
 .wikimess .compose .messageheader textarea {
     width: 100%;
-    height: 1.2em;
+    height: 2em;
 }
 
 .wikimess .compose .messageheader textarea.recipient {
