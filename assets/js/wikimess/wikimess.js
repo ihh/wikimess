@@ -1875,6 +1875,7 @@ var WikiMess = (function() {
                        ? wm.REST_deletePlayerDraft (wm.playerID, wm.composition.draft)
                        : $.Deferred().resolve())
             def.then (function() {
+              wm.composition.randomTemplate = true
               wm.showMailboxPage ({ tab: 'drafts' })
                 .then (function() {
                   // TODO: update wm.mailboxCache.drafts
@@ -2298,7 +2299,8 @@ var WikiMess = (function() {
       this.animationDiv.html (markdown)
       this.showScrollButtons()
       
-      if (this.deleteFirstSymbolName (this.animationExpansion) || this.extraAnimationSteps-- > 0)
+      if (this.animationExpansion
+          && (this.deleteFirstSymbolName (this.animationExpansion) || this.extraAnimationSteps-- > 0))
         this.setTimer ('expansionAnimationTimer',
                        Math.min (this.expansionAnimationDelay, Math.ceil (this.maxExpansionAnimationTime / this.animationSteps)),
                        this.animateExpansion.bind(this))
