@@ -1825,11 +1825,10 @@ var WikiMess = (function() {
 	helpPromise = wm.REST_getComposeTipsHtml()
 	.then (function (result) {
 	  var html = result.replace (/PHRASE/g, function() { return symCharHtml })
-	  wm.helpHtml = $.parseHTML (html)
+	  wm.helpHtml = $.parseHTML(html).filter (function (elt) { return elt.tagName === 'DIV' })   // yuck
 	  wm.addHelpIcons ($(wm.helpHtml))
 	})
       return helpPromise.then (function() {
-	wm.subnavbar.addClass ('help')
 	var cardDiv = $(wm.ParseTree.randomElement (wm.helpHtml))
 	    .removeAttr ('style')
 	    .addClass ('helpcard')
@@ -1843,6 +1842,7 @@ var WikiMess = (function() {
 	}
 	card.on ('throwout', swipe)
 	card.throwIn (0, -wm.throwYOffset())
+	wm.subnavbar.addClass ('help')
       })
     },
 
