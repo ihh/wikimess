@@ -1003,7 +1003,7 @@ input {
     box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
-.wikimess .compose .stack .card:not(.dragging) {
+.wikimess .compose .stack .jiggle:not(.dragging) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
     -webkit-animation: jiggle 5s ease 0s infinite;

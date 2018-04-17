@@ -234,6 +234,8 @@ var WikiMess = (function() {
     exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
     exampleSymbolDelay: 200,
     
+    shareMessagePrompt: "Share this message?",
+    deleteDraftPrompt: "Delete this draft?",
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'.",
     emptyTemplateWarning: "_The message will appear here._",
     reloadOnDisconnect: false,
@@ -1287,7 +1289,7 @@ var WikiMess = (function() {
     showComposePage: function (config) {
       var wm = this
       config = config || {}
-      
+
       return this.setPage ('compose')
         .then (function() {
           wm.showNavBar ('compose')
@@ -1544,7 +1546,7 @@ var WikiMess = (function() {
               wm.saveCurrentEdit()
                 .then (function() {
                   var sent = false
-                  if (!confirm || window.confirm ('Send message?')) {
+                  if (!confirm || window.confirm (wm.shareMessagePrompt)) {
                     var expansionText, expansionTextMatch
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
@@ -1614,9 +1616,10 @@ var WikiMess = (function() {
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendFunction ({ callback: facebookIntent }), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendFunction ({ callback: tweetIntent }), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
-                         if (wm.useThrowAnimations())
+                         if (wm.useThrowAnimations()) {
+                           wm.currentCardDiv.addClass('dragging')
                            wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
-                         else
+                         } else
                            wm.sendMessage()
                        }).addClass('big-button'),
                        wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
@@ -1725,7 +1728,7 @@ var WikiMess = (function() {
             return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
           }
           var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm ('Send message?'))
+            var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm (wm.shareMessagePrompt))
             return throwOut
           }
           wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
@@ -1761,21 +1764,27 @@ var WikiMess = (function() {
           wm.divAutosuggest()
           wm.randomizeButton.show()
           
-          var generate = false
+          var getRandomTemplate, generateNewContent
           if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs))
             wm.composition.body = config.body
           else if (config.template)
-            generate = true
+            generateNewContent = true
+          else if (!(wm.composition.body && wm.composition.body.rhs && !wm.ParseTree.parseTreeEmpty (wm.composition.body.rhs)))
+            getRandomTemplate = true
 
+          if (config.focus || config.click)
+            wm.headerToggler.show()
           if (config.focus)
             wm[config.focus].focus().trigger ('click')
           if (config.click)
             wm[config.click].trigger ('click')
 
           function dealFirstCard() {
-            return wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
+            return (getRandomTemplate
+                    ? wm.selectRandomTemplate (function() { return !wm.composition.template.content.length }, false)
+                    : $.Deferred().resolve())
               .then (function() {
-                wm.dealCard ({ generate: true })
+                return wm.dealCard ({ generate: getRandomTemplate || generateNewContent })
               })
           }
           if (wm.showHelpCard) {
@@ -1855,7 +1864,7 @@ var WikiMess = (function() {
     },
     
     deleteDraft: function() {
-      if (wm.composition.randomTemplate || window.confirm ('Delete this draft?')) {
+      if (wm.composition.randomTemplate || window.confirm (wm.deleteDraftPrompt)) {
         if (wm.playerID === null) {
           wm.composition.randomTemplate = true
           wm.dealCard ({ generate: true })
@@ -1892,6 +1901,8 @@ var WikiMess = (function() {
 
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv)
       var cardDiv = $('<div class="card">').append (expansionRow, innerDiv)
+      if (wm.isTouchDevice())
+        cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
       wm.stackDiv.html (cardDiv)  // make sure this is the only card in the stack
       wm.subnavbar.removeClass ('help')  // just in case we skipped a help card
 
@@ -1988,9 +1999,10 @@ var WikiMess = (function() {
     },
 
     throwAndRefresh: function() {
-      if (wm.useThrowAnimations())
+      if (wm.useThrowAnimations()) {
+        wm.currentCardDiv.addClass('dragging')
         wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
-      else
+      } else
         wm.generateMessageBody()
       delete wm.autosuggestStatus.lastVal
       delete wm.autosuggestStatus.lastKey
