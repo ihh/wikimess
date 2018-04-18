@@ -1506,7 +1506,7 @@ var WikiMess = (function() {
           function tweetIntent (info) {
             if (info.url) {
               wm.openLink (wm.twitterIntentPath
-                           + '?text=' + encodeURIComponent((info.title ? (info.title + ': ') : '') + info.text)
+                           + '?text=' + encodeURIComponent(info.text)
                            + '&url=' + encodeURIComponent(info.url)
                            + '&via=' + wm.twitterUsername)
             }
