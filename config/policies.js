@@ -89,6 +89,7 @@ module.exports.policies = {
     // broadcasts
     'getRecentBroadcasts': true,
     'getBroadcastMessage': true,
+    'unsubscribeBroadcasts': true,
     // status
     'getThread': true,
     'getThreadBefore': true,

@@ -4,6 +4,8 @@ var fs = require('fs');
 var extend = require('extend');
 var merge = require('deepmerge');
 
+var parseTree = require('../../assets/js/wikimess/parsetree.js')
+
 // Uncomment to show line numbers on console.log messages
 // https://remysharp.com/2014/05/23/where-is-that-console-log
 /*
