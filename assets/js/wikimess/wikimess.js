@@ -2047,9 +2047,10 @@ var WikiMess = (function() {
     fadeCard: function (element, card) {
       var wm = this
       var fadedPromise = $.Deferred()
+      if (!element.hasClass ('helpcard'))
+        wm.modalExitDiv.show()
       element.find('*').off()
       card.destroy()
-      wm.modalExitDiv.show()
       element.fadeOut (wm.cardFadeTime, function() {
 	if (wm.verbose.stack)
 	  console.log ("Card removed after fade: " + element.html())
