@@ -1326,8 +1326,6 @@ var WikiMess = (function() {
                                autosave: saveDraft,
                                pageExit: saveDraft })
 
-          wm.pageContainer.append (wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide())
-
           wm.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
           wm.playerSearchResultsDiv = $('<div class="results">')
           
@@ -1706,7 +1704,8 @@ var WikiMess = (function() {
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
                                wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
-                      wm.makeTipButton()))
+                      wm.makeTipButton(),
+                      wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])

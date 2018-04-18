@@ -1163,6 +1163,7 @@ input {
 }
 
 .wikimess .subnavbar {
+    position: relative;
     font-size: xx-large;
     display: flex;
     justify-content: space-between;
