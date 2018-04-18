@@ -921,6 +921,7 @@ input {
     border-radius: 4px 4px 0 0;
     margin-left: 1px;
     margin-right: 1px;
+    min-height: 1em;
 }
 
 .wikimess .compose .composesectiontitle,
