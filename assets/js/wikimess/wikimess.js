@@ -1994,6 +1994,7 @@ var WikiMess = (function() {
 
       return contentPromise
 	.then (function() {
+          cardDiv.show()
 	  // throw-in effect
 	  if (wm.useThrowAnimations() && !config.noThrowIn) {
             cardDiv.addClass ('dragging')
@@ -2439,8 +2440,6 @@ var WikiMess = (function() {
         div.html (this.renderMarkdown (processedExpansion))
         wm.showScrollButtons()
       }
-      if (expansion)
-        wm.currentCardDiv.show()
     },
     
     randomizeEmptyMessageWarning: function() {
