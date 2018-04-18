@@ -1798,12 +1798,12 @@ var WikiMess = (function() {
           if (config.click)
             wm[config.click].trigger ('click')
 
-          function dealFirstCard() {
-	    if (getRandomTemplate)
-	      wm.composition.randomTemplate = true
-            return wm.dealCard ({ generate: getRandomTemplate || generateNewContent,
-				  noThrowIn: !(getRandomTemplate || generateNewContent) })
-          }
+	  if (getRandomTemplate)
+	    wm.composition.randomTemplate = true
+          
+          var dealConfig = { generate: getRandomTemplate || generateNewContent,
+			     noThrowIn: !(getRandomTemplate || generateNewContent) }
+
           if (config.showHelpCard) {
             wm.headerToggler.hide()
             wm.subnavbar.addClass ('help')
@@ -1829,17 +1829,16 @@ var WikiMess = (function() {
 	    wm.addToStack (cardDiv)
             card = wm.stack.createCard (cardDiv[0])
             function swipe() {
-              wm.fadeCard (cardDiv, card)
+              wm.fadeAndDealCard (cardDiv, card, dealConfig) ()
                 .then (function() {
                   wm.subnavbar.removeClass ('help')
-                  dealFirstCard()
                 })
             }
             card.on ('throwout', swipe)
 	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
               card.throwIn (0, -wm.throwYOffset())
           } else
-            return dealFirstCard()
+            return wm.dealCard (dealConfig)
         })
       // end of showComposePage
     },
@@ -2014,11 +2013,12 @@ var WikiMess = (function() {
 	})
     },
 
-    fadeAndDealCard: function (cardDiv, card) {
+    fadeAndDealCard: function (cardDiv, card, dealConfig) {
       var wm = this
       return function() {
-        wm.dealCard ({ generate: true,
-                       stackReady: wm.fadeCard (cardDiv, card) })
+        return wm.dealCard ($.extend ({ generate: true,
+                                        stackReady: wm.fadeCard (cardDiv, card) },
+                                      dealConfig || {}))
       }
     },
 
@@ -2027,19 +2027,19 @@ var WikiMess = (function() {
       return function() {
         if (wm.composition.randomTemplate || window.confirm (wm.deleteDraftPrompt)) {
           if (wm.composition.randomTemplate)
-            wm.fadeAndDealCard (cardDiv, card) ()
+            return wm.fadeAndDealCard (cardDiv, card) ()
           else
-            wm.fadeCard (cardDiv, card)
+            return wm.fadeCard (cardDiv, card)
             .then (function() { wm.deleteDraft() })
-        } else
-          wm.dealCard()
+        }
+        return wm.dealCard()
       }
     },
 
     fadeAndSendMessage: function (cardDiv, card) {
       var wm = this
       return function() {
-        wm.sendMessage ({ fade: true, cardDiv: cardDiv, card: card })
+        return wm.sendMessage ({ fade: true, cardDiv: cardDiv, card: card })
       }
     },
 
@@ -2047,8 +2047,8 @@ var WikiMess = (function() {
       var wm = this
       return function() {
 	wm.destroyCard (cardDiv, card)
-        wm.dealCard ({ generate: false,
-		       alwaysAnimate: wm.headerToggler.hidden })
+        return wm.dealCard ({ generate: false,
+		              alwaysAnimate: wm.headerToggler.hidden })
 	  .then (wm.headerToggler.toggle)
       }
     },
