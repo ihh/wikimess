@@ -19,9 +19,9 @@ One ^person={man|woman|kid|guy|girl}^person's [$gemstone|$decorative_stone] is a
 $worldly_concern_prefix, when $worldly_concern_detail?
 
 >worldly_concern_prefix
-What kind of world is it
+What kind of [world|universe|justice] is it
 How can we face our children
-Is this really the world we want
+Is this really the [world|planet|society] we want
 
 >worldly_concern_detail
 $famous_celebrity sells $pharma_drug for $fortune500_company
