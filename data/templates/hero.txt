@@ -10,44 +10,44 @@ $just_an_opinion
 >So... #root opener #opener gambit
 $odd_statement
 
->Concerns #root opener #gambit
+>Concerns #root opener #opener gambit
 $worldly_concerns
 
->Check me out #root opener #gambit
+>Check me out #root opener #opener gambit
 $i_am_superior
 
->#gambit reject #reject
-[Nope|Yawn|Go away]
+>Rejection#gambit reject #reject
+$i_reject_you
 
->#opener #opener gambit
+>Tell me more#opener #opener gambit
 $tell_me_more
 
->#opener #call gambit
-Let's go on a date
+>Call to adventure#opener #call gambit
+$call_to_adventure
 
->#call place #place gambit
-I know where to go
+>Location#call place #place gambit
+$i_know_where_to_go
 
->#place activity #activity gambit
-I know what we can do
+>Activity#place activity #activity gambit
+$i_know_what_to_do
 
->#activity gatekeeper #gatekeeper
-We'll have to get past the gatekeeper
+>Gatekeeper#activity gatekeeper #gatekeeper
+$pass_the_gatekeeper
 
->#gatekeeper challenge #challenge
-I have a bad feeling about this
+>Omens#gatekeeper challenge #challenge
+$i_have_a_bad_feeling
 
->#gatekeeper challenge abyss #abyss
-Worst date ever
+>Abyss#gatekeeper challenge abyss #abyss
+$in_the_abyss
 
->#challenge abyss revelation #revelation
-I see a way out
+>Revelation#challenge abyss revelation #revelation
+$revelation_experience
 
->#abyss revelation rebirth #rebirth
-I feel alive
+>Rebirth#abyss revelation rebirth #rebirth
+$rebirth_experience
 
->#rebirth atonement #atonement
-I am redeemed
+>Atonement#rebirth atonement #atonement
+$atonement_process
 
->#atonement return #return
-Goodbye
+>Return#atonement return #return
+$return_from_adventure
