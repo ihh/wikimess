@@ -1,0 +1,47 @@
+>is_your_dad_a_thief
+Is your [^they={she}$mom|^they={he}$dad] &a[$human_occupation|[thief|burglar|robber|cat burglar|mugger|crook]]? Because ^they [took|stole] the [^it={it}[$moonlight|sunlight|dew|mist|rainbow|air]|^it={them}[sunbeams|stars]] [|from the [sky|earth|world]] and put ^it [in|into|on] your [eyes|ears|lips|mouth|tongue|fingernails|$body_part|$body_part|$body_part].
+
+>just_an_opinion
+[[[Possibly|Could be|May be] an u|U]npopular opinion[, but|]|Random thought|Just putting [it|this|something] out there[|, for what it's[| ever[| [gonna|going to] be]] worth]][:|...]
+
+>so_overrated
+[so|SO|sooo|Sooo|||] {overrated|underrated|awesome|passe|over|last year|[five|ten|fifteen] minutes ago|[past|entering|ready for] ^its [prime|best|peak|[interesting|cool|disruptive|innovative] phase]}
+
+>odd_statement
+I [[want|need|wish|was born|feel the [urge|desire]] to|must|shall|will] [dip|bathe|soak|immerse|wash] my $body_part in the $major_river...
+I am the [toast|king|queen|emperor|empress|lord|lady|duke|earl|bum|wizard|witch] of $american_city. My anthem, $musical_genre on a $musical_instrument.
+[Find|Chase|Paint|Kill|Seek|Touch|Meet|Hold|Kiss] me in the $random_room. With a [$wrestling_move|$common_vegetable|$musical_instrument]
+I must protect my precious $bodily_fluid. [$Greek_god|$Greek_monster|$Hospital_name] [needs|wants|demands] it
+$Common_interjection! I'm $drunken_state.
+One ^person={man|woman|kid|guy|girl}^person's [$gemstone|$decorative_stone] is another[| ^person]'s [$building_material|$packaging_material].
+
+>worldly_concerns
+$worldly_concern_prefix, when $worldly_concern_detail?
+
+>worldly_concern_prefix
+What kind of world is it
+How can we face our children
+Is this really the world we want
+
+>worldly_concern_detail
+$famous_celebrity sells $pharma_drug for $fortune500_company
+$american_industry is [banned|worshipped] in $major_country
+&plural{$home_appliance} are [gay|straight|communist|libertarian|socialist|polyamorous|monogamous|unfaithful|sexy|untrustworthy|exploitative|sarcastic]
+
+>i_am_superior
+When I lived in $american_city, I used to run [5|10|7] [miles|kilometers|marathons] a [day|week|month].
+I donated all my [marrow|kidneys|eyes|sperm|eggs|plasma|blood] to $hospital_name. $just_who_i_am
+
+>just_who_i_am
+That's just who I am.
+That's how I roll.
+That's me, that's who I am.
+Call it my way.
+I can't help it.
+No big deal.
+Not boasting, just data.
+
+>tell_me_more
+$thats_fascinating, [please|do] [[tell|entertain|educate]|[provide|regale|enrich|treat] me with] more[| details| information| anecdotes].
+I could [listen to|read|drink in|soak up] this [|stuff|gold|material|brilliance] [all [day|month]|forever|for time immemorial|endlessly|nonstop].
+
