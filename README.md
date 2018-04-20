@@ -22,4 +22,5 @@ The script has lots more options; it crawls the [data](data) directory to pre-lo
 
 You can log in using Twitter or Facebook authentication (via [passport.js](http://passportjs.org/)).
 However, currently this redirects back to `wikimess.me`, so it will not work on your local machine.
-You could probably edit the Twitter/Facebook client ID & secret in [config/passport.js](config/passport.js) to use a different Facebook account, in theory.
+You could probably edit the Twitter/Facebook client ID & secret in [config/passport.js](config/passport.js) to use a different Twitter/Facebook account, in theory.
+This side of things is not well hooked-up, yet.
