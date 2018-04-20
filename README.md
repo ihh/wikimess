@@ -14,9 +14,9 @@ Then point your browser to [localhost:1337](http://localhost:1337/).
 
 You will also need MySQL (for the database) and Redis (for the session store) running on localhost.
 
-The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-s` to the [load-data.js](bin/load-data.js) script
+The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-l` to the [load-data.js](bin/load-data.js) script
 
-    bin/load-data.js -s
+    bin/load-data.js -l
 
 The script has lots more options; it crawls the [data](data) directory to pre-load corpora into the wiki database.
 
