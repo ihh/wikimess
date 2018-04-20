@@ -14,14 +14,12 @@ Then point your browser to [localhost:1337](http://localhost:1337/).
 
 You will also need MySQL (for the database) and Redis (for the session store) running on localhost.
 
-The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-e` to the [load-data.js](bin/load-data.js) script
+The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-s` to the [load-data.js](bin/load-data.js) script
 
-    bin/load-data.js -e
+    bin/load-data.js -s
 
-Actually, this erases the database _before_ loading the data. WikiMess security[tm]!
-Use the `-s` option to just load the data into the existing database, without erasing.
 The script has lots more options; it crawls the [data](data) directory to pre-load corpora into the wiki database.
 
-You can log in using Facebook authentication (via [passport.js](http://passportjs.org/)).
+You can log in using Twitter or Facebook authentication (via [passport.js](http://passportjs.org/)).
 However, currently this redirects back to `wikimess.me`, so it will not work on your local machine.
-You could probably edit the Facebook client ID & secret in [config/passport.js](config/passport.js) to use your own Facebook account, in theory.
+You could probably edit the Twitter/Facebook client ID & secret in [config/passport.js](config/passport.js) to use a different Facebook account, in theory.
