@@ -9,7 +9,8 @@ var fs = require('fs'),
     jsonschema = require('jsonschema'),
     Promise = require('bluebird'),
     Sails = require('sails').constructor,
-    rhsParser = require('../misc/parsers/rhs.js')
+    rhsParser = require('../misc/parsers/rhs.js'),
+    templateParser = require('../misc/parsers/template.js')
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"
@@ -136,13 +137,13 @@ if (!dryRun && !start) {
   promise = promise.then (processFilenameList ({ path: '/symbol',
                                                  schema: schemaPath('symbol'),
                                                  handler: genericHandler('Symbol'),
-                                                 parsers: [JSON.parse, eval, parseSymbolDefs],
+                                                 parsers: [JSON.parse, eval, function (text) { return templateParser.parseSymbolDefs(text,log) }],
                                                  list: symbolFilenames.reverse() }))
-
+  
   promise = promise.then (processFilenameList ({ path: '/template',
                                                  schema: schemaPath('template'),
                                                  handler: makeHandler('Template',hasID,getTitle),
-                                                 parsers: [JSON.parse, eval, parseTemplateDefs],
+                                                 parsers: [JSON.parse, eval, function (text) { return templateParser.parseTemplateDefs(text,log) }],
                                                  list: templateFilenames.reverse() }))
 }
 
@@ -377,73 +378,3 @@ function isArray(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]'
 }
 
-function parseSymbolDefs (text) {
-  try {
-    var newSymbolDefReg = /^>([A-Za-z_]\w*)\s*$/;
-    var symbols = [], currentSymbol, newSymbolDefMatch
-    text.split(/\n/).forEach (function (line) {
-      if (line.length) {
-        if (currentSymbol)
-          currentSymbol.rules.push (parseRhs (line))
-        else if (newSymbolDefMatch = newSymbolDefReg.exec (line))
-          symbols.push (currentSymbol = { name: newSymbolDefMatch[1],
-                                          rules: [] })
-      } else {
-        // line is empty
-        currentSymbol = undefined
-      }
-    })
-    log(5,"Parsed text file and converted to the following JSON:\n" + JSON.stringify(symbols,null,2))
-    return symbols
-  } catch(e) { console.log(e) }
-}
-
-function makeTagString (text) {
-  return (text
-          ? (' ' + text.replace (/^\s*(.*?)\s*$/, function (_m, g) { return g }).split(/\s+/).join(' ') + ' ')
-	  : '')
-}
-
-function parseTemplateDefs (text) {
-  try {
-    var newTemplateDefReg = /^(>+)\s*(.*?)\s*(#\s*(.*?)\s*(#\s*(.*?)\s*|)|)$/;
-    var templates = [], replyChain = [], currentTemplate, newTemplateDefMatch
-    text.split(/\n/).forEach (function (line) {
-      if (line.length) {
-        if (currentTemplate)
-          currentTemplate.content = currentTemplate.content.concat (parseRhs (line + '\n'))
-        else if (newTemplateDefMatch = newTemplateDefReg.exec (line)) {
-          var depth = newTemplateDefMatch[1].length - 1,
-	      title = newTemplateDefMatch[2],
-	      prevTags = makeTagString (newTemplateDefMatch[4]),
-	      tags = makeTagString (newTemplateDefMatch[6])
-          var isRoot = !prevTags.match(/\S/) || (prevTags.search(' root ') >= 0)
-          currentTemplate = { title: title,
-			      previousTags: prevTags,
-			      tags: tags,
-                              isRoot: isRoot,
-			      content: [],
-                              replies: [] }
-          if (depth > replyChain.length)
-            throw new Error ("Missing replies in chain")
-          replyChain = replyChain.slice (0, depth)
-          if (depth > 0)
-            replyChain[depth-1].replies.push (currentTemplate)
-          else
-            templates.push (currentTemplate)
-          replyChain.push (currentTemplate)
-        }
-      } else {
-        // line is empty
-        currentTemplate = undefined
-      }
-    })
-    log(5,"Parsed text file and converted to the following JSON:\n" + JSON.stringify(templates,null,2))
-    return templates
-  } catch(e) { console.log(e) }
-}
-
-function parseRhs (rhs) {
-  var parsed = rhsParser.parse (rhs)
-  return parsed
-}
