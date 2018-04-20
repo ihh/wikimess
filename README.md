@@ -1,4 +1,4 @@
-# Welcome to Wiki Messenger!
+# Wiki Messenger
 
 ## Installation
 
