@@ -1833,7 +1833,7 @@ var WikiMess = (function() {
 	    wm.addToStack (cardDiv)
             card = wm.stack.createCard (cardDiv[0])
             function swipe() {
-              wm.fadeAndDealCard (cardDiv, card, dealConfig) ()
+              wm.fadeAndDealCard (cardDiv, card, dealConfig)
                 .then (function() {
                   wm.subnavbar.removeClass ('help')
                 })
@@ -1968,7 +1968,7 @@ var WikiMess = (function() {
 
       // create the swing card
       var card = wm.stack.createCard (cardDiv[0])
-      card.on ('throwoutleft', wm.fadeAndDealCard (cardDiv, card))
+      card.on ('throwoutleft', wm.fadeDealAndRefresh (cardDiv, card))
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
@@ -2023,10 +2023,16 @@ var WikiMess = (function() {
 
     fadeAndDealCard: function (cardDiv, card, dealConfig) {
       var wm = this
+      return wm.dealCard ($.extend ({ generate: true,
+                                      stackReady: wm.fadeCard (cardDiv, card) },
+                                    dealConfig || {}))
+    },
+
+    fadeDealAndRefresh: function (cardDiv, card, dealConfig) {
+      var wm = this
       return function() {
-        return wm.dealCard ($.extend ({ generate: true,
-                                        stackReady: wm.fadeCard (cardDiv, card) },
-                                      dealConfig || {}))
+        return wm.fadeAndDealCard (cardDiv, card, dealConfig)
+          .then (wm.refreshAutosuggest.bind (wm))
       }
     },
 
@@ -2035,7 +2041,7 @@ var WikiMess = (function() {
       return function() {
         if (wm.composition.randomTemplate || window.confirm (wm.deleteDraftPrompt)) {
           if (wm.composition.randomTemplate)
-            return wm.fadeAndDealCard (cardDiv, card) ()
+            return wm.fadeAndDealCard (cardDiv, card)
           else
             return wm.fadeCard (cardDiv, card)
             .then (function() { wm.deleteDraft() })
@@ -2061,14 +2067,16 @@ var WikiMess = (function() {
       }
     },
 
+    refreshAutosuggest: function() {
+      var wm = this
+      delete wm.autosuggestStatus.lastVal
+      delete wm.autosuggestStatus.lastKey
+      wm.autosuggestStatus.temperature++
+      wm.autosuggestStatus.refresh()
+    },
+
     throwAndRefresh: function() {
       wm.modalExitDiv.show()
-      function updateAutosuggest() {
-        delete wm.autosuggestStatus.lastVal
-        delete wm.autosuggestStatus.lastKey
-        wm.autosuggestStatus.temperature++
-        wm.autosuggestStatus.refresh()
-      }
       var nextCardPromise
       if (wm.useThrowAnimations()) {
         nextCardPromise = wm.nextDealPromise
@@ -2077,7 +2085,7 @@ var WikiMess = (function() {
       } else
         nextCardPromise = wm.dealCard ({ generate: true,
                                          stackReady: wm.fadeCard (wm.currentCardDiv, wm.currentCard) })
-      return nextCardPromise.then (updateAutosuggest)
+      return nextCardPromise.then (wm.refreshAutosuggest.bind(wm))
     },
 
     destroyCard: function (element, card) {
