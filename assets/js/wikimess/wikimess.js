@@ -103,8 +103,9 @@ var WikiMess = (function() {
     twitterUsername: 'wikimessage',
     facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
     anonGuest: 'Anonymous guest',
-    maxPlayerLoginLength: 16,
+    maxPlayerLoginLength: 15,
     maxPlayerNameLength: 32,
+    maxTwitterHandleLength: 15,
     maxRating: 5,
     ratingDelay: 2000,
     autosaveDelay: 5000,
@@ -1008,7 +1009,8 @@ var WikiMess = (function() {
               .append (wm.makeListLink ('Log' + (wm.playerID ? ' out' : 'in / Signup'), wm.doLogout))
           if (wm.playerID)
             menuDiv.append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
-                            wm.makeListLink ('Bio', wm.showPlayerBioPage))
+                            wm.makeListLink ('Bio', wm.showPlayerBioPage),
+                            wm.makeListLink ('Tweets', wm.showTwitterConfigPage))
           menuDiv.append (wm.makeListLink ('Colors', wm.showThemesPage),
                           wm.makeListLink ('Audio', wm.showAudioPage))
           wm.container
@@ -1062,17 +1064,7 @@ var WikiMess = (function() {
           })
           var sanitizeLogin = wm.sanitizer ('loginInput', wm.sanitizePlayerName)
 
-          var passwordForm = $('<div class="inputbar">')
-              .append ($('<form>')
-                       .append ($('<span>').text('Old password'),
-                                wm.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
-                                $('<span>').text('New password'),
-                                wm.changePasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
-                                $('<span>').text('New password (confirm)'),
-                                wm.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))
-          if (wm.playerInfo.hidePassword)
-            passwordForm.hide()
-
+          var passwordForm
           wm.container
             .append (wm.makePageTitle ('Login info'),
                      $('<div class="menubar">')
@@ -1090,7 +1082,43 @@ var WikiMess = (function() {
                                        .append (wm.nameInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
                                                 .val(wm.playerName)
                                                 .attr('maxlength', wm.maxPlayerNameLength))),
-                              passwordForm))
+                              passwordForm = $('<div class="inputbar">')
+                              .append ($('<form>')
+                                       .append ($('<span>').text('Old password'),
+                                                wm.oldPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                                $('<span>').text('New password'),
+                                                wm.changePasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">'),
+                                                $('<span>').text('New password (confirm)'),
+                                                wm.confirmPasswordInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password">')))))
+            .append (backBar)
+
+          if (wm.playerInfo.hidePassword)
+            passwordForm.hide()
+        })
+    },
+
+    
+    // settings
+    showTwitterConfigPage: function() {
+      var wm = this
+      return this.pushView ('twitter')
+        .then (function() {
+          var backBar = wm.popBack()
+          var sanitizeLogin = wm.sanitizer ('loginInput', wm.sanitizePlayerName)
+
+          wm.container
+            .append (wm.makePageTitle ('Twitter info'),
+                     $('<div class="menubar">')
+                     .append ($('<div class="inputbar">')
+                              .append ($('<form>')
+                                       .append ($('<span>').text('Twitter handle'))
+                                       .append (wm.twitterHandleInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
+                                                .val(wm.twitterHandle)  // FIXME
+                                                .attr('maxlength', wm.maxTwitterHandleLength)
+                                               )),
+                              $('<div class="list">')
+                              .append (wm.makeListLink ('Link Twitter account',
+                                                        function(){}))))
             .append (backBar)
         })
     },
