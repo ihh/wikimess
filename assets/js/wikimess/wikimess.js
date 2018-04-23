@@ -2938,23 +2938,28 @@ var WikiMess = (function() {
                      .append (wm.replyButton = wm.makeSubNavIcon ('reply',
                                                                   function (evt) {
                                                                     evt.stopPropagation()
-                                                                    var replyTitle = message.title
-                                                                    if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
-                                                                      replyTitle = 'Re: ' + replyTitle
-                                                                    wm.showComposePage
-                                                                    ({ recipient: message.sender,
-                                                                       defaultToPublic: !props.replyDirect,
-                                                                       title: replyTitle,
-                                                                       previousMessage: message.id,
-                                                                       previousTemplate: message.template,
-                                                                       vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
-                                                                       tags: '',
-                                                                       previousTags: message.template ? (message.template.tags || '') : '',
-                                                                       focus: 'messageTitleInput'
-                                                                     }).then (function() {
-                                                                       wm.generateMessageBody()
-                                                                     })
+                                                                    if ((message.next && message.next.length)
+                                                                        ? window.confirm('There is already a reply to this message. Do you really want to split the thread?')
+                                                                        : true) {
+                                                                      var replyTitle = message.title
+                                                                      if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+                                                                        replyTitle = 'Re: ' + replyTitle
+                                                                      wm.showComposePage
+                                                                      ({ recipient: message.sender,
+                                                                         defaultToPublic: !props.replyDirect,
+                                                                         title: replyTitle,
+                                                                         previousMessage: message.id,
+                                                                         previousTemplate: message.template,
+                                                                         vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
+                                                                         tags: '',
+                                                                         previousTags: message.template ? (message.template.tags || '') : '',
+                                                                         focus: 'messageTitleInput'
+                                                                       }).then (function() {
+                                                                         wm.generateMessageBody()
+                                                                       })
+                                                                    }
                                                                   }),
+                              
                               wm.forwardButton = wm.makeSubNavIcon ('forward',
                                                                     function (evt) {
                                                                       evt.stopPropagation()
@@ -2971,6 +2976,7 @@ var WikiMess = (function() {
                                                                              focus: 'playerSearchInput' })
                                                                         })
                                                                     }),
+                              
                               props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : []))
 
           var other = message[props.object]
