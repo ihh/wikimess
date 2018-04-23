@@ -60,6 +60,9 @@ module.exports.routes = {
   'GET /login/twitter':          'AuthController.twitterLogin',
   'GET /login/twitter/callback': 'AuthController.twitterLoginCallback',
 
+  'GET /login/twitter/auth':          'AuthController.twitterAuthorize',
+  'GET /login/twitter/auth/callback': 'AuthController.twitterAuthorizeCallback',
+
   // icon management
   'GET /icon/:icon.svg':                    'IconController.getIcon',
   'GET /icon/:icon/:color.svg':             'IconController.getIcon',

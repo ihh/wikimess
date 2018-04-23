@@ -251,6 +251,10 @@ var WikiMess = (function() {
       window.location.replace ('/login/twitter')
     },
 
+    REST_loginTwitterAuth: function() {
+      window.location.replace ('/login/twitter/auth')
+    },
+
     REST_postPlayer: function (playerName, playerPassword) {
       return this.logPost ('/p/new', { name: playerName, password: playerPassword })
     },
@@ -1108,9 +1112,7 @@ var WikiMess = (function() {
           wm.container
             .append ($('<div class="menubar">')
                      .append ($('<div class="list">')
-                              .append (wm.makeListLink('Link Twitter account',function(){
-                                // TODO: get access token as per https://www.npmjs.com/package/node-twitter-api
-                              }))),
+                              .append (wm.makeListLink('Link Twitter account',wm.REST_loginTwitterAuth))),
                      backBar)
         })
     },

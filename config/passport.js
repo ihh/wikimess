@@ -3,7 +3,8 @@ var passport = require('passport'),
     FacebookStrategy = require('passport-facebook').Strategy,
     TwitterStrategy = require('passport-twitter').Strategy,
     bcrypt = require('bcrypt'),
-    localConfig = require('./local')
+    localConfig = require('./local').local,
+    customConfig = require('./custom').custom
 
 passport.serializeUser(function(player, done) {
   done(null, player.id);
@@ -43,7 +44,10 @@ passport.use
 
 passport.use
 (new FacebookStrategy
- (localConfig.facebook,
+ ({ clientID: localConfig.facebook.clientID,
+    clientSecret: localConfig.facebook.clientSecret,
+    callbackURL: customConfig.baseURL + 'login/facebook/callback',
+    enableProof: localConfig.facebook.enableProof },
   function (accessToken, refreshToken, profile, done) {
     PlayerService.makeUniquePlayerName (profile.displayName)
       .then (function (name) {
@@ -67,7 +71,9 @@ passport.use
 
 passport.use
 (new TwitterStrategy
- (localConfig.twitter,
+ ({ consumerKey: localConfig.twitter.consumerKey,
+    consumerSecret: localConfig.twitter.consumerSecret,
+    callbackURL: customConfig.baseURL + 'login/twitter/callback' },
   function (token, tokenSecret, profile, done) {
     PlayerService.makeUniquePlayerName (profile.username)
       .then (function (name) {

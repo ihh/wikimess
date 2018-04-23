@@ -61,6 +61,16 @@ module.exports = {
       unique: true
     },
 
+    twitterAccessToken: {
+      type: 'string',
+      required: false
+    },
+
+    twitterAccessTokenSecret: {
+      type: 'string',
+      required: false
+    },
+
     // administrator?
     admin: {
       type: 'boolean',

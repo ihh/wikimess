@@ -21,7 +21,7 @@
 // 'isAdmin' to prevent unauthorized modification of all database tables
 //  true for unrestricted access
 var restPolicy = 'isAdmin'
-restPolicy = true // debug
+// restPolicy = true // debug
 
 // Set findPolicy to:
 // 'isAdmin' to prevent unauthorized inspection of all database tables

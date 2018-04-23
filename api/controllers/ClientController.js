@@ -804,7 +804,7 @@ module.exports = {
   // get draft
   getDraft: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var player = req.session.user
+    var player = req.user
     var draftID = Draft.parseID (req.params.draft)
     var result = {}
     Draft.findOne ({ id: draftID,
@@ -837,7 +837,7 @@ module.exports = {
   // save draft
   saveDraft: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var player = req.session.user, recipient
+    var player = req.user, recipient
     var draft = Draft.parseID (req.body.draft)
     var result = {}
     return Draft.create ({ sender: playerID,

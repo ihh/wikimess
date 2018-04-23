@@ -32,6 +32,7 @@
     "mkdirp": "~0.5.1",
     "node-getopt": "~0.2.3",
     "node-twitter-api": "^1.8.0",
+    "npm": "^5.8.0",
     "passport": "~0.2.1",
     "passport-facebook": "~2.1.1",
     "passport-local": "~1.0.0",

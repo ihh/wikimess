@@ -9,6 +9,7 @@ var passport = require('passport');
 
 var Promise = require('bluebird')
 var extend = require('extend')
+var twitterAPI = require('node-twitter-api');
 
 module.exports = {
 
@@ -193,8 +194,56 @@ module.exports = {
                               return res.redirect('/')
                             });
                           })(req, res, next);
-  }
-  
+  },
 
+
+  twitterAuthorize: function (req, res, next) {
+    var twitter = new twitterAPI({
+      consumerKey: sails.config.local.twitter.consumerKey,
+      consumerSecret: sails.config.local.twitter.consumerSecret,
+      callback: sails.config.custom.baseURL + 'login/twitter/auth/callback',
+      x_auth_access_type: "write"
+    });
+
+    twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results){
+      if (error) {
+        console.log("Error getting OAuth request token : " + error);
+        res.serverError()
+      } else {
+        req.session.twitterRequestTokenSecret = req.session.twitterRequestTokenSecret || {}
+        req.session.twitterRequestTokenSecret[requestToken] = requestTokenSecret
+        var twitterAuthorizeURL = 'https://twitter.com/oauth/authorize?oauth_token=' + requestToken
+        if (req.user && req.user.twitterId)
+          twitterAuthorizeURL = twitterAuthorizeURL + '&force_login=1&screen_name=' + req.user.twitterId
+        res.redirect (twitterAuthorizeURL)
+      }
+    });
+  },
+
+  twitterAuthorizeCallback: function (req, res, next) {
+    var requestToken = req.param('oauth_token')
+    var oauth_verifier = req.param('oauth_verifier')
+    var requestTokenSecret = req.session.twitterRequestTokenSecret ? req.session.twitterRequestTokenSecret[requestToken] : ''
+    var twitter = new twitterAPI({
+      consumerKey: sails.config.local.twitter.consumerKey,
+      consumerSecret: sails.config.local.twitter.consumerSecret,
+      callback: sails.config.custom.baseURL + 'login/twitter/auth/callback',
+      x_auth_access_type: "write"
+    });
+    twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
+      if (error) {
+        console.log(error)
+        res.serverError()
+      } else
+        Player.update ({ id: req.user.id },
+                       { twitterAccessToken: accessToken,
+                         twitterAccessTokenSecret: accessTokenSecret })
+          .then (function() {
+            res.redirect('/')
+          }).catch (function (err) {
+            res.serverError()
+          })
+    });    
+  }
 };
 
