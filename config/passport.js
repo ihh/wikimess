@@ -2,7 +2,8 @@ var passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
     FacebookStrategy = require('passport-facebook').Strategy,
     TwitterStrategy = require('passport-twitter').Strategy,
-    bcrypt = require('bcrypt');
+    bcrypt = require('bcrypt'),
+    localConfig = require('./local')
 
 passport.serializeUser(function(player, done) {
   done(null, player.id);
@@ -42,13 +43,8 @@ passport.use
 
 passport.use
 (new FacebookStrategy
- ({ clientID: "***REMOVED***",
-    clientSecret: "***REMOVED***",
-    callbackURL: "http://wikimess.me/login/facebook/callback",
-    enableProof: false },
-
+ (localConfig.facebook,
   function (accessToken, refreshToken, profile, done) {
-
     PlayerService.makeUniquePlayerName (profile.displayName)
       .then (function (name) {
         Player.findOrCreate ({ facebookId: profile.id },
@@ -69,11 +65,9 @@ passport.use
       })
   }))
 
-passport.use(new TwitterStrategy({
-    consumerKey: '***REMOVED***',
-    consumerSecret: '***REMOVED***',
-    callbackURL: "http://wikimess.me/login/twitter/callback"
-  },
+passport.use
+(new TwitterStrategy
+ (localConfig.twitter,
   function (token, tokenSecret, profile, done) {
     PlayerService.makeUniquePlayerName (profile.username)
       .then (function (name) {

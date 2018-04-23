@@ -105,7 +105,6 @@ var WikiMess = (function() {
     anonGuest: 'Anonymous guest',
     maxPlayerLoginLength: 15,
     maxPlayerNameLength: 32,
-    maxTwitterHandleLength: 15,
     maxRating: 5,
     ratingDelay: 2000,
     autosaveDelay: 5000,
@@ -1107,19 +1106,12 @@ var WikiMess = (function() {
           var sanitizeLogin = wm.sanitizer ('loginInput', wm.sanitizePlayerName)
 
           wm.container
-            .append (wm.makePageTitle ('Twitter info'),
-                     $('<div class="menubar">')
-                     .append ($('<div class="inputbar">')
-                              .append ($('<form>')
-                                       .append ($('<span>').text('Twitter handle'))
-                                       .append (wm.twitterHandleInput = $('<input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text">')
-                                                .val(wm.twitterHandle)  // FIXME
-                                                .attr('maxlength', wm.maxTwitterHandleLength)
-                                               )),
-                              $('<div class="list">')
-                              .append (wm.makeListLink ('Link Twitter account',
-                                                        function(){}))))
-            .append (backBar)
+            .append ($('<div class="menubar">')
+                     .append ($('<div class="list">')
+                              .append (wm.makeListLink('Link Twitter account',function(){
+                                // TODO: get access token as per https://www.npmjs.com/package/node-twitter-api
+                              }))),
+                     backBar)
         })
     },
 
