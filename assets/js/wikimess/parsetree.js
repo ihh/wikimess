@@ -278,6 +278,19 @@
     }
     return expansion
   }
+
+  function finalVarVal (node, initVarVal) {
+    var varVal
+    if (initVarVal) {
+      varVal = {}
+      Object.keys(initVarVal).forEach (function (name) {
+        varVal[name] = initVarVal[name]
+      })
+    } else
+      varVal = defaultVarVal()
+    makeExpansionText (node, false, varVal)
+    return varVal
+  }
   
   // General helper functions
   function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
@@ -487,6 +500,7 @@
     summarizeRhs: summarizeRhs,
     summarizeExpansion: summarizeExpansion,
     defaultVarVal: defaultVarVal,
+    finalVarVal: finalVarVal,
     // English grammar
     conjugate: conjugate,
     was: was,
