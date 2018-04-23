@@ -207,11 +207,6 @@
     return sugaredName
   }
 
-  function defaultVarVal() {
-    return { me: '_Anonymous_',
-             you: '_Everyone_' }
-  }
-
   var defaultSummaryLen = 64
   function summarize (text, summaryLen) {
     summaryLen = summaryLen || defaultSummaryLen
@@ -279,6 +274,21 @@
     return expansion
   }
 
+  function populateVarVal (varVal, sender, recipient) {
+    if (sender)
+      varVal.me = playerChar + sender.name
+    if (recipient)
+      varVal.you = playerChar + recipient.name
+    return varVal
+  }
+
+  function defaultVarVal (sender, recipient) {
+    var varVal = { me: '_Anonymous_',
+                   you: '_Everyone_' }
+    populateVarVal (sender, recipient)
+    return varVal
+  }
+  
   function finalVarVal (node, initVarVal) {
     var varVal
     if (initVarVal) {
@@ -291,7 +301,13 @@
     makeExpansionText (node, false, varVal)
     return varVal
   }
-  
+
+  function nextVarVal (node, initVarVal, sender, recipient) {
+    var varVal = finalVarVal (node, initVarVal)
+    populateVarVal (varVal, sender, recipient)
+    return varVal
+  }
+
   // General helper functions
   function isArray (obj) { return Object.prototype.toString.call(obj) === '[object Array]' }
 
@@ -501,6 +517,8 @@
     summarizeExpansion: summarizeExpansion,
     defaultVarVal: defaultVarVal,
     finalVarVal: finalVarVal,
+    nextVarVal: nextVarVal,
+    populateVarVal: populateVarVal,
     // English grammar
     conjugate: conjugate,
     was: was,

@@ -729,7 +729,7 @@ var WikiMess = (function() {
     },
 
     stripLeadingAndTrailingWhitespace: function (text) {
-      return text.replace(/^\s*/,'').replace(/\s*$/,'')
+      return text ? text.replace(/^\s*/,'').replace(/\s*$/,'') : text
     },
     
     validatePlayerName: function (success, failure) {
@@ -1393,10 +1393,12 @@ var WikiMess = (function() {
           wm.composition.template = config.template || wm.composition.template || {}
           wm.composition.template.content = wm.composition.template.content || []
 
+          wm.composition.vars = config.vars || {}
+
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
           makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
           makeMessageHeaderInput ('tags', 'No future tags', 'tags', 'messageTagsInput', true)
- 
+          
           wm.clearTimer ('autosuggestTimer')
           function autosuggestKey (before, after) {
             return before.map (function (rhsSym) { return rhsSym.name })
@@ -2759,6 +2761,7 @@ var WikiMess = (function() {
                                                          tags: draft.tags,
                                                          previousTags: draft.previousTags,
                                                          template: draft.template,
+                                                         vars: draft.vars,
                                                          body: draft.body,
                                                          draft: draft.id })
                                  }
@@ -2944,6 +2947,7 @@ var WikiMess = (function() {
                                                                        title: replyTitle,
                                                                        previousMessage: message.id,
                                                                        previousTemplate: message.template,
+                                                                       vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
                                                                        tags: '',
                                                                        previousTags: message.template ? (message.template.tags || '') : '',
                                                                        focus: 'messageTitleInput'
@@ -2959,6 +2963,7 @@ var WikiMess = (function() {
                                                                           return wm.showComposePage
                                                                           ({ title: message.title,
                                                                              template: templateResult.template,
+                                                                             vars: wm.ParseTree.populateVarVal ($.extend ({}, message.vars, { you: null }), sender),
                                                                              body: message.body,
                                                                              previousMessage: message.id,
                                                                              tags: templateResult.template.tags || '',
@@ -3000,22 +3005,16 @@ var WikiMess = (function() {
                      $('<div class="messagebody messageborder">')
 		     .append (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
                                                                                  false,
-                                                                                 wm.messageVarVal(sender,recipient)))))
+                                                                                 message.vars || wm.ParseTree.defaultVarVal (sender, recipient)))))
         })
     },
 
-    messageVarVal: function (sender, recipient) {
-      var varVal = this.ParseTree.defaultVarVal()
-      if (sender)
-        varVal.me = playerChar + sender.name
-      if (recipient)
-        varVal.you = playerChar + recipient.name
-      return varVal
-    },
-
     compositionVarVal: function() {
-      return this.messageVarVal (this.playerID ? this.playerInfo : null,
-                                 this.composition.isPrivate ? this.composition.recipient : null)
+      var sender = this.playerID ? this.playerInfo : null
+      var recipient = this.composition.isPrivate ? this.composition.recipient : null
+      return (this.composition.vars
+              ? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient)
+              : this.ParseTree.defaultVarVal (sender, recipient))
     },
     
     relativeDateString: function (dateInitializer) {

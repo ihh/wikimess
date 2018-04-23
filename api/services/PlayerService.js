@@ -104,6 +104,7 @@ module.exports = {
                   var draft = drafts[0]
                   status.draft = { id: draft.id,
                                    template: draft.template,
+                                   vars: draft.initVarVal,
                                    body: draft.body }
                 }
               })
@@ -176,6 +177,7 @@ module.exports = {
     var playerID = config.playerID || null
     var recipientID = config.recipientID || null
     var player = config.player
+    var recipient = null
     var template = config.template
     var title = config.title
     var body = config.body
@@ -184,7 +186,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}
+    var result = {}, notification = {}, initVarVal
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -199,25 +201,41 @@ module.exports = {
           .then (function (players) {
             if (!players.length)
               throw new Error ("Recipient unreachable")
+            recipient = players[0]
           })
       })
     return reachablePromise.then (function() {
+      // find previous Message
+      var previousPromise, previousTemplate
+      if (typeof(previous) === 'undefined') {
+        initVarVal = parseTree.defaultVarVal (player, recipient)
+        previousPromise = Promise.resolve()
+      } else {
+        previousPromise = Message.findOne ({ id: previous })
+        if (typeof(template.id) === 'undefined')
+          previousPromise = previousPromise.populate ('template')
+          .then (function (previousMessage) {
+            previousTemplate = previousMessage.template
+            return previousMessage
+          })
+        previousPromise = previousPromise
+          .then (function (previousMessage) {
+            initVarVal = parseTree.nextVarVal (previousMessage.body, previousMessage.initVarVal, player, recipient)
+          })
+      }
       // find, or create, the template
       var templatePromise
       if (typeof(template.id) !== 'undefined')
-        templatePromise = Template.findOne ({ id: template.id,
-                                              or: [{ author: playerID },
-                                                   { isPublic: true }] })
+        templatePromise = previousPromise.then (function() {
+          return Template.findOne ({ id: template.id,
+                                     or: [{ author: playerID },
+                                          { isPublic: true }] })
+        })
       else {
         // impose limits
         SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
-        // find previous Message
-        var previousPromise = (typeof(previous) === 'undefined'
-                               ? new Promise (function (resolve, reject) { resolve(null) })
-                               : (Message.findOne ({ id: previous })
-                                  .populate ('template')
-                                  .then (function (message) { return message.template })))
-        templatePromise = previousPromise.then (function (previousTemplate) {
+        // use template from previous Message
+        templatePromise = previousPromise.then (function (previousMessage) {
           // create the Template
           var content = template.content
           return Template.create ({ title: title,
@@ -247,6 +265,7 @@ module.exports = {
                                  template: template,
                                  previous: previous,
                                  title: title,
+                                 initVarVal: initVarVal,
                                  body: body })
       }).then (function (message) {
         result.message = { id: message.id }

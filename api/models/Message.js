@@ -41,6 +41,11 @@ module.exports = {
       type: 'string',
       defaultsTo: ''
     },
+
+    initVarVal: {
+      type: 'json',
+      defaultsTo: {}
+    },
     
     body: {
       type: 'json',

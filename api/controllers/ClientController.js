@@ -548,6 +548,7 @@ module.exports = {
                                          content: message.template.content,
                                          tags: message.template.tags },
                              title: message.title,
+                             vars: message.initVarVal,
                              body: message.body,
                              date: message.createdAt,
                              rating: message.rating }
@@ -597,6 +598,7 @@ module.exports = {
                                        content: message.template.content,
                                        tags: message.template.tags },
                            title: message.title,
+                           vars: message.initVarVal,
                            body: message.body,
                            date: message.createdAt,
                            rating: message.rating }
@@ -658,6 +660,7 @@ module.exports = {
                                          content: message.template.content,
                                          tags: message.template.tags },
                              title: message.title,
+                             vars: message.initVarVal,
                              body: message.body,
                              date: message.createdAt }
         res.json (result)
@@ -801,22 +804,27 @@ module.exports = {
   // get draft
   getDraft: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    var player = req.session.user
     var draftID = Draft.parseID (req.params.draft)
     var result = {}
     Draft.findOne ({ id: draftID,
                      sender: playerID })
       .populate ('recipient')
+      .populate ('previous')
       .then (function (draft) {
         result.draft = { id: draft.id,
                          recipient: draft.recipient && { id: draft.recipient.id,
                                                          name: draft.recipient.name,
                                                          displayName: draft.recipient.displayName },
-                         previous: draft.previous,
+                         previous: draft.previous ? draft.previous.id : null,
                          previousTemplate: draft.previousTemplate,
                          tags: draft.tags,
                          previousTags: draft.previousTags,
                          template: draft.template,
                          title: draft.title,
+                         vars: (draft.previous
+                                ? parseTree.nextVarVal (draft.previous.body, draft.previous.initVarVal, player, draft.recipient)
+                                : parseTree.defaultVarVal (player, draft.recipient)),
                          body: draft.body,
                          date: draft.updatedAt }
         res.json (result)
@@ -829,17 +837,18 @@ module.exports = {
   // save draft
   saveDraft: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    var player = req.session.user, recipient
     var draft = Draft.parseID (req.body.draft)
     var result = {}
-    Draft.create ({ sender: playerID,
-                    recipient: draft.recipient,
-                    previous: draft.previous,
-                    previousTemplate: draft.previousTemplate,
-                    tags: draft.tags,
-                    previousTags: draft.previousTags,
-                    template: draft.template,
-                    title: draft.title,
-                    body: draft.body })
+    return Draft.create ({ sender: playerID,
+                           recipient: draft.recipient,
+                           previous: draft.previous,
+                           previousTemplate: draft.previousTemplate,
+                           tags: draft.tags,
+                           previousTags: draft.previousTags,
+                           template: draft.template,
+                           title: draft.title,
+                           body: draft.body })
       .then (function (created) {
         result.draft = { id: created.id }
         res.json (result)
