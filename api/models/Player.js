@@ -61,6 +61,11 @@ module.exports = {
       unique: true
     },
 
+    twitterScreenName: {
+      type: 'string',
+      required: false
+    },
+
     twitterAccessToken: {
       type: 'string',
       required: false

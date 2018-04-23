@@ -1,9 +1,7 @@
 var WikiMess = (function() {
   var proto = function (config) {
     var wm = this
-    
     config = config || {}
-    $.extend (this, config)
 
     this.ParseTree = window.parseTree
 
@@ -253,6 +251,14 @@ var WikiMess = (function() {
 
     REST_loginTwitterAuth: function() {
       window.location.replace ('/login/twitter/auth')
+    },
+
+    REST_loginTwitterDeauth: function() {
+      return this.logGet ('/login/twitter/deauth')
+    },
+
+    REST_makeAvatarURL: function (screenName, size) {
+      return '/avatar/' + screenName + (size ? ('?size=' + size) : '')
     },
 
     REST_postPlayer: function (playerName, playerPassword) {
@@ -1107,13 +1113,34 @@ var WikiMess = (function() {
       return this.pushView ('twitter')
         .then (function() {
           var backBar = wm.popBack()
-          var sanitizeLogin = wm.sanitizer ('loginInput', wm.sanitizePlayerName)
+	  var twitterConfigDiv = $('<div class="menubar">')
+          wm.container.append (twitterConfigDiv, backBar)
+	  function buildPage() {
+	    var avatarDiv = $('<div class="avatar">'),
+		screenNameSpan = $('<span class="tweep">'),
+		helpSpan = $('<span class="twithelp">')
+	    if (wm.playerInfo.twitterAuthorized) {
+	      wm.addAvatarImage (avatarDiv, wm.playerInfo.twitterScreenName)
+	      screenNameSpan.text ('@' + wm.playerInfo.twitterScreenName)
+	    } else
+	      helpSpan.text ('If you link your Twitter account, Wiki Messenger can tweet for you.')
+	    twitterConfigDiv
+	      .empty()
+	      .append (avatarDiv,
+		       screenNameSpan,
+		       helpSpan,
+		       $('<div class="list">')
+		       .append ((wm.player && wm.playerInfo.twitterAuthorized)
+				? wm.makeListLink('Unlink Twitter account',function() {
+				  wm.REST_loginTwitterDeauth().then (function() {
+				    delete wm.playerInfo.twitterScreenName
+				    delete wm.playerInfo.twitterAuthorized
+				    buildPage()
+				  }) })
+				: wm.makeListLink('Link Twitter account',wm.REST_loginTwitterAuth)))
+	  }
 
-          wm.container
-            .append ($('<div class="menubar">')
-                     .append ($('<div class="list">')
-                              .append (wm.makeListLink('Link Twitter account',wm.REST_loginTwitterAuth))),
-                     backBar)
+	  buildPage()
         })
     },
 
@@ -1153,8 +1180,8 @@ var WikiMess = (function() {
                                                             opts: [{ text: "Anyone can contact me", value: false },
                                                                    { text: "Only people in my address book, please", value: true }] }),
                                        wm.makeConfigMenu ({ id: 'createsPublicTemplates',
-                                                            opts: [{ text: "All my mail is public", value: true },
-                                                                   { text: "I trust WikiMess security with my secrets", value: false }] })),
+                                                            opts: [{ text: "Others can post using my templates", value: true },
+                                                                   { text: "Only I can re-use my templates", value: false }] })),
                               $('<div class="inputbar">')
                               .append (wm.publicBioInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="bio public">')
                                        .attr ('rows', 2)
@@ -2148,6 +2175,7 @@ var WikiMess = (function() {
       var wm = this
       wm.composition.template = template
       wm.composition.title = template.title
+      wm.composition.tweeter = template.tweeter
       wm.composition.tags = wm.stripLeadingAndTrailingWhitespace (template.tags)
       wm.composition.previousTags = wm.stripLeadingAndTrailingWhitespace (template.previousTags)
             
@@ -2525,13 +2553,23 @@ var WikiMess = (function() {
       })
     },
 
+    addAvatarImage: function (div, tweeter, size) {
+      if (tweeter)
+	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
+    },
+    
     showMessageBody: function (config) {
       var wm = this
       config = config || {}
       var div = config.div || wm.messageBodyDiv
       var expansion = config.expansion || wm.composition.body
+      var tweeter = config.tweeter || wm.composition.tweeter
+      var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
+      if (tweeter)
+	this.addAvatarImage (avatarDiv, tweeter)
+      div.empty().append (avatarDiv, textDiv)
       wm.animationExpansion = _.cloneDeep (expansion)
-      wm.animationDiv = div
+      wm.animationDiv = textDiv
       wm.randomizeEmptyMessageWarning()
       if (config.animate && wm.countSymbolNodes(expansion,true)) {
         delete wm.animationSteps
@@ -2544,7 +2582,7 @@ var WikiMess = (function() {
 	var processedExpansion = rawExpansion.replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
 								 ? wm.emptyTemplateWarning
 								 : wm.emptyMessageWarning))
-        div.html (this.renderMarkdown (processedExpansion))
+        textDiv.html (this.renderMarkdown (processedExpansion))
         wm.showScrollButtons()
       }
     },
@@ -2624,6 +2662,10 @@ var WikiMess = (function() {
             wm.container.show()
           })
         break
+      case 'twitter':
+	promise = wm.showSettingsPage()
+	  .then (function() { return wm.showTwitterConfigPage() })
+	break
       case 'home':
       default:
         promise = this.showComposePage ({ showHelpCard: true })
@@ -3003,9 +3045,13 @@ var WikiMess = (function() {
                                                  ? $('<a href="#">').text('Next').on('click',wm.makeGetMessage (props, { id: message.next[0] }))
                                                  : 'Next')))),
                      $('<div class="messagebody messageborder">')
-		     .append (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
-                                                                                 false,
-                                                                                 message.vars || wm.ParseTree.defaultVarVal (sender, recipient)))))
+		     .append (avatarDiv = $('<div class="avatar">'),
+			      $('<div class="text">')
+			      .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
+											false,
+											message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))))
+	  if (message.tweeter)
+	    wm.addAvatarImage (avatarDiv, message.tweeter)
         })
     },
 

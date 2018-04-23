@@ -1124,6 +1124,21 @@ input {
     line-height: 2.5vh;
 }
 
+.wikimess .avatar img,
+.wikimess .avatar {
+    height: 20vh;
+}
+
+.wikimess .small .avatar img,
+.wikimess .small .avatar {
+    height: 15vh;
+}
+
+.wikimess .twithelp {
+    text-align: center;
+    margin: 10px;
+}
+
 .wikimess .compose .suggestions {
     overflow-wrap: break-word;
 }

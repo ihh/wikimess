@@ -6,10 +6,10 @@
  */
 
 var fs = require('fs');
+var request = require('request');
 
 module.exports = {
     getIcon: function (req, res) {
-
 	var icon = req.params.icon
 	var color = req.params.color || 'black'
 	var background = req.params.background || 'rgba(0,0,0,0)'
@@ -32,5 +32,17 @@ module.exports = {
 			 }
 		     })
     },
+
+  getAvatar: function (req, res) {
+    var screenName = req.params.screenname
+    var size = req.param('size','normal')
+    var url = 'https://twitter.com/' + screenName + '/profile_image' + '?size=' + size
+    request.get (url)
+      .on ('response', function (response) {
+	return (response.statusCode !== 200 || !['image/jpeg', 'image/png'].includes(response.headers['content-type']))
+          ? res.status(404).type('txt').send('Username not found.')
+          : response.pipe(res)
+      })
+  }
 };
 

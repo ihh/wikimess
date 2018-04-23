@@ -6,10 +6,10 @@
  */
 
 var passport = require('passport');
+var twitterAPI = require('node-twitter-api');
 
 var Promise = require('bluebird')
 var extend = require('extend')
-var twitterAPI = require('node-twitter-api');
 
 module.exports = {
 
@@ -37,6 +37,20 @@ module.exports = {
         homepage.vars.init = true
         homepage.vars.initConfig = homepage.vars.initConfig || {}
         homepage.vars.initConfig.action = homepage.vars.initConfig.action || 'home'
+        res.view ('homepage', homepage.vars)
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
+      })
+  },
+
+  twitterConfigPage: function (req, res) {
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    return PlayerService.makeHomepage (playerID)
+      .then (function (homepage) {
+        homepage.vars.init = true
+        homepage.vars.initConfig = homepage.vars.initConfig || {}
+        homepage.vars.initConfig.action = 'twitter'
         res.view ('homepage', homepage.vars)
       }).catch (function (err) {
         console.log(err)
@@ -196,12 +210,11 @@ module.exports = {
                           })(req, res, next);
   },
 
-
   twitterAuthorize: function (req, res, next) {
     var twitter = new twitterAPI({
       consumerKey: sails.config.local.twitter.consumerKey,
       consumerSecret: sails.config.local.twitter.consumerSecret,
-      callback: sails.config.custom.baseURL + 'login/twitter/auth/callback',
+      callback: (sails.config.local.baseURL || 'http://localhost:1337') + '/login/twitter/auth/callback',
       x_auth_access_type: "write"
     });
 
@@ -212,9 +225,9 @@ module.exports = {
       } else {
         req.session.twitterRequestTokenSecret = req.session.twitterRequestTokenSecret || {}
         req.session.twitterRequestTokenSecret[requestToken] = requestTokenSecret
-        var twitterAuthorizeURL = 'https://twitter.com/oauth/authorize?oauth_token=' + requestToken
-        if (req.user && req.user.twitterId)
-          twitterAuthorizeURL = twitterAuthorizeURL + '&force_login=1&screen_name=' + req.user.twitterId
+        var twitterAuthorizeURL = 'https://twitter.com/oauth/authorize?oauth_token=' + requestToken + '&force_login=1'
+        if (req.user && req.user.twitterScreenName)
+          twitterAuthorizeURL = twitterAuthorizeURL + '&screen_name=' + req.user.twitterScreenName
         res.redirect (twitterAuthorizeURL)
       }
     });
@@ -226,24 +239,43 @@ module.exports = {
     var requestTokenSecret = req.session.twitterRequestTokenSecret ? req.session.twitterRequestTokenSecret[requestToken] : ''
     var twitter = new twitterAPI({
       consumerKey: sails.config.local.twitter.consumerKey,
-      consumerSecret: sails.config.local.twitter.consumerSecret,
-      callback: sails.config.custom.baseURL + 'login/twitter/auth/callback',
-      x_auth_access_type: "write"
+      consumerSecret: sails.config.local.twitter.consumerSecret
     });
-    twitter.getAccessToken(requestToken, requestTokenSecret, oauth_verifier, function(error, accessToken, accessTokenSecret, results) {
+    twitter.getAccessToken (requestToken, requestTokenSecret, oauth_verifier, function (error, accessToken, accessTokenSecret, results) {
       if (error) {
         console.log(error)
         res.serverError()
-      } else
+      } else if (!results)
+        res.serverError()
+      else
         Player.update ({ id: req.user.id },
-                       { twitterAccessToken: accessToken,
+                       { twitterId: results.user_id,
+			 twitterScreenName: results.screen_name,
+			 twitterAccessToken: accessToken,
                          twitterAccessTokenSecret: accessTokenSecret })
           .then (function() {
-            res.redirect('/')
+            res.redirect('/twitter')
           }).catch (function (err) {
             res.serverError()
           })
     });    
-  }
+  },
+
+  twitterDeauthorize: function (req, res, next) {
+    if (req.session && req.session.passport && req.session.passport.user)
+      Player.update ({ id: req.user.id },
+		     { twitterId: null,
+		       twitterScreenName: null,
+		       twitterAccessToken: null,
+                       twitterAccessTokenSecret: null })
+      .then (function() {
+	res.ok()
+      }).catch (function (err) {
+	res.serverError()
+      })
+    else
+      res.status(401).send({error:"Not authenticated"});
+  },
+  
 };
 

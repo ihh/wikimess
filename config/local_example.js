@@ -15,5 +15,7 @@ module.exports.local = {
    consumerSecret: 'YOUR_CONSUMER_SECRET'
  },
 
+ baseURL: 'http://wikimess.me'
+
 };
 */

@@ -547,6 +547,8 @@ module.exports = {
                              template: { id: message.template.id,
                                          content: message.template.content,
                                          tags: message.template.tags },
+			     tweeter: message.tweeter,
+			     tweet: message.tweetId,
                              title: message.title,
                              vars: message.initVarVal,
                              body: message.body,
@@ -597,6 +599,8 @@ module.exports = {
                            template: { id: message.template.id,
                                        content: message.template.content,
                                        tags: message.template.tags },
+			   tweeter: message.tweeter,
+			   tweet: message.tweetId,
                            title: message.title,
                            vars: message.initVarVal,
                            body: message.body,
@@ -659,6 +663,8 @@ module.exports = {
                              template: { id: message.template,
                                          content: message.template.content,
                                          tags: message.template.tags },
+			     tweeter: message.tweeter,
+			     tweet: message.tweetId,
                              title: message.title,
                              vars: message.initVarVal,
                              body: message.body,
@@ -669,7 +675,7 @@ module.exports = {
         res.status(500).send ({ message: err })
       })
   },
-
+  
   // send message
   sendMessage: function (req, res) {
     PlayerService.sendMessage ({
@@ -1355,11 +1361,13 @@ module.exports = {
     Template.findOne ({ id: templateID,
                         or: [{ author: playerID },
                              { isPublic: true }] })
+      .populate ('author')
       .then (function (template) {
         if (template)
           result.template = { id: template.id,
                               content: template.content,
                               title: template.title,
+			      tweeter: template.author ? template.author.twitterScreenName : null,
                               tags: template.tags,
                               previousTags: template.previousTags }
         res.json (result)
@@ -1414,6 +1422,7 @@ module.exports = {
                             : undefined),
                    title: template.title || parseTree.summarizeRhs (template.content,
                                                                     function (sym) { return Symbol.cache.byId[sym.id].name }),
+		   tweeter: template.author ? template.author.twitterScreenName : null,
                    tags: template.tags,
                    previousTags: template.previousTags }
         })
@@ -1435,6 +1444,7 @@ module.exports = {
                 .concat (previousTags.map (function (tag) {
 		  return { previousTags: { contains: ' ' + tag + ' ' } }
                 })) })
+      .populate ('author')
       .then (function (templates) {
         var result = {}
         if (templates.length) {
@@ -1444,6 +1454,7 @@ module.exports = {
           var template = templates[SortService.sampleByWeight (templateRating)]
           result.template = { id: template.id,
                               title: template.title,
+			      tweeter: template.author ? template.author.twitterScreenName : null,
 			      tags: template.tags,
 			      previousTags: template.previousTags,
                               content: template.content }

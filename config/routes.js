@@ -39,6 +39,7 @@ module.exports.routes = {
   'GET /write': 'AuthController.composePage',
   'GET /write/:symname': 'AuthController.composePage',
   'GET /define/:symname': 'AuthController.grammarPage',
+  'GET /twitter': 'AuthController.twitterConfigPage',
 
   /***************************************************************************
    *                                                                          *
@@ -62,6 +63,7 @@ module.exports.routes = {
 
   'GET /login/twitter/auth':          'AuthController.twitterAuthorize',
   'GET /login/twitter/auth/callback': 'AuthController.twitterAuthorizeCallback',
+  'GET /login/twitter/deauth':        'AuthController.twitterDeauthorize',
 
   // icon management
   'GET /icon/:icon.svg':                    'IconController.getIcon',
@@ -71,6 +73,9 @@ module.exports.routes = {
   'GET /icon/:icon':                    'IconController.getIcon',
   'GET /icon/:icon/:color':             'IconController.getIcon',
   'GET /icon/:icon/:color/:background': 'IconController.getIcon', 
+
+  // Twitter avatar proxy
+  'GET /avatar/:screenname': 'IconController.getAvatar', 
 
   // client controller
   // player ID lookup

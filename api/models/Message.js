@@ -51,6 +51,14 @@ module.exports = {
       type: 'json',
       required: true
     },
+
+    tweeter: {
+      type: 'string'
+    },
+    
+    tweetId: {
+      type: 'string'
+    },
     
     isBroadcast: { type: 'boolean', defaultsTo: false },
     read: { type: 'boolean', defaultsTo: false },

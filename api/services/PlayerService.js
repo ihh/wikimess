@@ -3,6 +3,7 @@
 var fs = require('fs');
 var extend = require('extend');
 var merge = require('deepmerge');
+var twitterAPI = require('node-twitter-api');
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
 
@@ -38,6 +39,8 @@ module.exports = {
               { id: player.id,
                 name: player.name,
                 displayName: player.displayName,
+		twitterScreenName: player.twitterScreenName,
+		twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
                 gender: player.gender,
                 publicBio: player.publicBio,
                 nSenderRatings: player.nSenderRatings,
@@ -128,6 +131,8 @@ module.exports = {
              searchable: player.searchable,
              name: player.name,
              displayName: player.displayName,
+	     twitterScreenName: player.twitterScreenName,
+	     twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
              reachable: !player.noMailUnlessFollowed,
              following: following }
   },
@@ -136,6 +141,8 @@ module.exports = {
     return player && { id: player.id,
                        name: player.name,
                        displayName: player.displayName,
+		       twitterScreenName: player.twitterScreenName,
+		       twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
                        hidePassword: (player.facebookId || player.twitterId) ? true : false,
                        noMailUnlessFollowed: player.noMailUnlessFollowed,
                        publicBio: player.publicBio,
@@ -186,7 +193,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}, initVarVal
+    var result = {}, notification = {}, initVarVal, templateAuthor
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -230,6 +237,7 @@ module.exports = {
           return Template.findOne ({ id: template.id,
                                      or: [{ author: playerID },
                                           { isPublic: true }] })
+	    .populate ('author')
         })
       else {
         // impose limits
@@ -239,7 +247,7 @@ module.exports = {
           // create the Template
           var content = template.content
           return Template.create ({ title: title,
-                                    author: playerID,
+                                    author: player,
                                     content: content,
                                     previous: previousTemplate,
                                     tags: tags.toLowerCase().split(/\s+/).filter (function (tag) { return tag !== '' }).join(' '),
@@ -258,6 +266,7 @@ module.exports = {
       }
       return templatePromise.then (function (template) {
         result.template = { id: template.id }
+	templateAuthor = template.author
         // create the Message
         return Message.create ({ sender: playerID,
                                  recipient: recipientID,
@@ -266,6 +275,7 @@ module.exports = {
                                  previous: previous,
                                  title: title,
                                  initVarVal: initVarVal,
+				 tweeter: templateAuthor ? templateAuthor.twitterScreenName : null,
                                  body: body })
       }).then (function (message) {
         result.message = { id: message.id }
@@ -287,6 +297,50 @@ module.exports = {
         else
           draftPromise = Promise.resolve()
         return draftPromise
+	  .then (function() {
+	    // send a tweet
+	    var tweetPromise
+	    if (templateAuthor && templateAuthor.twitterAccessTokenSecret) {
+	      var twitter = new twitterAPI({
+		consumerKey: sails.config.local.twitter.consumerKey,
+		consumerSecret: sails.config.local.twitter.consumerSecret
+	      })
+	      tweetPromise = new Promise (function (resolve, reject) {
+		var status = parseTree.makeExpansionText (body, false, initVarVal)
+		if (previous && previous.tweetId)
+		  tweet.in_reply_to_status_id = previous.tweetId
+		if (recipientID === null) {
+		  var url = (sails.config.local.baseURL || 'http://localhost:1337') + result.message.path
+		  var statusWithUrl = status + (status.match(/\s$/) ? '' : ' ') + url
+		  if (statusWithUrl.length < 280)  // 280 is Twitter length limit. Should probably not hardcode this in here
+		    status = statusWithUrl
+		}
+		var tweet = { status: status }
+		twitter.statuses ("update",
+				  tweet,
+				  templateAuthor.twitterAccessToken,
+				  templateAuthor.twitterAccessTokenSecret,
+				  function (error, data, response) {
+				    if (error) {
+				      console.warn (error)
+				      resolve()  // plough ahead, even if the Twitter API doesn't work
+				    } else {
+				      resolve (data)
+				    }
+				  })
+	      })
+	    } else
+	      tweetPromise = Promise.resolve()
+	    return tweetPromise
+	      .then (function (tweetData) {
+		if (tweetData) {
+		  var tweetId = tweetData.id.toString()
+		  result.message.tweet = tweetId
+		  return Message.update ({ id: message.id },
+					 { tweetId: tweetId })
+		}
+	      })
+	  })
       }).then (function() {
         if (recipientID === null)
           sails.sockets.broadcast ('news', notification)  // send the good news to everyone
