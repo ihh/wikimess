@@ -749,7 +749,7 @@ input {
     display: none;
 }
 
-.wikimess .compose .bodysectiontitle,
+.wikimess .bodysectiontitle,
 .wikimess .messageheader {
     font-size: 1.5vh;
     line-height: 2vh;
@@ -907,14 +907,17 @@ input {
 }
 
 .wikimess .popular .templates,
-.wikimess .mailbox .contents,
-.wikimess .readmessage .messageborder {
+.wikimess .mailbox .contents {
     border-top-style: solid;
     border-width: 1px;
     margin: 2px;
 }
 
-.wikimess .compose .bodysectiontitle {
+.wikimess .readmessage .messageborder {
+    margin: 2px;
+}
+
+.wikimess .bodysectiontitle {
     text-align: center;
     border-style: none none dashed none;
     border-width: 1px;
@@ -930,17 +933,17 @@ input {
     border-width: 1px;
 }
 
-.wikimess .compose .sectiontitle {
+.wikimess .sectiontitle {
     font-style: italic;
     padding: 2px;
 }
 
-.wikimess .compose .bodysectiontitle .button {
+.wikimess .bodysectiontitle .button {
     float: right;
     cursor: pointer;
 }
 
-.wikimess .compose .bodysectiontitle .button svg {
+.wikimess .bodysectiontitle .button svg {
     width: 1em;
     height: 1em;
 }
@@ -977,7 +980,7 @@ input {
     border-width: 1px;
 }
 
-.wikimess .compose .stack {
+.wikimess .stack {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -985,7 +988,7 @@ input {
     position: relative;
 }
 
-.wikimess .compose .stack .card {
+.wikimess .stack .card {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -998,7 +1001,7 @@ input {
     box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
-.wikimess .compose .stack .jiggle:not(.dragging) {
+.wikimess .stack .jiggle:not(.dragging) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
     -webkit-animation: jiggle 5s ease 0s infinite;
@@ -1028,7 +1031,7 @@ input {
     100% { transform: rotate(0deg); }
 }
 
-.wikimess .compose .stack .helpcard {
+.wikimess .stack .helpcard {
     position: absolute;
 
     /* the following width and height are just defaults, they will be reset by the JavaScript */

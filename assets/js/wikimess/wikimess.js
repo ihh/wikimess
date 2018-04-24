@@ -47,7 +47,18 @@ var WikiMess = (function() {
                           renderer: renderer }
 
     this.randomizeEmptyMessageWarning()
-    
+
+    // initialize the swing Stack
+    wm.stack = swing.Stack ({ throwOutConfidence: wm.throwOutConfidence,
+			      throwOutDistance: function() { return wm.throwXOffset() },
+			      allowedDirections: [
+				swing.Direction.LEFT,
+				swing.Direction.RIGHT,
+				swing.Direction.UP,
+				swing.Direction.DOWN
+			      ],
+                              isThrowOut: wm.isThrowOut.bind(wm) })
+
     // monitor connection
     if (wm.reloadOnDisconnect)
       io.socket.on('disconnect', function() {
@@ -1798,23 +1809,6 @@ var WikiMess = (function() {
               pubTab.click()
           }
 
-          var throwOutConfidence = function (xOffset, yOffset, element) {
-            return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
-          }
-          var isThrowOut = function (xOffset, yOffset, element, throwOutConfidence) {
-            var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm (wm.shareMessagePrompt))
-            return throwOut
-          }
-          wm.stack = swing.Stack ({ throwOutConfidence: throwOutConfidence,
-				    throwOutDistance: function() { return wm.throwXOffset() },
-				    allowedDirections: [
-				      swing.Direction.LEFT,
-				      swing.Direction.RIGHT,
-				      swing.Direction.UP,
-				      swing.Direction.DOWN
-				    ],
-                                    isThrowOut: isThrowOut })
-          
           wm.restoreScrolling (wm.messageComposeDiv)
           wm.restoreScrolling (wm.suggestionDiv)
           
@@ -1896,6 +1890,16 @@ var WikiMess = (function() {
             return wm.dealCard (dealConfig)
         })
       // end of showComposePage
+    },
+
+    throwOutConfidence: function (xOffset, yOffset, element) {
+      return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
+    },
+
+    isThrowOut: function (xOffset, yOffset, element, throwOutConfidence) {
+      var wm = this
+      var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm (wm.shareMessagePrompt))
+      return throwOut
     },
 
     dealHelpCard: function() {
@@ -2148,7 +2152,7 @@ var WikiMess = (function() {
     fadeCard: function (element, card) {
       var wm = this
       var fadedPromise = $.Deferred()
-      if (!element.hasClass ('helpcard'))
+      if (!element.hasClass ('helpcard') && wm.modalExitDiv)
         wm.modalExitDiv.show()
       element.find('*').off()
       card.destroy()
@@ -2967,6 +2971,42 @@ var WikiMess = (function() {
       var sender = message.sender || props.sender, recipient = message.recipient || props.recipient
       return wm.pushView ('read')
         .then (function() {
+          function reply() {
+            if ((message.next && message.next.length)
+                ? window.confirm('There is already a reply to this message. Do you really want to split the thread?')
+                : true) {
+              var replyTitle = message.title
+              if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+                replyTitle = 'Re: ' + replyTitle
+              wm.showComposePage
+              ({ recipient: message.sender,
+                 defaultToPublic: !props.replyDirect,
+                 title: replyTitle,
+                 previousMessage: message.id,
+                 previousTemplate: message.template,
+                 vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
+                 tags: '',
+                 previousTags: message.template ? (message.template.tags || '') : '',
+                 focus: 'messageTitleInput'
+               }).then (function() {
+                 wm.generateMessageBody()
+               })
+            }
+          }
+          function forward() {
+            wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
+              .then (function (templateResult) {
+                return wm.showComposePage
+                ({ title: message.title,
+                   template: templateResult.template,
+                   vars: wm.ParseTree.populateVarVal ($.extend ({}, message.vars, { you: null }), sender),
+                   body: message.body,
+                   previousMessage: message.id,
+                   tags: templateResult.template.tags || '',
+                   previousTags: templateResult.template.previousTags || '',
+                   focus: 'playerSearchInput' })
+              })
+          }
           wm.container
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
@@ -2974,46 +3014,43 @@ var WikiMess = (function() {
                      .append (wm.replyButton = wm.makeSubNavIcon ('reply',
                                                                   function (evt) {
                                                                     evt.stopPropagation()
-                                                                    if ((message.next && message.next.length)
-                                                                        ? window.confirm('There is already a reply to this message. Do you really want to split the thread?')
-                                                                        : true) {
-                                                                      var replyTitle = message.title
-                                                                      if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
-                                                                        replyTitle = 'Re: ' + replyTitle
-                                                                      wm.showComposePage
-                                                                      ({ recipient: message.sender,
-                                                                         defaultToPublic: !props.replyDirect,
-                                                                         title: replyTitle,
-                                                                         previousMessage: message.id,
-                                                                         previousTemplate: message.template,
-                                                                         vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
-                                                                         tags: '',
-                                                                         previousTags: message.template ? (message.template.tags || '') : '',
-                                                                         focus: 'messageTitleInput'
-                                                                       }).then (function() {
-                                                                         wm.generateMessageBody()
-                                                                       })
-                                                                    }
+                                                                    reply()
                                                                   }),
                               
                               wm.forwardButton = wm.makeSubNavIcon ('forward',
                                                                     function (evt) {
                                                                       evt.stopPropagation()
-                                                                      wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
-                                                                        .then (function (templateResult) {
-                                                                          return wm.showComposePage
-                                                                          ({ title: message.title,
-                                                                             template: templateResult.template,
-                                                                             vars: wm.ParseTree.populateVarVal ($.extend ({}, message.vars, { you: null }), sender),
-                                                                             body: message.body,
-                                                                             previousMessage: message.id,
-                                                                             tags: templateResult.template.tags || '',
-                                                                             previousTags: templateResult.template.previousTags || '',
-                                                                             focus: 'playerSearchInput' })
-                                                                        })
+                                                                      forward()
                                                                     }),
                               
                               props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : []))
+
+          var avatarDiv = $('<div class="avatar">')
+	  var textDiv = $('<div class="text">')
+	      .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
+									false,
+
+									message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))
+          var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
+          var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
+                                                          .append (avatarDiv, textDiv))
+          var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
+          wm.stackDiv = $('<div class="stack">').append (cardDiv)
+
+          var card = wm.stack.createCard (cardDiv[0])
+          function fadeAndExit() {
+            wm.fadeCard (cardDiv, card)
+              .then (function() {
+                wm.popView()
+              })
+          }
+          card.on ('throwout', fadeAndExit)
+          card.on ('dragstart', function() {
+            cardDiv.addClass ('dragging')
+          })
+          card.on ('throwinend', function() {
+            cardDiv.removeClass ('dragging')
+          })
 
           var other = message[props.object]
           wm.readMessageDiv
@@ -3044,14 +3081,13 @@ var WikiMess = (function() {
                                                 (message.next && message.next.length
                                                  ? $('<a href="#">').text('Next').on('click',wm.makeGetMessage (props, { id: message.next[0] }))
                                                  : 'Next')))),
-                     $('<div class="messagebody messageborder">')
-		     .append (avatarDiv = $('<div class="avatar">'),
-			      $('<div class="text">')
-			      .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
-											false,
-											message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))))
+                     $('<div class="messageborder">')
+                     .append (wm.stackDiv))
 	  if (message.tweeter)
 	    wm.addAvatarImage (avatarDiv, message.tweeter)
+          
+          if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
+            card.throwIn (0, -wm.throwYOffset())
         })
     },
 
