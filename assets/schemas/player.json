@@ -32,11 +32,14 @@
         "admin": {
           "type": "boolean"
         },
-        "human": {
-          "type": "boolean"
-        },
         "newSignUp": {
           "type": "boolean"
+        },
+        "twitterAccessToken": {
+          "type": "string"
+        },
+        "twitterAccessTokenSecret": {
+          "type": "string"
         }
       }
     }

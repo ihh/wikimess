@@ -38,19 +38,22 @@ function parseSymbolDefs (text, log) {
 function parseTemplateDefs (text, log) {
   log = log || defaultLog
   try {
-    var newTemplateDefReg = /^(>+)\s*(.*?)\s*(#\s*(.*?)\s*(#\s*(.*?)\s*|)|)$/;
+    var newTemplateDefReg = /^(@.*|)(>+)\s*(.*?)\s*(#\s*(.*?)\s*(#\s*(.*?)\s*|)|)$/;
     var templates = [], replyChain = [], currentTemplate, newTemplateDefMatch
     text.split(/\n/).forEach (function (line) {
       if (line.length) {
         if (currentTemplate)
           currentTemplate.content = currentTemplate.content.concat (parseRhs (line + '\n'))
         else if (newTemplateDefMatch = newTemplateDefReg.exec (line)) {
-          var depth = newTemplateDefMatch[1].length - 1,
-	      title = newTemplateDefMatch[2],
-	      prevTags = makeTagString (newTemplateDefMatch[4]),
-	      tags = makeTagString (newTemplateDefMatch[6])
+          var author = newTemplateDefMatch[1],
+              depth = newTemplateDefMatch[2].length - 1,
+	      title = newTemplateDefMatch[3],
+	      prevTags = makeTagString (newTemplateDefMatch[5]),
+	      tags = makeTagString (newTemplateDefMatch[7])
           var isRoot = !prevTags.match(/\S/) || (prevTags.search(' root ') >= 0)
+          author = author ? author.substr(1) : null
           currentTemplate = { title: title,
+                              author: author,
 			      previousTags: prevTags,
 			      tags: tags,
                               isRoot: isRoot,

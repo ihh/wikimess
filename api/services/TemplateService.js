@@ -22,9 +22,18 @@ module.exports = {
   createTemplate: function (config) {
     var replies = config.replies || []
     delete config.replies
+    
+    var authorPromise
+    if (typeof(config.author) === 'string')
+      authorPromise = Player.findOne ({ name: config.author })
+      .then (function (player) { config.author = player.id })
+    else
+      authorPromise = Promise.resolve()
 
-    return Template.create (config)
-      .then (function (template) {
+    return authorPromise
+      .then (function() {
+        return Template.create (config)
+      }).then (function (template) {
         if (!template)
           throw new Error ('error creating Template from ' + JSON.stringify(config))
         return Promise.map (replies, function (reply) {

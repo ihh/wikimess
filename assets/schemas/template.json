@@ -32,6 +32,12 @@
         "previousTags": {
           "type": "string"
         },
+        "author": {
+          "type": "string"
+        },
+        "isRoot": {
+          "type": "boolean"
+        },
         "replies": {
           "type": "array",
           "items": {

@@ -537,6 +537,10 @@ input {
     font-style: italic;
 }
 
+.wikimess .field .displayname {
+    font-size: 1.5vh;
+}
+
 .wikimess .follow .playerlink {
     padding: 4px;
     word-break: break-all;

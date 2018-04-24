@@ -369,9 +369,9 @@ function genericHandler (model) {
 }
 
 function getName (obj) { return obj.name }
-function hasName (obj) { return typeof(obj.name) === 'string' }
+function hasName (obj) { return obj && typeof(obj.name) === 'string' }
 function getTitle (obj) { return obj.title }
-function hasID (obj) { return typeof(obj.id) === 'number' || typeof(obj.id) === 'string' }
+function hasID (obj) { return obj && (typeof(obj.id) === 'number' || typeof(obj.id) === 'string') }
 function hasNameAndID (obj) { return hasName(obj) && hasID(obj) }
 
 function isArray(obj) {

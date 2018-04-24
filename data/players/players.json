@@ -1,17 +1,12 @@
 [
     {
-        name: "bot",
-        password: "test",
-        human: false
-    },
-    {
-        name: "fred",
-        password: "test",
+        name: "goodnewsgary",
+        password: "goodnews",
         newSignUp: false
     },
     {
-        name: "sheila",
-        password: "test",
+        name: "badnewsbess",
+        password: "badnews",
         newSignUp: false
     }
 ]

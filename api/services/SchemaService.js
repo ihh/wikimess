@@ -143,11 +143,17 @@ module.exports = {
           "admin": {
             "type": "boolean"
           },
-          "human": {
-            "type": "boolean"
+          "password": {
+            "type": "string"
           },
           "newSignUp": {
             "type": "boolean"
+          },
+          "twitterAccessToken": {
+            "type": "string"
+          },
+          "twitterAccessTokenSecret": {
+            "type": "string"
           }
         }
       }
@@ -187,6 +193,9 @@ module.exports = {
             "type": "string"
           },
           "previousTags": {
+            "type": "string"
+          },
+          "author": {
             "type": "string"
           },
           "isRoot": {

@@ -464,6 +464,14 @@ var WikiMess = (function() {
       return window.location.origin + '/define/' + symname
     },
 
+    makeTweetUrl: function (tweet) {
+      return 'https://twitter.com/statuses/' + tweet
+    },
+
+    redirectToTweet: function (tweet) {
+      window.location.replace (this.makeTweetUrl (tweet))
+    },
+
     // WebSockets interface
     socket_onPlayer: function (callback) {
       io.socket.on ('player', callback)
@@ -1298,9 +1306,13 @@ var WikiMess = (function() {
         })
     },
 
+    viewElements: function() {
+      return this.container.find(':not(.pushed)').filter(':not(.navbar,.navlabelspace)')
+        .filter (function() { return $(this).parents('.navbar,.navlabelspace').length === 0})
+    },
+
     pushView: function (newPage) {
-      var elements = this.container.find(':not(.pushed)').filter(':not(.navbar,.navlabelspace)')
-          .filter (function() { return $(this).parents('.navbar,.navlabelspace').length === 0})
+      var elements = this.viewElements()
       if (this.verbose.page)
 	console.log ("Pushing " + this.page + " view, going to " + newPage)
       var page = this.page
@@ -1640,13 +1652,17 @@ var WikiMess = (function() {
                         .then (function (result) {
                           return fadePromise.then (function() {
                             if (shareCallback)
-                              shareCallback ({ url: (result.message && result.message.path
-                                                     ? (window.location.origin + result.message.path)
-                                                     : undefined),
+                              shareCallback ({ url: (result.tweet
+                                                     ? wm.makeTweetUrl (result.tweet)
+                                                     : (result.message && result.message.path
+                                                        ? (window.location.origin + result.message.path)
+                                                        : undefined)),
                                                title: wm.composition.title,
                                                text: wm.ParseTree.makeExpansionText (wm.composition.body,
                                                                                      false,
                                                                                      wm.compositionVarVal()) })
+                            else if (result.tweet)
+                              wm.redirectToTweet (result.tweet)
                           })
                         }).then (function() {
                           if (preserveMessage) {
@@ -1898,7 +1914,7 @@ var WikiMess = (function() {
 
     isThrowOut: function (xOffset, yOffset, element, throwOutConfidence) {
       var wm = this
-      var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || window.confirm (wm.shareMessagePrompt))
+      var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || wm.page !== 'compose' || window.confirm (wm.shareMessagePrompt))
       return throwOut
     },
 
@@ -2957,7 +2973,7 @@ var WikiMess = (function() {
               result.message.next.push (message.addNextId)
           }
           props.showMessage ($.extend
-                             ({},
+                             ({ keepView: true },
                               props,
                               { result: result,
                                 destroy: deleteMessage }))
@@ -2969,7 +2985,13 @@ var WikiMess = (function() {
       var wm = this
       var message = props.result.message
       var sender = message.sender || props.sender, recipient = message.recipient || props.recipient
-      return wm.pushView ('read')
+      var pushPromise
+      if (props.keepView) {
+        wm.viewElements().remove()
+        pushPromise = $.Deferred().resolve()
+      } else
+        pushPromise = wm.pushView ('read')
+      return pushPromise
         .then (function() {
           function reply() {
             if ((message.next && message.next.length)
@@ -2986,8 +3008,7 @@ var WikiMess = (function() {
                  previousTemplate: message.template,
                  vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
                  tags: '',
-                 previousTags: message.template ? (message.template.tags || '') : '',
-                 focus: 'messageTitleInput'
+                 previousTags: message.template ? (message.template.tags || '') : ''
                }).then (function() {
                  wm.generateMessageBody()
                })
@@ -3041,10 +3062,25 @@ var WikiMess = (function() {
           function fadeAndExit() {
             wm.fadeCard (cardDiv, card)
               .then (function() {
-                wm.popView()
+                if (message.tweet)
+                  wm.redirectToTweet (message.tweet)
+                else
+                  wm.popView()
               })
           }
-          card.on ('throwout', fadeAndExit)
+          function fadeAndNext() {
+            wm.fadeCard (cardDiv, card)
+              .then (function() {
+                if (message.next && message.next.length)
+                  wm.makeGetMessage (props, { id: message.next[0] }) ()
+                else
+                  reply()
+              })
+          }
+          card.on ('throwoutleft', fadeAndExit)
+          card.on ('throwoutup', fadeAndExit)
+          card.on ('throwoutdown', fadeAndExit)
+          card.on ('throwoutright', fadeAndNext)
           card.on ('dragstart', function() {
             cardDiv.addClass ('dragging')
           })
