@@ -193,7 +193,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}, initVarVal, templateAuthor
+    var result = {}, notification = {}, initVarVal, templateAuthor, previousTweet
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -228,6 +228,7 @@ module.exports = {
         previousPromise = previousPromise
           .then (function (previousMessage) {
             initVarVal = parseTree.nextVarVal (previousMessage.body, previousMessage.initVarVal, player, recipient)
+            previousTweet = previousMessage.tweetId
           })
       }
       // find, or create, the template
@@ -307,8 +308,8 @@ module.exports = {
 	      })
 	      tweetPromise = new Promise (function (resolve, reject) {
 		var status = parseTree.makeExpansionText (body, false, initVarVal)
-		if (previous && previous.tweetId)
-		  tweet.in_reply_to_status_id = previous.tweetId
+		if (previousTweetId)
+		  tweet.in_reply_to_status_id = previousTweetId
 		if (recipientID === null) {
 		  var url = (sails.config.local.baseURL || 'http://localhost:1337') + result.message.path
 		  var statusWithUrl = status + (status.match(/\s$/) ? '' : ' ') + url
