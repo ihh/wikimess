@@ -143,7 +143,7 @@ var WikiMess = (function() {
                     locked: 'padlock',
                     hide: 'hide',
                     reroll: 'rolling-die',
-                    randomcard: 'card-random',
+                    reply: 'card-random',
                     dealcard: 'card-deal',
                     discard: 'card-hand',
                     close: 'close',
@@ -156,8 +156,8 @@ var WikiMess = (function() {
                     unfollow: 'trash-can',
                     search: 'magnifying-glass',
                     compose: 'quill',
-                    forward: 'forward',
-                    reply: 'reply',
+                    forward: 'up-card',
+                    reply: 'forward',
                     reload: 'refresh',
                     back: 'back',
                     dummy: 'dummy',
@@ -1797,20 +1797,20 @@ var WikiMess = (function() {
                                                                      rightText: 'accept' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.headerToggler.showButton,
-                      wm.headerToggler.hideButton,
-                      wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
+                     (wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
                         wm.discardAndRefresh()
                       }),
+                      wm.headerToggler.showButton,
+                      wm.headerToggler.hideButton,
                       wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
                         evt.stopPropagation()
 			wm.fadeAndDeleteDraft (wm.currentCardDiv, wm.currentCard) ()
                       }),
+                      wm.makeTipButton(),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
                                wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
-                      wm.makeTipButton(),
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
@@ -3095,6 +3095,7 @@ var WikiMess = (function() {
                    previousMessage: message.id,
                    tags: templateResult.template.tags || '',
                    previousTags: templateResult.template.previousTags || '',
+                   showHeader: true,
                    focus: 'playerSearchInput',
                    generateNewContent: true })
               })
@@ -3103,20 +3104,22 @@ var WikiMess = (function() {
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      wm.popBack()
-                     .append (wm.replyButton = wm.makeSubNavIcon ('reply',
-                                                                  function (evt) {
-                                                                    evt.stopPropagation()
-                                                                    reply()
-                                                                  }),
-                              
-                              wm.forwardButton = wm.makeSubNavIcon ('forward',
+                     .append (wm.forwardButton = wm.makeSubNavIcon ('forward',
                                                                     function (evt) {
                                                                       evt.stopPropagation()
                                                                       forward()
                                                                     }),
                               
-                              props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : []))
+                              props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : [],
+                              wm.replyButton = wm.makeSubNavIcon ('reply',
+                                                                  function (evt) {
+                                                                    evt.stopPropagation()
+                                                                    reply()
+                                                                  })))
 
+          if (wm.playerID === null)
+            wm.forwardButton.hide()
+          
           var avatarDiv = $('<div class="avatar">')
 	  var textDiv = $('<div class="text">')
 	      .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
@@ -3152,7 +3155,7 @@ var WikiMess = (function() {
               })
           }
           card.on ('throwoutleft', fadeAndExit)
-          card.on ('throwoutup', fadeAndExit)
+          card.on ('throwoutup', wm.playerID === null ? fadeAndExit : forward)
           card.on ('throwoutdown', fadeAndExit)
           card.on ('throwoutright', fadeAndNext)
           card.on ('dragstart', function() {
