@@ -171,8 +171,8 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
-           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
+    tabs: [{ name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
+           { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
