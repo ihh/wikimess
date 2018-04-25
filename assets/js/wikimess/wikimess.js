@@ -172,7 +172,7 @@ var WikiMess = (function() {
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
     tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
-           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven', },
+           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
@@ -935,7 +935,7 @@ var WikiMess = (function() {
           return
         wm.getIconPromise(tab.icon)
           .done (function (svg) {
-            svg = wm.colorizeIcon (svg, wm.themeInfo.navbarIconColor)
+            svg = wm.colorizeIcon (svg, tab.iconColor || wm.themeInfo.navbarIconColor)
             span.append ($('<div>').addClass('navlabel').text(tab.label || tab.name),
                          $(svg).addClass('navicon'))
 	    if (isMailbox)

@@ -629,6 +629,10 @@ input {
     border: 1px solid #888;
     box-sizing: border-box;
     text-align: center;
+
+    -webkit-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
 .wikimess .menubar .listitem {
@@ -1043,9 +1047,9 @@ background: -webkit-linear-gradient(-45deg, #d5cea6 0%,#c9c190 40%,#b7ad70 100%)
 background: linear-gradient(135deg, #d5cea6 0%,#c9c190 40%,#b7ad70 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d5cea6', endColorstr='#b7ad70',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
     border-color: #000;
-    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -webkit-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
 .wikimess .readmessage .stack .bodysectiontitle {
@@ -1065,9 +1069,9 @@ background: -webkit-linear-gradient(-45deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%)
 background: linear-gradient(135deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#feffff', endColorstr='#a0d8ef',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
     border-color: #000;
-    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -webkit-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
 .wikimess .stack .card.messagecard {
@@ -1078,9 +1082,9 @@ background: -webkit-linear-gradient(-45deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%)
 background: linear-gradient(135deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#feffff', endColorstr='#a0d8ef',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
     border-color: #000;
-    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -webkit-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
 .wikimess .stack .card.sentcard {
@@ -1090,9 +1094,9 @@ background: -moz-linear-gradient(-45deg, #fddeb5 0%, #f9c785 100%); /* FF3.6-15 
 background: -webkit-linear-gradient(-45deg, #fddeb5 0%,#f9c785 100%); /* Chrome10-25,Safari5.1-6 */
 background: linear-gradient(135deg, #fddeb5 0%,#f9c785 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fddeb5', endColorstr='#f9c785',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */    border-color: #000;
-    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
-    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -webkit-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
 .wikimess .stack .helpcard {
@@ -1103,9 +1107,9 @@ background: -webkit-linear-gradient(-45deg, #fed6fd 0%,#f8bff9 100%); /* Chrome1
 background: linear-gradient(135deg, #fed6fd 0%,#f8bff9 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', endColorstr='#f8bff9',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
     border-color: #800;
-    -webkit-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
-    -moz-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
-    box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
+    -webkit-box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
+    -moz-box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
+    box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
 .wikimess .stack .jiggle:not(.dragging) {
