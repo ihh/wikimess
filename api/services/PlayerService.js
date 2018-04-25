@@ -193,7 +193,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}, initVarVal, templateAuthor, previousTweeter, previousTweetId
+    var result = {}, notification = {}, initVarVal, templateAuthor, tweeter, previousTweeter, previousTweetId
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -269,6 +269,7 @@ module.exports = {
       return templatePromise.then (function (template) {
         result.template = { id: template.id }
 	templateAuthor = template.author
+        tweeter = templateAuthor ? templateAuthor.twitterScreenName : null
         // create the Message
         return Message.create ({ sender: playerID,
                                  recipient: recipientID,
@@ -277,7 +278,7 @@ module.exports = {
                                  previous: previous,
                                  title: title,
                                  initVarVal: initVarVal,
-				 tweeter: templateAuthor ? templateAuthor.twitterScreenName : null,
+				 tweeter: tweeter,
                                  body: body })
       }).then (function (message) {
         result.message = { id: message.id }
@@ -342,6 +343,7 @@ module.exports = {
 		if (tweetData) {
 		  var tweetId = tweetData.id_str
 		  result.message.tweet = tweetId
+		  result.message.tweeter = tweeter
 		  return Message.update ({ id: message.id },
 					 { tweetId: tweetId })
 		}
