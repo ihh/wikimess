@@ -193,7 +193,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}, initVarVal, templateAuthor, previousTweet
+    var result = {}, notification = {}, initVarVal, templateAuthor, previousTweetId
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -228,7 +228,7 @@ module.exports = {
         previousPromise = previousPromise
           .then (function (previousMessage) {
             initVarVal = parseTree.nextVarVal (previousMessage.body, previousMessage.initVarVal, player, recipient)
-            previousTweet = previousMessage.tweetId
+            previousTweetId = previousMessage.tweetId
           })
       }
       // find, or create, the template
