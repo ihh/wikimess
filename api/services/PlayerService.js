@@ -334,7 +334,7 @@ module.exports = {
 	    return tweetPromise
 	      .then (function (tweetData) {
 		if (tweetData) {
-		  var tweetId = tweetData.id.toString()
+		  var tweetId = tweetData.id_str
 		  result.message.tweet = tweetId
 		  return Message.update ({ id: message.id },
 					 { tweetId: tweetId })
