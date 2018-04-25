@@ -1794,7 +1794,7 @@ var WikiMess = (function() {
                               $('<div class="messageborder">')
                               .append (wm.stackDiv = $('<div class="stack">'),
                                        wm.makeThrowArrowContainer ({ leftText: 'discard',
-                                                                     rightText: 'accept' }))),
+                                                                     rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
