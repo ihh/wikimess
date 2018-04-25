@@ -1663,7 +1663,7 @@ var WikiMess = (function() {
                                                                                      false,
                                                                                      wm.compositionVarVal()) })
                             else if (result.message.tweet)
-                              wm.redirectToTweet (result.tweet)
+                              wm.redirectToTweet (result.message.tweet)
                           })
                         }).then (function() {
                           if (preserveMessage) {
