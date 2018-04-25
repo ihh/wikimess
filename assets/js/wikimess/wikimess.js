@@ -1859,12 +1859,12 @@ var WikiMess = (function() {
           var getRandomTemplate, generateNewContent
           if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs))
             wm.composition.body = config.body
-          else if (config.template)
+          else if (config.generateNewContent || config.template)
             generateNewContent = true
-          else if (!(wm.composition.body && wm.composition.body.rhs && !wm.ParseTree.parseTreeEmpty (wm.composition.body.rhs)))
+          else if (config.getRandomTemplate || !(wm.composition.body && wm.composition.body.rhs && !wm.ParseTree.parseTreeEmpty (wm.composition.body.rhs)))
             getRandomTemplate = true
 
-          if (config.focus || config.click)
+          if (config.focus || config.click || config.showHeader)
             wm.headerToggler.show()
           if (config.focus)
             wm[config.focus].focus().trigger ('click')
@@ -2736,7 +2736,8 @@ var WikiMess = (function() {
       case 'compose':
         promise = this.showComposePage ({ recipient: config.recipient,
                                           title: config.title,
-                                          template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) } })
+                                          template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) },
+                                          generateNewContent: true })
         break
       case 'grammar':
         wm.container.hide()
@@ -3078,7 +3079,8 @@ var WikiMess = (function() {
                  previousTemplate: message.template,
                  vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
                  tags: '',
-                 previousTags: message.template ? (message.template.tags || '') : ''
+                 previousTags: message.template ? (message.template.tags || '') : '',
+                 getRandomTemplate: true
                })
             }
           }
@@ -3093,7 +3095,8 @@ var WikiMess = (function() {
                    previousMessage: message.id,
                    tags: templateResult.template.tags || '',
                    previousTags: templateResult.template.previousTags || '',
-                   focus: 'playerSearchInput' })
+                   focus: 'playerSearchInput',
+                   generateNewContent: true })
               })
           }
           wm.container
@@ -3295,7 +3298,8 @@ var WikiMess = (function() {
                                                                  .then (function (templateResult) {
                                                                    wm.showComposePage ({ title: template.title,
                                                                                          template: templateResult.template,
-                                                                                         focus: 'playerSearchInput' }) }) })
+                                                                                         focus: 'playerSearchInput',
+                                                                                         generateNewContent: true }) }) })
                                                              .append ($('<span class="title">')
                                                                       .text (template.title || 'Untitled'),
                                                                       $('<span class="by">').append
@@ -3785,7 +3789,8 @@ var WikiMess = (function() {
             ({ template: { content: [ symbol ] },
                title: wm.symbolName[symbol.id].replace(/_/g,' '),
                body: expansion ? { type: 'root', rhs: [expansion] } : undefined,
-               focus: 'playerSearchInput' })
+               focus: 'playerSearchInput',
+               generateNewContent: true })
             })
         }
       }
@@ -4682,7 +4687,8 @@ var WikiMess = (function() {
 								.then (function (templateResult) {
 								  wm.showComposePage ({ title: template.title,
 											template: templateResult.template,
-											focus: 'playerSearchInput' }) }) }))
+											focus: 'playerSearchInput',
+                                                                                        generateNewContent: true }) }) }))
 					       }))
               })
 
