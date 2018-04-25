@@ -137,16 +137,17 @@ var WikiMess = (function() {
                     minus: 'circle-minus',
                     up: 'up-arrow-button',
                     down: 'down-arrow-button',
+                    swipeleft: 'left-triangle',
+                    swiperight: 'right-triangle',
                     help: 'help',
                     locked: 'padlock',
                     hide: 'hide',
                     reroll: 'rolling-die',
                     randomcard: 'card-random',
                     dealcard: 'card-deal',
-                    shuffle: 'card-hand',
+                    retry: 'card-hand',
                     close: 'close',
-                    send: 'send',
-                    share: 'share',
+                    share: 'send',
                     inbox: 'inbox',
                     outbox: 'outbox',
                     drafts: 'scroll-unfurled',
@@ -1453,7 +1454,7 @@ var WikiMess = (function() {
 
           // autosuggest for textarea (typing with keyboard)
           wm.textareaAutosuggest = function (input) {
-            input.focus()  // in case we were triggered by player hitting 'shuffle' button
+            input.focus()  // in case we were triggered by player hitting 'retry' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1628,7 +1629,7 @@ var WikiMess = (function() {
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
                     else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
-                      window.alert ("Expanded text is empty. Please vary the input text, or shuffle to generate a new random expanded text.")
+                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'retry' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
                     else {
@@ -1717,6 +1718,7 @@ var WikiMess = (function() {
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendHandler ({ fade: true, callback: tweetIntent }), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
                          if (wm.useThrowAnimations()) {
+                           wm.throwArrowContainer.hide()
                            wm.currentCardDiv.addClass ('dragging')
                            wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
                          } else
@@ -1786,12 +1788,14 @@ var WikiMess = (function() {
                                        .text('Suggestions'),
                                        wm.suggestionDiv = $('<div class="suggest">')),
                               $('<div class="messageborder">')
-                              .append (wm.stackDiv = $('<div class="stack">'))),
+                              .append (wm.stackDiv = $('<div class="stack">'),
+                                       wm.makeThrowArrowContainer ({ leftText: 'retry',
+                                                                     rightText: 'accept' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.headerToggler.showButton,
                       wm.headerToggler.hideButton,
-                      wm.randomizeButton = wm.makeSubNavIcon ('shuffle', function (evt) {
+                      wm.randomizeButton = wm.makeSubNavIcon ('retry', function (evt) {
                         evt.stopPropagation()
                         wm.throwAndRefresh()
                       }),
@@ -1801,7 +1805,7 @@ var WikiMess = (function() {
                       }),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
-                               wm.shareButton = wm.makeSubNavIcon ('send', toggleSharePane).addClass('sharepanebutton')),
+                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
                       wm.makeTipButton(),
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
@@ -1871,6 +1875,7 @@ var WikiMess = (function() {
 
           if (config.showHelpCard) {
             wm.headerToggler.hide()
+            wm.throwArrowContainer.hide()
             wm.subnavbar.addClass ('help')
             var card
             var cardDiv = $('<div class="helpcard">')
@@ -1898,6 +1903,7 @@ var WikiMess = (function() {
               wm.fadeAndDealCard (cardDiv, card, dealConfig)
                 .then (function() {
                   wm.subnavbar.removeClass ('help')
+                  wm.throwArrowContainer.show()
                 })
             }
             card.on ('throwout', swipe)
@@ -1907,6 +1913,19 @@ var WikiMess = (function() {
             return wm.dealCard (dealConfig)
         })
       // end of showComposePage
+    },
+
+    makeThrowArrowContainer: function (config) {
+      var wm = this
+      return wm.throwArrowContainer = $('<div class="arrowcontainer">')
+        .append ($('<div class="arrowstripe leftarrowstripe">')
+                 .append ($('<div class="arrowplustext">')
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', null, 'darkgreen')),
+                                   $('<div class="text">').text (config.leftText))),
+                 $('<div class="arrowstripe rightarrowstripe">')
+                 .append ($('<div class="arrowplustext">')
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', null, 'darkgreen')),
+                                   $('<div class="text">').text (config.rightText))))
     },
 
     throwOutConfidence: function (xOffset, yOffset, element) {
@@ -1954,8 +1973,8 @@ var WikiMess = (function() {
     addToStack: function (cardDiv) {
       var wm = this
       wm.stackDiv.append (cardDiv)
-      cardDiv.width (wm.stackDiv.innerWidth() - parseInt(cardDiv.css('border-left-width')) - parseInt(cardDiv.css('border-right-width')) - parseInt(cardDiv.css('padding-left')) - parseInt(cardDiv.css('padding-right')))
-      cardDiv.height (wm.stackDiv.innerHeight() - parseInt(cardDiv.css('border-top-width')) - parseInt(cardDiv.css('border-bottom-width')) - parseInt(cardDiv.css('padding-top')) - parseInt(cardDiv.css('padding-bottom')))
+      cardDiv.width (wm.stackDiv.innerWidth() - parseInt(wm.stackDiv.css('padding-left')) - parseInt(wm.stackDiv.css('padding-right')) - parseInt(cardDiv.css('border-left-width')) - parseInt(cardDiv.css('border-right-width')) - parseInt(cardDiv.css('padding-left')) - parseInt(cardDiv.css('padding-right')))
+      cardDiv.height (wm.stackDiv.innerHeight() - parseInt(wm.stackDiv.css('padding-top')) - parseInt(wm.stackDiv.css('padding-bottom')) - parseInt(cardDiv.css('border-top-width')) - parseInt(cardDiv.css('border-bottom-width')) - parseInt(cardDiv.css('padding-top')) - parseInt(cardDiv.css('padding-bottom')))
     },
     
     deleteDraft: function() {
@@ -2046,10 +2065,12 @@ var WikiMess = (function() {
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
       card.on ('dragstart', function() {
+        wm.throwArrowContainer.hide()
         cardDiv.addClass ('dragging')
       })
       card.on ('throwinend', function() {
         cardDiv.removeClass ('dragging')
+        wm.throwArrowContainer.show()
         wm.modalExitDiv.hide()
       })
 
@@ -2081,6 +2102,7 @@ var WikiMess = (function() {
       return contentPromise
 	.then (function() {
           cardDiv.show()
+          wm.throwArrowContainer.show()
 	  // throw-in effect
 	  if (wm.useThrowAnimations() && !config.noThrowIn) {
             cardDiv.addClass ('dragging')
@@ -2096,6 +2118,7 @@ var WikiMess = (function() {
 
     fadeAndDealCard: function (cardDiv, card, dealConfig) {
       var wm = this
+      wm.throwArrowContainer.hide()
       return wm.dealCard ($.extend ({ generate: true,
                                       stackReady: wm.fadeCard (cardDiv, card) },
                                     dealConfig || {}))
@@ -2104,6 +2127,7 @@ var WikiMess = (function() {
     fadeDealAndRefresh: function (cardDiv, card, dealConfig) {
       var wm = this
       return function() {
+        wm.throwArrowContainer.hide()
         return wm.fadeAndDealCard (cardDiv, card, dealConfig)
           .then (wm.refreshAutosuggest.bind (wm))
       }
@@ -2112,6 +2136,7 @@ var WikiMess = (function() {
     fadeAndDeleteDraft: function (cardDiv, card) {
       var wm = this
       return function() {
+        wm.throwArrowContainer.hide()
         if (wm.composition.randomTemplate || window.confirm (wm.deleteDraftPrompt)) {
           if (wm.composition.randomTemplate)
             return wm.fadeAndDealCard (cardDiv, card)
@@ -2126,6 +2151,7 @@ var WikiMess = (function() {
     fadeAndSendMessage: function (cardDiv, card) {
       var wm = this
       return function() {
+        wm.throwArrowContainer.hide()
         return wm.sendMessage ({ fade: true, cardDiv: cardDiv, card: card })
       }
     },
@@ -2134,6 +2160,7 @@ var WikiMess = (function() {
       var wm = this
       return function() {
 	wm.destroyCard (cardDiv, card)
+        wm.throwArrowContainer.hide()
         return wm.dealCard ({ generate: false,
 		              alwaysAnimate: wm.headerToggler.hidden })
 	  .then (wm.headerToggler.toggle)
@@ -2150,6 +2177,7 @@ var WikiMess = (function() {
 
     throwAndRefresh: function() {
       wm.modalExitDiv.show()
+      wm.throwArrowContainer.hide()
       var nextCardPromise
       if (wm.useThrowAnimations()) {
         nextCardPromise = wm.nextDealPromise
@@ -2664,7 +2692,10 @@ var WikiMess = (function() {
               .then (function() {
                 return wm.showMessage ($.extend ({ result: result,
                                                    recipient: null,
-                                                   cardClass: 'messagecard' },
+                                                   cardClass: (result.message.recipient
+                                                               ? 'messagecard'
+                                                               : 'broadcastcard'),
+                                                   pushView: true },
                                                  wm.broadcastProps()))
               }).then (function() {
                 // presentation hack: monkey-patch the message container
@@ -2782,7 +2813,8 @@ var WikiMess = (function() {
                                  anon: 'Everyone',
                                  showMessage: function (props) {
                                    wm.showMessage ($.extend ({ sender: wm.playerInfo,
-                                                               cardClass: 'sentcard' },
+                                                               cardClass: 'sentcard',
+                                                               pushView: true },
                                                              props))
                                  }
                                })
@@ -2841,7 +2873,8 @@ var WikiMess = (function() {
                anon: this.anonGuest,
                showMessage: function (props) {
                  wm.showMessage ($.extend ({ recipient: null,
-                                             cardClass: 'broadcastcard' },
+                                             cardClass: 'broadcastcard',
+                                             pushView: true },
                                            props))
                }
              }
@@ -2859,7 +2892,9 @@ var WikiMess = (function() {
                object: 'sender',
                replyDirect: true,
                showMessage: function (props) {
-                 wm.showMessage ($.extend ({ recipient: wm.playerInfo },
+                 wm.showMessage ($.extend ({ recipient: wm.playerInfo,
+                                             cardClass: 'messagecard',
+                                             pushView: true },
                                            props))
                    .then (function() {
                      var message = props.result.message
@@ -2947,12 +2982,12 @@ var WikiMess = (function() {
                     ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
                     : []),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (props.anon || ('No '+props.object))))
-          .on ('click', wm.makeGetMessage (props, message, deleteMessage))
+          .on ('click', wm.makeGetMessage (props, message, deleteMessage, true))
       div.addClass (message.unread ? 'unread' : 'read')
       return div
     },
 
-    makeGetMessage: function (props, message, deleteMessage) {
+    makeGetMessage: function (props, message, deleteMessage, pushView) {
       return function (evt) {
         if (evt)
           evt.preventDefault()
@@ -2978,7 +3013,7 @@ var WikiMess = (function() {
               result.message.next.push (message.addNextId)
           }
           props.showMessage ($.extend
-                             ({ keepView: true },
+                             ({ pushView: pushView },
                               props,
                               { result: result,
                                 destroy: deleteMessage }))
@@ -2991,11 +3026,12 @@ var WikiMess = (function() {
       var message = props.result.message
       var sender = message.sender || props.sender, recipient = message.recipient || props.recipient
       var pushPromise
-      if (props.keepView) {
+      if (props.pushView)
+        pushPromise = wm.pushView ('read')
+      else {
         wm.viewElements().remove()
         pushPromise = $.Deferred().resolve()
-      } else
-        pushPromise = wm.pushView ('read')
+      }
       return pushPromise
         .then (function() {
           function reply() {
@@ -3091,9 +3127,11 @@ var WikiMess = (function() {
           card.on ('throwoutright', fadeAndNext)
           card.on ('dragstart', function() {
             cardDiv.addClass ('dragging')
+            wm.throwArrowContainer.hide()
           })
           card.on ('throwinend', function() {
             cardDiv.removeClass ('dragging')
+            wm.throwArrowContainer.show()
           })
 
           var other = message[props.object]
@@ -3126,7 +3164,9 @@ var WikiMess = (function() {
                                                  ? $('<a href="#">').text('Next').on('click',wm.makeGetMessage (props, { id: message.next[0] }))
                                                  : 'Next')))),
                      $('<div class="messageborder">')
-                     .append (wm.stackDiv))
+                     .append (wm.stackDiv,
+                              wm.makeThrowArrowContainer ({ leftText: 'ignore',
+                                                            rightText: (message.next && message.next.length ? 'next' : 'reply') })))
 	  if (message.tweeter)
 	    wm.addAvatarImage (avatarDiv, message.tweeter)
           
@@ -3738,8 +3778,8 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ('shuffle'),
-                           $('<div class="hint">').text('shuffle'))
+                  .append (wm.makeIconButton ('retry'),
+                           $('<div class="hint">').text('retry'))
                   .off('click')
                   .on('click',randomize)
                 wm.infoPaneRightControls

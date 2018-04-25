@@ -907,7 +907,7 @@ input {
     display: flex;
     flex-direction: column;
     overflow-wrap: break-word;
-    margin: 4px 20px;
+    position: relative;
 }
 
 .wikimess .popular .templates,
@@ -919,6 +919,7 @@ input {
 
 .wikimess .readmessage .messageborder {
     margin: 2px;
+    position: relative;
 }
 
 .wikimess .bodysectiontitle {
@@ -990,6 +991,7 @@ input {
     flex-direction: column;
     z-index: 6;
     position: relative;
+    padding: 4px 20px;
 }
 
 .wikimess .stack .card {
@@ -1128,6 +1130,112 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     97% { transform: rotate(1deg); }
     99% { transform: rotate(-0.5deg); }
     100% { transform: rotate(0deg); }
+}
+
+.wikimess .arrowcontainer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    z-index: 30;
+    pointer-events: none;
+}
+
+.wikimess .arrowcontainer .arrowstripe {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.wikimess .arrowcontainer .arrowstripe .arrowplustext {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.wikimess .arrowcontainer .arrowstripe .arrowplustext .arrow {
+    width: 10vh;
+    height: 10vh;
+}
+
+.wikimess .arrowcontainer .arrowstripe .arrowplustext .text {
+    position: absolute;
+    font-size: 2vh;
+    top: 5vh;
+    margin-top: -1.5vh;
+    color: white;
+}
+
+.wikimess .arrowcontainer .leftarrowstripe .arrowplustext .text {
+    text-align: right;
+    right: .5vh;
+}
+
+.wikimess .arrowcontainer .rightarrowstripe .arrowplustext .text {
+    text-align: left;
+    left: .5vh;
+}
+
+.wikimess .arrowcontainer .leftarrowstripe .arrowplustext {
+    animation: slideleft 10s linear 0s infinite;
+    -moz-animation: slideleft 10s linear 0s infinite;
+    -webkit-animation: slideleft 10s linear 0s infinite;
+}
+
+@-webkit-keyframes slideleft {
+    0% { left: 2vh; opacity: 0; }
+    20% { left: 2vh; opacity: 0; }
+    25% { left: 0vh; opacity: .5; }
+    50% { left: -10vh; opacity: 0; }
+    100% { left: -10vh; opacity: 0; }
+}
+
+@-moz-keyframes slideleft {
+    0% { left: 2vh; opacity: 0; }
+    20% { left: 2vh; opacity: 0; }
+    25% { left: 0vh; opacity: .5; }
+    50% { left: -10vh; opacity: 0; }
+    100% { left: -10vh; opacity: 0; }
+}
+
+@keyframes slideleft {
+    0% { left: 2vh; opacity: 0; }
+    20% { left: 2vh; opacity: 0; }
+    25% { left: 0vh; opacity: .5; }
+    50% { left: -10vh; opacity: 0; }
+    100% { left: -10vh; opacity: 0; }
+}
+
+.wikimess .arrowcontainer .rightarrowstripe .arrowplustext {
+    animation: slideright 10s linear 0s infinite;
+    -moz-animation: slideright 10s linear 0s infinite;
+    -webkit-animation: slideright 10s linear 0s infinite;
+}
+
+@-webkit-keyframes slideright {
+    0% { right: 2vh; opacity: 0; }
+    20% { right: 2vh; opacity: 0; }
+    25% { right: 0vh; opacity: .5; }
+    50% { right: -10vh; opacity: 0; }
+    100% { right: -10vh; opacity: 0; }
+}
+
+@-moz-keyframes slideright {
+    0% { right: 2vh; opacity: 0; }
+    20% { right: 2vh; opacity: 0; }
+    25% { right: 0vh; opacity: .5; }
+    50% { right: -10vh; opacity: 0; }
+    100% { right: -10vh; opacity: 0; }
+}
+
+@keyframes slideright {
+    0% { right: 2vh; opacity: 0; }
+    20% { right: 2vh; opacity: 0; }
+    25% { right: 0vh; opacity: .5; }
+    50% { right: -10vh; opacity: 0; }
+    100% { right: -10vh; opacity: 0; }
 }
 
 .wikimess .inner {
