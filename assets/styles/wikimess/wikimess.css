@@ -1160,6 +1160,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     height: 10vh;
 }
 
+.wikimess .arrowcontainer .arrowstripe .arrowplustext .arrow svg {
+    pointer-events: fill;
+}
+
 .wikimess .arrowcontainer .arrowstripe .arrowplustext .text {
     position: absolute;
     font-size: 2vh;

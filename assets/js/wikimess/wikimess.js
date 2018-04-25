@@ -145,7 +145,7 @@ var WikiMess = (function() {
                     reroll: 'rolling-die',
                     randomcard: 'card-random',
                     dealcard: 'card-deal',
-                    retry: 'card-hand',
+                    discard: 'card-hand',
                     close: 'close',
                     share: 'send',
                     inbox: 'inbox',
@@ -467,6 +467,10 @@ var WikiMess = (function() {
 
     makeTweetUrl: function (tweeter, tweet) {
       return 'https://twitter.com/' + tweeter + '/status/' + tweet
+    },
+
+    makeTweeterUrl: function (tweeter) {
+      return 'https://twitter.com/' + tweeter
     },
 
     redirectToTweet: function (tweeter, tweet) {
@@ -1454,7 +1458,7 @@ var WikiMess = (function() {
 
           // autosuggest for textarea (typing with keyboard)
           wm.textareaAutosuggest = function (input) {
-            input.focus()  // in case we were triggered by player hitting 'retry' button
+            input.focus()  // in case we were triggered by player hitting 'discard' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1629,7 +1633,7 @@ var WikiMess = (function() {
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
                     else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
-                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'retry' to generate a new random expanded text.")
+                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'discard' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
                     else {
@@ -1789,15 +1793,15 @@ var WikiMess = (function() {
                                        wm.suggestionDiv = $('<div class="suggest">')),
                               $('<div class="messageborder">')
                               .append (wm.stackDiv = $('<div class="stack">'),
-                                       wm.makeThrowArrowContainer ({ leftText: 'retry',
+                                       wm.makeThrowArrowContainer ({ leftText: 'discard',
                                                                      rightText: 'accept' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.headerToggler.showButton,
                       wm.headerToggler.hideButton,
-                      wm.randomizeButton = wm.makeSubNavIcon ('retry', function (evt) {
+                      wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
-                        wm.throwAndRefresh()
+                        wm.discardAndRefresh()
                       }),
                       wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
                         evt.stopPropagation()
@@ -1917,15 +1921,17 @@ var WikiMess = (function() {
 
     makeThrowArrowContainer: function (config) {
       var wm = this
-      return wm.throwArrowContainer = $('<div class="arrowcontainer">')
+      var leftArrow = $('<div class="arrowplustext">'), rightArrow = $('<div class="arrowplustext">')
+      wm.throwArrowContainer = $('<div class="arrowcontainer">')
         .append ($('<div class="arrowstripe leftarrowstripe">')
-                 .append ($('<div class="arrowplustext">')
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', null, 'darkgreen')),
+                 .append (leftArrow
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (leftArrow, wm.throwLeft), 'darkgreen')),
                                    $('<div class="text">').text (config.leftText))),
                  $('<div class="arrowstripe rightarrowstripe">')
-                 .append ($('<div class="arrowplustext">')
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', null, 'darkgreen')),
+                 .append (rightArrow
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (rightArrow, wm.throwRight), 'darkgreen')),
                                    $('<div class="text">').text (config.rightText))))
+      return wm.throwArrowContainer
     },
 
     throwOutConfidence: function (xOffset, yOffset, element) {
@@ -2175,14 +2181,36 @@ var WikiMess = (function() {
       wm.autosuggestStatus.refresh()
     },
 
-    throwAndRefresh: function() {
+    ifOpaque: function (element, func) {
+      var wm = this
+      return function (event) {
+        event.stopPropagation()
+        if (element.css('opacity') > 0)
+          func.call (wm, event)
+      }
+    },
+    
+    throwLeft: function() {
+      var wm = this
+      wm.throwArrowContainer.hide()
+      wm.currentCardDiv.addClass ('dragging')
+      wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+    },
+
+    throwRight: function() {
+      var wm = this
+      wm.throwArrowContainer.hide()
+      wm.currentCardDiv.addClass ('dragging')
+      wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
+    },
+
+    discardAndRefresh: function() {
       wm.modalExitDiv.show()
       wm.throwArrowContainer.hide()
       var nextCardPromise
       if (wm.useThrowAnimations()) {
         nextCardPromise = wm.nextDealPromise
-        wm.currentCardDiv.addClass ('dragging')
-        wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+        wm.throwLeft()
       } else
         nextCardPromise = wm.dealCard ({ generate: true,
                                          stackReady: wm.fadeCard (wm.currentCardDiv, wm.currentCard) })
@@ -2594,7 +2622,7 @@ var WikiMess = (function() {
                       }
 	            })
                     wm.composition.body = { type: 'root', rhs: sampledTree }
-                    wm.showMessageBody ({ animate: true })
+                    wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
                   } else
                     wm.showMessageBody()
                 })
@@ -2605,7 +2633,8 @@ var WikiMess = (function() {
 
     addAvatarImage: function (div, tweeter, size) {
       if (tweeter)
-	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
+	div.append ($('<a href="' + this.makeTweeterUrl (tweeter) + '">')
+                    .html ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original'))))
     },
     
     showMessageBody: function (config) {
@@ -3050,8 +3079,6 @@ var WikiMess = (function() {
                  vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
                  tags: '',
                  previousTags: message.template ? (message.template.tags || '') : ''
-               }).then (function() {
-                 wm.generateMessageBody()
                })
             }
           }
@@ -3133,6 +3160,9 @@ var WikiMess = (function() {
             cardDiv.removeClass ('dragging')
             wm.throwArrowContainer.show()
           })
+
+          wm.currentCardDiv = cardDiv
+          wm.currentCard = card
 
           var other = message[props.object]
           wm.readMessageDiv
@@ -3778,8 +3808,8 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ('retry'),
-                           $('<div class="hint">').text('retry'))
+                  .append (wm.makeIconButton ('discard'),
+                           $('<div class="hint">').text('discard'))
                   .off('click')
                   .on('click',randomize)
                 wm.infoPaneRightControls

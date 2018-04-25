@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <g>
-  <path fill="#fff" d="M0,256L512,512L512,0z"/>
+  <path class="svg_left_triangle" fill="#fff" d="M0,256L512,512L512,0z"/>
 </g>
 </svg>
