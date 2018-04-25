@@ -53,19 +53,6 @@
     border-color: #666;
 }
 
-.wikimess.plain .stack .card {
-    background-color: #fff;
-    border-color: #000;
-}
-
-.wikimess.plain .stack .helpcard {
-    background: #eee;
-}
-
-.wikimess.plain .bodysectiontitle {
-    background-color: #eee;
-}
-
 .wikimess.plain .suggest {
     background-color: #eee;
     border-color: #444;

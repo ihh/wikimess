@@ -999,10 +999,105 @@ input {
     border-radius: 2vh;
     border-width: 1px;
     border-style: solid;
+}
 
+.wikimess .stack .helpcard {
+    position: absolute;
+
+    /* the following width and height are just defaults, they will be reset by the JavaScript */
+    width: 90%;
+    height: 90%;
+    
+    display: flex;
+    flex-direction: column;
+
+    border-radius: 2vh;
+    border-width: 2px;
+    border-style: solid;
+
+    justify-content: center;
+}
+
+.wikimess .compose .stack .bodysectiontitle {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#fefcea+0,f1da36+100;Gold+3D */
+background: #fefcea; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #fefcea 0%, #f1da36 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #fefcea 0%,#f1da36 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #fefcea 0%,#f1da36 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fefcea', endColorstr='#f1da36',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+}
+
+.wikimess .stack .card.composecard {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#d5cea6+0,c9c190+40,b7ad70+100;Brown+3D */
+background: #d5cea6; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #d5cea6 0%, #c9c190 40%, #b7ad70 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #d5cea6 0%,#c9c190 40%,#b7ad70 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #d5cea6 0%,#c9c190 40%,#b7ad70 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d5cea6', endColorstr='#b7ad70',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+    border-color: #000;
     -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
     -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
     box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+}
+
+.wikimess .readmessage .stack .bodysectiontitle {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,a8a8a8+100 */
+background: #ffffff; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #ffffff 0%, #a8a8a8 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #ffffff 0%,#a8a8a8 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #ffffff 0%,#a8a8a8 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#a8a8a8',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+}
+
+.wikimess .stack .card.broadcastcard {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#feffff+0,ddf1f9+35,a0d8ef+100;Blue+3D+%2318 */
+background: #feffff; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #feffff 0%, #ddf1f9 35%, #a0d8ef 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#feffff', endColorstr='#a0d8ef',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+    border-color: #000;
+    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+}
+
+.wikimess .stack .card.messagecard {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#feffff+0,ddf1f9+35,a0d8ef+100;Blue+3D+%2318 */
+background: #feffff; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #feffff 0%, #ddf1f9 35%, #a0d8ef 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #feffff 0%,#ddf1f9 35%,#a0d8ef 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#feffff', endColorstr='#a0d8ef',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+    border-color: #000;
+    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+}
+
+.wikimess .stack .card.sentcard {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#fddeb5+0,f9c785+100 */
+background: #fddeb5; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #fddeb5 0%, #f9c785 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #fddeb5 0%,#f9c785 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #fddeb5 0%,#f9c785 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fddeb5', endColorstr='#f9c785',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */    border-color: #000;
+    -webkit-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    -moz-box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: -2px 2px 1px 1px rgba(0,0,0,0.3);
+}
+
+.wikimess .stack .helpcard {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#fed6fd+0,f8bff9+100 */
+background: #fed6fd; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #fed6fd 0%, #f8bff9 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #fed6fd 0%,#f8bff9 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #fed6fd 0%,#f8bff9 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', endColorstr='#f8bff9',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+    border-color: #800;
+    -webkit-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
+    -moz-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
+    box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
 .wikimess .stack .jiggle:not(.dragging) {
@@ -1033,29 +1128,6 @@ input {
     97% { transform: rotate(1deg); }
     99% { transform: rotate(-0.5deg); }
     100% { transform: rotate(0deg); }
-}
-
-.wikimess .stack .helpcard {
-    position: absolute;
-
-    /* the following width and height are just defaults, they will be reset by the JavaScript */
-    width: 90%;
-    height: 90%;
-    
-    display: flex;
-    flex-direction: column;
-
-    border-radius: 2vh;
-    border-width: 2px;
-    border-style: solid;
-
-    justify-content: center;
-
-    border-color: #800;
-    
-    -webkit-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
-    -moz-box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
-    box-shadow: -2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
 .wikimess .inner {

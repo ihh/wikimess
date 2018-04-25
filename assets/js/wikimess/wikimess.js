@@ -1892,6 +1892,7 @@ var WikiMess = (function() {
                                   $('<br>'),
                                   $('<em>').text('to begin')))
 	    wm.addToStack (cardDiv)
+            // create the swing card object for the initial help card
             card = wm.stack.createCard (cardDiv[0])
             function swipe() {
               wm.fadeAndDealCard (cardDiv, card, dealConfig)
@@ -1935,6 +1936,7 @@ var WikiMess = (function() {
 	    .removeAttr ('style')
 	    .addClass ('helpcard')
 	wm.addToStack (cardDiv)
+        // create the swing card object for the random help card
 	var card = wm.stack.createCard (cardDiv[0])
 	function swipe() {
           wm.fadeCard (cardDiv, card)
@@ -1990,7 +1992,7 @@ var WikiMess = (function() {
       var messageBodyElem = wm.messageBodyDiv[0]
 
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv)
-      var cardDiv = $('<div class="card">').append (expansionRow, innerDiv)
+      var cardDiv = $('<div class="card composecard">').append (expansionRow, innerDiv)
       if (wm.isTouchDevice())
         cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
 
@@ -2037,7 +2039,7 @@ var WikiMess = (function() {
       })
       wm.showScrollButtons = showScrollButtons
 
-      // create the swing card
+      // create the swing card object for the compose card
       var card = wm.stack.createCard (cardDiv[0])
       card.on ('throwoutleft', wm.fadeDealAndRefresh (cardDiv, card))
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
@@ -2661,7 +2663,8 @@ var WikiMess = (function() {
             return wm.showStatusPage()
               .then (function() {
                 return wm.showMessage ($.extend ({ result: result,
-                                                   recipient: null },
+                                                   recipient: null,
+                                                   cardClass: 'messagecard' },
                                                  wm.broadcastProps()))
               }).then (function() {
                 // presentation hack: monkey-patch the message container
@@ -2778,7 +2781,8 @@ var WikiMess = (function() {
                                  object: 'recipient',
                                  anon: 'Everyone',
                                  showMessage: function (props) {
-                                   wm.showMessage ($.extend ({ sender: wm.playerInfo },
+                                   wm.showMessage ($.extend ({ sender: wm.playerInfo,
+                                                               cardClass: 'sentcard' },
                                                              props))
                                  }
                                })
@@ -2836,7 +2840,8 @@ var WikiMess = (function() {
                object: 'sender',
                anon: this.anonGuest,
                showMessage: function (props) {
-                 wm.showMessage ($.extend ({ recipient: null },
+                 wm.showMessage ($.extend ({ recipient: null,
+                                             cardClass: 'broadcastcard' },
                                            props))
                }
              }
@@ -3056,8 +3061,11 @@ var WikiMess = (function() {
           var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
                                                           .append (avatarDiv, textDiv))
           var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
+          if (props.cardClass)
+            cardDiv.addClass (props.cardClass)
           wm.stackDiv = $('<div class="stack">').append (cardDiv)
 
+          // create the swing card object for the read message card
           var card = wm.stack.createCard (cardDiv[0])
           function fadeAndExit() {
             wm.fadeCard (cardDiv, card)
