@@ -193,7 +193,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}, initVarVal, templateAuthor, previousTweetId
+    var result = {}, notification = {}, initVarVal, templateAuthor, previousTweeter, previousTweetId
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -228,6 +228,7 @@ module.exports = {
         previousPromise = previousPromise
           .then (function (previousMessage) {
             initVarVal = parseTree.nextVarVal (previousMessage.body, previousMessage.initVarVal, player, recipient)
+            previousTweeter = previousMessage.tweeter
             previousTweetId = previousMessage.tweetId
           })
       }
@@ -307,16 +308,20 @@ module.exports = {
 		consumerSecret: sails.config.local.twitter.consumerSecret
 	      })
 	      tweetPromise = new Promise (function (resolve, reject) {
+		var tweet = {}
 		var status = parseTree.makeExpansionText (body, false, initVarVal)
+		if (previousTweetId) {
+		  tweet.in_reply_to_status_id = previousTweetId
+                  tweet.auto_populate_reply_metadata = true
+                  status = '@' + previousTweeter + ' ' + status
+                }
 		if (recipientID === null) {
 		  var url = (sails.config.local.baseURL || 'http://localhost:1337') + result.message.path
 		  var statusWithUrl = status + (status.match(/\s$/) ? '' : ' ') + url
 		  if (statusWithUrl.length < 280)  // 280 is Twitter length limit. Should probably not hardcode this in here
 		    status = statusWithUrl
 		}
-		var tweet = { status: status }
-		if (previousTweetId)
-		  tweet.in_reply_to_status_id = previousTweetId
+                tweet.status = status
 		twitter.statuses ("update",
 				  tweet,
 				  templateAuthor.twitterAccessToken,
