@@ -1662,7 +1662,7 @@ var WikiMess = (function() {
                                                text: wm.ParseTree.makeExpansionText (wm.composition.body,
                                                                                      false,
                                                                                      wm.compositionVarVal()) })
-                            else if (result.tweet)
+                            else if (result.message.tweet)
                               wm.redirectToTweet (result.tweet)
                           })
                         }).then (function() {
