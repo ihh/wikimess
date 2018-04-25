@@ -465,12 +465,12 @@ var WikiMess = (function() {
       return window.location.origin + '/define/' + symname
     },
 
-    makeTweetUrl: function (tweet) {
-      return 'https://twitter.com/statuses/' + tweet
+    makeTweetUrl: function (tweeter, tweet) {
+      return 'https://twitter.com/' + tweeter + '/status/' + tweet
     },
 
-    redirectToTweet: function (tweet) {
-      window.location.replace (this.makeTweetUrl (tweet))
+    redirectToTweet: function (tweeter, tweet) {
+      window.location.replace (this.makeTweetUrl (tweeter, tweet))
     },
 
     // WebSockets interface
@@ -1663,7 +1663,7 @@ var WikiMess = (function() {
                                                                                      false,
                                                                                      wm.compositionVarVal()) })
                             else if (result.message.tweet)
-                              wm.redirectToTweet (result.message.tweet)
+                              wm.redirectToTweet (result.message.tweeter, result.message.tweet)
                           })
                         }).then (function() {
                           if (preserveMessage) {
@@ -3107,7 +3107,7 @@ var WikiMess = (function() {
             wm.fadeCard (cardDiv, card)
               .then (function() {
                 if (message.tweet)
-                  wm.redirectToTweet (message.tweet)
+                  wm.redirectToTweet (message.tweeter, message.tweet)
                 else
                   wm.popView()
               })
