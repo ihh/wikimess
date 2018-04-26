@@ -1914,8 +1914,10 @@ var WikiMess = (function() {
             }
             card.on ('throwout', swipe)
             wm.stopDrag()
-	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
+	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
+              wm.startThrow()
               card.throwIn (0, -wm.throwYOffset())
+            }
           } else
             return wm.dealCard (dealConfig)
         })
@@ -1970,7 +1972,6 @@ var WikiMess = (function() {
 	    .removeAttr ('style')
 	    .addClass ('helpcard')
 	wm.addToStack (cardDiv)
-        wm.throwArrowContainer.hide()
         // create the swing card object for the random help card
 	var card = wm.stack.createCard (cardDiv[0])
 	function swipe() {
@@ -1981,9 +1982,13 @@ var WikiMess = (function() {
             })
 	}
 	card.on ('throwout', swipe)
-	if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
+        wm.stopDrag()
+	if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
+          wm.startThrow()
 	  card.throwIn (0, -wm.throwYOffset())
+        }
 	wm.subnavbar.addClass ('help')
+        wm.throwArrowContainer.hide()
       })
     },
 
@@ -2119,7 +2124,7 @@ var WikiMess = (function() {
       return contentPromise
 	.then (function() {
           cardDiv.show()
-          wm.throwArrowContainer.show()
+          wm.stopDrag()
 	  // throw-in effect
 	  if (wm.useThrowAnimations() && !config.noThrowIn) {
             wm.startThrow (cardDiv)
@@ -2205,7 +2210,7 @@ var WikiMess = (function() {
       var wm = this
       cardDiv = cardDiv || wm.currentCardDiv
       if (wm.throwArrowContainer)
-        wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+        wm.throwArrowContainer.removeClass('dragging').addClass('throwing').show()
       if (cardDiv)
         cardDiv.removeClass('dragging').addClass('throwing')
     },
@@ -2214,7 +2219,7 @@ var WikiMess = (function() {
       var wm = this
       cardDiv = cardDiv || wm.currentCardDiv
       if (wm.throwArrowContainer)
-        wm.throwArrowContainer.removeClass('throwing').addClass('dragging')
+        wm.throwArrowContainer.removeClass('throwing').addClass('dragging').show()
       if (cardDiv)
         cardDiv.removeClass('throwing').addClass('dragging')
     },
@@ -2223,7 +2228,7 @@ var WikiMess = (function() {
       var wm = this
       cardDiv = cardDiv || wm.currentCardDiv
       if (wm.throwArrowContainer)
-        wm.throwArrowContainer.removeClass('throwing').removeClass('dragging').removeClass('leftdrag').removeClass('rightdrag')
+        wm.throwArrowContainer.removeClass('throwing').removeClass('dragging').removeClass('leftdrag').removeClass('rightdrag').show()
       if (cardDiv)
         cardDiv.removeClass('throwing').removeClass('dragging')
     },
@@ -3323,7 +3328,7 @@ var WikiMess = (function() {
               dy = -wm.throwYOffset()
               break
             }
-            wm.stopDrag()
+            wm.startThrow()
             card.throwIn (dx, dy)
           }
         })
