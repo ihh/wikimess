@@ -461,7 +461,7 @@ input {
 
 .wikimess .closebutton {
     float: right;
-    font-size: x-large;
+    font-size: 3vh;
     width: 1em;
     height: 1em;
     padding: 1px;
@@ -469,7 +469,7 @@ input {
 }
 
 .wikimess .helpicon {
-    font-size: x-large;
+    font-size: 3vh;
     width: 1em;
     height: 1em;
     padding: 1px;

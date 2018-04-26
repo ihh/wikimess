@@ -1928,13 +1928,13 @@ var WikiMess = (function() {
       wm.throwArrowContainer = $('<div class="arrowcontainer">')
         .append ($('<div class="arrowstripe leftarrowstripe">')
                  .append (leftArrow
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (leftArrow, wm.throwLeft), 'darkgreen')),
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (leftArrow, wm.throwLeft), '#222')),
                                    $('<div class="text">').text (config.leftText))),
                  $('<div class="arrowstripe">')
                  .html (hand.html (wm.makeIconButton ('swipe'))),
                  $('<div class="arrowstripe rightarrowstripe">')
                  .append (rightArrow
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (rightArrow, wm.throwRight), 'darkgreen')),
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (rightArrow, wm.throwRight), '#222')),
                                    $('<div class="text">').text (config.rightText))))
       if (!wm.isTouchDevice())
         hand.hide()
@@ -1968,12 +1968,14 @@ var WikiMess = (function() {
 	    .removeAttr ('style')
 	    .addClass ('helpcard')
 	wm.addToStack (cardDiv)
+        wm.throwArrowContainer.hide()
         // create the swing card object for the random help card
 	var card = wm.stack.createCard (cardDiv[0])
 	function swipe() {
           wm.fadeCard (cardDiv, card)
             .then (function() {
               wm.subnavbar.removeClass ('help')
+              wm.throwArrowContainer.show()
             })
 	}
 	card.on ('throwout', swipe)
@@ -3181,6 +3183,8 @@ var WikiMess = (function() {
           var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
                                                           .append (avatarDiv, textDiv))
           var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
+          if (wm.isTouchDevice())
+            cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
           if (props.cardClass)
             cardDiv.addClass (props.cardClass)
           wm.stackDiv = $('<div class="stack">').append (cardDiv)
