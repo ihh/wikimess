@@ -1725,8 +1725,7 @@ var WikiMess = (function() {
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendHandler ({ fade: true, callback: tweetIntent }), undefined, true).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
                          if (wm.useThrowAnimations()) {
-                           wm.throwArrowContainer.hide()
-                           wm.currentCardDiv.addClass ('dragging')
+                           wm.startThrow()
                            wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
                          } else
                            wm.sendMessage ({ fade: true })
@@ -1914,6 +1913,7 @@ var WikiMess = (function() {
                 })
             }
             card.on ('throwout', swipe)
+            wm.stopDrag()
 	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
               card.throwIn (0, -wm.throwYOffset())
           } else
@@ -1924,17 +1924,19 @@ var WikiMess = (function() {
 
     makeThrowArrowContainer: function (config) {
       var wm = this
-      var leftArrow = $('<div class="arrowplustext">'), rightArrow = $('<div class="arrowplustext">'), hand = $('<div class="hand">')
+      wm.leftThrowArrow = $('<div class="arrowplustext">')
+      wm.rightThrowArrow = $('<div class="arrowplustext">')
+      var hand = $('<div class="hand">')
       wm.throwArrowContainer = $('<div class="arrowcontainer">')
         .append ($('<div class="arrowstripe leftarrowstripe">')
-                 .append (leftArrow
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (leftArrow, wm.throwLeft), '#222')),
+                 .append (wm.leftThrowArrow
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (wm.leftThrowArrow, wm.throwLeft), '#222')),
                                    $('<div class="text">').text (config.leftText))),
                  $('<div class="arrowstripe">')
                  .html (hand.html (wm.makeIconButton ('swipe'))),
                  $('<div class="arrowstripe rightarrowstripe">')
-                 .append (rightArrow
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (rightArrow, wm.throwRight), '#222')),
+                 .append (wm.rightThrowArrow
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (wm.rightThrowArrow, wm.throwRight), '#222')),
                                    $('<div class="text">').text (config.rightText))))
       if (!wm.isTouchDevice())
         hand.hide()
@@ -2079,14 +2081,14 @@ var WikiMess = (function() {
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
-      card.on ('dragstart', function() {
-        wm.throwArrowContainer.hide()
-        cardDiv.addClass ('dragging')
-      })
+      card.on ('dragstart', wm.startDrag.bind (wm, null))
       card.on ('throwinend', function() {
-        cardDiv.removeClass ('dragging')
-        wm.throwArrowContainer.show()
+        wm.stopDrag()
         wm.modalExitDiv.hide()
+      })
+      card.on ('dragmove', wm.dragListener.bind (wm))
+      card.on ('dragend', function() {
+        wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
       })
 
       cardDiv.hide()
@@ -2120,7 +2122,7 @@ var WikiMess = (function() {
           wm.throwArrowContainer.show()
 	  // throw-in effect
 	  if (wm.useThrowAnimations() && !config.noThrowIn) {
-            cardDiv.addClass ('dragging')
+            wm.startThrow (cardDiv)
             card.throwIn (0, -wm.throwYOffset())
           } else
             wm.modalExitDiv.hide()
@@ -2198,18 +2200,56 @@ var WikiMess = (function() {
           func.call (wm, event)
       }
     },
+
+    startThrow: function (cardDiv) {
+      var wm = this
+      cardDiv = cardDiv || wm.currentCardDiv
+      if (wm.throwArrowContainer)
+        wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+      if (cardDiv)
+        cardDiv.removeClass('dragging').addClass('throwing')
+    },
+
+    startDrag: function (cardDiv) {
+      var wm = this
+      cardDiv = cardDiv || wm.currentCardDiv
+      if (wm.throwArrowContainer)
+        wm.throwArrowContainer.removeClass('throwing').addClass('dragging')
+      if (cardDiv)
+        cardDiv.removeClass('throwing').addClass('dragging')
+    },
+
+    stopDrag: function (cardDiv) {
+      var wm = this
+      cardDiv = cardDiv || wm.currentCardDiv
+      if (wm.throwArrowContainer)
+        wm.throwArrowContainer.removeClass('throwing').removeClass('dragging').removeClass('leftdrag').removeClass('rightdrag')
+      if (cardDiv)
+        cardDiv.removeClass('throwing').removeClass('dragging')
+    },
+
+    dragListener: function (swingEvent) {
+      var wm = this
+      // swingEvent is a Hammer panmove event, decorated by swing
+      wm.throwArrowContainer.removeClass('leftdrag').removeClass('rightdrag')
+      if (swingEvent.throwDirection === swing.Direction.LEFT) {
+        wm.throwArrowContainer.addClass('leftdrag')
+        wm.leftThrowArrow.css ('opacity', swingEvent.throwOutConfidence)
+      } else if (swingEvent.throwDirection === swing.Direction.RIGHT) {
+        wm.throwArrowContainer.addClass('rightdrag')
+        wm.rightThrowArrow.css ('opacity', swingEvent.throwOutConfidence)
+      }
+    },
     
     throwLeft: function() {
       var wm = this
-      wm.throwArrowContainer.hide()
-      wm.currentCardDiv.addClass ('dragging')
+      wm.startThrow()
       wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
     },
 
     throwRight: function() {
       var wm = this
-      wm.throwArrowContainer.hide()
-      wm.currentCardDiv.addClass ('dragging')
+      wm.startThrow()
       wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
     },
 
@@ -3226,12 +3266,14 @@ var WikiMess = (function() {
           card.on ('throwoutdown', fadeAndExit)
           card.on ('throwoutright', fadeAndNext)
           card.on ('dragstart', function() {
-            cardDiv.addClass ('dragging')
-            wm.throwArrowContainer.hide()
+            wm.startDrag (cardDiv)
           })
           card.on ('throwinend', function() {
-            cardDiv.removeClass ('dragging')
-            wm.throwArrowContainer.show()
+            wm.stopDrag (cardDiv)
+          })
+          card.on ('dragmove', wm.dragListener.bind (wm))
+          card.on ('dragend', function() {
+            wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
           })
 
           wm.currentCardDiv = cardDiv
@@ -3281,6 +3323,7 @@ var WikiMess = (function() {
               dy = -wm.throwYOffset()
               break
             }
+            wm.stopDrag()
             card.throwIn (dx, dy)
           }
         })

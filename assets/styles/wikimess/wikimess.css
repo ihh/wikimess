@@ -1235,7 +1235,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     left: .5vh;
 }
 
-.wikimess .arrowcontainer .leftarrowstripe .arrowplustext {
+.wikimess .arrowcontainer:not(.dragging) .leftarrowstripe .arrowplustext {
     animation: slideleft 10s linear 0s infinite;
     -moz-animation: slideleft 10s linear 0s infinite;
     -webkit-animation: slideleft 10s linear 0s infinite;
@@ -1265,7 +1265,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     100% { left: 0vh; opacity: 0; }
 }
 
-.wikimess .arrowcontainer .rightarrowstripe .arrowplustext {
+.wikimess .arrowcontainer:not(.dragging) .rightarrowstripe .arrowplustext {
     animation: slideright 10s linear 0s infinite;
     -moz-animation: slideright 10s linear 0s infinite;
     -webkit-animation: slideright 10s linear 0s infinite;
@@ -1293,6 +1293,17 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     25% { right: 10vh; opacity: .5; }
     50% { right: 0vh; opacity: 0; }
     100% { right: 0vh; opacity: 0; }
+}
+
+.wikimess .arrowcontainer.throwing .arrowstripe .hand,
+.wikimess .arrowcontainer.dragging .arrowstripe .hand {
+    display: none;
+}
+
+.wikimess .arrowcontainer.throwing .arrowstripe,
+.wikimess .arrowcontainer.dragging:not(.leftdrag) .leftarrowstripe,
+.wikimess .arrowcontainer.dragging:not(.rightdrag) .rightarrowstripe {
+    opacity: 0;
 }
 
 .wikimess .inner {
