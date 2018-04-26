@@ -1176,30 +1176,30 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 @-webkit-keyframes handwobble {
-    0% { transform:scale(1) rotate(0deg); opacity: 0; }
-    20% { transform:scale(1) rotate(-5deg); opacity: 0; }
-    25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
-    45% { transform:scale(1.0510100501) rotate(10deg); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(5deg); opacity: 0; }
-    100% { transform:scale(1) rotate(0deg); opacity: 0; }
+    0% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
+    20% { transform:scale(1) rotate(-5deg) translate(-1vh,0); opacity: 0; }
+    25% { transform:scale(1.01) rotate(-10deg) translate(-2vh,0); opacity: .3; }
+    45% { transform:scale(1.0510100501) rotate(10deg) translate(2vh,0); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(5deg) translate(1vh,0); opacity: 0; }
+    100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
 @-moz-keyframes handwobble {
-    0% { transform:scale(1) rotate(0deg); opacity: 0; }
-    20% { transform:scale(1) rotate(-5deg); opacity: 0; }
-    25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
-    45% { transform:scale(1.0510100501) rotate(10deg); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(5deg); opacity: 0; }
-    100% { transform:scale(1) rotate(0deg); opacity: 0; }
+    0% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
+    20% { transform:scale(1) rotate(-5deg) translate(-1vh,0); opacity: 0; }
+    25% { transform:scale(1.01) rotate(-10deg) translate(-2vh,0); opacity: .3; }
+    45% { transform:scale(1.0510100501) rotate(10deg) translate(2vh,0); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(5deg) translate(1vh,0); opacity: 0; }
+    100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
 @keyframes handwobble {
-    0% { transform:scale(1) rotate(0deg); opacity: 0; }
-    20% { transform:scale(1) rotate(-5deg); opacity: 0; }
-    25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
-    45% { transform:scale(1.0510100501) rotate(10deg); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(5deg); opacity: 0; }
-    100% { transform:scale(1) rotate(0deg); opacity: 0; }
+    0% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
+    20% { transform:scale(1) rotate(-5deg) translate(-1vh,0); opacity: 0; }
+    25% { transform:scale(1.01) rotate(-10deg) translate(-2vh,0); opacity: .3; }
+    45% { transform:scale(1.0510100501) rotate(10deg) translate(2vh,0); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(5deg) translate(1vh,0); opacity: 0; }
+    100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
 .wikimess .arrowcontainer .arrowstripe .arrowplustext {
