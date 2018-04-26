@@ -137,13 +137,13 @@ var WikiMess = (function() {
                     minus: 'circle-minus',
                     up: 'up-arrow-button',
                     down: 'down-arrow-button',
+                    swipe: 'two-finger-swipe',
                     swipeleft: 'left-triangle',
                     swiperight: 'right-triangle',
                     help: 'help',
                     locked: 'padlock',
                     hide: 'hide',
                     reroll: 'rolling-die',
-                    reply: 'card-random',
                     dealcard: 'card-deal',
                     discard: 'card-hand',
                     close: 'close',
@@ -157,9 +157,12 @@ var WikiMess = (function() {
                     search: 'magnifying-glass',
                     compose: 'quill',
                     forward: 'up-card',
-                    reply: 'forward',
+                    reply: 'right-arrow',
+                    back: 'left-arrow',
+                    next: 'forward',
+                    previous: 'reply',
+                    twitter: 'twitter',
                     reload: 'refresh',
-                    back: 'back',
                     dummy: 'dummy',
                     emptyStar: 'star-empty',
                     filledStar: 'star-filled',
@@ -1921,16 +1924,20 @@ var WikiMess = (function() {
 
     makeThrowArrowContainer: function (config) {
       var wm = this
-      var leftArrow = $('<div class="arrowplustext">'), rightArrow = $('<div class="arrowplustext">')
+      var leftArrow = $('<div class="arrowplustext">'), rightArrow = $('<div class="arrowplustext">'), hand = $('<div class="hand">')
       wm.throwArrowContainer = $('<div class="arrowcontainer">')
         .append ($('<div class="arrowstripe leftarrowstripe">')
                  .append (leftArrow
                           .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (leftArrow, wm.throwLeft), 'darkgreen')),
                                    $('<div class="text">').text (config.leftText))),
+                 $('<div class="arrowstripe">')
+                 .html (hand.html (wm.makeIconButton ('swipe'))),
                  $('<div class="arrowstripe rightarrowstripe">')
                  .append (rightArrow
                           .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (rightArrow, wm.throwRight), 'darkgreen')),
                                    $('<div class="text">').text (config.rightText))))
+      if (!wm.isTouchDevice())
+        hand.hide()
       return wm.throwArrowContainer
     },
 
@@ -3000,10 +3007,12 @@ var WikiMess = (function() {
       wm.messageHeaderCache[message.id] = message
       var deleteMessage = (props.deleteMethod
                            ? function (evt) {
-                             evt.stopPropagation()
+                             if (evt)
+                               evt.stopPropagation()
                              if (window.confirm ('Delete this message?'))
-                               wm[props.deleteMethod] (wm.playerID, message.id)
+                               return wm[props.deleteMethod] (wm.playerID, message.id)
                                .then (wm.reloadCurrentTab.bind(wm))
+                             return $.Deferred().resolve()
                            }
                            : null)
       var div = $('<div class="message">')
@@ -3055,6 +3064,7 @@ var WikiMess = (function() {
       var wm = this
       var message = props.result.message
       var sender = message.sender || props.sender, recipient = message.recipient || props.recipient
+
       var pushPromise
       if (props.pushView)
         pushPromise = wm.pushView ('read')
@@ -3062,8 +3072,10 @@ var WikiMess = (function() {
         wm.viewElements().remove()
         pushPromise = $.Deferred().resolve()
       }
+
       return pushPromise
         .then (function() {
+
           function reply() {
             if ((message.next && message.next.length)
                 ? window.confirm('There is already a reply to this message. Do you really want to split the thread?')
@@ -3084,6 +3096,7 @@ var WikiMess = (function() {
                })
             }
           }
+
           function forward() {
             wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
               .then (function (templateResult) {
@@ -3100,11 +3113,32 @@ var WikiMess = (function() {
                    generateNewContent: true })
               })
           }
+
+          var nextInThread, prevInThread, gotoTwitter, nextInThreadButton, prevInThreadButton, twitterButton, backButton
+          if (message.previous)
+            prevInThread = wm.makeGetMessage ($.extend ({}, props, {throwInDir:'right'}),
+                                              { id: message.previous, addNextId: message.id })
+          if (message.next && message.next.length)
+            nextInThread = wm.makeGetMessage ($.extend ({}, props, {throwInDir:'left'}),
+                                              { id: message.next[0] })
+          if (message.tweeter && message.tweet)
+            gotoTwitter = wm.redirectToTweet.bind (wm, message.tweeter, message.tweet)
+          
           wm.container
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
-                     wm.popBack()
-                     .append (wm.forwardButton = wm.makeSubNavIcon ('forward',
+                     $('<div class="subnavbar">')
+                     .append (prevInThreadButton = wm.makeSubNavIcon ('previous',
+                                                                       function (evt) {
+                                                                         evt.stopPropagation()
+                                                                         prevInThread()
+                                                                       }),
+                              twitterButton = wm.makeSubNavIcon ('twitter',
+                                                                  function (evt) {
+                                                                    evt.stopPropagation()
+                                                                    gotoTwitter()
+                                                                  }),
+                              wm.forwardButton = wm.makeSubNavIcon ('forward',
                                                                     function (evt) {
                                                                       evt.stopPropagation()
                                                                       forward()
@@ -3115,11 +3149,28 @@ var WikiMess = (function() {
                                                                   function (evt) {
                                                                     evt.stopPropagation()
                                                                     reply()
-                                                                  })))
+                                                                  }),
+                              nextInThreadButton = wm.makeSubNavIcon ('next',
+                                                                      function (evt) {
+                                                                        evt.stopPropagation()
+                                                                        nextInThread()
+                                                                      })
+                             ))
 
           if (wm.playerID === null)
             wm.forwardButton.hide()
-          
+
+          if (nextInThread)
+            wm.replyButton.hide()
+          else
+            nextInThreadButton.hide()
+
+          if (!prevInThread)
+            prevInThreadButton.hide()
+
+          if (!gotoTwitter)
+            twitterButton.hide()
+
           var avatarDiv = $('<div class="avatar">')
 	  var textDiv = $('<div class="text">')
 	      .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
@@ -3139,8 +3190,20 @@ var WikiMess = (function() {
           function fadeAndExit() {
             wm.fadeCard (cardDiv, card)
               .then (function() {
-                if (message.tweet)
-                  wm.redirectToTweet (message.tweeter, message.tweet)
+                var exit = gotoTwitter || wm.popView.bind(wm)
+                if (props.destroy)
+                  props.destroy().then(exit)
+                else
+                  exit()
+              })
+          }
+          function fadeAndBack() {
+            wm.fadeCard (cardDiv, card)
+              .then (function() {
+                if (prevInThread)
+                  prevInThread()
+                else if (gotoTwitter)
+                  gotoTwitter()
                 else
                   wm.popView()
               })
@@ -3148,13 +3211,13 @@ var WikiMess = (function() {
           function fadeAndNext() {
             wm.fadeCard (cardDiv, card)
               .then (function() {
-                if (message.next && message.next.length)
-                  wm.makeGetMessage (props, { id: message.next[0] }) ()
+                if (nextInThread)
+                  nextInThread()
                 else
                   reply()
               })
           }
-          card.on ('throwoutleft', fadeAndExit)
+          card.on ('throwoutleft', fadeAndBack)
           card.on ('throwoutup', wm.playerID === null ? fadeAndExit : forward)
           card.on ('throwoutdown', fadeAndExit)
           card.on ('throwoutright', fadeAndNext)
@@ -3189,25 +3252,33 @@ var WikiMess = (function() {
                               .hide(),  // at the moment, we're not really using the title field except as a hint in mailbox view; so, hide it
                               $('<div class="row">')
                               .append ($('<span class="label">').text (props.verb),
-                                       $('<span class="messagedate">').text (wm.relativeDateString (message.date))),
-                              $('<div class="row">')
-                              .append ($('<span class="threadnav">')
-                                       .append ((message.previous
-                                                 ? $('<a href="#">').text('Previous').on('click',wm.makeGetMessage (props, { id: message.previous, addNextId: message.id }))
-                                                 : 'Previous'),
-                                                ' / ',
-                                                (message.next && message.next.length
-                                                 ? $('<a href="#">').text('Next').on('click',wm.makeGetMessage (props, { id: message.next[0] }))
-                                                 : 'Next')))),
+                                       $('<span class="messagedate">').text (wm.relativeDateString (message.date)))),
                      $('<div class="messageborder">')
                      .append (wm.stackDiv,
-                              wm.makeThrowArrowContainer ({ leftText: 'ignore',
-                                                            rightText: (message.next && message.next.length ? 'next' : 'reply') })))
+                              wm.makeThrowArrowContainer ({ leftText: (prevInThread ? 'previous' : (gotoTwitter ? 'twitter' : 'back')),
+                                                            rightText: (nextInThread ? 'next' : 'reply') })))
 	  if (message.tweeter)
 	    wm.addAvatarImage (avatarDiv, message.tweeter)
           
-          if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards)
-            card.throwIn (0, -wm.throwYOffset())
+          if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
+            var dx = 0, dy = 0
+            switch (props.throwInDir) {
+            case 'left':
+              dx = -wm.throwYOffset()
+              break
+            case 'right':
+              dx = wm.throwYOffset()
+              break
+            case 'down':
+              dy = wm.throwYOffset()
+              break
+            case 'up':
+            default:
+              dy = -wm.throwYOffset()
+              break
+            }
+            card.throwIn (dx, dy)
+          }
         })
     },
 
@@ -3337,12 +3408,14 @@ var WikiMess = (function() {
         })
     },
 
-    popBack: function (callback) {
+    popBack: function (callback, buttonCreationCallback) {
       var wm = this
       callback = callback || wm.popView.bind(wm)
-      var button
+      var button = wm.makeSubNavIcon ('back', function() { callback(button) })
+      if (buttonCreationCallback)
+        buttonCreationCallback (button)
       return (wm.popBackDiv = $('<div class="subnavbar backbar">'))
-	.append (button = wm.makeSubNavIcon ('back', function() { callback(button) }))
+	.append (button)
     },
 
     redrawPopBack: function (callback) {

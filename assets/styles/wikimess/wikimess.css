@@ -644,6 +644,10 @@ input {
 .wikimess .menubar .listitem.noborder {
     border-style: none;
     background: none;
+
+    -webkit-box-shadow: 0 0 0 0;
+    -moz-box-shadow: 0 0 0 0;
+    box-shadow: 0 0 0 0;
 }
 
 .wikimess .menubar .listitem img {
@@ -1159,6 +1163,48 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     justify-content: space-around;
 }
 
+.wikimess .arrowcontainer .arrowstripe .hand {
+    margin-top: 30vh;
+    width: 20vh;
+    height: 20vh;
+
+    animation: handwobble 10s linear 0s infinite;
+    -moz-animation: handwobble 10s linear 0s infinite;
+    -webkit-animation: handwobble 10s linear 0s infinite;
+
+    transform-origin: bottom center;
+}
+
+@-webkit-keyframes handwobble {
+    0% { transform:scale(1) rotate(0deg); opacity: 0; }
+    20% { transform:scale(1) rotate(0deg); opacity: 0; }
+    25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
+    35% { transform:scale(1.030301) rotate(10deg); opacity: .2; }
+    45% { transform:scale(1.0510100501) rotate(-10deg); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(0deg); opacity: 0; }
+    100% { transform:scale(1) rotate(0deg); opacity: 0; }
+}
+
+@-moz-keyframes handwobble {
+    0% { transform:scale(1) rotate(0deg); opacity: 0; }
+    20% { transform:scale(1) rotate(0deg); opacity: 0; }
+    25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
+    35% { transform:scale(1.030301) rotate(10deg); opacity: .2; }
+    45% { transform:scale(1.0510100501) rotate(-10deg); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(0deg); opacity: 0; }
+    100% { transform:scale(1) rotate(0deg); opacity: 0; }
+}
+
+@keyframes handwobble {
+    0% { transform:scale(1) rotate(0deg); opacity: 0; }
+    20% { transform:scale(1) rotate(0deg); opacity: 0; }
+    25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
+    35% { transform:scale(1.030301) rotate(10deg); opacity: .2; }
+    45% { transform:scale(1.0510100501) rotate(-10deg); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(0deg); opacity: 0; }
+    100% { transform:scale(1) rotate(0deg); opacity: 0; }
+}
+
 .wikimess .arrowcontainer .arrowstripe .arrowplustext {
     display: flex;
     flex-direction: column;
@@ -1199,27 +1245,27 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 @-webkit-keyframes slideleft {
-    0% { left: 2vh; opacity: 0; }
-    20% { left: 2vh; opacity: 0; }
-    25% { left: 0vh; opacity: .5; }
-    50% { left: -10vh; opacity: 0; }
-    100% { left: -10vh; opacity: 0; }
+    0% { left: 12vh; opacity: 0; }
+    20% { left: 12vh; opacity: 0; }
+    25% { left: 10vh; opacity: .5; }
+    50% { left: 0vh; opacity: 0; }
+    100% { left: 0vh; opacity: 0; }
 }
 
 @-moz-keyframes slideleft {
-    0% { left: 2vh; opacity: 0; }
-    20% { left: 2vh; opacity: 0; }
-    25% { left: 0vh; opacity: .5; }
-    50% { left: -10vh; opacity: 0; }
-    100% { left: -10vh; opacity: 0; }
+    0% { left: 12vh; opacity: 0; }
+    20% { left: 12vh; opacity: 0; }
+    25% { left: 10vh; opacity: .5; }
+    50% { left: 0vh; opacity: 0; }
+    100% { left: 0vh; opacity: 0; }
 }
 
 @keyframes slideleft {
-    0% { left: 2vh; opacity: 0; }
-    20% { left: 2vh; opacity: 0; }
-    25% { left: 0vh; opacity: .5; }
-    50% { left: -10vh; opacity: 0; }
-    100% { left: -10vh; opacity: 0; }
+    0% { left: 12vh; opacity: 0; }
+    20% { left: 12vh; opacity: 0; }
+    25% { left: 10vh; opacity: .5; }
+    50% { left: 0vh; opacity: 0; }
+    100% { left: 0vh; opacity: 0; }
 }
 
 .wikimess .arrowcontainer .rightarrowstripe .arrowplustext {
@@ -1229,27 +1275,27 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 @-webkit-keyframes slideright {
-    0% { right: 2vh; opacity: 0; }
-    20% { right: 2vh; opacity: 0; }
-    25% { right: 0vh; opacity: .5; }
-    50% { right: -10vh; opacity: 0; }
-    100% { right: -10vh; opacity: 0; }
+    0% { right: 12vh; opacity: 0; }
+    20% { right: 12vh; opacity: 0; }
+    25% { right: 10vh; opacity: .5; }
+    50% { right: 0vh; opacity: 0; }
+    100% { right: 0vh; opacity: 0; }
 }
 
 @-moz-keyframes slideright {
-    0% { right: 2vh; opacity: 0; }
-    20% { right: 2vh; opacity: 0; }
-    25% { right: 0vh; opacity: .5; }
-    50% { right: -10vh; opacity: 0; }
-    100% { right: -10vh; opacity: 0; }
+    0% { right: 12vh; opacity: 0; }
+    20% { right: 12vh; opacity: 0; }
+    25% { right: 10vh; opacity: .5; }
+    50% { right: 0vh; opacity: 0; }
+    100% { right: 0vh; opacity: 0; }
 }
 
 @keyframes slideright {
-    0% { right: 2vh; opacity: 0; }
-    20% { right: 2vh; opacity: 0; }
-    25% { right: 0vh; opacity: .5; }
-    50% { right: -10vh; opacity: 0; }
-    100% { right: -10vh; opacity: 0; }
+    0% { right: 12vh; opacity: 0; }
+    20% { right: 12vh; opacity: 0; }
+    25% { right: 10vh; opacity: .5; }
+    50% { right: 0vh; opacity: 0; }
+    100% { right: 0vh; opacity: 0; }
 }
 
 .wikimess .inner {
