@@ -1116,7 +1116,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
-.wikimess .stack .jiggle:not(.dragging) {
+.wikimess .stack .jiggle:not(.dragging):not(.throwing) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
     -webkit-animation: jiggle 5s ease 0s infinite;

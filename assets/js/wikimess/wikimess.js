@@ -3099,10 +3099,11 @@ var WikiMess = (function() {
               result.message.next.push (message.addNextId)
           }
           props.showMessage ($.extend
-                             ({ pushView: pushView },
+                             ({},
                               props,
                               { result: result,
-                                destroy: deleteMessage }))
+                                destroy: deleteMessage,
+				pushView: pushView || false }))
         })
       }
     },
@@ -3175,7 +3176,8 @@ var WikiMess = (function() {
             .append (wm.readMessageDiv = $('<div class="readmessage">'),
                      wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
                      $('<div class="subnavbar">')
-                     .append (prevInThreadButton = wm.makeSubNavIcon ('previous',
+                     .append (backButton = wm.makeSubNavIcon ('back', wm.popView.bind(wm)),
+			      prevInThreadButton = wm.makeSubNavIcon ('previous',
                                                                        function (evt) {
                                                                          evt.stopPropagation()
                                                                          prevInThread()
@@ -3211,6 +3213,9 @@ var WikiMess = (function() {
             wm.replyButton.hide()
           else
             nextInThreadButton.hide()
+
+	  if (prevInThread || gotoTwitter)
+	    backButton.hide()
 
           if (!prevInThread)
             prevInThreadButton.hide()
