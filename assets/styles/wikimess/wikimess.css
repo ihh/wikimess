@@ -1177,31 +1177,28 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 @-webkit-keyframes handwobble {
     0% { transform:scale(1) rotate(0deg); opacity: 0; }
-    20% { transform:scale(1) rotate(0deg); opacity: 0; }
+    20% { transform:scale(1) rotate(-5deg); opacity: 0; }
     25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
-    35% { transform:scale(1.030301) rotate(10deg); opacity: .2; }
-    45% { transform:scale(1.0510100501) rotate(-10deg); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(0deg); opacity: 0; }
+    45% { transform:scale(1.0510100501) rotate(10deg); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(5deg); opacity: 0; }
     100% { transform:scale(1) rotate(0deg); opacity: 0; }
 }
 
 @-moz-keyframes handwobble {
     0% { transform:scale(1) rotate(0deg); opacity: 0; }
-    20% { transform:scale(1) rotate(0deg); opacity: 0; }
+    20% { transform:scale(1) rotate(-5deg); opacity: 0; }
     25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
-    35% { transform:scale(1.030301) rotate(10deg); opacity: .2; }
-    45% { transform:scale(1.0510100501) rotate(-10deg); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(0deg); opacity: 0; }
+    45% { transform:scale(1.0510100501) rotate(10deg); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(5deg); opacity: 0; }
     100% { transform:scale(1) rotate(0deg); opacity: 0; }
 }
 
 @keyframes handwobble {
     0% { transform:scale(1) rotate(0deg); opacity: 0; }
-    20% { transform:scale(1) rotate(0deg); opacity: 0; }
+    20% { transform:scale(1) rotate(-5deg); opacity: 0; }
     25% { transform:scale(1.01) rotate(-10deg); opacity: .3; }
-    35% { transform:scale(1.030301) rotate(10deg); opacity: .2; }
-    45% { transform:scale(1.0510100501) rotate(-10deg); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(0deg); opacity: 0; }
+    45% { transform:scale(1.0510100501) rotate(10deg); opacity: .1; }
+    50% { transform:scale(1.061520150601) rotate(5deg); opacity: 0; }
     100% { transform:scale(1) rotate(0deg); opacity: 0; }
 }
 
