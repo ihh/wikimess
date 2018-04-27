@@ -2008,6 +2008,7 @@ var WikiMess = (function() {
                   card.on ('dragmove', wm.dragListener.bind (wm))
                   card.on ('dragend', function() {
                     wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+                    cardDiv.removeClass('dragging').addClass('throwing')
                   })
 
                   function throwIn() {
@@ -2235,6 +2236,7 @@ var WikiMess = (function() {
       card.on ('dragmove', wm.dragListener.bind (wm))
       card.on ('dragend', function() {
         wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+        cardDiv.removeClass('dragging').addClass('throwing')
       })
 
       cardDiv.hide()
@@ -3486,6 +3488,7 @@ var WikiMess = (function() {
           card.on ('dragmove', wm.dragListener.bind (wm))
           card.on ('dragend', function() {
             wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+            cardDiv.removeClass('dragging').addClass('throwing')
           })
 
           wm.currentCardDiv = cardDiv
