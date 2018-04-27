@@ -1004,6 +1004,7 @@ input {
 }
 
 .wikimess .stack .card,
+.wikimess .stack .inertcard,
 .wikimess .stack .helpcard {
     max-height: 160vw;
 }
@@ -1117,6 +1118,12 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
+.wikimess .stack .inertcard:not(:last-child),
+.wikimess .stack .helpcard:not(:last-child),
+.wikimess .stack .card:not(:last-child) {
+    pointer-events: none;
+}
+						      
 .wikimess .stack .jiggle:last-child:not(.dragging):not(.throwing) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
@@ -1145,22 +1152,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     97% { transform: rotate(1deg); }
     99% { transform: rotate(-0.5deg); }
     100% { transform: rotate(0deg); }
-}
-
-.wikimess .stack .broadcastcard:nth-child(4n+3) {
-    top: 2px; transform: translate(4px, 3px) rotate(-.8deg);
-}
-
-.wikimess .stack .broadcastcard:nth-child(4n+2) {
-    top: 3px; transform: translate(2px, 2px) rotate(0.4deg);
-}
-
-.wikimess .stack .broadcastcard:nth-child(4n+1) {
-    top: 3px; transform: translate(-2px, 2px) rotate(-0.4deg);
-}
-
-.wikimess .stack .broadcastcard:nth-child(4n) {
-    top: 4px; transform: translate(-4px, -2px) rotate(.8deg);
 }
 
 .wikimess .arrowcontainer {
@@ -1194,28 +1185,52 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 @-webkit-keyframes handwobble {
     0% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
-    20% { transform:scale(1) rotate(-5deg) translate(-1vh,0); opacity: 0; }
-    25% { transform:scale(1.01) rotate(-10deg) translate(-2vh,0); opacity: .3; }
-    45% { transform:scale(1.0510100501) rotate(10deg) translate(2vh,0); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(5deg) translate(1vh,0); opacity: 0; }
+    20% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: 0; }
+    21% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: .06; }
+    22% { transform:scale(1) rotate(0deg) translate(0,0); opacity: .12; }
+    25% { transform:scale(1) rotate(-6deg) translate(-1.2vh,0); opacity: .3; }
+    28% { transform:scale(1) rotate(-12deg) translate(-2.4vh,0); opacity: .15; }
+    31% { transform:scale(1) rotate(-17deg) translate(-3.4vh,0); opacity: 0; }
+    32% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: 0; }
+    33% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: .04; }
+    34% { transform:scale(1) rotate(0deg) translate(0,0); opacity: .1; }
+    37% { transform:scale(1) rotate(6deg) translate(1.2vh,0); opacity: .2; }
+    40% { transform:scale(1) rotate(12deg) translate(2.4vh,0); opacity: .2; }
+    43% { transform:scale(1) rotate(17deg) translate(3.4vh,0); opacity: 0; }
     100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
 @-moz-keyframes handwobble {
     0% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
-    20% { transform:scale(1) rotate(-5deg) translate(-1vh,0); opacity: 0; }
-    25% { transform:scale(1.01) rotate(-10deg) translate(-2vh,0); opacity: .3; }
-    45% { transform:scale(1.0510100501) rotate(10deg) translate(2vh,0); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(5deg) translate(1vh,0); opacity: 0; }
+    20% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: 0; }
+    21% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: .06; }
+    22% { transform:scale(1) rotate(0deg) translate(0,0); opacity: .12; }
+    25% { transform:scale(1) rotate(-6deg) translate(-1.2vh,0); opacity: .3; }
+    28% { transform:scale(1) rotate(-12deg) translate(-2.4vh,0); opacity: .15; }
+    31% { transform:scale(1) rotate(-17deg) translate(-3.4vh,0); opacity: 0; }
+    32% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: 0; }
+    33% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: .04; }
+    34% { transform:scale(1) rotate(0deg) translate(0,0); opacity: .1; }
+    37% { transform:scale(1) rotate(6deg) translate(1.2vh,0); opacity: .2; }
+    40% { transform:scale(1) rotate(12deg) translate(2.4vh,0); opacity: .2; }
+    43% { transform:scale(1) rotate(17deg) translate(3.4vh,0); opacity: 0; }
     100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
 @keyframes handwobble {
     0% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
-    20% { transform:scale(1) rotate(-5deg) translate(-1vh,0); opacity: 0; }
-    25% { transform:scale(1.01) rotate(-10deg) translate(-2vh,0); opacity: .3; }
-    45% { transform:scale(1.0510100501) rotate(10deg) translate(2vh,0); opacity: .1; }
-    50% { transform:scale(1.061520150601) rotate(5deg) translate(1vh,0); opacity: 0; }
+    20% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: 0; }
+    21% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: .06; }
+    22% { transform:scale(1) rotate(0deg) translate(0,0); opacity: .12; }
+    25% { transform:scale(1) rotate(-6deg) translate(-1.2vh,0); opacity: .3; }
+    28% { transform:scale(1) rotate(-12deg) translate(-2.4vh,0); opacity: .15; }
+    31% { transform:scale(1) rotate(-17deg) translate(-3.4vh,0); opacity: 0; }
+    32% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: 0; }
+    33% { transform:scale(1.02) rotate(0deg) translate(0,0); opacity: .04; }
+    34% { transform:scale(1) rotate(0deg) translate(0,0); opacity: .1; }
+    37% { transform:scale(1) rotate(6deg) translate(1.2vh,0); opacity: .2; }
+    40% { transform:scale(1) rotate(12deg) translate(2.4vh,0); opacity: .2; }
+    43% { transform:scale(1) rotate(17deg) translate(3.4vh,0); opacity: 0; }
     100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
@@ -1377,6 +1392,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     display: none;
 }
 
+.wikimess .inertcard,
 .wikimess .helpcard,
 .wikimess .readmessage .messagebody,
 .wikimess .compose .messagebody {
@@ -1390,6 +1406,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     line-height: 3.75vh;
 }
 
+.wikimess .small .inertcard,
 .wikimess .small .helpcard,
 .wikimess .small .messagebody {
     font-size: 2vh;

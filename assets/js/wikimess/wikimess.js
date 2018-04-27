@@ -1451,6 +1451,7 @@ var WikiMess = (function() {
           wm.composition.template.content = wm.composition.template.content || []
 
           wm.composition.vars = config.vars || wm.composition.vars || {}
+          wm.composition.thread = config.thread || wm.composition.thread
           
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
           makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
@@ -1805,12 +1806,8 @@ var WikiMess = (function() {
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.threadNextButton = wm.makeSubNavIcon ('discard', function (evt) {
-                       var lastCardDiv = wm.stackDiv.children().last()
-                       var lastCard = lastCardDiv[0].swingCardObject
-                       if (lastCardDiv.hasClass ('inertcard')) {
-                         wm.startThrow (lastCardDiv)
-                         lastCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
-                       }
+                       evt.stopPropagation()
+                       wm.discardInertCard()
                      }).addClass('threadshow'),
                       wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
@@ -1831,7 +1828,7 @@ var WikiMess = (function() {
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
 
-          if (config.thread) {
+          if (wm.composition.thread && wm.composition.thread.length) {
             wm.messagePrivacyDiv.addClass ('thread')
             wm.subnavbar.addClass ('thread')
           } else
@@ -1867,7 +1864,7 @@ var WikiMess = (function() {
             delete wm.lastComposePlayerSearchText
             wm.doComposePlayerSearch()
           }
-          
+
           if (config.previousMessage)
             wm.composition.previousMessage = config.previousMessage
 
@@ -1940,8 +1937,8 @@ var WikiMess = (function() {
           } else
             return wm.dealCard (dealConfig)
             .then (function() {
-              if (config.thread) {
-                var throwers = config.thread.reverse().map (function (message, n) {
+              if (wm.composition.thread && wm.composition.thread.length) {
+                var throwers = wm.composition.thread.map (function (message) {
                   var promise = $.Deferred()
                   var cardDiv = wm.makeMessageCardDiv ({ message: message,
                                                          sender: message.sender,
@@ -1950,22 +1947,18 @@ var WikiMess = (function() {
                   cardDiv.removeClass('card').addClass('inertcard')
                   wm.addToStack (cardDiv)
 
-                  // create the swing card object for the read message card
+                  // create the swing card object for the thread message card
                   var card = wm.stack.createCard (cardDiv[0])
                   cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
-                  function fadeCard() {
-                    wm.fadeCard (cardDiv, card)
-                      .then (function() {
-                        if (n == 0) {
-                          wm.setThrowArrowText ('discard', 'share')
-                          wm.messagePrivacyDiv.removeClass ('thread')
-                          wm.subnavbar.removeClass ('thread')
-                          wm.messagePrivacyDiv.css ('opacity', 1)
-                          wm.threadNextButton.hide()
-                        }
-                      })
-                  }
-                  card.on ('throwout', fadeCard)
+                  card.on ('throwoutleft', wm.fadeInertCard.bind (wm, card, cardDiv))
+                  card.on ('throwoutright', wm.fadeInertCard.bind (wm, card, cardDiv))
+                  card.on ('throwoutdown', wm.fadeInertCard.bind (wm, card, cardDiv))
+                  card.on ('throwoutup', function() {
+                    if (message.tweeter && message.tweet)
+                      wm.redirectToTweet (message.tweeter, message.tweet)
+                    else
+                      wm.showStatusPage()
+                  })
                   card.on ('dragstart', function() {
                     wm.startDrag (cardDiv)
                   })
@@ -1984,6 +1977,9 @@ var WikiMess = (function() {
 	            card.throwIn (0, -wm.throwYOffset())
                     return promise
                   }
+
+                  if (!wm.useThrowAnimations() || dealConfig.noThrowIn)
+                    return function() { return $.Deferred().resolve() }
                   
                   cardDiv.hide()
                   return throwIn
@@ -2338,16 +2334,45 @@ var WikiMess = (function() {
       }
     },
     
-    throwLeft: function() {
+    throwLeft: function (card, cardDiv) {
       var wm = this
-      wm.startThrow()
-      wm.currentCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+      card = card || wm.currentCard
+      wm.startThrow (cardDiv)
+      card.throwOut (-wm.throwXOffset(), wm.throwYOffset())
     },
 
-    throwRight: function() {
+    throwRight: function (card, cardDiv) {
       var wm = this
-      wm.startThrow()
-      wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
+      card = card || wm.currentCard
+      wm.startThrow (cardDiv)
+      card.throwOut (wm.throwXOffset(), wm.throwYOffset())
+    },
+
+    fadeInertCard: function (card, cardDiv) {
+      return wm.fadeCard (cardDiv, card)
+        .then (function() {
+          wm.stopDrag (cardDiv)
+          if (wm.stackDiv.children('.inertcard').length === 0) {
+            wm.setThrowArrowText ('discard', 'share')
+            wm.messagePrivacyDiv.removeClass ('thread')
+            wm.subnavbar.removeClass ('thread')
+            wm.messagePrivacyDiv.css ('opacity', 1)
+            wm.threadNextButton.hide()
+            delete wm.composition.thread
+          } else if (wm.composition.thread && wm.composition.thread.length)
+            wm.composition.thread.pop()
+        })
+    },
+
+    discardInertCard: function() {
+      var wm = this
+      var lastCardDiv = wm.stackDiv.children().last()
+      var lastCard = lastCardDiv[0].swingCardObject
+      wm.throwArrowContainer.hide()
+      if (wm.useThrowAnimations())
+        wm.throwLeft (lastCard, lastCardDiv)
+      else
+        wm.fadeInertCard (lastCard, lastCardDiv)
     },
 
     discardAndRefresh: function() {
@@ -2876,11 +2901,12 @@ var WikiMess = (function() {
                  title: replyTitle,
                  previousMessage: lastMessage.id,
                  previousTemplate: lastMessage.template,
+                 thread: [],
                  vars: wm.ParseTree.nextVarVal (lastMessage.body, lastMessage.vars, lastMessage.sender),
                  tags: '',
                  previousTags: lastMessage.template ? (lastMessage.template.tags || '') : '',
                  getRandomTemplate: true,
-                 thread: thread
+                 thread: thread.reverse()
                })
             }
           })
@@ -2889,6 +2915,7 @@ var WikiMess = (function() {
         promise = this.showComposePage ({ recipient: config.recipient,
                                           title: config.title,
                                           template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) },
+                                          thread: [],
                                           generateNewContent: true })
         break
       case 'grammar':
@@ -3036,6 +3063,7 @@ var WikiMess = (function() {
                                                          previousTags: draft.previousTags,
                                                          template: draft.template,
                                                          vars: draft.vars,
+                                                         thread: [],
                                                          body: draft.body,
                                                          draft: draft.id })
                                  }
@@ -3260,6 +3288,7 @@ var WikiMess = (function() {
                  previousMessage: message.id,
                  previousTemplate: message.template,
                  vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
+                 thread: [],
                  tags: '',
                  previousTags: message.template ? (message.template.tags || '') : '',
                  getRandomTemplate: true
@@ -3274,6 +3303,7 @@ var WikiMess = (function() {
                 ({ title: message.title,
                    template: templateResult.template,
                    vars: wm.ParseTree.populateVarVal ($.extend ({}, message.vars, { you: null }), sender),
+                   thread: [],
                    body: message.body,
                    previousMessage: message.id,
                    tags: templateResult.template.tags || '',
@@ -3538,6 +3568,7 @@ var WikiMess = (function() {
                                                                    wm.showComposePage ({ title: template.title,
                                                                                          template: templateResult.template,
                                                                                          focus: 'playerSearchInput',
+                                                                                         thread: [],
                                                                                          generateNewContent: true }) }) })
                                                              .append ($('<span class="title">')
                                                                       .text (template.title || 'Untitled'),
@@ -4024,12 +4055,13 @@ var WikiMess = (function() {
                 wm.composition.body.rhs.push (expansion)
               wm.composition.template.content.push ({ id: symbol.id })
               delete wm.composition.randomTemplate
-              return wm.showComposePage()
+              return wm.showComposePage ({ thread: [] })
             } else
               return wm.showComposePage
             ({ template: { content: [ symbol ] },
                title: wm.symbolName[symbol.id].replace(/_/g,' '),
                body: expansion ? { type: 'root', rhs: [expansion] } : undefined,
+               thread: [],
                focus: 'playerSearchInput',
                generateNewContent: true })
             })
@@ -4929,6 +4961,7 @@ var WikiMess = (function() {
 								  wm.showComposePage ({ title: template.title,
 											template: templateResult.template,
 											focus: 'playerSearchInput',
+                                                                                        thread: [],
                                                                                         generateNewContent: true }) }) }))
 					       }))
               })
@@ -5113,6 +5146,7 @@ var WikiMess = (function() {
                                     function (evt) {
                                       evt.stopPropagation()
                                       wm.showComposePage ({ recipient: follow,
+                                                            thread: [],
                                                             click: 'messageBodyDiv' })
                                     }))
       var doFollow, doUnfollow
