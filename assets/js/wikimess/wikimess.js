@@ -1805,7 +1805,7 @@ var WikiMess = (function() {
                                                                      rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.threadNextButton = wm.makeSubNavIcon ('discard', function (evt) {
+                     (wm.threadNextButton = wm.makeSubNavIcon ('next', function (evt) {
                        evt.stopPropagation()
                        wm.discardInertCard()
                      }).addClass('threadshow'),
@@ -1823,11 +1823,21 @@ var WikiMess = (function() {
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
                                wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
+                      wm.twitterButton = wm.makeSubNavIcon ('twitter', function (evt) {
+                        evt.stopPropagation()
+                        if (wm.composition.thread && wm.composition.thread.length) {
+                          var topMessage = wm.composition.thread[wm.composition.thread.length - 1]
+                          wm.redirectToTweet (topMessage.tweeter, topMessage.tweet)
+                        }
+                      }).addClass('threadshow'),
+                      wm.dummyButton = wm.makeSubNavIcon('discard')
+                      .addClass('threadshow').css('opacity',0),  // dummy spacer, so twitter button is not on the very right, which would be a visual cue for right-throw
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
 
+          wm.showOrHideTwitterButton()
           if (wm.composition.thread && wm.composition.thread.length) {
             wm.messagePrivacyDiv.addClass ('thread')
             wm.subnavbar.addClass ('thread')
@@ -1872,7 +1882,7 @@ var WikiMess = (function() {
             wm.composition.draft = config.draft
 
           wm.divAutosuggest()
-          wm.randomizeButton.show()
+          wm.randomizeButton.css('display','')
           
           var getRandomTemplate, generateNewContent
           if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs))
@@ -2348,6 +2358,18 @@ var WikiMess = (function() {
       card.throwOut (wm.throwXOffset(), wm.throwYOffset())
     },
 
+    showOrHideTwitterButton: function() {
+      var wm = this
+      if (wm.composition.thread && wm.composition.thread.length) {
+        var topMessage = wm.composition.thread[wm.composition.thread.length - 1]
+        if (topMessage.tweeter && topMessage.tweet)
+          wm.twitterButton.show()
+        else
+          wm.twitterButton.hide()
+      } else
+        wm.twitterButton.remove()
+    },
+    
     fadeInertCard: function (card, cardDiv) {
       return wm.fadeCard (cardDiv, card)
         .then (function() {
@@ -2358,9 +2380,11 @@ var WikiMess = (function() {
             wm.subnavbar.removeClass ('thread')
             wm.messagePrivacyDiv.css ('opacity', 1)
             wm.threadNextButton.hide()
+            wm.dummyButton.remove()
             delete wm.composition.thread
           } else if (wm.composition.thread && wm.composition.thread.length)
             wm.composition.thread.pop()
+          wm.showOrHideTwitterButton()
         })
     },
 
@@ -2470,7 +2494,7 @@ var WikiMess = (function() {
       var showButton, hideButton, showFunction, hideFunction, toggler
       showButton = wm.makeSubNavIcon (config.showIcon, showFunction = function() {
         config.elements.forEach (function (element) { element.show() })
-        hideButton.show()
+        hideButton.css('display','')
         showButton.hide()
         toggler.hidden = false
 	if (config.showCallback)
@@ -2479,7 +2503,7 @@ var WikiMess = (function() {
       hideButton = wm.makeSubNavIcon (config.hideIcon, hideFunction = function() {
         config.elements.forEach (function (element) { element.hide() })
         hideButton.hide()
-        showButton.show()
+        showButton.css('display','')
         toggler.hidden = true
 	if (config.hideCallback)
 	  config.hideCallback()

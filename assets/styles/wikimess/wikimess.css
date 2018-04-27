@@ -1482,10 +1482,16 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     max-height: 1.2em;
 }
 
-.wikimess .messageheader .privrow,
+.wikimess .messageheader .privrow {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .wikimess .subnavbar.help .button,
+.wikimess .subnavbar.thread .sharepanecontainer,
 .wikimess .subnavbar.thread .button:not(.threadshow) {
     opacity: 0;
+    display: none;
     pointer-events: none;
 }
 
