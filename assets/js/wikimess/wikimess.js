@@ -1451,7 +1451,16 @@ var WikiMess = (function() {
           wm.composition.template.content = wm.composition.template.content || []
 
           wm.composition.vars = config.vars || wm.composition.vars || {}
-          wm.composition.thread = config.thread || wm.composition.thread
+
+          if (config.clearThread) {
+            wm.composition.thread = null
+            delete wm.composition.threadTweeter
+            delete wm.composition.threadTweet
+          } else {
+            wm.composition.thread = config.thread || wm.composition.thread
+            wm.composition.threadTweeter = config.threadTweeter || wm.composition.threadTweeter
+            wm.composition.threadTweet = config.threadTweet || wm.composition.threadTweet
+          }
           
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
           makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
@@ -1841,8 +1850,10 @@ var WikiMess = (function() {
           if (wm.composition.thread && wm.composition.thread.length) {
             wm.messagePrivacyDiv.addClass ('thread')
             wm.subnavbar.addClass ('thread')
-          } else
-            wm.threadNextButton.hide()
+          } else {
+            wm.threadNextButton.remove()
+            wm.dummyButton.remove()
+          }
 
           if (config.recipient) {
             wm.composition.recipient = config.recipient
@@ -2098,7 +2109,9 @@ var WikiMess = (function() {
     },
     
     deleteDraft: function() {
-      if (wm.playerID === null) {
+      if (wm.composition.threadTweeter && wm.composition.threadTweet)
+        wm.redirectToTweet (wm.composition.threadTweeter, wm.composition.threadTweet)
+      else if (wm.playerID === null) {
         wm.composition.randomTemplate = true
         wm.dealCard ({ generate: true })
       } else
@@ -2925,7 +2938,9 @@ var WikiMess = (function() {
                  title: replyTitle,
                  previousMessage: lastMessage.id,
                  previousTemplate: lastMessage.template,
-                 thread: [],
+                 thread: thread,
+                 threadTweeter: lastMessage.tweeter,
+                 threadTweet: lastMessage.tweet,
                  vars: wm.ParseTree.nextVarVal (lastMessage.body, lastMessage.vars, lastMessage.sender),
                  tags: '',
                  previousTags: lastMessage.template ? (lastMessage.template.tags || '') : '',
@@ -2939,7 +2954,7 @@ var WikiMess = (function() {
         promise = this.showComposePage ({ recipient: config.recipient,
                                           title: config.title,
                                           template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) },
-                                          thread: [],
+                                          clearThread: true,
                                           generateNewContent: true })
         break
       case 'grammar':
@@ -3087,7 +3102,7 @@ var WikiMess = (function() {
                                                          previousTags: draft.previousTags,
                                                          template: draft.template,
                                                          vars: draft.vars,
-                                                         thread: [],
+                                                         clearThread: true,
                                                          body: draft.body,
                                                          draft: draft.id })
                                  }
@@ -3312,7 +3327,7 @@ var WikiMess = (function() {
                  previousMessage: message.id,
                  previousTemplate: message.template,
                  vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
-                 thread: [],
+                 clearThread: true,
                  tags: '',
                  previousTags: message.template ? (message.template.tags || '') : '',
                  getRandomTemplate: true
@@ -3327,7 +3342,7 @@ var WikiMess = (function() {
                 ({ title: message.title,
                    template: templateResult.template,
                    vars: wm.ParseTree.populateVarVal ($.extend ({}, message.vars, { you: null }), sender),
-                   thread: [],
+                   clearThread: true,
                    body: message.body,
                    previousMessage: message.id,
                    tags: templateResult.template.tags || '',
@@ -3592,7 +3607,7 @@ var WikiMess = (function() {
                                                                    wm.showComposePage ({ title: template.title,
                                                                                          template: templateResult.template,
                                                                                          focus: 'playerSearchInput',
-                                                                                         thread: [],
+                                                                                         clearThread: true,
                                                                                          generateNewContent: true }) }) })
                                                              .append ($('<span class="title">')
                                                                       .text (template.title || 'Untitled'),
@@ -4085,7 +4100,7 @@ var WikiMess = (function() {
             ({ template: { content: [ symbol ] },
                title: wm.symbolName[symbol.id].replace(/_/g,' '),
                body: expansion ? { type: 'root', rhs: [expansion] } : undefined,
-               thread: [],
+               clearThread: true,
                focus: 'playerSearchInput',
                generateNewContent: true })
             })
@@ -4985,7 +5000,7 @@ var WikiMess = (function() {
 								  wm.showComposePage ({ title: template.title,
 											template: templateResult.template,
 											focus: 'playerSearchInput',
-                                                                                        thread: [],
+                                                                                        clearThread: true,
                                                                                         generateNewContent: true }) }) }))
 					       }))
               })
@@ -5170,7 +5185,7 @@ var WikiMess = (function() {
                                     function (evt) {
                                       evt.stopPropagation()
                                       wm.showComposePage ({ recipient: follow,
-                                                            thread: [],
+                                                            clearThread: true,
                                                             click: 'messageBodyDiv' })
                                     }))
       var doFollow, doUnfollow
