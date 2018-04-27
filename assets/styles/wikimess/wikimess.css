@@ -1242,37 +1242,37 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 @-webkit-keyframes swipepulse {
     0% { fill-opacity: 0; }
-    22% { fill-opacity: 0; }
-    25% { fill-opacity: 1; }
-    31% { fill-opacity: 1; }
+    22% { fill-opacity: 0; fill: black; }
+    25% { fill-opacity: 1; fill: #400; }
+    31% { fill-opacity: 1; fill: black; }
     32% { fill-opacity: 0; }
     34% { fill-opacity: 0; }
-    37% { fill-opacity: 1; }
-    43% { fill-opacity: 1; }
+    37% { fill-opacity: 1; fill: #400; }
+    43% { fill-opacity: 1; fill: black; }
     100% { fill-opacity: 0; }
 }
 
 @-moz-keyframes swipepulse {
     0% { fill-opacity: 0; }
-    22% { fill-opacity: 0; }
-    25% { fill-opacity: 1; }
-    31% { fill-opacity: 1; }
+    22% { fill-opacity: 0; fill: black; }
+    25% { fill-opacity: 1; fill: #400; }
+    31% { fill-opacity: 1; fill: black; }
     32% { fill-opacity: 0; }
     34% { fill-opacity: 0; }
-    37% { fill-opacity: 1; }
-    43% { fill-opacity: 1; }
+    37% { fill-opacity: 1; fill: #400; }
+    43% { fill-opacity: 1; fill: black; }
     100% { fill-opacity: 0; }
 }
 
 @keyframes swipepulse {
     0% { fill-opacity: 0; }
-    22% { fill-opacity: 0; }
-    25% { fill-opacity: 1; }
-    31% { fill-opacity: 1; }
+    22% { fill-opacity: 0; fill: black; }
+    25% { fill-opacity: 1; fill: #400; }
+    31% { fill-opacity: 1; fill: black; }
     32% { fill-opacity: 0; }
     34% { fill-opacity: 0; }
-    37% { fill-opacity: 1; }
-    43% { fill-opacity: 1; }
+    37% { fill-opacity: 1; fill: #400; }
+    43% { fill-opacity: 1; fill: black; }
     100% { fill-opacity: 0; }
 }
 
