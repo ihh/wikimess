@@ -364,7 +364,9 @@ module.exports = {
               .populate ('template')
               .populate ('sender')
               .then (function (replies) {
-                return Promise.map (replies || [], function (reply) {
+                replies = replies || []
+                msg.replies = replies
+                return Promise.map (replies, function (reply) {
                   return subtreeRootedAt (reply)
                 }).then (function (repliesWithDescendants) {
                   return repliesWithDescendants.reduce (function (a, b) { return a.concat(b) },

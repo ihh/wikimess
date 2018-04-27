@@ -1979,6 +1979,12 @@ var WikiMess = (function() {
                       wm.redirectToTweet (message.tweeter, message.tweet)
                     else
                       wm.showStatusPage()
+                      .then (function() {
+                        wm.showMessage ($.extend ({ result: { message: message },
+                                                    cardClass: 'broadcastcard',
+                                                    pushView: true },
+                                                  wm.broadcastProps()))
+                      })
                   })
                   card.on ('dragstart', function() {
                     wm.startDrag (cardDiv)
