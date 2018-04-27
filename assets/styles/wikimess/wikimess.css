@@ -1017,6 +1017,7 @@ input {
     border-style: solid;
 }
 
+.wikimess .stack .inertcard,
 .wikimess .stack .helpcard {
     position: absolute;
 
@@ -1043,7 +1044,7 @@ background: linear-gradient(135deg, #fefcea 0%,#f1da36 100%); /* W3C, IE10+, FF1
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fefcea', endColorstr='#f1da36',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 }
 
-.wikimess .stack .card.composecard {
+.wikimess .stack .composecard {
 /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#d5cea6+0,c9c190+40,b7ad70+100;Brown+3D */
 background: #d5cea6; /* Old browsers */
 background: -moz-linear-gradient(-45deg, #d5cea6 0%, #c9c190 40%, #b7ad70 100%); /* FF3.6-15 */
@@ -1065,7 +1066,7 @@ background: linear-gradient(135deg, #ffffff 0%,#a8a8a8 100%); /* W3C, IE10+, FF1
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#a8a8a8',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 }
 
-.wikimess .stack .card.broadcastcard {
+.wikimess .stack .broadcastcard {
 /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#feffff+0,ddf1f9+35,a0d8ef+100;Blue+3D+%2318 */
 background: #feffff; /* Old browsers */
 background: -moz-linear-gradient(-45deg, #feffff 0%, #ddf1f9 35%, #a0d8ef 100%); /* FF3.6-15 */
@@ -1078,7 +1079,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#feffff', end
     box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
-.wikimess .stack .card.messagecard {
+.wikimess .stack .messagecard {
 /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#feffff+0,ddf1f9+35,a0d8ef+100;Blue+3D+%2318 */
 background: #feffff; /* Old browsers */
 background: -moz-linear-gradient(-45deg, #feffff 0%, #ddf1f9 35%, #a0d8ef 100%); /* FF3.6-15 */
@@ -1091,7 +1092,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#feffff', end
     box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
 }
 
-.wikimess .stack .card.sentcard {
+.wikimess .stack .sentcard {
 /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#fddeb5+0,f9c785+100 */
 background: #fddeb5; /* Old browsers */
 background: -moz-linear-gradient(-45deg, #fddeb5 0%, #f9c785 100%); /* FF3.6-15 */
@@ -1116,7 +1117,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
 }
 
-.wikimess .stack .jiggle:not(.dragging):not(.throwing) {
+.wikimess .stack .jiggle:last-child:not(.dragging):not(.throwing) {
     animation: jiggle 5s ease 0s infinite;
     -moz-animation: jiggle 5s ease 0s infinite;
     -webkit-animation: jiggle 5s ease 0s infinite;
@@ -1144,6 +1145,22 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     97% { transform: rotate(1deg); }
     99% { transform: rotate(-0.5deg); }
     100% { transform: rotate(0deg); }
+}
+
+.wikimess .stack .broadcastcard:nth-child(4n+3) {
+    top: 2px; transform: translate(4px, 3px) rotate(-.8deg);
+}
+
+.wikimess .stack .broadcastcard:nth-child(4n+2) {
+    top: 3px; transform: translate(2px, 2px) rotate(0.4deg);
+}
+
+.wikimess .stack .broadcastcard:nth-child(4n+1) {
+    top: 3px; transform: translate(-2px, 2px) rotate(-0.4deg);
+}
+
+.wikimess .stack .broadcastcard:nth-child(4n) {
+    top: 4px; transform: translate(-4px, -2px) rotate(.8deg);
 }
 
 .wikimess .arrowcontainer {
@@ -1448,8 +1465,11 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     max-height: 1.2em;
 }
 
-.wikimess .subnavbar.help .button {
-    display: none;
+.wikimess .messageheader .privrow,
+.wikimess .subnavbar.help .button,
+.wikimess .subnavbar.thread .button:not(.threadshow) {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .wikimess .subnavbar .sharepanecontainer,

@@ -123,6 +123,7 @@ var WikiMess = (function() {
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     menuPopupDelay: 500,
+    threadCardThrowDelay: 100,
     alwaysThrowInHelpCards: true,
     starColor: 'darkgoldenrod',
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
@@ -174,8 +175,8 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
-           { name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
+    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
+           { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
            { name: 'grammar', method: 'showGrammarEditPage', label: 'thesaurus', icon: 'spell-book' },
@@ -362,6 +363,10 @@ var WikiMess = (function() {
 
     REST_getPlayerMessagePublic: function (playerID, messageID) {
       return this.logGet ('/p/message/' + messageID + '/public')
+    },
+
+    REST_getPlayerMessageThread: function (playerID, messageID) {
+      return this.logGet ('/p/message/' + messageID + '/thread')
     },
 
     REST_postPlayerMessage: function (playerID, message) {
@@ -1445,8 +1450,8 @@ var WikiMess = (function() {
           wm.composition.template = config.template || wm.composition.template || {}
           wm.composition.template.content = wm.composition.template.content || []
 
-          wm.composition.vars = config.vars || {}
-
+          wm.composition.vars = config.vars || wm.composition.vars || {}
+          
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
           makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
           makeMessageHeaderInput ('tags', 'No future tags', 'tags', 'messageTagsInput', true)
@@ -1799,7 +1804,15 @@ var WikiMess = (function() {
                                                                      rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
+                     (wm.threadNextButton = wm.makeSubNavIcon ('discard', function (evt) {
+                       var lastCardDiv = wm.stackDiv.children().last()
+                       var lastCard = lastCardDiv[0].swingCardObject
+                       if (lastCardDiv.hasClass ('inertcard')) {
+                         wm.startThrow (lastCardDiv)
+                         lastCard.throwOut (-wm.throwXOffset(), wm.throwYOffset())
+                       }
+                     }).addClass('threadshow'),
+                      wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
                         wm.discardAndRefresh()
                       }),
@@ -1817,7 +1830,13 @@ var WikiMess = (function() {
 
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
-          
+
+          if (config.thread) {
+            wm.messagePrivacyDiv.addClass ('thread')
+            wm.subnavbar.addClass ('thread')
+          } else
+            wm.threadNextButton.hide()
+
           if (config.recipient) {
             wm.composition.recipient = config.recipient
             wm.composition.isPrivate = (wm.playerID !== null && config.recipient !== null && !config.defaultToPublic)
@@ -1920,6 +1939,74 @@ var WikiMess = (function() {
             }
           } else
             return wm.dealCard (dealConfig)
+            .then (function() {
+              if (config.thread) {
+                var throwers = config.thread.reverse().map (function (message, n) {
+                  var promise = $.Deferred()
+                  var cardDiv = wm.makeMessageCardDiv ({ message: message,
+                                                         sender: message.sender,
+                                                         recipient: message.recipient,
+                                                         cardClass: 'broadcastcard' })
+                  cardDiv.removeClass('card').addClass('inertcard')
+                  wm.addToStack (cardDiv)
+
+                  // create the swing card object for the read message card
+                  var card = wm.stack.createCard (cardDiv[0])
+                  cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
+                  function fadeCard() {
+                    wm.fadeCard (cardDiv, card)
+                      .then (function() {
+                        if (n == 0) {
+                          wm.setThrowArrowText ('discard', 'share')
+                          wm.messagePrivacyDiv.removeClass ('thread')
+                          wm.subnavbar.removeClass ('thread')
+                          wm.messagePrivacyDiv.css ('opacity', 1)
+                          wm.threadNextButton.hide()
+                        }
+                      })
+                  }
+                  card.on ('throwout', fadeCard)
+                  card.on ('dragstart', function() {
+                    wm.startDrag (cardDiv)
+                  })
+                  card.on ('throwinend', function() {
+                    wm.stopDrag (cardDiv)
+                    promise.resolve()
+                  })
+                  card.on ('dragmove', wm.dragListener.bind (wm))
+                  card.on ('dragend', function() {
+                    wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+                  })
+
+                  function throwIn() {
+                    cardDiv.show()
+                    wm.startThrow (cardDiv)
+	            card.throwIn (0, -wm.throwYOffset())
+                    return promise
+                  }
+                  
+                  cardDiv.hide()
+                  return throwIn
+                })
+
+                var allDealt = throwers.reduce (function (promise, thrower, k) {
+                  return promise.then (function() {
+                    thrower()  // discard result of this promise, we don't need to wait for each card's throw animation to finish
+                    var def = $.Deferred()
+                    if (k == 0)
+                      def.resolve()
+                    else
+                      window.setTimeout (function() {
+                        def.resolve()
+                      }, wm.threadCardThrowDelay)
+                    return def
+                  })
+                }, $.Deferred().resolve())
+
+                wm.setThrowArrowText ('next')
+                return allDealt
+              }
+            })
         })
       // end of showComposePage
     },
@@ -1945,13 +2032,18 @@ var WikiMess = (function() {
       return wm.throwArrowContainer
     },
 
+    setThrowArrowText: function (leftText, rightText) {
+      $('.leftarrowstripe .text').text (leftText)
+      $('.rightarrowstripe .text').text (rightText || leftText)
+    },
+    
     throwOutConfidence: function (xOffset, yOffset, element) {
       return Math.min (Math.max (Math.abs(xOffset) / element.offsetWidth, Math.abs(yOffset) / element.offsetHeight), 1)
     },
 
     isThrowOut: function (xOffset, yOffset, element, throwOutConfidence) {
       var wm = this
-      var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || xOffset < Math.abs(yOffset) || wm.page !== 'compose' || window.confirm (wm.shareMessagePrompt))
+      var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || element.className.includes('inertcard') || xOffset < Math.abs(yOffset) || wm.page !== 'compose' || window.confirm (wm.shareMessagePrompt))
       return throwOut
     },
 
@@ -2131,10 +2223,10 @@ var WikiMess = (function() {
             card.throwIn (0, -wm.throwYOffset())
           } else
             wm.modalExitDiv.hide()
-	}).then (function() {
           if (wm.nextDealPromise)
             wm.nextDealPromise.resolve()
           wm.nextDealPromise = $.Deferred()
+          return cardDiv
         })
     },
 
@@ -2280,7 +2372,7 @@ var WikiMess = (function() {
     fadeCard: function (element, card) {
       var wm = this
       var fadedPromise = $.Deferred()
-      if (!element.hasClass ('helpcard') && wm.modalExitDiv)
+      if (!element.hasClass ('helpcard') && !element.hasClass ('inertcard') && wm.modalExitDiv)
         wm.modalExitDiv.show()
       element.find('*').off()
       card.destroy()
@@ -2769,22 +2861,28 @@ var WikiMess = (function() {
       switch (config.action) {
       case 'message':
         wm.container.hide()
-        promise = wm.REST_getPlayerMessagePublic (wm.playerID, config.message)
+        promise = wm.REST_getPlayerMessageThread (wm.playerID, config.message)
           .then (function (result) {
-            return wm.showStatusPage()
-              .then (function() {
-                return wm.showMessage ($.extend ({ result: result,
-                                                   recipient: null,
-                                                   cardClass: (result.message.recipient
-                                                               ? 'messagecard'
-                                                               : 'broadcastcard'),
-                                                   pushView: true },
-                                                 wm.broadcastProps()))
-              }).then (function() {
-                // presentation hack: monkey-patch the message container
-                wm.readMessageDiv.addClass ('permalink')
-                wm.container.show()
-              })
+            wm.container.show()
+            if (result && result.thread && result.thread.length) {
+              var thread = result.thread
+              var lastMessage = thread[thread.length-1]
+              var replyTitle = lastMessage.title
+              if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+                replyTitle = 'Re: ' + replyTitle
+              return wm.showComposePage
+              ({ recipient: lastMessage.sender,
+                 defaultToPublic: true,
+                 title: replyTitle,
+                 previousMessage: lastMessage.id,
+                 previousTemplate: lastMessage.template,
+                 vars: wm.ParseTree.nextVarVal (lastMessage.body, lastMessage.vars, lastMessage.sender),
+                 tags: '',
+                 previousTags: lastMessage.template ? (lastMessage.template.tags || '') : '',
+                 getRandomTemplate: true,
+                 thread: thread
+               })
+            }
           })
         break
       case 'compose':
@@ -3107,7 +3205,31 @@ var WikiMess = (function() {
         })
       }
     },
-    
+
+    makeMessageCardDiv: function (config) {
+      var wm = this
+      var message = config.message, sender = config.sender, recipient = config.recipient
+      
+      var avatarDiv = $('<div class="avatar">')
+      if (message.tweeter)
+	wm.addAvatarImage (avatarDiv, message.tweeter)
+
+      var textDiv = $('<div class="text">')
+	  .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
+								    false,
+
+								    message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))
+      var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
+      var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
+                                                      .append (avatarDiv, textDiv))
+      var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
+      if (wm.isTouchDevice())
+        cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
+      if (config.cardClass)
+        cardDiv.addClass (config.cardClass)
+      return cardDiv
+    },
+
     showMessage: function (props) {
       var wm = this
       var message = props.result.message
@@ -3223,20 +3345,7 @@ var WikiMess = (function() {
           if (!gotoTwitter)
             twitterButton.hide()
 
-          var avatarDiv = $('<div class="avatar">')
-	  var textDiv = $('<div class="text">')
-	      .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
-									false,
-
-									message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))
-          var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
-          var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
-                                                          .append (avatarDiv, textDiv))
-          var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
-          if (wm.isTouchDevice())
-            cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
-          if (props.cardClass)
-            cardDiv.addClass (props.cardClass)
+          var cardDiv = wm.makeMessageCardDiv ({ message: message, sender: sender, recipient: recipient, cardClass: props.cardClass })
           wm.stackDiv = $('<div class="stack">').append (cardDiv)
 
           // create the swing card object for the read message card
@@ -3313,8 +3422,6 @@ var WikiMess = (function() {
                      .append (wm.stackDiv,
                               wm.makeThrowArrowContainer ({ leftText: (prevInThread ? 'previous' : (gotoTwitter ? 'twitter' : 'back')),
                                                             rightText: (nextInThread ? 'next' : 'reply') })))
-	  if (message.tweeter)
-	    wm.addAvatarImage (avatarDiv, message.tweeter)
           
           if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
             var dx = 0, dy = 0
@@ -3338,6 +3445,7 @@ var WikiMess = (function() {
           }
         })
     },
+
 
     compositionVarVal: function() {
       var sender = this.playerID ? this.playerInfo : null

@@ -312,7 +312,7 @@ module.exports = {
       })
   },
 
-  // get a conversation thread
+  // get a conversation thread, i.e. all messages between two players
   getThread: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var otherID = Player.parseID (req.params.id)
@@ -347,6 +347,65 @@ module.exports = {
         res.status(500).send ({ message: err })
       })
   },
+
+  // get a broadcast Message thread, forward in time: the Message itself and all descendants
+  getBroadcastMessageForwardThread: function (req, res) {
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    var messageID = Message.parseID (req.params.message)
+    var result = {}
+    Message.findOne ({ isBroadcast: true,
+                       id: messageID })
+      .populate ('template')
+      .populate ('sender')
+      .then (function (message) {
+        if (message) {
+          function subtreeRootedAt (msg) {
+            return Message.find ({ previous: msg.id })
+              .populate ('template')
+              .populate ('sender')
+              .then (function (replies) {
+                return Promise.map (replies || [], function (reply) {
+                  return subtreeRootedAt (reply)
+                }).then (function (repliesWithDescendants) {
+                  return repliesWithDescendants.reduce (function (a, b) { return a.concat(b) },
+                                                        [msg])
+                })
+              })
+          }
+          return subtreeRootedAt (message)
+        }
+        return []  // no message was found, return empty
+      }).then (function (messages) {
+        res.json
+        ({ thread:
+           messages.map (function (message) {
+             return { id: message.id,
+                      previous: message.previous,
+                      next: message.replies.map (function (reply) {
+                        return reply.id
+                      }),
+                      sender: (message.sender
+                               ? { id: message.sender.id,
+                                   name: message.sender.name,
+                                   displayName: message.sender.displayName }
+                               : null),
+                      template: { id: message.template.id,
+                                  content: message.template.content,
+                                  tags: message.template.tags },
+	              tweeter: message.tweeter,
+	              tweet: message.tweetId,
+                      title: message.title,
+                      vars: message.initVarVal,
+                      body: message.body,
+                      date: message.createdAt,
+                      rating: message.rating }
+           })
+         })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+        },
 
   // find player ID
   getPlayerId: function (req, res) {

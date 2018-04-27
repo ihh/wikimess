@@ -125,6 +125,7 @@ module.exports.routes = {
   'GET /p/message/:message/header':  'ClientController.getReceivedMessageHeader',
   'GET /p/message/:message/sent':    'ClientController.getSentMessage',
   'GET /p/message/:message/public':  'ClientController.getBroadcastMessage',
+  'GET /p/message/:message/thread':  'ClientController.getBroadcastMessageForwardThread',
   'POST /p/message':                 'ClientController.sendMessage',
   'DELETE /p/message/:message':      'ClientController.deleteMessage',
   'PUT /p/message/:message/rating':  'ClientController.rateMessage',
