@@ -138,7 +138,7 @@ var WikiMess = (function() {
                     minus: 'circle-minus',
                     up: 'up-arrow-button',
                     down: 'down-arrow-button',
-                    swipe: 'two-finger-swipe',
+                    swipe: 'one-finger-contact-swipe',
                     swipeleft: 'left-swipe-arrow',
                     swiperight: 'right-swipe-arrow',
                     help: 'help',
@@ -2050,8 +2050,6 @@ var WikiMess = (function() {
                  .append (wm.rightThrowArrow
                           .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (wm.rightThrowArrow, wm.throwRight), '#222')),
                                    $('<div class="text">').text (config.rightText))))
-      if (!wm.isTouchDevice())
-        hand.hide()
       return wm.throwArrowContainer
     },
 
