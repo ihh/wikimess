@@ -387,8 +387,8 @@ input {
 
 .wikimess .sharepane {
     position: absolute;
-    top: -46px;  /* ugh */
-    left: -70px;  /* double ugh */
+    top: -6vh;
+    right: 0;
     display: flex;
     flex-direction: row;
 }
@@ -1234,6 +1234,24 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     100% { transform:scale(1) rotate(0deg) translate(0,0); opacity: 0; }
 }
 
+.wikimess .arrowcontainer .arrowstripe .hand #one-finger-contact-swipe-mark {
+    animation: swipepulse 10s linear 0s infinite;
+    -moz-animation: swipepulse 10s linear 0s infinite;
+    -webkit-animation: swipepulse 10s linear 0s infinite;
+}
+
+@keyframes swipepulse {
+    0% { fill-opacity: 0; }
+    22% { fill-opacity: 0; }
+    25% { fill-opacity: 1; }
+    31% { fill-opacity: 1; }
+    32% { fill-opacity: 0; }
+    34% { fill-opacity: 0; }
+    37% { fill-opacity: 1; }
+    43% { fill-opacity: 1; }
+    100% { fill-opacity: 0; }
+}
+
 .wikimess .arrowcontainer .arrowstripe .arrowplustext {
     display: flex;
     flex-direction: column;
@@ -1246,7 +1264,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 .wikimess .arrowcontainer .arrowstripe .arrowplustext .arrow svg {
-    pointer-events: fill;
 }
 
 .wikimess .arrowcontainer .arrowstripe .arrowplustext .text {

@@ -91,7 +91,7 @@
 
     .wikimess .sharepane,
     .wikimess .infopane {
-	box-shadow: 1vw -1vw 1vw 0px gray;
+	box-shadow: 1vw 1vw 1vw 0px gray;
     }
 
     .wikimess .infopane .content {

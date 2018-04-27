@@ -59,6 +59,9 @@ var WikiMess = (function() {
 			      ],
                               isThrowOut: wm.isThrowOut.bind(wm) })
 
+    $(document).on ('resize', wm.resizeListener.bind(wm))
+    $(window).on ('resize', wm.resizeListener.bind(wm))
+    
     // monitor connection
     if (wm.reloadOnDisconnect)
       io.socket.on('disconnect', function() {
@@ -483,6 +486,10 @@ var WikiMess = (function() {
 
     redirectToTweet: function (tweeter, tweet) {
       window.location.replace (this.makeTweetUrl (tweeter, tweet))
+    },
+
+    openTweet: function (tweeter, tweet) {
+      window.open (this.makeTweetUrl (tweeter, tweet))
     },
 
     // WebSockets interface
@@ -1738,14 +1745,14 @@ var WikiMess = (function() {
               .empty()
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendHandler ({ fade: true, callback: facebookIntent }), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendHandler ({ fade: true, callback: tweetIntent }), undefined, true).addClass('big-button'),
+                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'),
                        wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
                          if (wm.useThrowAnimations()) {
                            wm.startThrow()
                            wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
                          } else
                            wm.sendMessage ({ fade: true })
-                       }).addClass('big-button'),
-                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
+                       }).addClass('big-button'))
           }
 
           // build the actual compose page UI
@@ -2042,13 +2049,13 @@ var WikiMess = (function() {
       wm.throwArrowContainer = $('<div class="arrowcontainer">')
         .append ($('<div class="arrowstripe leftarrowstripe">')
                  .append (wm.leftThrowArrow
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', wm.ifOpaque (wm.leftThrowArrow, wm.throwLeft), '#222')),
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swipeleft', null, '#222')),
                                    $('<div class="text">').text (config.leftText))),
                  $('<div class="arrowstripe">')
                  .html (hand.html (wm.makeIconButton ('swipe'))),
                  $('<div class="arrowstripe rightarrowstripe">')
                  .append (wm.rightThrowArrow
-                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', wm.ifOpaque (wm.rightThrowArrow, wm.throwRight), '#222')),
+                          .append ($('<div class="arrow">').html (wm.makeIconButton ('swiperight', null, '#222')),
                                    $('<div class="text">').text (config.rightText))))
       return wm.throwArrowContainer
     },
@@ -2105,11 +2112,22 @@ var WikiMess = (function() {
       })
     },
 
+    resizeListener: function() {
+      var wm = this
+      if (wm.stackDiv)
+        wm.stackDiv.children('.inertcard,.helpcard').each (function(_n,div) { wm.resizeCardToStack ($(div)) })
+    },
+    
+    resizeCardToStack: function (cardDiv) {
+      var wm = this
+      cardDiv.width (wm.stackDiv.innerWidth() - parseInt(wm.stackDiv.css('padding-left')) - parseInt(wm.stackDiv.css('padding-right')) - parseInt(cardDiv.css('border-left-width')) - parseInt(cardDiv.css('border-right-width')) - parseInt(cardDiv.css('padding-left')) - parseInt(cardDiv.css('padding-right')))
+      cardDiv.height (wm.stackDiv.innerHeight() - parseInt(wm.stackDiv.css('padding-top')) - parseInt(wm.stackDiv.css('padding-bottom')) - parseInt(cardDiv.css('border-top-width')) - parseInt(cardDiv.css('border-bottom-width')) - parseInt(cardDiv.css('padding-top')) - parseInt(cardDiv.css('padding-bottom')))
+    },
+
     addToStack: function (cardDiv) {
       var wm = this
       wm.stackDiv.append (cardDiv)
-      cardDiv.width (wm.stackDiv.innerWidth() - parseInt(wm.stackDiv.css('padding-left')) - parseInt(wm.stackDiv.css('padding-right')) - parseInt(cardDiv.css('border-left-width')) - parseInt(cardDiv.css('border-right-width')) - parseInt(cardDiv.css('padding-left')) - parseInt(cardDiv.css('padding-right')))
-      cardDiv.height (wm.stackDiv.innerHeight() - parseInt(wm.stackDiv.css('padding-top')) - parseInt(wm.stackDiv.css('padding-bottom')) - parseInt(cardDiv.css('border-top-width')) - parseInt(cardDiv.css('border-bottom-width')) - parseInt(cardDiv.css('padding-top')) - parseInt(cardDiv.css('padding-bottom')))
+      wm.resizeCardToStack (cardDiv)
     },
     
     deleteDraft: function() {
@@ -2310,15 +2328,6 @@ var WikiMess = (function() {
       delete wm.autosuggestStatus.lastKey
       wm.autosuggestStatus.temperature++
       wm.autosuggestStatus.refresh()
-    },
-
-    ifOpaque: function (element, func) {
-      var wm = this
-      return function (event) {
-        event.stopPropagation()
-        if (element.css('opacity') > 0)
-          func.call (wm, event)
-      }
     },
 
     startThrow: function (cardDiv) {
