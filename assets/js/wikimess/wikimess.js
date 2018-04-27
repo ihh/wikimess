@@ -1805,10 +1805,8 @@ var WikiMess = (function() {
                                                                      rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.threadNextButton = wm.makeSubNavIcon ('next', function (evt) {
-                       evt.stopPropagation()
-                       wm.discardInertCard()
-                     }).addClass('threadshow'),
+                     (wm.dummyButton = wm.makeSubNavIcon('discard')
+                      .addClass('threadshow').css('opacity',0),  // dummy spacer, so twitter button is not on the very right, which would be a visual cue for right-throw
                       wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
                         wm.discardAndRefresh()
@@ -1830,8 +1828,10 @@ var WikiMess = (function() {
                           wm.redirectToTweet (topMessage.tweeter, topMessage.tweet)
                         }
                       }).addClass('threadshow'),
-                      wm.dummyButton = wm.makeSubNavIcon('discard')
-                      .addClass('threadshow').css('opacity',0),  // dummy spacer, so twitter button is not on the very right, which would be a visual cue for right-throw
+                      wm.threadNextButton = wm.makeSubNavIcon ('next', function (evt) {
+                       evt.stopPropagation()
+                       wm.discardInertCard()
+                     }).addClass('threadshow'),
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
