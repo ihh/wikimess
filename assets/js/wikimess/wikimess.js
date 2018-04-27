@@ -148,6 +148,7 @@ var WikiMess = (function() {
                     locked: 'padlock',
                     hide: 'hide',
                     reroll: 'rolling-die',
+                    drawcard: 'card-draw',
                     dealcard: 'card-deal',
                     discard: 'card-hand',
                     close: 'close',
@@ -1709,7 +1710,9 @@ var WikiMess = (function() {
                                     : wm.showStatusPage())
                           }
                         }).catch (function (err) {
-                          wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
+                          console.error ('message send error', err)
+                          wm.reloadCurrentTab()
+                          // wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                         })
                       }
                   }
@@ -1821,8 +1824,12 @@ var WikiMess = (function() {
                                                                      rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.dummyButton = wm.makeSubNavIcon('discard')
-                      .addClass('threadshow').css('opacity',0),  // dummy spacer, so twitter button is not on the very right, which would be a visual cue for right-throw
+                     (wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'drawcard',
+                                                                 text: 'next',
+                                                                 callback: function (evt) {
+                                                                   evt.stopPropagation()
+                                                                   wm.discardInertCard()
+                                                                 } }).addClass('threadshow'),
                       wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
                         wm.discardAndRefresh()
@@ -1844,10 +1851,8 @@ var WikiMess = (function() {
                           wm.redirectToTweet (topMessage.tweeter, topMessage.tweet)
                         }
                       }).addClass('threadshow'),
-                      wm.threadNextButton = wm.makeSubNavIcon ('next', function (evt) {
-                       evt.stopPropagation()
-                       wm.discardInertCard()
-                     }).addClass('threadshow'),
+                      wm.dummyButton = wm.makeSubNavIcon('discard')
+                      .addClass('threadshow').css('opacity',0),  // dummy spacer, so twitter button is not on the very right, which would be a visual cue for right-throw
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
@@ -2219,7 +2224,10 @@ var WikiMess = (function() {
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
-      card.on ('dragstart', wm.startDrag.bind (wm, null))
+      card.on ('dragstart', function() {
+        wm.startDrag()
+        wm.sharePane.hide()
+      })
       card.on ('throwinend', function() {
         wm.stopDrag()
         wm.modalExitDiv.hide()
@@ -2416,13 +2424,16 @@ var WikiMess = (function() {
 
     discardInertCard: function() {
       var wm = this
-      var lastCardDiv = wm.stackDiv.children().last()
-      var lastCard = lastCardDiv[0].swingCardObject
-      wm.throwArrowContainer.hide()
-      if (wm.useThrowAnimations())
-        wm.throwLeft (lastCard, lastCardDiv)
-      else
-        wm.fadeInertCard (lastCard, lastCardDiv)
+      var inertCardDivs = wm.stackDiv.children('.inertcard:not(.throwing)')
+      if (inertCardDivs.length) {
+        var lastCardDiv = inertCardDivs.last()
+        var lastCard = lastCardDiv[0].swingCardObject
+        wm.throwArrowContainer.hide()
+        if (wm.useThrowAnimations())
+          wm.throwLeft (lastCard, lastCardDiv)
+        else
+          wm.fadeInertCard (lastCard, lastCardDiv)
+      }
     },
 
     discardAndRefresh: function() {
@@ -3795,15 +3806,20 @@ var WikiMess = (function() {
     },
 
     makeIconButton: function (iconName, callback, color) {
-      var iconNameSpan = $('<span>').addClass('iconlabel').text(iconName)
+      var config = (typeof(iconName) === 'object'
+                    ? iconName
+                    : { iconName: iconName,
+                        callback: callback,
+                        color: color })
+      var iconNameSpan = $('<span>').addClass('iconlabel').text (config.text || config.iconName)
       var button = $('<span>').addClass('button').html (iconNameSpan)
-      this.getIconPromise (this.iconFilename[iconName])
+      this.getIconPromise (this.iconFilename[config.iconName])
         .done (function (svg) {
-          svg = wm.colorizeIcon (svg, color || wm.themeInfo.iconColor)
+          svg = wm.colorizeIcon (svg, config.color || wm.themeInfo.iconColor)
           button.prepend ($(svg))
         })
-      if (callback)
-        button.on ('click', callback)
+      if (config.callback)
+        button.on ('click', config.callback)
       return button
     },
 
