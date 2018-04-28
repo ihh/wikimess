@@ -1,12 +1,18 @@
 [
     {
-        name: "goodnewsgary",
-        password: "goodnews",
-        newSignUp: false
+      name: "goodnewsgary",
+      password: "goodnews",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["badnewsbess"],
+      newSignUp: false
     },
     {
-        name: "badnewsbess",
-        password: "badnews",
-        newSignUp: false
+      name: "badnewsbess",
+      password: "badnews",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["goodnewsgary"],
+      newSignUp: false
     }
 ]

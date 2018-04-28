@@ -26,7 +26,7 @@ module.exports = {
     var authorPromise
     if (typeof(config.author) === 'string')
       authorPromise = Player.findOne ({ name: config.author })
-      .then (function (player) { config.author = player.id })
+      .then (function (player) { config.author = player ? player.id : null })
     else
       authorPromise = Promise.resolve()
 

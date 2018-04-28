@@ -127,12 +127,49 @@ if (!dryRun && !start) {
     })
   })
 
-  var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { return obj.name + '\t(id=' + obj.id + ')' })
+  var follows = [], playerNameToId = {}
+  var playerPrep = function (players) {
+    players.forEach (function (player) {
+      if (player.followed) {
+        player.followed.forEach (function (followedName) {
+          follows.push ([player.name, followedName])
+        })
+        delete player.followed
+      }
+      if (player.followers) {
+        player.followers.forEach (function (followerName) {
+          follows.push ([followerName, player.name])
+        })
+        delete player.followers
+      }
+    })
+    return players
+  }
+  var playerHandler = makeHandler ('Player', hasNameAndID, function (obj) { playerNameToId[obj.name] = obj.id; return obj.name + '\t(id=' + obj.id + ')' })
   promise = promise.then (processFilenameList ({ path: '/player',
                                                  schema: schemaPath('player'),
+                                                 preprocessor: playerPrep,
                                                  handler: playerHandler,
                                                  parsers: [JSON.parse, eval],
                                                  list: playerFilenames.reverse() }))
+    .then (function() {
+      return new Promise (function (resolve, reject) {
+        if (follows.length)
+          post ({ array: follows.map
+                  (function (follow) {
+                    return { follower: playerNameToId[follow[0]],
+                             followed: playerNameToId[follow[1]] }
+                  }),
+                  offset: 0,
+		  total: follows.length,
+                  filename: '<follows>',
+                  path: '/follow',
+                  handler: makeHandler('Template',hasID,JSON.stringify),
+                  callback: resolve })
+        else
+          resolve()
+      })
+    })
 
   promise = promise.then (processFilenameList ({ path: '/symbol',
                                                  schema: schemaPath('symbol'),
@@ -155,6 +192,7 @@ function processFilenameList (info) {
       return processFiles ({ filename: filename,
                              path: info.path,
                              schema: info.schema,
+                             preprocessor: info.preprocessor,
                              handler: info.handler,
                              parsers: info.parsers,
                              first: true })
@@ -183,6 +221,7 @@ function processDir (info) {
     return processFiles ({ filename: dir + '/' + filename,
                            schema: info.schema,
                            path: info.path,
+                           preprocessor: info.preprocessor,
                            handler: info.handler,
                            parsers: info.parsers })
   }))
@@ -197,6 +236,8 @@ function processFile (info) {
   var json = readJsonFileSync (filename, parsers)
   json = isArray(json) ? json : [json]
   log (5, 'Parsed ' + filename)
+  if (info.preprocessor)
+    json = info.preprocessor(json)
   log (8, JSON.stringify(json))
   if (json && schemaFilename && opt.options['validate']) {
     var schema = JSON.parse (fs.readFileSync (schemaFilename))
@@ -296,7 +337,7 @@ function post (info) {
     callback()
   } else {
     array.forEach (function (elem, n) {
-      log (2, 'POST ' + path + ' ' + (elem.name || ('"'+elem.title+'"')) + ' (entry #' + (n+offset+1) + ' of ' + total + ' in ' + filename + ')')
+      log (2, 'POST ' + path + ' ' + (elem.name || (elem.title ? ('"'+elem.title+'"') : JSON.stringify(elem))) + ' (entry #' + (n+offset+1) + ' of ' + total + ' in ' + filename + ')')
     })
     
     // Set up the request
@@ -311,15 +352,9 @@ function post (info) {
     }
 
     // post the data
-    if (false && sailsApp) {  // disabled this clause because it doesn't seem to work with cookies
-      console.warn (post_options)
-      sailsApp.request (post_options, array, reqCallback)
-    } else {
-      // fall back to HTTP
-      var req = request (post_options, reqCallback)
-      req.write(post_data)
-      req.end()
-    }
+    var req = request (post_options, reqCallback)
+    req.write(post_data)
+    req.end()
   }
 }
 
@@ -351,7 +386,7 @@ function makeHandler (model, filter, toString) {
 	  log (3, ' ' + filename + ' ' + obj.invalidAttributes.name[0].value + ' already created')
 	else {
 	  var json = isArray(obj) ? obj : [obj]
-	  results = json.filter (filter) 
+	  results = json.filter (filter)
 	  if (results.length)
 	    log (3, ' ' + filename + ': ' + results.map(toString).join("\n " + filename + ': '))
 	  else {
