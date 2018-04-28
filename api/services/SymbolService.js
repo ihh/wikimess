@@ -8,14 +8,18 @@ var parseTree = require('../../assets/js/wikimess/parsetree.js')
 
 module.exports = {
 
+  expansionHashKey: function (expansion) {
+    return md5 (expansion.id + ' ' + parseTree.makeExpansionText (expansion))
+  },
+
   addToExpansionHash: function (hashObj, expansion) {
-    var hashKey = md5 (parseTree.makeExpansionText (expansion))
+    var hashKey = SymbolService.expansionHashKey (expansion)
     hashObj[hashKey] = true
     return hashKey
   },
 
   isInExpansionHash: function (hashObj, expansion) {
-    return hashObj && hashObj[md5 (parseTree.makeExpansionText (expansion))]
+    return hashObj && hashObj[SymbolService.expansionHashKey (expansion)]
   },
   
   validateMessage: function (hashObj, template, body) {
