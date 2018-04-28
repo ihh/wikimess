@@ -144,6 +144,7 @@ module.exports = {
 		       twitterScreenName: player.twitterScreenName,
 		       twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
                        hidePassword: (player.facebookId || player.twitterId) ? true : false,
+                       createsPublicTemplates: player.createsPublicTemplates,
                        noMailUnlessFollowed: player.noMailUnlessFollowed,
                        publicBio: player.publicBio,
                        privateBio: player.privateBio,

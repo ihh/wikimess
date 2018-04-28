@@ -102,30 +102,31 @@ if (opt.options.lift || opt.options.start || opt.options.erase) {
   }
 }
 
-if (!dryRun && !start) {
-  promise = promise.then (function() {
-    return new Promise (function (resolve) {
-      var url = urlPrefix + '/login'
-      log (1, "Logging into " + url)
-      request.post ({ jar: jar,
-                      url: url,
-                      json: true,
-                      body: { name: adminUser, password: adminPass } },
-                    function (err, res, body) {
-                      if (err)
-                        throw err
-                      else if (!body) {
-                        console.log (res)
-                        log (0, "no body")
-                      } else if (!body.player)
-                        log (0, body.message)
-                      else {
-                        log (2, "Logged in as '" + adminUser + "'")
-                        resolve()
-                      }
-                    })
+if (!start) {
+  if (!dryRun)
+    promise = promise.then (function() {
+      return new Promise (function (resolve) {
+        var url = urlPrefix + '/login'
+        log (1, "Logging into " + url)
+        request.post ({ jar: jar,
+                        url: url,
+                        json: true,
+                        body: { name: adminUser, password: adminPass } },
+                      function (err, res, body) {
+                        if (err)
+                          throw err
+                        else if (!body) {
+                          console.log (res)
+                          log (0, "no body")
+                        } else if (!body.player)
+                          log (0, body.message)
+                        else {
+                          log (2, "Logged in as '" + adminUser + "'")
+                          resolve()
+                        }
+                      })
+      })
     })
-  })
 
   var follows = [], playerNameToId = {}
   var playerPrep = function (players) {
