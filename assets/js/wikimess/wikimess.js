@@ -902,7 +902,7 @@ var WikiMess = (function() {
     },
 
     showModalWebError: function (err, sfx, callback) {
-      this.showModalMessage ((err.responseJSON && err.responseJSON.error) || (err.status && (err.status + " " + err.statusText)) || err, sfx, callback)
+      this.showModalMessage ((err.responseJSON && err.responseJSON.error) || (err.status && (err.status + " " + err.statusText)) || JSON.stringify(err), sfx, callback)
     },
 
     reloadOnFail: function() {
