@@ -193,6 +193,7 @@ module.exports = {
     var previousTags = config.previousTags || ''
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
+    var expandSymbolHash = config.expandSymbolHash || {}
     var result = {}, notification = {}, initVarVal, templateAuthor, tweeter, previousTweeter, previousTweetId
     // check that the recipient is reachable
     var reachablePromise
@@ -245,7 +246,7 @@ module.exports = {
         // impose limits
         SymbolService.imposeSymbolLimit ([template.content], Symbol.maxTemplateSyms)
         // use template from previous Message
-        templatePromise = previousPromise.then (function (previousMessage) {
+        templatePromise = validPromise.then (function (previousMessage) {
           // create the Template
           var content = template.content
           return Template.create ({ title: title,
@@ -267,6 +268,10 @@ module.exports = {
         })
       }
       return templatePromise.then (function (template) {
+        // validate the message against the template
+        if (!SymbolService.validateMessage (expandSymbolHash, template, body))
+          throw new Error ('message invalid')
+        // message is valid
         result.template = { id: template.id }
 	templateAuthor = template.author
         tweeter = templateAuthor ? templateAuthor.twitterScreenName : null

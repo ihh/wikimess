@@ -9,6 +9,7 @@ var Promise = require('bluebird')
 var extend = require('extend')
 var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
+var md5 = require('md5')
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
 var botMachine = require('../../misc/parsers/bot.js')
@@ -750,7 +751,8 @@ module.exports = {
       tags: req.body.tags,
       previousTags: req.body.previousTags,
       draftID: Draft.parseID (req.body.draft),
-      isPublic: req.body.isPublic || false
+      isPublic: req.body.isPublic || false,
+      expandSymbolHash: req.session.expandSymbolHash
     }).then (function (result) {
       res.json (result)
     }).catch (function (err) {
@@ -1441,9 +1443,12 @@ module.exports = {
   // expand a symbol using the grammar
   expandSymbol: function (req, res) {
     var symbolID = Symbol.parseID (req.params.symid)
+    req.session.expandSymbolHash = req.session.expandSymbolHash || {}
     SymbolService.expandSymbol ({ id: symbolID })
       .then (function (expansion) {
-        res.json ({ expansion: expansion })
+        var hashKey = SymbolService.addToExpansionHash (req.session.expandSymbolHash, expansion)
+        res.json ({ expansion: expansion,
+                    md5: hashKey })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -1453,8 +1458,12 @@ module.exports = {
   // expand multiple symbols using the grammar
   expandSymbols: function (req, res) {
     var symbolQueries = req.body.symbols || []
+    req.session.expandSymbolHash = req.session.expandSymbolHash || {}
     SymbolService.expandSymbols (symbolQueries, Symbol.maxTemplateSyms)
       .then (function (expansions) {
+        expansions.forEach (function (expansion) {
+          expansion.md5 = SymbolService.addToExpansionHash (req.session.expandSymbolHash, expansion)
+        })
         res.json ({ expansions: expansions })
       }).catch (function (err) {
         console.log(err)

@@ -2,11 +2,61 @@
 
 var Promise = require('bluebird')
 var extend = require('extend')
+var md5 = require('md5')
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
 
 module.exports = {
+
+  addToExpansionHash: function (hashObj, expansion) {
+    var hashKey = md5 (parseTree.makeExpansionText (expansion))
+    hashObj[hashKey] = true
+    return hashKey
+  },
+
+  isInExpansionHash: function (hashObj, expansion) {
+    return hashObj && hashObj[md5 (parseTree.makeExpansionText (expansion))]
+  },
   
+  validateMessage: function (hashObj, template, body) {
+    return SymbolService.validateMessageRhs (hashObj, template.content, body.rhs)
+  },
+
+  validateMessageRhs: function (hashObj, templateContent, bodyRhs) {
+    console.warn ('validateMessageRhs', hashObj, templateContent, bodyRhs)
+    if (!templateContent || !bodyRhs)
+      return false
+    if (templateContent.length !== bodyRhs.length)
+      return false
+    return templateContent.reduce (function (valid, templateNode, n) {
+      if (!valid)
+        return false
+      var bodyNode = bodyRhs[n]
+      if (typeof(templateNode) === 'string')
+        return templateNode === bodyNode
+      if (bodyNode.type !== (templateNode.type === 'alt' ? 'opt' : templateNode.type))
+        return false
+      switch (templateNode.type) {
+      case 'assign':
+        return SymbolService.validateMessageRhs (hashObj, templateNode.value, bodyNode.value)
+      case 'lookup':
+        return true
+      case 'func':
+        return SymbolService.validateMessageRhs (hashObj, templateNode.args, bodyNode.args)
+      case 'alt':
+        return SymbolService.validateMessageRhs (hashObj, templateNode.opts[bodyNode.n], bodyNode.rhs)
+      case 'root':
+      case 'sym':
+        if (bodyNode.md5)
+          return (SymbolService.isInExpansionHash (hashObj, bodyNode.rhs)
+                  || SymbolService.validateMessageRhs (hashObj, templateNode.rhs, bodyNode.rhs))
+        case 'opt':
+        default:
+          break
+      }
+    }, true)
+  },
+
   makeSymbolInfo: function (symbol, playerID) {
     var ownerID = symbol.owner
     var result = { symbol: { id: symbol.id } }

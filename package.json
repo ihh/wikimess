@@ -37,7 +37,6 @@
     "passport-facebook": "~2.1.1",
     "passport-local": "~1.0.0",
     "passport-twitter": "~1.0.4",
-    "pegjs": "^0.10.0",
     "rc": "1.0.1",
     "request-promise": "~4.2.2",
     "sails": "~0.12.4",

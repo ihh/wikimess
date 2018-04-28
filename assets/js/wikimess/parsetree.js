@@ -15,9 +15,13 @@
   "use strict";
 
   // randomness
-  function randomElement (array, rng) {
+  function randomIndex (array, rng) {
     rng = rng || Math.random
-    return array[Math.floor (rng() * array.length)]
+    return Math.floor (rng() * array.length)
+  }
+
+  function randomElement (array, rng) {
+    return array[randomIndex (array, rng)]
   }
 
   function nRandomElements (array, n, rng) {
@@ -41,7 +45,7 @@
     var pt = this
     rng = rng || Math.random
     return rhs.map (function (node, n) {
-      var result
+      var result, index
       if (typeof(node) === 'string')
 	result = node
       else
@@ -52,8 +56,10 @@
 		     value: pt.sampleParseTree (node.value, rng) }
           break
 	case 'alt':
+          index = pt.randomIndex (node.opts)
 	  result = { type: 'opt',
-                     rhs: pt.sampleParseTree (pt.randomElement (node.opts), rng) }
+                     n: index,
+                     rhs: pt.sampleParseTree (node.opts[index], rng) }
           break
 	case 'func':
 	  result = { type: 'func',
@@ -538,6 +544,7 @@
     nPlurals: nPlurals,
     // general utility
     isArray: isArray,
+    randomIndex: randomIndex,
     randomElement: randomElement,
     nRandomElements: nRandomElements
   }
