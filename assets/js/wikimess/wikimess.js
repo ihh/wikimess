@@ -149,7 +149,7 @@ var WikiMess = (function() {
                     hide: 'hide',
                     reroll: 'rolling-die',
                     drawcard: 'card-draw',
-                    dealcard: 'card-deal',
+                    dealcard: 'card-fall',
                     discard: 'card-hand',
                     close: 'close',
                     share: 'send',
@@ -1462,10 +1462,15 @@ var WikiMess = (function() {
 
           if (config.clearThread) {
             wm.composition.thread = null
+            delete wm.composition.threadDiscards
             delete wm.composition.threadTweeter
             delete wm.composition.threadTweet
           } else {
-            wm.composition.thread = config.thread || wm.composition.thread
+            if (config.thread) {
+              wm.composition.thread = config.thread
+              wm.composition.threadDiscards = []
+            } else
+              wm.composition.threadDiscards = wm.composition.threadDiscards || []
             wm.composition.threadTweeter = config.threadTweeter || wm.composition.threadTweeter
             wm.composition.threadTweet = config.threadTweet || wm.composition.threadTweet
           }
@@ -1824,13 +1829,7 @@ var WikiMess = (function() {
                                                                      rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'drawcard',
-                                                                 text: 'next',
-                                                                 callback: function (evt) {
-                                                                   evt.stopPropagation()
-                                                                   wm.discardInertCard()
-                                                                 } }).addClass('threadshow'),
-                      wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
+                     (wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
                         evt.stopPropagation()
                         wm.discardAndRefresh()
                       }),
@@ -1840,10 +1839,6 @@ var WikiMess = (function() {
                         evt.stopPropagation()
 			wm.fadeAndDeleteDraft (wm.currentCardDiv, wm.currentCard) ()
                       }),
-                      wm.makeTipButton(),
-                      $('<div class="sharepanecontainer">')
-                      .append (wm.sharePane = $('<div class="sharepane">').hide(),
-                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
                       wm.twitterButton = wm.makeSubNavIcon ('twitter', function (evt) {
                         evt.stopPropagation()
                         if (wm.composition.thread && wm.composition.thread.length) {
@@ -1851,21 +1846,32 @@ var WikiMess = (function() {
                           wm.redirectToTweet (topMessage.tweeter, topMessage.tweet)
                         }
                       }).addClass('threadshow'),
-                      wm.dummyButton = wm.makeSubNavIcon('discard')
-                      .addClass('threadshow').css('opacity',0),  // dummy spacer, so twitter button is not on the very right, which would be a visual cue for right-throw
+                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'drawcard',
+                                                                 text: 'next',
+                                                                 callback: function (evt) {
+                                                                   evt.stopPropagation()
+                                                                   wm.discardInertCard()
+                                                                 } }).addClass('threadonly'),
+                      wm.threadPrevButton = wm.makeSubNavIcon ({ iconName: 'dealcard',
+                                                                 text: 'previous',
+                                                                 callback: function (evt) {
+                                                                   evt.stopPropagation()
+                                                                   wm.dealInertCard()
+                                                                 } }).addClass('threadshow'),
+                      wm.makeTipButton().addClass('threadshow'),
+                      $('<div class="sharepanecontainer">')
+                      .append (wm.sharePane = $('<div class="sharepane">').hide(),
+                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
 
           wm.showOrHideTwitterButton()
-          if (wm.composition.thread && wm.composition.thread.length) {
-            wm.messagePrivacyDiv.addClass ('thread')
-            wm.subnavbar.addClass ('thread')
-          } else {
-            wm.threadNextButton.remove()
-            wm.dummyButton.remove()
-          }
+          if (wm.composition.thread && wm.composition.thread.length)
+            wm.setComposeInertMode()
+          else
+            wm.setComposeCardMode()
 
           if (config.recipient) {
             wm.composition.recipient = config.recipient
@@ -1971,60 +1977,7 @@ var WikiMess = (function() {
             return wm.dealCard (dealConfig)
             .then (function() {
               if (wm.composition.thread && wm.composition.thread.length) {
-                var throwers = wm.composition.thread.map (function (message) {
-                  var promise = $.Deferred()
-                  var cardDiv = wm.makeMessageCardDiv ({ message: message,
-                                                         sender: message.sender,
-                                                         recipient: message.recipient,
-                                                         cardClass: 'broadcastcard' })
-                  cardDiv.removeClass('card').addClass('inertcard')
-                  wm.addToStack (cardDiv)
-
-                  // create the swing card object for the thread message card
-                  var card = wm.stack.createCard (cardDiv[0])
-                  cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
-                  card.on ('throwoutleft', wm.fadeInertCard.bind (wm, card, cardDiv))
-                  card.on ('throwoutright', wm.fadeInertCard.bind (wm, card, cardDiv))
-                  card.on ('throwoutdown', wm.fadeInertCard.bind (wm, card, cardDiv))
-                  card.on ('throwoutup', function() {
-                    if (message.tweeter && message.tweet)
-                      wm.redirectToTweet (message.tweeter, message.tweet)
-                    else
-                      wm.showStatusPage()
-                      .then (function() {
-                        wm.showMessage ($.extend ({ result: { message: message },
-                                                    cardClass: 'broadcastcard',
-                                                    pushView: true },
-                                                  wm.broadcastProps()))
-                      })
-                  })
-                  card.on ('dragstart', function() {
-                    wm.startDrag (cardDiv)
-                  })
-                  card.on ('throwinend', function() {
-                    wm.stopDrag (cardDiv)
-                    promise.resolve()
-                  })
-                  card.on ('dragmove', wm.dragListener.bind (wm))
-                  card.on ('dragend', function() {
-                    wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
-                    cardDiv.removeClass('dragging').addClass('throwing')
-                  })
-
-                  function throwIn() {
-                    cardDiv.show()
-                    wm.startThrow (cardDiv)
-	            card.throwIn (0, -wm.throwYOffset())
-                    return promise
-                  }
-
-                  if (!wm.useThrowAnimations() || dealConfig.noThrowIn)
-                    return function() { return $.Deferred().resolve() }
-                  
-                  cardDiv.hide()
-                  return throwIn
-                })
-
+                var throwers = wm.composition.thread.map (function (msg) { return wm.makeInertCardPromiser ({ message: msg, noThrowIn: dealConfig.noThrowIn }) })
                 var allDealt = throwers.reduce (function (promise, thrower, k) {
                   return promise.then (function() {
                     thrower()  // discard result of this promise, we don't need to wait for each card's throw animation to finish
@@ -2045,6 +1998,61 @@ var WikiMess = (function() {
             })
         })
       // end of showComposePage
+    },
+
+    makeInertCardPromiser: function (config) {
+      var wm = this
+      var message = config.message
+      var promise = $.Deferred()
+      var cardDiv = wm.makeMessageCardDiv ({ message: message,
+                                             sender: message.sender,
+                                             recipient: message.recipient,
+                                             cardClass: 'broadcastcard' })
+      cardDiv.removeClass('card').addClass('inertcard')
+      wm.addToStack (cardDiv)
+
+      // create the swing card object for the thread message card
+      var card = wm.stack.createCard (cardDiv[0])
+      cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
+      card.on ('throwoutleft', wm.fadeInertCard.bind (wm, card, cardDiv))
+      card.on ('throwoutright', wm.fadeInertCard.bind (wm, card, cardDiv))
+      card.on ('throwoutdown', wm.fadeInertCard.bind (wm, card, cardDiv))
+      card.on ('throwoutup', function() {
+        if (message.tweeter && message.tweet)
+          wm.redirectToTweet (message.tweeter, message.tweet)
+        else
+          wm.showStatusPage()
+          .then (function() {
+            wm.showMessage ($.extend ({ result: { message: message },
+                                        cardClass: 'broadcastcard',
+                                        pushView: true },
+                                      wm.broadcastProps()))
+          })
+      })
+      card.on ('dragstart', function() {
+        wm.startDrag (cardDiv)
+      })
+      card.on ('throwinend', function() {
+        wm.stopDrag (cardDiv)
+        promise.resolve()
+      })
+      card.on ('dragmove', wm.dragListener.bind (wm))
+      card.on ('dragend', function() {
+        wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
+        cardDiv.removeClass('dragging').addClass('throwing')
+      })
+
+      function throwIn() {
+        cardDiv.show()
+        if (!wm.useThrowAnimations() || config.noThrowIn)
+          return $.Deferred().resolve()
+        wm.startThrow (cardDiv)
+	card.throwIn (0, -wm.throwYOffset())
+        return promise
+      }
+
+      cardDiv.hide()
+      return throwIn
     },
 
     makeThrowArrowContainer: function (config) {
@@ -2405,25 +2413,62 @@ var WikiMess = (function() {
       } else
         wm.twitterButton.remove()
     },
+
+    setComposeCardMode: function() {
+      var wm = this
+      wm.setThrowArrowText ('discard', 'share')
+      wm.messagePrivacyDiv.removeClass ('thread')
+      wm.subnavbar.removeClass ('thread')
+      wm.messagePrivacyDiv.removeClass ('thread')
+      wm.setComposeThreadButtonState()
+    },
+
+    setComposeInertMode: function() {
+      var wm = this
+      wm.setThrowArrowText ('next')
+      wm.messagePrivacyDiv.addClass ('thread')
+      wm.subnavbar.addClass ('thread')
+      wm.messagePrivacyDiv.addClass ('thread')
+      wm.setComposeThreadButtonState()
+    },
+
+    setComposeThreadButtonState: function() {
+      var wm = this
+      if (wm.composition.threadDiscards && wm.composition.threadDiscards.length)
+        wm.threadPrevButton.removeClass ('disabled')
+      else
+        wm.threadPrevButton.addClass ('disabled')
+    },
     
+    noInertCards: function() {
+      return this.stackDiv.children('.inertcard').length === 0
+    },
+
     fadeInertCard: function (card, cardDiv) {
       return wm.fadeCard (cardDiv, card)
         .then (function() {
           wm.stopDrag (cardDiv)
-          if (wm.stackDiv.children('.inertcard').length === 0) {
-            wm.setThrowArrowText ('discard', 'share')
-            wm.messagePrivacyDiv.removeClass ('thread')
-            wm.subnavbar.removeClass ('thread')
-            wm.messagePrivacyDiv.css ('opacity', 1)
-            wm.threadNextButton.hide()
-            wm.dummyButton.remove()
-            delete wm.composition.thread
-          } else if (wm.composition.thread && wm.composition.thread.length)
-            wm.composition.thread.pop()
+          if (wm.composition.thread && wm.composition.thread.length)
+            wm.composition.threadDiscards.push (wm.composition.thread.pop())
+          if (wm.noInertCards())
+            wm.setComposeCardMode()
+          else
+            wm.setComposeInertMode()
           wm.showOrHideTwitterButton()
         })
     },
 
+    dealInertCard: function() {
+      var wm = this
+      if (wm.composition.thread && wm.composition.threadDiscards && wm.composition.threadDiscards.length) {
+        var msg = wm.composition.threadDiscards.pop()
+        wm.composition.thread.push (msg)
+        wm.setComposeInertMode()
+        return wm.makeInertCardPromiser ({ message: msg }) ()
+      }
+      return $.Deferred().resolve()
+    },
+    
     discardInertCard: function() {
       var wm = this
       var inertCardDivs = wm.stackDiv.children('.inertcard:not(.throwing)')
