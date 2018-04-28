@@ -66,17 +66,25 @@ module.exports = {
       .limit (resultsPerPage + 1)
       .skip (resultsPerPage * page)
       .then (function (players) {
-	return Follow.find ({ follower: searcherID,
-                              followed: players.map (function (player) { return player.id }) })
-	  .then (function (follows) {
-	    var following = {}
+        var playerIDs = players.map (function (player) { return player.id })
+	return Follow.find ({ or: [{ follower: searcherID,
+                                     followed: playerIDs },
+                                   { followed: searcherID,
+                                     follower: playerIDs }] })
+          .then (function (follows) {
+	    var following = {}, followedBy = {}
             follows.forEach (function (follow) {
-              following[follow.followed] = true
+              if (follow.follower === searcherID)
+                following[follow.followed] = true
+              if (follow.followed === searcherID)
+                followedBy[follow.follower] = true
             })
 	    res.json ({ page: page,
                         more: players.length > resultsPerPage,
                         players: players.slice(0,resultsPerPage).map (function (player) {
-	                  return PlayerService.makePlayerSummary (player, following[player.id])
+	                  var info = PlayerService.makePlayerSummary (player, following[player.id])
+                          info.reachable = info.reachable || followedBy[player.id]
+                          return info
 	                })
 		      })
 	  })
@@ -450,7 +458,8 @@ module.exports = {
           var followedInfo = followInfo[follow.follower.id]
           if (followedInfo)
             followedInfo.reachable = true
-          return PlayerService.makePlayerSummary (follow.follower, followedInfo && true)
+          return extend (PlayerService.makePlayerSummary (follow.follower, followedInfo && true),
+                         { reachable: true })
         })
         res.json (result)
       }).catch (function (err) {
