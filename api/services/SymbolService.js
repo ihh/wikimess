@@ -13,9 +13,9 @@ module.exports = {
 
   validateMessageRhs: function (templateContent, bodyRhs) {
     if (!templateContent)
-      return Promise.reject('template missing')
+      return Promise.reject('template content missing')
     if (!bodyRhs)
-      return Promise.reject('body missing: ' + JSON.stringify(templateContent))
+      return Promise.reject('body rhs missing')
     if (templateContent.length !== bodyRhs.length)
       return Promise.reject('template/body length mismatch')
     if (!templateContent.length)
