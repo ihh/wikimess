@@ -149,6 +149,24 @@ module.exports = {
           "newSignUp": {
             "type": "boolean"
           },
+          "publicBio": {
+            "type": "string"
+          },
+          "privateBio": {
+            "type": "string"
+          },
+          "noMailUnlessFollowed": {
+            "type": "boolean"
+          },
+          "createsPublicTemplates": {
+            "type": "boolean"
+          },
+          "searchable": {
+            "type": "boolean"
+          },
+          "twitterScreenName": {
+            "type": "string"
+          },
           "twitterAccessToken": {
             "type": "string"
           },

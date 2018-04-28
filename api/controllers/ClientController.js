@@ -1507,6 +1507,38 @@ module.exports = {
                 })) })
       .populate ('author')
       .then (function (templates) {
+        // exclude authors who have noMailUnlessFollowed set, unless they follow the original template author
+        var isShyAuthor = {}, isPrivateAuthor = {}
+        templates.forEach (function (template) {
+          var authorID = template.author.id
+          if (authorID !== playerID) {
+            if (!template.author.createsPublicTemplates)
+              isPrivateAuthor[authorID] = true
+            else if (template.author.noMailUnlessFollowed)
+              isShyAuthor[authorID] = true
+          }
+        })
+        templates = templates.filter (function (template) {
+          return !isPrivateAuthor[template.author.id]
+        })
+        var shyAuthors = Object.keys(isShyAuthor)
+        if (!shyAuthors.length)
+          return templates
+        return Template.findOne ({ id: previousID })
+          .then (function (previousTemplate) {
+            return Follow.find ({ follower: [shyAuthors],
+                                  followed: previousTemplate.author })
+          }).then (function (follows) {
+            if (follows)
+              follows.forEach (function (follow) {
+                delete isShyAuthor[follow.follower]
+              })
+            return templates.filter (function (template) {
+              return !isShyAuthor[template.author.id]
+            })
+          })
+      }).then (function (templates) {
+        // sample by rating
         var result = {}
         if (templates.length) {
           var templateRating = templates.map (function (template) {
