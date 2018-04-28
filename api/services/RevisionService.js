@@ -33,12 +33,10 @@ module.exports = {
   },
 
   findLatestRevision: function (symbolID) {
-    return Revision.find ({ symbol: symbolID })
-      .sort ('number DESC')
-      .limit (1)
-      .then (function (latestRevisions) {
-        if (latestRevisions && latestRevisions.length)
-          return latestRevisions[0]
+    return Symbol.findOneCached ({ id: symbolID })
+      .then (function (symbol) {
+        if (symbol.latestRevision)
+          return Revision.findOne ({ id: symbol.latestRevision })
         return null
       })
   },

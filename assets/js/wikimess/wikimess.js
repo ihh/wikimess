@@ -2850,6 +2850,8 @@ var WikiMess = (function() {
                           symbolNode.id = expansion.id
 		          symbolNode.rhs = expansion.rhs
                           symbolNode.name = wm.symbolName[expansion.id] = expansion.name
+                          symbolNode.rev = expansion.rev
+                          symbolNode.n = expansion.n
                         } else
                           symbolNode.notfound = expansion.notfound
                         return expansion

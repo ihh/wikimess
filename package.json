@@ -27,7 +27,6 @@
     "grunt-sync": "0.5.2",
     "include-all": "~0.1.6",
     "jsonschema": "~1.1.1",
-    "md5": "^2.2.1",
     "mersenne-twister": "~1.1.0",
     "mkdirp": "~0.5.1",
     "node-getopt": "~0.2.3",

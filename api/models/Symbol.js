@@ -60,6 +60,10 @@ module.exports = {
       type: 'json',
       defaultsTo: [[]]
     },
+
+    latestRevision: {
+      model: 'revision'
+    },
   },
 
   // limits for expansions

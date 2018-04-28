@@ -72,6 +72,14 @@ module.exports = {
       })
   },
 
+  afterCreate: function (revision, cb) {
+    Symbol.update ({ id: revision.symbol },
+                   { latestRevision: revision.id })
+      .then (function() {
+        cb()
+      })
+  },
+
   parseID: function (text) { return parseInt(text) },
 };
 

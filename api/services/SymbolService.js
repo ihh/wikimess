@@ -2,63 +2,62 @@
 
 var Promise = require('bluebird')
 var extend = require('extend')
-var md5 = require('md5')
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
 
 module.exports = {
 
-  expansionHashKey: function (expansion) {
-    return md5 (expansion.id + ' ' + parseTree.makeExpansionText (expansion))
+  validateMessage: function (template, body) {
+    return SymbolService.validateMessageRhs (template.content, body.rhs)
   },
 
-  addToExpansionHash: function (hashObj, expansion) {
-    var hashKey = SymbolService.expansionHashKey (expansion)
-    hashObj[hashKey] = true
-    return hashKey
-  },
-
-  isInExpansionHash: function (hashObj, expansion) {
-    return hashObj && hashObj[SymbolService.expansionHashKey (expansion)]
-  },
-  
-  validateMessage: function (hashObj, template, body) {
-    return SymbolService.validateMessageRhs (hashObj, template.content, body.rhs)
-  },
-
-  validateMessageRhs: function (hashObj, templateContent, bodyRhs) {
-    console.warn ('validateMessageRhs', hashObj, templateContent, bodyRhs)
-    if (!templateContent || !bodyRhs)
-      return false
+  validateMessageRhs: function (templateContent, bodyRhs) {
+    if (!templateContent)
+      return Promise.reject('template missing')
+    if (!bodyRhs)
+      return Promise.reject('body missing: ' + JSON.stringify(templateContent))
     if (templateContent.length !== bodyRhs.length)
-      return false
-    return templateContent.reduce (function (valid, templateNode, n) {
-      if (!valid)
-        return false
+      return Promise.reject('template/body length mismatch')
+    if (!templateContent.length)
+      return Promise.resolve()
+    return Promise.all (templateContent.map (function (templateNode, n) {
       var bodyNode = bodyRhs[n]
       if (typeof(templateNode) === 'string')
-        return templateNode === bodyNode
+        return templateNode === bodyNode ? Promise.resolve() : Promise.reject('string mismatch')
       if (bodyNode.type !== (templateNode.type === 'alt' ? 'opt' : templateNode.type))
-        return false
+        return Promise.reject('type mismatch')
       switch (templateNode.type) {
       case 'assign':
-        return SymbolService.validateMessageRhs (hashObj, templateNode.value, bodyNode.value)
+        if (templateNode.varname !== bodyNode.varname)
+          return Promise.reject('varname mismatch in assign')
+        return SymbolService.validateMessageRhs (templateNode.value, bodyNode.value)
       case 'lookup':
-        return true
+        return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in lookup')
       case 'func':
-        return SymbolService.validateMessageRhs (hashObj, templateNode.args, bodyNode.args)
+        if (templateNode.funcname !== bodyNode.funcname)
+          return Promise.reject('funcname mismatch')
+        return SymbolService.validateMessageRhs (templateNode.args, bodyNode.args)
       case 'alt':
-        return SymbolService.validateMessageRhs (hashObj, templateNode.opts[bodyNode.n], bodyNode.rhs)
+        return SymbolService.validateMessageRhs (templateNode.opts[bodyNode.n], bodyNode.rhs)
       case 'root':
+        return SymbolService.validateMessageRhs (templateNode.rhs, bodyNode.rhs)
       case 'sym':
-        if (bodyNode.md5)
-          return (SymbolService.isInExpansionHash (hashObj, bodyNode.rhs)
-                  || SymbolService.validateMessageRhs (hashObj, templateNode.rhs, bodyNode.rhs))
-        case 'opt':
-        default:
-          break
+        if ((templateNode.id && bodyNode.id) ? (templateNode.id !== bodyNode.id) : (templateNode.name !== bodyNode.name))
+          Promise.reject('symbol id/name mismatch')
+        return Symbol.findOneCached (templateNode.id ? { id: templateNode.id } : { name: templateNode.name })
+          .then (function (symbol) {
+            if (!symbol)
+              Promise.reject('symbol not found')
+            if (symbol.latestRevision !== bodyNode.rev)
+              Promise.reject('revision mismatch')
+            return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
+          })
+      case 'opt':
+      default:
+        break
       }
-    }, true)
+      return Promise.reject('unrecognized type')
+    }))
   },
 
   makeSymbolInfo: function (symbol, playerID) {
@@ -273,16 +272,27 @@ module.exports = {
           nextDepth[symbol.id] = (nextDepth[symbol.id] || 0) + 1
           ++info.nodes
 
-          var rhs = parseTree.sampleParseTree (symbol.rules.length ? parseTree.randomElement(symbol.rules,rng) : [], rng)
+          var rhs = parseTree.sampleParseTree (symbol.rules.length ? symbol.rules[symInfo.n = parseTree.randomIndex(symbol.rules,rng)] : [], rng)
           var rhsSyms = parseTree.getSymbolNodes (rhs)
-          
-          return SymbolService.expandSymbols (rhsSyms.map (function (rhsSym) { return { id: rhsSym.id,
-                                                                                        name: rhsSym.name } }),
-                                              Symbol.maxRhsSyms,
-                                              info,
-                                              nextDepth,
-                                              rng)
-            .then (function (rhsExpansions) {
+
+          var revisionPromise
+          if (symbol)
+            revisionPromise = RevisionService.findLatestRevision (symbol.id)
+            .then (function (revision) {
+              symInfo.rev = revision ? revision.id : null
+            })
+          else
+            revisionPromise = Promise.resolve()
+
+          return revisionPromise
+            .then (function() {
+              return SymbolService.expandSymbols (rhsSyms.map (function (rhsSym) { return { id: rhsSym.id,
+                                                                                            name: rhsSym.name } }),
+                                                  Symbol.maxRhsSyms,
+                                                  info,
+                                                  nextDepth,
+                                                  rng)
+            }).then (function (rhsExpansions) {
               rhsExpansions.forEach (function (rhsExpansion, n) {
                 extend (rhsSyms[n], rhsExpansion)
               })
