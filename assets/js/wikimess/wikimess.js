@@ -1925,8 +1925,7 @@ var WikiMess = (function() {
 
           if (config.showHelpCard) {
             wm.headerToggler.hide()
-            wm.throwArrowContainer.hide()
-            wm.subnavbar.addClass ('help')
+	    wm.setComposeHelpMode()
             var card
             var cardDiv = $('<div class="helpcard">')
                 .append ($('<p>')
@@ -1951,10 +1950,7 @@ var WikiMess = (function() {
             card = wm.stack.createCard (cardDiv[0])
             function swipe() {
               wm.fadeAndDealCard (cardDiv, card, dealConfig)
-                .then (function() {
-                  wm.subnavbar.removeClass ('help')
-                  wm.throwArrowContainer.show()
-                })
+                .then (wm.clearComposeHelpMode.bind (wm))
             }
             card.on ('throwout', swipe)
             wm.stopDrag()
@@ -1964,6 +1960,7 @@ var WikiMess = (function() {
             }
           } else {
             var dealPromise = wm.threadHasNextMessage() ? $.Deferred().resolve() : wm.dealCard(dealConfig)
+	    
             return dealPromise
               .then (function() {
                 if (wm.composition.thread && wm.composition.thread.length) {
@@ -2087,10 +2084,7 @@ var WikiMess = (function() {
 	var card = wm.stack.createCard (cardDiv[0])
 	function swipe() {
           wm.fadeCard (cardDiv, card)
-            .then (function() {
-              wm.subnavbar.removeClass ('help')
-              wm.throwArrowContainer.show()
-            })
+            .then (wm.clearComposeHelpMode.bind (wm))
 	}
 	card.on ('throwout', swipe)
         wm.stopDrag()
@@ -2098,8 +2092,7 @@ var WikiMess = (function() {
           wm.startThrow()
 	  card.throwIn (0, -wm.throwYOffset())
         }
-	wm.subnavbar.addClass ('help')
-        wm.throwArrowContainer.hide()
+	wm.setComposeHelpMode()
       })
     },
 
@@ -2235,7 +2228,7 @@ var WikiMess = (function() {
       var cardReadyPromise = stackReadyPromise
           .then (function() {
             wm.stackDiv.html (cardDiv)  // make sure this is the only card in the stack
-            wm.subnavbar.removeClass ('help')  // just in case we skipped a help card
+            wm.clearComposeHelpMode()  // just in case we skipped a help card
           })
       
       // return a promise, fulfilled when content is rendered & the card is dealt
@@ -2392,6 +2385,18 @@ var WikiMess = (function() {
         wm.twitterButton.remove()
     },
 
+    setComposeHelpMode: function() {
+      var wm = this
+      wm.subnavbar.addClass ('help')
+      wm.throwArrowContainer.hide()
+    },
+
+    clearComposeHelpMode: function() {
+      var wm = this
+      wm.subnavbar.removeClass ('help')
+      wm.throwArrowContainer.show()
+    },
+
     setComposeCardMode: function() {
       var wm = this
       wm.setThrowArrowText ('discard', 'share')
@@ -2445,7 +2450,7 @@ var WikiMess = (function() {
       var nextMessagePromise
       if (wm.noComposeCard() && wm.threadHasNextMessage() && wm.composition.thread.length === 1)
         nextMessagePromise = wm.REST_getPlayerMessage (wm.playerID, wm.composition.thread[0].next[0])
-      wm.subnavbar.addClass ('help')
+      wm.setComposeHelpMode()
       return wm.fadeCard (cardDiv, card)
         .then (function() {
           wm.stopDrag (cardDiv)
@@ -2454,7 +2459,7 @@ var WikiMess = (function() {
           if (nextMessagePromise)
             return nextMessagePromise
               .then (function (result) {
-                wm.subnavbar.removeClass ('help')
+		wm.clearComposeHelpMode()
                 if (result && result.message) {
                   wm.composition.thread.push (result.message)
                   if (wm.threadHasNextMessage()) {
@@ -2464,7 +2469,7 @@ var WikiMess = (function() {
                   return wm.replyToMessage ({ message: result.message })
                 }
               })
-          wm.subnavbar.removeClass ('help')
+	  wm.clearComposeHelpMode()
           if (wm.noInertCards()) {
             if (wm.noComposeCard()) {
               var dealConfig = {}
@@ -2488,13 +2493,13 @@ var WikiMess = (function() {
       else if (wm.composition.thread && wm.composition.thread.length) {
         var oldestMessage = wm.composition.thread [wm.composition.thread.length - 1]
         if (oldestMessage.previous) {
-          wm.subnavbar.addClass ('help')
+	  wm.setComposeHelpMode()
           prevMessagePromise = wm.REST_getPlayerMessage (wm.playerID, oldestMessage.previous)
         }
       }
       if (prevMessagePromise)
         return prevMessagePromise.then (function (result) {
-          wm.subnavbar.removeClass ('help')
+	  wm.clearComposeHelpMode()
           if (result && result.message) {
             wm.composition.thread.push (result.message)
             wm.setComposeInertMode()
