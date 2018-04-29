@@ -2148,8 +2148,9 @@ var WikiMess = (function() {
       if (wm.composition.threadTweeter && wm.composition.threadTweet)
         wm.redirectToTweet (wm.composition.threadTweeter, wm.composition.threadTweet)
       else if (wm.playerID === null) {
-        wm.composition.randomTemplate = true
+        wm.composition = { randomTemplate: true }
         wm.dealCard ({ generate: true })
+          .then (wm.setComposeCardMode.bind(wm))
       } else
         wm.finishLastSave()
         .then (function() {
