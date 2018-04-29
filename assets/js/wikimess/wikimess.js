@@ -2425,6 +2425,7 @@ var WikiMess = (function() {
 
     setComposeInertMode: function() {
       var wm = this
+      wm.headerToggler.hide()
       wm.setThrowArrowText ('next')
       wm.messagePrivacyDiv.addClass ('thread')
       wm.subnavbar.addClass ('thread')
