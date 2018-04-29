@@ -43,13 +43,6 @@ input {
     position: relative;
 }
 
-.wikimess .navlabelspace {
-    width: 100%;
-    font-size: 1vh;
-    min-height: 1.2em;
-    height: 1.2em;
-}
-
 .wikimess .navbar {
     display: flex;
     flex-direction: row;
@@ -58,6 +51,8 @@ input {
 
 .wikimess .navbar .navtab {
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .wikimess .navbar .navtab .messagecount {
@@ -82,14 +77,16 @@ input {
 }
 
 .wikimess .navbar .navlabel {
-    position: absolute;
-    top: -1.5em;
+    display: inline;
+    font-size: 1vh;
+    line-height: 1vh;
+    width: 100%;
+    position: relative;
+    text-align: center;
+    
     opacity: .8;
     cursor: pointer;
-    font-size: 1vh;
     font-style: italic;
-    width: 100%;
-    max-height: 1em;
     text-align: center;
 }
 
@@ -933,12 +930,12 @@ input {
     padding: 2px;
 }
 
-.wikimess .bodysectiontitle .button {
+.wikimess .composesectiontitle .button {
     float: right;
     cursor: pointer;
 }
 
-.wikimess .bodysectiontitle .button svg {
+.wikimess .composesectiontitle .button svg {
     width: 1em;
     height: 1em;
 }
@@ -1512,6 +1509,11 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     border-width: 2px;
 }
 
+.wikimess .mailstamp svg {
+    width: 4vh;
+    height: 4vh;
+}
+
 .wikimess .avatar img,
 .wikimess .avatar {
     height: 20vh;
@@ -1581,8 +1583,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     padding-top: 2px;
     padding-left: 2px;
     padding-right: 2px;
-    min-height: 1.2em;
-    max-height: 1.2em;
+    min-height: 1em;
+    max-height: 1em;
+    margin-bottom: 2px;
 }
 
 .wikimess .messageheader .privrow.thread {
@@ -1636,7 +1639,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 .wikimess .subnavbar .button svg {
-    font-size: 6vh;
+    font-size: 5vh;
     width: 1em;
     height: 1em;
     cursor: pointer;
@@ -1662,6 +1665,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 .wikimess .subnavbar .button .iconlabel {
     display: inline;
     font-size: 1vh;
+    line-height: 1vh;
     width: 100%;
     position: relative;
     text-align: center;

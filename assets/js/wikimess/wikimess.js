@@ -906,8 +906,7 @@ var WikiMess = (function() {
       
       this.container
         .empty()
-        .append ($('<div class="navlabelspace">'),
-                 this.navbar = $('<div class="navbar">'))
+        .append (this.navbar = $('<div class="navbar">'))
 
       this.drawNavBar (currentTab)
     },
@@ -1802,7 +1801,11 @@ var WikiMess = (function() {
                                                 .append ($('<span class="label">').text ('Future tags'),
                                                          $('<span class="input">').append (wm.messageTagsInput))),
                                        templateRow = $('<div class="sectiontitle composesectiontitle">')
-                                       .text('Template text'),
+                                       .append('Template text',
+					       wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
+						 evt.stopPropagation()
+						 wm.fadeAndDeleteDraft (wm.currentCardDiv, wm.currentCard) ()
+					       })),
                                        wm.messageComposeDiv,
                                        suggestRow = $('<div class="sectiontitle suggestsectiontitle">')
                                        .text('Suggestions'),
@@ -1819,17 +1822,6 @@ var WikiMess = (function() {
                       }),
                       wm.headerToggler.showButton,
                       wm.headerToggler.hideButton,
-                      wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
-                        evt.stopPropagation()
-			wm.fadeAndDeleteDraft (wm.currentCardDiv, wm.currentCard) ()
-                      }),
-                      wm.twitterButton = wm.makeSubNavIcon ('twitter', function (evt) {
-                        evt.stopPropagation()
-                        if (wm.composition.thread && wm.composition.thread.length) {
-                          var topMessage = wm.composition.thread[wm.composition.thread.length - 1]
-                          wm.redirectToTweet (topMessage.tweeter, topMessage.tweet)
-                        }
-                      }).addClass('threadshow'),
                       wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
                                                                  callback: function (evt) {
                                                                    evt.stopPropagation()
@@ -1849,7 +1841,6 @@ var WikiMess = (function() {
           updateSharePane()
           wm.headerToggler.init ([titleRow, tagsRow, prevTagsRow, templateRow, wm.messageComposeDiv, suggestRow, wm.suggestionDiv])
 
-          wm.showOrHideTwitterButton()
           if (wm.composition.thread && wm.composition.thread.length)
             wm.setComposeInertMode()
           else
@@ -2156,7 +2147,7 @@ var WikiMess = (function() {
         })
       var messageBodyElem = wm.messageBodyDiv[0]
 
-      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe right to select, left for more.')
+      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe right to share, left for more.')
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv, choiceTextDiv)
       var cardDiv = $('<div class="card composecard">').append (expansionRow, innerDiv)
       if (wm.isTouchDevice())
@@ -2380,18 +2371,6 @@ var WikiMess = (function() {
       card.throwOut (wm.throwXOffset(), wm.throwYOffset())
     },
 
-    showOrHideTwitterButton: function() {
-      var wm = this
-      if (wm.composition.thread && wm.composition.thread.length) {
-        var topMessage = wm.composition.thread[wm.composition.thread.length - 1]
-        if (topMessage.tweeter && topMessage.tweet)
-          wm.twitterButton.show()
-        else
-          wm.twitterButton.hide()
-      } else
-        wm.twitterButton.remove()
-    },
-
     setComposeHelpMode: function() {
       var wm = this
       wm.subnavbar.addClass ('help')
@@ -2495,7 +2474,6 @@ var WikiMess = (function() {
             wm.setComposeCardMode()
           } else
             wm.setComposeInertMode()
-          wm.showOrHideTwitterButton()
         })
     },
 
@@ -3094,7 +3072,7 @@ var WikiMess = (function() {
 	break
       case 'home':
       default:
-        promise = this.showComposePage ({ showHelpCard: true })
+        promise = this.showComposePage ({ showHelpCard: !wm.playerID })
         break
       }
       return promise
@@ -3386,6 +3364,9 @@ var WikiMess = (function() {
 			   ' ',
 			   wm.relativeDateString (message.date))
       mailstampDiv.css ('transform', 'rotate(' + ((message.id % 7) - 3) + 'deg)')
+      if (message.tweeter && message.tweet)
+	mailstampDiv.append (wm.makeIconButton ('twitter', null, 'darkred'))
+	.on ('click', wm.redirectToTweet.bind (wm, message.tweeter, message.tweet))
       
       var avatarDiv = $('<div class="avatar">')
       if (message.tweeter)
