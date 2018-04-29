@@ -126,7 +126,6 @@ module.exports.routes = {
   'GET /p/message/:message/thread':  'ClientController.getBroadcastMessageForwardThread',
   'POST /p/message':                 'ClientController.sendMessage',
   'DELETE /p/message/:message':      'ClientController.deleteMessage',
-  'PUT /p/message/:message/rating':  'ClientController.rateMessage',
 
   // templates
   'GET /p/template/:template': 'ClientController.getTemplate',

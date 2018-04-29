@@ -729,24 +729,8 @@ input {
     background-color: pink;
 }
 
-.wikimess .ratings {
-    padding: 16px;
-}
-	
-.wikimess .ratinginfo .ratinginfolabel {
-    float: left;
-    text-align: right;
-    vertical-align: top;
-    padding-right: 2px;
-}
-
-.wikimess .ratinginfo .ratinginfocount {
-    font-style: italic;
-}
-
 .wikimess .emptygrammar svg,
-.wikimess .menubutton .button svg,
-.wikimess .ratinginfo .button svg {
+.wikimess .menubutton .button svg {
     width: 1em;
     height: 1em;
 }

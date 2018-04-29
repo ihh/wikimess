@@ -124,7 +124,7 @@ var WikiMess = (function() {
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     menuPopupDelay: 500,
-    threadCardThrowDelay: 100,
+    threadCardThrowDelay: 50,
     alwaysThrowInHelpCards: true,
     starColor: 'darkgoldenrod',
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
@@ -369,11 +369,6 @@ var WikiMess = (function() {
 
     REST_deletePlayerMessage: function (playerID, messageID) {
       return this.logDelete ('/p/message/' + messageID)
-    },
-
-    REST_putPlayerMessageRating: function (playerID, messageID, rating) {
-      return this.logPut ('/p/message/' + messageID + '/rating',
-                          { rating: rating })
     },
 
     REST_getPlayerDrafts: function (playerID) {
@@ -1964,16 +1959,13 @@ var WikiMess = (function() {
               .then (function() {
                 if (wm.composition.thread && wm.composition.thread.length) {
                   var throwers = wm.composition.thread.map (function (msg) { return wm.makeInertCardPromiser ({ message: msg, noThrowIn: dealConfig.noThrowIn }) })
-                  var allDealt = throwers.reduce (function (promise, thrower, k) {
+                  var allDealt = throwers.reduce (function (promise, thrower) {
                     return promise.then (function() {
-                      thrower()  // discard result of this promise, we don't need to wait for each card's throw animation to finish
                       var def = $.Deferred()
-                      if (k == 0)
+                      window.setTimeout (function() {
+			thrower()  // discard result of this promise, we don't need to wait for each card's throw animation to finish
                         def.resolve()
-                      else
-                        window.setTimeout (function() {
-                          def.resolve()
-                        }, wm.threadCardThrowDelay)
+                      }, wm.threadCardThrowDelay)
                       return def
                     })
                   }, $.Deferred().resolve())

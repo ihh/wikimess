@@ -57,9 +57,11 @@ module.exports = {
       defaultsTo: true
     },
 
-    // ratings
-    nRatings: { type: 'integer', defaultsTo: 1 },
-    sumRatings: { type: 'integer', defaultsTo: 1 },
+    // suggestion weight
+    weight: {
+      type: 'number',
+      defaultsTo: 1
+    }
   },
 
   // lifecycle callback to update Adjacency table

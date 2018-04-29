@@ -43,11 +43,6 @@ module.exports = {
 		twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
                 gender: player.gender,
                 publicBio: player.publicBio,
-                nSenderRatings: player.nSenderRatings,
-                sumSenderRatings: player.sumSenderRatings,
-                nAuthorRatings: player.nAuthorRatings,
-                sumAuthorRatings: player.sumAuthorRatings,
-                sumAuthorRatingWeights: player.sumAuthorRatingWeights,
                 searchable: player.searchable })
 
     if (follower) {
@@ -90,8 +85,7 @@ module.exports = {
               return { id: message.id,
                        sender: message.sender,
                        body: message.body,
-                       date: message.createdAt,
-                       rating: toFollower ? message.rating : undefined }
+                       date: message.createdAt }
             })
             var messagesToFollower = msgs.filter (function (m) { return m.recipient === follower })
             return Message.update ({ id: messagesToFollower.map (function (m) { return m.id }) },

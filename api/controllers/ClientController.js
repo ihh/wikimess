@@ -407,8 +407,7 @@ module.exports = {
                       title: message.title,
                       vars: message.initVarVal,
                       body: message.body,
-                      date: message.createdAt,
-                      rating: message.rating }
+                      date: message.createdAt }
            })
          })
       }).catch (function (err) {
@@ -633,8 +632,7 @@ module.exports = {
                              title: message.title,
                              vars: message.initVarVal,
                              body: message.body,
-                             date: message.createdAt,
-                             rating: message.rating }
+                             date: message.createdAt }
         var updatedPromise
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = Message.update ({ id: messageID },
@@ -731,66 +729,6 @@ module.exports = {
                 ? Message.destroy ({ id: messageID })
                 : Message.update ({ id: messageID }, update))
       }).then (function (messages) {
-        res.ok()
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send ({ message: err })
-      })
-  },
-
-  // rate message
-  rateMessage: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var messageID = Message.parseID (req.params.message)
-    var rating = parseInt (req.body.rating)
-    Message.update ({ id: messageID,
-                      sender: { '!': playerID },
-                      recipient: playerID,
-                      rating: null,
-                      read: true,
-                      recipientDeleted: false },
-                    { rating: rating })
-      .then (function (messages) {
-        if (messages && messages.length === 1) {
-          var message = messages[0]
-//          sails.log.debug ('Player '+playerID+' rates "'+message.title+'": '+rating+' stars')
-          // split author credit between authors of all Symbols used in body
-          return SymbolService.expansionAuthors (message.body)
-            .then (function (authors) {
-              var authorRatingWeight = 1 / authors.length, authorRating = rating * authorRatingWeight
-              return Promise.map
-              (authors,
-               function (authorID) {
-                 return Player.findOne ({ id: authorID })
-                   .then (function (player) {
-                     return Player.update ({ id: authorID },
-                                           { nAuthorRatings: player.nAuthorRatings + 1,
-                                             sumAuthorRatingWeights: player.sumAuthorRatingWeights + authorRatingWeight,
-                                             sumAuthorRatings: player.sumAuthorRatings + authorRating })
-                   })
-               })
-            }).then (function() {
-              // give credit to sender
-              return Player.findOne ({ id: message.sender })
-            }).then (function (sender) {
-              return Player.update ({ id: message.sender },
-                                    { nSenderRatings: sender.nSenderRatings + 1,
-                                      sumSenderRatings: sender.sumSenderRatings + rating })
-              // give credit to template
-            }).then (function() {
-              return Template.findOne ({ id: message.template })
-            }).then (function (template) {
-//              sails.log.debug ('Awarding '+rating+' stars to template '+template.id)
-              return Template.update ({ id: template.id },
-                                      { nRatings: template.nRatings + 1,
-                                        sumRatings: template.sumRatings + rating })
-                .then (function() {
-                  // update adjacency weights
-                  return SymbolService.updateAdjacencies (template.content, rating)
-                })
-            })
-        }
-      }).then (function() {
         res.ok()
       }).catch (function (err) {
         console.log(err)
@@ -1420,11 +1358,8 @@ module.exports = {
                             isPublic: true })
       .populate ('author')
       .then (function (templates) {
-        templates.forEach (function (template) {
-          template.rating = template.nRatings ? (template.sumRatings / template.nRatings) : 0
-        })
         var suggestedTemplates = SortService.partialSort
-        (templates, nSuggestions, function (a, b) { return b.rating - a.rating })
+        (templates, nSuggestions, function (a, b) { return b.weight - a.weight })
         .map (function (template) {
           return { id: template.id,
                    author: (template.author
@@ -1489,13 +1424,13 @@ module.exports = {
             })
           })
       }).then (function (templates) {
-        // sample by rating
+        // sample by weight
         var result = {}
         if (templates.length) {
-          var templateRating = templates.map (function (template) {
-            return template.nRatings ? (template.sumRatings / template.nRatings) : 0
+          var templateWeight = templates.map (function (template) {
+            return template.weight
           })
-          var template = templates[SortService.sampleByWeight (templateRating)]
+          var template = templates[SortService.sampleByWeight (templateWeight)]
           result.template = { id: template.id,
                               title: template.title,
 			      tweeter: template.author ? template.author.twitterScreenName : null,
@@ -1542,7 +1477,7 @@ module.exports = {
           var allSymbolIDs = Object.keys (Symbol.cache.byId)
           var pseudocount = 1 / allSymbolIDs.length
           var heatedWeights = allSymbolIDs.map (function (symbolID) {
-            return adjCache[symbolID] || pseudocount  // TODO: multiply pseudocount by Symbol rating
+            return adjCache[symbolID] || pseudocount
           }).map (function (weight) {
             return Math.pow (weight, 1 / temperature)
           })
@@ -1554,7 +1489,6 @@ module.exports = {
           }), nSuggestions, function (a, b) { return adjCache[b] - adjCache[a] })
           if (!symbolIDs.length) {
             var allSymbolIDs = Object.keys (Symbol.cache.byId)
-            // TODO: weight sample by Symbol rating
             if (allSymbolIDs.length)
               symbolIDs.push (allSymbolIDs [Math.floor (Math.random() * allSymbolIDs.length)])
           }

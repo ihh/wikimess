@@ -92,14 +92,7 @@ module.exports = {
     newSignUp: {
       type: 'boolean',
       defaultsTo: true
-    },
-
-    // ratings
-    nSenderRatings: { type: 'integer', defaultsTo: 0 },
-    sumSenderRatings: { type: 'integer', defaultsTo: 0 },
-    nAuthorRatings: { type: 'integer', defaultsTo: 0 },
-    sumAuthorRatings: { type: 'float', defaultsTo: 0 },
-    sumAuthorRatingWeights: { type: 'float', defaultsTo: 0 },
+    }
   },
 
   maxNameLen: 16,
