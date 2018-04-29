@@ -117,8 +117,6 @@ var WikiMess = (function() {
     anonGuest: 'Anonymous guest',
     maxPlayerLoginLength: 15,
     maxPlayerNameLength: 32,
-    maxRating: 5,
-    ratingDelay: 2000,
     autosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
@@ -164,8 +162,8 @@ var WikiMess = (function() {
                     forward: 'up-card',
                     reply: 'right-arrow',
                     back: 'left-arrow',
-                    next: 'forward',
-                    previous: 'reply',
+                    next: 'card-draw',
+                    previous: 'card-fall',
                     twitter: 'twitter',
                     reload: 'refresh',
                     dummy: 'dummy',
@@ -359,14 +357,6 @@ var WikiMess = (function() {
 
     REST_getPlayerMessageHeader: function (playerID, messageID) {
       return this.logGet ('/p/message/' + messageID + '/header')
-    },
-
-    REST_getPlayerMessageSent: function (playerID, messageID) {
-      return this.logGet ('/p/message/' + messageID + '/sent')
-    },
-
-    REST_getPlayerMessagePublic: function (playerID, messageID) {
-      return this.logGet ('/p/message/' + messageID + '/public')
     },
 
     REST_getPlayerMessageThread: function (playerID, messageID) {
@@ -1468,12 +1458,13 @@ var WikiMess = (function() {
           } else {
             if (config.thread) {
               wm.composition.thread = config.thread
-              wm.composition.threadDiscards = []
+              wm.composition.threadDiscards = config.threadDiscards || []
             } else
-              wm.composition.threadDiscards = wm.composition.threadDiscards || []
+              wm.composition.threadDiscards = config.threadDiscards || wm.composition.threadDiscards || []
             wm.composition.threadTweeter = config.threadTweeter || wm.composition.threadTweeter
             wm.composition.threadTweet = config.threadTweet || wm.composition.threadTweet
           }
+          wm.composition.cardClass = config.cardClass || wm.composition.cardClass
           
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
           makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
@@ -1846,14 +1837,12 @@ var WikiMess = (function() {
                           wm.redirectToTweet (topMessage.tweeter, topMessage.tweet)
                         }
                       }).addClass('threadshow'),
-                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'drawcard',
-                                                                 text: 'next',
+                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
                                                                  callback: function (evt) {
                                                                    evt.stopPropagation()
                                                                    wm.discardInertCard()
                                                                  } }).addClass('threadonly'),
-                      wm.threadPrevButton = wm.makeSubNavIcon ({ iconName: 'dealcard',
-                                                                 text: 'previous',
+                      wm.threadPrevButton = wm.makeSubNavIcon ({ iconName: 'previous',
                                                                  callback: function (evt) {
                                                                    evt.stopPropagation()
                                                                    wm.dealInertCard()
@@ -1973,29 +1962,31 @@ var WikiMess = (function() {
               wm.startThrow()
               card.throwIn (0, -wm.throwYOffset())
             }
-          } else
-            return wm.dealCard (dealConfig)
-            .then (function() {
-              if (wm.composition.thread && wm.composition.thread.length) {
-                var throwers = wm.composition.thread.map (function (msg) { return wm.makeInertCardPromiser ({ message: msg, noThrowIn: dealConfig.noThrowIn }) })
-                var allDealt = throwers.reduce (function (promise, thrower, k) {
-                  return promise.then (function() {
-                    thrower()  // discard result of this promise, we don't need to wait for each card's throw animation to finish
-                    var def = $.Deferred()
-                    if (k == 0)
-                      def.resolve()
-                    else
-                      window.setTimeout (function() {
+          } else {
+            var dealPromise = wm.threadHasNextMessage() ? $.Deferred().resolve() : wm.dealCard(dealConfig)
+            return dealPromise
+              .then (function() {
+                if (wm.composition.thread && wm.composition.thread.length) {
+                  var throwers = wm.composition.thread.map (function (msg) { return wm.makeInertCardPromiser ({ message: msg, noThrowIn: dealConfig.noThrowIn }) })
+                  var allDealt = throwers.reduce (function (promise, thrower, k) {
+                    return promise.then (function() {
+                      thrower()  // discard result of this promise, we don't need to wait for each card's throw animation to finish
+                      var def = $.Deferred()
+                      if (k == 0)
                         def.resolve()
-                      }, wm.threadCardThrowDelay)
-                    return def
-                  })
-                }, $.Deferred().resolve())
-
-                wm.setThrowArrowText ('next')
-                return allDealt
-              }
-            })
+                      else
+                        window.setTimeout (function() {
+                          def.resolve()
+                        }, wm.threadCardThrowDelay)
+                      return def
+                    })
+                  }, $.Deferred().resolve())
+                  
+                  wm.setComposeInertMode()
+                  return allDealt
+                }
+              })
+          }
         })
       // end of showComposePage
     },
@@ -2007,28 +1998,14 @@ var WikiMess = (function() {
       var cardDiv = wm.makeMessageCardDiv ({ message: message,
                                              sender: message.sender,
                                              recipient: message.recipient,
-                                             cardClass: 'broadcastcard' })
+                                             cardClass: wm.composition.cardClass })
       cardDiv.removeClass('card').addClass('inertcard')
       wm.addToStack (cardDiv)
 
       // create the swing card object for the thread message card
       var card = wm.stack.createCard (cardDiv[0])
       cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
-      card.on ('throwoutleft', wm.fadeInertCard.bind (wm, card, cardDiv))
-      card.on ('throwoutright', wm.fadeInertCard.bind (wm, card, cardDiv))
-      card.on ('throwoutdown', wm.fadeInertCard.bind (wm, card, cardDiv))
-      card.on ('throwoutup', function() {
-        if (message.tweeter && message.tweet)
-          wm.redirectToTweet (message.tweeter, message.tweet)
-        else
-          wm.showStatusPage()
-          .then (function() {
-            wm.showMessage ($.extend ({ result: { message: message },
-                                        cardClass: 'broadcastcard',
-                                        pushView: true },
-                                      wm.broadcastProps()))
-          })
-      })
+      card.on ('throwout', wm.fadeInertCard.bind (wm, card, cardDiv))
       card.on ('dragstart', function() {
         wm.startDrag (cardDiv)
       })
@@ -2434,9 +2411,21 @@ var WikiMess = (function() {
       wm.setComposeThreadButtonState()
     },
 
+    threadHasNextMessage: function() {
+      var wm = this
+      return (wm.composition.thread && wm.composition.thread.length
+              && wm.composition.thread[0].next && wm.composition.thread[0].next.length)
+    },
+
+    threadHasPrevMessage: function() {
+      var wm = this
+      return ((wm.composition.threadDiscards && wm.composition.threadDiscards.length)
+              || (wm.composition.thread && wm.composition.thread.length && wm.composition.thread[wm.composition.thread.length-1].previous))
+    },
+
     setComposeThreadButtonState: function() {
       var wm = this
-      if (wm.composition.threadDiscards && wm.composition.threadDiscards.length)
+      if (wm.threadHasPrevMessage())
         wm.threadPrevButton.removeClass ('disabled')
       else
         wm.threadPrevButton.addClass ('disabled')
@@ -2446,15 +2435,46 @@ var WikiMess = (function() {
       return this.stackDiv.children('.inertcard').length === 0
     },
 
+    noComposeCard: function() {
+      return this.stackDiv.children('.card').length === 0
+    },
+
+    // when an inert (i.e. thread) card fades, nothing happens unless it's the last one in the deck & there's no compose card under it
+    // in which case a new card will be dealt (a later message in the thread, if available, otherwise a compose card for the reply)
     fadeInertCard: function (card, cardDiv) {
+      var nextMessagePromise
+      if (wm.noComposeCard() && wm.threadHasNextMessage() && wm.composition.thread.length === 1)
+        nextMessagePromise = wm.REST_getPlayerMessage (wm.playerID, wm.composition.thread[0].next[0])
+      wm.subnavbar.addClass ('help')
       return wm.fadeCard (cardDiv, card)
         .then (function() {
           wm.stopDrag (cardDiv)
           if (wm.composition.thread && wm.composition.thread.length)
             wm.composition.threadDiscards.push (wm.composition.thread.pop())
-          if (wm.noInertCards())
+          if (nextMessagePromise)
+            return nextMessagePromise
+              .then (function (result) {
+                wm.subnavbar.removeClass ('help')
+                if (result && result.message) {
+                  wm.composition.thread.push (result.message)
+                  if (wm.threadHasNextMessage()) {
+                    wm.setComposeInertMode()
+                    return wm.makeInertCardPromiser ({ message: result.message }) ()
+                  }
+                  return wm.replyToMessage ({ message: result.message })
+                }
+              })
+          wm.subnavbar.removeClass ('help')
+          if (wm.noInertCards()) {
+            if (wm.noComposeCard()) {
+              var dealConfig = {}
+              if (wm.composition.threadDiscards && wm.composition.threadDiscards.length) {
+                var message = wm.composition.threadDiscards[wm.composition.threadDiscards.length - 1]
+                return wm.replyToMessage ({ message: message })
+              }
+            }
             wm.setComposeCardMode()
-          else
+          } else
             wm.setComposeInertMode()
           wm.showOrHideTwitterButton()
         })
@@ -2462,12 +2482,25 @@ var WikiMess = (function() {
 
     dealInertCard: function() {
       var wm = this
-      if (wm.composition.thread && wm.composition.threadDiscards && wm.composition.threadDiscards.length) {
-        var msg = wm.composition.threadDiscards.pop()
-        wm.composition.thread.push (msg)
-        wm.setComposeInertMode()
-        return wm.makeInertCardPromiser ({ message: msg }) ()
+      var prevMessagePromise
+      if (wm.composition.thread && wm.composition.threadDiscards && wm.composition.threadDiscards.length)
+        prevMessagePromise = $.Deferred().resolve ({ message: wm.composition.threadDiscards.pop() })
+      else if (wm.composition.thread && wm.composition.thread.length) {
+        var oldestMessage = wm.composition.thread [wm.composition.thread.length - 1]
+        if (oldestMessage.previous) {
+          wm.subnavbar.addClass ('help')
+          prevMessagePromise = wm.REST_getPlayerMessage (wm.playerID, oldestMessage.previous)
+        }
       }
+      if (prevMessagePromise)
+        return prevMessagePromise.then (function (result) {
+          wm.subnavbar.removeClass ('help')
+          if (result && result.message) {
+            wm.composition.thread.push (result.message)
+            wm.setComposeInertMode()
+            return wm.makeInertCardPromiser ({ message: result.message }) ()
+          }
+        })
       return $.Deferred().resolve()
     },
     
@@ -3013,14 +3046,14 @@ var WikiMess = (function() {
                  title: replyTitle,
                  previousMessage: lastMessage.id,
                  previousTemplate: lastMessage.template,
-                 thread: thread,
+                 thread: thread.reverse(),
+                 cardClass: 'broadcastcard',
                  threadTweeter: lastMessage.tweeter,
                  threadTweet: lastMessage.tweet,
                  vars: wm.ParseTree.nextVarVal (lastMessage.body, lastMessage.vars, lastMessage.sender),
                  tags: '',
                  previousTags: lastMessage.template ? (lastMessage.template.tags || '') : '',
-                 getRandomTemplate: true,
-                 thread: thread.reverse()
+                 getRandomTemplate: true
                })
             }
           })
@@ -3128,17 +3161,26 @@ var WikiMess = (function() {
         wm.populateMailboxDiv ({ tab: 'outbox',
                                  title: 'Sent messages',
                                  messages: result.messages,
-                                 getMethod: 'REST_getPlayerMessageSent',
+                                 getMethod: 'REST_getPlayerMessage',
                                  deleteMethod: 'REST_deletePlayerMessage',
                                  verb: 'Sent',
                                  preposition: 'To',
                                  object: 'recipient',
                                  anon: 'Everyone',
                                  showMessage: function (props) {
-                                   wm.showMessage ($.extend ({ sender: wm.playerInfo,
-                                                               cardClass: 'sentcard',
-                                                               pushView: true },
-                                                             props))
+                                   var message = props.result.message
+                                   wm.showComposePage ($.extend
+                                                       ({ recipient: wm.playerInfo,
+                                                          defaultToPublic: false,
+                                                          thread: [message],
+                                                          cardClass: 'sentcard',
+                                                          threadTweeter: message.tweeter,
+                                                          threadTweet: message.tweet,
+                                                          vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+                                                          tags: '',
+                                                          previousTags: message.template ? (message.template.tags || '') : '',
+                                                          getRandomTemplate: true
+                                                        }))
                                  }
                                })
         return result
@@ -3161,7 +3203,7 @@ var WikiMess = (function() {
         wm.populateMailboxDiv ({ tab: 'drafts',
                                  title: 'Drafts',
                                  messages: result.drafts,
-                                 getMethod: 'REST_getPlayerDraft',
+                                 getMethod: 'REST_getPlayerMessage',
                                  deleteMethod: 'REST_deletePlayerDraft',
                                  verb: 'Edited',
                                  preposition: 'To',
@@ -3190,16 +3232,25 @@ var WikiMess = (function() {
       var wm = this
       return { tab: 'public',
                title: 'Recent messages',
-               getMethod: 'REST_getPlayerMessagePublic',
+               getMethod: 'REST_getPlayerMessage',
                verb: 'Posted',
                preposition: 'From',
                object: 'sender',
                anon: this.anonGuest,
                showMessage: function (props) {
-                 wm.showMessage ($.extend ({ recipient: null,
-                                             cardClass: 'broadcastcard',
-                                             pushView: true },
-                                           props))
+                 var message = props.result.message
+                 wm.showComposePage ($.extend
+                                     ({ recipient: null,
+                                        defaultToPublic: true,
+                                        thread: [message],
+                                        cardClass: 'broadcastcard',
+                                        threadTweeter: message.tweeter,
+                                        threadTweet: message.tweet,
+                                        vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+                                        tags: '',
+                                        previousTags: message.template ? (message.template.tags || '') : '',
+                                        getRandomTemplate: true
+                                      }))
                }
              }
     },
@@ -3216,42 +3267,19 @@ var WikiMess = (function() {
                object: 'sender',
                replyDirect: true,
                showMessage: function (props) {
-                 wm.showMessage ($.extend ({ recipient: wm.playerInfo,
-                                             cardClass: 'messagecard',
-                                             pushView: true },
-                                           props))
-                   .then (function() {
-                     var message = props.result.message
-                     if (!message.rating && message.sender.id !== wm.playerID) {
-                       var stars = new Array(wm.maxRating).fill(1).map (function() {
-                         return $('<span class="rating">')
-                       })
-                       wm.clearTimer ('ratingTimer')
-                       function fillStars (rating) {
-                         stars.forEach (function (span, n) {
-                           span
-                             .off('click')
-                             .html (wm.makeIconButton (n < rating ? 'filledStar' : 'emptyStar',
-                                                       function() {
-                                                         fillStars (n + 1)
-                                                         wm.setTimer ('ratingTimer',
-                                                                      wm.ratingDelay,
-                                                                      function() {
-                                                                        wm.REST_putPlayerMessageRating (wm.playerID, message.id, n + 1)
-                                                                          .then (function() { wm.rateMessageDiv.hide() })
-                                                                      })
-                                                       }, wm.starColor))
-                         })
-                       }
-                       fillStars(0)
-
-                       wm.rateMessageDiv
-                         .html ($('<div>')
-                                .append ($('<span class="ratinglabel">').text("Rate this message:"),
-                                         stars))
-                         .show()
-                     }
-                   })
+                 var message = props.result.message
+                 wm.showComposePage ($.extend
+                                     ({ recipient: message.sender,
+                                        defaultToPublic: false,
+                                        thread: [message],
+                                        cardClass: 'messagecard',
+                                        threadTweeter: message.tweeter,
+                                        threadTweet: message.tweet,
+                                        vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+                                        tags: '',
+                                        previousTags: message.template ? (message.template.tags || '') : '',
+                                        getRandomTemplate: true
+                                      }))
                }}
     },
 
@@ -3308,12 +3336,12 @@ var WikiMess = (function() {
                     ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
                     : []),
                    $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (props.anon || ('No '+props.object))))
-          .on ('click', wm.makeGetMessage (props, message, deleteMessage, true))
+          .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div))
       div.addClass (message.unread ? 'unread' : 'read')
       return div
     },
 
-    makeGetMessage: function (props, message, deleteMessage, pushView) {
+    makeGetMessage: function (props, message, deleteMessage, pushView, div) {
       return function (evt) {
         if (evt)
           evt.preventDefault()
@@ -3328,7 +3356,8 @@ var WikiMess = (function() {
                                  })))
         messagePromise.then (function (result) {
           if (message.unread) {
-            div.removeClass('unread').addClass('read')
+            if (div)
+              div.removeClass('unread').addClass('read')
             delete message.unread
             --wm.messageCount
             wm.updateMessageCountDiv()
@@ -3372,225 +3401,34 @@ var WikiMess = (function() {
       return cardDiv
     },
 
-    showMessage: function (props) {
+    replyToMessage: function (config) {
       var wm = this
-      var message = props.result.message
-      var sender = message.sender || props.sender, recipient = message.recipient || props.recipient
-
-      var pushPromise
-      if (props.pushView)
-        pushPromise = wm.pushView ('read')
-      else {
-        wm.viewElements().remove()
-        pushPromise = $.Deferred().resolve()
+      config = config || {}
+      var message = config.message
+      if ((message.next && message.next.length)
+          ? window.confirm('There is already a reply to this message. Do you really want to split the thread?')
+          : true) {
+        var replyTitle = message.title
+        if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+          replyTitle = 'Re: ' + replyTitle
+        return wm.showComposePage
+        ({ recipient: message.sender,
+           defaultToPublic: !config.replyDirect,
+           title: replyTitle,
+           previousMessage: message.id,
+           previousTemplate: message.template,
+           vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+           clearThread: config.clearThread,
+           thread: config.thread,
+           threadDiscards: config.threadDiscards,
+           cardClass: config.cardClass,
+           tags: '',
+           previousTags: message.template ? (message.template.tags || '') : '',
+           getRandomTemplate: true
+         })
       }
-
-      return pushPromise
-        .then (function() {
-
-          function reply() {
-            if ((message.next && message.next.length)
-                ? window.confirm('There is already a reply to this message. Do you really want to split the thread?')
-                : true) {
-              var replyTitle = message.title
-              if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
-                replyTitle = 'Re: ' + replyTitle
-              wm.showComposePage
-              ({ recipient: message.sender,
-                 defaultToPublic: !props.replyDirect,
-                 title: replyTitle,
-                 previousMessage: message.id,
-                 previousTemplate: message.template,
-                 vars: wm.ParseTree.nextVarVal (message.body, message.vars, sender),
-                 clearThread: true,
-                 tags: '',
-                 previousTags: message.template ? (message.template.tags || '') : '',
-                 getRandomTemplate: true
-               })
-            }
-          }
-
-          function forward() {
-            wm.REST_getPlayerTemplate (wm.playerID, message.template.id)
-              .then (function (templateResult) {
-                return wm.showComposePage
-                ({ title: message.title,
-                   template: templateResult.template,
-                   vars: wm.ParseTree.populateVarVal ($.extend ({}, message.vars, { you: null }), sender),
-                   clearThread: true,
-                   body: message.body,
-                   previousMessage: message.id,
-                   tags: templateResult.template.tags || '',
-                   previousTags: templateResult.template.previousTags || '',
-                   showHeader: true,
-                   focus: 'playerSearchInput',
-                   generateNewContent: true })
-              })
-          }
-
-          var nextInThread, prevInThread, gotoTwitter, nextInThreadButton, prevInThreadButton, twitterButton, backButton
-          if (message.previous)
-            prevInThread = wm.makeGetMessage ($.extend ({}, props, {throwInDir:'right'}),
-                                              { id: message.previous, addNextId: message.id })
-          if (message.next && message.next.length)
-            nextInThread = wm.makeGetMessage ($.extend ({}, props, {throwInDir:'left'}),
-                                              { id: message.next[0] })
-          if (message.tweeter && message.tweet)
-            gotoTwitter = wm.redirectToTweet.bind (wm, message.tweeter, message.tweet)
-          
-          wm.container
-            .append (wm.readMessageDiv = $('<div class="readmessage">'),
-                     wm.rateMessageDiv = $('<div class="ratemessage">').hide(),
-                     $('<div class="subnavbar">')
-                     .append (backButton = wm.makeSubNavIcon ('back', wm.popView.bind(wm)),
-			      prevInThreadButton = wm.makeSubNavIcon ('previous',
-                                                                       function (evt) {
-                                                                         evt.stopPropagation()
-                                                                         prevInThread()
-                                                                       }),
-                              twitterButton = wm.makeSubNavIcon ('twitter',
-                                                                  function (evt) {
-                                                                    evt.stopPropagation()
-                                                                    gotoTwitter()
-                                                                  }),
-                              wm.forwardButton = wm.makeSubNavIcon ('forward',
-                                                                    function (evt) {
-                                                                      evt.stopPropagation()
-                                                                      forward()
-                                                                    }),
-                              
-                              props.destroy ? (wm.destroyButton = wm.makeSubNavIcon('delete',props.destroy)) : [],
-                              wm.replyButton = wm.makeSubNavIcon ('reply',
-                                                                  function (evt) {
-                                                                    evt.stopPropagation()
-                                                                    reply()
-                                                                  }),
-                              nextInThreadButton = wm.makeSubNavIcon ('next',
-                                                                      function (evt) {
-                                                                        evt.stopPropagation()
-                                                                        nextInThread()
-                                                                      })
-                             ))
-
-          if (wm.playerID === null)
-            wm.forwardButton.hide()
-
-          if (nextInThread)
-            wm.replyButton.hide()
-          else
-            nextInThreadButton.hide()
-
-	  if (prevInThread || gotoTwitter)
-	    backButton.hide()
-
-          if (!prevInThread)
-            prevInThreadButton.hide()
-
-          if (!gotoTwitter)
-            twitterButton.hide()
-
-          var cardDiv = wm.makeMessageCardDiv ({ message: message, sender: sender, recipient: recipient, cardClass: props.cardClass })
-          wm.stackDiv = $('<div class="stack">').append (cardDiv)
-
-          // create the swing card object for the read message card
-          var card = wm.stack.createCard (cardDiv[0])
-          function fadeAndExit() {
-            wm.fadeCard (cardDiv, card)
-              .then (function() {
-                var exit = gotoTwitter || wm.popView.bind(wm)
-                if (props.destroy)
-                  props.destroy().then(exit)
-                else
-                  exit()
-              })
-          }
-          function fadeAndBack() {
-            wm.fadeCard (cardDiv, card)
-              .then (function() {
-                if (prevInThread)
-                  prevInThread()
-                else if (gotoTwitter)
-                  gotoTwitter()
-                else
-                  wm.popView()
-              })
-          }
-          function fadeAndNext() {
-            wm.fadeCard (cardDiv, card)
-              .then (function() {
-                if (nextInThread)
-                  nextInThread()
-                else
-                  reply()
-              })
-          }
-          card.on ('throwoutleft', fadeAndBack)
-          card.on ('throwoutup', wm.playerID === null ? fadeAndExit : forward)
-          card.on ('throwoutdown', fadeAndExit)
-          card.on ('throwoutright', fadeAndNext)
-          card.on ('dragstart', function() {
-            wm.startDrag (cardDiv)
-          })
-          card.on ('throwinend', function() {
-            wm.stopDrag (cardDiv)
-          })
-          card.on ('dragmove', wm.dragListener.bind (wm))
-          card.on ('dragend', function() {
-            wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
-            cardDiv.removeClass('dragging').addClass('throwing')
-          })
-
-          wm.currentCardDiv = cardDiv
-          wm.currentCard = card
-
-          var other = message[props.object]
-          wm.readMessageDiv
-            .empty()
-            .append ($('<div class="messageheader">')
-                     .append ($('<div class="row">')
-                              .append ($('<span class="label">').text (props.preposition),
-                                       $('<span class="field messageplayer">').html (other
-                                                                       ? wm.makePlayerSpan (other.name,
-                                                                                            other.displayName,
-                                                                                            function (evt) {
-                                                                                              wm.showOtherStatusPage (other)
-                                                                                            })
-                                                                       : (props.anon || ('No '+props.object)))),
-                              $('<div class="row">')
-                              .append ($('<span class="label">').text ('Subject'),
-                                       $('<span class="field messagetitle">').text (message.title || 'Untitled'))
-                              .hide(),  // at the moment, we're not really using the title field except as a hint in mailbox view; so, hide it
-                              $('<div class="row">')
-                              .append ($('<span class="label">').text (props.verb),
-                                       $('<span class="messagedate">').text (wm.relativeDateString (message.date)))),
-                     $('<div class="messageborder">')
-                     .append (wm.stackDiv,
-                              wm.makeThrowArrowContainer ({ leftText: (prevInThread ? 'previous' : (gotoTwitter ? 'twitter' : 'back')),
-                                                            rightText: (nextInThread ? 'next' : 'reply') })))
-          
-          if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
-            var dx = 0, dy = 0
-            switch (props.throwInDir) {
-            case 'left':
-              dx = -wm.throwYOffset()
-              break
-            case 'right':
-              dx = wm.throwYOffset()
-              break
-            case 'down':
-              dy = wm.throwYOffset()
-              break
-            case 'up':
-            default:
-              dy = -wm.throwYOffset()
-              break
-            }
-            wm.startThrow()
-            card.throwIn (dx, dy)
-          }
-        })
+      return $.Deferred().resolve()
     },
-
 
     compositionVarVal: function() {
       var sender = this.playerID ? this.playerInfo : null
@@ -3735,19 +3573,6 @@ var WikiMess = (function() {
       wm.container.append (wm.popBack())
     },
 
-    makeStars: function (rating) {
-      var wm = this
-      rating = rating || 0   // in case rating is NaN
-      return new Array(this.maxRating).fill(1).map (function (_dummy, n) {
-        return $('<span class="star">').html (wm.makeIconButton (rating >= n+1
-                                                                 ? 'filledStar'
-                                                                 : (rating >= n+.5
-                                                                    ? 'halfStar'
-                                                                    : 'emptyStar'),
-                                                                 null, wm.starColor))
-      })
-    },
-
     showGameStatusPage: function (status) {
       var wm = this
 
@@ -3761,17 +3586,6 @@ var WikiMess = (function() {
       }
 
       if (status && !status.hideStatusInfo) {
-        wm.detailBarDiv.append
-        ($('<div class="ratings">')
-         .append ($('<div class="ratinginfo">')
-                  .append ($('<span class="ratinginfolabel">').text ("Messages:"),
-                           wm.makeStars (status.sumSenderRatings / status.nSenderRatings),
-                           $('<span class="ratinginfocount">').text (" (" + wm.ParseTree.nPlurals (status.nSenderRatings, "rating") + ")")),
-                  $('<div class="ratinginfo">')
-                  .append ($('<span class="ratinginfolabel">').text ("Phrases:"),
-                           wm.makeStars (status.sumAuthorRatings / status.sumAuthorRatingWeights),
-                           $('<span class="ratinginfocount">').text (" (" + wm.ParseTree.nPlurals (status.nAuthorRatings, "rating") + ")"))))
-
         wm.detailBarDiv.append
         ($('<div class="biofact">')
          .append ($('<span class="biofactlabel">').text('Name: '),

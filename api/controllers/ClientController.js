@@ -593,14 +593,20 @@ module.exports = {
       })
   },
 
-  // get broadcast message
-  getBroadcastMessage: function (req, res) {
+  // get message
+  getMessage: function (req, res) {
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     var result = {}
-    Message.findOne ({ isBroadcast: true,
-                       id: messageID })
+    Message.findOne ({ id: messageID,
+                       or: [{ isBroadcast: true },
+                            { recipient: playerID,
+                              recipientDeleted: false },
+                            { sender: playerID,
+                              senderDeleted: false }] })
       .populate ('template')
       .populate ('sender')
+      .populate ('recipient')
       .populate ('replies')
       .then (function (message) {
         if (message)
@@ -614,6 +620,11 @@ module.exports = {
                                           name: message.sender.name,
                                           displayName: message.sender.displayName }
                                       : null),
+                             recipient: (message.recipient
+                                         ? { id: message.recipient.id,
+                                             name: message.recipient.name,
+                                             displayName: message.recipient.displayName }
+                                         : undefined),
                              template: { id: message.template.id,
                                          content: message.template.content,
                                          tags: message.template.tags },
@@ -624,7 +635,16 @@ module.exports = {
                              body: message.body,
                              date: message.createdAt,
                              rating: message.rating }
-        res.json (result)
+        var updatedPromise
+        if (message && !message.read)
+          updatedPromise = Message.update ({ id: messageID },
+                                           { read: true })
+        else
+          updatedPromise = Promise.resolve()
+        return updatedPromise
+          .then (function() {
+            res.json (result)
+          })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -637,46 +657,6 @@ module.exports = {
     sailsSocketsLeave (req, 'news')
       .then (function() {
         res.ok()
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send ({ message: err })
-      })
-  },
-
-  // get received message
-  getReceivedMessage: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var messageID = Message.parseID (req.params.message)
-    var result = {}
-    Message.update ({ recipient: playerID,
-                      id: messageID,
-                      recipientDeleted: false },
-                    { read: true })
-      .then (function (messages) {
-        return Message.findOne ({ id: messageID })
-          .populate ('template')
-          .populate ('sender')
-          .populate ('replies')
-      }).then (function (message) {
-        result.message = { id: message.id,
-                           previous: message.previous,
-                           next: message.replies.map (function (reply) {
-                             return reply.id
-                           }),
-                           sender: { id: message.sender.id,
-                                     name: message.sender.name,
-                                     displayName: message.sender.displayName },
-                           template: { id: message.template.id,
-                                       content: message.template.content,
-                                       tags: message.template.tags },
-			   tweeter: message.tweeter,
-			   tweet: message.tweetId,
-                           title: message.title,
-                           vars: message.initVarVal,
-                           body: message.body,
-                           date: message.createdAt,
-                           rating: message.rating }
-        res.json (result)
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -701,44 +681,6 @@ module.exports = {
                                      displayName: message.sender.displayName },
                            date: message.createdAt,
                            unread: !message.read }
-        res.json (result)
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send ({ message: err })
-      })
-  },
-
-  // get sent message
-  getSentMessage: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var messageID = Message.parseID (req.params.message)
-    var result = {}
-    Message.findOne ({ sender: playerID,
-                       id: messageID,
-                       senderDeleted: false })
-      .populate ('recipient')
-      .populate ('replies')
-      .then (function (message) {
-        if (message)
-          result.message = { id: message.id,
-                             previous: message.previous,
-                             next: message.replies.map (function (reply) {
-                               return reply.id
-                             }),
-                             recipient: (message.recipient
-                                         ? { id: message.recipient.id,
-                                             name: message.recipient.name,
-                                             displayName: message.recipient.displayName }
-                                         : undefined),
-                             template: { id: message.template,
-                                         content: message.template.content,
-                                         tags: message.template.tags },
-			     tweeter: message.tweeter,
-			     tweet: message.tweetId,
-                             title: message.title,
-                             vars: message.initVarVal,
-                             body: message.body,
-                             date: message.createdAt }
         res.json (result)
       }).catch (function (err) {
         console.log(err)
