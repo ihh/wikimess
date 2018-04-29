@@ -1451,6 +1451,67 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     margin: 2px;
 }
 
+.wikimess .choicetext,
+.wikimess .inerttext {
+    font-size: 1.5vh;
+    line-height: 1.5vh;
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.wikimess .choicetext {
+    color: darkgoldenrod;
+}
+
+.wikimess .small .choicetext {
+    font-size: 1vh;
+    line-height: 1vh;
+    margin-bottom: 3px;
+}
+
+.wikimess .leftchoicebadge,
+.wikimess .rightchoicebadge {
+    position: absolute;
+    width: 8vh;
+    height: 8vh;
+    top: 3vh;
+}
+.wikimess .leftchoicebadge {
+    left: 1vh;
+}
+.wikimess .rightchoicebadge {
+    right: 1vh;
+}
+
+.wikimess .small .leftchoicebadge,
+.wikimess .small .rightchoicebadge {
+    width: 6vh;
+    height: 6vh;
+    top: 2vh;
+}
+.wikimess .small .leftchoicebadge {
+    left: .7vh;
+}
+.wikimess .small .rightchoicebadge {
+    right: .7vh;
+}
+
+.wikimess .mailstamp {
+    position: absolute;
+    font-size: 1.5vh;
+    line-height: 1.5vh;
+    width: 10vh;
+    right: 1vh;
+    top: 3vh;
+    font-family: "Lucida Console", Monaco, monospace;
+    background: rgba(255,0,0,.1);
+    color: darkred;
+    padding: 2px;
+    border-style: dashed;
+    border-width: 2px;
+}
+
 .wikimess .avatar img,
 .wikimess .avatar {
     height: 20vh;
@@ -1461,6 +1522,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 .wikimess .small .avatar img,
 .wikimess .small .avatar {
     height: 15vh;
+}
+
+.wikimess .avatar a {
+    border-style: none;
 }
 
 .wikimess .twithelp {

@@ -167,9 +167,8 @@ var WikiMess = (function() {
                     twitter: 'twitter',
                     reload: 'refresh',
                     dummy: 'dummy',
-                    emptyStar: 'star-empty',
-                    filledStar: 'star-filled',
-                    halfStar: 'star-half',
+                    star: 'star-formation',
+                    choice: 'uncertainty',
                     menu: 'menu',
                     minimize: 'minimize',
                     maximize: 'maximize' },
@@ -1889,6 +1888,12 @@ var WikiMess = (function() {
 
           if (config.previousMessage)
             wm.composition.previousMessage = config.previousMessage
+	  else if (wm.composition.thread && wm.composition.thread.length) {
+	    var lastMessage = wm.composition.thread[0]
+	    wm.composition.title = config.title || wm.replyTitle (lastMessage.title)
+	    wm.composition.previousMessage = config.previousMessage || lastMessage.id
+	    wm.composition.previousTemplate = config.previousTemplate || lastMessage.template
+	  }
 
           if (config.draft)
             wm.composition.draft = config.draft
@@ -1953,7 +1958,18 @@ var WikiMess = (function() {
               card.throwIn (0, -wm.throwYOffset())
             }
           } else {
-            var dealPromise = wm.threadHasNextMessage() ? $.Deferred().resolve() : wm.dealCard(dealConfig)
+            var dealPromise
+	    if (wm.threadHasNextMessage())
+	      dealPromise = $.Deferred().resolve()
+	    else {
+	      if (wm.composition.thread && wm.composition.thread.length) {
+		var lastMessage = wm.composition.thread[0]
+		dealConfig.title = config.title || wm.replyTitle (lastMessage.title)
+		dealConfig.previousMessage = config.previousMessage || lastMessage.id
+		dealConfig.previousTemplate = config.previousTemplate || lastMessage.template
+	      }
+	      dealPromise = wm.dealCard (dealConfig)
+	    }
 	    
             return dealPromise
               .then (function() {
@@ -2140,7 +2156,8 @@ var WikiMess = (function() {
         })
       var messageBodyElem = wm.messageBodyDiv[0]
 
-      var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv)
+      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe right to select, left for more.')
+      var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv, choiceTextDiv)
       var cardDiv = $('<div class="card composecard">').append (expansionRow, innerDiv)
       if (wm.isTouchDevice())
         cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
@@ -2406,6 +2423,13 @@ var WikiMess = (function() {
       wm.setComposeThreadButtonState()
     },
 
+    replyTitle: function (msgTitle) {
+      var replyTitle = msgTitle
+      if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
+        replyTitle = 'Re: ' + replyTitle
+      return replyTitle
+    },
+    
     threadHasNextMessage: function() {
       var wm = this
       return (wm.composition.thread && wm.composition.thread.length
@@ -2955,9 +2979,10 @@ var WikiMess = (function() {
       var expansion = config.expansion || wm.composition.body
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
+      var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.starColor).addClass ('rightchoicebadge')
       if (tweeter)
 	this.addAvatarImage (avatarDiv, tweeter)
-      div.empty().append (avatarDiv, textDiv)
+      div.empty().append (rightChoiceBadgeDiv, avatarDiv, textDiv)
       wm.animationExpansion = _.cloneDeep (expansion)
       wm.animationDiv = textDiv
       wm.randomizeEmptyMessageWarning()
@@ -3030,18 +3055,15 @@ var WikiMess = (function() {
           .then (function (result) {
             wm.container.show()
             if (result && result.thread && result.thread.length) {
-              var thread = result.thread
-              var lastMessage = thread[thread.length-1]
-              var replyTitle = lastMessage.title
-              if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
-                replyTitle = 'Re: ' + replyTitle
+              var thread = result.thread.reverse()
+              var lastMessage = thread[0]
               return wm.showComposePage
               ({ recipient: lastMessage.sender,
                  defaultToPublic: true,
-                 title: replyTitle,
+                 title: wm.replyTitle (lastMessage.title),
                  previousMessage: lastMessage.id,
                  previousTemplate: lastMessage.template,
-                 thread: thread.reverse(),
+                 thread: thread,
                  threadTweeter: lastMessage.tweeter,
                  threadTweet: lastMessage.tweet,
                  vars: wm.ParseTree.nextVarVal (lastMessage.body, lastMessage.vars, lastMessage.sender),
@@ -3157,23 +3179,19 @@ var WikiMess = (function() {
                                  messages: result.messages,
                                  getMethod: 'REST_getPlayerMessage',
                                  deleteMethod: 'REST_deletePlayerMessage',
-                                 verb: 'Sent',
-                                 preposition: 'To',
                                  object: 'recipient',
-                                 anon: 'Everyone',
                                  showMessage: function (props) {
                                    var message = props.result.message
-                                   wm.showComposePage ($.extend
-                                                       ({ recipient: wm.playerInfo,
-                                                          defaultToPublic: false,
-                                                          thread: [message],
-                                                          threadTweeter: message.tweeter,
-                                                          threadTweet: message.tweet,
-                                                          vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
-                                                          tags: '',
-                                                          previousTags: message.template ? (message.template.tags || '') : '',
-                                                          getRandomTemplate: true
-                                                        }))
+                                   wm.showComposePage ({ recipient: wm.playerInfo,
+                                                         defaultToPublic: false,
+                                                         thread: [message],
+                                                         threadTweeter: message.tweeter,
+                                                         threadTweet: message.tweet,
+                                                         vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+                                                         tags: '',
+                                                         previousTags: message.template ? (message.template.tags || '') : '',
+                                                         getRandomTemplate: true
+                                                       })
                                  }
                                })
         return result
@@ -3198,10 +3216,7 @@ var WikiMess = (function() {
                                  messages: result.drafts,
                                  getMethod: 'REST_getPlayerMessage',
                                  deleteMethod: 'REST_deletePlayerDraft',
-                                 verb: 'Edited',
-                                 preposition: 'To',
                                  object: 'recipient',
-                                 anon: 'Everyone',
                                  showMessage: function (props) {
                                    var draft = props.result.draft
                                    wm.showComposePage ({ recipient: draft.recipient,
@@ -3226,23 +3241,19 @@ var WikiMess = (function() {
       return { tab: 'public',
                title: 'Recent messages',
                getMethod: 'REST_getPlayerMessage',
-               verb: 'Posted',
-               preposition: 'From',
                object: 'sender',
-               anon: this.anonGuest,
                showMessage: function (props) {
                  var message = props.result.message
-                 wm.showComposePage ($.extend
-                                     ({ recipient: null,
-                                        defaultToPublic: true,
-                                        thread: [message],
-                                        threadTweeter: message.tweeter,
-                                        threadTweet: message.tweet,
-                                        vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
-                                        tags: '',
-                                        previousTags: message.template ? (message.template.tags || '') : '',
-                                        getRandomTemplate: true
-                                      }))
+                 wm.showComposePage ({ recipient: null,
+                                       defaultToPublic: true,
+                                       thread: [message],
+                                       threadTweeter: message.tweeter,
+                                       threadTweet: message.tweet,
+                                       vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+                                       tags: '',
+                                       previousTags: message.template ? (message.template.tags || '') : '',
+                                       getRandomTemplate: true
+                                     })
                }
              }
     },
@@ -3254,23 +3265,19 @@ var WikiMess = (function() {
                title: 'Received messages',
                getMethod: 'REST_getPlayerMessage',
                deleteMethod: 'REST_deletePlayerMessage',
-               verb: 'Received',
-               preposition: 'From',
                object: 'sender',
-               replyDirect: true,
                showMessage: function (props) {
                  var message = props.result.message
-                 wm.showComposePage ($.extend
-                                     ({ recipient: message.sender,
-                                        defaultToPublic: false,
-                                        thread: [message],
-                                        threadTweeter: message.tweeter,
-                                        threadTweet: message.tweet,
-                                        vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
-                                        tags: '',
-                                        previousTags: message.template ? (message.template.tags || '') : '',
-                                        getRandomTemplate: true
-                                      }))
+                 wm.showComposePage ({ recipient: message.sender,
+                                       defaultToPublic: false,
+                                       thread: [message],
+                                       threadTweeter: message.tweeter,
+                                       threadTweet: message.tweet,
+                                       vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
+                                       tags: '',
+                                       previousTags: message.template ? (message.template.tags || '') : '',
+                                       getRandomTemplate: true
+                                     })
                }}
     },
 
@@ -3326,7 +3333,7 @@ var WikiMess = (function() {
                    (deleteMessage
                     ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
                     : []),
-                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (props.anon || ('No '+props.object))))
+                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
           .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div))
       div.addClass (message.unread ? 'unread' : 'read')
       return div
@@ -3371,6 +3378,14 @@ var WikiMess = (function() {
     makeMessageCardDiv: function (config) {
       var wm = this
       var message = config.message, sender = config.sender, recipient = config.recipient
+
+      var mailstampDiv = $('<div class="mailstamp">')
+      mailstampDiv.append (recipient ? ('Sent' + (recipient.id === wm.playerID ? ' to you' : '')) : 'Posted',
+			   ' by ',
+			   sender ? (sender.id === wm.playerID ? 'you' : sender.displayName) : wm.anonGuest,
+			   ' ',
+			   wm.relativeDateString (message.date))
+      mailstampDiv.css ('transform', 'rotate(' + ((message.id % 7) - 3) + 'deg)')
       
       var avatarDiv = $('<div class="avatar">')
       if (message.tweeter)
@@ -3379,11 +3394,12 @@ var WikiMess = (function() {
       var textDiv = $('<div class="text">')
 	  .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
 								    false,
-
 								    message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))
+      var inertTextDiv = $('<div class="inerttext">').html ('Swipe left or right to see next card.')
       var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
-                                                      .append (avatarDiv, textDiv))
+                                                      .append (mailstampDiv, avatarDiv, textDiv),
+						      inertTextDiv)
       var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
       if (wm.isTouchDevice())
         cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
@@ -3408,7 +3424,7 @@ var WikiMess = (function() {
           replyTitle = 'Re: ' + replyTitle
         return wm.showComposePage
         ({ recipient: message.sender,
-           defaultToPublic: !config.replyDirect,
+           defaultToPublic: !message.recipient,
            title: replyTitle,
            previousMessage: message.id,
            previousTemplate: message.template,
