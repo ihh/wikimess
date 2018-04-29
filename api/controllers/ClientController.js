@@ -636,7 +636,7 @@ module.exports = {
                              date: message.createdAt,
                              rating: message.rating }
         var updatedPromise
-        if (message && !message.read)
+        if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = Message.update ({ id: messageID },
                                            { read: true })
         else

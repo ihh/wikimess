@@ -88,7 +88,7 @@ module.exports.policies = {
     'sendMessage': true,
     // broadcasts
     'getRecentBroadcasts': true,
-    'getBroadcastMessage': true,
+    'getMessage': true,
     'getBroadcastMessageForwardThread': true,
     'unsubscribeBroadcasts': true,
     // status

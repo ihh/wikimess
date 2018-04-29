@@ -1464,7 +1464,6 @@ var WikiMess = (function() {
             wm.composition.threadTweeter = config.threadTweeter || wm.composition.threadTweeter
             wm.composition.threadTweet = config.threadTweet || wm.composition.threadTweet
           }
-          wm.composition.cardClass = config.cardClass || wm.composition.cardClass
           
           makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
           makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
@@ -1994,8 +1993,7 @@ var WikiMess = (function() {
       var promise = $.Deferred()
       var cardDiv = wm.makeMessageCardDiv ({ message: message,
                                              sender: message.sender,
-                                             recipient: message.recipient,
-                                             cardClass: wm.composition.cardClass })
+                                             recipient: message.recipient })
       cardDiv.removeClass('card').addClass('inertcard')
       wm.addToStack (cardDiv)
 
@@ -3052,7 +3050,6 @@ var WikiMess = (function() {
                  previousMessage: lastMessage.id,
                  previousTemplate: lastMessage.template,
                  thread: thread.reverse(),
-                 cardClass: 'broadcastcard',
                  threadTweeter: lastMessage.tweeter,
                  threadTweet: lastMessage.tweet,
                  vars: wm.ParseTree.nextVarVal (lastMessage.body, lastMessage.vars, lastMessage.sender),
@@ -3178,7 +3175,6 @@ var WikiMess = (function() {
                                                        ({ recipient: wm.playerInfo,
                                                           defaultToPublic: false,
                                                           thread: [message],
-                                                          cardClass: 'sentcard',
                                                           threadTweeter: message.tweeter,
                                                           threadTweet: message.tweet,
                                                           vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
@@ -3248,7 +3244,6 @@ var WikiMess = (function() {
                                      ({ recipient: null,
                                         defaultToPublic: true,
                                         thread: [message],
-                                        cardClass: 'broadcastcard',
                                         threadTweeter: message.tweeter,
                                         threadTweet: message.tweet,
                                         vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
@@ -3277,7 +3272,6 @@ var WikiMess = (function() {
                                      ({ recipient: message.sender,
                                         defaultToPublic: false,
                                         thread: [message],
-                                        cardClass: 'messagecard',
                                         threadTweeter: message.tweeter,
                                         threadTweet: message.tweet,
                                         vars: wm.ParseTree.nextVarVal (message.body, message.vars, message.sender),
@@ -3401,8 +3395,12 @@ var WikiMess = (function() {
       var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
       if (wm.isTouchDevice())
         cardDiv.addClass ('jiggle')  // non-touch devices don't get the drag-start event that are required to disable jiggle during drag (jiggle is incompatible with drag), so we just don't jiggle on non-touch devices for now
-      if (config.cardClass)
-        cardDiv.addClass (config.cardClass)
+      var cardClass = (sender && sender.id === wm.playerID
+		       ? 'sentcard'
+		       : (recipient && recipient.id === wm.playerID
+			  ? 'messagecard'
+			  : 'broadcastcard'))
+      cardDiv.addClass (cardClass)
       return cardDiv
     },
 
@@ -3426,7 +3424,6 @@ var WikiMess = (function() {
            clearThread: config.clearThread,
            thread: config.thread,
            threadDiscards: config.threadDiscards,
-           cardClass: config.cardClass,
            tags: '',
            previousTags: message.template ? (message.template.tags || '') : '',
            getRandomTemplate: true
