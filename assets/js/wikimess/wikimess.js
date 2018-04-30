@@ -2151,7 +2151,7 @@ var WikiMess = (function() {
         })
       var messageBodyElem = wm.messageBodyDiv[0]
 
-      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe right to share, left for more.')
+      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe left to discard, right to share.')
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv, choiceTextDiv)
       var cardDiv = $('<div class="card composecard">').append (expansionRow, innerDiv)
       if (wm.isTouchDevice())
