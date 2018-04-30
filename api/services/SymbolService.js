@@ -26,7 +26,7 @@ module.exports = {
       if (typeof(templateNode) === 'string')
         return templateNode === bodyNode ? Promise.resolve() : Promise.reject('string mismatch')
       if (bodyNode.type !== (templateNode.type === 'alt' ? 'opt' : templateNode.type))
-        return Promise.reject('type mismatch')
+        return Promise.reject('type mismatch (' + bodyNode.type + ' !== ' + templateNode.type + ')')
       switch (templateNode.type) {
       case 'assign':
         if (templateNode.varname !== bodyNode.varname)

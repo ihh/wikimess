@@ -59,7 +59,7 @@ module.exports = {
 
     // suggestion weight
     weight: {
-      type: 'number',
+      type: 'integer',
       defaultsTo: 1
     }
   },

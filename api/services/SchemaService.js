@@ -219,6 +219,9 @@ module.exports = {
           "isRoot": {
             "type": "boolean"
           },
+          "weight": {
+            "type": "integer"
+          },
           "replies": {
             "type": "array",
             "items": {

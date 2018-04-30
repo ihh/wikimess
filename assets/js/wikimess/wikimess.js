@@ -1476,7 +1476,7 @@ var WikiMess = (function() {
 
           // autosuggest for textarea (typing with keyboard)
           wm.textareaAutosuggest = function (input) {
-            input.focus()  // in case we were triggered by player hitting 'discard' button
+            input.focus()  // in case we were triggered by player hitting 'new card' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1651,7 +1651,7 @@ var WikiMess = (function() {
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
                     else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
-                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'discard' to generate a new random expanded text.")
+                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'new card' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
                     else {
@@ -1820,12 +1820,12 @@ var WikiMess = (function() {
                                                                      rightText: 'share' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.randomizeButton = wm.makeSubNavIcon ('discard', function (evt) {
-                        evt.stopPropagation()
-                        wm.discardAndRefresh()
-                      }),
-                      wm.headerToggler.showButton,
-                      wm.headerToggler.hideButton,
+                     (wm.randomizeButton = wm.makeSubNavIcon ({ iconName: 'discard',
+                                                                text: 'new card',
+                                                                callback: function (evt) {
+                                                                  evt.stopPropagation()
+                                                                  wm.discardAndRefresh()
+                                                                } }),
                       wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
                                                                  callback: function (evt) {
                                                                    evt.stopPropagation()
@@ -1836,6 +1836,8 @@ var WikiMess = (function() {
                                                                    evt.stopPropagation()
                                                                    wm.dealInertCard()
                                                                  } }).addClass('threadshow'),
+                      wm.headerToggler.showButton,
+                      wm.headerToggler.hideButton,
                       wm.makeTipButton().addClass('threadshow'),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
@@ -2836,7 +2838,8 @@ var WikiMess = (function() {
        })
       
       this.animationDiv.html (markdown)
-      this.showScrollButtons()
+      if (this.showScrollButtons)
+        this.showScrollButtons()
       
       if (this.animationExpansion
           && (this.deleteFirstSymbolName (this.animationExpansion) || this.extraAnimationSteps-- > 0))
@@ -2967,9 +2970,12 @@ var WikiMess = (function() {
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
       var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.starColor).addClass ('rightchoicebadge')
-      if (tweeter)
+      if (tweeter && !config.inEditor)
 	this.addAvatarImage (avatarDiv, tweeter)
-      div.empty().append (rightChoiceBadgeDiv, avatarDiv, textDiv)
+      div.empty()
+      if (!config.inEditor)
+        div.append (rightChoiceBadgeDiv, avatarDiv)
+      div.append (textDiv)
       wm.animationExpansion = _.cloneDeep (expansion)
       wm.animationDiv = textDiv
       wm.randomizeEmptyMessageWarning()
@@ -2985,7 +2991,8 @@ var WikiMess = (function() {
 								 ? wm.emptyTemplateWarning
 								 : wm.emptyMessageWarning))
         textDiv.html (this.renderMarkdown (processedExpansion))
-        wm.showScrollButtons()
+        if (wm.showScrollButtons)
+          wm.showScrollButtons()
       }
     },
     
@@ -4023,8 +4030,8 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ('discard'),
-                           $('<div class="hint">').text('discard'))
+                  .append (wm.makeIconButton ({ iconName: 'discard', text: 'randomize' }),
+                           $('<div class="hint">').text('randomize'))
                   .off('click')
                   .on('click',randomize)
                 wm.infoPaneRightControls
@@ -4833,7 +4840,7 @@ var WikiMess = (function() {
                        wm.grammarBarDiv,
                        wm.infoPane,
                        wm.subnavbar = $('<div class="subnavbar">').append
-                       (wm.makeSubNavIcon ('new', newSymbol),
+                       (wm.makeSubNavIcon ({ iconName: 'new', text: 'new phrase', callback: newSymbol }),
                         wm.makeHelpButton (wm.REST_getGrammarHelpHtml)))
             
             wm.searchInput.attr ('placeholder', 'Search words and phrases')

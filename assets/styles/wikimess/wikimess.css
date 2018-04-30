@@ -815,7 +815,6 @@ input {
 }
 
 .wikimess .mailbox,
-.wikimess .readmessage,
 .wikimess .compose {
     flex-grow: 1;
     display: flex;
@@ -855,25 +854,6 @@ input {
     right: 0;
 }
 
-.wikimess .readmessage.permalink .messageheader .threadnav {
-    position: inherit;
-}
-
-.wikimess .readmessage.permalink .messageheader {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.wikimess .readmessage.permalink .messageheader .displayname,
-.wikimess .readmessage.permalink .messageheader .label {
-    display: none;
-}
-
-.wikimess .readmessage.permalink .messageheader .row {
-    display: inline;
-}
-
 .wikimess .diffbar,
 .wikimess .messagebody {
     -webkit-user-select: text; /* Chrome/Safari */        
@@ -904,11 +884,6 @@ input {
     border-top-style: solid;
     border-width: 1px;
     margin: 2px;
-}
-
-.wikimess .readmessage .messageborder {
-    margin: 2px;
-    position: relative;
 }
 
 .wikimess .bodysectiontitle {
@@ -1035,15 +1010,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f9f6e3', end
     -webkit-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
     -moz-box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
     box-shadow: 2px 2px 1px 1px rgba(0,0,0,0.3);
-}
-
-.wikimess .readmessage .stack .bodysectiontitle {
-/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,a8a8a8+100 */
-background: #ffffff; /* Old browsers */
-background: -moz-linear-gradient(-45deg, #ffffff 0%, #a8a8a8 100%); /* FF3.6-15 */
-background: -webkit-linear-gradient(-45deg, #ffffff 0%,#a8a8a8 100%); /* Chrome10-25,Safari5.1-6 */
-background: linear-gradient(135deg, #ffffff 0%,#a8a8a8 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#a8a8a8',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 }
 
 .wikimess .broadcastcard {
@@ -1424,7 +1390,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 .wikimess .inertcard,
 .wikimess .helpcard,
-.wikimess .readmessage .messagebody,
 .wikimess .compose .messagebody {
     text-align: center;
     flex-grow: 1;

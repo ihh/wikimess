@@ -38,18 +38,19 @@ function parseSymbolDefs (text, log) {
 function parseTemplateDefs (text, log) {
   log = log || defaultLog
   try {
-    var newTemplateDefReg = /^(@.*|)(>+)\s*(.*?)\s*(#\s*(.*?)\s*(#\s*(.*?)\s*|)|)$/;
+    var newTemplateDefReg = /^(\d*)(@.*|)(>+)\s*(.*?)\s*(#\s*(.*?)\s*(#\s*(.*?)\s*|)|)$/;
     var templates = [], replyChain = [], currentTemplate, newTemplateDefMatch
     text.split(/\n/).forEach (function (line) {
       if (line.length) {
         if (currentTemplate)
           currentTemplate.content = currentTemplate.content.concat (parseRhs (line + '\n'))
         else if (newTemplateDefMatch = newTemplateDefReg.exec (line)) {
-          var author = newTemplateDefMatch[1],
-              depth = newTemplateDefMatch[2].length - 1,
-	      title = newTemplateDefMatch[3],
-	      prevTags = makeTagString (newTemplateDefMatch[5]),
-	      tags = makeTagString (newTemplateDefMatch[7])
+          var weight = newTemplateDefMatch[1],
+              author = newTemplateDefMatch[2],
+              depth = newTemplateDefMatch[3].length - 1,
+	      title = newTemplateDefMatch[4],
+	      prevTags = makeTagString (newTemplateDefMatch[6]),
+	      tags = makeTagString (newTemplateDefMatch[8])
           var isRoot = !prevTags.match(/\S/) || (prevTags.search(' root ') >= 0)
           author = author ? author.substr(1) : null
           currentTemplate = { title: title,
@@ -57,6 +58,7 @@ function parseTemplateDefs (text, log) {
 			      previousTags: prevTags,
 			      tags: tags,
                               isRoot: isRoot,
+                              weight: weight.length ? parseInt(weight) : undefined,
 			      content: [],
                               replies: [] }
           if (depth > replyChain.length)
