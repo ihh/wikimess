@@ -469,6 +469,10 @@ var WikiMess = (function() {
       return 'https://twitter.com/' + tweeter
     },
 
+    redirectToTweeter: function (tweeter) {
+      window.location.replace (this.makeTweeterUrl (tweeter))
+    },
+
     redirectToTweet: function (tweeter, tweet) {
       window.location.replace (this.makeTweetUrl (tweeter, tweet))
     },
@@ -2946,8 +2950,11 @@ var WikiMess = (function() {
 
     addAvatarImage: function (div, tweeter, size) {
       if (tweeter)
-	div.append ($('<a href="' + this.makeTweeterUrl (tweeter) + '">')
-                    .html ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original'))))
+	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
+        .on ('click', function (evt) {
+          if (window.confirm ("Go to @" + tweeter + "'s page on Twitter?"))
+            wm.redirectToTweeter (tweeter)
+        })
     },
     
     showMessageBody: function (config) {
@@ -3366,7 +3373,10 @@ var WikiMess = (function() {
       mailstampDiv.css ('transform', 'rotate(' + ((message.id % 7) - 3) + 'deg)')
       if (message.tweeter && message.tweet)
 	mailstampDiv.append (wm.makeIconButton ('twitter', null, 'darkred'))
-	.on ('click', wm.redirectToTweet.bind (wm, message.tweeter, message.tweet))
+	.on ('click', function() {
+          if (window.confirm ("View this message on Twitter?"))
+            wm.redirectToTweet (message.tweeter, message.tweet)
+        })
       
       var avatarDiv = $('<div class="avatar">')
       if (message.tweeter)
