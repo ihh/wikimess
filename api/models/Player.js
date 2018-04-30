@@ -82,12 +82,6 @@ module.exports = {
       defaultsTo: false
     },
     
-    // bot players
-    bot: {
-      collection: 'bot',
-      via: 'player'
-    },
-    
     // show signup flow?
     newSignUp: {
       type: 'boolean',

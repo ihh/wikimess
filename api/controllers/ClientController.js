@@ -263,48 +263,6 @@ module.exports = {
     })
   },
 
-  // configure Player's bot
-  getMachine: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    return Bot.findOne ({ player: playerID })
-      .then (function (bot) {
-        if (bot)
-          res.json ({ code: bot.code })
-        else
-          res.notFound()
-      }).catch (function (err) { res.status(500).send ({ message: err }) })
-  },
-
-  configureMachine: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var code = req.body.code
-    var machine
-    try {
-      machine = botMachine.parse (code)
-      if (machine)
-        Bot.findOrCreate ({ player: playerID })
-        .then (function (bot) {
-          Bot.update (bot,
-                      { code: code,
-                        startState: machine.state || 'start',
-                        transitions: machine.out || {} })
-        }).then (function() { res.ok() })
-        .catch (function (err) { res.status(500).send ({ message: err }) })
-    } catch (err) {
-      res.status(500).send ({ message: err })
-    }
-  },
-
-  deleteMachine: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    Bot.destroy ({ player: playerID })
-      .then (function() {
-        res.ok()
-      }).catch (function (err) {
-        res.status(500).send ({ message: err })
-      })
-  },
-
   // get player status
   selfStatus: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
