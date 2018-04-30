@@ -1506,11 +1506,16 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     padding: 2px;
     border-style: dashed;
     border-width: 2px;
+    word-wrap: normal;
 }
 
-.wikimess .mailstamp svg {
-    width: 4vh;
-    height: 4vh;
+.wikimess .mailstamp .button {
+    float: right;
+}
+
+.wikimess .mailstamp .button svg {
+    width: 2.5vh;
+    height: 2.5vh;
 }
 
 .wikimess .avatar img,

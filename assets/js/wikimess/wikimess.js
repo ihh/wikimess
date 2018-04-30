@@ -124,7 +124,7 @@ var WikiMess = (function() {
     autosuggestDelay: 500,
     unfocusDelay: 1000,
     menuPopupDelay: 500,
-    threadCardThrowDelay: 50,
+    threadCardThrowDelay: 5,
     alwaysThrowInHelpCards: true,
     starColor: 'darkgoldenrod',
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
@@ -3372,7 +3372,7 @@ var WikiMess = (function() {
 			   wm.relativeDateString (message.date))
       mailstampDiv.css ('transform', 'rotate(' + ((message.id % 7) - 3) + 'deg)')
       if (message.tweeter && message.tweet)
-	mailstampDiv.append (wm.makeIconButton ('twitter', null, 'darkred'))
+	mailstampDiv.prepend (wm.makeIconButton ('twitter', null, 'darkred'))
 	.on ('click', function() {
           if (window.confirm ("View this message on Twitter?"))
             wm.redirectToTweet (message.tweeter, message.tweet)
