@@ -253,8 +253,11 @@
           case 'uc':
             expansion = arg.toUpperCase()
             break
+          case 'lc':
+            expansion = arg.toLowerCase()
+            break
           case 'plural':
-            expansion = pluralForm (arg)
+            expansion = nlp(arg).nouns().toPlural().text()
             break
           case 'a':
             expansion = indefiniteArticle (arg)

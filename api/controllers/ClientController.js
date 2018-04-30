@@ -11,7 +11,7 @@ var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
-var botMachine = require('../../misc/parsers/bot.js')
+var nlp = require('../../assets/js/ext/compromise.min.js')
 
 module.exports = {
 

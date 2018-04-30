@@ -6,6 +6,7 @@
  */
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
+var nlp = require('../../assets/js/ext/compromise.min.js')
 
 module.exports = {
 

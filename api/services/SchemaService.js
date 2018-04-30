@@ -74,7 +74,7 @@ var symbolSchemaDefs = {
          "properties": {
            "type": { "const": "func" },
            "args": { "$ref": "#/definitions/rhs" },
-           "funcname": { "enum": ["uc", "cap", "plural", "a"] } },
+           "funcname": { "enum": ["uc", "lc","cap", "plural", "a"] } },
          "required": ["type", "funcname", "args"],
          "additionalProperties": false },
 

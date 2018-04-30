@@ -96,6 +96,7 @@
               "funcname": {
                 "enum": [
                   "uc",
+                  "lc",
                   "cap",
                   "plural",
                   "a"

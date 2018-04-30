@@ -6,6 +6,7 @@ var merge = require('deepmerge');
 var twitterAPI = require('node-twitter-api');
 
 var parseTree = require('../../assets/js/wikimess/parsetree.js')
+var nlp = require('../../assets/js/ext/compromise.min.js')
 
 // Uncomment to show line numbers on console.log messages
 // https://remysharp.com/2014/05/23/where-is-that-console-log
