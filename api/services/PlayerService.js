@@ -176,6 +176,14 @@ module.exports = {
       })
   },
 
+  makeTagArray: function (tags) {
+    return tags.toLowerCase().split(/\s+/).filter (function (tag) { return tag })
+  },
+
+  makeTagString: function (tags) {
+    return tags.toLowerCase().split(/\s+/).filter (function (tag) { return tag }).join(' ')
+  },
+  
   sendMessage: function (config) {
     var playerID = config.playerID || null
     var recipientID = config.recipientID || null
@@ -248,8 +256,8 @@ module.exports = {
                                     author: player,
                                     content: content,
                                     previous: previousTemplate,
-                                    tags: tags.toLowerCase().split(/\s+/).filter (function (tag) { return tag !== '' }).join(' '),
-                                    previousTags: ' ' + previousTags.toLowerCase() + ' ',
+                                    tags: PlayerService.makeTagString (tags),
+                                    previousTags: PlayerService.makeTagString (previousTags),
                                     isRoot: (previousTemplate ? false : true),
                                     isPublic: isPublic })
             .then (function (template) {

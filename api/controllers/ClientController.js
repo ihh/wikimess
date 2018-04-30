@@ -1342,7 +1342,7 @@ module.exports = {
   suggestReply: function (req, res) {
     var playerID = req.session && req.session.passport ? req.session.passport.user : null
     var previousID = Template.parseID (req.params.template)
-    var previousTags = req.param('tags','').toLowerCase().split(/\s+/).filter(function(tag){return tag.length>0})
+    var previousTags = PlayerService.makeTagArray (req.param('tags',''))
     return Template.find ({ or: [{ author: playerID },
                                  { isPublic: true }] })
       .where ({ or: [{ previous: previousID }]
