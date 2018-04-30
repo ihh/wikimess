@@ -20,6 +20,7 @@ var iconDir = assetDir + iconPath
 
 var svgSuffix = '.svg'
 var pngSuffix = '.png'
+var jpegSuffix = '.jpeg'
 
 module.exports = {
     getIcon: function (req, res) {
@@ -46,32 +47,40 @@ module.exports = {
     var screenName = req.params.screenname
     var size = req.param('size','normal')
     var url = 'https://twitter.com/' + screenName + '/profile_image' + '?size=' + size
-    var path = avatarPath + screenName + pngSuffix
-    var pathToFile = avatarDir + screenName + pngSuffix
+    var prefix = screenName + '-' + size
+    var pathToPng = avatarPath + prefix + pngSuffix, pathToJpeg = avatarPath + prefix + jpegSuffix
+    var pathToPngFile = avatarDir + prefix + pngSuffix, pathToJpegFile = avatarDir + prefix + jpegSuffix
 
     // https://stackoverflow.com/questions/39232296/node-js-cache-image-to-filesystem-and-pipe-image-to-response
-    fs.stat (pathToFile, function (err, stats) {
-        if (err) {
-
-          request.get ({ uri: url,
+    fs.stat (pathToPngFile, function (err, stats) {
+      if (err)
+          fs.stat (pathToJpegFile, function (err, stats) {
+            if (err) {
+              request.get ({ uri: url,
                          headers: { "Content-Type": "image/png" } })
-            .on ('response', function (response) {
-	      if (response.statusCode !== 200 || !['image/png'].includes(response.headers['content-type']))
-                res.status(404).type('txt').send('Username not found.')
-              else {
-                // Create a write stream to the file system
-                response.pipe (new stream.PassThrough().pipe (fs.createWriteStream (pathToFile)))
-                // pipe to the response at the same time
-                response.pipe (res)
-              }
-            })
-        } else {
-          // If the image does exist on the file system, then redirect to static asset
-          res.redirect (301, path)
-          // NB this may not play well if caching is turned on in config/http.js
-          // Alternatively, to serve the file dynamically every time, use this:
-          // fs.createReadStream(pathToFile).pipe(res)
-        }
+                .on ('response', function (response) {
+	          if (response.statusCode !== 200 || !['image/png','image/jpeg'].includes(response.headers['content-type']))
+                    res.status(404).type('txt').send('User ' + screenName + ' not found')
+                  else {
+                    var suffix
+                    switch (response.headers['content-type']) {
+                    case 'image/png': suffix = pngSuffix; break;
+                    case 'image/jpeg': suffix = jpegSuffix; break;
+                    default: break;
+                    }
+                    response.pipe (new stream.PassThrough().pipe (fs.createWriteStream (avatarDir + prefix + suffix)))
+                    // pipe to the response at the same time
+                    response.pipe (res)
+                  }
+                })
+            } else
+              res.redirect (301, pathToJpeg)  // see note below about redirects, caching, and confi/http.js
+          })
+      else
+        res.redirect (301, pathToPng)  // see note below about redirects, caching, and confi/http.js
+      // NB redirecting not play well if caching is turned on in config/http.js
+      // Alternatively, to serve the file dynamically every time, use this:
+      // fs.createReadStream(pathToFile).pipe(res)
     })
   }
 };
