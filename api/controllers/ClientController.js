@@ -737,7 +737,10 @@ module.exports = {
                          template: draft.template,
                          title: draft.title,
                          vars: (draft.previous
-                                ? parseTree.nextVarVal (draft.previous.body, draft.previous.initVarVal, player, draft.recipient)
+                                ? parseTree.nextVarVal ({ node: draft.previous.body,
+                                                          initVarVal: draft.previous.initVarVal,
+                                                          sender: player,
+                                                          recipient: draft.recipient })
                                 : parseTree.defaultVarVal (player, draft.recipient)),
                          body: draft.body,
                          date: draft.updatedAt }

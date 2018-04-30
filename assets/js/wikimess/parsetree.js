@@ -313,7 +313,8 @@
     return varVal
   }
 
-  function nextVarVal (node, initVarVal, sender, recipient) {
+  function nextVarVal (config) {
+    var node = config.node, initVarVal = config.initVarVal, sender = config.sender, recipient = config.recipient
     var varVal = finalVarVal (node, initVarVal)
     populateVarVal (varVal, sender, recipient)
     return varVal

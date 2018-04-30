@@ -231,7 +231,10 @@ module.exports = {
           })
         previousPromise = previousPromise
           .then (function (previousMessage) {
-            initVarVal = parseTree.nextVarVal (previousMessage.body, previousMessage.initVarVal, player, recipient)
+            initVarVal = parseTree.nextVarVal ({ node: previousMessage.body,
+                                                 initVarVal: previousMessage.initVarVal,
+                                                 sender: player,
+                                                 recipient: recipient })
             previousTweeter = previousMessage.tweeter
             previousTweetId = previousMessage.tweetId
           })
