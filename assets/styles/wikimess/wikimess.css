@@ -1479,11 +1479,14 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     height: 2.5vh;
 }
 
-.wikimess .avatar img,
-.wikimess .avatar {
+.wikimess .avatar img {
     height: 20vh;
     border-radius: 50%;
     margin: 1vh;
+
+    border-style: solid;
+    border-width: 0.5vh;
+    border-color: white;
 }
 
 .wikimess .small .avatar img,
