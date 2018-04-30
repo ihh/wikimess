@@ -193,8 +193,8 @@ module.exports = {
     var title = config.title
     var body = config.body
     var previous = config.previous
-    var tags = config.tags || ''
-    var previousTags = config.previousTags || ''
+    var tags = PlayerService.makeTagString (config.tags || '')
+    var previousTags = PlayerService.makeTagString (config.previousTags || '')
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
     var result = {}, notification = {}, initVarVal, templateAuthor, tweeter, previousTweeter, previousTweetId
@@ -219,7 +219,7 @@ module.exports = {
       // find previous Message
       var previousPromise, previousTemplate
       if (typeof(previous) === 'undefined') {
-        initVarVal = parseTree.defaultVarVal (player, recipient)
+        initVarVal = parseTree.defaultVarVal (player, recipient, tags)
         previousPromise = Promise.resolve()
       } else {
         previousPromise = Message.findOne ({ id: previous })
@@ -234,7 +234,8 @@ module.exports = {
             initVarVal = parseTree.nextVarVal ({ node: previousMessage.body,
                                                  initVarVal: previousMessage.initVarVal,
                                                  sender: player,
-                                                 recipient: recipient })
+                                                 recipient: recipient,
+                                                 tags: tags })
             previousTweeter = previousMessage.tweeter
             previousTweetId = previousMessage.tweetId
           })
@@ -259,8 +260,8 @@ module.exports = {
                                     author: player,
                                     content: content,
                                     previous: previousTemplate,
-                                    tags: PlayerService.makeTagString (tags),
-                                    previousTags: PlayerService.makeTagString (previousTags),
+                                    tags: tags,
+                                    previousTags: previousTags,
                                     isRoot: (previousTemplate ? false : true),
                                     isPublic: isPublic })
             .then (function (template) {

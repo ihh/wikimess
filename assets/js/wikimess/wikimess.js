@@ -1675,6 +1675,7 @@ var WikiMess = (function() {
                                                                 draft: wm.composition.draft,
                                                                 isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                         .then (function (result) {
+                          delete wm.composition.previousMessage
                           return fadePromise.then (function() {
                             if (shareCallback)
                               shareCallback ({ url: (result.tweet
@@ -2587,7 +2588,15 @@ var WikiMess = (function() {
 
     selectRandomReplyTemplate: function() {
       var wm = this
-      return wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (wm.composition.previousTemplate.tags))
+      var previousTags = wm.composition.previousTemplate.tags
+      if (wm.composition.previousMessage) {
+        // allow tags variable to override template tags
+        var finalVarVal = wm.ParseTree.finalVarVal ({ node: wm.composition.previousMessage.body,
+                                                      initVarVal: wm.composition.previousMessage.vars })
+        if (finalVarVal.tags)
+          previousTags = finalVarVal.tags
+      }
+      return wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (previousTags))
         .then (function (result) {
           if (!result.more)
             delete wm.composition.previousTemplate
@@ -3053,6 +3062,9 @@ var WikiMess = (function() {
             if (result && result.thread && result.thread.length) {
               var thread = result.thread.reverse()
               var lastMessage = thread[0]
+              var nextVars = wm.ParseTree.nextVarVal ({ node: lastMessage.body,
+                                                        initVarVal: lastMessage.vars,
+                                                        sender: lastMessage.sender })
               return wm.showComposePage
               ({ recipient: lastMessage.sender,
                  defaultToPublic: true,
@@ -3062,11 +3074,11 @@ var WikiMess = (function() {
                  thread: thread,
                  threadTweeter: lastMessage.tweeter,
                  threadTweet: lastMessage.tweet,
-                 vars: wm.ParseTree.nextVarVal ({ node: lastMessage.body,
-                                                  initVarVal: lastMessage.vars,
-                                                  sender: lastMessage.sender }),
+                 vars: nextVars,
                  tags: '',
-                 previousTags: lastMessage.template ? (lastMessage.template.tags || '') : '',
+                 previousTags: (nextVars.prevtags
+                                ? nextVars.prevtags
+                                : (lastMessage.template ? (lastMessage.template.tags || '') : '')),
                  getRandomTemplate: true
                })
             }
@@ -3180,16 +3192,19 @@ var WikiMess = (function() {
                                  object: 'recipient',
                                  showMessage: function (props) {
                                    var message = props.result.message
+                                   var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
+                                                                             initVarVal: message.vars,
+                                                                             sender: message.sender })
                                    wm.showComposePage ({ recipient: wm.playerInfo,
                                                          defaultToPublic: false,
                                                          thread: [message],
                                                          threadTweeter: message.tweeter,
                                                          threadTweet: message.tweet,
-                                                         vars: wm.ParseTree.nextVarVal ({ node: message.body,
-                                                                                          initVarVal: message.vars,
-                                                                                          sender: message.sender }),
+                                                         vars: nextVars,
                                                          tags: '',
-                                                         previousTags: message.template ? (message.template.tags || '') : '',
+                                                         previousTags: (nextVars.prevtags
+                                                                        ? nextVars.prevtags
+                                                                        : (message.template ? (message.template.tags || '') : '')),
                                                          getRandomTemplate: true
                                                        })
                                  }
@@ -3244,16 +3259,19 @@ var WikiMess = (function() {
                object: 'sender',
                showMessage: function (props) {
                  var message = props.result.message
+                 var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
+                                                           initVarVal: message.vars,
+                                                           sender: message.sender })
                  wm.showComposePage ({ recipient: null,
                                        defaultToPublic: true,
                                        thread: [message],
                                        threadTweeter: message.tweeter,
                                        threadTweet: message.tweet,
-                                       vars: wm.ParseTree.nextVarVal ({ node: message.body,
-                                                                        initVarVal: message.vars,
-                                                                        sender: message.sender }),
+                                       vars: nextVars,
                                        tags: '',
-                                       previousTags: message.template ? (message.template.tags || '') : '',
+                                       previousTags: (nextVars.prevtags
+                                                      ? nextVars.prevtags
+                                                      : (message.template ? (message.template.tags || '') : '')),
                                        getRandomTemplate: true
                                      })
                }
@@ -3270,16 +3288,19 @@ var WikiMess = (function() {
                object: 'sender',
                showMessage: function (props) {
                  var message = props.result.message
+                 var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
+                                                           initVarVal: message.vars,
+                                                           sender: message.sender })
                  wm.showComposePage ({ recipient: message.sender,
                                        defaultToPublic: false,
                                        thread: [message],
                                        threadTweeter: message.tweeter,
                                        threadTweet: message.tweet,
-                                       vars: wm.ParseTree.nextVarVal ({ node: message.body,
-                                                                        initVarVal: message.vars,
-                                                                        sender: message.sender }),
+                                       vars: nextVars,
                                        tags: '',
-                                       previousTags: message.template ? (message.template.tags || '') : '',
+                                       previousTags: (nextVars.prevtags
+                                                      ? nextVars.prevtags
+                                                      : (message.template ? (message.template.tags || '') : '')),
                                        getRandomTemplate: true
                                      })
                }}
@@ -3404,7 +3425,7 @@ var WikiMess = (function() {
       var textDiv = $('<div class="text">')
 	  .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
 								    false,
-								    message.vars || wm.ParseTree.defaultVarVal (sender, recipient))))
+								    message.vars || wm.ParseTree.defaultVarVal (sender, recipient, message.tags))))
       var inertTextDiv = $('<div class="inerttext">').html ('Swipe left or right to see next card.')
       var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
@@ -3432,20 +3453,23 @@ var WikiMess = (function() {
         var replyTitle = message.title
         if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
           replyTitle = 'Re: ' + replyTitle
+        var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
+                                                  initVarVal: message.vars,
+                                                  sender: message.sender })
         return wm.showComposePage
         ({ recipient: message.sender,
            defaultToPublic: !message.recipient,
            title: replyTitle,
            previousMessage: message.id,
            previousTemplate: message.template,
-           vars: wm.ParseTree.nextVarVal ({ node: message.body,
-                                            initVarVal: message.vars,
-                                            sender: message.sender }),
+           vars: nextVars,
            clearThread: config.clearThread,
            thread: config.thread,
            threadDiscards: config.threadDiscards,
            tags: '',
-           previousTags: message.template ? (message.template.tags || '') : '',
+           previousTags: (nextVars.prevtags
+                          ? nextVars.prevtags
+                          : (message.template ? (message.template.tags || '') : '')),
            getRandomTemplate: true
          })
       }
@@ -3456,8 +3480,8 @@ var WikiMess = (function() {
       var sender = this.playerID ? this.playerInfo : null
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
       return (this.composition.vars
-              ? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient)
-              : this.ParseTree.defaultVarVal (sender, recipient))
+              ? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
+              : this.ParseTree.defaultVarVal (sender, recipient, this.composition.tags))
     },
     
     relativeDateString: function (dateInitializer) {

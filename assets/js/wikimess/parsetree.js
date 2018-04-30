@@ -285,22 +285,25 @@
     return expansion
   }
 
-  function populateVarVal (varVal, sender, recipient) {
+  function populateVarVal (varVal, sender, recipient, tags) {
     if (sender)
       varVal.me = playerChar + sender.name
     if (recipient)
       varVal.you = playerChar + recipient.name
+    if (tags)
+      varVal.tags = tags
     return varVal
   }
 
-  function defaultVarVal (sender, recipient) {
+  function defaultVarVal (sender, recipient, tags) {
     var varVal = { me: '_Anonymous_',
                    you: '_Everyone_' }
-    populateVarVal (sender, recipient)
+    populateVarVal (varVal, sender, recipient, tags)
     return varVal
   }
   
-  function finalVarVal (node, initVarVal) {
+  function finalVarVal (config) {
+    var node = config.node, initVarVal = config.initVarVal
     var varVal
     if (initVarVal) {
       varVal = {}
@@ -314,9 +317,10 @@
   }
 
   function nextVarVal (config) {
-    var node = config.node, initVarVal = config.initVarVal, sender = config.sender, recipient = config.recipient
-    var varVal = finalVarVal (node, initVarVal)
-    populateVarVal (varVal, sender, recipient)
+    var varVal = finalVarVal (config)
+    varVal.prevtags = varVal.tags
+    delete varVal.tags
+    populateVarVal (varVal, config.sender, config.recipient, config.tags)
     return varVal
   }
 

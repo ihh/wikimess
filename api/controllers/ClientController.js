@@ -741,7 +741,7 @@ module.exports = {
                                                           initVarVal: draft.previous.initVarVal,
                                                           sender: player,
                                                           recipient: draft.recipient })
-                                : parseTree.defaultVarVal (player, draft.recipient)),
+                                : parseTree.defaultVarVal (player, draft.recipient, draft.tags)),
                          body: draft.body,
                          date: draft.updatedAt }
         res.json (result)
