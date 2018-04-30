@@ -2393,6 +2393,7 @@ var WikiMess = (function() {
       wm.messagePrivacyDiv.removeClass ('thread')
       wm.subnavbar.removeClass ('thread')
       wm.messagePrivacyDiv.removeClass ('thread')
+      wm.throwArrowContainer.removeClass ('thread')
       wm.setComposeThreadButtonState()
     },
 
@@ -2403,6 +2404,7 @@ var WikiMess = (function() {
       wm.messagePrivacyDiv.addClass ('thread')
       wm.subnavbar.addClass ('thread')
       wm.messagePrivacyDiv.addClass ('thread')
+      wm.throwArrowContainer.addClass ('thread')
       wm.setComposeThreadButtonState()
     },
 
