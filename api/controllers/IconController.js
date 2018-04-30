@@ -74,13 +74,10 @@ module.exports = {
                   }
                 })
             } else
-              res.redirect (301, pathToJpeg)  // see note below about redirects, caching, and confi/http.js
+              fs.createReadStream(pathToJpegFile).pipe(res)
           })
       else
-        res.redirect (301, pathToPng)  // see note below about redirects, caching, and confi/http.js
-      // NB redirecting not play well if caching is turned on in config/http.js
-      // Alternatively, to serve the file dynamically every time, use this:
-      // fs.createReadStream(pathToFile).pipe(res)
+        fs.createReadStream(pathToPngFile).pipe(res)
     })
   }
 };

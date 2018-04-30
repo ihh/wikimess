@@ -1624,11 +1624,13 @@ var WikiMess = (function() {
           // copy to clipboard
           function copyToClipboard (info) {
             wm.stopAnimation()
+            wm.messageBodyDiv.css('user-select','text')
             var range = document.createRange()
             range.selectNode (wm.messageBodyDiv[0])
             window.getSelection().removeAllRanges()
             window.getSelection().addRange (range)
             document.execCommand ("copy")
+            wm.messageBodyDiv.css('user-select','none')
             window.alert ('Message copied to clipboard')
             wm.sharePane.hide()
           }
