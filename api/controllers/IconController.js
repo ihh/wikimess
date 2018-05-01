@@ -63,7 +63,7 @@ module.exports = {
           fs.stat (pathToJpegFile, function (err, stats) {
             if (err) {
               request.get ({ uri: url,
-                         headers: { "Content-Type": "image/png" } })
+                             headers: { "Content-Type": "image/png" } })
                 .on ('response', function (response) {
 	          if (response.statusCode !== 200 || !['image/png','image/jpeg'].includes(response.headers['content-type']))
                     res.status(404).type('txt').send('User ' + screenName + ' not found')
