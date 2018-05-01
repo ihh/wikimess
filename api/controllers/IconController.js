@@ -22,6 +22,8 @@ var svgSuffix = '.svg'
 var pngSuffix = '.png'
 var jpegSuffix = '.jpeg'
 
+var maxCacheSeconds = 24*60*60
+
 module.exports = {
     getIcon: function (req, res) {
 	var icon = req.params.icon
@@ -32,13 +34,14 @@ module.exports = {
 		     'utf8',
 		     function (err, svg) {
 			 if (err) {
-			     console.log (err)
-			     res.status(500).send(err)
+			   console.log (err)
+			   res.status(500).send(err)
 			 } else {
-			     svg = svg.replace(/"#fff"/g, '"' + color + '"')
-			     svg = svg.replace(/"#000"/g, '"' + background + '"')
-			     res.set('Content-Type','image/svg+xml')
-			     res.send(svg)
+			   svg = svg.replace(/"#fff"/g, '"' + color + '"')
+			   svg = svg.replace(/"#000"/g, '"' + background + '"')
+			   res.set('Content-Type','image/svg+xml')
+                           res.set ('Cache-Control', 'max-age=' + maxCacheSeconds + ', public')
+			   res.send(svg)
 			 }
 		     })
     },
@@ -51,6 +54,9 @@ module.exports = {
     var pathToPng = avatarPath + prefix + pngSuffix, pathToJpeg = avatarPath + prefix + jpegSuffix
     var pathToPngFile = avatarDir + prefix + pngSuffix, pathToJpegFile = avatarDir + prefix + jpegSuffix
 
+    // cache
+    res.set ('Cache-Control', 'max-age=' + maxCacheSeconds + ', public')
+    
     // https://stackoverflow.com/questions/39232296/node-js-cache-image-to-filesystem-and-pipe-image-to-response
     fs.stat (pathToPngFile, function (err, stats) {
       if (err)
