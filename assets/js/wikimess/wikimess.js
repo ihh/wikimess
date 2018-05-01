@@ -1147,7 +1147,8 @@ var WikiMess = (function() {
 		screenNameSpan = $('<span class="tweep">'),
 		helpSpan = $('<span class="twithelp">')
 	    if (wm.playerInfo.twitterAuthorized) {
-	      wm.addAvatarImage (avatarDiv, wm.playerInfo.twitterScreenName)
+	      wm.addAvatarImage ({ div: avatarDiv,
+                                   tweeter: wm.playerInfo.twitterScreenName })
 	      screenNameSpan.text ('@' + wm.playerInfo.twitterScreenName)
 	    } else
 	      helpSpan.text ('If you link your Twitter account, Wiki Messenger can tweet for you.')
@@ -2964,8 +2965,13 @@ var WikiMess = (function() {
       })
     },
 
-    addAvatarImage: function (div, tweeter, size) {
-      if (tweeter)
+    addAvatarImage: function (config) {
+      var wm = this
+      var div = config.div, tweeter = config.tweeter, size = config.size, varVal = config.vars
+      if (varVal && varVal.icon)
+        div.append (wm.makeIconButton ({ iconFilename: varVal.icon,
+                                         color: varVal.icolor }))
+      else if (tweeter)
 	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
         .on ('click', function (evt) {
           if (window.confirm ("Go to @" + tweeter + "'s page on Twitter?"))
@@ -2981,8 +2987,11 @@ var WikiMess = (function() {
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
       var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.starColor).addClass ('rightchoicebadge')
-      if (tweeter && !config.inEditor)
-	this.addAvatarImage (avatarDiv, tweeter)
+      if (!config.inEditor)
+	this.addAvatarImage ({ div: avatarDiv,
+                               tweeter: tweeter,
+                               vars: wm.ParseTree.finalVarVal ({ node: expansion,
+                                                                 initVarVal: wm.compositionVarVal() }) })
       div.empty()
       if (!config.inEditor)
         div.append (rightChoiceBadgeDiv, avatarDiv)
@@ -3420,7 +3429,10 @@ var WikiMess = (function() {
       
       var avatarDiv = $('<div class="avatar">')
       if (message.tweeter)
-	wm.addAvatarImage (avatarDiv, message.tweeter)
+	wm.addAvatarImage ({ div: avatarDiv,
+                             tweeter: message.tweeter,
+                             vars: wm.ParseTree.finalVarVal ({ node: message.body,
+                                                               initVarVal: message.vars }) })
 
       var textDiv = $('<div class="text">')
 	  .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
@@ -3723,9 +3735,10 @@ var WikiMess = (function() {
                     : { iconName: iconName,
                         callback: callback,
                         color: color })
-      var iconNameSpan = $('<span>').addClass('iconlabel').text (config.text || config.iconName)
+      var iconFilename = config.iconFilename || this.iconFilename[config.iconName]
+      var iconNameSpan = $('<span>').addClass('iconlabel').text (config.text || config.iconName || config.iconFilename)
       var button = $('<span>').addClass('button').html (iconNameSpan)
-      this.getIconPromise (this.iconFilename[config.iconName])
+      this.getIconPromise (iconFilename)
         .done (function (svg) {
           svg = wm.colorizeIcon (svg, config.color || wm.themeInfo.iconColor)
           button.prepend ($(svg))
