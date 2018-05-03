@@ -82,6 +82,9 @@ var adminPass = opt.options.password || defaultPassword
 var jar = request.jar()
 
 var matchRegex = new RegExp (opt.options.regex || defaultMatchRegex)
+
+if (!opt.options.data && (opt.options.players || opt.options.symbols || opt.options.templates))
+  defaultDataDir = '/dev/null'  // hacky way to disable data-directory crawl if -P, -S, or -T specified
 var playerFilenames = opt.options.players || [defaultPath('Player',opt)]
 var symbolFilenames = opt.options.symbols || [defaultPath('Symbol',opt)]
 var templateFilenames = opt.options.templates || [defaultPath('Template',opt)]
