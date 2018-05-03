@@ -1,0 +1,2 @@
+10@dm>Bad situation ##dm_bad_situation
+$dm_bad_situation

@@ -1,0 +1,60 @@
+>dm_bad_situation
+$dm_uh_oh$dm_at_this_point, $dm_you_encounter $dm_a_horde_of ^dm_enemy={$dm_monster}&plural{^dm_enemy}!
+
+>dm_uh_oh
+[Uh oh[!|...]|[O|o][|o|oo]kay[.|]|[Right. |][so|So|SO|Soo][,|:|...]|Hmm[.|,]|OK[.|,]|Ahem.|uh[,|.]|Heads up[.|!]|||] 
+
+>dm_at_this_point
+As you [enter|approach|go deeper into|delve into|explore|dig into|[plumb|fathom] the [depths|deep|deeps] of] $dm_place
+[In|At] $dm_place
+[Later|Suddenly|Eventually|After some time|The next day|That afternoon], [in|at] $dm_place
+
+>dm_place
+the $dm_place_adjective [Cavern|Dungeon|Fjord|River|Forest|Chasm|Passage]
+$dm_villain's [Lair|Cavern|Forest|Dungeon|River|Castle|Keep|Folly|Palazzo]
+
+>dm_villain
+[Mag|Quar|Ab|Plu|Ben|Dul|So][dak|lok|bud|mel|vox|bex|kel|buht|tak]
+
+>dm_place_adjective
+Skanky
+Foul
+Rotten
+Lethal
+Burrowed
+Fallen
+Lost
+Forgotten
+Hopeless
+Dismal
+Awful
+Pitied
+Pitiful
+Sorrowful
+Lossless
+Troubled
+Regretful
+Remorseful
+Sad
+
+>dm_you_encounter
+you run into
+you're [surprised|attacked] by
+you [see|observe|find]
+you get [jumped|attacked] by
+
+>dm_a_horde_of
+&a{[[organized|ambitious|impressive|scary|foul|undisciplined|rowdy|stinking|smelly|malodorous|cunning] |][group|team|corps|division|bunch|gang|horde|mob|throng|band]} of
+several
+[three|four|five][| dozen| or so]
+
+>dm_monster
+kobold
+goblin
+orc
+drow elf
+[fire|ice|stone] giant
+creeper
+$common_animal-creature
+$common_animal-demon
+zombie
