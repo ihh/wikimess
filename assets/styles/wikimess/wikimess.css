@@ -1667,6 +1667,30 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     animation: 200ms linear 0s infinite alternate throb_rule;
 }
 
+.wikimess .lhslink.limitdepth {
+    background-color: palevioletred;
+}
+
+.wikimess .lhslink.limitnodes {
+    background-color: orange;
+}
+
+.wikimess .lhslink.limitsymbols {
+    background-color: red;
+}
+
+.wikimess .lhslink.notfound {
+    background-color: #fdd;
+}
+
+.wikimess .lhslink.unexpanded {
+    background-color: darkgoldenrod;
+}
+
+.wikimess .lhslink.unexpanded.animating {
+    background-color: goldenrod;
+}
+
 @-webkit-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
    @-moz-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }
      @-o-keyframes throb_rule { 0% { transform:scale(1) rotate(-1deg); } 50% { transform:scale(1.02) rotate(0deg); } 100% { transform:scale(1) rotate(1deg); } }

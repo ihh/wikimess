@@ -147,32 +147,6 @@
     background: #222;
 }
 
-.wikimess.l33t .lhslink.limitdepth {
-    background-color: darkred;
-}
-
-.wikimess.l33t .lhslink.limitnodes {
-    background-color: orange;
-}
-
-.wikimess.l33t .lhslink.limitsymbols {
-    background-color: red;
-}
-
-.wikimess.l33t .lhslink.notfound {
-    background-color: #fdd;
-}
-
-.wikimess.l33t .lhslink.unexpanded {
-    background-color: #003200;
-    color: #cfc;
-}
-
-.wikimess.l33t .lhslink.unexpanded.animating {
-    background-color: #006400;
-    color: #0f0;
-}
-
 .wikimess.l33t .messageheader .privrow .privtab {
     background-color: black;
     opacity: .4;
