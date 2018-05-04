@@ -257,9 +257,12 @@
             expansion = arg.toLowerCase()
             break
           case 'plural':
+/*
             var doc = nlp(arg)
             doc.nouns().toPlural()
             expansion = doc.out('text')
+*/
+            expansion = pluralForm(arg)
             break
           case 'a':
             expansion = indefiniteArticle (arg)

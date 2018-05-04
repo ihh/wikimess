@@ -42,6 +42,8 @@ module.exports = {
 
     publicBio: { type: 'string' },
     privateBio: { type: 'string' },
+
+    avatar: { type: 'string' },
     
     // privacy controls
     noMailUnlessFollowed: { type: 'boolean', defaultsTo: false },

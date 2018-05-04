@@ -344,30 +344,34 @@ module.exports = {
         }
         return []  // no message was found, return empty
       }).then (function (messages) {
-        res.json
-        ({ thread:
-           messages.map (function (message) {
-             return { id: message.id,
-                      previous: message.previous,
-                      next: message.replies.map (function (reply) {
-                        return reply.id
-                      }),
-                      sender: (message.sender
-                               ? { id: message.sender.id,
-                                   name: message.sender.name,
-                                   displayName: message.sender.displayName }
-                               : null),
-                      template: { id: message.template.id,
-                                  content: message.template.content,
-                                  tags: message.template.tags },
-	              tweeter: message.tweeter,
-	              tweet: message.tweetId,
-                      title: message.title,
-                      vars: message.initVarVal,
-                      body: message.body,
-                      date: message.createdAt }
-           })
-         })
+        return PlayerService.getAvatars (messages.map (function (message) { return message.template.author }))
+          .then (function (authorAvatar) {
+            res.json
+            ({ thread:
+               messages.map (function (message) {
+                 return { id: message.id,
+                          previous: message.previous,
+                          next: message.replies.map (function (reply) {
+                            return reply.id
+                          }),
+                          sender: (message.sender
+                                   ? { id: message.sender.id,
+                                       name: message.sender.name,
+                                       displayName: message.sender.displayName }
+                                   : null),
+                          template: { id: message.template.id,
+                                      content: message.template.content,
+                                      tags: message.template.tags },
+	                  tweeter: message.tweeter,
+	                  tweet: message.tweetId,
+                          avatar: authorAvatar[message.template.author],
+                          title: message.title,
+                          vars: message.initVarVal,
+                          body: message.body,
+                          date: message.createdAt }
+               })
+             })
+          })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })
@@ -566,38 +570,46 @@ module.exports = {
       .populate ('recipient')
       .populate ('replies')
       .then (function (message) {
+        var avatarPromise
         if (message)
-          result.message = { id: message.id,
-                             previous: message.previous,
-                             next: message.replies.map (function (reply) {
-                               return reply.id
-                             }),
-                             sender: (message.sender
-                                      ? { id: message.sender.id,
-                                          name: message.sender.name,
-                                          displayName: message.sender.displayName }
-                                      : null),
-                             recipient: (message.recipient
-                                         ? { id: message.recipient.id,
-                                             name: message.recipient.name,
-                                             displayName: message.recipient.displayName }
-                                         : undefined),
-                             template: { id: message.template.id,
-                                         content: message.template.content,
-                                         tags: message.template.tags },
-			     tweeter: message.tweeter,
-			     tweet: message.tweetId,
-                             title: message.title,
-                             vars: message.initVarVal,
-                             body: message.body,
-                             date: message.createdAt }
+          avatarPromise = PlayerService.getAvatars ([message.template.author])
+            .then (function (authorAvatar) {
+              result.message = { id: message.id,
+                                 previous: message.previous,
+                                 next: message.replies.map (function (reply) {
+                                   return reply.id
+                                 }),
+                                 sender: (message.sender
+                                          ? { id: message.sender.id,
+                                              name: message.sender.name,
+                                              displayName: message.sender.displayName }
+                                          : null),
+                                 recipient: (message.recipient
+                                             ? { id: message.recipient.id,
+                                                 name: message.recipient.name,
+                                                 displayName: message.recipient.displayName }
+                                             : undefined),
+                                 template: { id: message.template.id,
+                                             content: message.template.content,
+                                             tags: message.template.tags },
+			         tweeter: message.tweeter,
+			         tweet: message.tweetId,
+                                 avatar: authorAvatar[message.template.author],
+                                 title: message.title,
+                                 vars: message.initVarVal,
+                                 body: message.body,
+                                 date: message.createdAt }
+            })
+        else
+          avatarPromise = Promise.resolve()
         var updatedPromise
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = Message.update ({ id: messageID },
                                            { read: true })
         else
           updatedPromise = Promise.resolve()
-        return updatedPromise
+        return avatarPromise
+          .then (updatedPromise)
           .then (function() {
             res.json (result)
           })
@@ -1279,6 +1291,7 @@ module.exports = {
                               content: template.content,
                               title: template.title,
 			      tweeter: template.author ? template.author.twitterScreenName : null,
+			      avatar: template.author ? template.author.avatar : null,
                               tags: template.tags,
                               previousTags: template.previousTags }
         res.json (result)
@@ -1331,6 +1344,7 @@ module.exports = {
                    title: template.title || parseTree.summarizeRhs (template.content,
                                                                     function (sym) { return Symbol.cache.byId[sym.id].name }),
 		   tweeter: template.author ? template.author.twitterScreenName : null,
+		   avatar: template.author ? template.author.avatar : null,
                    tags: template.tags,
                    previousTags: template.previousTags }
         })
@@ -1395,6 +1409,7 @@ module.exports = {
           result.template = { id: template.id,
                               title: template.title,
 			      tweeter: template.author ? template.author.twitterScreenName : null,
+			      avatar: template.author ? template.author.avatar : null,
 			      tags: template.tags,
 			      previousTags: template.previousTags,
                               content: template.content }

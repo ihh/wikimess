@@ -40,6 +40,7 @@ module.exports = {
               { id: player.id,
                 name: player.name,
                 displayName: player.displayName,
+		avatar: player.avatar,
 		twitterScreenName: player.twitterScreenName,
 		twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
                 gender: player.gender,
@@ -126,6 +127,7 @@ module.exports = {
              searchable: player.searchable,
              name: player.name,
              displayName: player.displayName,
+	     avatar: player.avatar,
 	     twitterScreenName: player.twitterScreenName,
 	     twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
              reachable: !player.noMailUnlessFollowed,
@@ -373,5 +375,16 @@ module.exports = {
         return result
       })
     })
-  }
+  },
+
+  getAvatars: function (playerIDs) {
+    return Player.find ({ id: playerIDs })
+      .then (function (players) {
+        var playerAvatar = {}
+        if (players)
+          players.forEach (function (player) { playerAvatar[player.id] = player.avatar })
+        return playerAvatar
+      })
+  },
+
 }

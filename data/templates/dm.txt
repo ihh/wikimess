@@ -1,2 +1,8 @@
 10@dm>Bad situation ##dm_bad_situation
 $dm_bad_situation
+
+10@player1>Attack #dm_bad_situation #dm_attack
+$dm_attack
+
+10@dm>Attack fail #dm_attack #dm_bad_situation
+$dm_attack_fails

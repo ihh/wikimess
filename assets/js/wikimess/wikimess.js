@@ -1148,6 +1148,7 @@ var WikiMess = (function() {
 		helpSpan = $('<span class="twithelp">')
 	    if (wm.playerInfo.twitterAuthorized) {
 	      wm.addAvatarImage ({ div: avatarDiv,
+                                   avatar: wm.playerInfo.avatar,
                                    tweeter: wm.playerInfo.twitterScreenName })
 	      screenNameSpan.text ('@' + wm.playerInfo.twitterScreenName)
 	    } else
@@ -1642,6 +1643,7 @@ var WikiMess = (function() {
             var shareCallback = config.callback
             var preserveMessage = config.preserve
             var confirm = config.confirm
+            var previousMessage = wm.composition.previousMessage
             return function (sendConfig) {
               sendConfig = $.extend ({}, config, sendConfig || {})
               wm.sharePane.find('*').off('click')
@@ -1701,6 +1703,11 @@ var WikiMess = (function() {
                             return (wm.playerID
                                     ? wm.showMailboxPage ({ tab: 'outbox' })
                                     .then (function() {
+                                      Object.keys (wm.mailboxCache)
+                                        .forEach (function (cacheName) {
+                                          if (wm.mailboxCache[cacheName][previousMessage])
+                                            wm.mailboxCache[cacheName][previousMessage].next = (wm.mailboxCache[cacheName][previousMessage].next || []).concat (result.message.id)
+                                        })
                                       // TODO: update wm.mailboxCache.outbox
                                     })
                                     : wm.showStatusPage())
@@ -2577,6 +2584,7 @@ var WikiMess = (function() {
       wm.composition.template = template
       wm.composition.title = template.title
       wm.composition.tweeter = template.tweeter
+      wm.composition.avatar = template.avatar
       wm.composition.tags = wm.stripLeadingAndTrailingWhitespace (template.tags)
       wm.composition.previousTags = wm.stripLeadingAndTrailingWhitespace (template.previousTags)
             
@@ -2967,7 +2975,7 @@ var WikiMess = (function() {
 
     addAvatarImage: function (config) {
       var wm = this
-      var div = config.div, tweeter = config.tweeter, size = config.size, varVal = config.vars
+      var div = config.div, tweeter = config.tweeter, avatar = config.avatar, size = config.size, varVal = config.vars
       if (varVal && varVal.icon)
         div.append (wm.makeIconButton ({ iconFilename: varVal.icon,
                                          color: varVal.icolor }))
@@ -2977,6 +2985,11 @@ var WikiMess = (function() {
           if (window.confirm ("Go to @" + tweeter + "'s page on Twitter?"))
             wm.redirectToTweeter (tweeter)
         })
+      else if (avatar) {
+        var icon_color = avatar.split('#')
+        div.append (wm.makeIconButton ({ iconFilename: icon_color[0],
+                                         color: icon_color[1] }))
+      }
     },
     
     showMessageBody: function (config) {
@@ -2985,11 +2998,13 @@ var WikiMess = (function() {
       var div = config.div || wm.messageBodyDiv
       var expansion = config.expansion || wm.composition.body
       var tweeter = config.tweeter || wm.composition.tweeter
+      var avatar = config.avatar || wm.composition.avatar
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
       var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.starColor).addClass ('rightchoicebadge')
       if (!config.inEditor)
 	this.addAvatarImage ({ div: avatarDiv,
                                tweeter: tweeter,
+                               avatar: avatar,
                                vars: wm.ParseTree.finalVarVal ({ node: expansion,
                                                                  initVarVal: wm.compositionVarVal() }) })
       div.empty()
@@ -3428,11 +3443,11 @@ var WikiMess = (function() {
         })
       
       var avatarDiv = $('<div class="avatar">')
-      if (message.tweeter)
-	wm.addAvatarImage ({ div: avatarDiv,
-                             tweeter: message.tweeter,
-                             vars: wm.ParseTree.finalVarVal ({ node: message.body,
-                                                               initVarVal: message.vars }) })
+      wm.addAvatarImage ({ div: avatarDiv,
+                           tweeter: message.tweeter,
+                           avatar: message.avatar,
+                           vars: wm.ParseTree.finalVarVal ({ node: message.body,
+                                                             initVarVal: message.vars }) })
 
       var textDiv = $('<div class="text">')
 	  .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,

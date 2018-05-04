@@ -45,14 +45,18 @@ module.exports = {
       case 'sym':
         if ((templateNode.id && bodyNode.id) ? (templateNode.id !== bodyNode.id) : (templateNode.name !== bodyNode.name))
           Promise.reject('symbol id/name mismatch')
-        return Symbol.findOneCached (templateNode.id ? { id: templateNode.id } : { name: templateNode.name })
+        else {
+          var symbolQuery = templateNode.id ? { id: templateNode.id } : { name: templateNode.name }
+          return Symbol.findOneCached (symbolQuery)
           .then (function (symbol) {
             if (!symbol)
-              Promise.reject('symbol not found')
-            if (symbol.latestRevision !== bodyNode.rev)
+              Promise.reject('symbol not found: ' + JSON.stringify(symbolQuery))
+            else if (symbol.latestRevision !== bodyNode.rev)
               Promise.reject('revision mismatch')
-            return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
+            else
+              return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
           })
+        }
       case 'opt':
       default:
         break

@@ -2,7 +2,7 @@
 $dm_uh_oh$dm_at_this_point, $dm_you_encounter $dm_a_horde_of ^dm_enemy={$dm_monster}&plural{^dm_enemy}!
 
 >dm_uh_oh
-[Uh oh[!|...]|[O|o][|o|oo]kay[.|]|[Right. |][so|So|SO|Soo][,|:|...]|Hmm[.|,]|OK[.|,]|Ahem.|uh[,|.]|Heads up[.|!]|||] 
+[Uh oh[!|...]|[O|o][|o|oo]kay[.|]|[Right. |][so|So|SO|Soo][,|:|...]|OK[.|:]|Ahem.|[Heads|Listen] up[.|:|!]|||] 
 
 >dm_at_this_point
 As you [enter|approach|go deeper into|delve into|explore|dig into|[plumb|fathom] the [depths|deep|deeps] of] $dm_place
@@ -58,3 +58,9 @@ creeper
 $common_animal-creature
 $common_animal-demon
 zombie
+
+>dm_attack
+I attack the &plural^dm_enemy with my ^dm_weapon=[axe|sword|club]^dm_weapon.
+
+>dm_attack_fails
+Your ^dm_weapon splinters into pieces.

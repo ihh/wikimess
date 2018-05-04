@@ -44,5 +44,5 @@ module.exports = {
           return [].concat.apply ([template], replyTemplates)
         })
       })
-  }
+  },
 }

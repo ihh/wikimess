@@ -155,6 +155,9 @@ module.exports = {
           "privateBio": {
             "type": "string"
           },
+          "avatar": {
+            "type": "string"
+          },
           "noMailUnlessFollowed": {
             "type": "boolean"
           },

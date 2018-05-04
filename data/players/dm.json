@@ -1,0 +1,20 @@
+[
+    {
+      name: "dm",
+      password: "dm",
+      avatar: "wizard-face",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["player1"],
+      newSignUp: false
+    },
+    {
+      name: "player1",
+      password: "dm",
+      avatar: "dwarf-face",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["dm"],
+      newSignUp: false
+    }
+]
