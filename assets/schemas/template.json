@@ -38,6 +38,9 @@
         "isRoot": {
           "type": "boolean"
         },
+        "weight": {
+          "type": "integer"
+        },
         "replies": {
           "type": "array",
           "items": {
@@ -146,7 +149,20 @@
                   "lc",
                   "cap",
                   "plural",
-                  "a"
+                  "singular",
+                  "a",
+                  "nlp_plural",
+                  "topic",
+                  "person",
+                  "place",
+                  "past",
+                  "present",
+                  "future",
+                  "infinitive",
+                  "gerund",
+                  "adjective",
+                  "negative",
+                  "positive"
                 ]
               }
             },

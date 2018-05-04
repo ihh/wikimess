@@ -47,7 +47,7 @@ Function
   / "&" func:FunctionName lookup:VarLookup { return makeFunction (func, [lookup]) }
   / "&" func:FunctionName innerFunc:Function { return makeFunction (func, [innerFunc]) }
 
-FunctionName = "uc" / "cap" / "plural" / "a"
+FunctionName = "uc" / "lc" / "cap" / "plural" / "singular" / "a" / "nlp_plural" / "topic" / "person" / "place" / "past" / "present" / "future" / "infinitive" / "gerund" / "adjective" / "negative" / "positive"
 
 VarLookup
   = "^" varname:Identifier { return makeLookup (varname) }
