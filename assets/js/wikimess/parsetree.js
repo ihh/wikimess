@@ -257,16 +257,55 @@
             expansion = arg.toLowerCase()
             break
           case 'plural':
-/*
-            var doc = nlp(arg)
-            doc.nouns().toPlural()
-            expansion = doc.out('text')
-*/
             expansion = pluralForm(arg)
             break
           case 'a':
             expansion = indefiniteArticle (arg)
             break
+
+          // nlp: nouns
+          case 'nlp_plural':  // alternative to built-in plural
+            expansion = nlp(arg).nouns(0).toPlural().text()
+            break
+          case 'singular':
+            expansion = nlp(arg).nouns(0).toSingular().text()
+            break
+          case 'topic':
+            expansion = nlp(arg).topics(0).text()
+            break
+          case 'person':
+            expansion = nlp(arg).people(0).text()
+            break
+          case 'place':
+            expansion = nlp(arg).places(0).text()
+            break
+
+          // nlp: verbs
+          case 'past':
+            expansion = nlp(arg).verbs(0).toPastTense().text()
+            break
+          case 'present':
+            expansion = nlp(arg).verbs(0).toPresentTense().text()
+            break
+          case 'future':
+            expansion = nlp(arg).verbs(0).toFutureTense().text()
+            break
+          case 'infinitive':
+            expansion = nlp(arg).verbs(0).toInfinitive().text()
+            break
+          case 'gerund':
+            expansion = nlp(arg).verbs(0).toGerund().text()
+            break
+          case 'adjective':
+            expansion = nlp(arg).verbs(0).asAdjective()[0] || ''
+            break
+          case 'negative':
+            expansion = nlp(arg).verbs(0).toNegative().text()
+            break
+          case 'positive':
+            expansion = nlp(arg).verbs(0).toPositive().text()
+            break
+
           default:
             expansion = arg
             break
