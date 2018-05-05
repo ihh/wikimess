@@ -431,10 +431,6 @@ var WikiMess = (function() {
       return this.logGet ('/html/welcome-guest.html')
     },
 
-    REST_getComposeHelpHtml: function() {
-      return this.logGet ('/html/message-compose-help.html')
-    },
-
     REST_getComposeTipsHtml: function() {
       return this.logGet ('/html/message-compose-tips.html')
     },
@@ -1478,7 +1474,7 @@ var WikiMess = (function() {
 
           // autosuggest for textarea (typing with keyboard)
           wm.textareaAutosuggest = function (input) {
-            input.focus()  // in case we were triggered by player hitting 'new card' button
+            input.focus()  // in case we were triggered by player hitting 'discard' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1656,7 +1652,7 @@ var WikiMess = (function() {
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
                     else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
-                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'new card' to generate a new random expanded text.")
+                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'discard' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
                     else {
@@ -1832,7 +1828,7 @@ var WikiMess = (function() {
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.randomizeButton = wm.makeSubNavIcon ({ iconName: 'discard',
-                                                                text: 'new card',
+                                                                text: 'discard',
                                                                 callback: function (evt) {
                                                                   evt.stopPropagation()
                                                                   wm.discardAndRefresh()
