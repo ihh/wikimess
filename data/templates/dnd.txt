@@ -20,16 +20,16 @@ $dnd_attack
 ^dnd_attacker={I}$dnd_no_attacks
 
 @dm>No Attacks #dnd_inappropriate_attack #dnd_bad_situation dnd_fail
-^dnd_attacker={@player1}$dnd_no_attacks
+^dnd_attacker={a warrior}$dnd_no_attacks
 
 5@player1>Cast Spell #dnd_bad_situation #dnd_inappropriate_spell
 $dnd_cast_spell
 
-@player1>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
+@player2>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 ^dnd_spellcaster={I}$dnd_no_spells
 
 @dm>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
-^dnd_spellcaster={@player1}$dnd_no_spells
+^dnd_spellcaster={a mage}$dnd_no_spells
 
 3@player1>Game Suck #dnd_fail #dnd_argument
 $dnd_game_sucks

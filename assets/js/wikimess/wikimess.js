@@ -2971,20 +2971,26 @@ var WikiMess = (function() {
 
     addAvatarImage: function (config) {
       var wm = this
-      var div = config.div, tweeter = config.tweeter, avatar = config.avatar, size = config.size, varVal = config.vars
+      var div = config.div, tweeter = config.tweeter, avatar = config.avatar, author = config.author, size = config.size, varVal = config.vars
       if (varVal && varVal.icon)
         div.append (wm.makeIconButton ({ iconFilename: varVal.icon,
                                          color: varVal.icolor }))
-      else if (tweeter)
+      else if (tweeter) {
 	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
         .on ('click', function (evt) {
           if (window.confirm ("Go to @" + tweeter + "'s page on Twitter?"))
             wm.redirectToTweeter (tweeter)
         })
-      else if (avatar) {
+        if (author)
+          div.append ($('<div class="avatarname">').html (author + '<br/>@' + tweeter))
+        else
+          div.append ($('<div class="avatarname">').text ('@' + tweeter))
+      } else if (avatar) {
         var icon_color = avatar.split('#')
         div.append (wm.makeIconButton ({ iconFilename: icon_color[0],
                                          color: icon_color[1] }))
+        if (author)
+          div.append ($('<div class="avatarname">').text (author))
       }
     },
     
@@ -3001,6 +3007,7 @@ var WikiMess = (function() {
 	this.addAvatarImage ({ div: avatarDiv,
                                tweeter: tweeter,
                                avatar: avatar,
+                               author: (wm.composition.template && wm.composition.template.author ? wm.composition.template.author.displayName : null),
                                vars: wm.ParseTree.finalVarVal ({ node: expansion,
                                                                  initVarVal: wm.compositionVarVal() }) })
       div.empty()
@@ -3442,6 +3449,7 @@ var WikiMess = (function() {
       wm.addAvatarImage ({ div: avatarDiv,
                            tweeter: message.tweeter,
                            avatar: message.avatar,
+                           author: message.template.author.displayName,
                            vars: wm.ParseTree.finalVarVal ({ node: message.body,
                                                              initVarVal: message.vars }) })
 

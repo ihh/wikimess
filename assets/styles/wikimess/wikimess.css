@@ -1479,13 +1479,11 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     height: 2.5vh;
 }
 
-.wikimess .avatar,
 .wikimess .avatar img,
 .wikimess .avatar svg {
     height: 20vh;
 }
 
-.wikimess .small .avatar,
 .wikimess .small .avatar img,
 .wikimess .small .avatar svg {
     height: 15vh;
@@ -1502,6 +1500,17 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 .wikimess .avatar a {
     border-style: none;
+}
+
+.wikimess .avatarname {
+    font-style: italic;
+    font-size: 2vh;
+    line-height: 2vh;
+}
+
+.wikimess .small .avatarname {
+    font-size: 1.6vh;
+    line-height: 1.6vh;
 }
 
 .wikimess .twithelp {

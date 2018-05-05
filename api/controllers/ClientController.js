@@ -572,8 +572,9 @@ module.exports = {
       .then (function (message) {
         var avatarPromise
         if (message)
-          avatarPromise = PlayerService.getAvatars ([message.template.author])
-            .then (function (authorAvatar) {
+          avatarPromise = PlayerService.getPlayersById ([message.template.author])
+            .then (function (authorById) {
+              var author = authorById[message.template.author] || {}
               result.message = { id: message.id,
                                  previous: message.previous,
                                  next: message.replies.map (function (reply) {
@@ -591,10 +592,13 @@ module.exports = {
                                              : undefined),
                                  template: { id: message.template.id,
                                              content: message.template.content,
+                                             author: { id: message.template.author,
+                                                       name: author.name,
+                                                       displayName: author.displayName },
                                              tags: message.template.tags },
-			         tweeter: message.tweeter,
+			         tweeter: message.tweeter,  // == author.twitterScreenName, denormalized (why?)
+                                 avatar: author.avatar,
 			         tweet: message.tweetId,
-                                 avatar: authorAvatar[message.template.author],
                                  title: message.title,
                                  vars: message.initVarVal,
                                  body: message.body,
@@ -1292,6 +1296,11 @@ module.exports = {
                               title: template.title,
 			      tweeter: template.author ? template.author.twitterScreenName : null,
 			      avatar: template.author ? template.author.avatar : null,
+                              author: (template.author
+                                       ? { id: template.author.id,
+                                           name: template.author.name,
+                                           displayName: template.author.displayName }
+                                       : undefined),
                               tags: template.tags,
                               previousTags: template.previousTags }
         res.json (result)
@@ -1410,6 +1419,11 @@ module.exports = {
                               title: template.title,
 			      tweeter: template.author ? template.author.twitterScreenName : null,
 			      avatar: template.author ? template.author.avatar : null,
+                              author: (template.author
+                                       ? { id: template.author.id,
+                                           name: template.author.name,
+                                           displayName: template.author.displayName }
+                                       : undefined),
 			      tags: template.tags,
 			      previousTags: template.previousTags,
                               content: template.content }

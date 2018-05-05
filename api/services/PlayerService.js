@@ -377,13 +377,13 @@ module.exports = {
     })
   },
 
-  getAvatars: function (playerIDs) {
+  getPlayersById: function (playerIDs) {
     return Player.find ({ id: playerIDs })
       .then (function (players) {
-        var playerAvatar = {}
+        var playerById = {}
         if (players)
-          players.forEach (function (player) { playerAvatar[player.id] = player.avatar })
-        return playerAvatar
+          players.forEach (function (player) { playerById[player.id] = player })
+        return playerById
       })
   },
 
