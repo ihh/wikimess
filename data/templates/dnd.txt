@@ -1,0 +1,21 @@
+10@dm>Bad Situation ##dnd_bad_situation
+$dnd_bad_situation
+
+10@player1>Attack #dnd_bad_situation #dnd_attack #dnd_fail
+$dnd_attack
+
+10@dm>Attack Fail #dnd_attack #dnd_bad_situation
+$dnd_attack_fails
+
+10@player2>Cast Spell #dnd_bad_situation #dnd_spell
+$dnd_cast_spell
+
+10@dm>Spell Fail #dnd_spell #dnd_bad_situation #dnd_fail
+$dnd_spell_fails
+
+3@player1>Game Suck #dnd_fail #dnd_argument
+$dnd_game_sucks
+
+3@player2>Game Suck #dnd_fail #dnd_argument
+$dnd_game_sucks
+

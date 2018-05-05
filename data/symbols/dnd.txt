@@ -1,0 +1,88 @@
+>dnd_bad_situation
+$dnd_uh_oh$dnd_at_this_point, $dnd_you_encounter $dnd_a_horde_of ^dnd_enemy={$dnd_monster}&plural{^dnd_enemy}!
+
+>dnd_uh_oh
+[Uh oh[!|...]|[O|o][|o|oo]kay[.|]|[Right. |][so|So|SO|Soo][,|:|...]|OK[.|:]|Ahem.|[Heads|Listen] up[.|:|!]|||] 
+
+>dnd_at_this_point
+As you [enter|approach|go deeper into|delve into|explore|dig into|[plumb|fathom] the [depths|deep|deeps] of] $dnd_place
+[In|At] $dnd_place
+[Later|Suddenly|Eventually|After some time|The next day|That afternoon], [in|at] $dnd_place
+
+>dnd_place
+the $dnd_place_adjective [Cavern|Dungeon|Fjord|River|Forest|Chasm|Passage]
+$dnd_villain's [Lair|Cavern|Forest|Dungeon|River|Castle|Keep|Folly|Palazzo]
+
+>dnd_villain
+[Mag|Quar|Ab|Plu|Ben|Dul|So][dak|lok|bud|mel|vox|bex|kel|buht|tak]
+
+>dnd_place_adjective
+Skanky
+Foul
+Rotten
+Lethal
+Burrowed
+Fallen
+Lost
+Forgotten
+Hopeless
+Dismal
+Awful
+Pitied
+Pitiful
+Sorrowful
+Lossless
+Troubled
+Regretful
+Remorseful
+Sad
+
+>dnd_you_encounter
+you run into
+you're [surprised|attacked] by
+you [see|observe|find]
+you get [jumped|attacked] by
+
+>dnd_a_horde_of
+&a{[[organized|ambitious|impressive|scary|foul|undisciplined|rowdy|stinking|smelly|malodorous|cunning] |][group|team|corps|division|bunch|gang|horde|mob|throng|band]} of
+several
+[three|four|five][| dozen| or so]
+
+>dnd_monster
+kobold
+goblin
+orc
+drow elf
+[fire|ice|stone] giant
+creeper
+$common_animal-creature
+$common_animal-demon
+zombie
+
+>dnd_attack
+I attack the &plural^dnd_enemy with my ^dnd_weapon=[axe|sword|club]^dnd_weapon.
+
+>dnd_attack_fails
+Your ^dnd_weapon splinters into pieces.
+
+>dnd_cast_spell
+${dnd_a_spell}I cast ^dnd_a_spell at the &plural^dnd_enemy.
+
+>dnd_spell_fails
+Your ^dnd_spell fails.
+
+>dnd_a_spell
+^dnd_spell={$dnd_spell}^dnd_villain={$dnd_villain}^dnd_a_spell={$dnd_a_spell_syntax}
+
+>dnd_a_spell_syntax
+&a{^dnd_spell}
+^dnd_villain's ^dnd_spell
+the [dread|loath|unmentionable|evil|forbidden|taboo|repulsive] ^dnd_spell
+
+>dnd_spell
+[fire|ice|dust]ball
+[spell|charm|ward|omen|gloom|pall] of [fire|ice|dark|pain|obliteration]
+$body_part of [$greek_monster|$greek_titan]
+
+>dnd_game_sucks
+This game sucks!
