@@ -2,19 +2,31 @@
     {
       name: "dm",
       password: "dm",
-      avatar: "wizard-face",
+      displayName: "Dungeon Master",
+      avatar: "wisdom",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["player1"],
+      followed: ["player1","player2","dm"],
       newSignUp: false
     },
     {
       name: "player1",
+      displayName: "Warrior",
       password: "dm",
       avatar: "dwarf-face",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["dm"],
+      followed: ["player1","player2","dm"],
+      newSignUp: false
+    },
+    {
+      name: "player2",
+      displayName: "Wizard",
+      password: "dm",
+      avatar: "wizard-face",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["player1","player2","dm"],
       newSignUp: false
     }
 ]

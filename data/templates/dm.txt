@@ -1,8 +1,14 @@
-10@dm>Bad situation ##dm_bad_situation
+10@dm>Bad Situation ##dm_bad_situation
 $dm_bad_situation
 
 10@player1>Attack #dm_bad_situation #dm_attack
 $dm_attack
 
-10@dm>Attack fail #dm_attack #dm_bad_situation
+10@dm>Attack Fail #dm_attack #dm_bad_situation
 $dm_attack_fails
+
+10@player2>Cast Spell #dm_bad_situation #dm_spell
+$dm_cast_spell
+
+10@dm>Spell Fail #dm_spell #dm_bad_situation
+$dm_spell_fails
