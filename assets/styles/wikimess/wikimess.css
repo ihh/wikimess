@@ -1479,23 +1479,34 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     height: 2.5vh;
 }
 
-.wikimess .avatar img,
-.wikimess .avatar svg {
+.wikimess .messagebody .avatar {
+    min-height: 10vh;
+}
+
+.wikimess .small .messagebody .avatar {
+    min-height: 7vh;
+}
+
+.wikimess .messagebody .avatar img,
+.wikimess .messagebody .avatar svg {
     height: 20vh;
 }
 
-.wikimess .small .avatar img,
-.wikimess .small .avatar svg {
+.wikimess .small .messagebody .avatar img,
+.wikimess .small .messagebody .avatar svg {
     height: 15vh;
 }
 
 .wikimess .avatar img {
     border-radius: 50%;
-    margin: 1vh;
 
     border-style: solid;
-    border-width: 0.5vh;
     border-color: white;
+}
+
+.wikimess .messagebody .avatar img {
+    margin: 1vh;
+    border-width: 0.5vh;
 }
 
 .wikimess .avatar a {
@@ -1504,11 +1515,14 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 .wikimess .avatarname {
     font-style: italic;
+}
+
+.wikimess .messagebody .avatarname {
     font-size: 2vh;
     line-height: 2vh;
 }
 
-.wikimess .small .avatarname {
+.wikimess .small .messagebody .avatarname {
     font-size: 1.6vh;
     line-height: 1.6vh;
 }
@@ -1524,10 +1538,19 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 
 .wikimess .mailbox .contents .message {
     cursor: pointer;
+    display: flex;
+    flex-direction: row;
 }
 
-.wikimess .mailbox .contents .message.read .title {
-    font-size: medium;
+.wikimess .mailbox .contents .message .avatar {
+    height: 4.5vh;
+    width: 4.5vh;
+    margin-right: .5vh;
+}
+
+.wikimess .mailbox .contents .message .title {
+    font-size: 2vh;
+    line-height: 3vh;
 }
 
 .wikimess .mailbox .contents .message.unread .title {
@@ -1535,25 +1558,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 .wikimess .mailbox .contents .message .player {
-    font-size: small;
+    font-size: 1vh;
+    line-height: 1.5vh;
     font-style: italic;
-}
-
-.wikimess .ratemessage {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
-
-.wikimess .ratemessage span {
-    padding: 4px;
-}
-
-.wikimess .ratemessage svg {
-    width: 1em;
-    height: 1em;
 }
 
 .wikimess .subnavbar {

@@ -52,10 +52,16 @@ module.exports = {
       required: true
     },
 
+    // tweeter = template.author.twitterScreenName (denormalized)
     tweeter: {
       type: 'string'
     },
-    
+
+    // avatar = template.author.avatar (denormalized)
+    avatar: {
+      type: 'string'
+    },
+
     tweetId: {
       type: 'string'
     },

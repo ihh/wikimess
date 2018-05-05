@@ -284,7 +284,10 @@ module.exports = {
             // message is valid
             result.template = { id: template.id }
 	    templateAuthor = template.author
-            tweeter = templateAuthor ? templateAuthor.twitterScreenName : null
+            if (templateAuthor) {
+              tweeter = templateAuthor.twitterScreenName
+              avatar = templateAuthor.avatar
+            }
             // create the Message
             return Message.create ({ sender: playerID,
                                      recipient: recipientID,
@@ -294,6 +297,7 @@ module.exports = {
                                      title: title,
                                      initVarVal: initVarVal,
 				     tweeter: tweeter,
+				     avatar: avatar,
                                      body: body })
           })
       }).then (function (message) {
@@ -360,6 +364,7 @@ module.exports = {
 		  var tweetId = tweetData.id_str
 		  result.message.tweet = tweetId
 		  result.message.tweeter = tweeter
+		  result.message.avatar = avatar
 		  return Message.update ({ id: message.id },
 					 { tweetId: tweetId })
 		}

@@ -344,11 +344,12 @@ module.exports = {
         }
         return []  // no message was found, return empty
       }).then (function (messages) {
-        return PlayerService.getAvatars (messages.map (function (message) { return message.template.author }))
-          .then (function (authorAvatar) {
+        return PlayerService.getPlayersById (messages.map (function (message) { return message.template.author }))
+          .then (function (authorById) {
             res.json
             ({ thread:
                messages.map (function (message) {
+                 var author = authorById[message.template.author] || {}
                  return { id: message.id,
                           previous: message.previous,
                           next: message.replies.map (function (reply) {
@@ -361,10 +362,13 @@ module.exports = {
                                    : null),
                           template: { id: message.template.id,
                                       content: message.template.content,
+                                      author: { id: message.template.author,
+                                                name: author.name,
+                                                displayName: author.displayName },
                                       tags: message.template.tags },
-	                  tweeter: message.tweeter,
+			  tweeter: message.tweeter,  // == author.twitterScreenName, denormalized
+                          avatar: message.avatar,  // == author.avatar, denormalized
 	                  tweet: message.tweetId,
-                          avatar: authorAvatar[message.template.author],
                           title: message.title,
                           vars: message.initVarVal,
                           body: message.body,
@@ -477,6 +481,8 @@ module.exports = {
                    sender: { id: message.sender.id,
                              displayName: message.sender.displayName },
                    date: message.createdAt,
+                   tweeter: message.tweeter,
+                   avatar: message.avatar,
                    unread: !message.read }
         })
         res.json (result)
@@ -516,6 +522,8 @@ module.exports = {
                                ? { id: message.recipient.id,
                                    displayName: message.recipient.displayName }
                                : undefined),
+                   tweeter: message.tweeter,
+                   avatar: message.avatar,
                    date: message.createdAt }
         })
         res.json (result)
@@ -541,6 +549,8 @@ module.exports = {
                             ? { id: message.sender.id,
                                 displayName: message.sender.displayName }
                             : undefined),
+                   tweeter: message.tweeter,
+                   avatar: message.avatar,
                    date: message.createdAt }
         })
         var sailsSocketsJoin = Promise.promisify (sails.sockets.join)
@@ -570,9 +580,9 @@ module.exports = {
       .populate ('recipient')
       .populate ('replies')
       .then (function (message) {
-        var avatarPromise
+        var authorPromise
         if (message)
-          avatarPromise = PlayerService.getPlayersById ([message.template.author])
+          authorPromise = PlayerService.getPlayersById ([message.template.author])
             .then (function (authorById) {
               var author = authorById[message.template.author] || {}
               result.message = { id: message.id,
@@ -596,8 +606,8 @@ module.exports = {
                                                        name: author.name,
                                                        displayName: author.displayName },
                                              tags: message.template.tags },
-			         tweeter: message.tweeter,  // == author.twitterScreenName, denormalized (why?)
-                                 avatar: author.avatar,
+			         tweeter: message.tweeter,  // == author.twitterScreenName, denormalized
+                                 avatar: message.avatar,  // == author.avatar, denormalized
 			         tweet: message.tweetId,
                                  title: message.title,
                                  vars: message.initVarVal,
@@ -605,14 +615,14 @@ module.exports = {
                                  date: message.createdAt }
             })
         else
-          avatarPromise = Promise.resolve()
+          authorPromise = Promise.resolve()
         var updatedPromise
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = Message.update ({ id: messageID },
                                            { read: true })
         else
           updatedPromise = Promise.resolve()
-        return avatarPromise
+        return authorPromise
           .then (updatedPromise)
           .then (function() {
             res.json (result)
@@ -771,7 +781,7 @@ module.exports = {
   saveDraft: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var player = req.user, recipient
-    var draft = Draft.parseID (req.body.draft)
+    var draft = req.body.draft
     var result = {}
     return Draft.create ({ sender: playerID,
                            recipient: draft.recipient,

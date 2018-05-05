@@ -1,10 +1,10 @@
 10@dm>Bad Situation ##dnd_bad_situation
 $dnd_bad_situation
 
-10@player1>Attack #dnd_bad_situation #dnd_attack dnd_fail
+10@player1>Attack #dnd_bad_situation #dnd_attack
 $dnd_attack
 
-10@dm>Attack Fail #dnd_attack #dnd_bad_situation
+10@dm>Attack Fail #dnd_attack #dnd_bad_situation dnd_fail
 $dnd_attack_fails
 
 10@player2>Cast Spell #dnd_bad_situation #dnd_spell

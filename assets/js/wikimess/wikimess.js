@@ -3380,13 +3380,21 @@ var WikiMess = (function() {
                              return $.Deferred().resolve()
                            }
                            : null)
+      var avatarDiv = $('<div class="avatar">')
+      wm.addAvatarImage ({ div: avatarDiv,
+                           tweeter: message.tweeter,
+                           avatar: message.avatar,
+                           vars: wm.ParseTree.finalVarVal ({ node: message.body,
+                                                             initVarVal: message.vars }) })
       var div = $('<div class="message">')
-          .append ($('<div class="title">').text (message.title || 'Untitled'),
-                   (deleteMessage
-                    ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
-                    : []),
-                   $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
-          .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div))
+          .append (avatarDiv,
+                   $('<div class="mailboxheader">')
+                   .append ($('<div class="title">').text (message.title || 'Untitled'),
+                            (deleteMessage
+                             ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
+                             : []),
+                            $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
+                   .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)))
       div.addClass (message.unread ? 'unread' : 'read')
       return div
     },
