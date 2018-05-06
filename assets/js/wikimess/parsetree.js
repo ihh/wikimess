@@ -167,8 +167,8 @@
         switch (tok.type) {
         case 'lookup':
           result = (nextIsAlpha
-                    ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
-                    : (varChar + tok.varname))
+                    ? (varChar + leftBraceChar + tok.varname.toLowerCase() + rightBraceChar)
+                    : (varChar + tok.varname.toLowerCase()))
 	  break
         case 'assign':
           result = varChar + tok.varname + assignChar + leftBraceChar + pt.makeRhsText(tok.value,makeSymbolName) + rightBraceChar
@@ -180,8 +180,8 @@
 	  var sugaredName = pt.makeSugaredName (tok, makeSymbolName)
 	  if (sugaredName)
 	    result = (nextIsAlpha
-		      ? (symChar + leftBraceChar + sugaredName + rightBraceChar)
-		      : (symChar + sugaredName))
+		      ? (sugaredName[0] + leftBraceChar + sugaredName.substr(1) + rightBraceChar)
+		      : sugaredName)
 	  else {
             var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
             result = funcChar + tok.funcname + (noBraces ? '' : leftBraceChar) + pt.makeRhsText(tok.args,makeSymbolName) + (noBraces ? '' : rightBraceChar)
@@ -202,13 +202,22 @@
   }
 
   function makeSugaredName (funcNode, makeSymbolName) {
-    var sugaredName
-    if (funcNode.args.length === 1 && typeof(funcNode.args[0]) === 'object' && funcNode.args[0].type === 'sym') {
-      var symName = makeSymbolName(funcNode.args[0])
-      if (funcNode.funcname === 'cap' && symName.match(/[a-z]/))
-	sugaredName = symName.replace(/[a-z]/,function(c){return c.toUpperCase()})
-      if (funcNode.funcname === 'uc' && symName.match(/[a-z]/))
-	sugaredName = symName.toUpperCase()
+    var name, sugaredName, prefixChar
+    if (funcNode.args.length === 1 && typeof(funcNode.args[0]) === 'object') {
+      if (funcNode.args[0].type === 'sym') {
+        name = makeSymbolName(funcNode.args[0])
+        prefixChar = symChar
+      } else if (funcNode.args[0].type === 'lookup') {
+        name = funcNode.args[0].varname
+        prefixChar = varChar
+      }
+      if (name) {
+        name = name.toLowerCase()
+        if (funcNode.funcname === 'cap' && name.match(/[a-z]/))
+	  sugaredName = prefixChar + name.replace(/[a-z]/,function(c){return c.toUpperCase()})
+        else if (funcNode.funcname === 'uc' && name.match(/[a-z]/))
+	  sugaredName = prefixChar + name.toUpperCase()
+      }
     }
     return sugaredName
   }
@@ -242,7 +251,7 @@
           varVal[node.varname] = makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
           break
         case 'lookup':
-          expansion = varVal[node.varname]
+          expansion = varVal[node.varname.toLowerCase()]
           break
         case 'func':
           var arg = makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)

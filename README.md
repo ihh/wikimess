@@ -31,3 +31,52 @@ This side of things is not well hooked-up, yet.
 
 To enable/disable direct inspection of the data model via Sails [blueprint methods](https://sailsjs.com/documentation/reference/blueprint-api),
 edit the REST policy in [config/policies.js](config/policies.js).
+
+# Bracery
+
+Bracery is Wiki Messenger's native syntax for representing generative context-free grammars.
+Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression](https://en.wikipedia.org/wiki/Regular_expression) syntax, including
+
+- named nonterminals: Tracery-style `#symbol_name#`, or Bracery-style `$symbol_name` or `${symbol_name}` (the latter is useful if you want to follow it with an alphanumeric or underscore)
+- alternations (anonymous nonterminals), which can be nested: `[option1|option 2|3rd opt|4th|more [options|nested options]...]`
+- variables: `^variable_name={value}` to assign, `^variable_name` or `^{variable_name}` to retrieve (names are case-insensitive)
+- built-in text-processing functions:
+   - `&plural{...}` (plural), `&a{...}` ("a" or "an")
+   - `&cap{...}` (Capitalize), `&lc{...}` and `&uc{...}` (lower- & UPPER-case)
+   - selected natural language-processing functions from [compromise](https://github.com/spencermountain/compromise) including (for nouns) `&singular` and `&topic`, and (for verbs) `&past`, `&present`, `&future`, `&infinitive`,  `&adjective`, `&negative`
+- function, alternation, and variable assignment expressions can be arbitrarily nested
+- syntactic sugar
+   - braces can be omitted in many situations where context is obvious, e.g. `^currency=&cap&plural$name` means the same as `^currency={&cap{&plural{$name}}}`
+   - as a shorthand, you can use `$Nonterminal_name` as a shorthand for `&cap{$nonterminal_name}`, and `^Variable_name` for `&cap{^variable_name}`
+   - similarly, `$NONTERMINAL_NAME` is a shorthand for `&uc{$nonterminal_name}`, and  `^VARIABLE_NAME` for `&uc{^variable_name}`
+
+Wiki Messenger implements Bracery expansion as a web service, with nonterminal definitions as a RESTful resource.
+Special variables interpreted by Wiki Messenger include
+
+- `^icon` and `^icolor` (name and color of icons displayed on cards)
+- `^tags` (set by default to the message tags; if modified, will override the message tags)
+- `^prevtags` (tags for the previous message)
+
+# Template directory syntax
+
+Files in the `data/templates` directory define the built-in templates and have the following syntax
+
+~~~~
+@template_author>template_name#past_tag1 past_tag2#future_tag1 future_tag2
+The template itself, featuring $nonterminals, [alternations|etc.]
+(it can be split over multiple lines)
+~~~~
+
+# Symbol directory syntax
+
+Files in the `data/symbols` directory have the following syntax
+
+~~~~
+>nonterminal_name
+First option for the nonterminal definition, featuring $nonterminals, [alternations|etc.]
+Second option for the nonterminal definition, featuring the same stuff
+Third option for the nonterminal definition
+Fourth option. If you want newlines, use \n (backslash is an escape character in general)
+etc.
+~~~~
+

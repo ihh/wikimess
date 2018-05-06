@@ -4511,12 +4511,14 @@ var WikiMess = (function() {
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
-              return wm.makeSymbolSpanWithName (tok.args[0],
-						sugaredName,
-						function (evt) {
-						  evt.stopPropagation()
-						  wm.loadGrammarSymbol (tok.args[0])
-						})
+              return (sugaredName[0] === symChar
+                      ? wm.makeSymbolSpanWithName (tok.args[0],
+						   sugaredName.substr(1),
+						   function (evt) {
+						     evt.stopPropagation()
+						     wm.loadGrammarSymbol (tok.args[0])
+						   })
+                      : sugaredName)
             var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
             return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
                                        wm.makeRhsSpan (tok.args),
@@ -4555,12 +4557,14 @@ var WikiMess = (function() {
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
-              return wm.makeSymbolSpanWithName (tok.args[0],
-						sugaredName,
-						function (evt) {
-						  evt.stopPropagation()
-						  wm.showGrammarLoadSymbol (tok.args[0])
-						})
+              return (sugaredName[0] === symChar
+                      ? wm.makeSymbolSpanWithName (tok.args[0],
+						   sugaredName.substr(1),
+						   function (evt) {
+						     evt.stopPropagation()
+						     wm.showGrammarLoadSymbol (tok.args[0])
+						   })
+                      : sugaredName)
             return $('<span>').append (funcChar + tok.funcname + leftBraceChar,
                                        wm.makeTemplateSpan (tok.args),
                                        rightBraceChar)

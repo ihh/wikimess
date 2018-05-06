@@ -50,8 +50,8 @@ Function
 FunctionName = "uc" / "lc" / "cap" / "plural" / "singular" / "a" / "nlp_plural" / "topic" / "person" / "place" / "past" / "present" / "future" / "infinitive" / "gerund" / "adjective" / "negative" / "positive"
 
 VarLookup
-  = "^" varname:Identifier { return makeLookup (varname) }
-  / "^{" _ varname:Identifier _ "}" { return makeLookup (varname) }
+  = "^" varname:Identifier { return makeSugaredLookup (varname) }
+  / "^{" _ varname:Identifier _ "}" { return makeSugaredLookup (varname) }
 
 VarAssignment
   = "^" varname:Identifier "={" args:NodeList "}" { return makeAssign (varname, args) }

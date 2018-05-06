@@ -137,6 +137,9 @@ $dnd_spell_type of [fire|ice|dark|pain|obliteration]
 
 >dnd_game_sucks
 This game sucks!
+This is unfair.
+This game is rigged.
+This [| [whole|entire]] [thing|game|campaign|battle|encounter] is[| so,][| just,][| so,][| like,][| so][| totally] [boring|not cool|uncool|wrong|weak].
 
 >dnd_no_attacks
 You can't use &a^dnd_weapon!

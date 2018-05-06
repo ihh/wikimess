@@ -14,3 +14,11 @@ function makeSugaredSymbol (name) {
     return makeUpperCase ([makeSymbol (name)])
   return makeSymbol (name)
 }
+
+function makeSugaredLookup (name) {
+  if (name.match(/^[0-9_]*[A-Z].*[a-z]/))
+    return makeCapped ([makeLookup (name)])
+  if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
+    return makeUpperCase ([makeLookup (name)])
+  return makeLookup (name)
+}

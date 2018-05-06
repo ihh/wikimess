@@ -221,7 +221,7 @@ function peg$parse(input, options) {
       peg$c73 = peg$literalExpectation("positive", false),
       peg$c74 = "^",
       peg$c75 = peg$literalExpectation("^", false),
-      peg$c76 = function(varname) { return makeLookup (varname) },
+      peg$c76 = function(varname) { return makeSugaredLookup (varname) },
       peg$c77 = "^{",
       peg$c78 = peg$literalExpectation("^{", false),
       peg$c79 = "={",
@@ -1771,6 +1771,14 @@ function peg$parse(input, options) {
     if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
       return makeUpperCase ([makeSymbol (name)])
     return makeSymbol (name)
+  }
+
+  function makeSugaredLookup (name) {
+    if (name.match(/^[0-9_]*[A-Z].*[a-z]/))
+      return makeCapped ([makeLookup (name)])
+    if (name.match(/[A-Z]/) && !name.match(/[a-z]/))
+      return makeUpperCase ([makeLookup (name)])
+    return makeLookup (name)
   }
 
 
