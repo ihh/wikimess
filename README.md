@@ -45,7 +45,7 @@ Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression
    - `&cap{...}` (Capitalize), `&lc{...}` and `&uc{...}` (lower- & UPPER-case)
    - selected natural language-processing functions from [compromise](https://github.com/spencermountain/compromise) including (for nouns) `&singular` and `&topic`, and (for verbs) `&past`, `&present`, `&future`, `&infinitive`,  `&adjective`, `&negative`
 - conditionals: `&if{testExpr}{trueExpr}{falseExpr}` evaluates to `trueExpr` if `testExpr` contains any non-whitespace characters, and `falseExpr` otherwise
-   - the Tracery-style expression `#name#` is actually shorthand for `&if{^name}{^name}{$name}` (Tracery overloads the same namespace for symbol and variable names, and uses the variable if it's defined; this reproduces that behavior)
+   - the Tracery-style expression `#name#` is actually shorthand for `&if{^name}{^name}{$name}`. Tracery overloads the same namespace for symbol and variable names, and uses the variable if it's defined; this reproduces that behavior (almost; it won't be quite the same if `^name` is set to whitespace or the empty string)
 - function, alternation, and variable assignment expressions can be arbitrarily nested
 - syntactic sugar
    - braces can be omitted in many situations where context is obvious, e.g. `^currency=&cap&plural$name` means the same as `^currency={&cap{&plural{$name}}}`
