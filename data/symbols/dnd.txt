@@ -69,15 +69,34 @@ club
 mace
 lance
 spear
+dagger
+knife
+broadsword
+ax
+rapier
+battle-axe
+katana
+machete
+small-sword
+pick-axe
+ice-axe
+tomahawk
+hatchet
+scimitar
+war-club
+pike
+trident
+war-hammer
 
 >dnd_attack_fails
-Your ^dnd_weapon splinters into pieces.
+Your ^dnd_weapon [shatters|splinters|breaks] into [|a [thousand|hundred|dozen]][| [tiny|useless]][pieces|shards|fragments].
 
 >dnd_cast_spell
 ${dnd_a_spell}I cast ^dnd_a_spell at the &plural^dnd_enemy.
 
 >dnd_spell_fails
-Your ^dnd_spell fails.
+Your ^dnd_spell [fails|fizzles|flops|is &a{catastrophe|embarrassment|failure}].
+That spell is too [high level|advanced|difficult|dextrous] for you, [I'm [afraid|sorry to say]|fool|unfortunately|n00b|butterfingers|I [fear|very much fear|regret to say]|young [mage|trainee|padawan|acolyte|beginner|adventurer]].
 
 >dnd_a_spell
 ^dnd_spell={$dnd_spell}^dnd_villain={$dnd_villain}^dnd_a_spell={$dnd_a_spell_syntax}
@@ -128,6 +147,7 @@ Only ^dnd_spellcaster can cast ^dnd_a_spell.
 
 >dnd_treasure
 ${dnd_some_treasure}$dnd_you_found ^dnd_some_treasure!
+${dnd_some_treasure}$dnd_you_found ^dnd_some_treasure! [$dnd_treasure_is_valuable|$dnd_treasure_is_useful]
 
 >dnd_you_found
 [||||[O|Oh][, |]][Good|Wonderful|Fortuitous|Happy] [news|tidings|luck|Fate]! You $dnd_found
@@ -144,12 +164,53 @@ uncovered
 ^dnd_treasure_item={$dnd_treasure_item}^dnd_some_treasure=${dnd_some_treasure_syntax}
 
 >dnd_treasure_item
-[enchanted|blessed|sentient|talking|conscious|alien|elvish|mithril|dwarven-forged] $dnd_melee_weapon
-[rare|valuable|secret|stolen|priceless|legendary|mythical] $gemstone
+[|$common_adjective, ][enchanted|blessed|sentient|talking|conscious|alien|elvish|mithril|dwarven-forged] $dnd_melee_weapon
+[|$common_adjective, ][rare|potent|puissant|sentient|conscious|talking|elvish|ancient] $dnd_magic_item of $dnd_magic_genre
+[|$common_adjective, ][rare|valuable|secret|stolen|priceless|legendary|mythical] $gemstone
+
+>dnd_magic_item
+orb
+runestone
+codex
+tome
+wand
+staff
+sceptre
+purse
+handbag
+slipper
+
+>dnd_magic_genre
+necromancy
+illusion
+legerdemain
+conjuring
+summoning
+divination
+transformation
+divination
 
 >dnd_some_treasure_syntax
 &a{^dnd_treasure_item}
 some &plural{^dnd_treasure_item}
+
+>dnd_treasure_is_valuable
+This [may|can] be sold [at|for] [great|enormous|huge|immense] [value|profit].
+Your eyes gleam as you [imagine|dream of] the [wealth|profit|rewards]!
+Nice.
+Pretty sweet.
+Not bad!
+Sweet!
+Tasty!
+Ker-ching!
+You got [lucky|money|paid]!
+You hit [payday|paydirt|the big time]!
+
+>dnd_treasure_is_useful
+This [will surely|may|could|will likely|might possibly] [aid|help|further|be related to] your quest.
+This could be what $dnd_villain was [[referring|alluding] to|[hinting|getting] at]!
+You have &a{feeling|hunch|gut feeling|intuition} this will be [relevant|helpful|crucial] to your [quest|questing|goal|ultimate goal].
+Your eyes gleam as you [imagine|dream of] the [power|possibilities|dominion|mastery]!
 
 >dnd_take_treasure
 [Awesome|Fantastic|Cool|Amazing][!|!!|!!!|!1!]
