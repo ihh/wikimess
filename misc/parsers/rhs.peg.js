@@ -38,7 +38,17 @@ OuterNodeList
 Symbol
   = "$" sym:Identifier { return makeSugaredSymbol (sym) }
   / "${" _ sym:Identifier _ "}" { return makeSugaredSymbol (sym) }
-  / "#" sym:Identifier "#" { return makeSugaredSymbol (sym) }
+  / "#" sym:Identifier mods:TraceryModifiers "#" { return makeTraceryExpr (sym, mods) }
+
+TraceryModifiers
+  = mod:TraceryModifier mods:TraceryModifiers { return [mod].concat (mods) }
+  / "" { return [] }
+
+TraceryModifier
+  = ".capitalizeAll" { return "uc" }
+  / ".capitalize" { return "cap" }
+  / ".a" { return "a" }
+  / ".ed" { return "past" }
 
 Function
   = "&" func:FunctionName "{" args:NodeList "}" { return makeFunction (func, args) }

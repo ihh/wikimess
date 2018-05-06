@@ -49,6 +49,7 @@ Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression
    - braces can be omitted in many situations where context is obvious, e.g. `^currency=&cap&plural$name` means the same as `^currency={&cap{&plural{$name}}}`
    - as a shorthand, you can use `$Nonterminal_name` as a shorthand for `&cap{$nonterminal_name}`, and `^Variable_name` for `&cap{^variable_name}`
    - similarly, `$NONTERMINAL_NAME` is a shorthand for `&uc{$nonterminal_name}`, and  `^VARIABLE_NAME` for `&uc{^variable_name}`
+   - as well as the Tracery syntax for nonterminals, i.e. `#symbol_name#` instead of `$symbol_name`, you can optionally use the Tracery modifier syntax, e.g. `#symbol_name.capitalize#` instead of `&cap{$symbol_name}`. However, there's currently no option to use the Tracery syntax for variables (which overloads variables and nonterminals in the same namespace), or Tracery's support for scoped variables.
 
 Wiki Messenger implements Bracery expansion as a web service, with nonterminal definitions as a RESTful resource.
 Special variables interpreted by Wiki Messenger include
@@ -68,6 +69,8 @@ The template itself, featuring $nonterminals, [alternations|etc.]
 ~~~~
 
 This defines a template by `@template_author`, with the title "Template title", and the specified past tags (`past_tag1` and `past_tag2`) and future tags (`future_tag1`, `future_tag2`, and `future_tag3`). The past & future tag fields can each contain any number of whitespace-separated tags; the special past tag `root` is used for templates that can be used at the top of a thread, or the past tags can be left empty for the same effect.
+
+The template definition is terminated by an empty line.
 
 The author and tag fields of the template definition line are optional so e.g. it can be
 
@@ -94,3 +97,4 @@ Fourth option. If you want newlines, use \n (backslash is an escape character in
 etc.
 ~~~~
 
+The symbol definition is terminated by an empty line.

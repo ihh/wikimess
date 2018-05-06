@@ -22,3 +22,9 @@ function makeSugaredLookup (name) {
     return makeUpperCase ([makeLookup (name)])
   return makeLookup (name)
 }
+
+function makeTraceryExpr (sym, mods) {
+  return mods.reduce (function (expr, mod) {
+    return makeFunction (mod, [expr])
+  }, makeSymbol (sym))
+}
