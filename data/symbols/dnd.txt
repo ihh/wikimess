@@ -125,3 +125,47 @@ Only ^dnd_attacker can use &plural^dnd_weapon.
 >dnd_no_spells
 You can't cast ^dnd_spell!
 Only ^dnd_spellcaster can cast ^dnd_a_spell.
+
+>dnd_treasure
+${dnd_some_treasure}$dnd_you_found ^dnd_some_treasure!
+
+>dnd_you_found
+[||||[O|Oh][, |]][Good|Wonderful|Fortuitous|Happy] [news|tidings|luck|Fate]! You $dnd_found
+Your [[explorations|adventures|efforts|risks] have|[gambling|courage|adventuresome spirit] has] borne fruit[, for|:] you have $dnd_found
+
+>dnd_found
+found
+discovered
+revealed
+uncovered
+[lucked|chanced|stumbled] [on|upon]
+
+>dnd_some_treasure
+^dnd_treasure_item={$dnd_treasure_item}^dnd_some_treasure=${dnd_some_treasure_syntax}
+
+>dnd_treasure_item
+[enchanted|blessed|sentient|talking|conscious|alien|elvish|mithril|dwarven-forged] $dnd_melee_weapon
+[rare|valuable|secret|stolen|priceless|legendary|mythical] $gemstone
+
+>dnd_some_treasure_syntax
+&a{^dnd_treasure_item}
+some &plural{^dnd_treasure_item}
+
+>dnd_take_treasure
+[Awesome|Fantastic|Cool|Amazing][!|!!|!!!|!1!]
+I take the ^dnd_treasure_item.
+My [|sacred ][quest is|trials are] [complete|over|about to begin|just begun]. I take the ^dnd_treasure_item and [assume|claim|seek] my role as [[Lord|Autarch|Supreme Ruler|Mayor|Deathlord] of the [Underworld|Dungeon|land|[Cursed|Hidden|Nether] Realms]|[Guild|Clan|Party] [Acolyte|Secretary|President|Treasurer]]!
+Let's [grab|take|claim|bag|pick up] the ^dnd_treasure_item[| and [run|scarper|get out of here|make a sharp exit|exit, fast|exit|quit|quit while we're ahead]]!
+[It is not my [place|role|duty|quest] to [take|claim]|I leave to [others|another|my fellow [adventurer|party member][|s]] the [honor|privilege|duty|task|rite] of [taking|claiming]] ^dnd_treasure_item, but I am glad that we [have|finally] found it[|, as was [foretold|prophesied|augured|expected|totally predictable|inevitable]].
+
+>dnd_treasure_guarded
+$dnd_unfortunately_guarded[|| $dnd_gloat]
+
+>dnd_unfortunately_guarded
+[Unfortunately,|However,|To your [peril|chagrin|humiliation|eternal regret],|The bad news is,|Bad news:] the ^dnd_treasure_item is guarded by [$dnd_a_horde_of |]^dnd_enemy={$dnd_monster}&plural{^dnd_enemy}!
+And that's [when|where|how] you [run into|encounter|get ambushed by|are surprised by|meet|find yourself [facing|[talking|introducing yourself] to]] [the|$dnd_a_horde_of] ^dnd_enemy={$dnd_monster}&plural{^dnd_enemy}!
+
+>dnd_gloat
+Did you imagine it would be easy?
+([||Naive |Callow ][Fools|Newbies|N00bs|Beginners]! It is never [that easy|as it seems|as easy as it [looks|seems]]!)
+I [am so [sorry for|moved by]|pity|feel [|such ][|deep |heartbreaking |bottomless ] [pity|empathy|sorrow|sadness] for] your imminent ^dnd_fate=[doom|death][^dnd_fate|&cap^dnd_fate|&uc^dnd_fate][...|!|!!|!!!]

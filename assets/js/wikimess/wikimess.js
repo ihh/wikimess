@@ -129,7 +129,7 @@ var WikiMess = (function() {
     starColor: 'darkgoldenrod',
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
-    iconFilename: { edit: 'quill',
+    iconFilename: { debug: 'quill',
                     backspace: 'backspace',
                     'new': 'copy',
                     create: 'circle-plus',
@@ -1769,8 +1769,8 @@ var WikiMess = (function() {
           // build the actual compose page UI
           wm.initInfoPane()
           wm.headerToggler = wm.makeToggler ({ hidden: !wm.headerToggler || wm.headerToggler.hidden,
-                                               showIcon: 'edit',
-                                               hideIcon: 'edit',
+                                               showIcon: 'debug',
+                                               hideIcon: 'debug',
 				               hideCallback: function() {
                                                  if (wm.messageBodyDiv)
                                                    wm.stackDiv.removeClass('small').addClass('big')
@@ -1778,7 +1778,7 @@ var WikiMess = (function() {
 				               showCallback: function() {
                                                  if (wm.messageBodyDiv)
                                                    wm.stackDiv.removeClass('big').addClass('small')
-                                                 // uncomment next line to automatically start editing template when 'edit' is pressed
+                                                 // uncomment next line to automatically start editing template when 'debug' is pressed
                                                  // wm.messageComposeDiv.trigger ('click')
                                                } })
 
@@ -2995,7 +2995,7 @@ var WikiMess = (function() {
         else
           div.append ($('<div class="avatarname">').text ('@' + tweeter))
       } else if (avatar) {
-        var icon_color = avatar.split('#')
+        var icon_color = avatar.split(':')
         div.append (wm.makeIconButton ({ iconFilename: icon_color[0],
                                          color: icon_color[1] }))
         if (author)

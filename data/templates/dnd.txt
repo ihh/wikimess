@@ -1,4 +1,16 @@
-10@dm>Bad Situation ##dnd_bad_situation
+10@dm>Treasure ##dnd_treasure
+$dnd_treasure
+
+10@player1>Claim Treasure #dnd_treasure #dnd_take_treasure
+$dnd_take_treasure
+
+10@player2>Claim Treasure #dnd_treasure #dnd_take_treasure
+$dnd_take_treasure
+
+10@dm>Guards #dnd_take_treasure #dnd_bad_situation dnd_fail
+$dnd_treasure_guarded
+
+10@dm>Surprise Encounter ##dnd_bad_situation
 $dnd_bad_situation
 
 10@player1>Attack #dnd_bad_situation #dnd_attack
@@ -36,4 +48,3 @@ $dnd_game_sucks
 
 3@player2>Game Suck #dnd_fail #dnd_argument
 $dnd_game_sucks
-
