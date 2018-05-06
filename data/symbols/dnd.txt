@@ -151,7 +151,7 @@ ${dnd_some_treasure}$dnd_you_found ^dnd_some_treasure!
 ${dnd_some_treasure}$dnd_you_found ^dnd_some_treasure! [$dnd_treasure_is_valuable|$dnd_treasure_is_useful]
 
 >dnd_you_found
-[||||[O|Oh][, |]][Good|Wonderful|Fortuitous|Happy] [news|tidings|luck|Fate]! You $dnd_found
+[||||[O|Oh][,|] ][Good|Wonderful|Fortuitous|Happy] [news|tidings|luck|Fate]! You $dnd_found
 Your [[explorations|adventures|efforts|risks] have|[gambling|courage|adventuresome spirit] has] borne fruit[, for|:] you have $dnd_found
 
 >dnd_found
@@ -165,7 +165,7 @@ uncovered
 ^dnd_treasure_item={$dnd_treasure_item}^dnd_some_treasure=${dnd_some_treasure_syntax}
 
 >dnd_treasure_item
-[enchanted|blessed|sentient|talking|conscious|alien|elvish|dwarven-forged][|, [diamond|mithril|steel|carbon-fiber|titanium|plutonium] $dnd_melee_weapon
+[enchanted|blessed|sentient|talking|conscious|alien|elvish|dwarven-forged][|, [diamond|mithril|steel|carbon-fiber|titanium|plutonium]] $dnd_melee_weapon
 [rare|potent|puissant|sentient|conscious|talking|elvish|ancient] $dnd_magic_item of $dnd_magic_genre
 [rare|valuable|secret|stolen|priceless|legendary|mythical] $gemstone
 
