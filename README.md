@@ -62,10 +62,24 @@ Special variables interpreted by Wiki Messenger include
 Files in the `data/templates` directory define the built-in templates and have the following syntax
 
 ~~~~
-@template_author>template_name#past_tag1 past_tag2#future_tag1 future_tag2
+@template_author>Template title#past_tag1 past_tag2#future_tag1 future_tag2 future_tag3
 The template itself, featuring $nonterminals, [alternations|etc.]
 (it can be split over multiple lines)
 ~~~~
+
+This defines a template by `@template_author`, with the title "Template title", and the specified past tags (`past_tag1` and `past_tag2`) and future tags (`future_tag1`, `future_tag2`, and `future_tag3`). The past & future tag fields can each contain any number of whitespace-separated tags; the special past tag `root` is used for templates that can be used at the top of a thread, or the past tags can be left empty for the same effect.
+
+The author and tag fields of the template definition line are optional so e.g. it can be
+
+~~~~
+>Template title
+The template itself
+split over two lines
+or three
+or more
+~~~~
+
+The author field can optionally be preceded by an integer weight, reflecting how frequently (relatively speaking) a template will be suggested to the user.
 
 # Symbol directory syntax
 
