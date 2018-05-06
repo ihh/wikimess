@@ -74,8 +74,18 @@ var symbolSchemaDefs = {
          "properties": {
            "type": { "const": "func" },
            "args": { "$ref": "#/definitions/rhs" },
-           "funcname": { "enum": ["if", "uc", "lc", "cap", "plural", "singular", "a", "nlp_plural", "topic", "person", "place", "past", "present", "future", "infinitive", "gerund", "adjective", "negative", "positive"] } },
+           "funcname": { "enum": ["uc", "lc", "cap", "plural", "singular", "a", "nlp_plural", "topic", "person", "place", "past", "present", "future", "infinitive", "gerund", "adjective", "negative", "positive"] } },
          "required": ["type", "funcname", "args"],
+         "additionalProperties": false },
+
+       { "type": "object",
+         "properties": {
+           "type": { "const": "cond" },
+           "test": { "$ref": "#/definitions/rhs" },
+           "t": { "$ref": "#/definitions/rhs" },
+           "f": { "$ref": "#/definitions/rhs" }
+         },
+         "required": ["type", "test", "t", "f"],
          "additionalProperties": false },
 
        { "type": "object",
