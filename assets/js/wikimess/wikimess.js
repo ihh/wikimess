@@ -1640,6 +1640,7 @@ var WikiMess = (function() {
             var preserveMessage = config.preserve
             var confirm = config.confirm
             var previousMessage = wm.composition.previousMessage
+            var recipient
             return function (sendConfig) {
               sendConfig = $.extend ({}, config, sendConfig || {})
               wm.sharePane.find('*').off('click')
@@ -1664,7 +1665,8 @@ var WikiMess = (function() {
                         fadePromise = wm.fadeCard (sendConfig.cardDiv || wm.currentCardDiv, sendConfig.card || wm.currentCard)
                       else
                         fadePromise = $.Deferred().resolve()
-                      wm.REST_postPlayerMessage (wm.playerID, { recipient: wm.composition.isPrivate ? wm.composition.recipient.id : null,
+                      recipient = wm.composition.isPrivate ? wm.composition.recipient.id : null
+                      wm.REST_postPlayerMessage (wm.playerID, { recipient: recipient,
                                                                 template: wm.composition.template,
                                                                 title: wm.composition.title,
                                                                 body: wm.composition.body,
@@ -1688,25 +1690,32 @@ var WikiMess = (function() {
                                                                                      wm.compositionVarVal()) })
                             else if (result.message.tweet)
                               wm.redirectToTweet (result.message.tweeter, result.message.tweet)
+                            return result
                           })
-                        }).then (function() {
+                        }).then (function (result) {
                           if (preserveMessage) {
                             wm.sharePane.hide()
                             wm.shareButton.on ('click', toggleSharePane)
                           } else {
                             wm.composition = {}  // delete the composition after sending
                             delete wm.mailboxCache.outbox   // TODO: update wm.mailboxCache.outbox
+                            function updateMailboxCache() {
+                              Object.keys (wm.mailboxCache)
+                                .forEach (function (cacheName) {
+                                  if (wm.mailboxCache[cacheName][previousMessage])
+                                    wm.mailboxCache[cacheName][previousMessage].next = (wm.mailboxCache[cacheName][previousMessage].next || []).concat (result.message.id)
+                                })
+                            }
+                            if (!recipient)
+                              return wm.REST_getPlayerMessage (wm.playerID, result.message.id)
+                              .then (function (result) {
+                                return wm.replyToMessage ({ message: result.message,
+                                                            thread: [result.message] })
+                              })
                             return (wm.playerID
                                     ? wm.showMailboxPage ({ tab: 'outbox' })
-                                    .then (function() {
-                                      Object.keys (wm.mailboxCache)
-                                        .forEach (function (cacheName) {
-                                          if (wm.mailboxCache[cacheName][previousMessage])
-                                            wm.mailboxCache[cacheName][previousMessage].next = (wm.mailboxCache[cacheName][previousMessage].next || []).concat (result.message.id)
-                                        })
-                                      // TODO: update wm.mailboxCache.outbox
-                                    })
                                     : wm.showStatusPage())
+                              .then (updateMailboxCache)
                           }
                         }).catch (function (err) {
                           console.error ('message send error', err)
