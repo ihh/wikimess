@@ -2,7 +2,7 @@
 $dnd_uh_oh$dnd_at_this_point, $dnd_you_encounter $dnd_a_horde_of ^dnd_enemy={$dnd_monster}&plural{^dnd_enemy}!
 
 >dnd_uh_oh
-[Uh oh[!|...]|[O|o][|o|oo]kay[.|]|[Right. |][so|So|SO|Soo][,|:|...]|OK[.|:]|Ahem.|[Heads|Listen] up[.|:|!]|||] 
+[Uh oh[!|...]|[O|o][|o|oo]kay.|[Right. |][so|So|SO|Soo][,|:|...]|OK[.|:]|Ahem.|[Heads|Listen] up[.|:|!]|||] 
 
 >dnd_at_this_point
 As you [enter|approach|go deeper into|delve into|explore|dig into|[plumb|fathom] the [depths|deep|deeps] of] $dnd_place
