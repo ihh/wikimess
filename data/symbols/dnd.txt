@@ -87,9 +87,10 @@ war-club
 pike
 trident
 war-hammer
+blade
 
 >dnd_attack_fails
-Your ^dnd_weapon [shatters|splinters|breaks] into [|a [thousand|hundred|dozen]][| [tiny|useless]][pieces|shards|fragments].
+Your ^dnd_weapon [shatters|splinters|breaks] into [|a [thousand|hundred|dozen]] [|[tiny|useless] ][pieces|shards|fragments].
 
 >dnd_cast_spell
 ${dnd_a_spell}I cast ^dnd_a_spell at the &plural^dnd_enemy.
@@ -164,9 +165,9 @@ uncovered
 ^dnd_treasure_item={$dnd_treasure_item}^dnd_some_treasure=${dnd_some_treasure_syntax}
 
 >dnd_treasure_item
-[|$common_adjective, ][enchanted|blessed|sentient|talking|conscious|alien|elvish|mithril|dwarven-forged] $dnd_melee_weapon
-[|$common_adjective, ][rare|potent|puissant|sentient|conscious|talking|elvish|ancient] $dnd_magic_item of $dnd_magic_genre
-[|$common_adjective, ][rare|valuable|secret|stolen|priceless|legendary|mythical] $gemstone
+[enchanted|blessed|sentient|talking|conscious|alien|elvish|dwarven-forged][|, [diamond|mithril|steel|carbon-fiber|titanium|plutonium] $dnd_melee_weapon
+[rare|potent|puissant|sentient|conscious|talking|elvish|ancient] $dnd_magic_item of $dnd_magic_genre
+[rare|valuable|secret|stolen|priceless|legendary|mythical] $gemstone
 
 >dnd_magic_item
 orb
@@ -191,8 +192,8 @@ transformation
 divination
 
 >dnd_some_treasure_syntax
-&a{^dnd_treasure_item}
-some &plural{^dnd_treasure_item}
+&a{[|$common_adjective, ]^dnd_treasure_item}
+some &plural{[|$common_adjective, ]^dnd_treasure_item}
 
 >dnd_treasure_is_valuable
 [This [treasure|loot|haul]|&cap&plural^dnd_treasure_item] [may|can] be sold [at|for] [great|enormous|huge|immense] [value|profit].
@@ -214,10 +215,11 @@ Your eyes gleam as you [imagine|dream of] the [power|possibilities|dominion|mast
 
 >dnd_take_treasure
 [Awesome|Fantastic|Cool|Amazing][!|!!|!!!|!1!]
-I take the ^dnd_treasure_item.
-My [|sacred ][quest is|trials are] [complete|over|about to begin|just begun]. I take the ^dnd_treasure_item and [assume|claim|seek] my role as [[Lord|Autarch|Supreme Ruler|Mayor|Deathlord] of the [Underworld|Dungeon|land|[Cursed|Hidden|Nether] Realms]|[Guild|Clan|Party] [Acolyte|Secretary|President|Treasurer]]!
-Let's [grab|take|claim|bag|pick up] the ^dnd_treasure_item[| and [run|scarper|get out of here|make a sharp exit|exit, fast|exit|quit|quit while we're ahead]]!
-[It is not my [place|role|duty|quest] to [take|claim]|I leave to [others|another|my fellow [adventurer|party member][|s]] the [honor|privilege|duty|task|rite] of [taking|claiming]] ^dnd_treasure_item, but I am glad that we [have|finally] found it[|, as was [foretold|prophesied|augured|expected|totally predictable|inevitable]].
+[Calling|Definitely [gotta have|calling|having|taking|claiming]|I [take|claim|call]] &a^dnd_treasure_item.
+All &plural^dnd_treasure_item are mine.
+My [|sacred ][quest is|trials are] [complete|over|about to begin|just begun]. I take [&a^dnd_treasure_item|the &plural^dnd_treasure_item] and [assume|claim|seek] my role as [[Lord|Autarch|Supreme Ruler|Mayor|Deathlord] of the [Underworld|Dungeon|land|[Cursed|Hidden|Nether] Realms]|[Guild|Clan|Party] [Acolyte|Secretary|President|Treasurer]]!
+Let's [grab|take|claim|bag|pick up] the &plural^dnd_treasure_item[| and [run|scarper|get out of here|make a sharp exit|exit, fast|exit|quit|quit while we're ahead]]!
+[It is not my [place|role|duty|quest] to [take|claim]|I leave to [others|another|my fellow [adventurer|party member][|s]] the [honor|privilege|duty|task|rite] of [taking|claiming]] &plural^dnd_treasure_item, but I am glad that we [have|finally] found them[|, as was [foretold|prophesied|augured|expected|totally predictable|inevitable]].
 
 >dnd_treasure_guarded
 $dnd_unfortunately_guarded[|| $dnd_gloat]
