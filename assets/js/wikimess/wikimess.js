@@ -4508,6 +4508,11 @@ var WikiMess = (function() {
             return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeRhsSpan(opt)) }),
                                        rightSquareBraceChar)
+          case 'cond':
+            if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
+              return $('<span>').append ('#', tok.test[0].varname, '#')
+            return $('<span>').append (funcChar + 'if',
+                                       [tok.test,tok.t,tok.f].map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeRhsSpan(arg), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
@@ -4554,6 +4559,11 @@ var WikiMess = (function() {
             return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeTemplateSpan(opt)) }),
                                        rightSquareBraceChar)
+          case 'cond':
+            if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
+              return $('<span>').append ('#', tok.test[0].varname, '#')
+            return $('<span>').append (funcChar + 'if',
+                                       [tok.test,tok.t,tok.f].map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeTemplateSpan(arg), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)

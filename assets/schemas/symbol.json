@@ -95,6 +95,7 @@
               },
               "funcname": {
                 "enum": [
+                  "if",
                   "uc",
                   "lc",
                   "cap",

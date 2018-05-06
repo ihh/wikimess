@@ -61,6 +61,12 @@
                      n: index,
                      rhs: pt.sampleParseTree (node.opts[index], rng) }
           break
+	case 'cond':
+	  result = { type: 'cond',
+                     test: node.test,
+		     t: pt.sampleParseTree (node.t, rng),
+                     f: pt.sampleParseTree (node.f, rng) }
+          break
 	case 'func':
 	  result = { type: 'func',
                      funcname: node.funcname,
@@ -99,6 +105,9 @@
         case 'func':
           r = pt.getSymbolNodes (node.args)
           break
+        case 'cond':
+          r = pt.getSymbolNodes (node.test.concat (node.t, node.f))
+          break
         case 'root':
         case 'opt':
           r = pt.getSymbolNodes (node.rhs)
@@ -131,10 +140,14 @@
 	      return r && pt.parseTreeEmpty (opt)
             }, true)
             break
+          case 'cond':
+            result = pt.parseTreeEmpty (node.t) && pt.parseTreeEmpty (node.f)   // this will miss some empty trees, oh well
+            break
           case 'func':
             result = pt.parseTreeEmpty (node.args)
             break
           case 'lookup':
+            result = false  // we aren't checking variable values, so just assume any referenced variable is nonempty (yes this will miss some empty trees)
             break
           case 'root':
           case 'opt':
@@ -153,6 +166,15 @@
       }
       return result
     }, true)
+  }
+
+  function isTraceryExpr (node, makeSymbolName) {
+    return typeof(node) === 'object' && node.type === 'cond'
+      && node.test.length === 1 && typeof(node.test[0]) === 'object' && node.test[0].type === 'lookup'
+      && node.t.length === 1 && typeof(node.t[0]) === 'object' && node.t[0].type === 'lookup'
+      && node.f.length === 1 && typeof(node.f[0]) === 'object' && node.f[0].type === 'sym'
+      && node.test[0].varname === node.t[0].varname
+      && node.test[0].varname === makeSymbolName (node.f[0])
   }
   
   function makeRhsText (rhs, makeSymbolName) {
@@ -176,6 +198,11 @@
         case 'alt':
           result = leftSquareBraceChar + tok.opts.map (function (opt) { return pt.makeRhsText(opt,makeSymbolName) }).join('|') + rightSquareBraceChar
 	  break
+        case 'cond':
+          result = (isTraceryExpr (tok, makeSymbolName)
+                    ? ('#' + tok.test[0].varname + '#')
+                    : (funcChar + 'if' + [tok.test,tok.t,tok.f].map (function (arg) { return leftBraceChar + pt.makeRhsText (arg, makeSymbolName) + rightBraceChar }).join('')))
+          break;
         case 'func':
 	  var sugaredName = pt.makeSugaredName (tok, makeSymbolName)
 	  if (sugaredName)
@@ -253,6 +280,10 @@
         case 'lookup':
           expansion = varVal[node.varname.toLowerCase()]
           break
+        case 'cond':
+          var test = makeRhsExpansionText (node.test, leaveSymbolsUnexpanded, varVal)
+          expansion = makeRhsExpansionText (test.match(/\S/) ? node.t : node.f, leaveSymbolsUnexpanded, varVal)
+          break;
         case 'func':
           var arg = makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
           switch (node.funcname) {
@@ -272,7 +303,7 @@
             expansion = indefiniteArticle (arg)
             break
 
-          // nlp: nouns
+            // nlp: nouns
           case 'nlp_plural':  // alternative to built-in plural
             expansion = nlp(arg).nouns(0).toPlural().text()
             break
@@ -289,7 +320,7 @@
             expansion = nlp(arg).places(0).text()
             break
 
-          // nlp: verbs
+            // nlp: verbs
           case 'past':
             expansion = nlp(arg).verbs(0).toPastTense().text()
             break
@@ -579,6 +610,7 @@
     sampleParseTree: sampleParseTree,
     getSymbolNodes: getSymbolNodes,
     parseTreeEmpty: parseTreeEmpty,
+    isTraceryExpr: isTraceryExpr,
     makeRhsText: makeRhsText,
     makeSugaredName: makeSugaredName,
     makeExpansionText: makeExpansionText,

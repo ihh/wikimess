@@ -34,6 +34,10 @@ module.exports = {
         return SymbolService.validateMessageRhs (templateNode.value, bodyNode.value)
       case 'lookup':
         return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in lookup')
+      case 'cond':
+        return SymbolService.validateMessageRhs (templateNode.test, bodyNode.test)
+          .then (SymbolService.validateMessageRhs (templateNode.t, bodyNode.t))
+          .then (SymbolService.validateMessageRhs (templateNode.f, bodyNode.f))
       case 'func':
         if (templateNode.funcname !== bodyNode.funcname)
           return Promise.reject('funcname mismatch')

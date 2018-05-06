@@ -3,6 +3,7 @@ function makeLookup (name) { return { type: 'lookup', varname: name } }
 function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
 function makeAlternation (opts) { return { type: 'alt', opts: opts } }
 function makeFunction (name, args) { return { type: 'func', funcname: name, args: args } }
+function makeConditional (testArg, trueArg, falseArg) { return { type: 'cond', test: testArg, t: trueArg, f: falseArg } }
 
 function makeCapped (args) { return makeFunction ('cap', args) }
 function makeUpperCase (args) { return makeFunction ('uc', args) }
@@ -26,5 +27,5 @@ function makeSugaredLookup (name) {
 function makeTraceryExpr (sym, mods) {
   return mods.reduce (function (expr, mod) {
     return makeFunction (mod, [expr])
-  }, makeSymbol (sym))
+  }, makeConditional ([makeLookup(sym)], [makeLookup(sym)], [makeSymbol(sym)]))
 }

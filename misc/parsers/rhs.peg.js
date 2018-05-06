@@ -7,6 +7,7 @@ Node
   / "\\" escaped:. { return escaped }
   / text:[^\$\#&\^\{\}\[\]\|\\]+ { return text.join("") }
   / Symbol
+  / Conditional
   / Function
   / VarAssignment
   / VarLookup
@@ -49,15 +50,22 @@ TraceryModifier
   / ".capitalize" { return "cap" }
   / ".a" { return "a" }
   / ".ed" { return "past" }
+  / ".s" { return "plural" }
+
+Conditional
+  = "&if" testArg:FunctionArg trueArg:FunctionArg falseArg:FunctionArg { return makeConditional (testArg, trueArg, falseArg) }
 
 Function
-  = "&" func:FunctionName "{" args:NodeList "}" { return makeFunction (func, args) }
-  / "&" func:FunctionName sym:Symbol { return makeFunction (func, [sym]) }
-  / "&" func:FunctionName alt:Alternation { return makeFunction (func, [alt]) }
-  / "&" func:FunctionName lookup:VarLookup { return makeFunction (func, [lookup]) }
-  / "&" func:FunctionName innerFunc:Function { return makeFunction (func, [innerFunc]) }
+  = "&" func:FunctionName args:FunctionArg { return makeFunction (func, args) }
 
 FunctionName = "uc" / "lc" / "cap" / "plural" / "singular" / "a" / "nlp_plural" / "topic" / "person" / "place" / "past" / "present" / "future" / "infinitive" / "gerund" / "adjective" / "negative" / "positive"
+
+FunctionArg
+  = "{" args:NodeList "}" { return args }
+  / sym:Symbol { return [sym] }
+  / alt:Alternation { return [alt] }
+  / lookup:VarLookup { return [lookup] }
+  / innerFunc:Function { return [innerFunc] }
 
 VarLookup
   = "^" varname:Identifier { return makeSugaredLookup (varname) }
