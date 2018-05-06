@@ -195,7 +195,7 @@ divination
 some &plural{^dnd_treasure_item}
 
 >dnd_treasure_is_valuable
-This [may|can] be sold [at|for] [great|enormous|huge|immense] [value|profit].
+[This [treasure|loot|haul]|&cap&plural^dnd_treasure_item] [may|can] be sold [at|for] [great|enormous|huge|immense] [value|profit].
 Your eyes gleam as you [imagine|dream of] the [wealth|profit|rewards]!
 Nice.
 Pretty sweet.
