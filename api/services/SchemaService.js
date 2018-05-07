@@ -102,7 +102,7 @@ var symbolSchemaDefs = {
            "varname": { "type": "string" } },
          "required": ["type", "varname", "value"],
          "additionalProperties": false },
-
+       
        { "type": "object",
          "properties": {
            "type": { "const": "alt" },

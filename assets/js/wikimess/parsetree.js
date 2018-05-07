@@ -73,6 +73,7 @@
 		     args: pt.sampleParseTree (node.args, rng) }
           break
 	case 'lookup':
+	case 'expand':
 	  result = node
           break
 	default:
@@ -93,6 +94,7 @@
       if (typeof(node) === 'object')
         switch (node.type) {
         case 'lookup':
+        case 'expand':
           break
         case 'assign':
           r = pt.getSymbolNodes (node.value)
@@ -147,6 +149,7 @@
             result = pt.parseTreeEmpty (node.args)
             break
           case 'lookup':
+          case 'expand':
             result = false  // we aren't checking variable values, so just assume any referenced variable is nonempty (yes this will miss some empty trees)
             break
           case 'root':
@@ -171,7 +174,7 @@
   function isTraceryExpr (node, makeSymbolName) {
     return typeof(node) === 'object' && node.type === 'cond'
       && node.test.length === 1 && typeof(node.test[0]) === 'object' && node.test[0].type === 'lookup'
-      && node.t.length === 1 && typeof(node.t[0]) === 'object' && node.t[0].type === 'lookup'
+      && node.t.length === 1 && typeof(node.t[0]) === 'object' && node.t[0].type === 'expand'
       && node.f.length === 1 && typeof(node.f[0]) === 'object' && node.f[0].type === 'sym'
       && node.test[0].varname === node.t[0].varname
       && node.test[0].varname === makeSymbolName (node.f[0])
@@ -192,6 +195,11 @@
                     ? (varChar + leftBraceChar + tok.varname.toLowerCase() + rightBraceChar)
                     : (varChar + tok.varname.toLowerCase()))
 	  break
+        case 'expand':
+          result = (nextIsAlpha
+                    ? (symChar + varChar + leftBraceChar + tok.varname.toLowerCase() + rightBraceChar)
+                    : (symChar + varChar + tok.varname.toLowerCase()))
+	  break
         case 'assign':
           result = varChar + tok.varname + assignChar + leftBraceChar + pt.makeRhsText(tok.value,makeSymbolName) + rightBraceChar
 	  break
@@ -210,7 +218,7 @@
 		      ? (sugaredName[0] + leftBraceChar + sugaredName.substr(1) + rightBraceChar)
 		      : sugaredName)
 	  else {
-            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'expand' || tok.args[0].type === 'alt')
             result = funcChar + tok.funcname + (noBraces ? '' : leftBraceChar) + pt.makeRhsText(tok.args,makeSymbolName) + (noBraces ? '' : rightBraceChar)
           }
 	  break
@@ -237,6 +245,9 @@
       } else if (funcNode.args[0].type === 'lookup') {
         name = funcNode.args[0].varname
         prefixChar = varChar
+      } else if (funcNode.args[0].type === 'expand') {
+        name = funcNode.args[0].varname
+        prefixChar = symChar + varChar
       }
       if (name) {
         name = name.toLowerCase()
@@ -274,6 +285,12 @@
         expansion = node
       else
         switch (node.type) {
+        case 'expand':
+          if (typeof(node.rhs) === 'undefined')
+            throw { node: node,
+                    vars: varVal }
+          expansion = makeRhsExpansionText (node.rhs, leaveSymbolsUnexpanded, varVal)
+          break
         case 'assign':
           varVal[node.varname] = makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
           break

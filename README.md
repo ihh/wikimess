@@ -51,7 +51,8 @@ Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression
    - braces can be omitted in many situations where context is obvious, e.g. `^currency=&cap&plural$name` means the same as `^currency={&cap{&plural{$name}}}`
    - as a shorthand, you can use `$Nonterminal_name` as a shorthand for `&cap{$nonterminal_name}`, and `^Variable_name` for `&cap{^variable_name}`
    - similarly, `$NONTERMINAL_NAME` is a shorthand for `&uc{$nonterminal_name}`, and  `^VARIABLE_NAME` for `&uc{^variable_name}`
-   - as well as the Tracery syntax for nonterminals, i.e. `#symbol_name#` instead of `$symbol_name`, you can optionally use the Tracery modifier syntax, e.g. `#symbol_name.capitalize#` instead of `&cap{$symbol_name}`. However, there's currently no equivalent of Tracery's support for scoped variables.
+   - as well as the Tracery syntax for nonterminals, i.e. `#symbol_name#` instead of `$symbol_name`, you can optionally use the Tracery modifier syntax, e.g. `#symbol_name.capitalize#` instead of `&cap{$symbol_name}`
+   - There's currently no equivalent of Tracery's support for locally scoped variables and nonterminals (what Tracery calls "actions"). See issue #115.
 
 Wiki Messenger implements Bracery expansion as a web service, with nonterminal definitions as a RESTful resource.
 Special variables interpreted by Wiki Messenger include

@@ -217,6 +217,28 @@
             "type": "object",
             "properties": {
               "type": {
+                "const": "expand"
+              },
+              "varname": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "rhs": {
+                "$ref": "#/definitions/rhs"
+              }
+            },
+            "required": [
+              "type",
+              "varname"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
                 "const": "assign"
               },
               "value": {

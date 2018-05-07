@@ -381,6 +381,7 @@ function makeHandler (model, filter, toString) {
 	  obj = JSON.parse (data)
         } catch (err) {
 	  log ("Warning: When parsing " + filename + ": couldn't parse " + model + " response as JSON")
+          log (data)
         }
       if (obj) {
 	if (obj.status == 400

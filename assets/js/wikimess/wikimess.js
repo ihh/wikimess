@@ -126,7 +126,7 @@ var WikiMess = (function() {
     menuPopupDelay: 500,
     threadCardThrowDelay: 5,
     alwaysThrowInHelpCards: true,
-    starColor: 'darkgoldenrod',
+    maxExpandCalls: 10,  // for recursive evaluations
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
     iconFilename: { edit: 'quill',
@@ -1409,7 +1409,7 @@ var WikiMess = (function() {
           wm.playerSearchInput = $('<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="recipient">')
           wm.playerSearchResultsDiv = $('<div class="results">')
           
-          function markForSave() { wm.composition.needsSave = true }
+          var markForSave = wm.markForSave.bind (wm)
 
           function makeMessageHeaderInput (className, placeholderText, compositionAttrName, controlName, lowercase, changeCallback) {
             if (typeof(config[compositionAttrName]) !== 'undefined')
@@ -1527,6 +1527,7 @@ var WikiMess = (function() {
                   input.val (updatedNewValBefore + newValAfter)
                   wm.setCaretToPos (input[0], updatedNewValBefore.length)
                   input.focus()
+                  wm.markForSave()
                   wm.textareaAutosuggest (input)
                 })
               }
@@ -1557,6 +1558,7 @@ var WikiMess = (function() {
                                                                                                              name: symbol.name },
                                                                                                            wrappedFuncs)])))
                                         delete wm.composition.randomTemplate
+                                        wm.markForSave()
                                         wm.updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
@@ -2678,6 +2680,12 @@ var WikiMess = (function() {
 	wm.messageTitleSpan.text (wm.composition.title || 'Untitled')
     },
 
+    markForSave: function() {
+      this.composition.needsSave = true
+      delete this.composition.avatar
+      delete this.composition.tweeter
+    },
+    
     updateComposeDiv: function() {
       var wm = this
       wm.updateMessageTitle()
@@ -2686,7 +2694,7 @@ var WikiMess = (function() {
        { content: function() { return wm.composition.template ? wm.composition.template.content : [] },
          changeCallback: function (input) {
            delete wm.composition.randomTemplate
-           wm.composition.needsSave = true
+           wm.markForSave()
            wm.autosuggestStatus.temperature = 0
            wm.setTimer ('autosuggestTimer',
                         wm.autosuggestDelay,
@@ -2726,7 +2734,7 @@ var WikiMess = (function() {
         delete this.composition.previousTemplate
         this.composition.template.content = newContent
         this.autosuggestStatus.temperature = 0
-        wm.composition.needsSave = true
+        wm.markForSave()
         return true
       }
       return false
@@ -2920,6 +2928,71 @@ var WikiMess = (function() {
       return false
     },
 
+    makeExpansionTextPromise: function (config) {
+      var wm = this
+      var initNode = config.node
+      var leaveSymbolsUnexpanded = config.leaveSymbolsUnexpanded
+      var initVarVal = config.vars
+      var expandCalls = config.calls || 0
+      var expansion
+      try {
+        expansion = wm.ParseTree.makeExpansionText (initNode, leaveSymbolsUnexpanded, varVal)
+      } catch (expandNodeInfo) {
+        var expandNode = expandNodeInfo.node, expandVarVal = expandNodeInfo.vars
+        var rhsText = expandVarVal[expandNode.varname], parsedRhs = parseRhs(rhsText)
+        expandNode.value = rhsText
+        if (expandCalls < wm.maxExpandCalls)
+          return wm.expandRecursively ({ content: parsedRhs,
+                                         vars: expandVarVal,
+                                         calls: expandCalls + 1})
+          .then (function (result) {
+            expandNode.rhs = result.expansion
+            return wm.makeExpansionTextPromise ($.extend ({},
+                                                          config,
+                                                          { calls: result.calls }))
+          })
+        else {
+          expandNode.rhs = []
+          return wm.makeExpansionTextPromise (config)
+        }
+      }
+      return $.Deferred().resolve ({ expansion: expansion,
+                                     calls: expandCalls })
+    },
+
+    expandRecursively: function (config) {
+      var wm = this
+      var node = config.node
+      var initVarVal = config.vars
+      var expandCalls = config.calls || 0
+      var sampledTree = wm.ParseTree.sampleParseTree (node)
+      var symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
+      var symbolQueries = symbolNodes.map (function (sym) {
+        return { id: sym.id,
+                 name: sym.name }
+      })
+      return wm.REST_postPlayerExpand (wm.playerID, symbolQueries)
+        .then (function (result) {
+          if (result && result.expansions) {
+	    symbolNodes.forEach (function (symbolNode, n) {
+              var expansion = result.expansions[n]
+              if (expansion) {
+                if (typeof(expansion.id) !== 'undefined') {
+                  symbolNode.id = expansion.id
+		  symbolNode.rhs = expansion.rhs
+                  symbolNode.name = wm.symbolName[expansion.id] = expansion.name
+                  symbolNode.rev = expansion.rev
+                  symbolNode.n = expansion.n
+                } else
+                  symbolNode.notfound = expansion.notfound
+              }
+	    })
+          }
+          return { expansion: sampledTree,
+                   calls: expandCalls }
+        })
+    },
+    
     generateMessageBody: function (config) {
       var wm = this
       config = config || {}
@@ -2927,7 +3000,7 @@ var WikiMess = (function() {
       var cardReady = config.cardReady || $.Deferred().resolve()
       
       wm.composition.body = {}
-      wm.composition.needsSave = true
+      wm.markForSave()
       
       var templatePromise
       if (useCurrentTemplate)
@@ -2937,44 +3010,21 @@ var WikiMess = (function() {
       else
         templatePromise = wm.selectRandomTemplate()
       
-      var sampledTree, symbolNodes
       return templatePromise.then (function (newTemplate) {
         var template = newTemplate || wm.composition.template
         if (template && template.content) {
-	  sampledTree = wm.ParseTree.sampleParseTree (template.content)
-          symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
-          var symbolQueries = symbolNodes.map (function (sym) {
-            return { id: sym.id,
-                     name: sym.name }
-          })
-          return wm.REST_postPlayerExpand (wm.playerID, symbolQueries)
-            .then (function (result) {
-              return cardReady
-                .then (function() {
-                  if (result && result.expansions) {
-                    if (newTemplate)
-                      wm.updateMessageHeader (newTemplate)
-	            symbolNodes.forEach (function (symbolNode, n) {
-                      var expansion = result.expansions[n]
-                      if (expansion) {
-                        if (typeof(expansion.id) !== 'undefined') {
-                          symbolNode.id = expansion.id
-		          symbolNode.rhs = expansion.rhs
-                          symbolNode.name = wm.symbolName[expansion.id] = expansion.name
-                          symbolNode.rev = expansion.rev
-                          symbolNode.n = expansion.n
-                        } else
-                          symbolNode.notfound = expansion.notfound
-                        return expansion
-                      }
-	            })
-                    wm.composition.body = { type: 'root', rhs: sampledTree }
-                    wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
-                  } else
-                    wm.showMessageBody()
-                })
+          return cardReady
+            .then (function() {
+              if (newTemplate)
+                wm.updateMessageHeader (newTemplate)
+              return wm.expandRecursively ({ node: template.content,
+                                             vars: wm.compositionVarVal() })
+            }).then (function (result) {
+              wm.composition.body = { type: 'root', rhs: result.expansion }
+              wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
             })
-        }
+        } else
+          wm.showMessageBody()
       })
     },
 
@@ -3967,7 +4017,7 @@ var WikiMess = (function() {
         }
       }
     },
-
+          
     parseRhs: function (rhs) {
       var wm = this, result
       try {
@@ -4500,6 +4550,10 @@ var WikiMess = (function() {
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
                                      ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
+          case 'expand':
+            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                                     ? (symChar + varChar + leftBraceChar + tok.varname + rightBraceChar)
+                                     : (symChar + varChar + tok.varname))
           case 'assign':
             return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeRhsSpan (tok.value),
@@ -4524,7 +4578,7 @@ var WikiMess = (function() {
 						     wm.loadGrammarSymbol (tok.args[0])
 						   })
                       : sugaredName)
-            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'expand' || tok.args[0].type === 'alt')
             return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
                                        wm.makeRhsSpan (tok.args),
                                        noBraces ? '' : rightBraceChar)
@@ -4551,6 +4605,10 @@ var WikiMess = (function() {
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
                                      ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
+          case 'expand':
+            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                                     ? (symChar + varChar + leftBraceChar + tok.varname + rightBraceChar)
+                                     : (symChar + varChar + tok.varname))
           case 'assign':
             return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeTemplateSpan (tok.value),
