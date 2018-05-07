@@ -690,6 +690,7 @@
     ordinal: ordinal,
     nPlurals: nPlurals,
     // general utility
+    extend: extend,
     isArray: isArray,
     randomIndex: randomIndex,
     randomElement: randomElement,

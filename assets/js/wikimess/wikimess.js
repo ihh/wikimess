@@ -2941,7 +2941,6 @@ var WikiMess = (function() {
     makeExpansionTextPromise: function (config) {
       var wm = this
       var initNode = config.node
-      var leaveSymbolsUnexpanded = config.leaveSymbolsUnexpanded
       var expandCalls = config.calls || 0
       var expansion
       function throwCallback (info) {
