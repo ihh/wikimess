@@ -129,6 +129,7 @@ var WikiMess = (function() {
     maxExpandCalls: 10,  // for recursive evaluations
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
+    choiceBadgeColor: 'darkgoldenrod',
     iconFilename: { edit: 'quill',
                     backspace: 'backspace',
                     'new': 'copy',
@@ -1654,7 +1655,7 @@ var WikiMess = (function() {
                     var expansionText, expansionTextMatch
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
-                    else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText ({ node: wm.composition.body })).match(/\S/))))
+                    else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText ({ node: wm.composition.body, vars: wm.compositionVarVal() })).match(/\S/))))
                       window.alert ("Expanded text is empty. Please vary the input text, or hit 'discard' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
@@ -2607,7 +2608,8 @@ var WikiMess = (function() {
       if (wm.composition.previousMessage) {
         // allow tags variable to override template tags
         var finalVarVal = wm.ParseTree.finalVarVal ({ node: wm.composition.previousMessage.body,
-                                                      initVarVal: wm.composition.previousMessage.vars })
+                                                      initVarVal: wm.composition.previousMessage.vars,
+						      makeSymbolName: wm.makeSymbolName.bind(wm) })
         if (finalVarVal.tags)
           previousTags = finalVarVal.tags
       }
@@ -2884,6 +2886,7 @@ var WikiMess = (function() {
 
     makeExpansionText: function (config) {
       config.makeSymbolName = this.makeSymbolName.bind (this)
+      config.expandCallback = config.expandCallback || function() { throw new Error ('unexpanded &eval') }
       return this.ParseTree.makeExpansionText (config)
     },
     
@@ -2939,21 +2942,30 @@ var WikiMess = (function() {
       var wm = this
       var initNode = config.node
       var leaveSymbolsUnexpanded = config.leaveSymbolsUnexpanded
-      var initVarVal = config.vars
       var expandCalls = config.calls || 0
       var expansion
-      function throwCallback (info) { throw info; return null }
+      function throwCallback (info) {
+	info.inThrowCallback = true  // hack hack hack
+	throw info
+	return null
+      }
       try {
-        expansion = wm.makeExpansionText ($.extend ({}, config, { expandCallback: throwCallback }))
-      } catch (expandNodeInfo) {
+        expansion = wm.makeExpansionText ($.extend ({},
+						    config,
+						    { expandCallback: throwCallback,
+						      vars: $.extend ({}, config.vars) }))
+      } catch (e) {
+	if (!e.inThrowCallback) {  // disgusting hack
+	  console.error (e)
+	  throw e
+	}
+        var expandNode = e.node, expandText = e.text
         if (expandCalls < wm.maxExpandCalls) {
-          var expandNode = expandNodeInfo.node, expandText = expandNodeInfo.text
           var parsedExpandText = wm.parseRhs (expandText)
-          return wm.getServerExpansion ({ content: parsedRhs,
-                                          vars: expandVarVal })
-            .then (function (result) {
+          return wm.getServerExpansion (parsedExpandText)
+            .then (function (expansion) {
               expandNode.evaltext = parsedExpandText
-              expandNode.value = result
+              expandNode.value = expansion
               // it is a bit inefficient here to start back at the root again every time, but simpler code-wise, and not too slow
               return wm.makeExpansionTextPromise ($.extend ({},
                                                             config,
@@ -2969,12 +2981,12 @@ var WikiMess = (function() {
                                      calls: expandCalls })
     },
 
-    getServerExpansion: function (config) {
+    getServerExpansion: function (rhs) {
       var wm = this
-      var node = config.node
-      var initVarVal = config.vars
-      var sampledTree = wm.ParseTree.sampleParseTree (node)
+      var sampledTree = wm.ParseTree.sampleParseTree (rhs)
       var symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
+      if (!symbolNodes.length)
+	return $.Deferred().resolve (sampledTree)
       var symbolQueries = symbolNodes.map (function (sym) {
         return { id: sym.id,
                  name: sym.name }
@@ -3024,12 +3036,13 @@ var WikiMess = (function() {
             .then (function() {
               if (newTemplate)
                 wm.updateMessageHeader (newTemplate)
-              return wm.getServerExpansion ({ node: template.content,
-                                              vars: wm.compositionVarVal() })
+              return wm.getServerExpansion (template.content)
             }).then (function (expansion) {
-              return wm.makeExpansionTextPromise ({ node: expansion })  // expand all &eval{...}'s
+	      var root = { type: 'root', rhs: expansion }
+              return wm.makeExpansionTextPromise ({ node: root,
+						    vars: wm.compositionVarVal() })  // expand all &eval{...}'s
                 .then (function() {
-                  wm.composition.body = { type: 'root', rhs: expansion }
+                  wm.composition.body = root
                   wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
                 })
             })
@@ -3071,14 +3084,15 @@ var WikiMess = (function() {
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatar = config.avatar || wm.composition.avatar
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
-      var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.starColor).addClass ('rightchoicebadge')
+      var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.choiceBadgeColor).addClass ('rightchoicebadge')
       if (!config.inEditor)
 	this.addAvatarImage ({ div: avatarDiv,
                                tweeter: tweeter,
                                avatar: avatar,
                                author: (wm.composition.template && wm.composition.template.author ? wm.composition.template.author.displayName : null),
                                vars: wm.ParseTree.finalVarVal ({ node: expansion,
-                                                                 initVarVal: wm.compositionVarVal() }) })
+                                                                 initVarVal: wm.compositionVarVal(),
+							       	 makeSymbolName: wm.makeSymbolName.bind(wm) }) })
       div.empty()
       if (!config.inEditor)
         div.append (rightChoiceBadgeDiv, avatarDiv)
@@ -3160,6 +3174,7 @@ var WikiMess = (function() {
               var lastMessage = thread[0]
               var nextVars = wm.ParseTree.nextVarVal ({ node: lastMessage.body,
                                                         initVarVal: lastMessage.vars,
+							makeSymbolName: wm.makeSymbolName.bind(wm),
                                                         sender: lastMessage.sender })
               return wm.showComposePage
               ({ recipient: lastMessage.sender,
@@ -3290,6 +3305,7 @@ var WikiMess = (function() {
                                    var message = props.result.message
                                    var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
                                                                              initVarVal: message.vars,
+									     makeSymbolName: wm.makeSymbolName.bind(wm),
                                                                              sender: message.sender })
                                    wm.showComposePage ({ recipient: wm.playerInfo,
                                                          defaultToPublic: false,
@@ -3357,6 +3373,7 @@ var WikiMess = (function() {
                  var message = props.result.message
                  var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
                                                            initVarVal: message.vars,
+							   makeSymbolName: wm.makeSymbolName.bind(wm),
                                                            sender: message.sender })
                  wm.showComposePage ({ recipient: null,
                                        defaultToPublic: true,
@@ -3386,6 +3403,7 @@ var WikiMess = (function() {
                  var message = props.result.message
                  var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
                                                            initVarVal: message.vars,
+							   makeSymbolName: wm.makeSymbolName.bind(wm),
                                                            sender: message.sender })
                  wm.showComposePage ({ recipient: message.sender,
                                        defaultToPublic: false,
@@ -3454,7 +3472,8 @@ var WikiMess = (function() {
                            tweeter: message.tweeter,
                            avatar: message.avatar,
                            vars: wm.ParseTree.finalVarVal ({ node: message.body,
-                                                             initVarVal: message.vars }) })
+                                                             initVarVal: message.vars,
+							     makeSymbolName: wm.makeSymbolName.bind(wm) }) })
       var div = $('<div class="message">')
           .append (avatarDiv,
                    $('<div class="mailboxheader">')
@@ -3528,14 +3547,15 @@ var WikiMess = (function() {
                            avatar: message.avatar,
                            author: message.template.author.displayName,
                            vars: wm.ParseTree.finalVarVal ({ node: message.body,
-                                                             initVarVal: message.vars }) })
+                                                             initVarVal: message.vars,
+							     makeSymbolName: wm.makeSymbolName.bind(wm) }) })
 
       var textDiv = $('<div class="text">')
 	  .html (wm.renderMarkdown (wm.makeExpansionText ({ node: message.body,
-							    vars: message.vars || wm.ParseTree.defaultVarVal (sender, recipient, message.tags) })))
+							    vars: $.extend ({}, message.vars || wm.ParseTree.defaultVarVal (sender, recipient, message.tags)) })))
       var inertTextDiv = $('<div class="inerttext">').html ('Swipe left or right to see next card.')
       var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
-      var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
+      var innerDiv = $('<div class="inner">').append ($('<div class="messagebody">')
                                                       .append (mailstampDiv, avatarDiv, textDiv),
 						      inertTextDiv)
       var cardDiv = $('<div class="card">').append (titleDiv, innerDiv)
@@ -3562,6 +3582,7 @@ var WikiMess = (function() {
           replyTitle = 'Re: ' + replyTitle
         var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
                                                   initVarVal: message.vars,
+						  makeSymbolName: wm.makeSymbolName.bind(wm),
                                                   sender: message.sender })
         return wm.showComposePage
         ({ recipient: message.sender,
@@ -3586,9 +3607,10 @@ var WikiMess = (function() {
     compositionVarVal: function() {
       var sender = this.playerID ? this.playerInfo : null
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
-      return (this.composition.vars
-              ? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
-              : this.ParseTree.defaultVarVal (sender, recipient, this.composition.tags))
+      return $.extend ({},
+		       (this.composition.vars
+			? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
+			: this.ParseTree.defaultVarVal (sender, recipient, this.composition.tags)))
     },
     
     relativeDateString: function (dateInitializer) {
@@ -4570,8 +4592,10 @@ var WikiMess = (function() {
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append ('#', tok.test[0].varname, '#')
-            return $('<span>').append (funcChar + 'if',
-                                       [tok.test,tok.t,tok.f].map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeRhsSpan(arg), rightBraceChar) }))
+            return $('<span>').append (funcChar,
+				       [['if',tok.test],
+					['then',tok.t],
+					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, wm.makeRhsSpan (keyword_arg[1]), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
@@ -4621,8 +4645,10 @@ var WikiMess = (function() {
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append ('#', tok.test[0].varname, '#')
-            return $('<span>').append (funcChar + 'if',
-                                       [tok.test,tok.t,tok.f].map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeTemplateSpan(arg), rightBraceChar) }))
+            return $('<span>').append (funcChar,
+				       [['if',tok.test],
+					['then',tok.t],
+					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, wm.makeTemplateSpan (keyword_arg[1]), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
@@ -4634,9 +4660,10 @@ var WikiMess = (function() {
 						     wm.showGrammarLoadSymbol (tok.args[0])
 						   })
                       : sugaredName)
-            return $('<span>').append (funcChar + tok.funcname + leftBraceChar,
-                                       wm.makeTemplateSpan (tok.args),
-                                       rightBraceChar)
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
+            return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
+                                       wm.makeRhsSpan (tok.args),
+                                       noBraces ? '' : rightBraceChar)
           default:
           case 'sym':
             return wm.makeSymbolSpan (tok,

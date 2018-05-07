@@ -44,15 +44,17 @@ Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression
    - `&plural{...}` (plural), `&a{...}` ("a" or "an")
    - `&cap{...}` (Capitalize), `&lc{...}` and `&uc{...}` (lower- & UPPER-case)
    - selected natural language-processing functions from [compromise](https://github.com/spencermountain/compromise) including (for nouns) `&singular` and `&topic`, and (for verbs) `&past`, `&present`, `&future`, `&infinitive`,  `&adjective`, `&negative`
-- conditionals: `&if{testExpr}{trueExpr}{falseExpr}` evaluates to `trueExpr` if `testExpr` contains any non-whitespace characters, and `falseExpr` otherwise
-   - the Tracery-style expression `#name#` is actually shorthand for `&if{^name}{^name}{$name}`. Tracery overloads the same namespace for symbol and variable names, and uses the variable if it's defined; this reproduces that behavior (almost; it won't be quite the same if `^name` is set to whitespace or the empty string)
-- function, alternation, and variable assignment expressions can be arbitrarily nested
+- special functions:
+   - conditionals: `&if{testExpr}{trueExpr}{falseExpr}` evaluates to `trueExpr` if `testExpr` contains any non-whitespace characters, and `falseExpr` otherwise
+   - dynamic evaluation: `&eval{expr}` parses `expr` as Bracery and dynamically expands it. Conversely, `&quote{expr}` returns `expr` as a text string, without doing any expansions. So `&eval{&quote{expr}}` is the same as `expr` (with a subtle side effect: there is a limit on the number of dynamic evaluations that an expression can use, to guard against infinite recursion or hammering the server)
+- functions, alternations, variable assignments, and conditionals can be arbitrarily nested
 - syntactic sugar
+   - the Tracery-style expression `#name#` is actually shorthand for `&if{^name}{&eval{^name}}{$name}`. Tracery overloads the same namespace for symbol and variable names, and uses the variable if it's defined; this reproduces that behavior (almost; it won't be quite the same if `^name` is set to whitespace or the empty string)
    - braces can be omitted in many situations where context is obvious, e.g. `^currency=&cap&plural$name` means the same as `^currency={&cap{&plural{$name}}}`
    - as a shorthand, you can use `$Nonterminal_name` as a shorthand for `&cap{$nonterminal_name}`, and `^Variable_name` for `&cap{^variable_name}`
    - similarly, `$NONTERMINAL_NAME` is a shorthand for `&uc{$nonterminal_name}`, and  `^VARIABLE_NAME` for `&uc{^variable_name}`
    - as well as the Tracery syntax for nonterminals, i.e. `#symbol_name#` instead of `$symbol_name`, you can optionally use the Tracery modifier syntax, e.g. `#symbol_name.capitalize#` instead of `&cap{$symbol_name}`
-   - There's currently no equivalent of Tracery's support for locally scoped variables and nonterminals (what Tracery calls "actions"). See issue #115.
+   - There's currently no direct equivalent of Tracery's support for locally scoped variables and nonterminals (what Tracery calls "actions"), but similar effects can be achieved with `&eval` and `&quote`
 
 Wiki Messenger implements Bracery expansion as a web service, with nonterminal definitions as a RESTful resource.
 Special variables interpreted by Wiki Messenger include

@@ -8,11 +8,30 @@ var nlp = require('../../assets/js/ext/compromise.min.js')
 
 module.exports = {
 
-  validateMessage: function (template, body) {
-    return SymbolService.validateMessageRhs (template.content, body.rhs)
+  validateMessage: function (template, body, varVal) {
+    var symbolName = {}
+    return Symbol.find ({ id: (parseTree.getSymbolNodes (body.rhs)
+			       .filter (function (node) { return node.id && !node.name })
+			       .map (function (node) { return node.id })) })
+      .then (function (symbols) {
+	if (symbols)
+	  symbols.forEach (function (symbol) { symbolName[symbol.id] = symbol.name })
+	// call makeRhsExpansionText to verify that stored &eval texts are correct
+	parseTree.makeRhsExpansionText ({ rhs: body.rhs,
+					  vars: varVal,
+					  makeSymbolName: function (symNode) { return symNode.name || symbolName[symNode.id] },
+					  expandCallback: function() {
+					    throw new Error ('unexpanded node')
+					  },
+					  validateEvalText: function (storedEvalText, evalText) {
+					    throw new Error ("in &eval, stored evaluation text '" + storedEvalText + "' does not match dynamically computed value '" + evalText + "'")
+					  } })
+	// compare body to template
+	return SymbolService.validateMessageRhs (template.content, body.rhs)
+      })
   },
 
-  validateMessageRhs: function (templateContent, bodyRhs) {
+  validateMessageRhs: function (templateContent, bodyRhs, inQuote) {
     if (!templateContent)
       return Promise.reject('template content missing')
     if (!bodyRhs)
@@ -31,43 +50,53 @@ module.exports = {
       case 'assign':
         if (templateNode.varname !== bodyNode.varname)
           return Promise.reject('varname mismatch in assign')
-        return SymbolService.validateMessageRhs (templateNode.value, bodyNode.value)
+        return SymbolService.validateMessageRhs (templateNode.value, bodyNode.value, inQuote)
       case 'lookup':
         return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
       case 'cond':
-        return SymbolService.validateMessageRhs (templateNode.test, bodyNode.test)
-          .then (SymbolService.validateMessageRhs (templateNode.t, bodyNode.t))
-          .then (SymbolService.validateMessageRhs (templateNode.f, bodyNode.f))
+        return SymbolService.validateMessageRhs (templateNode.test, bodyNode.test, inQuote)
+          .then (SymbolService.validateMessageRhs (templateNode.t, bodyNode.t, inQuote))
+          .then (SymbolService.validateMessageRhs (templateNode.f, bodyNode.f, inQuote))
       case 'func':
         if (templateNode.funcname !== bodyNode.funcname)
           return Promise.reject('funcname mismatch')
-        var result = SymbolService.validateMessageRhs (templateNode.args, bodyNode.args)
-        if (typeof(bodyNode.value) !== 'undefined') {
-          result = result.promise (function() {
-            // security hole here: should check that dynamically expanded text (evalText) is what it should be
-            // this would require passing in vars...
-            return SymbolService.validateMessageRhs (bodyNode.evalText, bodyNode.value)
-          })
-        }
-        return result
+	switch (bodyNode.funcname) {
+	case 'quote':
+          return SymbolService.validateMessageRhs (templateNode.args, bodyNode.args, true)
+	  break
+	case 'eval':
+          return SymbolService.validateMessageRhs (templateNode.args, bodyNode.args, inQuote)
+	    .then (function() {
+	      if (!inQuote)
+		return SymbolService.validateMessageRhs (bodyNode.evaltext, bodyNode.value)
+	    })
+	  break
+	default:
+          return SymbolService.validateMessageRhs (templateNode.args, bodyNode.args, inQuote)
+	  break
+	}
       case 'alt':
+        if (inQuote)
+	  return SymbolService.validateMessageRhs (templateNode.opts, bodyNode.opts)
         return SymbolService.validateMessageRhs (templateNode.opts[bodyNode.n], bodyNode.rhs)
       case 'root':
-        return SymbolService.validateMessageRhs (templateNode.rhs, bodyNode.rhs)
+        return SymbolService.validateMessageRhs (templateNode.rhs, bodyNode.rhs, inQuote)
       case 'sym':
         if ((templateNode.id && bodyNode.id) ? (templateNode.id !== bodyNode.id) : (templateNode.name !== bodyNode.name))
           Promise.reject('symbol id/name mismatch')
         else {
+	  if (inQuote)
+	    return Promise.resolve()
           var symbolQuery = templateNode.id ? { id: templateNode.id } : { name: templateNode.name }
           return Symbol.findOneCached (symbolQuery)
-          .then (function (symbol) {
-            if (!symbol)
-              Promise.reject('symbol not found: ' + JSON.stringify(symbolQuery))
-            else if (symbol.latestRevision !== bodyNode.rev)
-              Promise.reject('revision mismatch')
-            else
-              return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
-          })
+            .then (function (symbol) {
+              if (!symbol)
+		Promise.reject('symbol not found: ' + JSON.stringify(symbolQuery))
+              else if (symbol.latestRevision !== bodyNode.rev) {
+		Promise.reject('revision mismatch (message has ' + bodyNode.rev + ', latest is ' + symbol.latestRevision + ')')
+              } else
+		return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
+            })
         }
       case 'opt':
       default:

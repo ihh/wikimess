@@ -103,7 +103,17 @@
           }, [])
           break
         case 'func':
-          r = pt.getSymbolNodes (node.args)
+	  switch (node.funcname) {
+	  case 'quote':
+	    break
+	  case 'eval':
+	    if (node.value)
+	      r = pt.getSymbolNodes (node.value)
+	    break
+	  default:
+	    r = pt.getSymbolNodes (node.args)
+	    break
+	  }
           break
         case 'cond':
           r = pt.getSymbolNodes (node.test.concat (node.t, node.f))
@@ -172,9 +182,9 @@
     return typeof(node) === 'object' && node.type === 'cond'
       && node.test.length === 1 && typeof(node.test[0]) === 'object' && node.test[0].type === 'lookup'
       && node.t.length === 1 && typeof(node.t[0]) === 'object' && node.t[0].type === 'func'
-      && node.t[0].funcname === 'eval' && node.t[0].rhs.length === 1 && node.t[0].rhs[0].type === 'lookup'
+      && node.t[0].funcname === 'eval' && node.t[0].args.length === 1 && node.t[0].args[0].type === 'lookup'
       && node.f.length === 1 && typeof(node.f[0]) === 'object' && node.f[0].type === 'sym'
-      && node.test[0].varname === node.t[0].rhs[0].varname
+      && node.test[0].varname === node.t[0].args[0].varname
       && node.test[0].varname === makeSymbolName (node.f[0])
   }
   
@@ -202,7 +212,9 @@
         case 'cond':
           result = (isTraceryExpr (tok, makeSymbolName)
                     ? ('#' + tok.test[0].varname + '#')
-                    : (funcChar + 'if' + [tok.test,tok.t,tok.f].map (function (arg) { return leftBraceChar + pt.makeRhsText (arg, makeSymbolName) + rightBraceChar }).join('')))
+                    : (funcChar + [['if',tok.test],
+				   ['then',tok.t],
+				   ['else',tok.f]].map (function (keyword_arg) { return keyword_arg[0] + leftBraceChar + pt.makeRhsText (keyword_arg[1], makeSymbolName) + rightBraceChar }).join('')))
           break;
         case 'func':
 	  var sugaredName = pt.makeSugaredName (tok, makeSymbolName)
@@ -262,32 +274,30 @@
     return this.summarize (this.makeRhsText(rhs,makeSymbolName), summaryLen)
   }
 
+  function extend (dest) {
+    Array.prototype.slice.call (arguments, 1).forEach (function (src) {
+      Object.keys(src).forEach (function (key) { dest[key] = src[key] })
+    })
+    return dest
+  }
+  
   function makeRhsExpansionText (config) {
     var pt = this
     return config.rhs.map (function (child) {
-      return pt.makeExpansionText ({ node: child,
-                                     leaveSymbolsUnexpanded: config.leaveSymbolsUnexpanded,
-                                     vars: config.vars,
-                                     makeSymbolName: config.makeSymbolName,
-                                     expandCallback: config.expandCallback })
+      return pt.makeExpansionText (extend ({}, config, { node: child }))
     }).join('')
   }
 
   function makeRhsExpansionTextForConfig (config, rhs) {
-    return this.makeRhsExpansionText ({ rhs: rhs,
-                                        leaveSymbolsUnexpanded: config.leaveSymbolsUnexpanded,
-                                        vars: config.vars,
-                                        makeSymbolName: config.makeSymbolName,
-                                        expandCallback: config.expandCallback })
+    return this.makeRhsExpansionText (extend ({}, config, { rhs: rhs }))
   }
-
+  
   function makeExpansionText (config) {
     var node = config.node
     var leaveSymbolsUnexpanded = config.leaveSymbolsUnexpanded
-    var varVal = config.vars
+    var varVal = config.vars || defaultVarVal()
     var makeSymbolName = config.makeSymbolName
     var expandCallback = config.expandCallback
-    varVal = varVal || defaultVarVal()
     var expansion = ''
     var makeRhsExpansionTextFor = makeRhsExpansionTextForConfig.bind (this, config)
     if (node) {
@@ -307,22 +317,25 @@
           break;
 
         case 'func':
-          if (node.funcname === 'quote') {
-            if (makeSymbolName)
-              expansion = this.makeRhsText (node.args, makeSymbolName)
-
-          } else {
+          if (node.funcname === 'quote')
+            expansion = this.makeRhsText (node.args, makeSymbolName)
+	  else {
             var arg = makeRhsExpansionTextFor (node.args)
             switch (node.funcname) {
 
             case 'eval':
-              if (expandCallback && typeof(node.value) === 'undefined') {
-                var evaltext = makeRhsExpansionTextFor (rhs)
+              var evaltext = makeRhsExpansionTextFor (node.args)
+	      if (config.validateEvalText && typeof(node.evaltext) !== 'undefined') {
+		var storedEvalText = this.makeRhsText (node.evaltext, makeSymbolName)
+		if (evaltext !== storedEvalText)
+		  config.validateEvalText (storedEvalText, evalText)
+	      }
+              if (expandCallback && typeof(node.value) === 'undefined')
                 expansion = expandCallback ({ node: node,
                                               text: evaltext,
                                               vars: varVal })
-              } else
-                expansion = node.value
+              else
+                expansion = makeRhsExpansionTextFor (node.value)
               break
 
             case 'cap':
@@ -426,15 +439,13 @@
   function finalVarVal (config) {
     var node = config.node, initVarVal = config.initVarVal
     var varVal
-    if (initVarVal) {
-      varVal = {}
-      Object.keys(initVarVal).forEach (function (name) {
-        varVal[name] = initVarVal[name]
-      })
-    } else
+    if (initVarVal)
+      varVal = extend ({}, initVarVal)
+    else
       varVal = defaultVarVal()
     this.makeExpansionText ({ node: node,
-                              vars: varVal })
+                              vars: varVal,
+			      makeSymbolName: config.makeSymbolName })
     return varVal
   }
 

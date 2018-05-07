@@ -28,5 +28,5 @@ function makeSugaredLookup (name) {
 function makeTraceryExpr (sym, mods) {
   return mods.reduce (function (expr, mod) {
     return makeFunction (mod, [expr])
-  }, makeConditional ([makeLookup(sym)], [makeFunction('eval',[sym])], [makeSymbol(sym)]))
+  }, makeConditional ([makeLookup(sym)], [makeFunction('eval',[makeLookup(sym)])], [makeSymbol(sym)]))
 }

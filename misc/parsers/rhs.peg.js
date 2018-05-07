@@ -53,7 +53,7 @@ TraceryModifier
   / ".s" { return "plural" }
 
 Conditional
-  = "&if" testArg:FunctionArg trueArg:FunctionArg falseArg:FunctionArg { return makeConditional (testArg, trueArg, falseArg) }
+  = "&if" testArg:FunctionArg ("then" / "") trueArg:FunctionArg ("else" / "")  falseArg:FunctionArg { return makeConditional (testArg, trueArg, falseArg) }
 
 Function
   = "&" func:FunctionName args:FunctionArg { return makeFunction (func, args) }

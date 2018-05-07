@@ -279,7 +279,7 @@ module.exports = {
       return templatePromise.then (function (template) {
         // validate the message against the template
         // we should probably do this before creating a new template... but that would complicate the code & it's to guard against a rare event (forging messages to fit templates)
-        return SymbolService.validateMessage (template, body)
+        return SymbolService.validateMessage (template, body, extend ({}, initVarVal))
           .then (function() {
             // message is valid
             result.template = { id: template.id }
