@@ -1,6 +1,5 @@
 function makeSymbol (name) { return { type: 'sym', name: name.toLowerCase() } }
 function makeLookup (name) { return { type: 'lookup', varname: name } }
-function makeExpansion (name) { return { type: 'expand', varname: name } }
 function makeAssign (name, value) { return { type: 'assign', varname: name, value: value } }
 function makeAlternation (opts) { return { type: 'alt', opts: opts } }
 function makeFunction (name, args) { return { type: 'func', funcname: name, args: args } }
@@ -26,12 +25,8 @@ function makeSugaredLookup (name) {
   return sugarize (name, makeLookup)
 }
 
-function makeSugaredExpansion (name) {
-  return sugarize (name, makeExpansion)
-}
-
 function makeTraceryExpr (sym, mods) {
   return mods.reduce (function (expr, mod) {
     return makeFunction (mod, [expr])
-  }, makeConditional ([makeLookup(sym)], [makeExpansion(sym)], [makeSymbol(sym)]))
+  }, makeConditional ([makeLookup(sym)], [makeFunction('eval',[sym])], [makeSymbol(sym)]))
 }

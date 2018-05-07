@@ -93,8 +93,16 @@
               "args": {
                 "$ref": "#/definitions/rhs"
               },
+              "evaltext": {
+                "$ref": "#/definitions/rhs"
+              },
+              "value": {
+                "$ref": "#/definitions/rhs"
+              },
               "funcname": {
                 "enum": [
+                  "eval",
+                  "quote",
                   "uc",
                   "lc",
                   "cap",
@@ -155,28 +163,6 @@
               },
               "varname": {
                 "type": "string"
-              }
-            },
-            "required": [
-              "type",
-              "varname"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "expand"
-              },
-              "varname": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              },
-              "rhs": {
-                "$ref": "#/definitions/rhs"
               }
             },
             "required": [

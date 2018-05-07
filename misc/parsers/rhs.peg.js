@@ -11,7 +11,6 @@ Node
   / Function
   / VarAssignment
   / VarLookup
-  / VarExpansion
   / Alternation
   / char:[\$\#&\^] { return char }
 
@@ -59,23 +58,18 @@ Conditional
 Function
   = "&" func:FunctionName args:FunctionArg { return makeFunction (func, args) }
 
-FunctionName = "uc" / "lc" / "cap" / "plural" / "singular" / "a" / "nlp_plural" / "topic" / "person" / "place" / "past" / "present" / "future" / "infinitive" / "gerund" / "adjective" / "negative" / "positive"
+FunctionName = "eval" / "quote" / "uc" / "lc" / "cap" / "plural" / "singular" / "a" / "nlp_plural" / "topic" / "person" / "place" / "past" / "present" / "future" / "infinitive" / "gerund" / "adjective" / "negative" / "positive"
 
 FunctionArg
   = "{" args:NodeList "}" { return args }
   / sym:Symbol { return [sym] }
   / alt:Alternation { return [alt] }
   / lookup:VarLookup { return [lookup] }
-  / expansion:VarExpansion { return [expansion] }
   / innerFunc:Function { return [innerFunc] }
 
 VarLookup
   = "^" varname:Identifier { return makeSugaredLookup (varname) }
   / "^{" _ varname:Identifier _ "}" { return makeSugaredLookup (varname) }
-
-VarExpansion
-  = "$^" varname:Identifier { return makeSugaredExpansion (varname) }
-  / "$^{" _ varname:Identifier _ "}" { return makeSugaredExpansion (varname) }
 
 VarAssignment
   = "^" varname:Identifier "={" args:NodeList "}" { return makeAssign (varname, args) }
@@ -83,7 +77,6 @@ VarAssignment
   / "^" varname:Identifier "=" sym:Symbol { return makeAssign (varname, [sym]) }
   / "^" varname:Identifier "=" func:Function { return makeAssign (varname, [func]) }
   / "^" varname:Identifier "=" lookup:VarLookup { return makeAssign (varname, [lookup]) }
-  / "^" varname:Identifier "=" expansion:VarExpansion { return makeAssign (varname, [expansion]) }
 
 Alternation
   = "{" head:NodeList "|" tail:AltList "}" { return makeAlternation ([head].concat(tail)) }

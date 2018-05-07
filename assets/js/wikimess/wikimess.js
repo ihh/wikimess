@@ -1654,7 +1654,7 @@ var WikiMess = (function() {
                     var expansionText, expansionTextMatch
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
-                    else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.ParseTree.makeExpansionText(wm.composition.body)).match(/\S/))))
+                    else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText ({ node: wm.composition.body })).match(/\S/))))
                       window.alert ("Expanded text is empty. Please vary the input text, or hit 'discard' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
@@ -1687,9 +1687,8 @@ var WikiMess = (function() {
                                                         ? (window.location.origin + result.message.path)
                                                         : undefined)),
                                                title: wm.composition.title,
-                                               text: wm.ParseTree.makeExpansionText (wm.composition.body,
-                                                                                     false,
-                                                                                     wm.compositionVarVal()) })
+                                               text: wm.makeExpansionText ({ node: wm.composition.body,
+                                                                             vars: wm.compositionVarVal() }) })
                             else if (result.message.tweet)
                               wm.redirectToTweet (result.message.tweeter, result.message.tweet)
                             return result
@@ -2865,7 +2864,9 @@ var WikiMess = (function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
       var markdown = this.renderMarkdown
-      (this.ParseTree.makeExpansionText (this.animationExpansion, true, this.compositionVarVal()),
+      (this.makeExpansionText ({ node: this.animationExpansion,
+                                 leaveSymbolsUnexpanded: true,
+                                 vars: this.compositionVarVal() }),
        function (html) {
 	 return wm.linkSymbols (html)
        })
@@ -2881,6 +2882,11 @@ var WikiMess = (function() {
                        this.animateExpansion.bind(this))
     },
 
+    makeExpansionText: function (config) {
+      config.makeSymbolName = this.makeSymbolName.bind (this)
+      return this.ParseTree.makeExpansionText (config)
+    },
+    
     linkSymbols: function (html) {
       // more than slightly hacky, this method...
       var nSymbols = 0
@@ -2897,7 +2903,8 @@ var WikiMess = (function() {
 
     stopAnimation: function() {
       if (this.expansionAnimationTimer) {
-        this.animationDiv.html (this.renderMarkdown (this.ParseTree.makeExpansionText (this.animationExpansion, false, this.compositionVarVal())))
+        this.animationDiv.html (this.renderMarkdown (this.makeExpansionText ({ node: this.animationExpansion,
+                                                                               vars: this.compositionVarVal() })))
         this.clearTimer ('expansionAnimationTimer')
         return true
       }
@@ -2935,24 +2942,26 @@ var WikiMess = (function() {
       var initVarVal = config.vars
       var expandCalls = config.calls || 0
       var expansion
+      function throwCallback (info) { throw info; return null }
       try {
-        expansion = wm.ParseTree.makeExpansionText (initNode, leaveSymbolsUnexpanded, varVal)
+        expansion = wm.makeExpansionText ($.extend ({}, config, { expandCallback: throwCallback }))
       } catch (expandNodeInfo) {
-        var expandNode = expandNodeInfo.node, expandVarVal = expandNodeInfo.vars
-        var rhsText = expandVarVal[expandNode.varname], parsedRhs = parseRhs(rhsText)
-        expandNode.value = rhsText
-        if (expandCalls < wm.maxExpandCalls)
-          return wm.expandRecursively ({ content: parsedRhs,
-                                         vars: expandVarVal,
-                                         calls: expandCalls + 1})
-          .then (function (result) {
-            expandNode.rhs = result.expansion
-            return wm.makeExpansionTextPromise ($.extend ({},
-                                                          config,
-                                                          { calls: result.calls }))
-          })
-        else {
-          expandNode.rhs = []
+        if (expandCalls < wm.maxExpandCalls) {
+          var expandNode = expandNodeInfo.node, expandText = expandNodeInfo.text
+          var parsedExpandText = wm.parseRhs (expandText)
+          return wm.getServerExpansion ({ content: parsedRhs,
+                                          vars: expandVarVal })
+            .then (function (result) {
+              expandNode.evaltext = parsedExpandText
+              expandNode.value = result
+              // it is a bit inefficient here to start back at the root again every time, but simpler code-wise, and not too slow
+              return wm.makeExpansionTextPromise ($.extend ({},
+                                                            config,
+                                                            { calls: expandCalls + 1 }))
+            })
+        } else {
+          expandNode.evalText = []
+          expandNode.value = []
           return wm.makeExpansionTextPromise (config)
         }
       }
@@ -2960,11 +2969,10 @@ var WikiMess = (function() {
                                      calls: expandCalls })
     },
 
-    expandRecursively: function (config) {
+    getServerExpansion: function (config) {
       var wm = this
       var node = config.node
       var initVarVal = config.vars
-      var expandCalls = config.calls || 0
       var sampledTree = wm.ParseTree.sampleParseTree (node)
       var symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
       var symbolQueries = symbolNodes.map (function (sym) {
@@ -2988,8 +2996,7 @@ var WikiMess = (function() {
               }
 	    })
           }
-          return { expansion: sampledTree,
-                   calls: expandCalls }
+          return sampledTree
         })
     },
     
@@ -3017,11 +3024,14 @@ var WikiMess = (function() {
             .then (function() {
               if (newTemplate)
                 wm.updateMessageHeader (newTemplate)
-              return wm.expandRecursively ({ node: template.content,
-                                             vars: wm.compositionVarVal() })
-            }).then (function (result) {
-              wm.composition.body = { type: 'root', rhs: result.expansion }
-              wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
+              return wm.getServerExpansion ({ node: template.content,
+                                              vars: wm.compositionVarVal() })
+            }).then (function (expansion) {
+              return wm.makeExpansionTextPromise ({ node: expansion })  // expand all &eval{...}'s
+                .then (function() {
+                  wm.composition.body = { type: 'root', rhs: expansion }
+                  wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
+                })
             })
         } else
           wm.showMessageBody()
@@ -3083,7 +3093,7 @@ var WikiMess = (function() {
 	if (wm.animationExpansion)
           wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
-	var rawExpansion = wm.ParseTree.makeExpansionText (expansion, false, wm.compositionVarVal())
+	var rawExpansion = wm.makeExpansionText ({ node: expansion, vars: wm.compositionVarVal() })
 	var processedExpansion = rawExpansion.replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
 								 ? wm.emptyTemplateWarning
 								 : wm.emptyMessageWarning))
@@ -3521,9 +3531,8 @@ var WikiMess = (function() {
                                                              initVarVal: message.vars }) })
 
       var textDiv = $('<div class="text">')
-	  .html (wm.renderMarkdown (wm.ParseTree.makeExpansionText (message.body,
-								    false,
-								    message.vars || wm.ParseTree.defaultVarVal (sender, recipient, message.tags))))
+	  .html (wm.renderMarkdown (wm.makeExpansionText ({ node: message.body,
+							    vars: message.vars || wm.ParseTree.defaultVarVal (sender, recipient, message.tags) })))
       var inertTextDiv = $('<div class="inerttext">').html ('Swipe left or right to see next card.')
       var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv = $('<div class="messagebody">')
@@ -4550,10 +4559,6 @@ var WikiMess = (function() {
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
                                      ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
-          case 'expand':
-            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (symChar + varChar + leftBraceChar + tok.varname + rightBraceChar)
-                                     : (symChar + varChar + tok.varname))
           case 'assign':
             return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeRhsSpan (tok.value),
@@ -4578,7 +4583,7 @@ var WikiMess = (function() {
 						     wm.loadGrammarSymbol (tok.args[0])
 						   })
                       : sugaredName)
-            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'expand' || tok.args[0].type === 'alt')
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
             return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
                                        wm.makeRhsSpan (tok.args),
                                        noBraces ? '' : rightBraceChar)
@@ -4605,10 +4610,6 @@ var WikiMess = (function() {
             return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
                                      ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
-          case 'expand':
-            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (symChar + varChar + leftBraceChar + tok.varname + rightBraceChar)
-                                     : (symChar + varChar + tok.varname))
           case 'assign':
             return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeTemplateSpan (tok.value),

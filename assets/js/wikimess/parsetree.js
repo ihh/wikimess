@@ -70,10 +70,9 @@
 	case 'func':
 	  result = { type: 'func',
                      funcname: node.funcname,
-		     args: pt.sampleParseTree (node.args, rng) }
+		     args: node.funcname === 'quote' ? node.args : pt.sampleParseTree (node.args, rng) }
           break
 	case 'lookup':
-	case 'expand':
 	  result = node
           break
 	default:
@@ -94,7 +93,6 @@
       if (typeof(node) === 'object')
         switch (node.type) {
         case 'lookup':
-        case 'expand':
           break
         case 'assign':
           r = pt.getSymbolNodes (node.value)
@@ -149,7 +147,6 @@
             result = pt.parseTreeEmpty (node.args)
             break
           case 'lookup':
-          case 'expand':
             result = false  // we aren't checking variable values, so just assume any referenced variable is nonempty (yes this will miss some empty trees)
             break
           case 'root':
@@ -174,9 +171,10 @@
   function isTraceryExpr (node, makeSymbolName) {
     return typeof(node) === 'object' && node.type === 'cond'
       && node.test.length === 1 && typeof(node.test[0]) === 'object' && node.test[0].type === 'lookup'
-      && node.t.length === 1 && typeof(node.t[0]) === 'object' && node.t[0].type === 'expand'
+      && node.t.length === 1 && typeof(node.t[0]) === 'object' && node.t[0].type === 'func'
+      && node.t[0].funcname === 'eval' && node.t[0].rhs.length === 1 && node.t[0].rhs[0].type === 'lookup'
       && node.f.length === 1 && typeof(node.f[0]) === 'object' && node.f[0].type === 'sym'
-      && node.test[0].varname === node.t[0].varname
+      && node.test[0].varname === node.t[0].rhs[0].varname
       && node.test[0].varname === makeSymbolName (node.f[0])
   }
   
@@ -194,11 +192,6 @@
           result = (nextIsAlpha
                     ? (varChar + leftBraceChar + tok.varname.toLowerCase() + rightBraceChar)
                     : (varChar + tok.varname.toLowerCase()))
-	  break
-        case 'expand':
-          result = (nextIsAlpha
-                    ? (symChar + varChar + leftBraceChar + tok.varname.toLowerCase() + rightBraceChar)
-                    : (symChar + varChar + tok.varname.toLowerCase()))
 	  break
         case 'assign':
           result = varChar + tok.varname + assignChar + leftBraceChar + pt.makeRhsText(tok.value,makeSymbolName) + rightBraceChar
@@ -218,7 +211,7 @@
 		      ? (sugaredName[0] + leftBraceChar + sugaredName.substr(1) + rightBraceChar)
 		      : sugaredName)
 	  else {
-            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'expand' || tok.args[0].type === 'alt')
+            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
             result = funcChar + tok.funcname + (noBraces ? '' : leftBraceChar) + pt.makeRhsText(tok.args,makeSymbolName) + (noBraces ? '' : rightBraceChar)
           }
 	  break
@@ -245,9 +238,6 @@
       } else if (funcNode.args[0].type === 'lookup') {
         name = funcNode.args[0].varname
         prefixChar = varChar
-      } else if (funcNode.args[0].type === 'expand') {
-        name = funcNode.args[0].varname
-        prefixChar = symChar + varChar
       }
       if (name) {
         name = name.toLowerCase()
@@ -266,106 +256,138 @@
     return text.replace(/^\s*/,'').substr (0, summaryLen)
   }
   function summarizeExpansion (expansion, summaryLen) {
-    return summarize (makeExpansionText(expansion), summaryLen)
+    return this.summarize (this.makeExpansionText ({ node: expansion }), summaryLen)
   }
   function summarizeRhs (rhs, makeSymbolName, summaryLen) {
-    return summarize (makeRhsText(rhs,makeSymbolName), summaryLen)
+    return this.summarize (this.makeRhsText(rhs,makeSymbolName), summaryLen)
   }
 
-  function makeRhsExpansionText (rhs, leaveSymbolsUnexpanded, varVal) {
-    return rhs.map (function (child) { return makeExpansionText (child, leaveSymbolsUnexpanded, varVal) })
-      .join('')
+  function makeRhsExpansionText (config) {
+    var pt = this
+    return config.rhs.map (function (child) {
+      return pt.makeExpansionText ({ node: child,
+                                     leaveSymbolsUnexpanded: config.leaveSymbolsUnexpanded,
+                                     vars: config.vars,
+                                     makeSymbolName: config.makeSymbolName,
+                                     expandCallback: config.expandCallback })
+    }).join('')
   }
 
-  function makeExpansionText (node, leaveSymbolsUnexpanded, varVal) {
+  function makeRhsExpansionTextForConfig (config, rhs) {
+    return this.makeRhsExpansionText ({ rhs: rhs,
+                                        leaveSymbolsUnexpanded: config.leaveSymbolsUnexpanded,
+                                        vars: config.vars,
+                                        makeSymbolName: config.makeSymbolName,
+                                        expandCallback: config.expandCallback })
+  }
+
+  function makeExpansionText (config) {
+    var node = config.node
+    var leaveSymbolsUnexpanded = config.leaveSymbolsUnexpanded
+    var varVal = config.vars
+    var makeSymbolName = config.makeSymbolName
+    var expandCallback = config.expandCallback
     varVal = varVal || defaultVarVal()
     var expansion = ''
+    var makeRhsExpansionTextFor = makeRhsExpansionTextForConfig.bind (this, config)
     if (node) {
       if (typeof(node) === 'string')
         expansion = node
       else
         switch (node.type) {
-        case 'expand':
-          if (typeof(node.rhs) === 'undefined')
-            throw { node: node,
-                    vars: varVal }
-          expansion = makeRhsExpansionText (node.rhs, leaveSymbolsUnexpanded, varVal)
-          break
         case 'assign':
-          varVal[node.varname] = makeRhsExpansionText (node.value, leaveSymbolsUnexpanded, varVal)
+          varVal[node.varname] = makeRhsExpansionTextFor (node.value)
           break
         case 'lookup':
           expansion = varVal[node.varname.toLowerCase()]
           break
         case 'cond':
-          var test = makeRhsExpansionText (node.test, leaveSymbolsUnexpanded, varVal)
-          expansion = makeRhsExpansionText (test.match(/\S/) ? node.t : node.f, leaveSymbolsUnexpanded, varVal)
+          var test = makeRhsExpansionTextFor (node.test)
+          expansion = makeRhsExpansionTextFor (test.match(/\S/) ? node.t : node.f)
           break;
+
         case 'func':
-          var arg = makeRhsExpansionText (node.args, leaveSymbolsUnexpanded, varVal)
-          switch (node.funcname) {
-          case 'cap':
-            expansion = capitalize (arg)
-            break
-          case 'uc':
-            expansion = arg.toUpperCase()
-            break
-          case 'lc':
-            expansion = arg.toLowerCase()
-            break
-          case 'plural':
-            expansion = pluralForm(arg)
-            break
-          case 'a':
-            expansion = indefiniteArticle (arg)
-            break
+          if (node.funcname === 'quote') {
+            if (makeSymbolName)
+              expansion = this.makeRhsText (node.args, makeSymbolName)
 
-            // nlp: nouns
-          case 'nlp_plural':  // alternative to built-in plural
-            expansion = nlp(arg).nouns(0).toPlural().text()
-            break
-          case 'singular':
-            expansion = nlp(arg).nouns(0).toSingular().text()
-            break
-          case 'topic':
-            expansion = nlp(arg).topics(0).text()
-            break
-          case 'person':
-            expansion = nlp(arg).people(0).text()
-            break
-          case 'place':
-            expansion = nlp(arg).places(0).text()
-            break
+          } else {
+            var arg = makeRhsExpansionTextFor (node.args)
+            switch (node.funcname) {
 
-            // nlp: verbs
-          case 'past':
-            expansion = nlp(arg).verbs(0).toPastTense().text()
-            break
-          case 'present':
-            expansion = nlp(arg).verbs(0).toPresentTense().text()
-            break
-          case 'future':
-            expansion = nlp(arg).verbs(0).toFutureTense().text()
-            break
-          case 'infinitive':
-            expansion = nlp(arg).verbs(0).toInfinitive().text()
-            break
-          case 'gerund':
-            expansion = nlp(arg).verbs(0).toGerund().text()
-            break
-          case 'adjective':
-            expansion = nlp(arg).verbs(0).asAdjective()[0] || ''
-            break
-          case 'negative':
-            expansion = nlp(arg).verbs(0).toNegative().text()
-            break
-          case 'positive':
-            expansion = nlp(arg).verbs(0).toPositive().text()
-            break
+            case 'eval':
+              if (expandCallback && typeof(node.value) === 'undefined') {
+                var evaltext = makeRhsExpansionTextFor (rhs)
+                expansion = expandCallback ({ node: node,
+                                              text: evaltext,
+                                              vars: varVal })
+              } else
+                expansion = node.value
+              break
 
-          default:
-            expansion = arg
-            break
+            case 'cap':
+              expansion = capitalize (arg)
+              break
+            case 'uc':
+              expansion = arg.toUpperCase()
+              break
+            case 'lc':
+              expansion = arg.toLowerCase()
+              break
+            case 'plural':
+              expansion = pluralForm(arg)
+              break
+            case 'a':
+              expansion = indefiniteArticle (arg)
+              break
+
+              // nlp: nouns
+            case 'nlp_plural':  // alternative to built-in plural
+              expansion = nlp(arg).nouns(0).toPlural().text()
+              break
+            case 'singular':
+              expansion = nlp(arg).nouns(0).toSingular().text()
+              break
+            case 'topic':
+              expansion = nlp(arg).topics(0).text()
+              break
+            case 'person':
+              expansion = nlp(arg).people(0).text()
+              break
+            case 'place':
+              expansion = nlp(arg).places(0).text()
+              break
+
+              // nlp: verbs
+            case 'past':
+              expansion = nlp(arg).verbs(0).toPastTense().text()
+              break
+            case 'present':
+              expansion = nlp(arg).verbs(0).toPresentTense().text()
+              break
+            case 'future':
+              expansion = nlp(arg).verbs(0).toFutureTense().text()
+              break
+            case 'infinitive':
+              expansion = nlp(arg).verbs(0).toInfinitive().text()
+              break
+            case 'gerund':
+              expansion = nlp(arg).verbs(0).toGerund().text()
+              break
+            case 'adjective':
+              expansion = nlp(arg).verbs(0).asAdjective()[0] || ''
+              break
+            case 'negative':
+              expansion = nlp(arg).verbs(0).toNegative().text()
+              break
+            case 'positive':
+              expansion = nlp(arg).verbs(0).toPositive().text()
+              break
+
+            default:
+              expansion = arg
+              break
+            }
           }
           break
         case 'root':
@@ -374,7 +396,7 @@
           if (leaveSymbolsUnexpanded && node.name)
             expansion = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
           else if (node.rhs)
-            expansion = makeRhsExpansionText (node.rhs, leaveSymbolsUnexpanded, varVal)
+            expansion = makeRhsExpansionTextFor (node.rhs)
           break
         case 'alt':
         default:
@@ -411,12 +433,13 @@
       })
     } else
       varVal = defaultVarVal()
-    makeExpansionText (node, false, varVal)
+    this.makeExpansionText ({ node: node,
+                              vars: varVal })
     return varVal
   }
 
   function nextVarVal (config) {
-    var varVal = finalVarVal (config)
+    var varVal = this.finalVarVal (config)
     varVal.prevtags = varVal.tags
     delete varVal.tags
     delete varVal.icon
@@ -628,9 +651,10 @@
     getSymbolNodes: getSymbolNodes,
     parseTreeEmpty: parseTreeEmpty,
     isTraceryExpr: isTraceryExpr,
-    makeRhsText: makeRhsText,
     makeSugaredName: makeSugaredName,
+    makeRhsText: makeRhsText,
     makeExpansionText: makeExpansionText,
+    makeRhsExpansionText: makeRhsExpansionText,
     summarizeRhs: summarizeRhs,
     summarizeExpansion: summarizeExpansion,
     defaultVarVal: defaultVarVal,

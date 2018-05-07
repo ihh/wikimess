@@ -33,7 +33,6 @@ module.exports = {
           return Promise.reject('varname mismatch in assign')
         return SymbolService.validateMessageRhs (templateNode.value, bodyNode.value)
       case 'lookup':
-      case 'expand':
         return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
       case 'cond':
         return SymbolService.validateMessageRhs (templateNode.test, bodyNode.test)
@@ -42,7 +41,15 @@ module.exports = {
       case 'func':
         if (templateNode.funcname !== bodyNode.funcname)
           return Promise.reject('funcname mismatch')
-        return SymbolService.validateMessageRhs (templateNode.args, bodyNode.args)
+        var result = SymbolService.validateMessageRhs (templateNode.args, bodyNode.args)
+        if (typeof(bodyNode.value) !== 'undefined') {
+          result = result.promise (function() {
+            // security hole here: should check that dynamically expanded text (evalText) is what it should be
+            // this would require passing in vars...
+            return SymbolService.validateMessageRhs (bodyNode.evalText, bodyNode.value)
+          })
+        }
+        return result
       case 'alt':
         return SymbolService.validateMessageRhs (templateNode.opts[bodyNode.n], bodyNode.rhs)
       case 'root':
