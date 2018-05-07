@@ -1563,7 +1563,7 @@ var WikiMess = (function() {
                                         wm.updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
-                                             ? wm.REST_getPlayerExpand (wm.playerID, symbol.id)
+                                             ? wm.getRecursiveExpansion (symbol.id, wm.compositionFinalVarVal())
                                              .then (function (result) {
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
@@ -2962,7 +2962,7 @@ var WikiMess = (function() {
         var expandNode = e.node, expandText = e.text
         if (expandCalls < wm.maxExpandCalls) {
           var parsedExpandText = wm.parseRhs (expandText)
-          return wm.getServerExpansion (parsedExpandText)
+          return wm.getRhsExpansion (parsedExpandText)
             .then (function (expansion) {
               expandNode.evaltext = parsedExpandText
               expandNode.value = expansion
@@ -2981,7 +2981,7 @@ var WikiMess = (function() {
                                      calls: expandCalls })
     },
 
-    getServerExpansion: function (rhs) {
+    getRhsExpansion: function (rhs) {
       var wm = this
       var sampledTree = wm.ParseTree.sampleParseTree (rhs)
       var symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
@@ -3011,6 +3011,16 @@ var WikiMess = (function() {
           return sampledTree
         })
     },
+
+    getRecursiveExpansion: function (symbolID, initVarVal) {
+      var wm = this
+      initVarVal = initVarVal || wm.defaultVarVal()
+      return wm.REST_getPlayerExpand (wm.playerID, symbolID)
+        .then (function (result) {
+          return wm.makeExpansionTextPromise ({ node: result.expansion,
+						vars: initVarVal })  // expand all &eval{...}'s
+        })
+    },
     
     generateMessageBody: function (config) {
       var wm = this
@@ -3036,7 +3046,7 @@ var WikiMess = (function() {
             .then (function() {
               if (newTemplate)
                 wm.updateMessageHeader (newTemplate)
-              return wm.getServerExpansion (template.content)
+              return wm.getRhsExpansion (template.content)
             }).then (function (expansion) {
 	      var root = { type: 'root', rhs: expansion }
               return wm.makeExpansionTextPromise ({ node: root,
@@ -3604,7 +3614,14 @@ var WikiMess = (function() {
       return $.Deferred().resolve()
     },
 
+    defaultVarVal: function() {
+      var sender = this.playerID ? this.playerInfo : null
+      return this.ParseTree.defaultVarVal (sender)
+    },
+
     compositionVarVal: function() {
+      if (!this.composition)
+        return this.defaultVarVal()
       var sender = this.playerID ? this.playerInfo : null
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
       return $.extend ({},
@@ -3612,7 +3629,15 @@ var WikiMess = (function() {
 			? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
 			: this.ParseTree.defaultVarVal (sender, recipient, this.composition.tags)))
     },
-    
+
+    compositionFinalVarVal: function() {
+      if (!this.composition)
+        return this.defaultVarVal()
+      return this.ParseTree.finalVarVal ({ node: this.composition.body,
+                                           initVarVal: wm.compositionVarVal(),
+					   makeSymbolName: wm.makeSymbolName.bind(wm) })
+    },
+
     relativeDateString: function (dateInitializer) {
       var weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
       var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -4152,7 +4177,7 @@ var WikiMess = (function() {
           if (!expansion)
             expandedPromise = expandedPromise
             .then (function () {
-              return wm.REST_getPlayerExpand (wm.playerID, symbol.id)
+              return wm.getRecursiveExpansion (symbol.id, wm.compositionFinalVarVal())
                 .then (function (result) {
                   expansion = result.expansion
                 })
@@ -4182,7 +4207,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            wm.REST_getPlayerExpand (wm.playerID, symbol.id)
+            wm.getRecursiveExpansion (symbol.id, wm.compositionFinalVarVal())
               .then (function (result) {
                 wm.showingHelp = false
 		wm.infoPaneTitle.html (wm.makeSymbolSpan (symbol,
