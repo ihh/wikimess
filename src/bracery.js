@@ -224,4 +224,5 @@ Bracery.prototype.expandSymbol = function (symbolName, config) {
 
 module.exports = { Bracery: Bracery,
                    ParseTree: ParseTree,
-                   RhsParser: RhsParser }
+                   RhsParser: RhsParser,
+                   nlp: nlp }
