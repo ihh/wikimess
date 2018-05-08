@@ -4606,9 +4606,10 @@ var WikiMess = (function() {
                                      ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
           case 'assign':
-            return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
+            return $('<span>').append ((tok.local ? '&let' : '') + varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeRhsSpan (tok.value),
-                                       rightBraceChar)
+                                       rightBraceChar,
+                                       tok.local ? [leftBraceChar, wm.makeRhsSpan (tok.local), rightBraceChar] : undefined)
           case 'alt':
             return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeRhsSpan(opt)) }),
@@ -4659,9 +4660,10 @@ var WikiMess = (function() {
                                      ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
                                      : (varChar + tok.varname))
           case 'assign':
-            return $('<span>').append (varChar + tok.varname + assignChar + leftBraceChar,
+            return $('<span>').append ((tok.local ? '&let' : '') + varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeTemplateSpan (tok.value),
-                                       rightBraceChar)
+                                       rightBraceChar,
+                                       tok.local ? [leftBraceChar, wm.makeRhsSpan (tok.local), rightBraceChar] : undefined)
           case 'alt':
             return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeTemplateSpan(opt)) }),
