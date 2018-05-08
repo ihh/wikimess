@@ -191,7 +191,7 @@ Bracery.prototype._doAllEvaluations = function (config) {
         expandNode.maxExpandCalls = true
       }
     } else
-      expansion = next.expansion  // may be falsey
+      expansion = next.expansion  // may be falsy
   }
 }
 
