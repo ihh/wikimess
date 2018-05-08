@@ -101,7 +101,8 @@ var symbolSchemaDefs = {
          "properties": {
            "type": { "const": "assign" },
            "value": { "$ref": "#/definitions/rhs" },
-           "varname": { "type": "string" } },
+           "varname": { "type": "string" },
+           "local": { "$ref": "#/definitions/rhs" } },
          "required": ["type", "varname", "value"],
          "additionalProperties": false },
        

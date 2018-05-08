@@ -51,6 +51,10 @@ module.exports = {
         if (templateNode.varname !== bodyNode.varname)
           return Promise.reject('varname mismatch in assign')
         return SymbolService.validateMessageRhs (templateNode.value, bodyNode.value, inQuote)
+          .then (function() {
+            if (templateNode.local || bodyNode.local)
+              return SymbolService.validateMessageRhs (templateNode.local, bodyNode.local, inQuote)
+          })
       case 'lookup':
         return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
       case 'cond':
