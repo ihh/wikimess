@@ -1,3 +1,4 @@
+var nlp = require('../assets/js/ext/compromise.min.js')
 var RhsParser = require('../misc/parsers/rhs')
 var ParseTree = require('../assets/js/wikimess/parsetree')
 var extend = ParseTree.extend
@@ -15,17 +16,17 @@ Bracery.prototype.maxExpandCalls = 5  // max number of &eval{} calls per expansi
 Bracery.prototype.maxRecursionDepth = 3  // max number of recursive expansions of the same symbol
 Bracery.prototype.rng = Math.random
 
-Bracery.prototype.toJSON = function (name) {
+Bracery.prototype.toJSON = function() {
   var bracery = this
   var result = {}
-  if (name) {
-    var rules = this.rules[name]
-    if (rules)
-      result[name] = rules.map (function (rhs) {
-        return ParseTree.makeRhsText (rhs, makeSymbolName)
-      })
-  } else
-    result = extend.apply (this, Object.keys(this.rules).sort().map (this.toJSON.bind (this)))
+  var names = (arguments.length
+               ? Array.prototype.slice.call (arguments, 0)
+               : Object.keys(this.rules).sort())
+  names.forEach (function (name) {
+    result[name] = bracery.rules[name].map (function (rhs) {
+      return ParseTree.makeRhsText (rhs, makeSymbolName)
+    })
+  })
   return result
 }
 
@@ -98,14 +99,14 @@ Bracery.prototype._expandAllSymbols = function (config) {
     if (!atRecursionLimit (bracery, nextConfig)) {
       var expansion = bracery._expandSymbol (nextConfig)
       if (expansion)
-      node.rhs = expansion
+        node.rhs = expansion
       else {
         node.rhs = []
         node.not_found = true
       }
     } else {
       node.rhs = []
-      node.depth_limit = true
+      node.maxRecursionDepth = true
     }
   })
 }
@@ -187,7 +188,7 @@ Bracery.prototype._doAllEvaluations = function (config) {
       } else {
         expandNode.evalText = []
         expandNode.value = []
-        expandNode.eval_limit = true
+        expandNode.maxExpandCalls = true
       }
     } else
       expansion = next.expansion  // may be falsey
