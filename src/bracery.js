@@ -222,4 +222,6 @@ Bracery.prototype.expandSymbol = function (symbolName, config) {
   return this._expandAndEvaluate (extend (config || {}, { expansion: expansion }))
 }
 
-module.exports = Bracery
+module.exports = { Bracery: Bracery,
+                   ParseTree: ParseTree,
+                   RhsParser: RhsParser }
