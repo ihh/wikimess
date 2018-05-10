@@ -6,7 +6,7 @@
   "keywords": [],
   "dependencies": {
     "bcrypt": "^1.0.3",
-    "bracery": "^1.0.5",
+    "bracery": "^1.0.11",
     "connect-redis": "^3.3.2",
     "deepcopy": "~0.6.3",
     "deepmerge": "0.2.10",
@@ -56,7 +56,7 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "node app.js",
-    "postinstall": "cd misc/parsers; make postinstall",
+    "postinstall": "make postinstall",
     "test": "node ./node_modules/mocha/bin/mocha test/bootstrap.test.js test/integration/**/*.test.js"
   },
   "main": "app.js",

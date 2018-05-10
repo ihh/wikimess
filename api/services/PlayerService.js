@@ -5,7 +5,8 @@ var extend = require('extend');
 var merge = require('deepmerge');
 var twitterAPI = require('node-twitter-api');
 
-var parseTree = require('../../assets/js/wikimess/parsetree.js')
+var parseTree = require('bracery').ParseTree
+var VarsHelper = require('../../misc/parsers/vars')
 var nlp = require('../../assets/js/ext/compromise.min.js')
 
 // Uncomment to show line numbers on console.log messages
@@ -221,7 +222,7 @@ module.exports = {
       // find previous Message
       var previousPromise, previousTemplate
       if (typeof(previous) === 'undefined') {
-        initVarVal = parseTree.defaultVarVal (player, recipient, tags)
+        initVarVal = VarsHelper.defaultVarVal (player, recipient, tags)
         previousPromise = Promise.resolve()
       } else {
         previousPromise = Message.findOne ({ id: previous })
@@ -233,11 +234,11 @@ module.exports = {
           })
         previousPromise = previousPromise
           .then (function (previousMessage) {
-            initVarVal = parseTree.nextVarVal ({ node: previousMessage.body,
-                                                 initVarVal: previousMessage.initVarVal,
-                                                 sender: player,
-                                                 recipient: recipient,
-                                                 tags: tags })
+            initVarVal = VarsHelper.nextVarVal ({ node: previousMessage.body,
+                                                  initVarVal: previousMessage.initVarVal,
+                                                  sender: player,
+                                                  recipient: recipient,
+                                                  tags: tags })
             previousTweeter = previousMessage.tweeter
             previousTweetId = previousMessage.tweetId
           })

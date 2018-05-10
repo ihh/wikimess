@@ -10,8 +10,8 @@ var extend = require('extend')
 var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
-var parseTree = require('../../assets/js/wikimess/parsetree.js')
-var nlp = require('../../assets/js/ext/compromise.min.js')
+var parseTree = require('bracery').ParseTree
+var VarsHelper = require('../../misc/parsers/vars')
 
 module.exports = {
 
@@ -763,11 +763,11 @@ module.exports = {
                          template: draft.template,
                          title: draft.title,
                          vars: (draft.previous
-                                ? parseTree.nextVarVal ({ node: draft.previous.body,
-                                                          initVarVal: draft.previous.initVarVal,
-                                                          sender: player,
-                                                          recipient: draft.recipient })
-                                : parseTree.defaultVarVal (player, draft.recipient, draft.tags)),
+                                ? VarsHelper.nextVarVal ({ node: draft.previous.body,
+                                                           initVarVal: draft.previous.initVarVal,
+                                                           sender: player,
+                                                           recipient: draft.recipient })
+                                : VarsHelper.defaultVarVal (player, draft.recipient, draft.tags)),
                          body: draft.body,
                          date: draft.updatedAt }
         res.json (result)

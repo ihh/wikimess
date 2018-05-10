@@ -5,8 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-var parseTree = require('../../assets/js/wikimess/parsetree.js')
-var nlp = require('../../assets/js/ext/compromise.min.js')
+var parseTree = require('bracery').ParseTree
 
 module.exports = {
 

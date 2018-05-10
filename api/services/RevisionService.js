@@ -2,7 +2,7 @@
 
 var JsDiff = require('diff')
 
-var parseTree = require('../../assets/js/wikimess/parsetree.js')
+var parseTree = require('bracery').ParseTree
 var nlp = require('../../assets/js/ext/compromise.min.js')
 
 module.exports = {

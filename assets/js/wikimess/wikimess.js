@@ -3,7 +3,8 @@ var WikiMess = (function() {
     var wm = this
     config = config || {}
 
-    this.ParseTree = window.parseTree
+    this.ParseTree = window.bracery.ParseTree
+    this.VarsHelper = window.VarsHelper
 
     this.container = $('<div class="wikimess">')
     this.pageContainer = $('#'+this.containerID)
@@ -97,7 +98,8 @@ var WikiMess = (function() {
   }
 
   // config, defaults
-  var symChar = parseTree.symChar, symCharHtml = parseTree.symCharHtml
+  var parseTree = window.bracery.ParseTree
+  var symChar = parseTree.symChar, symCharHtml = '&#x24;'
   var playerChar = parseTree.playerChar
   var varChar = parseTree.varChar, funcChar = parseTree.funcChar, assignChar = parseTree.assignChar
   var leftBraceChar = parseTree.leftBraceChar, rightBraceChar = parseTree.rightBraceChar
@@ -3181,10 +3183,10 @@ var WikiMess = (function() {
             if (result && result.thread && result.thread.length) {
               var thread = result.thread.reverse()
               var lastMessage = thread[0]
-              var nextVars = wm.ParseTree.nextVarVal ({ node: lastMessage.body,
-                                                        initVarVal: lastMessage.vars,
-							makeSymbolName: wm.makeSymbolName.bind(wm),
-                                                        sender: lastMessage.sender })
+              var nextVars = wm.nextVarVal ({ node: lastMessage.body,
+                                              initVarVal: lastMessage.vars,
+					      makeSymbolName: wm.makeSymbolName.bind(wm),
+                                              sender: lastMessage.sender })
               return wm.showComposePage
               ({ recipient: lastMessage.sender,
                  defaultToPublic: true,
@@ -3312,10 +3314,10 @@ var WikiMess = (function() {
                                  object: 'recipient',
                                  showMessage: function (props) {
                                    var message = props.result.message
-                                   var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
-                                                                             initVarVal: message.vars,
-									     makeSymbolName: wm.makeSymbolName.bind(wm),
-                                                                             sender: message.sender })
+                                   var nextVars = wm.nextVarVal ({ node: message.body,
+                                                                   initVarVal: message.vars,
+								   makeSymbolName: wm.makeSymbolName.bind(wm),
+                                                                   sender: message.sender })
                                    wm.showComposePage ({ recipient: wm.playerInfo,
                                                          defaultToPublic: false,
                                                          thread: [message],
@@ -3380,10 +3382,10 @@ var WikiMess = (function() {
                object: 'sender',
                showMessage: function (props) {
                  var message = props.result.message
-                 var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
-                                                           initVarVal: message.vars,
-							   makeSymbolName: wm.makeSymbolName.bind(wm),
-                                                           sender: message.sender })
+                 var nextVars = wm.nextVarVal ({ node: message.body,
+                                                 initVarVal: message.vars,
+						 makeSymbolName: wm.makeSymbolName.bind(wm),
+                                                 sender: message.sender })
                  wm.showComposePage ({ recipient: null,
                                        defaultToPublic: true,
                                        thread: [message],
@@ -3410,10 +3412,10 @@ var WikiMess = (function() {
                object: 'sender',
                showMessage: function (props) {
                  var message = props.result.message
-                 var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
-                                                           initVarVal: message.vars,
-							   makeSymbolName: wm.makeSymbolName.bind(wm),
-                                                           sender: message.sender })
+                 var nextVars = wm.nextVarVal ({ node: message.body,
+                                                 initVarVal: message.vars,
+						 makeSymbolName: wm.makeSymbolName.bind(wm),
+                                                 sender: message.sender })
                  wm.showComposePage ({ recipient: message.sender,
                                        defaultToPublic: false,
                                        thread: [message],
@@ -3589,10 +3591,10 @@ var WikiMess = (function() {
         var replyTitle = message.title
         if (replyTitle.match(/\S/) && !replyTitle.match(/^re:/i))
           replyTitle = 'Re: ' + replyTitle
-        var nextVars = wm.ParseTree.nextVarVal ({ node: message.body,
-                                                  initVarVal: message.vars,
-						  makeSymbolName: wm.makeSymbolName.bind(wm),
-                                                  sender: message.sender })
+        var nextVars = wm.nextVarVal ({ node: message.body,
+                                        initVarVal: message.vars,
+					makeSymbolName: wm.makeSymbolName.bind(wm),
+                                        sender: message.sender })
         return wm.showComposePage
         ({ recipient: message.sender,
            defaultToPublic: !message.recipient,
@@ -3613,9 +3615,32 @@ var WikiMess = (function() {
       return $.Deferred().resolve()
     },
 
-    defaultVarVal: function() {
-      var sender = this.playerID ? this.playerInfo : null
-      return this.ParseTree.defaultVarVal (sender)
+    defaultVarVal: function (sender, recipient, tags) {
+      sender = sender || (this.playerID ? this.playerInfo : null)
+      var varVal = { me: '_Anonymous_',
+                     you: '_Everyone_' }
+      populateVarVal (varVal, sender, recipient, tags)
+      return varVal
+    },
+
+    populateVarVal: function (varVal, sender, recipient, tags) {
+      if (sender)
+        varVal.me = playerChar + sender.name
+      if (recipient)
+        varVal.you = playerChar + recipient.name
+      if (tags)
+        varVal.tags = tags
+      return varVal
+    },
+    
+    nextVarVal: function (config) {
+      var varVal = this.ParseTree.finalVarVal (config)
+      varVal.prevtags = varVal.tags
+      delete varVal.tags
+      delete varVal.icon
+      delete varVal.icolor
+      this.populateVarVal (varVal, config.sender, config.recipient, config.tags)
+      return varVal
     },
 
     compositionVarVal: function() {
@@ -3625,7 +3650,7 @@ var WikiMess = (function() {
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
       return $.extend ({},
 		       (this.composition.vars
-			? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
+			? this.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
 			: this.ParseTree.defaultVarVal (sender, recipient, this.composition.tags)))
     },
 
@@ -4074,14 +4099,7 @@ var WikiMess = (function() {
     },
           
     parseRhs: function (rhs) {
-      var wm = this, result
-      try {
-        result = rhsParser.parse (rhs)
-      } catch (e) {
-        console.warn(e)
-        result = [rhs]
-      }
-      return result
+      return this.ParseTree.parseRhs (rhs)
     },
 
     symbolOwnedByPlayer: function (symbol) {
