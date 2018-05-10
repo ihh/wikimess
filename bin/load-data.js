@@ -9,7 +9,7 @@ var fs = require('fs'),
     jsonschema = require('jsonschema'),
     Promise = require('bluebird'),
     Sails = require('sails').constructor,
-    rhsParser = require('../misc/parsers/rhs.js'),
+    rhsParser = require('bracery').RhsParser,
     templateParser = require('../misc/parsers/template.js')
 
 var defaultUrlPrefix = "http://localhost:1337"

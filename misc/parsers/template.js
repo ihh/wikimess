@@ -1,4 +1,4 @@
-var rhsParser = require('./rhs.js')
+var rhsParser = require('bracery').RhsParser
 
 function makeTagString (text) {
   return (text
