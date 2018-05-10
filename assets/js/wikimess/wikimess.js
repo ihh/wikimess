@@ -2937,6 +2937,9 @@ var WikiMess = (function() {
 
     // BEGIN REWRITE SECTION
     // this section needs a rewrite to use wm.REST_postPlayerExpandTree and wm.parseTree.makeRhsExpansionPromise
+
+    // makeExpansionText is going to stay the same as this - just delegating to ParseTree.makeExpansionText
+    // ParseTree.makeExpansionText will be a wrapper for ParseTree.makeExpansionSync that throws an exception if any symbols are unexpanded
     makeExpansionText: function (config) {
       config.makeSymbolName = this.makeSymbolName.bind (this)
       config.evalCallback = config.evalCallback || function() { throw new Error ('unexpanded &eval') }
@@ -2944,6 +2947,7 @@ var WikiMess = (function() {
     },
     
     // makeExpansionTextPromise can be rewritten as a thin wrapper around wm.parseTree.makeRhsExpansionPromise
+    // the documented 'disgusting hack' can be deleted
     makeExpansionTextPromise: function (config) {
       var wm = this
       var initNode = config.node
