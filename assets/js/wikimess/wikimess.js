@@ -418,17 +418,9 @@ var WikiMess = (function() {
     REST_getPlayerSymbolLinks: function (playerID, symbolID) {
       return this.logGet ('/p/symbol/' + symbolID + '/links')
     },
-    
-    REST_getPlayerExpand: function (playerID, symbolID) {
-      return this.logGet ('/p/expand/' + symbolID)
-    },
 
-    REST_postPlayerExpand: function (playerID, symbolQueries) {
-      return this.logPost ('/p/expand', { symbols: symbolQueries })
-    },
-
-    REST_postPlayerExpandTree: function (playerID, query) {
-      return this.logPost ('/p/expand/tree', query)
+    REST_postPlayerExpand: function (playerID, query) {
+      return this.logPost ('/p/expand', query)
     },
 
     REST_getWelcomeHtml: function() {
@@ -1566,7 +1558,7 @@ var WikiMess = (function() {
                                         wm.updateComposeDiv()
                                         var generatePromise =
                                             (wm.animationExpansion
-                                             ? wm.getRecursiveExpansion (symbol.id, wm.compositionFinalVarVal())
+                                             ? wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
                                              .then (function (result) {
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
@@ -2935,9 +2927,6 @@ var WikiMess = (function() {
       return false
     },
 
-    // BEGIN REWRITE SECTION
-    // this section needs a rewrite to use wm.REST_postPlayerExpandTree and wm.parseTree.makeRhsExpansionPromise
-
     // makeExpansionText is going to stay the same as this - just delegating to ParseTree.makeExpansionText
     // ParseTree.makeExpansionText will be a wrapper for ParseTree.makeExpansionSync that throws an exception if any symbols are unexpanded
     makeExpansionText: function (config) {
@@ -2946,95 +2935,26 @@ var WikiMess = (function() {
       return this.ParseTree.makeExpansionText (config)
     },
     
-    // makeExpansionTextPromise can be rewritten as a thin wrapper around wm.parseTree.makeRhsExpansionPromise
-    // the documented 'disgusting hack' can be deleted
-    makeExpansionTextPromise: function (config) {
-      var wm = this
-      var initNode = config.node
-      var expandCalls = config.calls || 0
-      var expansion
-      function throwCallback (info) {
-	info.inThrowCallback = true  // hack hack hack
-	throw info
-	return null
-      }
-      try {
-        expansion = wm.makeExpansionText ($.extend ({},
-						    config,
-						    { evalCallback: throwCallback,
-						      vars: $.extend ({}, config.vars) }))
-      } catch (e) {
-	if (!e.inThrowCallback) {  // disgusting hack
-	  console.error (e)
-	  throw e
-	}
-        var expandNode = e.node, expandText = e.text
-        if (expandCalls < wm.maxExpandCalls) {
-          var parsedExpandText = wm.parseRhs (expandText)
-          return wm.getRhsExpansion (parsedExpandText)
-            .then (function (expansion) {
-              expandNode.evaltext = parsedExpandText
-              expandNode.value = expansion
-              // it is a bit inefficient here to start back at the root again every time, but simpler code-wise, and not too slow
-              return wm.makeExpansionTextPromise ($.extend ({},
-                                                            config,
-                                                            { calls: expandCalls + 1 }))
-            })
-        } else {
-          expandNode.evalText = []
-          expandNode.value = []
-          return wm.makeExpansionTextPromise (config)
-        }
-      }
-      return $.Deferred().resolve ({ expansion: expansion,
-                                     calls: expandCalls })
+    // getSymbolExpansion is the main entry point from other parts of the code that expand a symbol in context (i.e. with variables)
+    getSymbolExpansion: function (symbolID, initVarVal) {
+      return this.getContentExpansion ([{ type: 'sym',
+                                          id: symbolID }],
+                                       initVarVal)
     },
 
-    // getRhsExpansion method can probably be deleted
-    getRhsExpansion: function (rhs) {
-      var wm = this
-      var sampledTree = wm.ParseTree.sampleParseTree (rhs)
-      var symbolNodes = wm.ParseTree.getSymbolNodes (sampledTree)
-      if (!symbolNodes.length)
-	return $.Deferred().resolve (sampledTree)
-      var symbolQueries = symbolNodes.map (function (sym) {
-        return { id: sym.id,
-                 name: sym.name }
-      })
-      return wm.REST_postPlayerExpand (wm.playerID, symbolQueries)
-        .then (function (result) {
-          if (result && result.expansions) {
-	    symbolNodes.forEach (function (symbolNode, n) {
-              var expansion = result.expansions[n]
-              if (expansion) {
-                if (typeof(expansion.id) !== 'undefined') {
-                  symbolNode.id = expansion.id
-		  symbolNode.rhs = expansion.rhs
-                  symbolNode.name = wm.symbolName[expansion.id] = expansion.name
-                  symbolNode.rev = expansion.rev
-                  symbolNode.n = expansion.n
-                } else
-                  symbolNode.notfound = expansion.notfound
-              }
-	    })
-          }
-          return sampledTree
-        })
-    },
-
-    // getRecursiveExpansion is the main entry point from other parts of the code that expand a symbol in context (i.e. with variables)
-    // it can be rewritten to call wm.REST_postPlayerExpandTree directly
-    getRecursiveExpansion: function (symbolID, initVarVal) {
+    // getContentExpansion, used by getSymbolExpansion and generateMessageBody, is a wrapper for REST_postPlayerExpand
+    getContentExpansion: function (content, initVarVal) {
       var wm = this
       initVarVal = initVarVal || wm.defaultVarVal()
-      return wm.REST_getPlayerExpand (wm.playerID, symbolID)
+      return wm.REST_postPlayerExpand (wm.playerID,
+                                       { content: content,
+                                         vars: initVarVal })
         .then (function (result) {
-          return wm.makeExpansionTextPromise ({ node: result.expansion,
-						vars: initVarVal })  // expand all &eval{...}'s
+          return { expansion: result.expansion.tree }
         })
     },
-    
-    // generateMessageBody needs to reflect above-commented changes
+
+    // generateMessageBody fetches a random template and requests an expansion
     generateMessageBody: function (config) {
       var wm = this
       config = config || {}
@@ -3059,14 +2979,9 @@ var WikiMess = (function() {
             .then (function() {
               if (newTemplate)
                 wm.updateMessageHeader (newTemplate)
-              // rewrite from about here
-              return wm.getRhsExpansion (template.content)
-            }).then (function (expansion) {
-	      var root = { type: 'root', rhs: expansion }
-              return wm.makeExpansionTextPromise ({ node: root,
-						    vars: wm.compositionVarVal() })  // expand all &eval{...}'s
-                .then (function() {
-                  wm.composition.body = root
+              return wm.getContentExpansion (template.content, wm.compositionVarVal())
+                .then (function (result) {
+                  wm.composition.body = wm.ParseTree.makeRoot (result.expansion)
                   wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
                 })
             })
@@ -3074,7 +2989,6 @@ var WikiMess = (function() {
           wm.showMessageBody()
       })
     },
-    // END REWRITE SECTION
     
     addAvatarImage: function (config) {
       var wm = this
@@ -4218,7 +4132,7 @@ var WikiMess = (function() {
           if (!expansion)
             expandedPromise = expandedPromise
             .then (function () {
-              return wm.getRecursiveExpansion (symbol.id, wm.compositionFinalVarVal())
+              return wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
                 .then (function (result) {
                   expansion = result.expansion
                 })
@@ -4248,7 +4162,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            wm.getRecursiveExpansion (symbol.id, wm.compositionFinalVarVal())
+            wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
               .then (function (result) {
                 wm.showingHelp = false
 		wm.infoPaneTitle.html (wm.makeSymbolSpan (symbol,

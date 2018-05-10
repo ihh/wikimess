@@ -1333,30 +1333,6 @@ module.exports = {
       })
   },
 
-  // expand a symbol using the grammar
-  expandSymbol: function (req, res) {
-    var symbolID = Symbol.parseID (req.params.symid)
-    SymbolService.expandSymbol ({ id: symbolID })
-      .then (function (expansion) {
-        res.json ({ expansion: expansion })
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send ({ message: err })
-      })
-  },
-
-  // expand multiple symbols using the grammar
-  expandSymbols: function (req, res) {
-    var symbolQueries = req.body.symbols || []
-    SymbolService.expandSymbols (symbolQueries, Symbol.maxTemplateSyms)
-      .then (function (expansions) {
-        res.json ({ expansions: expansions })
-      }).catch (function (err) {
-        console.log(err)
-        res.status(500).send ({ message: err })
-      })
-  },
-
   // suggest best N templates
   suggestTemplates: function (req, res) {
     var nSuggestions = 5
