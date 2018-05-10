@@ -427,6 +427,10 @@ var WikiMess = (function() {
       return this.logPost ('/p/expand', { symbols: symbolQueries })
     },
 
+    REST_postPlayerExpandTree: function (playerID, query) {
+      return this.logPost ('/p/expand/tree', query)
+    },
+
     REST_getWelcomeHtml: function() {
       return this.logGet ('/html/welcome-guest.html')
     },
@@ -2883,12 +2887,6 @@ var WikiMess = (function() {
                        this.animateExpansion.bind(this))
     },
 
-    makeExpansionText: function (config) {
-      config.makeSymbolName = this.makeSymbolName.bind (this)
-      config.evalCallback = config.evalCallback || function() { throw new Error ('unexpanded &eval') }
-      return this.ParseTree.makeExpansionText (config)
-    },
-    
     linkSymbols: function (html) {
       // more than slightly hacky, this method...
       var nSymbols = 0
@@ -2937,6 +2935,15 @@ var WikiMess = (function() {
       return false
     },
 
+    // BEGIN REWRITE SECTION
+    // this section needs a rewrite to use wm.REST_postPlayerExpandTree and wm.parseTree.makeRhsExpansionPromise
+    makeExpansionText: function (config) {
+      config.makeSymbolName = this.makeSymbolName.bind (this)
+      config.evalCallback = config.evalCallback || function() { throw new Error ('unexpanded &eval') }
+      return this.ParseTree.makeExpansionText (config)
+    },
+    
+    // makeExpansionTextPromise can be rewritten as a thin wrapper around wm.parseTree.makeRhsExpansionPromise
     makeExpansionTextPromise: function (config) {
       var wm = this
       var initNode = config.node
@@ -2979,6 +2986,7 @@ var WikiMess = (function() {
                                      calls: expandCalls })
     },
 
+    // getRhsExpansion method can probably be deleted
     getRhsExpansion: function (rhs) {
       var wm = this
       var sampledTree = wm.ParseTree.sampleParseTree (rhs)
@@ -3010,6 +3018,8 @@ var WikiMess = (function() {
         })
     },
 
+    // getRecursiveExpansion is the main entry point from other parts of the code that expand a symbol in context (i.e. with variables)
+    // it can be rewritten to call wm.REST_postPlayerExpandTree directly
     getRecursiveExpansion: function (symbolID, initVarVal) {
       var wm = this
       initVarVal = initVarVal || wm.defaultVarVal()
@@ -3020,6 +3030,7 @@ var WikiMess = (function() {
         })
     },
     
+    // generateMessageBody needs to reflect above-commented changes
     generateMessageBody: function (config) {
       var wm = this
       config = config || {}
@@ -3044,6 +3055,7 @@ var WikiMess = (function() {
             .then (function() {
               if (newTemplate)
                 wm.updateMessageHeader (newTemplate)
+              // rewrite from about here
               return wm.getRhsExpansion (template.content)
             }).then (function (expansion) {
 	      var root = { type: 'root', rhs: expansion }
@@ -3058,7 +3070,8 @@ var WikiMess = (function() {
           wm.showMessageBody()
       })
     },
-
+    // END REWRITE SECTION
+    
     addAvatarImage: function (config) {
       var wm = this
       var div = config.div, tweeter = config.tweeter, avatar = config.avatar, author = config.author, size = config.size, varVal = config.vars

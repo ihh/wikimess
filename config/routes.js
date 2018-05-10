@@ -151,8 +151,9 @@ module.exports.routes = {
   'GET /p/symname/:symname':   'ClientController.getOrCreateSymbolByName',
 
   // symbol expansion
-  'GET /p/expand/:symid': 'ClientController.expandSymbol',
-  'POST /p/expand':       'ClientController.expandSymbols',
+  'GET /p/expand/:symid':   'ClientController.expandSymbol',
+  'POST /p/expand':         'ClientController.expandSymbols',
+  'POST /p/expand/tree':    'ClientController.expandContent',
 
   // auto-suggest of templates, messages, and symbols
   'GET /p/suggest/templates':       'ClientController.suggestTemplates',

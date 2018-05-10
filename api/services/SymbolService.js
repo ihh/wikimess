@@ -253,6 +253,34 @@ module.exports = {
       })
   },
 
+  expandContent: function (config) {
+    var rhs = config.rhs || parseTree.parseRhs (config.rhsText)
+    var varVal = config.vars || {}
+    var sampledTree = parseTree.sampleParseTree (rhs)
+    return parseTree.makeRhsExpansionPromise
+    ({ rhs: sampledTree,
+       vars: varVal,
+       expand: function (expandConfig) {
+         var node = expandConfig.node
+         var symbolQuery = {}
+         if (typeof(node.id) !== 'undefined')
+           symbolQuery.id = node.id
+         else if (typeof(node.name) !== 'undefined')
+           symbolQuery.name = node.name
+         return Symbol.findOneCached (symbolQuery)
+           .then (function (symbol) {
+             var result
+             if (symbol) {
+               result = parseTree.sampleParseTree (parseTree.randomElement (symbol.rules, config.rng || Math.random))
+               node.id = symbol.id
+             } else
+               result = []
+             return result
+           })
+       }
+    })
+  },
+  
   expandSymbol: function (symbolQuery, maxSyms) {
     return SymbolService.expandSymbols ([symbolQuery], maxSyms)
       .then (function (expansions) {

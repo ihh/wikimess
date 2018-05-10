@@ -1320,6 +1320,19 @@ module.exports = {
       })
   },
 
+  // expand a Bracery parse tree using the grammar
+  expandContent: function (req, res) {
+    SymbolService.expandContent ({ rhs: req.body.content,
+                                   rhsText: req.body.text,
+                                   vars: req.body.vars })
+      .then (function (expansion) {
+        res.json ({ expansion: expansion })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
   // expand a symbol using the grammar
   expandSymbol: function (req, res) {
     var symbolID = Symbol.parseID (req.params.symid)
