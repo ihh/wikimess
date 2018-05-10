@@ -97,11 +97,8 @@ var WikiMess = (function() {
   }
 
   // config, defaults
-  var symChar = parseTree.symChar, symCharHtml = parseTree.symCharHtml
-  var playerChar = parseTree.playerChar
-  var varChar = parseTree.varChar, funcChar = parseTree.funcChar, assignChar = parseTree.assignChar
-  var leftBraceChar = parseTree.leftBraceChar, rightBraceChar = parseTree.rightBraceChar
-  var leftSquareBraceChar = parseTree.leftSquareBraceChar, rightSquareBraceChar = parseTree.rightSquareBraceChar
+  var symChar = '$', symCharHtml = '&#36;'
+  var playerChar = '@', varChar = '^', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '='
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -2886,7 +2883,7 @@ var WikiMess = (function() {
 
     makeExpansionText: function (config) {
       config.makeSymbolName = this.makeSymbolName.bind (this)
-      config.expandCallback = config.expandCallback || function() { throw new Error ('unexpanded &eval') }
+      config.evalCallback = config.evalCallback || function() { throw new Error ('unexpanded &eval') }
       return this.ParseTree.makeExpansionText (config)
     },
     
@@ -2951,7 +2948,7 @@ var WikiMess = (function() {
       try {
         expansion = wm.makeExpansionText ($.extend ({},
 						    config,
-						    { expandCallback: throwCallback,
+						    { evalCallback: throwCallback,
 						      vars: $.extend ({}, config.vars) }))
       } catch (e) {
 	if (!e.inThrowCallback) {  // disgusting hack
@@ -3614,10 +3611,23 @@ var WikiMess = (function() {
     },
 
     defaultVarVal: function() {
+      var varVal = { me: '_Anonymous_',
+                     you: '_Everyone_' }
       var sender = this.playerID ? this.playerInfo : null
-      return this.ParseTree.defaultVarVal (sender)
+      populateVarVal (varVal, sender, recipient, tags)
+      return varVal
     },
 
+    populateVarVal: function (varVal, sender, recipient, tags) {
+      if (sender)
+        varVal.me = playerChar + sender.name
+      if (recipient)
+        varVal.you = playerChar + recipient.name
+      if (tags)
+        varVal.tags = tags
+      return varVal
+    },
+    
     compositionVarVal: function() {
       if (!this.composition)
         return this.defaultVarVal()
@@ -3625,8 +3635,8 @@ var WikiMess = (function() {
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
       return $.extend ({},
 		       (this.composition.vars
-			? this.ParseTree.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
-			: this.ParseTree.defaultVarVal (sender, recipient, this.composition.tags)))
+			? this.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
+			: this.defaultVarVal (sender, recipient, this.composition.tags)))
     },
 
     compositionFinalVarVal: function() {

@@ -23,7 +23,8 @@ module.exports = {
 					  expandCallback: function() {
 					    throw new Error ('unexpanded node')
 					  },
-					  validateEvalText: function (storedEvalText, evalText) {
+                                          validateEvalText: true,
+					  invalidEvalTextCallback: function (node, storedEvalText, evalText) {
 					    throw new Error ("in &eval, stored evaluation text '" + storedEvalText + "' does not match dynamically computed value '" + evalText + "'")
 					  } })
 	// compare body to template
