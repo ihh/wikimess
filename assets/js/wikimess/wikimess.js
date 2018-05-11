@@ -2860,9 +2860,14 @@ var WikiMess = (function() {
     animateExpansion: function() {
       var wm = this
       this.clearTimer ('expansionAnimationTimer')
-      var markdown = this.renderMarkdown
+      var markdown
+      if (this.animationExpansion)
+        markdown = this.renderMarkdown
       (this.makeExpansionText ({ node: this.animationExpansion,
-                                 leaveSymbolsUnexpanded: true,
+                                 afterSync: { sym: function (node, vars, depth, expansion) {
+                                   if (node.name)
+                                     expansion.text = symCharHtml + node.name + '.' + (node.limit ? ('limit' + node.limit.type) : (node.notfound ? 'notfound' : 'unexpanded'))
+                                 } },
                                  vars: this.compositionVarVal() }),
        function (html) {
 	 return wm.linkSymbols (html)
