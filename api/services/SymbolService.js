@@ -44,7 +44,7 @@ module.exports = {
       var bodyNode = bodyRhs[n]
       if (typeof(templateNode) === 'string')
         return templateNode === bodyNode ? Promise.resolve() : Promise.reject('string mismatch')
-      if (bodyNode.type !== (templateNode.type === 'alt' ? 'opt' : templateNode.type))
+      if (bodyNode.type !== (templateNode.type + (templateNode.type === 'alt' || templateNode.type === 'rep' ? '_sampled' : '')))
         return Promise.reject('type mismatch (' + bodyNode.type + ' !== ' + templateNode.type + ')')
       switch (templateNode.type) {
       case 'assign':
@@ -83,6 +83,10 @@ module.exports = {
         if (inQuote)
 	  return SymbolService.validateMessageRhs (templateNode.opts, bodyNode.opts)
         return SymbolService.validateMessageRhs (templateNode.opts[bodyNode.n], bodyNode.rhs)
+      case 'rep':
+        if (bodyNode.n < templateNode.min || bodyNode.n > templateNode.max)
+          return Promise.reject('invalid number of reps')
+        return Promise.all (bodyNode.reps.map (function (rep) { return SymbolService.validateMessageRhs (templateNode.unit, rep) }))
       case 'root':
         return SymbolService.validateMessageRhs (templateNode.rhs, bodyNode.rhs, inQuote)
       case 'sym':
@@ -102,7 +106,8 @@ module.exports = {
 		return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
             })
         }
-      case 'opt':
+      case 'alt_sampled':
+      case 'rep_sampled':
       default:
         break
       }
