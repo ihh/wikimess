@@ -78,8 +78,6 @@ module.exports.policies = {
     'newSymbol': true,
     'unsubscribeSymbol': true,
     'getOrCreateSymbolByName': true,
-    'expandSymbol': true,
-    'expandSymbols': true,
     'expandContent': true,
     // compose, autosuggest, send
     'getTemplate': true,
