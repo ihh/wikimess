@@ -114,6 +114,15 @@ var symbolSchemaDefs = {
              "type": "array",
              "items": { "$ref": "#/definitions/rhs" } } },
          "required": ["type", "opts"],
+         "additionalProperties": false },
+      
+       { "type": "object",
+         "properties": {
+           "type": { "const": "rep" },
+           "unit": {"$ref": "#/definitions/rhs" },
+           "min": { "type": "integer" },
+           "max": { "type": "integer" } },
+         "required": ["type", "unit", "min", "max"],
          "additionalProperties": false } ]
     }
   }

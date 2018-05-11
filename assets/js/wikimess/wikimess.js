@@ -3600,6 +3600,8 @@ var WikiMess = (function() {
     compositionFinalVarVal: function() {
       if (!this.composition)
         return this.defaultVarVal()
+      if (!this.composition.body)
+        return wm.compositionVarVal()
       return this.ParseTree.finalVarVal ({ node: this.composition.body,
                                            initVarVal: wm.compositionVarVal(),
 					   makeSymbolName: wm.makeSymbolName.bind(wm) })
@@ -4176,7 +4178,7 @@ var WikiMess = (function() {
                                                             wm.loadGrammarSymbol (symbol)
                                                           }))
 		wm.showMessageBody ({ div: wm.infoPaneContent,
-                                      expansion: { type: 'root', rhs: [result.expansion] },
+                                      expansion: { type: 'root', rhs: result.expansion },
                                       inEditor: true,
                                       animate: true })
                 wm.infoPaneLeftControls
@@ -4575,6 +4577,10 @@ var WikiMess = (function() {
             return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeRhsSpan(opt)) }),
                                        rightSquareBraceChar)
+          case 'rep':
+            return $('<span>').append (funcChar + 'rep' + leftBraceChar,
+                                       wm.makeRhsSpan(tok.unit),
+                                       rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append ('#', tok.test[0].varname, '#')
@@ -4584,7 +4590,7 @@ var WikiMess = (function() {
 					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, wm.makeRhsSpan (keyword_arg[1]), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
-	    if (sugaredName)
+	    if (sugaredName && tok.funcname !== 'quote')
               return (sugaredName[0] === symChar
                       ? wm.makeSymbolSpanWithName (tok.args[0],
 						   sugaredName.substr(1),
@@ -4624,11 +4630,15 @@ var WikiMess = (function() {
             return $('<span>').append ((tok.local ? '&let' : '') + varChar + tok.varname + assignChar + leftBraceChar,
                                        wm.makeTemplateSpan (tok.value),
                                        rightBraceChar,
-                                       tok.local ? [leftBraceChar, wm.makeRhsSpan (tok.local), rightBraceChar] : undefined)
+                                       tok.local ? [leftBraceChar, wm.makeTemplateSpan (tok.local), rightBraceChar] : undefined)
           case 'alt':
             return $('<span>').append (leftSquareBraceChar,
                                        tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeTemplateSpan(opt)) }),
                                        rightSquareBraceChar)
+          case 'rep':
+            return $('<span>').append (funcChar + 'rep' + leftBraceChar,
+                                       wm.makeTemplateSpan (tok.unit),
+                                       rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append ('#', tok.test[0].varname, '#')
@@ -4638,7 +4648,7 @@ var WikiMess = (function() {
 					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, wm.makeTemplateSpan (keyword_arg[1]), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
-	    if (sugaredName)
+	    if (sugaredName && tok.funcname !== 'quote')
               return (sugaredName[0] === symChar
                       ? wm.makeSymbolSpanWithName (tok.args[0],
 						   sugaredName.substr(1),

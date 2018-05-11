@@ -94,6 +94,9 @@
                 "$ref": "#/definitions/rhs"
               },
               "evaltext": {
+                "type": "string"
+              },
+              "evaltree": {
                 "$ref": "#/definitions/rhs"
               },
               "value": {
@@ -182,6 +185,9 @@
               },
               "varname": {
                 "type": "string"
+              },
+              "local": {
+                "$ref": "#/definitions/rhs"
               }
             },
             "required": [
@@ -207,6 +213,30 @@
             "required": [
               "type",
               "opts"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "rep"
+              },
+              "unit": {
+                "$ref": "#/definitions/rhs"
+              },
+              "min": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "unit",
+              "min",
+              "max"
             ],
             "additionalProperties": false
           }
