@@ -2959,6 +2959,26 @@ var WikiMess = (function() {
         })
     },
 
+    // getContentExpansionLocal is a wrapper for getContentExpansion that avoids making a REST call if possible
+    // so bracery that does not involve any symbol expansions gets processed locally
+    getContentExpansionLocal: function (content, initVarVal) {
+      var wm = this
+      initVarVal = initVarVal || wm.defaultVarVal()
+      var initVarValCopy = $.extend ({}, initVarVal)
+      return new Promise (function (resolve, reject) {
+        var sampledTree = wm.ParseTree.sampleParseTree (content)
+        return wm.ParseTree.makeRhsExpansionPromise
+        ({ rhs: sampledTree,
+           vars: initVarVal,
+           expand: reject })
+          .then (resolve)
+      }).then (function (expansion) {
+        return { expansion: expansion.tree }
+      }, function (expandConfig) {
+        return wm.getContentExpansion (content, initVarValCopy)
+      })
+    },
+
     // generateMessageBody fetches a random template and requests an expansion
     generateMessageBody: function (config) {
       var wm = this
@@ -2984,7 +3004,7 @@ var WikiMess = (function() {
             .then (function() {
               if (newTemplate)
                 wm.updateMessageHeader (newTemplate)
-              return wm.getContentExpansion (template.content, wm.compositionVarVal())
+              return wm.getContentExpansionLocal (template.content, wm.compositionVarVal())
                 .then (function (result) {
                   wm.composition.body = wm.ParseTree.makeRoot (result.expansion)
                   wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
