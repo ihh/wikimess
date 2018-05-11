@@ -3552,7 +3552,7 @@ var WikiMess = (function() {
       sender = sender || (this.playerID ? this.playerInfo : null)
       var varVal = { me: '_Anonymous_',
                      you: '_Everyone_' }
-      populateVarVal (varVal, sender, recipient, tags)
+      this.populateVarVal (varVal, sender, recipient, tags)
       return varVal
     },
 
