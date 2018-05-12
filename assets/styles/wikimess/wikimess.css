@@ -1563,6 +1563,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     font-style: italic;
 }
 
+.wikimess .mailbox .contents .message .mailboxheader {
+    flex-grow: 1;
+}
+
 .wikimess .subnavbar {
     position: relative;
     font-size: 6vh;
