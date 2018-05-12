@@ -72,7 +72,7 @@ The author field can optionally be preceded by an integer weight, reflecting how
 
 # Symbol directory syntax
 
-Files in the `data/symbols` directory have the following syntax
+Files in the `data/symbols` directory use Bracery's plaintext format for symbol definitions
 
 ~~~~
 >nonterminal_name
