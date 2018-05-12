@@ -4,6 +4,14 @@ var WikiMess = (function() {
     config = config || {}
 
     this.ParseTree = window.bracery.ParseTree
+    // override bracery's default limits
+    $.extend (this.ParseTree,
+              { maxDepth: 100,
+                maxRecursion: 3,
+                maxReps: 10,
+                maxLength: 280,
+                maxNodes: 1000 })
+
     this.VarsHelper = window.VarsHelper
 
     this.container = $('<div class="wikimess">')
@@ -2930,11 +2938,13 @@ var WikiMess = (function() {
       return false
     },
 
-    // makeExpansionText is going to stay the same as this - just delegating to ParseTree.makeExpansionText
-    // ParseTree.makeExpansionText will be a wrapper for ParseTree.makeExpansionSync that throws an exception if any symbols are unexpanded
+    dummyExpandSymbol: function (config) {
+      return []
+    },
+
     makeExpansionText: function (config) {
       config.makeSymbolName = this.makeSymbolName.bind (this)
-      config.evalCallback = config.evalCallback || function() { throw new Error ('unexpanded &eval') }
+      config.expand = this.dummyExpandSymbol
       return this.ParseTree.makeExpansionText (config)
     },
     
