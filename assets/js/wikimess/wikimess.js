@@ -2965,8 +2965,8 @@ var WikiMess = (function() {
       var wm = this
       initVarVal = initVarVal || wm.defaultVarVal()
       var initVarValCopy = $.extend ({}, initVarVal)
+      var sampledTree = wm.ParseTree.sampleParseTree (content)
       return new Promise (function (resolve, reject) {
-        var sampledTree = wm.ParseTree.sampleParseTree (content)
         return wm.ParseTree.makeRhsExpansionPromise
         ({ rhs: sampledTree,
            vars: initVarVal,
@@ -2975,7 +2975,7 @@ var WikiMess = (function() {
       }).then (function (expansion) {
         return { expansion: expansion.tree }
       }, function (expandConfig) {
-        return wm.getContentExpansion (content, initVarValCopy)
+        return wm.getContentExpansion (sampledTree, initVarValCopy)
       })
     },
 
