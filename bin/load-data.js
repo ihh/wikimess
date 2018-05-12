@@ -10,7 +10,7 @@ var fs = require('fs'),
     Promise = require('bluebird'),
     Sails = require('sails').constructor,
     rhsParser = require('bracery').RhsParser,
-    templateParser = require('../misc/parsers/template.js')
+    templateParser = require('../src/template.js')
 
 var defaultUrlPrefix = "http://localhost:1337"
 var defaultUserName = "admin"

@@ -11,7 +11,7 @@ var deepcopy = require('deepcopy')
 var bcrypt = require('bcrypt')
 
 var parseTree = require('bracery').ParseTree
-var VarsHelper = require('../../misc/parsers/vars')
+var VarsHelper = require('../../src/vars')
 
 module.exports = {
 

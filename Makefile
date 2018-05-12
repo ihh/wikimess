@@ -1,6 +1,6 @@
 BRACERY = node_modules/bracery
 ASSETS = assets/js/wikimess
-PARSERS = misc/parsers
+PARSERS = src
 
 NODE_BIN = node_modules/.bin
 BROWSERIFY = $(NODE_BIN)/browserify
