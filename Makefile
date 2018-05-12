@@ -5,8 +5,15 @@ PARSERS = misc/parsers
 NODE_BIN = node_modules/.bin
 BROWSERIFY = $(NODE_BIN)/browserify
 
+LOAD_DATA = bin/load-data.js
+
+all: $(ASSETS)/vars.js
+
+start:
+	$(LOAD_DATA) -s
+
 testdnd:
-	bin/load-data.js -l -S data/symbols/dnd.txt -T data/templates/dnd.txt -P data/players/dnd.json -S data/symbols/dariusk_corpora.json
+	$(LOAD_DATA) -l -S data/symbols/dnd.txt -T data/templates/dnd.txt -P data/players/dnd.json -S data/symbols/dariusk_corpora.json
 
 clean:
 	mysql -u root -e 'drop database wikimess; create database wikimess;'

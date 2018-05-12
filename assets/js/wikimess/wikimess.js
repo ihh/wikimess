@@ -1724,7 +1724,8 @@ var WikiMess = (function() {
                       }
                   }
                   if (!sent) {
-                    wm.sharePane.remove()
+                    updateSharePane()
+                    wm.sharePane.hide()
                     wm.currentCardDiv.remove()
                     wm.dealCard()
                   }
@@ -3575,13 +3576,7 @@ var WikiMess = (function() {
     },
 
     populateVarVal: function (varVal, sender, recipient, tags) {
-      if (sender)
-        varVal.me = playerChar + sender.name
-      if (recipient)
-        varVal.you = playerChar + recipient.name
-      if (tags)
-        varVal.tags = tags
-      return varVal
+      return this.VarsHelper.populateVarVal (varVal, sender, recipient, tags)
     },
     
     compositionVarVal: function() {
@@ -3589,10 +3584,9 @@ var WikiMess = (function() {
         return this.defaultVarVal()
       var sender = this.playerID ? this.playerInfo : null
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
-      return $.extend ({},
-		       (this.composition.vars
-			? this.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
-			: this.defaultVarVal (sender, recipient, this.composition.tags)))
+      return (this.composition.vars
+	      ? this.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
+	      : this.defaultVarVal (sender, recipient, this.composition.tags))
     },
 
     compositionFinalVarVal: function() {

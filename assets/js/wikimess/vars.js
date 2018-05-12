@@ -12,10 +12,8 @@ function defaultVarVal (sender, recipient, tags) {
 }
 
 function populateVarVal (varVal, sender, recipient, tags) {
-  if (sender)
-    varVal.me = playerChar + sender.name
-  if (recipient)
-    varVal.you = playerChar + recipient.name
+  varVal.me = sender ? (playerChar + sender.name) : '_Anonymous_'
+  varVal.you = recipient ? (playerChar + recipient.name) : '_Everyone_'
   if (tags)
     varVal.tags = tags
   return varVal
@@ -27,6 +25,8 @@ function nextVarVal (config, parseTree) {
   delete varVal.tags
   delete varVal.icon
   delete varVal.icolor
+  delete varVal.sender
+  delete varVal.recipient
   this.populateVarVal (varVal, config.sender, config.recipient, config.tags)
   return varVal
 }
