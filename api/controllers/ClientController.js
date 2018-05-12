@@ -766,7 +766,8 @@ module.exports = {
                                 ? VarsHelper.nextVarVal ({ node: draft.previous.body,
                                                            initVarVal: draft.previous.initVarVal,
                                                            sender: player,
-                                                           recipient: draft.recipient })
+                                                           recipient: draft.recipient },
+                                                        parseTree)
                                 : VarsHelper.defaultVarVal (player, draft.recipient, draft.tags)),
                          body: draft.body,
                          date: draft.updatedAt }

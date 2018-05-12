@@ -238,7 +238,8 @@ module.exports = {
                                                   initVarVal: previousMessage.initVarVal,
                                                   sender: player,
                                                   recipient: recipient,
-                                                  tags: tags })
+                                                  tags: tags },
+                                                parseTree)
             previousTweeter = previousMessage.tweeter
             previousTweetId = previousMessage.tweetId
           })

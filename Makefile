@@ -13,7 +13,6 @@ clean:
 
 postinstall:
 	cp $(BRACERY)/browser/bracery.js $(ASSETS)/bracery.js
-	cp $(BRACERY)/src/rhs.js $(PARSERS)/
 
 $(PARSERS)/vars-shim.js:
 	echo "window.VarsHelper = require('./vars');" >$@

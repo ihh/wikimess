@@ -1,4 +1,5 @@
-var rhsParser = require('bracery').RhsParser
+var bracery = require('bracery')
+var rhsParser = bracery.RhsParser
 
 function makeTagString (text) {
   return (text
@@ -15,24 +16,16 @@ function defaultLog() { return console.log.apply (console.log, Array.prototype.s
 
 function parseSymbolDefs (text, log) {
   log = log || defaultLog
-  try {
-    var newSymbolDefReg = /^>([A-Za-z_]\w*)\s*$/;
-    var symbols = [], currentSymbol, newSymbolDefMatch
-    text.split(/\n/).forEach (function (line) {
-      if (line.length) {
-        if (currentSymbol)
-          currentSymbol.rules.push (parseRhs (line))
-        else if (newSymbolDefMatch = newSymbolDefReg.exec (line))
-          symbols.push (currentSymbol = { name: newSymbolDefMatch[1],
-                                          rules: [] })
-      } else {
-        // line is empty
-        currentSymbol = undefined
-      }
-    })
+  var rules = bracery.ParseTree.parseTextDefs (text)
+  var symbols = Object.keys (rules)
+      .map (function (name) {
+        var symbol = { rules: rules[name].map (bracery.ParseTree.parseRhs) }
+        symbol.name = name
+        return symbol
+      })
+  if (symbols)
     log(5,"Parsed text file and converted to the following JSON:\n" + JSON.stringify(symbols,null,2))
-    return symbols
-  } catch(e) { console.log(e) }
+  return symbols
 }
 
 function parseTemplateDefs (text, log) {

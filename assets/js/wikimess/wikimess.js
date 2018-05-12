@@ -1578,6 +1578,8 @@ var WikiMess = (function() {
                           break
                       }
                       wm.updateComposeContent (newContent)
+                      delete wm.composition.randomTemplate
+                      wm.markForSave()
                       wm.updateComposeDiv()
                       if (wm.composition.body) {
                         wm.composition.body.rhs.splice
@@ -1908,7 +1910,6 @@ var WikiMess = (function() {
           if (config.draft)
             wm.composition.draft = config.draft
 
-          wm.divAutosuggest()
           wm.randomizeButton.css('display','')
           
           var getRandomTemplate, generateNewContent
@@ -1960,6 +1961,7 @@ var WikiMess = (function() {
             function swipe() {
               wm.fadeAndDealCard (cardDiv, card, dealConfig)
                 .then (wm.clearComposeHelpMode.bind (wm))
+                .then (wm.divAutosuggest)
             }
             card.on ('throwout', swipe)
             wm.stopDrag()
@@ -1983,6 +1985,7 @@ var WikiMess = (function() {
 	    
             return dealPromise
               .then (function() {
+                wm.divAutosuggest()
                 if (wm.composition.thread && wm.composition.thread.length) {
                   var throwers = wm.composition.thread.map (function (msg) { return wm.makeInertCardPromiser ({ message: msg, noThrowIn: dealConfig.noThrowIn }) })
                   var allDealt = throwers.reduce (function (promise, thrower) {
@@ -2600,14 +2603,8 @@ var WikiMess = (function() {
     selectRandomReplyTemplate: function() {
       var wm = this
       var previousTags = wm.composition.previousTemplate.tags
-      if (wm.composition.previousMessage) {
-        // allow tags variable to override template tags
-        var finalVarVal = wm.ParseTree.finalVarVal ({ node: wm.composition.previousMessage.body,
-                                                      initVarVal: wm.composition.previousMessage.vars,
-						      makeSymbolName: wm.makeSymbolName.bind(wm) })
-        if (finalVarVal.tags)
-          previousTags = finalVarVal.tags
-      }
+      if (wm.composition.vars && wm.composition.prevtags)
+          previousTags = wm.composition.prevtags
       return wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (previousTags))
         .then (function (result) {
           if (!result.more)
@@ -2987,7 +2984,6 @@ var WikiMess = (function() {
       var cardReady = config.cardReady || $.Deferred().resolve()
       
       wm.composition.body = {}
-      wm.markForSave()
       
       var templatePromise
       if (useCurrentTemplate)
@@ -3434,10 +3430,7 @@ var WikiMess = (function() {
       var avatarDiv = $('<div class="avatar">')
       wm.addAvatarImage ({ div: avatarDiv,
                            tweeter: message.tweeter,
-                           avatar: message.avatar,
-                           vars: wm.ParseTree.finalVarVal ({ node: message.body,
-                                                             initVarVal: message.vars,
-							     makeSymbolName: wm.makeSymbolName.bind(wm) }) })
+                           avatar: message.avatar })
       var div = $('<div class="message">')
           .append (avatarDiv,
                    $('<div class="mailboxheader">')
@@ -3570,30 +3563,15 @@ var WikiMess = (function() {
 
     defaultVarVal: function (sender, recipient, tags) {
       sender = sender || (this.playerID ? this.playerInfo : null)
-      var varVal = { me: '_Anonymous_',
-                     you: '_Everyone_' }
-      this.populateVarVal (varVal, sender, recipient, tags)
-      return varVal
+      return this.VarsHelper.defaultVarVal (sender, recipient, tags)
     },
 
     populateVarVal: function (varVal, sender, recipient, tags) {
-      if (sender)
-        varVal.me = playerChar + sender.name
-      if (recipient)
-        varVal.you = playerChar + recipient.name
-      if (tags)
-        varVal.tags = tags
-      return varVal
+      return this.VarsHelper.populateVarVal (varVal, sender, recipient, tags)
     },
     
     nextVarVal: function (config) {
-      var varVal = this.ParseTree.finalVarVal (config)
-      varVal.prevtags = varVal.tags
-      delete varVal.tags
-      delete varVal.icon
-      delete varVal.icolor
-      this.populateVarVal (varVal, config.sender, config.recipient, config.tags)
-      return varVal
+      return this.VarsHelper.nextVarVal (config, this.ParseTree)
     },
 
     populateVarVal: function (varVal, sender, recipient, tags) {

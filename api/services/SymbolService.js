@@ -276,8 +276,11 @@ module.exports = {
            .then (function (symbol) {
              var result
              if (symbol) {
-               result = parseTree.sampleParseTree (parseTree.randomElement (symbol.rules, config.rng || Math.random))
+               var n = parseTree.randomIndex (symbol.rules)
+               result = parseTree.sampleParseTree (symbol.rules[n], config.rng || Math.random)
                node.id = symbol.id
+               node.rev = symbol.latestRevision
+               node.n = n
              } else
                result = []
              return result
