@@ -18,8 +18,13 @@ testdnd:
 clean:
 	mysql -u root -e 'drop database wikimess; create database wikimess;'
 
-postinstall:
-	cp $(BRACERY)/browser/bracery.js $(ASSETS)/bracery.js
+postinstall: $(ASSETS)/bracery.js config/local.js
+
+$(ASSETS)/bracery.js: $(BRACERY)/browser/bracery.js
+	cp $< $@
+
+config/local.js:
+	test -e $@ || cp config/local_example.js $@
 
 $(PARSERS)/vars-shim.js:
 	echo "window.VarsHelper = require('./vars');" >$@
