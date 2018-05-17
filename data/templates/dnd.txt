@@ -43,8 +43,6 @@ $dnd_cast_spell
 @dm>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 ^dnd_spellcaster={a mage}$dnd_no_spells
 
-3@player1>Game Suck #dnd_fail #dnd_argument
+3@player1,player2>Game Suck #dnd_fail #dnd_argument
 $dnd_game_sucks
 
-3@player2>Game Suck #dnd_fail #dnd_argument
-$dnd_game_sucks
