@@ -46,6 +46,10 @@ $dnd_cast_spell
 3@player1,player2>Game Over #dnd_fail #dnd_argument
 $dnd_game_sucks
 
+
+10@dm>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_spell_backfires
+Your spell backfires.
+
 @dm>Game Continue #dnd_argument #dnd_argument dnd_dodge_argument
 Please, let's not get into this again.
 
