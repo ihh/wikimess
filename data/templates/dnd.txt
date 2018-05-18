@@ -16,11 +16,17 @@ $dnd_bad_situation
 10@player1>Attack #dnd_bad_situation #dnd_attack
 $dnd_attack
 
+10@player2>>Assist #dnd_bad_situation #dnd_attack
+I aid your attack with magic.
+
 10@dm>Attack Fail #dnd_attack #dnd_bad_situation dnd_fail
 $dnd_attack_fails
 
 10@player2>Cast Spell #dnd_bad_situation #dnd_spell
 $dnd_cast_spell
+
+20@player1>>Guard # #dnd_spell
+I guard your spell-weaving with my blade.
 
 10@dm>Spell Fail #dnd_spell #dnd_bad_situation dnd_fail
 $dnd_spell_fails
@@ -37,8 +43,17 @@ $dnd_attack
 5@player1>Cast Spell #dnd_bad_situation #dnd_inappropriate_spell
 $dnd_cast_spell
 
+5@player1>Cast Spell #dnd_dodge_argument #dnd_inappropriate_spell
+$dnd_cast_spell
+
+5@player1>>Spell Backfires #dnd_dodge_argument #dnd_spell_backfires
+Your spell backfires.
+
 @player2>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 ^dnd_spellcaster={I}$dnd_no_spells
+
+10@dm>>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_spell_backfires
+Your spell backfires.
 
 @dm>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 ^dnd_spellcaster={a mage}$dnd_no_spells
@@ -47,11 +62,50 @@ $dnd_cast_spell
 $dnd_game_sucks
 
 
-10@dm>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_spell_backfires
-Your spell backfires.
 
 @dm>Game Continue #dnd_argument #dnd_argument dnd_dodge_argument
 Please, let's not get into this again.
 
 @player1,player2>Game Over #dnd_dodge_argument #dnd_argument
 No way. $dnd_game_sucks
+
+
+@player1,player2>Meaning? #dnd_spell_backfires#
+What does this even mean?
+
+@dm>>Rift##dnd_spell_backfires
+A rift in space and time, too deep to contemplate.
+
+@player1,player2>Cause? #dnd_spell_backfires#
+How did this even happen?
+
+@dm>>Antagonist##dnd_antagonist
+^dnd_nemesis={$dnd_villain}Your dreaded antagonist, ^dnd_nemesis.
+
+@player1,player2>Victory! #dnd_antagonist #dnd_antagonist
+We must defeat ^dnd_nemesis!
+
+@dm>>Victory! ##dnd_antagonist
+This will be difficult. Let me tell you why.
+
+@dm>Lair #dnd_antagonist #dnd_antagonist
+^dnd_nemesis has a fearsome lair.
+
+@dm>Powers #dnd_antagonist #dnd_antagonist
+^dnd_nemesis has fearsome powers.
+
+@dm>Army #dnd_antagonist #dnd_antagonist
+^dnd_nemesis has a fearsome army.
+
+@dm>Nature #dnd_antagonist #dnd_antagonist dnd_antagonist_nature
+^dnd_nemesis has a fearsome nature.
+
+@player1,player2>Redemption #dnd_antagonist_nature #dnd_redemption
+No-one is beyond redemption.
+
+@dm>>Redemption #dnd_antagonist_nature #dnd_redemption
+Who are you, ^dnd_redemption_advocate=[Dostoyevsky|St John|Bob Marley]^dnd_redemption_advocate?
+
+@player1,player2>>Redemption ##dnd_redemption
+Don't diss ^dnd_redemption_advocate.
+
