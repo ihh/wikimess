@@ -96,8 +96,8 @@ use bracery with the `-q` option (short for `--quiz`) instead of `-m`:
 bracery data/symbols/*.txt data/symbols/*.json -q data/templates/dnd.txt
 ~~~~
 
-You can also use Bracery's `templates2dot.js` script to get a visualization of the Markov chain
-(you'll need GraphViz installed)
+You can also use Bracery's `templates2dot.js` script to get a visualization of the Markov chain as a GraphViz dot file
+(the `-o` option will create and open the PDF automatically, but only on a Mac with GraphViz installed)
 
 ~~~~
 ./node_modules/bracery/bin/templates2dot.js -o data/templates/dnd.txt
