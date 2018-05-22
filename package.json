@@ -6,7 +6,7 @@
   "keywords": [],
   "dependencies": {
     "bcrypt": "^1.0.3",
-    "bracery": "ihh/bracery",
+    "bracery": "git://github.com/ihh/bracery.git",
     "browserify": "^16.2.2",
     "connect-redis": "^3.3.2",
     "deepcopy": "~0.6.3",

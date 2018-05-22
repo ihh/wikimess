@@ -20,7 +20,7 @@ clean:
 
 postinstall: $(ASSETS)/bracery.js config/local.js
 
-$(ASSETS)/bracery.js: $(BRACERY)/browser/bracery.js
+$(ASSETS)/bracery.js: $(BRACERY)/web/bracery.js
 	cp $< $@
 
 config/local.js:
