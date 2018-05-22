@@ -1,37 +1,37 @@
-10@dm>Treasure ##dnd_treasure
+@dm>Treasure ##dnd_treasure
 $dnd_treasure
 
-10@player1>Claim Treasure #dnd_treasure #dnd_take_treasure
+@player1>Claim Treasure #dnd_treasure #dnd_take_treasure
 $dnd_take_treasure
 
-10@player2>Claim Treasure #dnd_treasure #dnd_take_treasure
+@player2>Claim Treasure #dnd_treasure #dnd_take_treasure
 $dnd_take_treasure
 
-10@dm>Guards #dnd_take_treasure #dnd_bad_situation dnd_fail
+@dm>Guards #dnd_take_treasure #dnd_bad_situation dnd_fail
 $dnd_treasure_guarded
 
-10@dm>Surprise Encounter ##dnd_bad_situation
+@dm>Surprise Encounter ##dnd_bad_situation
 $dnd_bad_situation
 
-10@player1>Attack #dnd_bad_situation #dnd_attack
+@player1>Attack #dnd_bad_situation #dnd_attack
 $dnd_attack
 
-10@player2>>Assist #dnd_bad_situation #dnd_attack
+@player2>>Assist #dnd_attack #dnd_attack
 I aid your attack with magic.
 
-10@dm>Attack Fail #dnd_attack #dnd_bad_situation dnd_fail
+@dm>Attack Fail #dnd_attack #dnd_bad_situation dnd_fail
 $dnd_attack_fails
 
-10@player2>Cast Spell #dnd_bad_situation #dnd_spell
+@player2>Cast Spell #dnd_bad_situation #dnd_spell
 $dnd_cast_spell
 
-20@player1>>Guard # #dnd_spell
+@player1>>Guard #dnd_spell #dnd_spell
 I guard your spell-weaving with my blade.
 
-10@dm>Spell Fail #dnd_spell #dnd_bad_situation dnd_fail
+@dm>Spell Fail #dnd_spell #dnd_bad_situation dnd_fail
 $dnd_spell_fails
 
-5@player2>Attack #dnd_bad_situation #dnd_inappropriate_attack
+@player2>Attack #dnd_bad_situation #dnd_inappropriate_attack
 $dnd_attack
 
 @player1>No Attacks #dnd_inappropriate_attack #dnd_bad_situation dnd_fail
@@ -40,25 +40,25 @@ $dnd_attack
 @dm>No Attacks #dnd_inappropriate_attack #dnd_bad_situation dnd_fail
 ^dnd_attacker={a warrior}$dnd_no_attacks
 
-5@player1>Cast Spell #dnd_bad_situation #dnd_inappropriate_spell
+@player1>Cast Spell #dnd_bad_situation #dnd_inappropriate_spell
 $dnd_cast_spell
 
-5@player1>Cast Spell #dnd_dodge_argument #dnd_inappropriate_spell
+@player1>Cast Spell #dnd_dodge_argument #dnd_inappropriate_spell
 $dnd_cast_spell
 
-5@player1>>Spell Backfires #dnd_dodge_argument #dnd_magic_accident
+@player1>>Spell Backfires #dnd_dodge_argument #dnd_magic_accident
 Your spell backfires.
 
 @player2>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 ^dnd_spellcaster={I}$dnd_no_spells
 
-10@dm>>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_magic_accident
+@dm>>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_magic_accident
 Your spell backfires.
 
 @dm>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 ^dnd_spellcaster={a mage}$dnd_no_spells
 
-3@player1,player2>Game Over #dnd_fail #dnd_argument
+@player1,player2>Game Over #dnd_fail #dnd_argument
 $dnd_game_sucks
 
 
