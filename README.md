@@ -32,6 +32,14 @@ This side of things is not well hooked-up, yet.
 To enable/disable direct inspection of the data model via Sails [blueprint methods](https://sailsjs.com/documentation/reference/blueprint-api),
 edit the REST policy in [config/policies.js](config/policies.js).
 
+# Corpora
+
+The [data/symbols](data/symbols) directory contains several pre-loaded sets of synonyms
+including selections from [Darius Kazemi's corpora](https://github.com/dariusk/corpora),
+[Moby](http://moby-thesaurus.org/), and [Wordnet](https://wordnet.princeton.edu/).
+
+The [Makefile](data/symbols/Makefile) in this directory fetches and builds these synonym sets.
+
 # Bracery
 
 [Bracery](https://github.com/ihh/bracery) is Wiki Messenger's native syntax for representing generative context-free grammars.
