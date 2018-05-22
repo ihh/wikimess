@@ -24,21 +24,15 @@ The final two steps of this initialization sequence (`sails lift` and `bin/load-
 
 The script has lots more options; it crawls the [data](data) directory to pre-load corpora into the wiki database.
 
+## Configuration
+
 You can log in using Twitter or Facebook authentication (via [passport.js](http://passportjs.org/)).
 However, currently this redirects back to `wikimess.me`, so it will not work on your local machine.
-You could probably edit the Twitter/Facebook client ID & secret in [config/passport.js](config/passport.js) to use a different Twitter/Facebook account, in theory.
-This side of things is not well hooked-up, yet.
+Edit the Twitter/Facebook client ID & secret in [config/local.js](config/local.js) to use a different Twitter/Facebook account and app credentials.
 
 To enable/disable direct inspection of the data model via Sails [blueprint methods](https://sailsjs.com/documentation/reference/blueprint-api),
 edit the REST policy in [config/policies.js](config/policies.js).
-
-# Corpora
-
-The [data/symbols](data/symbols) directory contains several pre-loaded sets of synonyms
-including selections from [Darius Kazemi's corpora](https://github.com/dariusk/corpora),
-[Moby](http://moby-thesaurus.org/), and [Wordnet](https://wordnet.princeton.edu/).
-
-The [Makefile](data/symbols/Makefile) in this directory fetches and builds these synonym sets.
+Currently, it allows local users full access to the database.
 
 # Bracery
 
@@ -52,9 +46,14 @@ Special variables interpreted by Wiki Messenger include
 - `^tags` (set by default to the message tags; if modified, will override the message tags)
 - `^prevtags` (tags for the previous message)
 
-# Template directory syntax
+# Template directory
 
-Files in the `data/templates` directory define the built-in templates and have the following syntax
+Files in the [data/templates](data/templates) directory define the built-in templates
+for messages.
+
+## Template directory syntax
+
+Templates can be specified in JSON or in the following plaintext shorthand
 
 ~~~~
 @template_author>Template title#past_tag1 past_tag2#future_tag1 future_tag2 future_tag3
@@ -78,7 +77,11 @@ or more
 
 The author field can optionally be preceded by an integer weight, reflecting how frequently (relatively speaking) a template will be suggested to the user.
 
-# Symbol directory syntax
+# Symbol directory
+
+Symbol definitions are in [data/symbols](data/symbols).
+
+## Symbol directory syntax
 
 Files in the `data/symbols` directory use Bracery's plaintext format for symbol definitions
 
@@ -92,3 +95,12 @@ etc.
 ~~~~
 
 The symbol definition is terminated by an empty line.
+
+## Preset corpora
+
+The [data/symbols](data/symbols) directory contains several pre-loaded sets of synonyms
+including selections from [Darius Kazemi's corpora](https://github.com/dariusk/corpora),
+[Moby](http://moby-thesaurus.org/), and [Wordnet](https://wordnet.princeton.edu/).
+
+The [Makefile](data/symbols/Makefile) in this directory fetches and builds these synonym sets.
+
