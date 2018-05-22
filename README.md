@@ -77,6 +77,25 @@ or more
 
 The author field can optionally be preceded by an integer weight, reflecting how frequently (relatively speaking) a template will be suggested to the user.
 
+## Testing templates
+
+You can test templates outside of Wiki Messenger using [bracery's](https://github.com/ihh/bracery) `-m` option
+(short for `--markov`, because it basically samples a trajectory through a Markov chain).
+Make sure to also load any required symbol definitions.
+For example:
+
+~~~~
+bracery data/symbols/*.txt data/symbols/*.json -m data/templates/dnd.txt
+~~~~
+
+Or for an interactive command-line experience that's a little closer to the Wiki Messenger web client UI
+(in that it allows you to keep re-rolling the next move until you're happy with it),
+use bracery with the `-q` option (short for `--quiz`) instead of `-m`:
+
+~~~~
+bracery data/symbols/*.txt data/symbols/*.json -q data/templates/dnd.txt
+~~~~
+
 # Symbol directory
 
 Symbol definitions are in [data/symbols](data/symbols).
