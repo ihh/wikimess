@@ -46,7 +46,7 @@ $dnd_cast_spell
 @player1>Cast Spell #dnd_dodge_argument #dnd_inappropriate_spell
 $dnd_cast_spell
 
-@player1>>Spell Backfires #dnd_dodge_argument #dnd_magic_accident
+@dm>>Spell Backfires #dnd_dodge_argument #dnd_magic_accident
 Your spell backfires.
 
 @player2>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
