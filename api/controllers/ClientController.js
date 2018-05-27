@@ -1368,13 +1368,20 @@ module.exports = {
   suggestReply: function (req, res) {
     var playerID = req.session && req.session.passport ? req.session.passport.user : null
     var previousID = Template.parseID (req.params.template)
-    var previousTags = PlayerService.makeTagArray (req.param('tags',''))
-    return Template.find ({ or: [{ author: playerID },
-                                 { isPublic: true }] })
-      .where ({ or: [{ previous: previousID }]
-                .concat (previousTags.map (function (tag) {
-		  return { previousTags: { contains: ' ' + tag + ' ' } }
-                })) })
+    var tagArray = PlayerService.makeTagArray (req.param('tags',''))
+    var previousTags = tagArray.filter (function (tag) { return tag[0] !== '!' })
+    var excludedTags = tagArray.filter (function (tag) { return tag[0] === '!' }).map (function (xtag) { return xtag.substr(1) })
+    var query = Template.find ({ or: [{ author: playerID },
+                                      { isPublic: true }] })
+        .where ({ or: [{ previous: previousID }]
+                  .concat (previousTags.map (function (tag) {
+		    return { previousTags: { contains: ' ' + tag + ' ' } }
+                  })) })
+    if (excludedTags.length)
+      query = query.where ({ not: { or: excludedTags.map (function (tag) {
+        return { previousTags: { contains: ' ' + tag + ' ' } }
+      }) } })
+    return query
       .populate ('author')
       .then (function (templates) {
         // exclude authors who have noMailUnlessFollowed set, unless they follow the original template author
