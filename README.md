@@ -61,7 +61,11 @@ The template itself, featuring $nonterminals, [alternations|etc.]
 (it can be split over multiple lines)
 ~~~~
 
-This defines a template by `@template_author`, with the title "Template title", and the specified past tags (`past_tag1` and `past_tag2`) and future tags (`future_tag1`, `future_tag2`, and `future_tag3`). The past & future tag fields can each contain any number of whitespace-separated tags; the special past tag `root` is used for templates that can be used at the top of a thread, or the past tags can be left empty for the same effect.
+This defines a template by `@template_author`, with the title "Template title", and the specified past tags (`past_tag1` and `past_tag2`) and future tags (`future_tag1`, `future_tag2`, and `future_tag3`). These tags define the succession of templates in a thread, as follows:
+- The past & future tag fields can each contain any number of whitespace-separated tags
+- For template B to be considered as a possible successor (i.e. reply) to template A, at least one of A's future tags must also be one of B's past tags
+- If any of template A's future tags appear in B's past tags with an exclamation point in front (e.g. A has future tag `tag` and B has past tag `!tag`), then B is disallowed as a successor to A
+- The special past tag `root` is used for templates that can be used at the top of a thread, or the past tags can be left empty for the same effect
 
 The template definition is terminated by an empty line.
 
