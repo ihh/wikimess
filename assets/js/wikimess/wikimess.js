@@ -1440,7 +1440,7 @@ var WikiMess = (function() {
 
           wm.composition.previousTemplate = config.previousTemplate || wm.composition.previousTemplate
           if (config.template) {
-            wm.composition.template = config.template
+            wm.updateMessageHeader (config.template)
             delete wm.composition.randomTemplate
           }
           wm.composition.template = wm.composition.template || {}
@@ -1940,6 +1940,7 @@ var WikiMess = (function() {
 	    wm.composition.randomTemplate = true
           
           var dealConfig = { generate: getRandomTemplate || generateNewContent,
+                             useCurrentTemplate: !getRandomTemplate,
 			     noThrowIn: !(getRandomTemplate || generateNewContent) }
 
           if (config.showHelpCard) {
@@ -2264,7 +2265,8 @@ var WikiMess = (function() {
       delete wm.animationExpansion
       var contentPromise
       if (config.generate)
-        contentPromise = wm.generateMessageBody ({ cardReady: cardReadyPromise })
+        contentPromise = wm.generateMessageBody ({ cardReady: cardReadyPromise,
+                                                   useCurrentTemplate: config.useCurrentTemplate })
       else
         contentPromise = cardReadyPromise
         .then (function() {
@@ -3689,7 +3691,7 @@ var WikiMess = (function() {
                                                              .on ('click', function() {
                                                                wm.REST_getPlayerTemplate (wm.playerID, template.id)
                                                                  .then (function (templateResult) {
-                                                                   wm.showComposePage ({ title: template.title,
+                                                                   wm.showComposePage ({ title: templateResult.template.title,
                                                                                          template: templateResult.template,
                                                                                          focus: 'playerSearchInput',
                                                                                          clearThread: true,

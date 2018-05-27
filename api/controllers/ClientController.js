@@ -1369,21 +1369,22 @@ module.exports = {
     var playerID = req.session && req.session.passport ? req.session.passport.user : null
     var previousID = Template.parseID (req.params.template)
     var tagArray = PlayerService.makeTagArray (req.param('tags',''))
-    var previousTags = tagArray.filter (function (tag) { return tag[0] !== '!' })
-    var excludedTags = tagArray.filter (function (tag) { return tag[0] === '!' }).map (function (xtag) { return xtag.substr(1) })
     var query = Template.find ({ or: [{ author: playerID },
                                       { isPublic: true }] })
         .where ({ or: [{ previous: previousID }]
-                  .concat (previousTags.map (function (tag) {
+                  .concat (tagArray.map (function (tag) {
 		    return { previousTags: { contains: ' ' + tag + ' ' } }
                   })) })
-    if (excludedTags.length)
-      query = query.where ({ not: { or: excludedTags.map (function (tag) {
-        return { previousTags: { contains: ' ' + tag + ' ' } }
-      }) } })
     return query
       .populate ('author')
       .then (function (templates) {
+        // exclude templates whose previousTags include '!tag' (for any of our tags)
+        // this would probably be more efficiently done in the query, but Waterline doesn't seem to support negation of 'contains' queries
+        templates = templates.filter (function (template) {
+          return !tagArray.reduce (function (foundNegativeTag, tag) {
+            return foundNegativeTag || (template.previousTags.indexOf (' !' + tag + ' ') >= 0)
+          }, false)
+        })
         // exclude authors who have noMailUnlessFollowed set, unless they follow the original template author
         var isShyAuthor = {}, isPrivateAuthor = {}
         templates.forEach (function (template) {
