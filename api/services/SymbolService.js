@@ -106,6 +106,7 @@ module.exports = {
 		return SymbolService.validateMessageRhs (symbol.rules[bodyNode.n], bodyNode.rhs)
             })
         }
+      case 'list':
       case 'alt_sampled':
       case 'rep_sampled':
       default:
