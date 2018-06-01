@@ -1,6 +1,6 @@
 >rude_opening
-$Hey$pling You $filthy $common_animal$pling\n\n
-$Filthy $common_animal$pling\n\n
+~Hey~pling You ~filthy ~common_animal~pling\n\n
+~Filthy ~common_animal~pling\n\n
 
 >hey
 hey
@@ -12,4 +12,4 @@ listen
 listen up
 listen to me
 wake up
-let's cut the $crap
+let's cut the ~crap

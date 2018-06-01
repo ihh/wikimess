@@ -107,8 +107,8 @@ var WikiMess = (function() {
 
   // config, defaults
   var parseTree = window.bracery.ParseTree
-  var symChar = '$', symCharHtml = '&#36;'
-  var playerChar = '@', varChar = '^', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '='
+  var symChar = '~', symCharHtml = '&#126;'
+  var playerChar = '@', varChar = '$', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '='
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',

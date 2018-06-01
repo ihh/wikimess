@@ -1,53 +1,53 @@
 >Hey baby #root opener #opener gambit
-$is_your_dad_a_thief
+~is_your_dad_a_thief
 
 >I have opinions #root opener #opener gambit
-^subject={^is={is}^its={their}$famous_celebrity|^is={is}^its={its}$common_metal|^is={are}^its={their}&plural{$common_animal|$common_flower|$common_fruit|$common_condiment|$common_bread|$common_pastry|$common_vegetable|$common_fabric|$common_fibre|$common_clothing|$common_object|$common_noun}}
-$just_an_opinion
-[&cap{^subject} ^is $so_overrated...|[I|You] [just|totally|have to] [hate|love] ^subject: $so_overrated!|&cap{^subject}[.|:|...] &cap{$so_overrated}[?|!|??|?!]|[Am I|Am I really|I can't be|Surely I can't be] the only one who thinks ^subject ^is $so_overrated?]
-[If I never see ^subject again it'll be too soon.|I just can't [stand|handle|deal with|abide|get enough of] ^subject.|I really[|, really] [hate|love] ^subject. [|Sorry....|OK?|That's just how it is.]]
+$subject={$is={is}$its={their}~famous_celebrity|$is={is}$its={its}~common_metal|$is={are}$its={their}&plural{~common_animal|~common_flower|~common_fruit|~common_condiment|~common_bread|~common_pastry|~common_vegetable|~common_fabric|~common_fibre|~common_clothing|~common_object|~common_noun}}
+~just_an_opinion
+[&cap{$subject} $is ~so_overrated...|[I|You] [just|totally|have to] [hate|love] $subject: ~so_overrated!|&cap{$subject}[.|:|...] &cap{~so_overrated}[?|!|??|?!]|[Am I|Am I really|I can't be|Surely I can't be] the only one who thinks $subject $is ~so_overrated?]
+[If I never see $subject again it'll be too soon.|I just can't [stand|handle|deal with|abide|get enough of] $subject.|I really[|, really] [hate|love] $subject. [|Sorry....|OK?|That's just how it is.]]
 
 >So... #root opener #opener gambit
-$odd_statement
+~odd_statement
 
 >Concerns #root opener #opener gambit
-$worldly_concerns
+~worldly_concerns
 
 >Check me out #root opener #opener gambit
-$i_am_superior
+~i_am_superior
 
 >Rejection#gambit reject #reject
-$i_reject_you
+~i_reject_you
 
 >Tell me more#opener #opener gambit
-$tell_me_more
+~tell_me_more
 
 >Call to adventure#opener #call gambit
-$call_to_adventure
+~call_to_adventure
 
 >Location#call place #place gambit
-$i_know_where_to_go
+~i_know_where_to_go
 
 >Activity#place activity #activity gambit
-$i_know_what_to_do
+~i_know_what_to_do
 
 >Gatekeeper#activity gatekeeper #gatekeeper
-$pass_the_gatekeeper
+~pass_the_gatekeeper
 
 >Omens#gatekeeper challenge #challenge
-$i_have_a_bad_feeling
+~i_have_a_bad_feeling
 
 >Abyss#gatekeeper challenge abyss #abyss
-$in_the_abyss
+~in_the_abyss
 
 >Revelation#challenge abyss revelation #revelation
-$revelation_experience
+~revelation_experience
 
 >Rebirth#abyss revelation rebirth #rebirth
-$rebirth_experience
+~rebirth_experience
 
 >Atonement#rebirth atonement #atonement
-$atonement_process
+~atonement_process
 
 >Return#atonement return #return
-$return_from_adventure
+~return_from_adventure

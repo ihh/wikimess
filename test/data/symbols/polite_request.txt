@@ -1,15 +1,15 @@
 >polite_request
-$Please$comma$basic_request
-$Basic_request
+~Please~comma~basic_request
+~Basic_request
 
 >basic_request
-$give_me $money{?|.}
-$give_me your &plural$common_flower{?|.}
-$lend_me your $artistic_item{?|.}
-$tell_me $personal_fact{?|.}
+~give_me ~money{?|.}
+~give_me your &plural~common_flower{?|.}
+~lend_me your ~artistic_item{?|.}
+~tell_me ~personal_fact{?|.}
 
 >personal_fact
-the $personal_detail of your $relative
+the ~personal_detail of your ~relative
 
 >personal_detail
 name
@@ -48,9 +48,9 @@ remind me of
 
 >please
 please
-I $beg you
-would you $possibly
-could you $possibly
+I ~beg you
+would you ~possibly
+could you ~possibly
 
 >possibly
 possibly
@@ -77,16 +77,16 @@ gold
 gravy
 
 >show_me
-$i_would_like_to see
+~i_would_like_to see
 show me
 
 >send_me
-$give_me
-$grant_me
-$lend_me
+~give_me
+~grant_me
+~lend_me
 
 >give_me
-$i_would_like_to have
+~i_would_like_to have
 give me
 send me
 let me have
@@ -98,7 +98,7 @@ donate
 release
 
 >lend_me
-$i_would_like_to borrow
+~i_would_like_to borrow
 lend me
 
 >i_would_like_to
@@ -108,5 +108,5 @@ I wish to
 let me
 allow me to
 permit me to
-$grant_me permission to
-$grant_me your blessing to
+~grant_me permission to
+~grant_me your blessing to
