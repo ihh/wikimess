@@ -63,7 +63,7 @@ $dnd_spellcaster={a mage}~dnd_no_spells
 
 
 
-@dm>Game Continue #dnd_argument #dnd_argument dnd_dodge_argument
+@dm>Game Continue #dnd_argument !dnd_dodge_argument #dnd_argument dnd_dodge_argument
 Please, let's not get into this again.
 
 @player1,player2>Game Over #dnd_dodge_argument #dnd_argument
@@ -82,30 +82,5 @@ How did this even happen?
 @dm>Antagonist#dnd_magic_accident_cause#dnd_antagonist
 $dnd_nemesis={~dnd_villain}Your dreaded antagonist, $dnd_nemesis.
 
-@player1,player2>Victory! #dnd_antagonist #dnd_antagonist_victory dnd_antagonist
+@player1,player2>Victory! #dnd_antagonist #dnd_antagonist_victory
 We must defeat $dnd_nemesis!
-
-@dm>Victory! #dnd_antagonist_victory #dnd_antagonist
-This will be difficult. Let me tell you why.
-
-@dm>Lair #dnd_antagonist #dnd_antagonist
-$dnd_nemesis has a fearsome lair.
-
-@dm>Powers #dnd_antagonist #dnd_antagonist
-$dnd_nemesis has fearsome powers.
-
-@dm>Army #dnd_antagonist #dnd_antagonist
-$dnd_nemesis has a fearsome army.
-
-@dm>Nature #dnd_antagonist #dnd_antagonist dnd_antagonist_nature
-$dnd_nemesis has a fearsome nature.
-
-@player1,player2>Redemption #dnd_antagonist_nature #dnd_redemption dnd_redemption_proposed
-No-one is beyond redemption.
-
-@dm>Redemption #dnd_redemption_proposed #dnd_redemption
-Who are you, $dnd_redemption_advocate=[Dostoyevsky|St John|Bob Marley]$dnd_redemption_advocate?
-
-@player1,player2>>Redemption ##dnd_redemption
-Don't diss $dnd_redemption_advocate.
-
