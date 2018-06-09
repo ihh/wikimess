@@ -2980,6 +2980,7 @@ var WikiMess = (function() {
         return wm.ParseTree.makeRhsExpansionPromise
         ({ rhs: sampledTree,
            vars: initVarVal,
+           disableParse: true,
            expand: reject,
            get: reject })
           .then (resolve)

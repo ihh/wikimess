@@ -280,6 +280,7 @@ module.exports = {
              config,
              { rhs: sampledTree,
                vars: varVal,
+               disableParse: true,
                get: function (getConfig) {
                  return Symbol.findOneCached (SymbolService.makeSymbolQuery (getConfig))
                    .then (function (symbol) {
