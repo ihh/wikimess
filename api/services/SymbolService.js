@@ -259,35 +259,55 @@ module.exports = {
       })
   },
 
+  makeSymbolQuery: function (expandConfig) {
+    var node = expandConfig.node
+    var symbolQuery = {}
+    if (node && typeof(node.id) !== 'undefined')
+      symbolQuery.id = node.id
+    else if (node && typeof(node.name) !== 'undefined')
+      symbolQuery.name = node.name
+    else if (expandConfig.symbolName)
+      symbolQuery.name = expandConfig.symbolName
+    return symbolQuery
+  },
+  
   expandContent: function (config) {
     var rhs = config.rhs || parseTree.parseRhs (config.rhsText)
     var varVal = config.vars || {}
-    var sampledTree = parseTree.sampleParseTree (rhs)
+    var sampledTree = parseTree.sampleParseTree (rhs, config)
     return parseTree.makeRhsExpansionPromise
-    ({ rhs: sampledTree,
-       vars: varVal,
-       expand: function (expandConfig) {
-         var node = expandConfig.node
-         var symbolQuery = {}
-         if (typeof(node.id) !== 'undefined')
-           symbolQuery.id = node.id
-         else if (typeof(node.name) !== 'undefined')
-           symbolQuery.name = node.name
-         return Symbol.findOneCached (symbolQuery)
-           .then (function (symbol) {
-             var result
-             if (symbol) {
-               var n = parseTree.randomIndex (symbol.rules)
-               result = parseTree.sampleParseTree (symbol.rules[n], config.rng || Math.random)
-               node.id = symbol.id
-               node.rev = symbol.latestRevision
-               node.n = n
-             } else
-               result = []
-             return result
-           })
-       }
-    })
+    (extend ({},
+             config,
+             { rhs: sampledTree,
+               vars: varVal,
+               get: function (getConfig) {
+                 return Symbol.findOneCached (SymbolService.makeSymbolQuery (getConfig))
+                   .then (function (symbol) {
+                     var rulesRhs = symbol && symbol.rules.map (function (rule) { return parseTree.makeRhsText (rule) })
+                     return (rulesRhs && rulesRhs.length
+                             ? (rulesRhs.length === 1
+                                ? rulesRhs
+                                : [parseTree.leftSquareBraceChar + rulesRhs.join (parseTree.pipeChar) + parseTree.rightSquareBraceChar])
+                             : [''])
+                   })
+               },
+               expand: function (expandConfig) {
+                 var node = expandConfig.node
+                 return Symbol.findOneCached (SymbolService.makeSymbolQuery (expandConfig))
+                   .then (function (symbol) {
+                     var result
+                     if (symbol) {
+                       var n = parseTree.randomIndex (symbol.rules)
+                       result = parseTree.sampleParseTree (symbol.rules[n], config)
+                       node.id = symbol.id
+                       node.rev = symbol.latestRevision
+                       node.n = n
+                     } else
+                       result = []
+                     return result
+                   })
+               }
+             }))
   },
   
   expansionSymbols: function (expansion) {
