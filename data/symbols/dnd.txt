@@ -273,12 +273,12 @@ I [am so [sorry for|moved by]|pity|feel [|such ][|deep |heartbreaking |bottomles
 Your spell backfires.
 
 >dnd_dodge_argument
-When this ~dnd_sort_of_thing [starts up|kicks in][| again], I [sometimes|often|occasionally] [wonder if|speculate that] [players|we] [ought to|could|might] [redirect|turn|bend] our [energy|emotions|emotional [investment|passion|intensity]] to the [game|campaign] [world|universe|mythos].
+When this ~dnd_sort_of_argument [starts up|kicks in][| again], I [sometimes|often|occasionally] [wonder if|speculate that] [players|we] [ought to|could|might] [redirect|turn|bend] our [energy|emotions|emotional [investment|passion|intensity]] to the [game|campaign] [world|universe|mythos].
 [Please|Oh gods|Great Zeus], let's not get ~dnd_distracted_by [this|all this|this ~dnd_sort_of_argument] again.
 [|[Please|People|Guys], |[Seriously|Really|Honestly]? ]I've[| [really|already]] [asked you not to|talked about [what happens|the effect on [the [campaign|game|group]|[realism|morale|immersion|authenticity]]|what it feels like|what signal you're sending] when we] [go there|get ~dnd_distracted_by [that|all that][| [stuff|~dnd_sort_of_argument]]].
 
->dnd_sort_of_thing
-[sort|kind] of [thing|~dnd_negativity]
+>dnd_sort_of_argument
+[sort|kind] of [thing|argument|~dnd_negativity]
 [|[particular|whole|old] ][flavor|miasma|vortex|morass] of ~dnd_negativity
 
 >dnd_negativity
