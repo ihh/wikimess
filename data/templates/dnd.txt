@@ -47,40 +47,57 @@ $dnd_attacker={a warrior}~dnd_no_attacks
 ~dnd_cast_spell
 
 @dm>>Spell Backfires #dnd_dodge_argument #dnd_magic_accident
-Your spell backfires.
+~dnd_spell_backfires
 
 @player2>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 $dnd_spellcaster={I}~dnd_no_spells
 
 @dm>>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_magic_accident
-Your spell backfires.
+~dnd_spell_backfires
 
 @dm>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
 $dnd_spellcaster={a mage}~dnd_no_spells
 
-@player1,player2>Game Over #dnd_fail #dnd_argument
+@player1>Game Over #dnd_fail #dnd_argument
 ~dnd_game_sucks
 
+@player2>Game Over #dnd_fail #dnd_argument
+~dnd_i_cannot_even
 
 
 @dm>Game Continue #dnd_argument !dnd_dodge_argument #dnd_argument dnd_dodge_argument
-Please, let's not get into this again.
+~dnd_dodge_argument
 
 @player1,player2>Game Over #dnd_dodge_argument #dnd_argument
-No way. ~dnd_game_sucks
+~dnd_prolong_argument
 
 
 @player1,player2>Meaning? #dnd_magic_accident#dnd_magic_accident_meaning
-What does this even mean?
+~dnd_query_meaning
 
 @dm>Rift#dnd_magic_accident_meaning#dnd_magic_accident
-A rift in space and time, too deep to contemplate.
+~dnd_magical_explanation
 
 @player1,player2>Cause? #dnd_magic_accident#dnd_magic_accident_cause
-How did this even happen?
+~dnd_query_cause
 
 @dm>Antagonist#dnd_magic_accident_cause#dnd_antagonist
-$dnd_nemesis={~dnd_villain}Your dreaded antagonist, $dnd_nemesis.
+~dnd_introduce_antagonist
 
 @player1,player2>Victory! #dnd_antagonist #dnd_antagonist_victory
-We must defeat $dnd_nemesis!
+~dnd_declare_war
+
+@player1>Attack #dnd_antagonist_victory #dnd_attack dnd_antagonist_absent
+~dnd_attack
+
+@player2>Cast Spell #dnd_antagonist_victory #dnd_spell dnd_antagonist_absent
+~dnd_cast_spell
+
+@dm>Four Oh Four #dnd_antagonist_absent #dnd_antagonist_victory dnd_fail
+~dnd_antagonist_missing
+
+@player2>Attack #dnd_antagonist_victory #dnd_inappropriate_attack
+~dnd_attack
+
+@player1>Cast Spell #dnd_antagonist_victory #dnd_inappropriate_spell
+~dnd_cast_spell

@@ -10,8 +10,11 @@ As you [enter|approach|go deeper into|delve into|explore|dig into|[plumb|fathom]
 [Later|Suddenly|Eventually|After some time|The next day|That afternoon], [in|at] ~dnd_place
 
 >dnd_place
-the ~dnd_place_adjective [Cavern|Dungeon|Fjord|River|Forest|Chasm|Passage]
-~dnd_villain's [Lair|Cavern|Forest|Dungeon|River|Castle|Keep|Folly|Palazzo]
+the ~dnd_place_adjective &cap~dnd_region
+~dnd_villain's [[Lair|Castle||Keep|Folly|Palazzo]|$dnd_region]
+
+>dnd_region
+$dnd_region:=[cavern|dungeon|fjord|river|forest|chasm|passage|lake]
 
 >dnd_villain
 [Mag|Quar|Ab|Plu|Ben|Dul|So][dak|lok|bud|mel|vox|bex|kel|buht|tak]
@@ -60,7 +63,10 @@ creeper
 zombie
 
 >dnd_attack
-I attack the &plural$dnd_enemy with my $dnd_weapon={~dnd_melee_weapon}$dnd_weapon.
+~{dnd_init_enemy}I attack $dnd_the_enemy with my $dnd_weapon={~dnd_melee_weapon}$dnd_weapon.
+
+>dnd_init_enemy
+$dnd_the_enemy=&if{$dnd_the_enemy}{$dnd_the_enemy}{the &plural$dnd_enemy}
 
 >dnd_melee_weapon
 axe
@@ -93,7 +99,7 @@ blade
 Your $dnd_weapon [shatters|splinters|breaks] into [|a [thousand|hundred|dozen]] [|[tiny|useless] ][pieces|shards|fragments].
 
 >dnd_cast_spell
-~{dnd_a_spell}I cast $dnd_a_spell at the &plural$dnd_enemy.
+~{dnd_init_enemy}~{dnd_a_spell}I cast $dnd_a_spell at $dnd_the_enemy.
 
 >dnd_spell_fails
 Your $dnd_spell [fails|fizzles|flops|is &a{catastrophe|embarrassment|failure}].
@@ -136,10 +142,20 @@ curse
 [[silent|quiet|whispered|phantom|illusory|ghostly] |]~Body_part of [~greek_monster|~greek_titan]
 
 >dnd_game_sucks
-This game sucks!
+This game [sucks|drools]!
 This is unfair.
-This game is rigged.
-This [| [whole|entire]] [thing|game|campaign|battle|encounter] is[| so,][| just,][| so,][| like,][| so][| totally] [boring|not cool|uncool|wrong|weak].
+This game is [rigged|the worst|the literal worst].
+This[| [whole|entire|#dnd_region#]] [thing|game|campaign|battle|encounter] is[| so,][| just,][| so,][| like,][| so][| totally] [boring|not cool|uncool|wrong|weak].
+
+>dnd_literally
+literally
+seriously
+in [genuine|all] [seriousness|honesty|integrity|truth]
+
+>dnd_i_cannot_even
+I[| ~dnd_literally|, ~dnd_literally,] [can't|cannot|[do not have|lack|am [deficient in|bereft of]] the [power|ability|will] to][| ~dnd_literally| even] even.
+Not even my[| [literal|own|can's]] can [can|could|has the ability to][| even] even.
+I [have [abandoned|lost]|[am|have been] [drained|bereft|depleted] of] the [ability|power|will] to [can|care|continue|live|believe|play].
 
 >dnd_no_attacks
 You can't use &a$dnd_weapon!
@@ -220,7 +236,7 @@ Your eyes gleam as you [imagine|dream of] the [power|possibilities|dominion|mast
 [Awesome|Fantastic|Cool|Amazing][!|!!|!!!|!1!]
 [Calling|Definitely [gotta have|calling|having|taking|claiming]|I [take|claim|call]] &a$dnd_treasure_item.
 All &plural$dnd_treasure_item are mine.
-My [|sacred ][quest is|trials are] [complete|over|about to begin|just begun]. I take [&a$dnd_treasure_item|the &plural$dnd_treasure_item] and [assume|claim|seek] my role as [[Lord|Autarch|Supreme Ruler|Mayor|Deathlord] of the [Underworld|Dungeon|land|[Cursed|Hidden|Nether] Realms]|[Guild|Clan|Party] [Acolyte|Secretary|President|Treasurer]]!
+My [|sacred ][quest is|trials are] [complete|over|about to begin|just begun]. I take [&a$dnd_treasure_item|the &plural$dnd_treasure_item] and [assume|claim|seek] my role as [[Lord|Autarch|Supreme Ruler|Mayor|Deathlord] of the [Underworld|&cap~dnd_region|land|[Cursed|Hidden|Nether] Realms]|[Guild|Clan|Party] [Acolyte|Secretary|President|Treasurer]]!
 Let's [grab|take|claim|bag|pick up] the &plural$dnd_treasure_item[| and [run|scarper|get out of here|make a sharp exit|exit, fast|exit|quit|quit while we're ahead]]!
 [It is not my [place|role|duty|quest] to [take|claim]|I leave to [others|another|my fellow [adventurer|party member][|s]] the [honor|privilege|duty|task|rite] of [taking|claiming]] &plural$dnd_treasure_item, but I am glad that we [have|finally] found them[|, as was [foretold|prophesied|augured|expected|totally predictable|inevitable]].
 
@@ -235,3 +251,30 @@ And that's [when|where|how] you [run into|encounter|get ambushed by|are surprise
 Did you imagine it would be easy?
 ([||Naive |Callow ][Fools|Newbies|N00bs|Beginners]! It is never [that easy|as it seems|as easy as it [looks|seems]]!)
 I [am so [sorry for|moved by]|pity|feel [|such ][|deep |heartbreaking |bottomless ] [pity|empathy|sorrow|sadness] for] your imminent $dnd_fate=[doom|death][$dnd_fate|&cap$dnd_fate|&uc$dnd_fate][...|!|!!|!!!]
+
+>dnd_spell_backfires
+Your spell backfires.
+
+>dnd_dodge_argument
+Please, let's not get into this again.
+
+>dnd_prolong_argument
+No way. ~dnd_game_sucks
+
+>dnd_query_meaning
+What does this even mean?
+
+>dnd_magical_explanation
+A rift in space and time, too deep to contemplate.
+
+>dnd_query_cause
+How did this even happen?
+
+>dnd_introduce_antagonist
+$dnd_nemesis={~dnd_villain}$dnd_the_enemy={$dnd_nemesis}Your dreaded antagonist, $dnd_nemesis.
+
+>dnd_declare_war
+We must defeat $dnd_nemesis!
+
+>dnd_antagonist_missing
+$dnd_the_enemy={}You realize $dnd_nemesis isn't actually here.
