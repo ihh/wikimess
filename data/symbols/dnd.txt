@@ -153,7 +153,7 @@ curse
 >dnd_game_sucks
 ~dnd_fortune500_slam
 This ~dnd_campaign [sucks|drools|bites]!
-This[| ~dnd_campaign] is [unfair|ridiculous|idiotic|contrived|
+This[| ~dnd_campaign] is [unfair|ridiculous|idiotic|contrived].
 This ~dnd_campaign is [rigged|the worst|the literal worst].
 This[| [whole|entire|#dnd_region#]] [thing|~dnd_campaign] is[| so,][| just,][| so,][| like,][| so][| totally] [boring|not cool|uncool|wrong|weak].
 
@@ -172,7 +172,7 @@ Not even my[| [literal|own|can's]] can [can|could|has the ability to][| even] ev
 I [have [abandoned|lost]|[am|have been] [drained|bereft|depleted] of] the [ability|power|will] to [can|care|continue|live|believe|play].
 
 >dnd_fortune500_slam
-Does your ~fortune500_company [group|game|campaign] [suck|bite] this [bad|hard]?
+Does your $dnd_the_enemy:=~fortune500_company [group|game|campaign] [suck|bite] this [bad|hard]?
 
 >dnd_no_attacks
 You can't use &a$dnd_weapon!
