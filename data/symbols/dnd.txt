@@ -11,7 +11,7 @@ As you [enter|approach|go deeper into|delve into|explore|dig into|[plumb|fathom]
 
 >dnd_place
 the ~dnd_place_adjective &cap~dnd_region
-~dnd_villain's [[Lair|Castle||Keep|Folly|Palazzo]|$dnd_region]
+~dnd_villain's [[Lair|Castle||Keep|Folly|Palazzo]|~Dnd_region]
 
 >dnd_region
 $dnd_region:=[cavern|dungeon|fjord|river|forest|chasm|passage|lake]
@@ -152,10 +152,13 @@ curse
 
 >dnd_game_sucks
 ~dnd_fortune500_slam
-This game [sucks|drools]!
-This is unfair.
-This game is [rigged|the worst|the literal worst].
-This[| [whole|entire|#dnd_region#]] [thing|game|campaign|battle|encounter] is[| so,][| just,][| so,][| like,][| so][| totally] [boring|not cool|uncool|wrong|weak].
+This ~dnd_campaign [sucks|drools|bites]!
+This[| ~dnd_campaign] is [unfair|ridiculous|idiotic|contrived|
+This ~dnd_campaign is [rigged|the worst|the literal worst].
+This[| [whole|entire|#dnd_region#]] [thing|~dnd_campaign] is[| so,][| just,][| so,][| like,][| so][| totally] [boring|not cool|uncool|wrong|weak].
+
+>dnd_campaign
+[game|campaign|battle|encounter]
 
 >dnd_literally
 literally
@@ -247,7 +250,7 @@ You have &a{feeling|hunch|gut feeling|intuition} this will be [relevant|helpful|
 Your eyes gleam as you [imagine|dream of] the [power|possibilities|dominion|mastery]!
 
 >dnd_take_treasure
-[Awesome|Fantastic|Cool|Amazing][!|!!|!!!|!1!]
+[Awesome|Fantastic|Cool|Amazing][!|!!|!!!]
 [Calling|Definitely [gotta have|calling|having|taking|claiming]|I [take|claim|call]] &a$dnd_treasure_item.
 All &plural$dnd_treasure_item are mine.
 My [|sacred ][quest is|trials are] [complete|over|about to begin|just begun]. I take [&a$dnd_treasure_item|the &plural$dnd_treasure_item] and [assume|claim|seek] my role as [[Lord|Autarch|Supreme Ruler|Mayor|Deathlord] of the [Underworld|&cap~dnd_region|land|[Cursed|Hidden|Nether] Realms]|[Guild|Clan|Party] [Acolyte|Secretary|President|Treasurer]]!
@@ -270,15 +273,16 @@ I [am so [sorry for|moved by]|pity|feel [|such ][|deep |heartbreaking |bottomles
 Your spell backfires.
 
 >dnd_dodge_argument
+When this ~dnd_sort_of_thing [starts up|kicks in][| again], I [sometimes|often|occasionally] [wonder if|speculate that] [players|we] [ought to|could|might] [redirect|turn|bend] our [energy|emotions|emotional [investment|passion|intensity]] to the [game|campaign] [world|universe|mythos].
 [Please|Oh gods|Great Zeus], let's not get ~dnd_distracted_by [this|all this|this ~dnd_sort_of_argument] again.
-[|Please, ]I've[| [really|already]] [asked you not to|talked about what happens when we] [go there|get ~dnd_distracted_by [that|all that] [stuff|~dnd_sort_of_argument]].
+[|[Please|People|Guys], |[Seriously|Really|Honestly]? ]I've[| [really|already]] [asked you not to|talked about [what happens|the effect on [the [campaign|game|group]|[realism|morale|immersion|authenticity]]|what it feels like|what signal you're sending] when we] [go there|get ~dnd_distracted_by [that|all that][| [stuff|~dnd_sort_of_argument]]].
 
 >dnd_sort_of_thing
 [sort|kind] of [thing|~dnd_negativity]
-[|particular ][flavor|miasma] of ~dnd_negativity
+[|[particular|whole|old] ][flavor|miasma|vortex|morass] of ~dnd_negativity
 
 >dnd_negativity
-[nay-saying|negativity|bickering]
+[nay-saying|negativity|bickering|cynicism|apathy]
 
 >dnd_distracted_by
 [into|bogged down in|distracted by]
