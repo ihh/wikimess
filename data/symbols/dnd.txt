@@ -96,7 +96,16 @@ war-hammer
 blade
 
 >dnd_attack_fails
-Your $dnd_weapon [shatters|splinters|breaks] into [|a [thousand|hundred|dozen]] [|[tiny|useless] ][pieces|shards|fragments].
+~{dnd_add_broken_weapon_tag}Your $dnd_weapon[|, [uh|like],| *cough*] [shatters|splinters|breaks|explodes] into[| [countless|innumerable|a [thousand|hundred|dozen]]][| [tiny|useless|tumbling]] [pieces|shards|fragments][| of [metal|shrapnel|junk]].
+
+>dnd_add_broken_weapon_tag
+$tags={$tags dnd_broken_weapon}
+
+>dnd_remove_broken_weapon_tag
+$tags=&replace/dnd_broken_weapon /$prevtags{}
+
+>dnd_lament_failed_attack
+~{dnd_remove_broken_weapon_tag}[GOD|GODS] [DAMMIT|[DAMN|BLIND|CURSE] [YOU|YOUR EYES]] I [LOVED|NEEDED] THAT $DND_WEAPON
 
 >dnd_cast_spell
 ~{dnd_init_enemy}~{dnd_a_spell}I cast $dnd_a_spell at $dnd_the_enemy.
@@ -142,6 +151,7 @@ curse
 [[silent|quiet|whispered|phantom|illusory|ghostly] |]~Body_part of [~greek_monster|~greek_titan]
 
 >dnd_game_sucks
+~dnd_fortune500_slam
 This game [sucks|drools]!
 This is unfair.
 This game is [rigged|the worst|the literal worst].
@@ -153,9 +163,13 @@ seriously
 in [genuine|all] [seriousness|honesty|integrity|truth]
 
 >dnd_i_cannot_even
+~dnd_fortune500_slam
 I[| ~dnd_literally|, ~dnd_literally,] [can't|cannot|[do not have|lack|am [deficient in|bereft of]] the [power|ability|will] to][| ~dnd_literally| even] even.
 Not even my[| [literal|own|can's]] can [can|could|has the ability to][| even] even.
 I [have [abandoned|lost]|[am|have been] [drained|bereft|depleted] of] the [ability|power|will] to [can|care|continue|live|believe|play].
+
+>dnd_fortune500_slam
+Does your ~fortune500_company [group|game|campaign] [suck|bite] this [bad|hard]?
 
 >dnd_no_attacks
 You can't use &a$dnd_weapon!
@@ -256,10 +270,21 @@ I [am so [sorry for|moved by]|pity|feel [|such ][|deep |heartbreaking |bottomles
 Your spell backfires.
 
 >dnd_dodge_argument
-Please, let's not get into this again.
+[Please|Oh gods|Great Zeus], let's not get ~dnd_distracted_by [this|all this|this ~dnd_sort_of_argument] again.
+[|Please, ]I've[| [really|already]] [asked you not to|talked about what happens when we] [go there|get ~dnd_distracted_by [that|all that] [stuff|~dnd_sort_of_argument]].
+
+>dnd_sort_of_thing
+[sort|kind] of [thing|~dnd_negativity]
+[|particular ][flavor|miasma] of ~dnd_negativity
+
+>dnd_negativity
+[nay-saying|negativity|bickering]
+
+>dnd_distracted_by
+[into|bogged down in|distracted by]
 
 >dnd_prolong_argument
-No way. ~dnd_game_sucks
+[No way|Too bad|Whatever|Deal with it|Suffer|Sit on it|I don't care|Your problem|That's your problem]. ~dnd_game_sucks
 
 >dnd_query_meaning
 What does this even mean?

@@ -16,16 +16,19 @@
 @player1>Attack #dnd_bad_situation #dnd_attack
 ~dnd_attack
 
-@player2>>Assist #dnd_attack #dnd_attack
+@player2>>Assist #dnd_attack !dnd_assist #dnd_attack dnd_assist
 I aid your attack with magic.
 
 @dm>Attack Fail #dnd_attack #dnd_bad_situation dnd_fail
 ~dnd_attack_fails
 
+@player1>Attack Fail #dnd_broken_weapon #
+~dnd_lament_failed_attack
+
 @player2>Cast Spell #dnd_bad_situation #dnd_spell
 ~dnd_cast_spell
 
-@player1>>Guard #dnd_spell #dnd_spell
+@player1>>Guard #dnd_spell !dnd_assist #dnd_spell dnd_assist
 I guard your spell-weaving with my blade.
 
 @dm>Spell Fail #dnd_spell #dnd_bad_situation dnd_fail
