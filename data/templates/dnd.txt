@@ -17,7 +17,7 @@
 ~dnd_attack
 
 @player2>>Assist #dnd_attack !dnd_assist #dnd_attack dnd_assist
-I aid your attack with magic.
+~dnd_help_attack
 
 @dm>Attack Fail #dnd_attack #dnd_bad_situation dnd_fail
 ~dnd_attack_fails
@@ -29,7 +29,7 @@ I aid your attack with magic.
 ~dnd_cast_spell
 
 @player1>>Guard #dnd_spell !dnd_assist #dnd_spell dnd_assist
-I guard your spell-weaving with my blade.
+~dnd_help_spell
 
 @dm>Spell Fail #dnd_spell #dnd_bad_situation dnd_fail
 ~dnd_spell_fails
@@ -53,13 +53,13 @@ $dnd_attacker={a warrior}~dnd_no_attacks
 ~dnd_spell_backfires
 
 @player2>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
-$dnd_spellcaster={I}~dnd_no_spells
+&let$dnd_spellcaster={I}~dnd_no_spells
 
 @dm>>Spell Backfires #dnd_spell #dnd_bad_situation dnd_fail dnd_magic_accident
 ~dnd_spell_backfires
 
 @dm>No Spells #dnd_inappropriate_spell #dnd_bad_situation dnd_fail
-$dnd_spellcaster={a mage}~dnd_no_spells
+&let$dnd_spellcaster={a mage}~dnd_no_spells
 
 @player1>Game Over #dnd_fail #dnd_argument
 ~dnd_game_sucks
