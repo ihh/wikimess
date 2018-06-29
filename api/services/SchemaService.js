@@ -292,14 +292,17 @@ module.exports = {
   },
 
   validateSymbol: function (data, errorCallback) {
-    return this.validate (data, this.symbolSchema, "Symbol", errorCallback)
+    return true
+    // return this.validate (data, this.symbolSchema, "Symbol", errorCallback)
   },
 
   validateRules: function (data, errorCallback) {
-    return this.validate ({rules: data}, this.symbolSchema, "Symbol", errorCallback)
+    return true
+    // return this.validate ({rules: data}, this.symbolSchema, "Symbol", errorCallback)
   },
   
   validateTemplate: function (data, errorCallback) {
-    return this.validate (data, this.templateSchema, "Template", errorCallback)
+    return true
+    // return this.validate (data, this.templateSchema, "Template", errorCallback)
   }
 };
