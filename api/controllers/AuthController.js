@@ -113,6 +113,30 @@ module.exports = {
       })
   },
 
+  authorPage: function (req, res) {
+    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
+    var authorName = req.params.name
+    return Player.findOne ({ name: authorName })
+      .then (function (author) {
+        if (!author)
+          throw new Error (authorName + ' not found')
+        return PlayerService.makeHomepage (playerID)
+          .then (function (homepage) {
+            homepage.vars.init = true
+            homepage.vars.initConfig =
+              extend ({},
+                      homepage.vars.initConfig,
+                      { action: 'compose',
+                        recipient: null,
+                        author: author.id })
+            res.view ('homepage', homepage.vars)
+          })
+      }).catch (function (err) {
+        console.log(err)
+        res.notFound()
+      })
+  },
+
   grammarPage: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var symname = req.params.symname

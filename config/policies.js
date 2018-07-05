@@ -82,6 +82,7 @@ module.exports.policies = {
     // compose, autosuggest, send
     'getTemplate': true,
     'suggestTemplates': true,
+    'suggestTemplatesBy': true,
     'suggestReply': true,
     'suggestSymbol': true,
     'sendMessage': true,

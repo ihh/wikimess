@@ -1336,28 +1336,20 @@ module.exports = {
 
   // suggest best N templates
   suggestTemplates: function (req, res) {
-    var nSuggestions = 5
-    return Template.find ({ isRoot: true,
-                            isPublic: true })
-      .populate ('author')
+    return TemplateService.suggestTemplates()
       .then (function (templates) {
-        var suggestedTemplates = SortService.partialSort
-        (templates, nSuggestions, function (a, b) { return b.weight - a.weight })
-        .map (function (template) {
-          return { id: template.id,
-                   author: (template.author
-                            ? { id: template.author.id,
-                                name: template.author.name,
-                                displayName: template.author.displayName }
-                            : undefined),
-                   title: template.title || parseTree.summarizeRhs (template.content,
-                                                                    function (sym) { return Symbol.cache.byId[sym.id].name }),
-		   tweeter: template.author ? template.author.twitterScreenName : null,
-		   avatar: template.author ? template.author.avatar : null,
-                   tags: template.tags,
-                   previousTags: template.previousTags }
-        })
-        res.json ({ templates: suggestedTemplates })
+        res.json ({ templates: templates })
+      }).catch (function (err) {
+        console.log(err)
+        res.status(500).send ({ message: err })
+      })
+  },
+
+  // suggest best N templates by a particular author
+  suggestTemplatesBy: function (req, res) {
+    return TemplateService.suggestTemplates ({ author: req.params.author })
+      .then (function (templates) {
+        res.json ({ templates: templates })
       }).catch (function (err) {
         console.log(err)
         res.status(500).send ({ message: err })

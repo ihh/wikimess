@@ -36,6 +36,7 @@ module.exports.routes = {
   'GET /login': 'AuthController.loginOrHomepage',
   'GET /home': 'AuthController.homepage',
   'GET /m/:message': 'AuthController.broadcastPage',
+  'GET /by/:name': 'AuthController.authorPage',
   'GET /write': 'AuthController.composePage',
   'GET /write/:symname': 'AuthController.composePage',
   'GET /define/:symname': 'AuthController.grammarPage',
@@ -155,6 +156,7 @@ module.exports.routes = {
 
   // auto-suggest of templates, messages, and symbols
   'GET /p/suggest/templates':       'ClientController.suggestTemplates',
+  'GET /p/suggest/by/:author':      'ClientController.suggestTemplatesBy',
   'GET /p/suggest/reply/:template': 'ClientController.suggestReply',
   'POST /p/suggest/symbol':         'ClientController.suggestSymbol',
   

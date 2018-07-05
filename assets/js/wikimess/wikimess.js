@@ -447,6 +447,10 @@ var WikiMess = (function() {
       return this.logGet ('/p/suggest/templates')
     },
 
+    REST_getPlayerSuggestTemplatesBy: function (playerID, authorName) {
+      return this.logGet ('/p/suggest/by/' + authorName)
+    },
+
     REST_getPlayerSuggestReply: function (playerID, templateID, tags) {
       return this.logGet ('/p/suggest/reply/' + templateID + (tags ? ('?tags=' + encodeURIComponent(tags)) : ''))
     },
@@ -1938,6 +1942,7 @@ var WikiMess = (function() {
 
 	  if (getRandomTemplate)
 	    wm.composition.randomTemplate = true
+          wm.composition.randomTemplateAuthor = config.author
           
           var dealConfig = { generate: getRandomTemplate || generateNewContent,
                              useCurrentTemplate: !getRandomTemplate,
@@ -2631,7 +2636,9 @@ var WikiMess = (function() {
     selectRandomTemplate: function() {
       var wm = this
       if (wm.composition.randomTemplate)
-        return wm.REST_getPlayerSuggestTemplates (wm.playerID)
+        return (wm.composition.randomTemplateAuthor
+                ? wm.REST_getPlayerSuggestTemplatesBy (wm.playerID, wm.composition.randomTemplateAuthor)
+                : wm.REST_getPlayerSuggestTemplates (wm.playerID))
         .then (function (result) {
           if (result && result.templates.length && wm.composition.randomTemplate) {
             var template = wm.ParseTree.randomElement (result.templates)
@@ -3173,9 +3180,11 @@ var WikiMess = (function() {
       case 'compose':
         promise = this.showComposePage ({ recipient: config.recipient,
                                           title: config.title,
-                                          template: { content: config.content || (config.text ? wm.parseRhs(config.text) : []) },
+                                          template: (config.content || config.text) && { content: config.content || (config.text ? wm.parseRhs(config.text) : []) },
+                                          getRandomTemplate: !!config.author,
+                                          author: config.author,
                                           clearThread: true,
-                                          generateNewContent: true })
+                                          generateNewContent: !config.author })
         break
       case 'grammar':
         wm.container.hide()
