@@ -1,0 +1,20 @@
+@buyer>Anything philosophical? ##book_query
+Got anything philosophical?
+
+@dealer>Book title #book_query #book_phil_title
+Perhaps you might be interested in...
+
+@inspector>Busted #book_phil_title #book_busted
+Busted!
+
+@prisoner>No! #book_busted #book_prisoner
+Noooooo!!!
+
+@judge>Sentence #book_prisoner #book_judge
+You have been found guilty...
+
+@captain>Welcome to the Galleys! #book_judge #book_captain
+Welcome to your new life as a Galérien!
+
+@galerien>Game Over #book_captain #book_galerien
+You last almost a year in the galleys...

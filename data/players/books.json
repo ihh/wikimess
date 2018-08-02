@@ -1,0 +1,72 @@
+[
+    {
+      name: "dealer",
+      password: "dealer",
+      displayName: "Book Dealer",
+      avatar: "gift-of-knowledge",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["buyer"],
+      newSignUp: false
+    },
+    {
+      name: "buyer",
+      displayName: "Book Buyer",
+      password: "buyer",
+      avatar: "take-my-money",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["dealer"],
+      newSignUp: false
+    },
+    {
+      name: "inspector",
+      password: "inspector",
+      displayName: "Police Inspector",
+      avatar: "police-officer-head",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["dealer"],
+      newSignUp: false
+    },
+    {
+      name: "prisoner",
+      displayName: "Jailed Dealer",
+      password: "prisoner",
+      avatar: "prisoner",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["inspector"],
+      newSignUp: false
+    },
+    {
+      name: "judge",
+      displayName: "Judge",
+      password: "judge",
+      avatar: "banging-gavel",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["prisoner"],
+      newSignUp: false
+    },
+    {
+      name: "captain",
+      displayName: "Galley Captain",
+      password: "captain",
+      avatar: "trireme",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["judge"],
+      newSignUp: false
+    },
+    {
+      name: "galerien",
+      displayName: "Galérien",
+      password: "galerien",
+      avatar: "slavery-whip",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: ["captain"],
+      newSignUp: false
+    }
+]
