@@ -1,12 +1,22 @@
 [
     {
+      name: "town",
+      password: "town",
+      displayName: "Town Square",
+      avatar: "building",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: [],
+      newSignUp: false
+    },
+    {
       name: "dealer",
       password: "dealer",
       displayName: "Book Dealer",
       avatar: "gift-of-knowledge",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["buyer"],
+      followed: ["town", "buyer"],
       newSignUp: false
     },
     {
@@ -16,13 +26,13 @@
       avatar: "take-my-money",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["dealer"],
+      followed: ["town", "dealer"],
       newSignUp: false
     },
     {
       name: "inspector",
       password: "inspector",
-      displayName: "Police Inspector",
+      displayName: "Undercover Police Inspector",
       avatar: "police-officer-head",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
@@ -31,7 +41,7 @@
     },
     {
       name: "prisoner",
-      displayName: "Jailed Dealer",
+      displayName: "Jailed Book Dealer",
       password: "prisoner",
       avatar: "prisoner",
       createsPublicTemplates: true,
@@ -50,9 +60,9 @@
       newSignUp: false
     },
     {
-      name: "captain",
-      displayName: "Galley Captain",
-      password: "captain",
+      name: "galley",
+      displayName: "Galleys",
+      password: "galley",
       avatar: "trireme",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
@@ -66,7 +76,7 @@
       avatar: "slavery-whip",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["captain"],
+      followed: ["galley", "judge"],
       newSignUp: false
     }
 ]
