@@ -1,11 +1,41 @@
-@buyer>Anything philosophical? ##book_query
-Got anything philosophical?
+@town>A picturesque French town #root #book_town
+$cop=[|1] A picturesque French town...
 
-@dealer>Book title #book_query #book_phil_title
-Perhaps you might be interested in...
+@buyer>Philosophical book? #book_town #book_query book_opener
+I&if$cop{, not a cop,}{} am looking for a philosophical book.
 
-@inspector>Busted #book_phil_title #book_busted
-Busted!
+@dealer>Denied #book_query book_request #book_refuse
+I carry no such books.
+
+@dealer>Intrigued #book_opener #book_continue
+Pray tell me more...
+
+@buyer>Book title #book_continue #book_request book_title
+The title is "Teresa, Philosopher".
+
+@dealer>Unknown #book_request #book_refuse
+Sorry, I haven't heard of it.
+
+@dealer>Sale #book_request #
+$tags=&if$cop{book_trap}{book_sold} I do have that book!
+
+@dealer>Intriguing #book_title #book_title_continue
+An intriguing title. Tell me more...
+
+@buyer>Book theme #book_title_continue #book_request book_theme
+The themes are libel against the Bishop of Rennes, and bestial erotica.
+
+@dealer>Impressive #book_theme #book_theme_continue
+Sounds like a best-seller...
+
+@buyer>Censorship #book_theme_continue #book_request book_censorship
+The book has been burned by the public hangman in the courtyard of the Palais de Justice.
+
+@buyer>Sold #book_sold #
+Wonderful! Thank you very much.
+
+@inspector>Busted #book_trap #book_busted
+Busted! I am, in fact, a police inspector.
 
 @prisoner>No! #book_busted #book_prisoner
 Noooooo!!!
