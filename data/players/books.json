@@ -56,7 +56,7 @@
       avatar: "banging-gavel",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["prisoner"],
+      followed: ["inspector","prisoner"],
       newSignUp: false
     },
     {
@@ -66,7 +66,7 @@
       avatar: "trireme",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["judge"],
+      followed: ["inspector","prisoner","judge"],
       newSignUp: false
     },
     {
@@ -76,7 +76,7 @@
       avatar: "slavery-whip",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["galley", "judge"],
+      followed: ["inspector","prisoner","judge","galley"],
       newSignUp: false
     }
 ]

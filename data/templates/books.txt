@@ -1,50 +1,53 @@
-@town>A picturesque French town #root #book_town
+@town>Town #root #book_town
 $cop=[|1] A picturesque French town...
 
-@buyer>Philosophical book? #book_town #book_query book_opener
-I&if$cop{, not a cop,}{} am looking for a philosophical book.
+@buyer>Inquiry #book_town #book_vague
+I&if$cop{, not a police informer,}{} am looking for a philosophical book.
 
-@dealer>Denied #book_query book_request #book_refuse
+@dealer>Denial #book_vague book_request #book_refuse
 I carry no such books.
 
-@dealer>Intrigued #book_opener #book_continue
-Pray tell me more...
+@dealer>Caution #book_vague #
+$book_topics=&split{title theme censorship} Pray tell me more...~set_book_topics_ok
 
-@buyer>Book title #book_continue #book_request book_title
-The title is "Teresa, Philosopher".
+@buyer>Request #book_generic_ok #book_request
+I don't know what to say about it. About this big?
 
-@dealer>Unknown #book_request #book_refuse
+@dealer>Apology #book_request #book_refuse
 Sorry, I haven't heard of it.
 
 @dealer>Sale #book_request #
 $tags=&if$cop{book_trap}{book_sold} I do have that book!
 
-@dealer>Intriguing #book_title #book_title_continue
-An intriguing title. Tell me more...
+4@buyer>Title #book_title_ok #
+&let$topic=title~set_book_topic The title is "Therese, Philosophe".
 
-@buyer>Book theme #book_title_continue #book_request book_theme
-The themes are libel against the Bishop of Rennes, and bestial erotica.
+@dealer>Intrigue #book_title #
+An intriguing title. Tell me more...~set_book_topics_ok
 
-@dealer>Impressive #book_theme #book_theme_continue
-Sounds like a best-seller...
+3@buyer>Theme #book_theme_ok #
+&let$topic=theme~set_book_topic The themes are libel against the Bishop of Rennes, and bestial erotica.
 
-@buyer>Censorship #book_theme_continue #book_request book_censorship
-The book has been burned by the public hangman in the courtyard of the Palais de Justice.
+@dealer>Interest #book_theme #
+Sounds like a best-seller...~set_book_topics_ok
+
+2@buyer>Censorship #book_censorship_ok #
+&let$topic=censorship~set_book_topic The book has been burned by the public hangman in the courtyard of the Palais de Justice.
 
 @buyer>Sold #book_sold #
 Wonderful! Thank you very much.
 
-@inspector>Busted #book_trap #book_busted
-Busted! I am, in fact, a police inspector.
+@inspector>Raid #book_trap #book_busted
+A loyal member of the citizenry has informed us of your illegal trade in books.
 
-@prisoner>No! #book_busted #book_prisoner
-Noooooo!!!
+@prisoner>Shock #book_busted #book_prisoner
+Busted!
 
-@judge>Sentence #book_prisoner #book_judge
+@judge>Sentence #book_busted book_prisoner #book_judge
 You have been found guilty...
 
-@galley>Welcome to the Galleys! #book_judge #book_galley
+@galley>Galleys #book_busted book_prisoner book_judge #book_galley
 Welcome to your new life as a Galérien!
 
-@galerien>Game Over #book_galley #book_galerien
+@galerien>Death #book_busted book_prisoner book_judge book_galley #
 You last almost a year in the galleys...
