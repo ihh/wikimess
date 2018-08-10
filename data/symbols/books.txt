@@ -2,5 +2,8 @@
 $book_topics=&filter$book_topics&not&same$_$topic $tags={book_request book_$topic}
 
 >set_book_topics_ok
-$tags={book_generic_ok &join&map$book_topics{&quote{book_}$_&quote{_ok}}}
+~{set_book_topics_init}$tags={book_generic_ok $tags}
+
+>set_book_topics_init
+$tags=&join&map$book_topics{&quote{book_}$_&quote{_ok}}
 

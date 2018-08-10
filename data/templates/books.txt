@@ -8,7 +8,7 @@ I&if$cop{, not a police informer,}{} am looking for a philosophical book.
 I carry no such books.
 
 @dealer>Caution #book_vague #
-$book_topics=&split{title theme censorship} Pray tell me more...~set_book_topics_ok
+$book_topics=&split{title theme censorship} Pray tell me more...~set_book_topics_init
 
 @buyer>Request #book_generic_ok #book_request
 I don't know what to say about it. About this big?
