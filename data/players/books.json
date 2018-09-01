@@ -1,32 +1,22 @@
 [
     {
-      name: "town",
-      password: "town",
-      displayName: "Town Square",
-      avatar: "building",
-      createsPublicTemplates: true,
-      noMailUnlessFollowed: true,
-      followed: [],
-      newSignUp: false
-    },
-    {
       name: "dealer",
       password: "dealer",
       displayName: "Book Dealer",
       avatar: "gift-of-knowledge",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["town", "buyer"],
+      followed: ["publisher"],
       newSignUp: false
     },
     {
-      name: "buyer",
-      displayName: "Book Buyer",
-      password: "buyer",
-      avatar: "take-my-money",
+      name: "publisher",
+      password: "publisher",
+      displayName: "Publisher",
+      avatar: "printing-press",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["town", "dealer"],
+      followed: ["dealer"],
       newSignUp: false
     },
     {
