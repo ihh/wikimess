@@ -1,18 +1,28 @@
 [
     {
+      name: "narrator",
+      password: "narrator",
+      displayName: "Narrator",
+      avatar: "death-note",
+      createsPublicTemplates: true,
+      noMailUnlessFollowed: true,
+      followed: [],
+      newSignUp: false
+    },
+    {
       name: "dealer",
       password: "dealer",
       displayName: "Book Dealer",
       avatar: "gift-of-knowledge",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["publisher"],
+      followed: ["narrator","publisher"],
       newSignUp: false
     },
     {
       name: "publisher",
       password: "publisher",
-      displayName: "Publisher",
+      displayName: "Publisher's Clerk",
       avatar: "printing-press",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
@@ -20,53 +30,23 @@
       newSignUp: false
     },
     {
-      name: "inspector",
-      password: "inspector",
-      displayName: "Undercover Police Inspector",
-      avatar: "police-officer-head",
+      name: "executioner",
+      password: "executioner",
+      displayName: "Public Executioner",
+      avatar: "executioner",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["dealer"],
-      newSignUp: false
-    },
-    {
-      name: "prisoner",
-      displayName: "Jailed Book Dealer",
-      password: "prisoner",
-      avatar: "prisoner",
-      createsPublicTemplates: true,
-      noMailUnlessFollowed: true,
-      followed: ["inspector"],
-      newSignUp: false
-    },
-    {
-      name: "judge",
-      displayName: "Judge",
-      password: "judge",
-      avatar: "banging-gavel",
-      createsPublicTemplates: true,
-      noMailUnlessFollowed: true,
-      followed: ["inspector","prisoner"],
-      newSignUp: false
-    },
-    {
-      name: "galley",
-      displayName: "Galleys",
-      password: "galley",
-      avatar: "trireme",
-      createsPublicTemplates: true,
-      noMailUnlessFollowed: true,
-      followed: ["inspector","prisoner","judge"],
+      followed: ["publisher"],
       newSignUp: false
     },
     {
       name: "galerien",
-      displayName: "Galérien",
       password: "galerien",
+      displayName: "Galley Slave",
       avatar: "slavery-whip",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["inspector","prisoner","judge","galley"],
+      followed: ["executioner"],
       newSignUp: false
     }
 ]

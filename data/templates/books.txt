@@ -1,53 +1,44 @@
-@town>Town #root #book_town
+@narrator>Town #root #book_town
 $cop=[|1] A picturesque French town...
 
-@buyer>Inquiry #book_town #book_vague
+@dealer>Inquiry #book_town #book_vague
 I&if$cop{, not a police informer,}{} am looking for a philosophical book.
 
-@dealer>Denial #book_vague book_request #book_refuse
+@publisher>Denial #book_vague book_request #book_refuse
 I carry no such books.
 
-@dealer>Caution #book_vague #
+@publisher>Caution #book_vague #
 $book_topics=&split{title theme censorship} Pray tell me more...~set_book_topics_init
 
-@buyer>Request #book_generic_ok #book_request
+@dealer>Request #book_generic_ok #book_request
 I don't know what to say about it. About this big?
 
-@dealer>Apology #book_request #book_refuse
+@publisher>Apology #book_request #book_refuse
 Sorry, I haven't heard of it.
 
-@dealer>Sale #book_request #
+@publisher>Sale #book_request #
 $tags=&if$cop{book_trap}{book_sold} I do have that book!
 
-4@buyer>Title #book_title_ok #
+4@dealer>Title #book_title_ok #
 &let$topic=title~set_book_topic The title is "Therese, Philosophe".
 
-@dealer>Intrigue #book_title #
+@publisher>Intrigue #book_title #
 An intriguing title. Tell me more...~set_book_topics_ok
 
-3@buyer>Theme #book_theme_ok #
+3@dealer>Theme #book_theme_ok #
 &let$topic=theme~set_book_topic The themes are libel against the Bishop of Rennes, and bestial erotica.
 
-@dealer>Interest #book_theme #
+@publisher>Interest #book_theme #
 Sounds like a best-seller...~set_book_topics_ok
 
-2@buyer>Censorship #book_censorship_ok #
+2@dealer>Censorship #book_censorship_ok #
 &let$topic=censorship~set_book_topic The book has been burned by the public hangman in the courtyard of the Palais de Justice.
 
-@buyer>Sold #book_sold #
+@dealer>Sold #book_sold #
 Wonderful! Thank you very much.
 
-@inspector>Raid #book_trap #book_busted
-A loyal member of the citizenry has informed us of your illegal trade in books.
+@executioner>Confiscated #book_trap #book_busted
+Your books have been confiscated and burned.
 
-@prisoner>Shock #book_busted #book_prisoner
-Busted!
-
-@judge>Sentence #book_busted book_prisoner #book_judge
-You have been found guilty...
-
-@galley>Galleys #book_busted book_prisoner book_judge #book_galley
-Welcome to your new life as a Galérien!
-
-@galerien>Death #book_busted book_prisoner book_judge book_galley #
-You last almost a year in the galleys...
+@galerien>Galleys #book_busted #book_galley
+Welcome to your new life as a galérien!
