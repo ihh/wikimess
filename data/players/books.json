@@ -13,7 +13,7 @@
       name: "dealer",
       password: "dealer",
       displayName: "Book Dealer",
-      avatar: "gift-of-knowledge",
+      avatar: "quill-ink",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
       followed: ["narrator","publisher"],
