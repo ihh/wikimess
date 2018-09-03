@@ -2,7 +2,7 @@
 $cop=[|1] A picturesque French town...
 
 @dealer>Inquiry #book_town #book_vague
-I&if$cop{, not a police informer,}{} am looking for a philosophical book.
+I&if$cop{, not a police informer,} am looking for a philosophical book.
 
 @publisher>Denial #book_vague book_request #book_refuse
 I carry no such books.
@@ -20,19 +20,19 @@ Sorry, I haven't heard of it.
 $tags=&if$cop{book_trap}{book_sold} I do have that book!
 
 4@dealer>Title #book_title_ok #
-&let$topic=title~set_book_topic The title is "Therese, Philosophe".
+&~set_book_topic{title} The title is "Therese, Philosophe".
 
 @publisher>Intrigue #book_title #
-An intriguing title. Tell me more...~set_book_topics_ok
+An intriguing title! ~set_book_topics_ok
 
 3@dealer>Theme #book_theme_ok #
-&let$topic=theme~set_book_topic The themes are libel against the Bishop of Rennes, and bestial erotica.
+&~set_book_topic{theme} The themes are libel against the Bishop of Rennes, and bestial erotica.
 
 @publisher>Interest #book_theme #
 Sounds like a best-seller...~set_book_topics_ok
 
 2@dealer>Censorship #book_censorship_ok #
-&let$topic=censorship~set_book_topic The book has been burned by the public hangman in the courtyard of the Palais de Justice.
+&~set_book_topic{censorship} The book has been burned by the public hangman in the courtyard of the Palais de Justice.
 
 @dealer>Sold #book_sold #
 Wonderful! Thank you very much.

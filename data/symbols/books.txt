@@ -1,5 +1,5 @@
 >set_book_topic
-$book_topics=&filter$book_topics&not&same$_$topic $tags={book_request book_$topic}
+$book_topics=&filter$book_topics&not&same$_$$1 $tags={book_request book_$$1}
 
 >set_book_topics_ok
 ~{set_book_topics_init}$tags={book_generic_ok $tags}
