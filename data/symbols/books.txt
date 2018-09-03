@@ -1,9 +1,12 @@
+>init_book_topics
+$book_topics=&split{title theme censorship}~set_book_topic_tags
+
 >set_book_topic
-$book_topics=&filter$book_topics&not&same$_$$1 $tags={book_request book_$$1}
+$book_topics=&filter$book_topics&not&same$_$$1 $tags={book_request book_reply_$$1}
 
->set_book_topics_ok
-~{set_book_topics_init}$tags={book_generic_ok $tags}
+>set_book_topic_tags
+$tags=&join&map$book_topics{&quote{book_}$_}
 
->set_book_topics_init
-$tags=&join&map$book_topics{&quote{book_}$_&quote{_ok}}
+>next_book_topic
+~{set_book_topic_tags}$tags={book_generic $tags}
 
