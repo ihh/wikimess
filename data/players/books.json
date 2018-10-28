@@ -1,12 +1,12 @@
 [
     {
-      name: "narrator",
-      password: "narrator",
-      displayName: "Narrator",
+      name: "clerk",
+      password: "clerk",
+      displayName: "Dealer's Clerk",
       avatar: "death-note",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: [],
+      followed: ["dealer","buyer"],
       newSignUp: false
     },
     {
@@ -16,14 +16,14 @@
       avatar: "quill-ink",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["narrator","publisher"],
+      followed: ["clerk"],
       newSignUp: false
     },
     {
-      name: "publisher",
-      password: "publisher",
-      displayName: "Publisher's Clerk",
-      avatar: "printing-press",
+      name: "buyer",
+      password: "buyer",
+      displayName: "Philosophical Reader",
+      avatar: "take-my-money",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
       followed: ["dealer"],
@@ -36,17 +36,7 @@
       avatar: "executioner",
       createsPublicTemplates: true,
       noMailUnlessFollowed: true,
-      followed: ["publisher"],
+      followed: ["dealer"],
       newSignUp: false
     },
-    {
-      name: "galerien",
-      password: "galerien",
-      displayName: "Galley Slave",
-      avatar: "slavery-whip",
-      createsPublicTemplates: true,
-      noMailUnlessFollowed: true,
-      followed: ["executioner"],
-      newSignUp: false
-    }
 ]
