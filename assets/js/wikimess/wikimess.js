@@ -2619,8 +2619,8 @@ var WikiMess = (function() {
     selectRandomReplyTemplate: function() {
       var wm = this
       var previousTags = wm.composition.previousTemplate.tags
-      if (wm.composition.vars && wm.composition.prevtags)
-          previousTags = wm.composition.prevtags
+      if (wm.composition.vars && wm.composition.previousTags)
+          previousTags = wm.composition.previousTags
       return wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (previousTags))
         .then (function (result) {
           if (!result.more)
