@@ -7,12 +7,13 @@
 
 module.exports = {
 
+  primaryKey: 'id',
+
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     sender: {
@@ -33,13 +34,11 @@ module.exports = {
     },
 
     tags: {
-      type: 'string',
-      defaultsTo: '',
+      type: 'string'
     },
 
     previousTags: {
-      type: 'string',
-      defaultsTo: '',
+      type: 'string'
     },
     
     template: {
@@ -57,5 +56,12 @@ module.exports = {
   },
 
   parseID: function (text) { return parseInt(text) },
+
+  // lifecycle updates
+  beforeCreate: function (draft, callback) {
+    draft.tags = draft.tags || ''
+    draft.previousTags = draft.previousTags || ''
+    callback()
+  },
 };
 

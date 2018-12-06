@@ -4,6 +4,14 @@ var Promise = require('bluebird')
 
 module.exports = {
 
+  // The standard footer is added to all templates created via blueprint actions, but not those created via the UI.
+  standardFooter: { type: 'assign',
+                    varname: 'tags',
+                    value: [{ type: 'func',
+                              funcname: 'eval',
+                              args: [{ type: 'lookup',
+                                       varname: 'tags' }] }] },
+
   suggestTemplates: function (config) {
     config = config || {}
     var result = {}

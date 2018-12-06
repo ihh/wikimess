@@ -7,17 +7,17 @@
 
 module.exports = {
 
+  primaryKey: 'id',
+
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     title: {
-      type: 'string',
-      defaultsTo: ''
+      type: 'string'
     },
     
     content: {
@@ -26,23 +26,19 @@ module.exports = {
     },
 
     author: {
-      model: 'player',
-      defaultsTo: function() { return Player.adminUserId }
+      model: 'player'
     },
 
     previous: {
-      model: 'template',
-      defaultsTo: null
+      model: 'template'
     },
 
     tags: {
-      type: 'string',
-      defaultsTo: '',
+      type: 'string'
     },
 
     previousTags: {
-      type: 'string',
-      defaultsTo: '',
+      type: 'string'
     },
 
     // root of reply chain?
@@ -59,7 +55,7 @@ module.exports = {
 
     // suggestion weight
     weight: {
-      type: 'integer',
+      type: 'number',
       defaultsTo: 1
     }
   },
@@ -73,5 +69,15 @@ module.exports = {
   },
 
   parseID: function (text) { return parseInt(text) },
+
+  // lifecycle callbacks
+  beforeCreate: function (t, callback) {
+    t.title = t.title || ''
+    t.author = t.author || Player.adminUserId
+    t.previous = t.previous || null
+    t.tags = t.tags || ''
+    t.previousTags = t.previousTags || ''
+    callback()
+  }
 };
 

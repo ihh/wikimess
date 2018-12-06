@@ -9,12 +9,13 @@ var parseTree = require('bracery').ParseTree
 
 module.exports = {
 
+  primaryKey: 'id',
+
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     name: {
@@ -27,13 +28,11 @@ module.exports = {
     },
 
     owner: {
-      model: 'player',
-      defaultsTo: function() { return Player.adminUserId }
+      model: 'player'
     },
 
     owned: {
-      type: 'boolean',
-      defaultsTo: false
+      type: 'boolean'
     },
 
     transferable: {
@@ -47,18 +46,15 @@ module.exports = {
     },
     
     initialized: {
-      type: 'boolean',
-      defaultsTo: false
+      type: 'boolean'
     },
 
     summary: {
-      type: 'string',
-      defaultsTo: null
+      type: 'string'
     },
     
     rules: {
-      type: 'json',
-      defaultsTo: [[]]
+      type: 'json'
     },
 
     latestRevision: {
@@ -216,6 +212,12 @@ module.exports = {
 
   // lifecycle callbacks to update cache
   beforeCreate: function (symbol, callback) {
+    symbol.owner = symbol.owner || Player.adminUserId
+    symbol.owned = symbol.owned || false
+    symbol.initialized = symbol.initialized || false
+    symbol.summary = symbol.summary || ''
+    symbol.rules = symbol.rules || [[]]
+    
     if (!symbol.name) {
       var prefix = symbol.prefix || Symbol.autoname.defaultPrefix
       var nextSuffix = ''
@@ -261,4 +263,9 @@ module.exports = {
   },
 
   parseID: function (text) { return parseInt(text) },
+
+  // Sails 0.1-style message
+  message: function (id, data) {
+    this.publish ({ verb: 'messaged', id: id, data: data })
+  },
 };

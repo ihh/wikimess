@@ -991,9 +991,9 @@ module.exports = {
                   })
               }))
             }).then (function() {
-              return Revision.create (revisions)
+              return Revision.createEach (revisions)
             }).then (function() {
-              Symbol.subscribe (req, symbol.id)
+              Symbol.subscribe (req, [symbol.id])
               res.json (result)
             })
         }).catch (function (err) {
@@ -1013,7 +1013,7 @@ module.exports = {
         if (symbol)
           return SymbolService.makeSymbolInfo (symbol, playerID)
           .then (function (result) {
-            Symbol.subscribe (req, symbolID)
+            Symbol.subscribe (req, [symbolID])
             res.json (result)
           }).catch (function (err) {
             console.log(err)
@@ -1156,7 +1156,7 @@ module.exports = {
       }).then (function (symbol) {
         return SymbolService.makeSymbolInfo (symbol, playerID)
       }).then (function (result) {
-        Symbol.subscribe (req, result.symbol.id)
+        Symbol.subscribe (req, [result.symbol.id])
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -1273,7 +1273,7 @@ module.exports = {
   // subscribe to notifications for a player
   subscribePlayer: function (req, res) {
     var playerID = req.session && req.session.passport ? req.session.passport.user : null
-    Player.subscribe (req, playerID)
+    Player.subscribe (req, [playerID])
     res.ok()
   },
 
@@ -1325,7 +1325,8 @@ module.exports = {
   expandContent: function (req, res) {
     SymbolService.expandContent ({ rhs: req.body.content,
                                    rhsText: req.body.text,
-                                   vars: req.body.vars })
+                                   vars: req.body.vars,
+                                   evalTags: req.body.evalTags })
       .then (function (expansion) {
         res.json ({ expansion: expansion })
       }).catch (function (err) {
@@ -1396,8 +1397,8 @@ module.exports = {
           return templates
         return Template.findOne ({ id: previousID })
           .then (function (previousTemplate) {
-            return Follow.find ({ follower: [shyAuthors],
-                                  followed: previousTemplate.author })
+            return Follow.find ({ followed: previousTemplate.author })
+              .where ({ or: shyAuthors.map (function (shyAuthor) { return { follower: shyAuthor } }) })
           }).then (function (follows) {
             if (follows)
               follows.forEach (function (follow) {

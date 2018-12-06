@@ -294,7 +294,7 @@ module.exports = {
             return Message.create ({ sender: playerID,
                                      recipient: recipientID,
                                      isBroadcast: !recipientID,
-                                     template: template,
+                                     template: template.id,
                                      previous: previous,
                                      title: title,
                                      initVarVal: initVarVal,

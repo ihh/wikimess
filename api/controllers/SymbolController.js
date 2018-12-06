@@ -11,9 +11,9 @@ module.exports = {
   create: function (req, res) {
     if (SchemaService.validateSymbol (req.body)) {
       var symbolInitializers = _.isArray(req.body) ? req.body : [req.body]
-      return Symbol.create (symbolInitializers)
+      return Symbol.createEach (symbolInitializers)
         .then (function (symbols) {
-          return Revision.create (symbols.map (function (symbol) {
+          return Revision.createEach (symbols.map (function (symbol) {
             return { symbol: symbol.id,
                      rules: symbol.rules,
                      name: symbol.name,

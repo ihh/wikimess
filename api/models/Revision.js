@@ -7,12 +7,13 @@
 
 module.exports = {
 
+  primaryKey: 'id',
+
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     symbol: {
@@ -24,8 +25,7 @@ module.exports = {
     },
     
     author: {
-      model: 'player',
-      defaultsTo: null
+      model: 'player'
     },
 
     authored: {
@@ -33,8 +33,7 @@ module.exports = {
     },
 
     owner: {
-      model: 'player',
-      defaultsTo: null
+      model: 'player'
     },
 
     owned: {
@@ -56,15 +55,17 @@ module.exports = {
     // Revision number is purely decorative: a denormalized count of Revisions of the same Symbol at the time of creation (including this one)
     // It should NOT be used as an identifier!
     number: {
-      type: 'integer',
-      defaultsTo: 1
+      type: 'number'
     },
   },
 
   beforeCreate: function (revision, cb) {
-    if (revision.firstRevision)
+    revision.author = revision.author || null
+    revision.owner = revision.owner || null
+    if (revision.firstRevision) {
+      revision.number = 1
       cb()
-    else
+    } else
       return RevisionService.findLatestRevision (revision.symbol)
       .then (function (prevRevision) {
         revision.number = (prevRevision ? (prevRevision.number || 0) : 0) + 1

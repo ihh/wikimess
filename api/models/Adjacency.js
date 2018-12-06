@@ -7,12 +7,13 @@
 
 module.exports = {
 
+  primaryKey: 'id',
+  
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     predecessor: {
@@ -24,8 +25,7 @@ module.exports = {
     },
 
     weight: {
-      type: 'integer',
-      defaultsTo: 0
+      type: 'number'
     },
   },
     
@@ -49,6 +49,11 @@ module.exports = {
   },
 
   // lifecycle updates
+  beforeCreate: function (adj, callback) {
+    adj.weight = adj.weight || 0
+    callback()
+  },
+
   afterCreate: function (adj, callback) {
     Adjacency.updateCache (adj, callback)
   },

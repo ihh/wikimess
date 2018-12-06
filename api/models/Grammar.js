@@ -7,12 +7,13 @@
 
 module.exports = {
 
+  primaryKey: 'id',
+  
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     author: {
@@ -21,21 +22,22 @@ module.exports = {
     },
 
     name: {
-      type: 'string',
-      defaultsTo: 'Thoughtful missive'
+      type: 'string'
     },
 
     rules: {
-      type: 'json',
-      defaultsTo: {
-        'document': ['@beginning @body @ending'],
-        'beginning': ['Esteemed Colleague,', 'Dearest Friend,'],
-        'body': ['I trust you are in good health.', 'May I offer my warmest regards.'],
-        'ending': ['Sincerely, @me.', 'Yours, @me.']
-      }
+      type: 'json'
     },
   },
 
   rootSymbol: 'document',
-  choiceNamePrefix: '_grammar'
+  choiceNamePrefix: '_grammar',
+
+  // lifecycle updates
+  beforeCreate: function (g, callback) {
+    g.name = g.name || ''
+    g.rules = g.rules || {}
+    callback()
+  },
+
 };

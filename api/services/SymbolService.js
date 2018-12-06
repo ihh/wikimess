@@ -37,7 +37,7 @@ module.exports = {
     if (!bodyRhs)
       return Promise.reject('body rhs missing')
     if (templateContent.length !== bodyRhs.length)
-      return Promise.reject('template/body length mismatch')
+      return Promise.reject('template/body length mismatch (' + templateContent.length + ' !== ' + bodyRhs.length + ')')
     if (!templateContent.length)
       return Promise.resolve()
     return Promise.all (templateContent.map (function (templateNode, n) {
@@ -72,7 +72,7 @@ module.exports = {
           return SymbolService.validateMessageRhs (templateNode.args, bodyNode.args, inQuote)
 	    .then (function() {
 	      if (!inQuote)
-		return SymbolService.validateMessageRhs (bodyNode.evaltext, bodyNode.value)
+		return SymbolService.validateMessageRhs (bodyNode.evaltree, bodyNode.value)
 	    })
 	  break
 	default:
@@ -121,7 +121,7 @@ module.exports = {
     var result = { symbol: { id: symbol.id } }
     if (!symbol.renamable)
       result.symbol.fixname = true
-    if (ownerID === playerID || symbol.summary === null)
+    if (ownerID === playerID || !symbol.summary)
       result.symbol.rules = symbol.rules
     else {
       result.symbol.rules = []
@@ -153,7 +153,7 @@ module.exports = {
     var usingSymbols = Symbol.getUsingSymbols (symbol.name)
     var copySymbols = Symbol.getCopies (symbol.id)
     var usedSymbols
-    if (ownerID === playerID || symbol.summary === null) {
+    if (ownerID === playerID || !symbol.summary) {
       // caller is allowed to see (summaries of) rules
       usedSymbols = Symbol.getUsedSymbols (symbol.name)
     }

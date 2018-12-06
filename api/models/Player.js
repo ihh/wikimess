@@ -9,12 +9,13 @@ var bcrypt = require('bcrypt');
 
 module.exports = {
 
+  primaryKey: 'id',
+
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     // login info
@@ -25,8 +26,8 @@ module.exports = {
     
     password: {
       type: 'string',
-      //            minLength: 6,
-      required: true
+      // minLength: 6,
+      // required: true
     },
 
     // bio
@@ -36,8 +37,7 @@ module.exports = {
 
     gender: {
       type: 'string',
-      enum: ['male', 'female', 'neither', 'secret'],
-      defaultsTo: 'secret'
+      isIn: ['male', 'female', 'neither', 'secret']
     },
 
     publicBio: { type: 'string' },
@@ -46,21 +46,21 @@ module.exports = {
     avatar: { type: 'string' },
     
     // privacy controls
-    noMailUnlessFollowed: { type: 'boolean', defaultsTo: false },
-    createsPublicTemplates: { type: 'boolean', defaultsTo: false },
+    noMailUnlessFollowed: { type: 'boolean' },
+    createsPublicTemplates: { type: 'boolean' },
     searchable: { type: 'boolean', defaultsTo: true },
     
     // social networks
     facebookId: {
       type: 'string',
       required: false,
-      unique: true
+//      unique: true
     },
 
     twitterId: {
       type: 'string',
       required: false,
-      unique: true
+//      unique: true
     },
 
     twitterScreenName: {
@@ -80,8 +80,7 @@ module.exports = {
 
     // administrator?
     admin: {
-      type: 'boolean',
-      defaultsTo: false
+      type: 'boolean'
     },
     
     // show signup flow?
@@ -118,14 +117,25 @@ module.exports = {
       });
     })
   },
+
+  parseID: function (text) { return parseInt(text) },
+
+  // Sails 0.1-style message
+  message: function (id, data) {
+    this.publish ({ verb: 'messaged', id: id, data: data })
+  },
   
+  // lifecycle callbacks
   beforeCreate: function(player, cb) {
     player.displayName = player.displayName || player.name
+    player.gender = player.gender || 'secret'
+    player.noMailUnlessFollowed = player.noMailUnlessFollowed || false
+    player.createsPublicTemplates = player.createsPublicTemplates || false
+    player.admin = player.admin || false
+    player.password = player.password || ''
     Player.hashPassword (player.password, function (err, hash) {
       player.password = hash
       cb()
     })
   },
-
-  parseID: function (text) { return parseInt(text) },
 };

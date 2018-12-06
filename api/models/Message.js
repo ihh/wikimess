@@ -7,12 +7,13 @@
 
 module.exports = {
 
+  primaryKey: 'id',
+
   attributes: {
     id: {
-      type: 'integer',
+      type: 'number',
       autoIncrement: true,
-      unique: true,
-      primaryKey: true
+      unique: true
     },
 
     sender: {
@@ -38,13 +39,11 @@ module.exports = {
     },
 
     title: {
-      type: 'string',
-      defaultsTo: ''
+      type: 'string'
     },
 
     initVarVal: {
-      type: 'json',
-      defaultsTo: {}
+      type: 'json'
     },
     
     body: {
@@ -66,12 +65,23 @@ module.exports = {
       type: 'string'
     },
     
-    isBroadcast: { type: 'boolean', defaultsTo: false },
-    read: { type: 'boolean', defaultsTo: false },
-    senderDeleted: { type: 'boolean', defaultsTo: false },
-    recipientDeleted: { type: 'boolean', defaultsTo: false }
+    isBroadcast: { type: 'boolean' },
+    read: { type: 'boolean' },
+    senderDeleted: { type: 'boolean' },
+    recipientDeleted: { type: 'boolean' }
   },
 
-  parseID: function (text) { return parseInt(text) }
+  parseID: function (text) { return parseInt(text) },
+
+  // lifecycle updates
+  beforeCreate: function (m, callback) {
+    m.title = m.title || ''
+    m.initVarVal = m.initVarVal || {}
+    m.isBroadcast = m.isBroadcast || false
+    m.read = m.read || false
+    m.senderDeleted = m.senderDeleted || false
+    m.recipientDeleted = m.recipientDeleted || false
+    callback()
+  },
 };
 

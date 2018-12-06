@@ -324,6 +324,7 @@ function post (info) {
 
   log (5, 'Stringifying POST data')
   var post_data = JSON.stringify (array)
+  log (6, post_data)
   log (5, 'POST data length = ' + post_data.length)
   var post_options = {
     url: urlPrefix + path,

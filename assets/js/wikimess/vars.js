@@ -18,7 +18,7 @@ function populateVarVal (varVal, sender, recipient, tags) {
     varVal.tags = tags
   return varVal
 }
-    
+
 function nextVarVal (config, parseTree) {
   var varVal = parseTree.finalVarVal (config)
   varVal.prevtags = varVal.tags

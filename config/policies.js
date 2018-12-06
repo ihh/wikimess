@@ -20,14 +20,14 @@
 // Set restPolicy to:
 // 'isAdmin' to prevent unauthorized modification of all database tables
 //  true for unrestricted access
-var restPolicy = 'isAdminOrLocal'
-// restPolicy = true // debug
+//var restPolicy = 'isAdminOrLocal'
+var restPolicy = true // debug
 
 // Set findPolicy to:
 // 'isAdmin' to prevent unauthorized inspection of all database tables
 //  true for unrestricted access
-var findPolicy = 'isAdminOrLocal'
-// findPolicy = true // debug
+//var findPolicy = 'isAdminOrLocal'
+var findPolicy = true // debug
 
 // Set clientPolicy to:
 // 'isAuthenticated' to prevent unauthenticated client operations (gameplay, config, etc)
@@ -73,7 +73,6 @@ module.exports.policies = {
     'getSymbolRevision': true,
     'getSymbolRevisionDiff': true,
     'getSymbolLinks': true,
-    'dumpSymbol': true,
     'putSymbol': true,
     'newSymbol': true,
     'unsubscribeSymbol': true,
