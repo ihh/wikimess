@@ -122,7 +122,7 @@ module.exports = {
 
   // Sails 0.1-style message
   message: function (id, data) {
-    this.publish ({ verb: 'messaged', id: id, data: data })
+    this.publish ([id], { verb: 'messaged', id: id, data: data })
   },
   
   // lifecycle callbacks

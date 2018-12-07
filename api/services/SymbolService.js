@@ -333,7 +333,10 @@ module.exports = {
   },
 
   updateAdjacencies: function (rhs, weight) {
-    var symbolIDsPromise = Promise.map (parseTree.getSymbolNodes(rhs),
+    var symNodes = parseTree.getSymbolNodes (rhs)
+    if (!symNodes.length)
+      return Promise.resolve()
+    var symbolIDsPromise = Promise.map (symNodes,
                                         function (rhsSym) {
                                           return (typeof(rhsSym.id) !== 'undefined'
                                                   ? Promise.resolve (rhsSym.id)

@@ -617,6 +617,7 @@ module.exports = {
         else
           authorPromise = Promise.resolve()
         var updatedPromise
+        if (message) console.warn('getMessage',playerID,JSON.stringify(message))
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = Message.update ({ id: messageID },
                                            { read: true })
@@ -911,11 +912,11 @@ module.exports = {
       }
       var initialized = (rules && rules.length > 0)
         
-      extend (symInfo, { prefix: name,
+      extend (symInfo, { name: name,
                          copied: copiedSymbolId,
                          rules: rules,
                          initialized: initialized })
-
+      
       Symbol.create (symInfo)
         .then (function (symbol) {
           result.symbol = { id: symbol.id,
@@ -1280,14 +1281,14 @@ module.exports = {
   // unsubscribe from notifications for a player
   unsubscribePlayer: function (req, res) {
     var playerID = req.session && req.session.passport ? req.session.passport.user : null
-    Player.unsubscribe (req, playerID)
+    Player.unsubscribe (req, [playerID])
     res.ok()
   },
 
   // unsubscribe from notifications for a symbol
   unsubscribeSymbol: function (req, res) {
     var symbolID = Symbol.parseID (req.params.symid)
-    Symbol.unsubscribe (req, symbolID)
+    Symbol.unsubscribe (req, [symbolID])
     res.ok()
   },
 

@@ -217,23 +217,19 @@ module.exports = {
     symbol.initialized = symbol.initialized || false
     symbol.summary = symbol.summary || ''
     symbol.rules = symbol.rules || [[]]
-    
-    if (!symbol.name) {
-      var prefix = symbol.prefix || Symbol.autoname.defaultPrefix
+    symbol.name = symbol.name || Symbol.autoname.defaultPrefix
+    if (Symbol.cache.byName[symbol.name]) {
+      var prefix = symbol.name
       var nextSuffix = ''
-      if (Symbol.cache.byName[prefix]) {
-        var match = Symbol.autoname.regex.exec (prefix)
-        if (match)
-          prefix = match[1]
-        nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 1) + 1
-        if (match)
-          nextSuffix = Math.max (nextSuffix, parseInt(match[2]))
-        do
-          symbol.name = prefix + Symbol.autoname.versionString + (nextSuffix++)
-        while (Symbol.cache.byName[symbol.name])
-      } else
-        symbol.name = prefix
-      delete symbol.prefix
+      var match = Symbol.autoname.regex.exec (prefix)
+      if (match)
+        prefix = match[1]
+      nextSuffix = (Symbol.autoname.maxSuffix[prefix] || 1) + 1
+      if (match)
+        nextSuffix = Math.max (nextSuffix, parseInt(match[2]))
+      do
+        symbol.name = prefix + Symbol.autoname.versionString + (nextSuffix++)
+      while (Symbol.cache.byName[symbol.name])
     }
     callback()
   },
@@ -266,6 +262,6 @@ module.exports = {
 
   // Sails 0.1-style message
   message: function (id, data) {
-    this.publish ({ verb: 'messaged', id: id, data: data })
+    this.publish ([id], { verb: 'messaged', id: id, data: data })
   },
 };

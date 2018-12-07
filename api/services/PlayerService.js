@@ -261,7 +261,7 @@ module.exports = {
           // create the Template
           var content = template.content
           return Template.create ({ title: title,
-                                    author: player,
+                                    author: player.id,
                                     content: content,
                                     previous: previousTemplate,
                                     tags: tags,
