@@ -1372,11 +1372,18 @@ module.exports = {
     return query
       .populate ('author')
       .then (function (templates) {
-        // exclude templates whose previousTags include '!tag' (for any of our tags)
+        // exclude templates whose previousTags include '!tag' or '-tag' (for any of our tags)
         // this would probably be more efficiently done in the query, but Waterline doesn't seem to support negation of 'contains' queries
         templates = templates.filter (function (template) {
-          return !tagArray.reduce (function (foundNegativeTag, tag) {
-            return foundNegativeTag || (template.previousTags.indexOf (' !' + tag + ' ') >= 0)
+          return !tagArray.reduce (function (foundExcludedTag, tag) {
+            return foundExcludedTag || (template.previousTags.indexOf (' !' + tag + ' ') >= 0) || (template.previousTags.indexOf (' -' + tag + ' ') >= 0)
+          }, false)
+        })
+        // exclude templates whose previousTags include '+tag' for any tags that we don't have
+        templates = templates.filter (function (template) {
+          var tempPrevTags = template.previousTags.split()
+          return !tempPrevTags.reduce (function (missingRequiredTag, tempPrevTag) {
+            return missingRequiredTag || (tempPrevTag[0] === '+' && tagArray.indexOf(' ' + tempPrevTag.substr(1) + ' ') < 0)
           }, false)
         })
         // exclude authors who have noMailUnlessFollowed set, unless they follow the original template author
