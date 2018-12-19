@@ -1382,7 +1382,7 @@ var WikiMess = (function() {
             delete wm.nextDealPromise
           }
           wm.nextDealPromise = $.Deferred()
-          
+
           function saveDraft() {
             if (wm.composition.needsSave) {
               delete wm.composition.needsSave
@@ -1482,7 +1482,7 @@ var WikiMess = (function() {
 
           // autosuggest for textarea (typing with keyboard)
           wm.textareaAutosuggest = function (input) {
-            input.focus()  // in case we were triggered by player hitting 'discard' button
+            input.focus()  // in case we were triggered by player hitting 'reject' button
             var newVal = input.val(), caretPos = input[0].selectionStart, caretEnd = input[0].selectionEnd
             if (newVal !== wm.autosuggestStatus.lastVal)
               if (wm.updateComposeContent (wm.parseRhs (newVal)))
@@ -1665,7 +1665,7 @@ var WikiMess = (function() {
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
                     else if (!(wm.composition.body && (expansionTextMatch = (expansionText = wm.makeExpansionText ({ node: wm.composition.body, vars: wm.compositionVarVal() })).match(/\S/))))
-                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'discard' to generate a new random expanded text.")
+                      window.alert ("Expanded text is empty. Please vary the input text, or hit 'reject' to generate a new random expanded text.")
                     else if (wm.composition.isPrivate && !wm.composition.recipient)
                       window.alert ("Please select the direct message recipient, or make it public.")
                     else {
@@ -1844,12 +1844,12 @@ var WikiMess = (function() {
                                        wm.suggestionDiv = $('<div class="suggest">')),
                               $('<div class="messageborder">')
                               .append (wm.stackDiv = $('<div class="stack">'),
-                                       wm.makeThrowArrowContainer ({ leftText: 'discard',
-                                                                     rightText: 'share' }))),
+                                       wm.makeThrowArrowContainer ({ leftText: 'reject',
+                                                                     rightText: 'accept' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
                      (wm.randomizeButton = wm.makeSubNavIcon ({ iconName: 'discard',
-                                                                text: 'discard',
+                                                                text: 'reject',
                                                                 callback: function (evt) {
                                                                   evt.stopPropagation()
                                                                   wm.discardAndRefresh()
@@ -1869,7 +1869,9 @@ var WikiMess = (function() {
                       wm.makeTipButton().addClass('threadshow'),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
-                               wm.shareButton = wm.makeSubNavIcon ('share', toggleSharePane).addClass('sharepanebutton')),
+                               wm.shareButton = wm.makeSubNavIcon ({ iconName: 'share',
+								     text: 'accept',
+								     callback: toggleSharePane }).addClass('sharepanebutton')),
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
@@ -2184,7 +2186,7 @@ var WikiMess = (function() {
         })
       var messageBodyElem = wm.messageBodyDiv[0]
 
-      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe left to discard, right to share.')
+      var choiceTextDiv = $('<div class="choicetext">').html ('<b>Choice card:</b> Swipe left to reject, right to accept.')
       var innerDiv = $('<div class="inner">').append (wm.messageBodyDiv, choiceTextDiv)
       var cardDiv = $('<div class="card composecard">').append (expansionRow, innerDiv)
       if (wm.isTouchDevice())
@@ -2276,7 +2278,6 @@ var WikiMess = (function() {
         contentPromise = cardReadyPromise
         .then (function() {
           wm.showMessageBody ({ animate: config.alwaysAnimate })
-	  contentPromise = $.Deferred().resolve()
         })
 
       return contentPromise
@@ -2423,7 +2424,7 @@ var WikiMess = (function() {
 
     setComposeCardMode: function() {
       var wm = this
-      wm.setThrowArrowText ('discard', 'share')
+      wm.setThrowArrowText ('reject', 'accept')
       wm.messagePrivacyDiv.removeClass ('thread')
       wm.subnavbar.removeClass ('thread')
       wm.messagePrivacyDiv.removeClass ('thread')
@@ -4161,7 +4162,7 @@ var WikiMess = (function() {
             })
           expandedPromise.then (function() {
 	    if (expansion)
-	      expansion = $.extend ({ type: 'sym' }, expansion)
+	      expansion = $.extend ({ type: 'sym' }, expansion[0])
             if (!wm.templateIsEmpty()) {
               if (expansion && wm.composition.body && wm.composition.body.rhs)
                 wm.composition.body.rhs.push (expansion)
@@ -4198,7 +4199,7 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ({ iconName: 'discard', text: 'randomize' }),
+                  .append (wm.makeIconButton ({ iconName: 'reject', text: 'randomize' }),
                            $('<div class="hint">').text('randomize'))
                   .off('click')
                   .on('click',randomize)
