@@ -120,6 +120,7 @@ var WikiMess = (function() {
     twitterButtonImageUrl: '/images/twitter.png',
     twitterIntentPath: 'https://twitter.com/intent/tweet',
     twitterUsername: 'wikimessage',
+    redirectToTwitterWheneverPossible: false,
     facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
     anonGuest: 'Anonymous guest',
     maxPlayerLoginLength: 15,
@@ -1699,7 +1700,7 @@ var WikiMess = (function() {
                                                title: wm.composition.title,
                                                text: wm.makeExpansionText ({ node: wm.composition.body,
                                                                              vars: wm.compositionVarVal() }) })
-                            else if (result.message.tweet)
+                            else if (result.message.tweet && wm.redirectToTwitterWheneverPossible)
                               wm.redirectToTweet (result.message.tweeter, result.message.tweet)
                             return result
                           })
@@ -2151,7 +2152,7 @@ var WikiMess = (function() {
     },
     
     deleteDraft: function() {
-      if (wm.composition.threadTweeter && wm.composition.threadTweet)
+      if (wm.composition.threadTweeter && wm.composition.threadTweet && wm.redirectToTwitterWheneverPossible)
         wm.redirectToTweet (wm.composition.threadTweeter, wm.composition.threadTweet)
       else if (wm.playerID === null) {
         wm.composition = { randomTemplate: true }
