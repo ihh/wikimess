@@ -256,7 +256,7 @@ var WikiMess = (function() {
     exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
     exampleSymbolDelay: 200,
     
-    shareMessagePrompt: "Share this message?",
+    shareMessagePrompt: "Post this message?",
     deleteDraftPrompt: "Delete this draft?",
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'.",
     emptyTemplateWarning: "_The message will appear here._",
@@ -3326,7 +3326,7 @@ var WikiMess = (function() {
         wm.populateMailboxDiv ({ tab: 'drafts',
                                  title: 'Drafts',
                                  messages: result.drafts,
-                                 getMethod: 'REST_getPlayerMessage',
+                                 getMethod: 'REST_getPlayerDraft',
                                  deleteMethod: 'REST_deletePlayerDraft',
                                  object: 'recipient',
                                  showMessage: function (props) {

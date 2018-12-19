@@ -172,7 +172,7 @@ Not even my[| [literal|own|can's]] can [can|could|has the ability to][| even] ev
 I [have [abandoned|lost]|[am|have been] [drained|bereft|depleted] of] the [ability|power|will] to [can|care|continue|live|believe|play].
 
 >dnd_fortune500_slam
-Does your $dnd_the_enemy:=~fortune500_company [group|game|campaign] [suck|bite] this [bad|hard]?
+Does your $dnd_the_enemy:={~fortune500_company} [group|game|campaign] [suck|bite] this [bad|hard]?
 
 >dnd_help_attack
 I aid your attack with magic.
