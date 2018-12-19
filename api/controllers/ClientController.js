@@ -618,10 +618,12 @@ module.exports = {
           authorPromise = Promise.resolve()
         var updatedPromise
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
-          updatedPromise = Message.update ({ id: messageID },
-                                           { read: true })
+          updatedPromise = function() {
+	    return Message.update ({ id: messageID },
+                                   { read: true })
+	  }
         else
-          updatedPromise = Promise.resolve()
+          updatedPromise = function() { return Promise.resolve() }
         return authorPromise
           .then (updatedPromise)
           .then (function() {
