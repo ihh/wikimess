@@ -273,6 +273,7 @@ module.exports = {
               return Template.update ({ id: template.id },
                                       { content: content })
                 .then (function() {
+		  template.author = player  // because we want the full Player object, not just the ID
                   return template
                 })
             })
