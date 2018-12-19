@@ -617,7 +617,6 @@ module.exports = {
         else
           authorPromise = Promise.resolve()
         var updatedPromise
-        if (message) console.warn('getMessage',playerID,JSON.stringify(message))
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = Message.update ({ id: messageID },
                                            { read: true })
