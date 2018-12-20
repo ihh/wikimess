@@ -57,6 +57,9 @@
               },
               "name": {
                 "type": "string"
+              },
+              "footer": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -76,6 +79,9 @@
               },
               "name": {
                 "type": "string"
+              },
+              "footer": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -89,6 +95,9 @@
             "properties": {
               "type": {
                 "const": "func"
+              },
+              "footer": {
+                "type": "boolean"
               },
               "args": {
                 "$ref": "#/definitions/rhs"
@@ -140,6 +149,9 @@
               "type": {
                 "const": "cond"
               },
+              "footer": {
+                "type": "boolean"
+              },
               "test": {
                 "$ref": "#/definitions/rhs"
               },
@@ -166,6 +178,9 @@
               },
               "varname": {
                 "type": "string"
+              },
+              "footer": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -188,6 +203,9 @@
               },
               "local": {
                 "$ref": "#/definitions/rhs"
+              },
+              "footer": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -208,6 +226,9 @@
                 "items": {
                   "$ref": "#/definitions/rhs"
                 }
+              },
+              "footer": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -230,6 +251,9 @@
               },
               "max": {
                 "type": "integer"
+              },
+              "footer": {
+                "type": "boolean"
               }
             },
             "required": [

@@ -7,7 +7,7 @@ BROWSERIFY = $(NODE_BIN)/browserify
 
 LOAD_DATA = bin/load-data.js
 
-all: $(ASSETS)/vars.js
+all: $(ASSETS)/vars.js $(ASSETS)/bracery.js
 
 start:
 	$(LOAD_DATA) -s

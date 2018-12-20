@@ -200,7 +200,7 @@ module.exports = {
     var previousTags = PlayerService.makeTagString (config.previousTags || '')
     var draftID = Draft.parseID (config.draft)
     var isPublic = config.isPublic || false
-    var result = {}, notification = {}, initVarVal, templateAuthor, tweeter, previousTweeter, previousTweetId
+    var result = {}, notification = {}, initVarVal, templateAuthor, tweeter, avatar, previousTweeter, previousTweetId
     // check that the recipient is reachable
     var reachablePromise
     if (recipientID === null)
@@ -261,7 +261,7 @@ module.exports = {
           // create the Template
           var content = template.content
           return Template.create ({ title: title,
-                                    author: player.id,
+                                    author: playerID,
                                     content: content,
                                     previous: previousTemplate,
                                     tags: tags,
