@@ -117,11 +117,13 @@ var WikiMess = (function() {
     iconSuffix: '.svg',
     blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
+    facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
+    showFacebookLoginButton: false,
     twitterButtonImageUrl: '/images/twitter.png',
     twitterIntentPath: 'https://twitter.com/intent/tweet',
     twitterUsername: 'wikimessage',
     redirectToTwitterWheneverPossible: false,
-    facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
+    showTwitterLoginButton: true,
     anonGuest: 'Anonymous guest',
     maxPlayerLoginLength: 15,
     maxPlayerNameLength: 32,
@@ -744,6 +746,12 @@ var WikiMess = (function() {
         .then (function() {
           var sanitizeLogin = wm.sanitizer ('nameInput', wm.sanitizePlayerName)
 
+	  var socialMediaPane = $('<span class="listitem noborder">')
+	  if (wm.showFacebookLoginButton)
+	    socialMediaPane.append (wm.makeImageLink (wm.facebookButtonImageUrl, wm.REST_loginFacebook))
+	  if (wm.showTwitterLoginButton)
+            socialMediaPane.append (wm.makeImageLink (wm.twitterButtonImageUrl, wm.REST_loginTwitter))
+
           wm.container
             .empty()
             .append ($('<div class="inputbar">')
@@ -761,9 +769,7 @@ var WikiMess = (function() {
                      .append ($('<div class="list">')
                               .append (wm.makeListLink ('Log in', wm.doReturnLogin),
                                        wm.makeListLink ('Sign up', wm.createPlayer),
-                                       $('<span class="listitem noborder">')
-                                       .append (wm.makeImageLink (wm.facebookButtonImageUrl, wm.REST_loginFacebook),
-                                                wm.makeImageLink (wm.twitterButtonImageUrl, wm.REST_loginTwitter)),
+                                       socialMediaPane,
                                        wm.makeListLink ('Play as Guest', wm.continueAsGuest))))
           if (wm.playerLogin)
             wm.nameInput.val (wm.playerLogin)
