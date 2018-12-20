@@ -159,9 +159,9 @@ var WikiMess = (function() {
                     reroll: 'rolling-die',
                     drawcard: 'card-draw',
                     dealcard: 'card-fall',
-                    discard: 'card-hand',
+                    discard: 'thumb-down',
+                    share: 'thumb-up',
                     close: 'close',
-                    share: 'send',
                     inbox: 'inbox',
                     outbox: 'outbox',
                     drafts: 'scroll-unfurled',
@@ -1589,24 +1589,22 @@ var WikiMess = (function() {
                     function backspace() {
                       var newContent = wm.composition.template.content.slice(0)
                       var nSymPopped = 0
-                      while (newContent.length) {
-                        var poppedSym = newContent.pop()
+                      while (wm.ParseTree.stripFooter(newContent).length) {
+                        var popIndex = newContent.length - 1
+                        while (popIndex > 0 && typeof(newContent[popIndex]) === 'object' && newContent[popIndex].footer)
+                          --popIndex
+                        var popSym = newContent[popIndex]
+                        newContent.splice (popIndex, 1)
                         ++nSymPopped
-                        if (typeof(poppedSym) === 'object'
-                            || poppedSym.match(/\S/))
+                        if (typeof(popSym) === 'object'
+                            || popSym.match(/\S/))
                           break
                       }
                       wm.updateComposeContent (newContent)
                       delete wm.composition.randomTemplate
                       wm.markForSave()
                       wm.updateComposeDiv()
-                      if (wm.composition.body) {
-                        wm.composition.body.rhs.splice
-                        (wm.composition.template.content.length,
-                         wm.composition.body.rhs.length - wm.composition.template.content.length)
-                        wm.showMessageBody()
-                      } else
-                        wm.generateMessageBody()
+                      wm.generateMessageBody()
                       wm.divAutosuggest()
                     }
                     wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
@@ -1685,6 +1683,7 @@ var WikiMess = (function() {
                       else
                         fadePromise = $.Deferred().resolve()
                       recipient = wm.composition.isPrivate ? wm.composition.recipient.id : null
+                      wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content)
                       wm.REST_postPlayerMessage (wm.playerID, { recipient: recipient,
                                                                 template: wm.composition.template,
                                                                 title: wm.composition.title,
@@ -2966,16 +2965,19 @@ var WikiMess = (function() {
     },
     
     // getSymbolExpansion is the main entry point from other parts of the code that expand a symbol in context (i.e. with variables)
-    getSymbolExpansion: function (symbolID, initVarVal) {
+    getSymbolExpansion: function (symbolID, initVarVal, noFooter) {
       return this.getContentExpansion ([{ type: 'sym',
                                           id: symbolID }],
-                                       initVarVal)
+                                       initVarVal,
+                                       noFooter)
     },
 
     // getContentExpansion, used by getSymbolExpansion and generateMessageBody, is a wrapper for REST_postPlayerExpand
-    getContentExpansion: function (content, initVarVal) {
+    getContentExpansion: function (content, initVarVal, noFooter) {
       var wm = this
       initVarVal = initVarVal || wm.defaultVarVal()
+      if (!noFooter)
+        content = wm.ParseTree.addFooter (content)
       return wm.REST_postPlayerExpand (wm.playerID,
                                        { content: content,
                                          vars: initVarVal })
@@ -2990,7 +2992,7 @@ var WikiMess = (function() {
       var wm = this
       initVarVal = initVarVal || wm.defaultVarVal()
       var initVarValCopy = $.extend ({}, initVarVal)
-      var sampledTree = wm.ParseTree.sampleParseTree (content)
+      var sampledTree = wm.ParseTree.sampleParseTree (wm.ParseTree.addFooter (content))
       return new Promise (function (resolve, reject) {
         return wm.ParseTree.makeRhsExpansionPromise
         ({ rhs: sampledTree,
@@ -3074,7 +3076,6 @@ var WikiMess = (function() {
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatar = config.avatar || wm.composition.avatar
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
-      var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.choiceBadgeColor).addClass ('rightchoicebadge')
       if (!config.inEditor)
 	this.addAvatarImage ({ div: avatarDiv,
                                tweeter: tweeter,
@@ -3085,7 +3086,7 @@ var WikiMess = (function() {
 							       	 makeSymbolName: wm.makeSymbolName.bind(wm) }) })
       div.empty()
       if (!config.inEditor)
-        div.append (rightChoiceBadgeDiv, avatarDiv)
+        div.append (avatarDiv)
       div.append (textDiv)
       wm.animationExpansion = _.cloneDeep (expansion)
       wm.animationDiv = textDiv
@@ -3138,8 +3139,8 @@ var WikiMess = (function() {
     },
     
     appendToMessageBody: function (appendedRhs) {
-      Array.prototype.push.apply (wm.composition.body.rhs, appendedRhs)
-      Array.prototype.push.apply (wm.animationExpansion.rhs, appendedRhs)
+      wm.composition.body.rhs = wm.ParseTree.stripFooter (wm.composition.body.rhs).concat (appendedRhs)
+      wm.animationExpansion.rhs = wm.ParseTree.stripFooter (wm.animationExpansion.rhs).concat (appendedRhs)
       this.randomizeEmptyMessageWarning()
       this.startAnimatingExpansion()
     },
@@ -4155,24 +4156,22 @@ var WikiMess = (function() {
       var editable = wm.symbolEditableByPlayer (symbol)
       var owned = wm.symbolOwnedByPlayer (symbol)
 
-      function addToDraft (expansion) {
+      function addToDraft() {
         return function (evt) {
           evt.stopPropagation()
-          var expandedPromise = wm.saveCurrentEdit()
-          if (!expansion)
-            expandedPromise = expandedPromise
+          wm.saveCurrentEdit()
             .then (function () {
               return wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
                 .then (function (result) {
                   expansion = result.expansion
                 })
             })
-          expandedPromise.then (function() {
+            .then (function() {
 	    if (expansion)
 	      expansion = $.extend ({ type: 'sym' }, expansion[0])
             if (!wm.templateIsEmpty()) {
               if (expansion && wm.composition.body && wm.composition.body.rhs)
-                wm.composition.body.rhs.push (expansion)
+                wm.composition.body.rhs = wm.ParseTree.stripFooter (wm.composition.body.rhs).concat ([expansion])
               wm.composition.template.content.push ({ id: symbol.id })
               delete wm.composition.randomTemplate
               return wm.showComposePage ({ thread: [] })
@@ -4192,7 +4191,7 @@ var WikiMess = (function() {
         evt.stopPropagation()
         wm.saveCurrentEdit()
           .then (function() {
-            wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
+            wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal(), true)
               .then (function (result) {
                 wm.showingHelp = false
 		wm.infoPaneTitle.html (wm.makeSymbolSpan (symbol,
@@ -4206,7 +4205,8 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ({ iconName: 'reject', text: 'randomize' }),
+                  .append (wm.makeIconButton ({ iconName: 'reroll',
+                                                text: 'randomize' }),
                            $('<div class="hint">').text('randomize'))
                   .off('click')
                   .on('click',randomize)
@@ -4215,7 +4215,7 @@ var WikiMess = (function() {
                   .append (wm.makeIconButton ('forward'),
                            $('<div class="hint">').text('add to draft'))
                   .off('click')
-                  .on('click', addToDraft (result.expansion))
+                  .on('click', addToDraft())
 		wm.infoPane.show()
               })
           })
@@ -4582,7 +4582,7 @@ var WikiMess = (function() {
     makeRhsSpan: function (rhs) {
       var wm = this
       return $('<span>')
-        .append (rhs.map (function (tok, n) {
+        .append (wm.ParseTree.stripFooter(rhs).map (function (tok, n) {
           if (typeof(tok) === 'string')
             return $('<span>').html (wm.renderMarkdown (tok))
           var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
@@ -4640,7 +4640,7 @@ var WikiMess = (function() {
     makeTemplateSpan: function (rhs) {
       var wm = this
       return $('<span>')
-        .append (rhs.map (function (tok, n) {
+        .append (wm.ParseTree.stripFooter(rhs).map (function (tok, n) {
           if (typeof(tok) === 'string')
             return $('<span>').html (wm.renderMarkdown (tok))
           var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
