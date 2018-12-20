@@ -1582,7 +1582,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     margin-bottom: 2px;
 }
 
-.wikimess .messageheader .privrow.thread {
+.wikimess .messageheader .thread {
     opacity: 0;
     pointer-events: none;
 }

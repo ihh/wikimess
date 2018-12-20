@@ -2438,8 +2438,8 @@ var WikiMess = (function() {
       var wm = this
       wm.setThrowArrowText ('reject', 'accept')
       wm.messagePrivacyDiv.removeClass ('thread')
+      wm.messageRecipientDiv.removeClass ('thread')
       wm.subnavbar.removeClass ('thread')
-      wm.messagePrivacyDiv.removeClass ('thread')
       wm.throwArrowContainer.removeClass ('thread')
       wm.setComposeThreadButtonState()
     },
@@ -2449,8 +2449,8 @@ var WikiMess = (function() {
       wm.headerToggler.hide()
       wm.setThrowArrowText ('next')
       wm.messagePrivacyDiv.addClass ('thread')
+      wm.messageRecipientDiv.addClass ('thread')
       wm.subnavbar.addClass ('thread')
-      wm.messagePrivacyDiv.addClass ('thread')
       wm.throwArrowContainer.addClass ('thread')
       wm.setComposeThreadButtonState()
     },

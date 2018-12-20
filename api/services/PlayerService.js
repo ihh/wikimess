@@ -230,7 +230,7 @@ module.exports = {
         if (typeof(template.id) === 'undefined')
           previousPromise = previousPromise.populate ('template')
           .then (function (previousMessage) {
-            previousTemplate = previousMessage.template
+            previousTemplate = previousMessage.template.id
             return previousMessage
           })
         previousPromise = previousPromise
