@@ -4949,7 +4949,7 @@ var WikiMess = (function() {
     lhsRefersTo: function (lhsSymbol, rhsSymbol) {
       var wm = this
       return lhsSymbol.rules.find (function (rhs) {
-        return wm.getSymbolNodes(rhs).filter (function (rhsSym) {
+        return wm.ParseTree.getSymbolNodes(rhs).filter (function (rhsSym) {
           return rhsSym.id === rhsSymbol.id
         })
       })
