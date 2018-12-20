@@ -3070,7 +3070,6 @@ var WikiMess = (function() {
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatar = config.avatar || wm.composition.avatar
       var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
-      var rightChoiceBadgeDiv = wm.makeIconButton ('choice', null, wm.choiceBadgeColor).addClass ('rightchoicebadge')
       if (!config.inEditor)
 	this.addAvatarImage ({ div: avatarDiv,
                                tweeter: tweeter,
@@ -3081,7 +3080,7 @@ var WikiMess = (function() {
 							       	 makeSymbolName: wm.makeSymbolName.bind(wm) }) })
       div.empty()
       if (!config.inEditor)
-        div.append (rightChoiceBadgeDiv, avatarDiv)
+        div.append (avatarDiv)
       div.append (textDiv)
       wm.animationExpansion = _.cloneDeep (expansion)
       wm.animationDiv = textDiv
