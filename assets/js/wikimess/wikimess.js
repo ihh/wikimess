@@ -157,9 +157,9 @@ var WikiMess = (function() {
                     reroll: 'rolling-die',
                     drawcard: 'card-draw',
                     dealcard: 'card-fall',
-                    discard: 'card-hand',
+                    discard: 'thumb-down',
+                    share: 'thumb-up',
                     close: 'close',
-                    share: 'send',
                     inbox: 'inbox',
                     outbox: 'outbox',
                     drafts: 'scroll-unfurled',
@@ -4200,7 +4200,8 @@ var WikiMess = (function() {
                                       animate: true })
                 wm.infoPaneLeftControls
                   .empty()
-                  .append (wm.makeIconButton ({ iconName: 'discard', text: 'randomize' }),
+                  .append (wm.makeIconButton ({ iconName: 'reroll',
+                                                text: 'randomize' }),
                            $('<div class="hint">').text('randomize'))
                   .off('click')
                   .on('click',randomize)
