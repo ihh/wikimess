@@ -139,6 +139,7 @@ module.exports = {
     return player && { id: player.id,
                        name: player.name,
                        displayName: player.displayName,
+                       avatar: player.avatar,
 		       twitterScreenName: player.twitterScreenName,
 		       twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
                        hidePassword: (player.facebookId || player.twitterId) ? true : false,

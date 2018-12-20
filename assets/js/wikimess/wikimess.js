@@ -1573,6 +1573,7 @@ var WikiMess = (function() {
                                             (wm.animationExpansion
                                              ? wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
                                              .then (function (result) {
+                                               wm.updateAvatarDiv()
                                                wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
                                              })
                                              : wm.generateMessageBody())
@@ -2696,6 +2697,7 @@ var WikiMess = (function() {
       this.composition.needsSave = true
       delete this.composition.avatar
       delete this.composition.tweeter
+      delete this.composition.template.author
     },
     
     updateComposeDiv: function() {
@@ -3069,18 +3071,13 @@ var WikiMess = (function() {
       var expansion = config.expansion || wm.composition.body
       var tweeter = config.tweeter || wm.composition.tweeter
       var avatar = config.avatar || wm.composition.avatar
-      var avatarDiv = $('<div class="avatar">'), textDiv = $('<div class="text">')
-      if (!config.inEditor)
-	this.addAvatarImage ({ div: avatarDiv,
-                               tweeter: tweeter,
-                               avatar: avatar,
-                               author: (wm.composition.template && wm.composition.template.author ? wm.composition.template.author.displayName : null),
-                               vars: wm.ParseTree.finalVarVal ({ node: expansion,
-                                                                 initVarVal: wm.compositionVarVal(),
-							       	 makeSymbolName: wm.makeSymbolName.bind(wm) }) })
+      var textDiv = $('<div class="text">')
+      wm.avatarDiv = config.inEditor ? null : $('<div class="avatar">')
       div.empty()
-      if (!config.inEditor)
-        div.append (avatarDiv)
+      if (wm.avatarDiv) {
+        wm.updateAvatarDiv (config)
+        div.append (wm.avatarDiv)
+      }
       div.append (textDiv)
       wm.animationExpansion = _.cloneDeep (expansion)
       wm.animationDiv = textDiv
@@ -3099,6 +3096,25 @@ var WikiMess = (function() {
         textDiv.html (this.renderMarkdown (processedExpansion))
         if (wm.showScrollButtons)
           wm.showScrollButtons()
+      }
+    },
+
+    updateAvatarDiv: function (config) {
+      var wm = this
+      config = config || {}
+      var expansion = config.expansion || wm.composition.body
+      var tweeter = config.tweeter || wm.composition.tweeter || wm.playerInfo.twitterScreenName
+      var avatar = config.avatar || wm.composition.avatar || wm.playerInfo.avatar
+      var author = (wm.composition.template && wm.composition.template.author) ? wm.composition.template.author : wm.playerInfo
+      if (wm.avatarDiv) {
+        wm.avatarDiv.empty()
+        wm.addAvatarImage ({ div: wm.avatarDiv,
+                             tweeter: tweeter,
+                             avatar: avatar,
+                             author: author.displayName || null,
+                             vars: wm.ParseTree.finalVarVal ({ node: expansion,
+                                                               initVarVal: wm.compositionVarVal(),
+							       makeSymbolName: wm.makeSymbolName.bind(wm) }) })
       }
     },
     
@@ -4167,6 +4183,7 @@ var WikiMess = (function() {
               if (expansion && wm.composition.body && wm.composition.body.rhs)
                 wm.composition.body.rhs = wm.ParseTree.stripFooter (wm.composition.body.rhs).concat ([expansion])
               wm.composition.template.content.push ({ id: symbol.id })
+              wm.updateAvatarDiv()
               delete wm.composition.randomTemplate
               return wm.showComposePage ({ thread: [] })
             } else
