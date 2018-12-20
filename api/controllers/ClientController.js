@@ -167,7 +167,7 @@ module.exports = {
           .find (_.extend ({ name: query.name },
                            searcherID
                            ? { or: [ { owned: false },
-                                     { owned: true, owner: { '!': searcherID } } ] }
+                                     { owned: true, owner: { '!=': searcherID } } ] }
                            : { owned: true }))
           .limit (maxResults - ownedSymbols.length)
           .populate ('owner')
@@ -208,7 +208,7 @@ module.exports = {
     var name = req.body.name
     var nameClashPromise = (typeof(name) === 'undefined'
                             ? Promise.resolve (false)
-                            : Player.find ({ id: { '!': playerID },
+                            : Player.find ({ id: { '!=': playerID },
                                              name: name })
                             .then (function (players) {
                               return players.length > 0

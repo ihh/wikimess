@@ -124,6 +124,7 @@ var WikiMess = (function() {
     twitterUsername: 'wikimessage',
     redirectToTwitterWheneverPossible: false,
     showTwitterLoginButton: true,
+    reloadOnLogin: true,
     anonGuest: 'Anonymous guest',
     maxPlayerLoginLength: 15,
     maxPlayerNameLength: 32,
@@ -826,14 +827,18 @@ var WikiMess = (function() {
 	    else {
               if (wm.selectSound)
                 wm.selectSound.stop()
-              wm.initPlayerInfo (data.player)
-              return wm.socket_getPlayerSubscribe (wm.playerID)
-                .then (function() {
-                  showNextPage.call(wm)
-                }).fail (function (err) {
-                  console.error('subscribe failed', err)
-                  showNextPage.call(wm)
-                })
+              if (wm.reloadOnLogin)  // socket_getPlayerSubscribe doesn't seem to work here, so reload as a kludge...
+                window.location.reload()
+              else {
+                wm.initPlayerInfo (data.player)
+                return wm.socket_getPlayerSubscribe (wm.playerID)
+                  .then (function() {
+                    showNextPage.call(wm)
+                  }).fail (function (err) {
+                    console.error('subscribe failed', err)
+                    showNextPage.call(wm)
+                  })
+              }
 	    }
           })
           .fail (function (err) {
@@ -2701,8 +2706,11 @@ var WikiMess = (function() {
 
     markForSave: function() {
       this.composition.needsSave = true
+      // needing to delete avatar and tweeter twice is a bit icky here
       delete this.composition.avatar
       delete this.composition.tweeter
+      delete this.composition.template.avatar
+      delete this.composition.template.tweeter
       delete this.composition.template.author
     },
     
@@ -3048,9 +3056,10 @@ var WikiMess = (function() {
     addAvatarImage: function (config) {
       var wm = this
       var div = config.div, tweeter = config.tweeter, avatar = config.avatar, author = config.author, size = config.size, varVal = config.vars
-      if (varVal && varVal.icon)
+      var safeRegex = /^#?[a-zA-Z0-9_\-]+$/
+      if (varVal && varVal.icon && varVal.icon.match(safeRegex))
         div.append (wm.makeIconButton ({ iconFilename: varVal.icon,
-                                         color: varVal.icolor }))
+                                         color: (varVal.icolor && varVal.icolor.match(safeRegex)) ? varVal.icolor : undefined }))
       else if (tweeter) {
 	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
         .on ('click', function (evt) {
