@@ -160,8 +160,9 @@ var WikiMess = (function() {
                     reroll: 'rolling-die',
                     drawcard: 'card-draw',
                     dealcard: 'card-fall',
-                    discard: 'thumb-down',
-                    share: 'thumb-up',
+                    reject: 'thumb-down',
+                    accept: 'thumb-up',
+                    share: 'share-up',
                     close: 'close',
                     inbox: 'inbox',
                     outbox: 'outbox',
@@ -260,7 +261,6 @@ var WikiMess = (function() {
     exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
     exampleSymbolDelay: 200,
     
-    shareMessagePrompt: "Post this message?",
     deleteDraftPrompt: "Delete this draft?",
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'.",
     emptyTemplateWarning: "_The message will appear here._",
@@ -1661,7 +1661,6 @@ var WikiMess = (function() {
             config = config || {}
             var shareCallback = config.callback
             var preserveMessage = config.preserve
-            var confirm = config.confirm
             var previousMessage = wm.composition.previousMessage
             var recipient
             return function (sendConfig) {
@@ -1671,7 +1670,6 @@ var WikiMess = (function() {
               wm.saveCurrentEdit()
                 .then (function() {
                   var sent = false
-                  if (!confirm || window.confirm (wm.shareMessagePrompt)) {
                     var expansionText, expansionTextMatch
                     if (wm.templateIsEmpty())
                       window.alert ("Please enter some input text.")
@@ -1746,7 +1744,6 @@ var WikiMess = (function() {
                           // wm.showModalWebError (err, wm.reloadCurrentTab.bind(wm))
                         })
                       }
-                  }
                   if (!sent) {
                     updateSharePane()
                     wm.sharePane.hide()
@@ -1780,14 +1777,7 @@ var WikiMess = (function() {
               .empty()
               .append (wm.makeImageLink (wm.facebookButtonImageUrl, makeSendHandler ({ fade: true, callback: facebookIntent }), undefined, true).addClass('big-button'),
                        wm.makeImageLink (wm.twitterButtonImageUrl, makeSendHandler ({ fade: true, callback: tweetIntent }), undefined, true).addClass('big-button'),
-                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'),
-                       wm.makeIconButton ((wm.playerID && wm.composition && wm.composition.isPrivate) ? 'mailbox-tab' : 'status-tab', function() {
-                         if (wm.useThrowAnimations()) {
-                           wm.startThrow()
-                           wm.currentCard.throwOut (wm.throwXOffset(), wm.throwYOffset())
-                         } else
-                           wm.sendMessage ({ fade: true })
-                       }).addClass('big-button'))
+                       wm.makeIconButton ('copy to clipboard', copyToClipboard).addClass('big-button'))
           }
 
           // build the actual compose page UI
@@ -1860,12 +1850,12 @@ var WikiMess = (function() {
                                                                      rightText: 'accept' }))),
                      wm.infoPane,
                      wm.subnavbar = $('<div class="subnavbar">').append
-                     (wm.randomizeButton = wm.makeSubNavIcon ({ iconName: 'discard',
-                                                                text: 'reject',
-                                                                callback: function (evt) {
-                                                                  evt.stopPropagation()
-                                                                  wm.discardAndRefresh()
-                                                                } }),
+                     (wm.rejectButton = wm.makeSubNavIcon ({ iconName: 'reject',
+                                                             text: 'reject',
+                                                             callback: function (evt) {
+                                                               evt.stopPropagation()
+                                                               wm.discardAndRefresh()
+                                                             } }),
                       wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
                                                                  callback: function (evt) {
                                                                    evt.stopPropagation()
@@ -1882,8 +1872,14 @@ var WikiMess = (function() {
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
                                wm.shareButton = wm.makeSubNavIcon ({ iconName: 'share',
-								     text: 'accept',
+								     text: 'share',
 								     callback: toggleSharePane }).addClass('sharepanebutton')),
+                      wm.acceptButton = wm.makeSubNavIcon ({ iconName: 'accept',
+                                                             text: 'accept',
+                                                                callback: function (evt) {
+                                                                  evt.stopPropagation()
+                                                                  wm.acceptCurrentCard()
+                                                                } }),
                       wm.modalExitDiv = $('<div class="wikimess-modalexit">').hide()))
 
           updateSharePane()
@@ -1937,7 +1933,7 @@ var WikiMess = (function() {
           if (config.draft)
             wm.composition.draft = config.draft
 
-          wm.randomizeButton.css('display','')
+          wm.rejectButton.css('display','')
           
           var getRandomTemplate, generateNewContent
           if (config.body && config.body.rhs && !wm.ParseTree.parseTreeEmpty (config.body.rhs))
@@ -2107,7 +2103,7 @@ var WikiMess = (function() {
 
     isThrowOut: function (xOffset, yOffset, element, throwOutConfidence) {
       var wm = this
-      var throwOut = throwOutConfidence > .25 && (element.className.includes('helpcard') || element.className.includes('inertcard') || xOffset < Math.abs(yOffset) || wm.page !== 'compose' || window.confirm (wm.shareMessagePrompt))
+      var throwOut = throwOutConfidence > .25
       return throwOut
     },
 
@@ -2569,6 +2565,7 @@ var WikiMess = (function() {
     },
 
     discardAndRefresh: function() {
+      var wm = this
       wm.modalExitDiv.show()
       wm.throwArrowContainer.hide()
       var nextCardPromise
@@ -2581,6 +2578,14 @@ var WikiMess = (function() {
       return nextCardPromise.then (wm.refreshAutosuggest.bind(wm))
     },
 
+    acceptCurrentCard: function() {
+      var wm = this
+      if (wm.useThrowAnimations())
+        wm.throwRight()
+      else
+        wm.sendMessage ({ fade: true })
+    },
+    
     destroyCard: function (element, card) {
       var wm = this
       element.remove()
