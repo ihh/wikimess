@@ -108,7 +108,7 @@ var WikiMess = (function() {
   // config, defaults
   var parseTree = window.bracery.ParseTree
   var symChar = '~', symCharHtml = '&#126;'
-  var playerChar = '@', varChar = '$', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '='
+  var playerChar = '@', varChar = '$', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '=', traceryChar = '#'
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -4636,7 +4636,19 @@ var WikiMess = (function() {
                                        rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
-              return $('<span>').append ('#', tok.test[0].varname, '#')
+              return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
+            if (wm.ParseTree.isProposeExpr (tok))
+              return $('<span>').append (funcChar + 'propose', leftBraceChar, wm.makeRhsSpan (wm.ParseTree.choiceExprProposeRhs (tok)), rightBraceChar)
+             if (wm.ParseTree.isAcceptExpr (tok))
+              return $('<span>').append (funcChar + 'accept', leftBraceChar, wm.makeRhsSpan (wm.ParseTree.choiceExprAcceptRhs (tok)), rightBraceChar)
+             if (wm.ParseTree.isRejectExpr (tok))
+              return $('<span>').append (funcChar + 'reject', leftBraceChar, wm.makeRhsSpan (wm.ParseTree.choiceExprRejectRhs (tok)), rightBraceChar)
+            if (wm.ParseTree.isChoiceExpr (tok))
+              return $('<span>').append (funcChar + 'choice',
+                                         [wm.ParseTree.choiceExprProposeRhs(tok),
+                                          wm.ParseTree.choiceExprAcceptRhs(tok),
+                                          wm.ParseTree.choiceExprRejectRhs(tok)]
+                                         .map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeRhsSpan (arg), rightBraceChar) }))
             return $('<span>').append (funcChar,
 				       [['if',tok.test],
 					['then',tok.t],
@@ -4694,7 +4706,19 @@ var WikiMess = (function() {
                                        rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
-              return $('<span>').append ('#', tok.test[0].varname, '#')
+              return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
+            if (wm.ParseTree.isProposeExpr (tok))
+              return $('<span>').append (funcChar + 'propose', leftBraceChar, wm.makeTemplateSpan (wm.ParseTree.choiceExprProposeRhs (tok)), rightBraceChar)
+             if (wm.ParseTree.isAcceptExpr (tok))
+              return $('<span>').append (funcChar + 'accept', leftBraceChar, wm.makeTemplateSpan (wm.ParseTree.choiceExprAcceptRhs (tok)), rightBraceChar)
+             if (wm.ParseTree.isRejectExpr (tok))
+              return $('<span>').append (funcChar + 'reject', leftBraceChar, wm.makeTemplateSpan (wm.ParseTree.choiceExprRejectRhs (tok)), rightBraceChar)
+            if (wm.ParseTree.isChoiceExpr (tok))
+              return $('<span>').append (funcChar + 'choice',
+                                         [wm.ParseTree.choiceExprProposeRhs(tok),
+                                          wm.ParseTree.choiceExprAcceptRhs(tok),
+                                          wm.ParseTree.choiceExprRejectRhs(tok)]
+                                         .map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeTemplateSpan (arg), rightBraceChar) }))
             return $('<span>').append (funcChar,
 				       [['if',tok.test],
 					['then',tok.t],
