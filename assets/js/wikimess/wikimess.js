@@ -3118,8 +3118,12 @@ var WikiMess = (function() {
       var wm = this
       config = config || {}
       var expansion = config.expansion || wm.composition.body
-      var tweeter = config.tweeter || wm.composition.tweeter || wm.playerInfo.twitterScreenName
-      var avatar = config.avatar || wm.composition.avatar || wm.playerInfo.avatar
+      var tweeter = config.tweeter || wm.composition.tweeter
+      if (typeof(tweeter) === 'undefined')
+        tweeter = wm.playerInfo.twitterScreenName
+      var avatar = config.avatar || wm.composition.avatar
+      if (typeof(avatar) === 'undefined')
+        avatar = wm.playerInfo.avatar
       var author = (wm.composition.template && wm.composition.template.author) ? wm.composition.template.author : wm.playerInfo
       if (wm.avatarDiv) {
         wm.avatarDiv.empty()

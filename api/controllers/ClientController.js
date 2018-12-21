@@ -701,6 +701,7 @@ module.exports = {
     Message.findOne ({ id: messageID,
                        or: [ { sender: playerID },
                              { recipient: playerID } ] })
+      .populate ('template')
       .then (function (message) {
         var update = {}, destroy = false
         if (message.sender === playerID) {
@@ -714,7 +715,12 @@ module.exports = {
         return (destroy
                 ? Message.destroy ({ id: messageID })
                 : Message.update ({ id: messageID }, update))
-      }).then (function (messages) {
+          .then (function() {
+            if (message.template && message.template.author === playerID)
+              return Template.update ({ id: message.template.id },
+                                      { isPublic: false })
+          })
+      }).then (function() {
         res.ok()
       }).catch (function (err) {
         console.log(err)
