@@ -1697,7 +1697,6 @@ var WikiMess = (function() {
                                                                 tags: wm.composition.tags,
                                                                 previousTags: wm.composition.previousTags,
                                                                 draft: wm.composition.draft,
-                                                                reject: sendConfig.reject,
                                                                 isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                         .then (function (result) {
                           delete wm.composition.previousMessage
@@ -2247,7 +2246,7 @@ var WikiMess = (function() {
 
       // create the swing card object for the compose card
       var card = wm.stack.createCard (cardDiv[0])
-      card.on ('throwoutleft', wm.fadeAndRejectOrRefresh (cardDiv, card))
+      card.on ('throwoutleft', wm.fadeDealAndRefresh (cardDiv, card))
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
@@ -2315,22 +2314,13 @@ var WikiMess = (function() {
                                     dealConfig || {}))
     },
 
-    fadeAndRejectOrRefresh: function (cardDiv, card, dealConfig) {
+    fadeDealAndRefresh: function (cardDiv, card, dealConfig) {
       var wm = this
       return function() {
         wm.throwArrowContainer.hide()
-        return (wm.tagsIndicateChoiceCard (wm.composition.previousTags)
-                ? wm.sendRejected (cardDiv, card)
-                : (wm.fadeAndDealCard (cardDiv, card, dealConfig)
-                   .then (wm.refreshAutosuggest.bind (wm))))
+        return wm.fadeAndDealCard (cardDiv, card, dealConfig)
+          .then (wm.refreshAutosuggest.bind (wm))
       }
-    },
-
-    sendRejected: function (cardDiv, card) {
-      return wm.sendMessage ({ fade: true,
-                               reject: true,
-                               cardDiv: cardDiv,
-                               card: card })
     },
     
     fadeAndDeleteDraft: function (cardDiv, card) {
@@ -2584,25 +2574,17 @@ var WikiMess = (function() {
 
     rejectCurrentCard: function() {
       var wm = this
-      function animateReject() { var p = wm.nextDealPromise; wm.throwLeft(); return p }
-      function quickReject() { return wm.fadeCard (wm.currentCardDiv, wm.currentCard) }
-      if (wm.tagsIndicateChoiceCard (wm.composition.previousTags)) {
-        if (wm.useThrowAnimations())
-          animateReject()
-        else
-          quickReject().then (function() { wm.sendRejected (wm.currentCardDiv, wm.currentCard) })
-      } else {
-        // discard and refresh
-        wm.modalExitDiv.show()
-        wm.throwArrowContainer.hide()
-        var nextCardPromise
-        if (wm.useThrowAnimations())
-          nextCardPromise = animateReject()
-        else
-          nextCardPromise = wm.dealCard ({ generate: true,
-                                           stackReady: quickReject() })
-        nextCardPromise.then (wm.refreshAutosuggest.bind (wm))
-      }
+      // discard and refresh
+      wm.modalExitDiv.show()
+      wm.throwArrowContainer.hide()
+      var nextCardPromise
+      if (wm.useThrowAnimations()) {
+        nextCardPromise = wm.nextDealPromise
+        wm.throwLeft()
+      } else
+        nextCardPromise = wm.dealCard ({ generate: true,
+                                         stackReady: wm.fadeCard (wm.currentCardDiv, wm.currentCard) })
+      nextCardPromise.then (wm.refreshAutosuggest.bind (wm))
     },
     
     acceptCurrentCard: function() {
@@ -4669,18 +4651,6 @@ var WikiMess = (function() {
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
-            if (wm.ParseTree.isProposeExpr (tok))
-              return $('<span>').append (funcChar + 'propose', leftBraceChar, wm.makeRhsSpan (wm.ParseTree.choiceExprProposeRhs (tok)), rightBraceChar)
-             if (wm.ParseTree.isAcceptExpr (tok))
-              return $('<span>').append (funcChar + 'accept', leftBraceChar, wm.makeRhsSpan (wm.ParseTree.choiceExprAcceptRhs (tok)), rightBraceChar)
-             if (wm.ParseTree.isRejectExpr (tok))
-              return $('<span>').append (funcChar + 'reject', leftBraceChar, wm.makeRhsSpan (wm.ParseTree.choiceExprRejectRhs (tok)), rightBraceChar)
-            if (wm.ParseTree.isChoiceExpr (tok))
-              return $('<span>').append (funcChar + 'choice',
-                                         [wm.ParseTree.choiceExprProposeRhs(tok),
-                                          wm.ParseTree.choiceExprAcceptRhs(tok),
-                                          wm.ParseTree.choiceExprRejectRhs(tok)]
-                                         .map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeRhsSpan (arg), rightBraceChar) }))
             return $('<span>').append (funcChar,
 				       [['if',tok.test],
 					['then',tok.t],
@@ -4739,18 +4709,6 @@ var WikiMess = (function() {
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
-            if (wm.ParseTree.isProposeExpr (tok))
-              return $('<span>').append (funcChar + 'propose', leftBraceChar, wm.makeTemplateSpan (wm.ParseTree.choiceExprProposeRhs (tok)), rightBraceChar)
-             if (wm.ParseTree.isAcceptExpr (tok))
-              return $('<span>').append (funcChar + 'accept', leftBraceChar, wm.makeTemplateSpan (wm.ParseTree.choiceExprAcceptRhs (tok)), rightBraceChar)
-             if (wm.ParseTree.isRejectExpr (tok))
-              return $('<span>').append (funcChar + 'reject', leftBraceChar, wm.makeTemplateSpan (wm.ParseTree.choiceExprRejectRhs (tok)), rightBraceChar)
-            if (wm.ParseTree.isChoiceExpr (tok))
-              return $('<span>').append (funcChar + 'choice',
-                                         [wm.ParseTree.choiceExprProposeRhs(tok),
-                                          wm.ParseTree.choiceExprAcceptRhs(tok),
-                                          wm.ParseTree.choiceExprRejectRhs(tok)]
-                                         .map (function (arg) { return $('<span>').append (leftBraceChar, wm.makeTemplateSpan (arg), rightBraceChar) }))
             return $('<span>').append (funcChar,
 				       [['if',tok.test],
 					['then',tok.t],

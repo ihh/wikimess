@@ -281,9 +281,6 @@ module.exports = {
         })
       }
       return templatePromise.then (function (template) {
-        // update choice variable, if this is a choice message
-        if ((' ' + previousTags + ' ').indexOf (' ' + parseTree.choiceVarName + ' ') >= 0)
-          initVarVal[parseTree.choiceVarName] = config.reject ? '0' : '1'
         // validate the message against the template
         // we should probably do this before creating a new template... but that would complicate the code & it's to guard against a rare event (forging messages to fit templates)
         return SymbolService.validateMessage (template, body, extend ({}, initVarVal))
