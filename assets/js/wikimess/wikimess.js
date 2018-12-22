@@ -1682,23 +1682,43 @@ var WikiMess = (function() {
                       wm.shareButton.off ('click')
                       wm.acceptButton.off ('click')
                       delete wm.composition.previousTemplate
+
                       var fadePromise
                       if (sendConfig.fade)
                         fadePromise = wm.fadeCard (sendConfig.cardDiv || wm.currentCardDiv, sendConfig.card || wm.currentCard)
                       else
                         fadePromise = $.Deferred().resolve()
                       recipient = wm.composition.isPrivate ? wm.composition.recipient.id : null
+
                       wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content)
-                      wm.REST_postPlayerMessage (wm.playerID, { recipient: recipient,
-                                                                template: wm.composition.template,
-                                                                title: wm.composition.title,
-                                                                body: wm.composition.body,
-                                                                previous: wm.composition.previousMessage,
-                                                                tags: wm.composition.tags,
-                                                                previousTags: wm.composition.previousTags,
-                                                                draft: wm.composition.draft,
-                                                                isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
-                        .then (function (result) {
+                      var choiceFooter
+                      if (sendConfig.reject) {
+                        if (wm.gotRejectHandler())
+                          choiceFooter = wm.rejectVarName
+                      } else {
+                        if (wm.gotAcceptHandler())
+                          choiceFooter = wm.acceptVarName
+                      }
+                      var expandChoiceFooter = (choiceFooter
+                                                ? (wm.getContentExpansionLocal ([], wm.compositionFinalVarVal(), choiceFooter)
+                                                   .then (function (result) {
+                                                     wm.composition.body.rhs = wm.composition.body.rhs.concat (result.expansion)
+                                                     wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content, choiceFooter)
+                                                   }))
+                                                : $.Deferred().resolve())
+                      
+                      expandChoiceFooter
+                        .then (function() {
+                          return wm.REST_postPlayerMessage (wm.playerID, { recipient: recipient,
+                                                                           template: wm.composition.template,
+                                                                           title: wm.composition.title,
+                                                                           body: wm.composition.body,
+                                                                           previous: wm.composition.previousMessage,
+                                                                           tags: wm.composition.tags,
+                                                                           previousTags: wm.composition.previousTags,
+                                                                           draft: wm.composition.draft,
+                                                                           isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                        }).then (function (result) {
                           delete wm.composition.previousMessage
                           return fadePromise.then (function() {
                             if (shareCallback)
@@ -2246,7 +2266,7 @@ var WikiMess = (function() {
 
       // create the swing card object for the compose card
       var card = wm.stack.createCard (cardDiv[0])
-      card.on ('throwoutleft', wm.fadeDealAndRefresh (cardDiv, card))
+      card.on ('throwoutleft', wm.fadeAndRejectOrRefresh (cardDiv, card))
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
@@ -2314,12 +2334,14 @@ var WikiMess = (function() {
                                     dealConfig || {}))
     },
 
-    fadeDealAndRefresh: function (cardDiv, card, dealConfig) {
+    fadeAndRejectOrRefresh: function (cardDiv, card, dealConfig) {
       var wm = this
       return function() {
         wm.throwArrowContainer.hide()
-        return wm.fadeAndDealCard (cardDiv, card, dealConfig)
-          .then (wm.refreshAutosuggest.bind (wm))
+        return (wm.gotRejectHandler()
+                ? wm.sendMessage ({ fade: true, reject: true })
+                : (wm.fadeAndDealCard (cardDiv, card, dealConfig)
+                   .then (wm.refreshAutosuggest.bind (wm))))
       }
     },
     
@@ -2567,26 +2589,42 @@ var WikiMess = (function() {
       }
     },
 
-    tagsIndicateChoiceCard: function (tags) {
-      var wm = this
-      return (' ' + tags + ' ').indexOf (' ' + wm.ParseTree.choiceVarName + ' ') >= 0
+    acceptVarName: 'accept',
+    rejectVarName: 'reject',
+    gotRejectHandler: function() {
+      return !!this.compositionFinalVarVal()[this.rejectVarName]
     },
 
-    rejectCurrentCard: function() {
-      var wm = this
-      // discard and refresh
-      wm.modalExitDiv.show()
-      wm.throwArrowContainer.hide()
-      var nextCardPromise
-      if (wm.useThrowAnimations()) {
-        nextCardPromise = wm.nextDealPromise
-        wm.throwLeft()
-      } else
-        nextCardPromise = wm.dealCard ({ generate: true,
-                                         stackReady: wm.fadeCard (wm.currentCardDiv, wm.currentCard) })
-      nextCardPromise.then (wm.refreshAutosuggest.bind (wm))
+    gotAcceptHandler: function() {
+      return !!this.compositionFinalVarVal()[this.acceptVarName]
     },
     
+    rejectCurrentCard: function() {
+      var wm = this
+      wm.modalExitDiv.show()
+      wm.throwArrowContainer.hide()
+      if (wm.gotRejectHandler()) {
+        if (wm.useThrowAnimations())
+          wm.throwLeft()
+        else
+          wm.sendMessage ({ fade: true,
+                            reject: true })
+      } else {
+        // discard and refresh
+        var nextCardPromise
+        if (wm.useThrowAnimations()) {
+          nextCardPromise = wm.nextDealPromise
+          wm.throwLeft()
+        } else
+          nextCardPromise = wm.dealCard ({ generate: true,
+                                           stackReady: wm.fadeCurrentCard() })
+        nextCardPromise.then (wm.refreshAutosuggest.bind (wm))
+      }
+    },
+    
+    sendRejected: function() {
+    },
+
     acceptCurrentCard: function() {
       var wm = this
       if (wm.useThrowAnimations())
@@ -2601,6 +2639,10 @@ var WikiMess = (function() {
       card.destroy()
     },
 
+    fadeCurrentCard: function() {
+      return this.fadeCard (this.currentCardDiv, this.currentCard)
+    },
+    
     fadeCard: function (element, card) {
       var wm = this
       var fadedPromise = $.Deferred()
@@ -3012,11 +3054,11 @@ var WikiMess = (function() {
 
     // getContentExpansionLocal is a wrapper for getContentExpansion that avoids making a REST call if possible
     // so bracery that does not involve any symbol expansions gets processed locally
-    getContentExpansionLocal: function (content, initVarVal) {
+    getContentExpansionLocal: function (content, initVarVal, footerName) {
       var wm = this
       initVarVal = initVarVal || wm.defaultVarVal()
       var initVarValCopy = $.extend ({}, initVarVal)
-      var sampledTree = wm.ParseTree.sampleParseTree (wm.ParseTree.addFooter (content))
+      var sampledTree = wm.ParseTree.sampleParseTree (wm.ParseTree.addFooter (content, footerName))
       return new Promise (function (resolve, reject) {
         return wm.ParseTree.makeRhsExpansionPromise
         ({ rhs: sampledTree,
