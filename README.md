@@ -21,7 +21,7 @@ You will also need MySQL (for the database) and Redis (for the session store) ru
 
 In MySQL you will need to create a database called 'wikimess'.
 Currently the MySQL username is set to 'root' and the password is the empty string.
-This can be changed in [config/connections.js](config/connections.js).
+This can be changed in [config/datastores.js](config/datastores.js).
 
 The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-l` to the [load-data.js](bin/load-data.js) script
 
@@ -33,7 +33,7 @@ The script has lots more options; it crawls the [data](data) directory to pre-lo
 
 You can log in using Twitter or Facebook authentication (via [passport.js](http://passportjs.org/)).
 However, currently this redirects back to `wikimess.me`, so it will not work on your local machine.
-Edit the Twitter/Facebook client ID & secret in [config/local.js](config/local.js) to use a different Twitter/Facebook account and app credentials.
+Edit the Twitter/Facebook client ID & secret in [config/local_example.js](config/local_example.js) (and rename to config/local.js) to use a different Twitter/Facebook account and app credentials.
 
 To enable/disable direct inspection of the data model via Sails [blueprint methods](https://sailsjs.com/documentation/reference/blueprint-api),
 edit the REST policy in [config/policies.js](config/policies.js).

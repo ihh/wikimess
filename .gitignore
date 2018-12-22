@@ -40,7 +40,8 @@
 ################################################
 
 config/local.js
-config/connections.js
+config/local_example.js
+config/datastores.js
 
 
 
