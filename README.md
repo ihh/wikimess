@@ -42,44 +42,18 @@ Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression
 Wiki Messenger implements Bracery expansion as a web service, with nonterminal definitions as a RESTful resource.
 Special variables interpreted by Wiki Messenger include
 
-- `^icon` and `^icolor` (name and color of icons displayed on cards)
-- `^tags` (set by default to the message tags; if modified, will override the message tags)
-- `^prevtags` (tags for the previous message)
+- `$icon` and `$icolor` (name and color of icons displayed on cards)
+- `$tags` (set by default to the message tags; if modified, will override the message tags)
+- `$prevtags` (tags for the previous message)
 
-# Template directory
+# Templates
 
-Files in the [data/templates](data/templates) directory define the built-in templates
-for messages.
+Wiki Messenger templates are [Braceplates](https://github.com/ihh/bracery/blob/master/MESSAGES.md) (Bracery message templates).
+They are defined in the [data/templates](data/templates) directory.
 
 ## Template directory syntax
 
-Templates can be specified in JSON or in the following plaintext shorthand
-
-~~~~
-@template_author>Template title#past_tag1 past_tag2#future_tag1 future_tag2 future_tag3
-The template itself, featuring $nonterminals, [alternations|etc.]
-(it can be split over multiple lines)
-~~~~
-
-This defines a template by `@template_author`, with the title "Template title", and the specified past tags (`past_tag1` and `past_tag2`) and future tags (`future_tag1`, `future_tag2`, and `future_tag3`). These tags define the succession of templates in a thread, as follows:
-- The past & future tag fields can each contain any number of whitespace-separated tags
-- For template B to be considered as a possible successor (i.e. reply) to template A, at least one of A's future tags must also be one of B's past tags
-- If any of template A's future tags appear in B's past tags with an exclamation point in front (e.g. A has future tag `tag` and B has past tag `!tag`), then B is disallowed as a successor to A
-- The special past tag `root` is used for templates that can be used at the top of a thread, or the past tags can be left empty for the same effect
-
-The template definition is terminated by an empty line.
-
-The author and tag fields of the template definition line are optional so e.g. it can be
-
-~~~~
->Template title
-The template itself
-split over two lines
-or three
-or more
-~~~~
-
-The author field can optionally be preceded by an integer weight, reflecting how frequently (relatively speaking) a template will be suggested to the user.
+Template definitions can be provided in JSON or in the plaintext shorthand defined by [Bracery](https://github.com/ihh/bracery/blob/master/MESSAGES.md).
 
 ## Testing templates
 
@@ -113,18 +87,7 @@ Symbol definitions are in [data/symbols](data/symbols).
 
 ## Symbol directory syntax
 
-Files in the `data/symbols` directory use Bracery's plaintext format for symbol definitions
-
-~~~~
->nonterminal_name
-First option for the nonterminal definition, featuring $nonterminals, [alternations|etc.]
-Second option for the nonterminal definition, featuring the same stuff
-Third option for the nonterminal definition
-Fourth option. If you want newlines, use \n (backslash is an escape character in general)
-etc.
-~~~~
-
-The symbol definition is terminated by an empty line.
+Files in the `data/symbols` directory use Bracery's [plaintext format](https://github.com/ihh/bracery/blob/master/MESSAGES.md) for symbol definitions.
 
 ## Preset corpora
 
