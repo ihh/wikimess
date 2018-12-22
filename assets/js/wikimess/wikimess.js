@@ -1680,6 +1680,7 @@ var WikiMess = (function() {
                     else {
                       sent = true
                       wm.shareButton.off ('click')
+                      wm.acceptButton.off ('click')
                       delete wm.composition.previousTemplate
                       var fadePromise
                       if (sendConfig.fade)
@@ -1696,6 +1697,7 @@ var WikiMess = (function() {
                                                                 tags: wm.composition.tags,
                                                                 previousTags: wm.composition.previousTags,
                                                                 draft: wm.composition.draft,
+                                                                reject: sendConfig.reject,
                                                                 isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                         .then (function (result) {
                           delete wm.composition.previousMessage
@@ -1854,7 +1856,7 @@ var WikiMess = (function() {
                                                              text: 'reject',
                                                              callback: function (evt) {
                                                                evt.stopPropagation()
-                                                               wm.discardAndRefresh()
+                                                               wm.rejectCurrentCard()
                                                              } }),
                       wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
                                                                  callback: function (evt) {
@@ -2245,7 +2247,7 @@ var WikiMess = (function() {
 
       // create the swing card object for the compose card
       var card = wm.stack.createCard (cardDiv[0])
-      card.on ('throwoutleft', wm.fadeDealAndRefresh (cardDiv, card))
+      card.on ('throwoutleft', wm.fadeAndRejectOrRefresh (cardDiv, card))
       card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
       card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
@@ -2313,15 +2315,24 @@ var WikiMess = (function() {
                                     dealConfig || {}))
     },
 
-    fadeDealAndRefresh: function (cardDiv, card, dealConfig) {
+    fadeAndRejectOrRefresh: function (cardDiv, card, dealConfig) {
       var wm = this
       return function() {
         wm.throwArrowContainer.hide()
-        return wm.fadeAndDealCard (cardDiv, card, dealConfig)
-          .then (wm.refreshAutosuggest.bind (wm))
+        return (wm.tagsIndicateChoiceCard (wm.composition.previousTags)
+                ? wm.sendRejected (cardDiv, card)
+                : (wm.fadeAndDealCard (cardDiv, card, dealConfig)
+                   .then (wm.refreshAutosuggest.bind (wm))))
       }
     },
 
+    sendRejected: function (cardDiv, card) {
+      return wm.sendMessage ({ fade: true,
+                               reject: true,
+                               cardDiv: cardDiv,
+                               card: card })
+    },
+    
     fadeAndDeleteDraft: function (cardDiv, card) {
       var wm = this
       return function() {
@@ -2341,7 +2352,9 @@ var WikiMess = (function() {
       var wm = this
       return function() {
         wm.throwArrowContainer.hide()
-        return wm.sendMessage ({ fade: true, cardDiv: cardDiv, card: card })
+        return wm.sendMessage ({ fade: true,
+                                 cardDiv: cardDiv,
+                                 card: card })
       }
     },
 
@@ -2564,20 +2577,34 @@ var WikiMess = (function() {
       }
     },
 
-    discardAndRefresh: function() {
+    tagsIndicateChoiceCard: function (tags) {
       var wm = this
-      wm.modalExitDiv.show()
-      wm.throwArrowContainer.hide()
-      var nextCardPromise
-      if (wm.useThrowAnimations()) {
-        nextCardPromise = wm.nextDealPromise
-        wm.throwLeft()
-      } else
-        nextCardPromise = wm.dealCard ({ generate: true,
-                                         stackReady: wm.fadeCard (wm.currentCardDiv, wm.currentCard) })
-      return nextCardPromise.then (wm.refreshAutosuggest.bind(wm))
+      return (' ' + tags + ' ').indexOf (' ' + wm.ParseTree.choiceVarName + ' ') >= 0
     },
 
+    rejectCurrentCard: function() {
+      var wm = this
+      function animateReject() { var p = wm.nextDealPromise; wm.throwLeft(); return p }
+      function quickReject() { return wm.fadeCard (wm.currentCardDiv, wm.currentCard) }
+      if (wm.tagsIndicateChoiceCard (wm.composition.previousTags)) {
+        if (wm.useThrowAnimations())
+          animateReject()
+        else
+          quickReject().then (function() { wm.sendRejected (wm.currentCardDiv, wm.currentCard) })
+      } else {
+        // discard and refresh
+        wm.modalExitDiv.show()
+        wm.throwArrowContainer.hide()
+        var nextCardPromise
+        if (wm.useThrowAnimations())
+          nextCardPromise = animateReject()
+        else
+          nextCardPromise = wm.dealCard ({ generate: true,
+                                           stackReady: quickReject() })
+        nextCardPromise.then (wm.refreshAutosuggest.bind (wm))
+      }
+    },
+    
     acceptCurrentCard: function() {
       var wm = this
       if (wm.useThrowAnimations())
@@ -3206,7 +3233,7 @@ var WikiMess = (function() {
                  defaultToPublic: true,
                  title: wm.replyTitle (lastMessage.title),
                  previousMessage: lastMessage.id,
-                 previousTemplate: lastMessage.template,
+                 previousTemplate: lastMessage.template.id,
                  thread: thread,
                  threadTweeter: lastMessage.tweeter,
                  threadTweet: lastMessage.tweet,

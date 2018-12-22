@@ -684,6 +684,7 @@ module.exports = {
       previous: req.body.previous,
       tags: req.body.tags,
       previousTags: req.body.previousTags,
+      reject: req.body.reject,
       draftID: Draft.parseID (req.body.draft),
       isPublic: req.body.isPublic || false
     }).then (function (result) {

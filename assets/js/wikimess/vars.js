@@ -22,6 +22,7 @@ function populateVarVal (varVal, sender, recipient, tags) {
 function nextVarVal (config, parseTree) {
   var varVal = parseTree.finalVarVal (config)
   varVal.prevtags = varVal.tags
+  delete varVal.choice
   delete varVal.tags
   delete varVal.icon
   delete varVal.icolor
