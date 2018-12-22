@@ -1,8 +1,13 @@
 # Wiki Messenger
 
+Wiki Messenger is a messenger app (and server) where the messages can be generated procedurally.
+It's intended for rapid prototyping and casual, collaborative interactive fiction development.
+
+The app runs in a mobile browser with a swipe-based interface for accepting/rejecting procedurally-generated text.
+
 ## Installation
 
-This works for me on my late-2014 iMac (OS X El Capitan 10.11.16)
+e.g on Mac
 
     brew install node
     npm install -g sails
