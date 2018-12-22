@@ -113,9 +113,6 @@ var WikiMess = (function() {
     // default constants
     containerID: 'wikimess',
     localStorageKey: 'wikimess',
-    iconPrefix: '/images/icons/',
-    iconSuffix: '.svg',
-    blankImageUrl: '/images/1x1blank.png',
     facebookButtonImageUrl: '/images/facebook.png',
     facebookIntentPath: 'https://www.facebook.com/sharer/sharer.php',
     showFacebookLoginButton: false,
@@ -270,6 +267,12 @@ var WikiMess = (function() {
     preloadSounds: ['error','select','login','logout','gamestart'],
 
     // REST API
+    REST_getImagesIcons: function (icon) {
+      // do not log every icon GET
+      return $.get ({ url: '/images/icons/' + icon + '.svg',
+                      dataType: 'text' })
+    },
+
     REST_loginFacebook: function() {
       window.location.replace ('/login/facebook')
     },
@@ -977,9 +980,7 @@ var WikiMess = (function() {
 
     getIconPromise: function(icon) {
       if (!this.iconPromise[icon])
-        this.iconPromise[icon] = $.ajax ({ url: this.iconPrefix + icon + this.iconSuffix,
-                                           method: 'GET',
-                                           dataType: 'text' })
+        this.iconPromise[icon] = this.REST_getImagesIcons (icon)
       return this.iconPromise[icon]
     },
 
