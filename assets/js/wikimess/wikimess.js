@@ -1692,13 +1692,8 @@ var WikiMess = (function() {
 
                       wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content)
                       var choiceFooter
-                      if (sendConfig.reject) {
-                        if (wm.gotRejectHandler())
-                          choiceFooter = wm.rejectVarName
-                      } else {
-                        if (wm.gotAcceptHandler())
-                          choiceFooter = wm.acceptVarName
-                      }
+                      if (wm.gotRejectHandler() || wm.gotAcceptHandler())
+                        choiceFooter = sendConfig.reject ? wm.rejectVarName : wm.acceptVarName
                       var expandChoiceFooter = (choiceFooter
                                                 ? (wm.getContentExpansionLocal ([], wm.compositionFinalVarVal(), choiceFooter)
                                                    .then (function (result) {

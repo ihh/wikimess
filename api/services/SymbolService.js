@@ -56,7 +56,9 @@ module.exports = {
               return SymbolService.validateMessageRhs (templateNode.local, bodyNode.local, inQuote)
           })
       case 'lookup':
-        return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
+        // hardcode in the special case of a footer where the template creator has &$accept and the template user has &$reject (or vice versa)
+        var footerChoice = templateNode.footer && (templateNode.varname === 'accept' || templateNode.varname === 'reject') && (bodyNode.varname === 'accept' || bodyNode.varname === 'reject')
+        return (templateNode.varname === bodyNode.varname || footerChoice) ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
       case 'cond':
         return SymbolService.validateMessageRhs (templateNode.test, bodyNode.test, inQuote)
           .then (SymbolService.validateMessageRhs (templateNode.t, bodyNode.t, inQuote))
