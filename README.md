@@ -51,7 +51,7 @@ Special variables interpreted by Wiki Messenger include
 - `$tags` (set by default to the message tags; if modified, will override the message tags)
 - `$prevtags` (tags for the previous message)
 - `$reject`, if defined, forces a card to be posted (with `&$reject` appended) even if the player rejects it
-   - `$accept`, if defined, will cause `&$accept` to be appended to _accepted_ cards before posting
+- `$accept`, if defined, will cause `&$accept` to be appended to _accepted_ cards before posting
 
 # Templates
 
