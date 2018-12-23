@@ -2589,11 +2589,11 @@ var WikiMess = (function() {
     acceptVarName: 'accept',
     rejectVarName: 'reject',
     gotRejectHandler: function() {
-      return this.ParseTree.isTruthy (this.compositionFinalVarVal()[this.rejectVarName])
+      return this.compositionFinalVarVal()[this.rejectVarName]
     },
 
     gotAcceptHandler: function() {
-      return this.ParseTree.isTruthy (this.compositionFinalVarVal()[this.acceptVarName])
+      return this.compositionFinalVarVal()[this.acceptVarName]
     },
     
     rejectCurrentCard: function() {
