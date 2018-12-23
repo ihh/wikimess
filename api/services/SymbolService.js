@@ -31,11 +31,18 @@ module.exports = {
       })
   },
 
-  validateMessageRhs: function (templateContent, bodyRhs, inQuote) {
-    if (!templateContent)
+  validateMessageRhs: function (origTemplateContent, origBodyRhs, inQuote) {
+    if (!origTemplateContent)
       return Promise.reject('template content missing')
-    if (!bodyRhs)
+    if (!origBodyRhs)
       return Promise.reject('body rhs missing')
+    // Strip footers before proceeding with validation
+    // This is a hole, but is a quick kludge to prevent mismatches that can otherwise occur
+    // when a choice footer (&$accept or &$reject) has been appended to a message,
+    // but is missing from the template
+    // (since template parser can't know in advance if $accept or $reject are defined)
+    var templateContent = parseTree.stripFooter (origTemplateContent)
+    var bodyRhs = parseTree.stripFooter (origBodyRhs)
     if (templateContent.length !== bodyRhs.length)
       return Promise.reject('template/body length mismatch (' + templateContent.length + ' !== ' + bodyRhs.length + ')')
     if (!templateContent.length)
@@ -56,9 +63,7 @@ module.exports = {
               return SymbolService.validateMessageRhs (templateNode.local, bodyNode.local, inQuote)
           })
       case 'lookup':
-        // hardcode in the special case of a footer where the template creator has &$accept and the template user has &$reject (or vice versa)
-        var footerChoice = templateNode.footer && (templateNode.varname === 'accept' || templateNode.varname === 'reject') && (bodyNode.varname === 'accept' || bodyNode.varname === 'reject')
-        return (templateNode.varname === bodyNode.varname || footerChoice) ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
+        return templateNode.varname === bodyNode.varname ? Promise.resolve() : Promise.reject('varname mismatch in ' + templateNode.type)
       case 'cond':
         return SymbolService.validateMessageRhs (templateNode.test, bodyNode.test, inQuote)
           .then (SymbolService.validateMessageRhs (templateNode.t, bodyNode.t, inQuote))
