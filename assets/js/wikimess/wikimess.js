@@ -2,7 +2,8 @@ var WikiMess = (function() {
   var proto = function (config) {
     var wm = this
     config = config || {}
-
+    this.standalone = config.standalone
+    
     this.ParseTree = window.bracery.ParseTree
     // override bracery's default limits
     $.extend (this.ParseTree,
