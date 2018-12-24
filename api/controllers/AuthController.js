@@ -44,23 +44,6 @@ module.exports = {
       })
   },
 
-  standalone: function (req, res) {
-    return PlayerService.makeHomepage (null)
-      .then (function (homepage) {
-        homepage.vars.init = true
-        homepage.vars.initConfig = homepage.vars.initConfig || {}
-        homepage.vars.initConfig =
-          extend ({},
-                  homepage.vars.initConfig,
-                  { action: 'home',
-                    standalone: true })
-        res.view ('homepage', homepage.vars)
-      }).catch (function (err) {
-        console.log(err)
-        res.notFound()
-      })
-  },
-
   twitterConfigPage: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     return PlayerService.makeHomepage (playerID)

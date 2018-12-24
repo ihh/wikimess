@@ -4,7 +4,8 @@ var WikiMess = (function() {
     config = config || {}
 
     // includes
-    this.Bracery = window.bracery
+    this.Bracery = window.bracery.Bracery
+    this.BraceryTemplate = window.bracery.Template
     this.ParseTree = window.bracery.ParseTree
     this.VarsHelper = window.VarsHelper
 
@@ -16,23 +17,17 @@ var WikiMess = (function() {
                 maxLength: 280,
                 maxNodes: 1000 })
 
-
-    // Standalone mode
-    this.standalone = config.standalone
-    this.templates = config.templates || []
-    if (this.standalone)
-      this.bracery = new this.Bracery()
-
     // HTML
     this.container = $('<div class="wikimess">')
     this.pageContainer = $('#'+this.containerID)
       .addClass("wikimess-page")
       .html (this.container)
 
+    // localStorage
     this.localStorage = { playerLogin: undefined,
                           soundVolume: .5,
                           theme: 'plain',
-                          messages: {} }
+                          messages: [] }
     try {
       var ls = JSON.parse (localStorage.getItem (this.localStorageKey))
       $.extend (this.localStorage, ls)
@@ -41,6 +36,16 @@ var WikiMess = (function() {
     }
     $.extend (this, this.localStorage)
 
+    // Standalone mode
+    this.standalone = config.standalone
+    this.templates = config.templates || []
+    this.templates.forEach (function (t, id) { t.id = id })
+    if (this.standalone) {
+      this.braceryInstance = new this.Bracery (this.rules)
+      config.action = this.messages.length ? 'message' : 'home'
+    }
+    
+    // sockets
     this.socket_onPlayer (this.handlePlayerMessage.bind (this))
     this.socket_onSymbol (this.handleSymbolMessage.bind (this))
     this.socket_onMessage (this.handleBroadcastMessage.bind (this))
@@ -671,16 +676,16 @@ var WikiMess = (function() {
     // wrappers for AJAX calls that intercept the call when in standalone mode
     wrapREST_getPlayerSuggestTemplates: function (playerID) {
       if (this.standalone)
-        return $.Deferred().resolve ({ templates: this.Bracery.Template.allRootTemplates (this.templates) })
+        return $.Deferred().resolve ({ templates: this.BraceryTemplate.allRootTemplates (this.templates) })
       return this.REST_getPlayerSuggestTemplates (playerID)
     },
 
     wrapREST_getPlayerSuggestReply: function (playerID, templateID, tags) {
       if (this.standalone)
         return $.Deferred().resolve
-      ({ template: this.Bracery.Template.randomReplyTemplate (this.templates,
-                                                              tags,
-                                                              this.template[parseInt(templateID)]),
+      ({ template: this.BraceryTemplate.randomReplyTemplate (this.templates,
+                                                             tags,
+                                                             this.template[parseInt(templateID)]),
          more: true })
       return this.REST_getPlayerSuggestReply (playerID, templateID, tags)
     },
@@ -692,17 +697,37 @@ var WikiMess = (function() {
     },
 
     wrapREST_postPlayerExpand: function (playerID, query) {
+      var wm = this
+      if (this.standalone)
+        return wm.braceryInstance.expandParsed
+      ({ parsedRhsText: query.content,
+         vars: $.extend ({}, query.vars || this.defaultVarVal()),
+         callback: true })
       return this.REST_postPlayerExpand (playerID, query)
     },
 
     wrapREST_postPlayerMessage: function (playerID, message) {
+      if (this.standalone) {
+        var storedMessage = $.extend ({}, message, { id: this.messages.length })
+        this.messages.push (storedMessage)
+        this.writeLocalStorage ('messages')
+        return $.Deferred().resolve ({ message: storedMessage })
+      }
       return this.REST_postPlayerMessage (playerID, message)
     },
 
     wrapREST_getPlayerMessage: function (playerID, messageID) {
+      if (this.standalone)
+        return $.Deferred().resolve ({ message: this.messages[parseInt(messageID)] })
       return this.REST_getPlayerMessage (playerID, messageID)
     },
-    
+
+    wrapREST_getPlayerMessageThread: function (playerID, messageID) {
+      if (this.standalone)
+        return $.Deferred().resolve ({ thread: this.messages })
+      return this.REST_getPlayerMessageThread (playerID, messageID)
+    },
+
     // helpers
     isTouchDevice: function() {
       return 'ontouchstart' in document.documentElement
@@ -1754,7 +1779,7 @@ var WikiMess = (function() {
                           return wm.wrapREST_postPlayerMessage (wm.playerID,
                                                                 { recipient: recipient,
                                                                   template: wm.composition.template,
-                                                                  title: wm.composition.title,
+                                                                  title: wm.composition.title || '',
                                                                   body: wm.composition.body,
                                                                   previous: wm.composition.previousMessage,
                                                                   tags: wm.composition.tags,
@@ -1792,7 +1817,7 @@ var WikiMess = (function() {
                                 })
                             }
                             if (!recipient)
-                              return wm.REST_getPlayerMessage (wm.playerID, result.message.id)
+                              return wm.wrapREST_getPlayerMessage (wm.playerID, result.message.id)
                               .then (function (result) {
                                 return wm.replyToMessage ({ message: result.message,
                                                             thread: [result.message] })
