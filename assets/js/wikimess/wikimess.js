@@ -2,9 +2,12 @@ var WikiMess = (function() {
   var proto = function (config) {
     var wm = this
     config = config || {}
-    this.standalone = config.standalone
-    
+
+    // includes
+    this.Bracery = window.bracery
     this.ParseTree = window.bracery.ParseTree
+    this.VarsHelper = window.VarsHelper
+
     // override bracery's default limits
     $.extend (this.ParseTree,
               { maxDepth: 100,
@@ -13,8 +16,14 @@ var WikiMess = (function() {
                 maxLength: 280,
                 maxNodes: 1000 })
 
-    this.VarsHelper = window.VarsHelper
 
+    // Standalone mode
+    this.standalone = config.standalone
+    this.templates = config.templates || []
+    if (this.standalone)
+      this.bracery = new this.Bracery()
+
+    // HTML
     this.container = $('<div class="wikimess">')
     this.pageContainer = $('#'+this.containerID)
       .addClass("wikimess-page")
@@ -22,7 +31,8 @@ var WikiMess = (function() {
 
     this.localStorage = { playerLogin: undefined,
                           soundVolume: .5,
-                          theme: 'plain' }
+                          theme: 'plain',
+                          messages: {} }
     try {
       var ls = JSON.parse (localStorage.getItem (this.localStorageKey))
       $.extend (this.localStorage, ls)
@@ -658,6 +668,41 @@ var WikiMess = (function() {
       return def
     },
 
+    // wrappers for AJAX calls that intercept the call when in standalone mode
+    wrapREST_getPlayerSuggestTemplates: function (playerID) {
+      if (this.standalone)
+        return $.Deferred().resolve ({ templates: this.Bracery.Template.allRootTemplates (this.templates) })
+      return this.REST_getPlayerSuggestTemplates (playerID)
+    },
+
+    wrapREST_getPlayerSuggestReply: function (playerID, templateID, tags) {
+      if (this.standalone)
+        return $.Deferred().resolve
+      ({ template: this.Bracery.Template.randomReplyTemplate (this.templates,
+                                                              tags,
+                                                              this.template[parseInt(templateID)]),
+         more: true })
+      return this.REST_getPlayerSuggestReply (playerID, templateID, tags)
+    },
+
+    wrapREST_getPlayerTemplate: function (playerID, templateID) {
+      if (this.standalone)
+        return $.Deferred().resolve ({ template: this.templates[parseInt(templateID)] })
+      return this.REST_getPlayerTemplate (playerID, templateID)
+    },
+
+    wrapREST_postPlayerExpand: function (playerID, query) {
+      return this.REST_postPlayerExpand (playerID, query)
+    },
+
+    wrapREST_postPlayerMessage: function (playerID, message) {
+      return this.REST_postPlayerMessage (playerID, message)
+    },
+
+    wrapREST_getPlayerMessage: function (playerID, messageID) {
+      return this.REST_getPlayerMessage (playerID, messageID)
+    },
+    
     // helpers
     isTouchDevice: function() {
       return 'ontouchstart' in document.documentElement
@@ -1706,15 +1751,16 @@ var WikiMess = (function() {
                       
                       expandChoiceFooter
                         .then (function() {
-                          return wm.REST_postPlayerMessage (wm.playerID, { recipient: recipient,
-                                                                           template: wm.composition.template,
-                                                                           title: wm.composition.title,
-                                                                           body: wm.composition.body,
-                                                                           previous: wm.composition.previousMessage,
-                                                                           tags: wm.composition.tags,
-                                                                           previousTags: wm.composition.previousTags,
-                                                                           draft: wm.composition.draft,
-                                                                           isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                          return wm.wrapREST_postPlayerMessage (wm.playerID,
+                                                                { recipient: recipient,
+                                                                  template: wm.composition.template,
+                                                                  title: wm.composition.title,
+                                                                  body: wm.composition.body,
+                                                                  previous: wm.composition.previousMessage,
+                                                                  tags: wm.composition.tags,
+                                                                  previousTags: wm.composition.previousTags,
+                                                                  draft: wm.composition.draft,
+                                                                  isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
                         }).then (function (result) {
                           delete wm.composition.previousMessage
                           return fadePromise.then (function() {
@@ -2513,7 +2559,7 @@ var WikiMess = (function() {
     fadeInertCard: function (card, cardDiv) {
       var nextMessagePromise
       if (wm.noComposeCard() && wm.threadHasNextMessage() && wm.composition.thread.length === 1)
-        nextMessagePromise = wm.REST_getPlayerMessage (wm.playerID, wm.composition.thread[0].next[0])
+        nextMessagePromise = wm.wrapREST_getPlayerMessage (wm.playerID, wm.composition.thread[0].next[0])
       wm.setComposeHelpMode()
       return wm.fadeCard (cardDiv, card)
         .then (function() {
@@ -2557,7 +2603,7 @@ var WikiMess = (function() {
         var oldestMessage = wm.composition.thread [wm.composition.thread.length - 1]
         if (oldestMessage.previous) {
 	  wm.setComposeHelpMode()
-          prevMessagePromise = wm.REST_getPlayerMessage (wm.playerID, oldestMessage.previous)
+          prevMessagePromise = wm.wrapREST_getPlayerMessage (wm.playerID, oldestMessage.previous)
         }
       }
       if (prevMessagePromise)
@@ -2687,7 +2733,7 @@ var WikiMess = (function() {
       var previousTags = wm.composition.previousTemplate.tags
       if (wm.composition.vars && wm.composition.previousTags)
           previousTags = wm.composition.previousTags
-      return wm.REST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (previousTags))
+      return wm.wrapREST_getPlayerSuggestReply (wm.playerID, wm.composition.previousTemplate.id, wm.stripLeadingAndTrailingWhitespace (previousTags))
         .then (function (result) {
           if (!result.more)
             delete wm.composition.previousTemplate
@@ -2704,11 +2750,11 @@ var WikiMess = (function() {
       if (wm.composition.randomTemplate)
         return (wm.composition.randomTemplateAuthor
                 ? wm.REST_getPlayerSuggestTemplatesBy (wm.playerID, wm.composition.randomTemplateAuthor)
-                : wm.REST_getPlayerSuggestTemplates (wm.playerID))
+                : wm.wrapREST_getPlayerSuggestTemplates (wm.playerID))
         .then (function (result) {
           if (result && result.templates.length && wm.composition.randomTemplate) {
             var template = wm.ParseTree.randomElement (result.templates)
-            return wm.REST_getPlayerTemplate (wm.playerID, template.id)
+            return wm.wrapREST_getPlayerTemplate (wm.playerID, template.id)
               .then (function (templateResult) {
                 if (templateResult && templateResult.template && wm.composition.randomTemplate)
                   return templateResult.template
@@ -3041,9 +3087,9 @@ var WikiMess = (function() {
       initVarVal = initVarVal || wm.defaultVarVal()
       if (!noFooter)
         content = wm.ParseTree.addFooter (content)
-      return wm.REST_postPlayerExpand (wm.playerID,
-                                       { content: content,
-                                         vars: initVarVal })
+      return wm.wrapREST_postPlayerExpand (wm.playerID,
+                                           { content: content,
+                                             vars: initVarVal })
         .then (function (result) {
           return { expansion: result.expansion.tree }
         })
@@ -3239,7 +3285,7 @@ var WikiMess = (function() {
       switch (config.action) {
       case 'message':
         wm.container.hide()
-        promise = wm.REST_getPlayerMessageThread (wm.playerID, config.message)
+        promise = wm.wrapREST_getPlayerMessageThread (wm.playerID, config.message)
           .then (function (result) {
             wm.container.show()
             if (result && result.thread && result.thread.length) {
