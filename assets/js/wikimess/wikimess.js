@@ -2189,13 +2189,7 @@ var WikiMess = (function() {
         cardDiv.removeClass('dragging').addClass('throwing')
       })
 
-
-      var isReject
-      if (message.body && message.body.rhs && message.body.rhs.length) {
-        var lastNode = message.body.rhs[message.body.rhs.length - 1]
-        isReject = wm.ParseTree.isEvalVar(lastNode) && wm.ParseTree.getEvalVar(lastNode) === 'reject'
-      }
-      var cardThrowOffset = (isReject ? -1 : +1) * wm.throwXOffset()
+      var cardThrowOffset = (wm.isRejectMessage (message) ? -1 : +1) * wm.throwXOffset()
 
       var setThrowOutTimer = function() {
         if (message.justPosted) {
@@ -2227,6 +2221,16 @@ var WikiMess = (function() {
       return throwIn
     },
 
+    isRejectMessage: function (message) {
+      var wm = this
+      var isReject
+      if (message.body && message.body.rhs && message.body.rhs.length) {
+        var lastNode = message.body.rhs[message.body.rhs.length - 1]
+        isReject = wm.ParseTree.isEvalVar(lastNode) && wm.ParseTree.getEvalVar(lastNode) === 'reject'
+      }
+      return isReject
+    },
+    
     makeThrowArrowContainer: function (config) {
       var wm = this
       wm.leftThrowArrow = $('<div class="arrowplustext">')
