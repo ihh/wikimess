@@ -2195,8 +2195,8 @@ var WikiMess = (function() {
         wm.startThrow (cardDiv)
 
         var isReject
-        if (message.body && message.body.length) {
-          var lastNode = message.body[message.body.length - 1]
+        if (message.body && message.body.rhs && message.body.rhs.length) {
+          var lastNode = message.body.rhs[message.body.rhs.length - 1]
           isReject = wm.ParseTree.isEvalVar(lastNode) && wm.ParseTree.getEvalVar(lastNode) === 'reject'
         }
         
