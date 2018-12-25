@@ -1582,7 +1582,8 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     margin-bottom: 2px;
 }
 
-.wikimess .messageheader .thread {
+.wikimess .messageheader .thread,
+.wikimess.standalone .navtab {
     opacity: 0;
     pointer-events: none;
 }

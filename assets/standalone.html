@@ -43,8 +43,7 @@
 <script type="text/javascript">
   var wm
   $(function() {
-    wm = new WikiMess({"standalone":true})
-  
+  wm = new WikiMess({"standalone":true,templateDefs:">Syn # # syn\nSYN\n\n>Ack/Syn # syn # syn_ack\nACK / SYN\n\n>Ack # syn_ack # ack\nACK\n"})
   })
 </script>
 

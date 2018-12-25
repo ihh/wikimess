@@ -38,11 +38,18 @@ var WikiMess = (function() {
 
     // Standalone mode
     this.standalone = config.standalone
-    this.templates = config.templates || []
-    this.templates.forEach (function (t, id) { t.id = id })
+    this.svg = config.svg || {}
+    this.templates = (config.templateDefs && this.BraceryTemplate.parseTemplateDefs (config.templateDefs))
+      || config.templates || []
+    this.templates.forEach (function (t, id) {
+      t.id = id
+      t.author = {}
+    })
     if (this.standalone) {
-      this.braceryInstance = new this.Bracery (this.rules)
+      this.braceryInstance = new this.Bracery ((config.symbolDefs && this.ParseTree.parseTextDefs (config.symbolDefs))
+                                               || config.rules)
       config.action = this.messages.length ? 'message' : 'home'
+      this.container.addClass ('standalone')
     }
     
     // sockets
@@ -274,7 +281,8 @@ var WikiMess = (function() {
     exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
     exampleSymbolDelay: 200,
     
-    deleteDraftPrompt: "Delete this draft and start a new thread?",
+    deleteDraftPrompt: "Delete draft and start a new thread?",
+    resetThreadPrompt: "Reset and start a new thread?",
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'.",
     emptyTemplateWarning: "_The message will appear here._",
     reloadOnDisconnect: false,
@@ -556,6 +564,8 @@ var WikiMess = (function() {
     // helpers to log ajax calls
     logGet: function (url) {
       var wm = this
+      if (wm.standalone)
+        return $.Deferred().reject()
       var before
       if (wm.verbose.request) {
         console.log ('GET ' + url + ' request')
@@ -574,6 +584,8 @@ var WikiMess = (function() {
 
     logPost: function (url, data) {
       var wm = this
+      if (wm.standalone)
+        return $.Deferred().reject()
       var before
       if (wm.verbose.request) {
         console.log ('POST ' + url + ' request', data)
@@ -594,6 +606,8 @@ var WikiMess = (function() {
 
     logPut: function (url, data) {
       var wm = this
+      if (wm.standalone)
+        return $.Deferred().reject()
       var before
       if (wm.verbose.request) {
         console.log ('PUT ' + url + ' request', data)
@@ -614,6 +628,8 @@ var WikiMess = (function() {
 
     logDelete: function (url) {
       var wm = this
+      if (wm.standalone)
+        return $.Deferred().reject()
       var before
       if (wm.verbose.request) {
         console.log ('DELETE ' + url + ' request')
@@ -633,6 +649,8 @@ var WikiMess = (function() {
     // helpers to convert socket callbacks to promises
     socketGetPromise: function (url) {
       var wm = this
+      if (wm.standalone)
+        return $.Deferred().reject()
       var def = $.Deferred()
       var before
       if (wm.verbose.request) {
@@ -654,6 +672,8 @@ var WikiMess = (function() {
 
     socketPostPromise: function (url, data) {
       var wm = this
+      if (wm.standalone)
+        return $.Deferred().reject()
       var def = $.Deferred()
       var before
       if (wm.verbose.request) {
@@ -685,7 +705,7 @@ var WikiMess = (function() {
         return $.Deferred().resolve
       ({ template: this.BraceryTemplate.randomReplyTemplate (this.templates,
                                                              tags,
-                                                             this.template[parseInt(templateID)]),
+                                                             this.templates[parseInt(templateID)]),
          more: true })
       return this.REST_getPlayerSuggestReply (playerID, templateID, tags)
     },
@@ -708,7 +728,10 @@ var WikiMess = (function() {
 
     wrapREST_postPlayerMessage: function (playerID, message) {
       if (this.standalone) {
-        var storedMessage = $.extend ({}, message, { id: this.messages.length })
+        var storedMessage = $.extend ({},
+                                      message,
+                                      { id: this.messages.length,
+                                        date: Date.now() })
         this.messages.push (storedMessage)
         this.writeLocalStorage ('messages')
         return $.Deferred().resolve ({ message: storedMessage })
@@ -1051,7 +1074,7 @@ var WikiMess = (function() {
 
     getIconPromise: function(icon) {
       if (!this.iconPromise[icon])
-        this.iconPromise[icon] = this.REST_getImagesIcons (icon)
+        this.iconPromise[icon] = this.svg[icon] ? $.Deferred().resolve(this.svg[icon]) : this.REST_getImagesIcons (icon)
       return this.iconPromise[icon]
     },
 
@@ -1583,7 +1606,8 @@ var WikiMess = (function() {
                 var prefix = endsWithSymbolMatch[1]
                 delete wm.autosuggestStatus.lastKey
                 wm.autosuggestStatus.temperature = 0
-                symbolSuggestionPromise = wm.REST_postPlayerSearchSymbolsOwned (wm.playerID, { name: { startsWith: prefix } })
+                if (!wm.standalone)
+                  symbolSuggestionPromise = wm.REST_postPlayerSearchSymbolsOwned (wm.playerID, { name: { startsWith: prefix } })
                 getInsertText = function (symbol) {
                   return symbol.name.substr (prefix.length)
                 }
@@ -1594,7 +1618,8 @@ var WikiMess = (function() {
                 var key = autosuggestKey (beforeSymbols, afterSymbols)
                 if (wm.autosuggestStatus.lastKey !== key) {
                   wm.autosuggestStatus.lastKey = key
-                  symbolSuggestionPromise = wm.REST_postPlayerSuggestSymbol (wm.playerID, beforeSymbols, afterSymbols, wm.autosuggestStatus.temperature)
+                  if (!wm.standalone)
+                    symbolSuggestionPromise = wm.REST_postPlayerSuggestSymbol (wm.playerID, beforeSymbols, afterSymbols, wm.autosuggestStatus.temperature)
                   getInsertText = function (symbol) { return (endsWithSymbolMatch ? '' : symChar) + symbol.name }
                 }
               }
@@ -1640,28 +1665,29 @@ var WikiMess = (function() {
             var key = autosuggestKey (before, [])
             if (wm.autosuggestStatus.lastKey !== key) {
               wm.autosuggestStatus.lastKey = key
-              wm.populateSuggestions (wm.REST_postPlayerSuggestSymbol (wm.playerID, before, [], wm.autosuggestStatus.temperature),
-                                      function (symbol, wrappedFuncs) {
-                                        // prepend a space only if we're nonempty & don't already end in a space
-                                        var content = wm.composition.template.content, lastTok = content.length && content[content.length-1]
-                                        var spacer = (lastTok && !(typeof(lastTok) === 'string' && lastTok.match(/\s$/))) ? [' '] : []
-                                        wm.updateComposeContent (content.concat (spacer.concat ([wrapNode ({ type: 'sym',
-                                                                                                             id: symbol.id,
-                                                                                                             name: symbol.name },
-                                                                                                           wrappedFuncs)])))
-                                        delete wm.composition.randomTemplate
-                                        wm.markForSave()
-                                        wm.updateComposeDiv()
-                                        var generatePromise =
-                                            (wm.animationExpansion
-                                             ? wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
-                                             .then (function (result) {
-                                               wm.updateAvatarDiv()
-                                               wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
-                                             })
-                                             : wm.generateMessageBody())
-                                        generatePromise.then (wm.divAutosuggest)
-                                      })
+              if (!wm.standalone)
+                wm.populateSuggestions (wm.REST_postPlayerSuggestSymbol (wm.playerID, before, [], wm.autosuggestStatus.temperature),
+                                        function (symbol, wrappedFuncs) {
+                                          // prepend a space only if we're nonempty & don't already end in a space
+                                          var content = wm.composition.template.content, lastTok = content.length && content[content.length-1]
+                                          var spacer = (lastTok && !(typeof(lastTok) === 'string' && lastTok.match(/\s$/))) ? [' '] : []
+                                          wm.updateComposeContent (content.concat (spacer.concat ([wrapNode ({ type: 'sym',
+                                                                                                               id: symbol.id,
+                                                                                                               name: symbol.name },
+                                                                                                             wrappedFuncs)])))
+                                          delete wm.composition.randomTemplate
+                                          wm.markForSave()
+                                          wm.updateComposeDiv()
+                                          var generatePromise =
+                                              (wm.animationExpansion
+                                               ? wm.getSymbolExpansion (symbol.id, wm.compositionFinalVarVal())
+                                               .then (function (result) {
+                                                 wm.updateAvatarDiv()
+                                                 wm.appendToMessageBody (spacer.concat (wrapNode (result.expansion, wrappedFuncs)))
+                                               })
+                                               : wm.generateMessageBody())
+                                          generatePromise.then (wm.divAutosuggest)
+                                        })
                 .then (function() {
                   if (wm.composition.template.content.length) {
                     function backspace() {
@@ -1925,7 +1951,7 @@ var WikiMess = (function() {
                                                          $('<span class="input">').append (wm.messageTagsInput))),
                                        templateRow = $('<div class="sectiontitle composesectiontitle">')
                                        .append('Template text',
-					       wm.destroyButton = wm.makeSubNavIcon ('delete', function (evt) {
+					       wm.makeSubNavIcon ('delete', function (evt) {
 						 evt.stopPropagation()
 						 wm.fadeAndDeleteDraft (wm.currentCardDiv, wm.currentCard) ()
 					       })),
@@ -1955,9 +1981,15 @@ var WikiMess = (function() {
                                                                    evt.stopPropagation()
                                                                    wm.dealInertCard()
                                                                  } }).addClass('threadshow'),
+                      wm.resetButton = wm.makeSubNavIcon ({ iconName: 'delete',
+                                                            text: 'reset',
+                                                            callback: function (evt) {
+			                                      evt.stopPropagation()
+			                                      wm.fadeAndResetThread()
+		                                            } }).addClass('threadshow'),
                       wm.headerToggler.showButton,
                       wm.headerToggler.hideButton,
-                      wm.makeTipButton().addClass('threadshow'),
+                      wm.tipButton = wm.makeTipButton().addClass('threadshow'),
                       $('<div class="sharepanecontainer">')
                       .append (wm.sharePane = $('<div class="sharepane">').hide(),
                                wm.shareButton = wm.makeSubNavIcon ({ iconName: 'share',
@@ -1996,6 +2028,13 @@ var WikiMess = (function() {
               pubTab.click()
           }
 
+          if (wm.standalone) {
+            wm.headerToggler.showButton.hide()
+            wm.headerToggler.hideButton.hide()
+            wm.tipButton.hide()
+          } else
+            wm.resetButton.hide()
+          
           wm.restoreScrolling (wm.messageComposeDiv)
           wm.restoreScrolling (wm.suggestionDiv)
           
@@ -2208,10 +2247,9 @@ var WikiMess = (function() {
 	  wm.helpHtml = $.parseHTML(html).filter (function (elt) { return elt.tagName === 'DIV' })   // yuck
 	  wm.addHelpIcons ($(wm.helpHtml))
 	})
-      return helpPromise.then (function() {
+      helpPromise.then (function() {
 	var cardDiv = $(wm.ParseTree.randomElement (wm.helpHtml))
-	    .removeAttr ('style')
-	    .addClass ('helpcard')
+	    .removeAttr('style').addClass('helpcard')
 	wm.addToStack (cardDiv)
         // create the swing card object for the random help card
 	var card = wm.stack.createCard (cardDiv[0])
@@ -2333,11 +2371,11 @@ var WikiMess = (function() {
       wm.showScrollButtons = showScrollButtons
 
       // create the swing card object for the compose card
-      var card = wm.stack.createCard (cardDiv[0])
-      card.on ('throwoutleft', wm.fadeAndRejectOrRefresh (cardDiv, card))
-      card.on ('throwoutdown', wm.fadeAndDeleteDraft (cardDiv, card))
+      var card = wm.stack.createCard (cardDiv[0]), reject
+      card.on ('throwoutleft', reject = wm.fadeAndRejectOrRefresh (cardDiv, card))
+      card.on ('throwoutdown', wm.standalone ? reject : wm.fadeAndDeleteDraft (cardDiv, card))
+      card.on ('throwoutup', wm.standalone ? reject : wm.redealAndToggleEdit (cardDiv, card))
       card.on ('throwoutright', wm.fadeAndSendMessage (cardDiv, card))
-      card.on ('throwoutup', wm.redealAndToggleEdit (cardDiv, card))
       card.on ('dragstart', function() {
         wm.startDrag()
         wm.sharePane.hide()
@@ -2356,7 +2394,7 @@ var WikiMess = (function() {
 
       wm.currentCard = card
       wm.currentCardDiv = cardDiv
-      
+
       // use promises to add card when the stack is ready (i.e. previous card faded out)
       var stackReadyPromise = config.stackReady || $.Deferred().resolve()
       var cardReadyPromise = stackReadyPromise
@@ -2425,6 +2463,17 @@ var WikiMess = (function() {
             .then (function() { wm.deleteDraft() })
         }
         return wm.dealCard()
+      }
+    },
+
+    fadeAndResetThread: function (cardDiv, card) {
+      var wm = this
+      wm.throwArrowContainer.hide()
+      if (window.confirm (wm.resetThreadPrompt)) {
+        wm.composition = {}
+        wm.messages = []
+        wm.writeLocalStorage ('messages')
+        wm.showComposePage()
       }
     },
 
@@ -2802,7 +2851,8 @@ var WikiMess = (function() {
       hideButton = wm.makeSubNavIcon (config.hideIcon, hideFunction = function() {
         config.elements.forEach (function (element) { element.hide() })
         hideButton.hide()
-        showButton.css('display','')
+        if (!wm.standalone)
+          showButton.css('display','')
         toggler.hidden = true
 	if (config.hideCallback)
 	  config.hideCallback()
@@ -3671,11 +3721,11 @@ var WikiMess = (function() {
       var message = config.message, sender = config.sender, recipient = config.recipient
 
       var mailstampDiv = $('<div class="mailstamp">')
-      mailstampDiv.append (recipient ? ('Sent' + (recipient.id === wm.playerID ? ' to you' : '')) : 'Posted',
-			   ' by ',
-			   sender ? (sender.id === wm.playerID ? 'you' : sender.displayName) : wm.anonGuest,
-			   ' ',
-			   wm.relativeDateString (message.date))
+      mailstampDiv.append (recipient ? ('Sent' + (recipient.id === wm.playerID ? ' to you' : '')) : 'Posted')
+      if (!wm.standalone)
+        mailstampDiv.append (' by ',
+			     sender ? (sender.id === wm.playerID ? 'you' : sender.displayName) : wm.anonGuest)
+      mailstampDiv.append (' ', wm.relativeDateString (message.date))
       mailstampDiv.css ('transform', 'rotate(' + ((message.id % 7) - 3) + 'deg)')
       if (message.tweeter && message.tweet)
 	mailstampDiv.prepend (wm.makeIconButton ('twitter', null, 'darkred'))
@@ -3695,7 +3745,7 @@ var WikiMess = (function() {
 
       var textDiv = $('<div class="text">')
 	  .html (wm.renderMarkdown (wm.makeExpansionText ({ node: message.body,
-							    vars: $.extend ({}, message.vars || wm.ParseTree.defaultVarVal (sender, recipient, message.tags)) })))
+							    vars: $.extend ({}, message.vars || wm.defaultVarVal (sender, recipient, message.tags)) })))
       var inertTextDiv = $('<div class="inerttext">').html ('Swipe left or right to see next card.')
       var titleDiv = $('<div class="sectiontitle bodysectiontitle">').append ($('<span>').text (message.title))
       var innerDiv = $('<div class="inner">').append ($('<div class="messagebody">')
