@@ -2213,7 +2213,7 @@ var WikiMess = (function() {
         }
         wm.startThrow (cardDiv)
         
-	card.throwIn (cardThrowOffset, 0)
+	card.throwIn (0, -wm.throwYOffset())
         return promise.then (setThrowOutTimer)
       }
 
