@@ -2193,7 +2193,14 @@ var WikiMess = (function() {
         if (!wm.useThrowAnimations() || config.noThrowIn)
           return $.Deferred().resolve()
         wm.startThrow (cardDiv)
-	card.throwIn (0, -wm.throwYOffset())
+
+        var isReject
+        if (message.body && message.body.length) {
+          var lastNode = message.body[message.body.length - 1]
+          isReject = wm.ParseTree.isEvalVar(lastNode) && wm.ParseTree.getEvalVar(lastNode) === 'reject'
+        }
+        
+	card.throwIn ((isReject ? -1 : +1) * wm.throwXOffset(), 0)
         return promise
       }
 
