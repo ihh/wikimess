@@ -1845,6 +1845,7 @@ var WikiMess = (function() {
                             if (!recipient)
                               return wm.wrapREST_getPlayerMessage (wm.playerID, result.message.id)
                               .then (function (result) {
+                                result.message.justPosted = true
                                 return wm.replyToMessage ({ message: result.message,
                                                             thread: [result.message] })
                               })
@@ -2188,20 +2189,38 @@ var WikiMess = (function() {
         cardDiv.removeClass('dragging').addClass('throwing')
       })
 
+
+      var isReject
+      if (message.body && message.body.rhs && message.body.rhs.length) {
+        var lastNode = message.body.rhs[message.body.rhs.length - 1]
+        isReject = wm.ParseTree.isEvalVar(lastNode) && wm.ParseTree.getEvalVar(lastNode) === 'reject'
+      }
+      var cardThrowOffset = (isReject ? -1 : +1) * wm.throwXOffset()
+
+      var setThrowOutTimer = function() {
+        if (message.justPosted) {
+          message.justPosted = false
+          window.setTimeout (function() {
+            if (wm.stackDiv.children().last()[0] === cardDiv[0] && !cardDiv.hasClass('dragging')) {
+              if (!wm.useThrowAnimations() || config.noThrowIn)
+                wm.fadeInertCard (card, cardDiv)
+              else
+                card.throwOut (cardThrowOffset, 0)
+            }
+          }, 800)
+        }
+      }
+      
       function throwIn() {
         cardDiv.show()
-        if (!wm.useThrowAnimations() || config.noThrowIn)
+        if (!wm.useThrowAnimations() || config.noThrowIn) {
+          setThrowOutTimer()
           return $.Deferred().resolve()
-        wm.startThrow (cardDiv)
-
-        var isReject
-        if (message.body && message.body.rhs && message.body.rhs.length) {
-          var lastNode = message.body.rhs[message.body.rhs.length - 1]
-          isReject = wm.ParseTree.isEvalVar(lastNode) && wm.ParseTree.getEvalVar(lastNode) === 'reject'
         }
+        wm.startThrow (cardDiv)
         
-	card.throwIn ((isReject ? -1 : +1) * wm.throwXOffset(), 0)
-        return promise
+	card.throwIn (cardThrowOffset, 0)
+        return promise.then (setThrowOutTimer)
       }
 
       cardDiv.hide()
