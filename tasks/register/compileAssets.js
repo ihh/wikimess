@@ -12,16 +12,12 @@
  *
  */
 module.exports = function(grunt) {
-  grunt.registerTask('test-svg-sprite', [
-    'svg_sprite:dev'
-  ]);
-
   grunt.registerTask('compileAssets', [
-    'svg_sprite:dev',
     'clean:dev',
     'jst:dev',
     'less:dev',
     'copy:dev',
+    'svg_sprite:dev',
     'coffee:dev'
   ]);
 };

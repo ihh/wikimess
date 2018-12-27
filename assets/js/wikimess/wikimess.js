@@ -8,7 +8,8 @@ var WikiMess = (function() {
     this.BraceryTemplate = window.bracery.Template
     this.ParseTree = window.bracery.ParseTree
     this.VarsHelper = window.VarsHelper
-
+    this.SvgSpriteCache = window.SvgSpriteCache
+    
     // override bracery's default limits
     $.extend (this.ParseTree,
               { maxDepth: 100,
@@ -292,6 +293,10 @@ var WikiMess = (function() {
 
     // REST API
     REST_getImagesIcons: function (icon) {
+      // intercept with grunt-generated cache
+      var ssc = this.SvgSpriteCache[icon]
+      if (ssc)
+        return $.Deferred().resolve (ssc)
       // do not log every icon GET
       return $.get ({ url: '/images/icons/' + icon + '.svg',
                       dataType: 'text' })

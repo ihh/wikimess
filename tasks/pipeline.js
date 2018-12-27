@@ -99,5 +99,3 @@ module.exports.templateFilesToInject = templateFilesToInject.map(function(tplPat
   }
   return require('path').join('assets/',tplPath);
 });
-
-
