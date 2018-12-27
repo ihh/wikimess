@@ -40,6 +40,12 @@ var jsFilesToInject = [
 ];
 
 
+// SVG icon files to inject
+var svgFilesToInject = [
+  'images/icons/**/*.svg'
+];
+
+
 // Client-side HTML templates are injected using the sources below
 // The ordering of these templates shouldn't matter.
 // (uses Grunt-style wildcard/glob/splat expressions)
@@ -78,6 +84,13 @@ module.exports.jsFilesToInject = jsFilesToInject.map(function(jsPath) {
     return require('path').join('!.tmp/public/', jsPath.substr(1));
   }
   return require('path').join('.tmp/public/', jsPath);
+});
+module.exports.svgFilesToInject = svgFilesToInject.map(function(svgPath) {
+  // If we're ignoring the file, make sure the ! is at the beginning of the path
+  if (svgPath[0] === '!') {
+    return require('path').join('!.tmp/public/', svgPath.substr(1));
+  }
+  return require('path').join('.tmp/public/', svgPath);
 });
 module.exports.templateFilesToInject = templateFilesToInject.map(function(tplPath) {
   // If we're ignoring the file, make sure the ! is at the beginning of the path

@@ -147,7 +147,7 @@ module.exports = function(grunt) {
         'views/**/*.ejs': ['.tmp/public/min/production.min.css']
       }
     },
-
+    
     // Bring in JST template object
     devTpl: {
       options: {
