@@ -223,7 +223,8 @@ var WikiMess = (function() {
                messages: true,
                timer: false,
                errors: true,
-	       stack: false },
+	       stack: false,
+               standalone: true },
 
     noRhsWarning: 'No definitions',
     newRhsTextGrammar: {root: ['#content goes here.',
@@ -700,24 +701,35 @@ var WikiMess = (function() {
 
     // wrappers for AJAX calls that intercept the call when in standalone mode
     wrapREST_getPlayerSuggestTemplates: function (playerID) {
-      if (this.standalone)
-        return $.Deferred().resolve ({ templates: this.BraceryTemplate.allRootTemplates (this.templates) })
+      if (this.standalone) {
+        if (this.verbose.standalone)
+          console.warn ('SuggestTemplates', templates)
+        return $.Deferred().resolve ({ templates: templates })
+      }
       return this.REST_getPlayerSuggestTemplates (playerID)
     },
 
     wrapREST_getPlayerSuggestReply: function (playerID, templateID, tags) {
-      if (this.standalone)
+      if (this.standalone) {
+        var prevTemplate = this.templates[parseInt(templateID)]
+        if (this.verbose.standalone)
+          console.warn ('SuggestReply', prevTemplate, tags)
         return $.Deferred().resolve
       ({ template: this.BraceryTemplate.randomReplyTemplate (this.templates,
                                                              tags,
-                                                             this.templates[parseInt(templateID)]),
+                                                             prevTemplate),
          more: true })
+      }
       return this.REST_getPlayerSuggestReply (playerID, templateID, tags)
     },
 
     wrapREST_getPlayerTemplate: function (playerID, templateID) {
-      if (this.standalone)
-        return $.Deferred().resolve ({ template: this.templates[parseInt(templateID)] })
+      if (this.standalone) {
+        var template = this.templates[parseInt(templateID)]
+        if (this.verbose.standalone)
+          console.warn ('GetTemplate', template)
+        return $.Deferred().resolve ({ template: template })
+      }
       return this.REST_getPlayerTemplate (playerID, templateID)
     },
 
@@ -728,15 +740,28 @@ var WikiMess = (function() {
       ({ parsedRhsText: query.content,
          vars: $.extend ({}, query.vars || this.defaultVarVal()),
          callback: true })
+        .then (function (expansion) {
+          if (wm.verbose.standalone)
+            console.warn ('Expand', query, expansion)
+          return { expansion: expansion }
+        })
       return this.REST_postPlayerExpand (playerID, query)
     },
 
     wrapREST_postPlayerMessage: function (playerID, message) {
       if (this.standalone) {
+        var lastMessage = typeof(message.previous) !== 'undefined' && this.messages[parseInt (message.previous)]
         var storedMessage = $.extend ({},
                                       message,
                                       { id: this.messages.length,
+                                        vars: (lastMessage
+                                               ? this.nextVarVal ({ node: lastMessage.body,
+                                                                    initVarVal: lastMessage.vars,
+					                            makeSymbolName: this.makeSymbolName.bind (this) })
+                                               : this.defaultVarVal()),
                                         date: Date.now() })
+        if (this.verbose.standalone)
+          console.warn ('PostMessage', storedMessage)
         this.messages.push (storedMessage)
         this.writeLocalStorage ('messages')
         return $.Deferred().resolve ({ message: storedMessage })
@@ -745,14 +770,21 @@ var WikiMess = (function() {
     },
 
     wrapREST_getPlayerMessage: function (playerID, messageID) {
-      if (this.standalone)
-        return $.Deferred().resolve ({ message: this.messages[parseInt(messageID)] })
+      if (this.standalone) {
+        var message = this.messages[parseInt(messageID)]
+        if (this.verbose.standalone)
+          console.warn ('GetMessage', message)
+        return $.Deferred().resolve ({ message: message })
+      }
       return this.REST_getPlayerMessage (playerID, messageID)
     },
 
     wrapREST_getPlayerMessageThread: function (playerID, messageID) {
-      if (this.standalone)
+      if (this.standalone) {
+        if (this.verbose.standalone)
+          console.warn ('Thread', this.messages)
         return $.Deferred().resolve ({ thread: this.messages })
+      }
       return this.REST_getPlayerMessageThread (playerID, messageID)
     },
 
