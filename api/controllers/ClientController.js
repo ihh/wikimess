@@ -721,6 +721,10 @@ module.exports = {
             if (message.template && message.template.author === playerID)
               return Template.update ({ id: message.template.id },
                                       { isPublic: false })
+              .then (function() {
+                return Player.update ({ botTemplate: message.template.id },
+                                      { botTemplate: null })
+              })
           })
       }).then (function() {
         res.ok()

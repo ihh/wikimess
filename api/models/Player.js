@@ -43,6 +43,16 @@ module.exports = {
     publicBio: { type: 'string' },
     privateBio: { type: 'string' },
 
+    botTemplate: {
+      model: 'template'
+    },
+
+    botInterval: {
+      type: 'string',
+      isIn: ['hourly', 'daily', 'weekly', 'never'],
+      defaultsTo: 'never'
+    },
+    
     avatar: { type: 'string' },
     
     // privacy controls
