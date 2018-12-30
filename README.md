@@ -39,13 +39,15 @@ To enable/disable direct inspection of the data model via Sails [blueprint metho
 edit the REST policy in [config/policies.js](config/policies.js).
 Currently, it allows local users full access to the database.
 
-# Bracery
+## Bracery
 
 [Bracery](https://github.com/ihh/bracery) is Wiki Messenger's native syntax for representing generative context-free grammars.
 Bracery blends elements of [Tracery](http://tracery.io/) and [regular expression](https://en.wikipedia.org/wiki/Regular_expression) syntax.
 
 Wiki Messenger implements Bracery expansion as a web service, with nonterminal definitions as a RESTful resource.
-Special variables interpreted by Wiki Messenger include
+On startup, an initial set of symbols is loaded from the [data/symbols](data/symbols) directory.
+
+Special Bracery variables interpreted by Wiki Messenger include
 
 - `$icon` and `$icolor` (name and color of icons displayed on cards)
 - `$tags` (set by default to the message tags; if modified, will override the message tags)
@@ -53,12 +55,19 @@ Special variables interpreted by Wiki Messenger include
 - `$reject`, if defined, forces a card to be posted (with `&$reject` appended) even if the player rejects it
 - `$accept`, if defined, will cause `&$accept` to be appended to _accepted_ cards before posting
 
-# Templates
+### Symbol directory syntax
+
+Symbol definitions can be provided in JSON or in the plaintext shorthand defined by [Bracery](https://github.com/ihh/bracery/blob/master/MESSAGES.md).
+Several symbol definitions are provided in the Wiki Messenger repository, along with scripts to import symbol definitions from resources
+such as Darius Kazemi's [corpora](https://github.com/dariusk/corpora).
+
+## Templates
 
 Wiki Messenger templates are [Braceplates](https://github.com/ihh/bracery/blob/master/MESSAGES.md) (Bracery message templates).
-They are defined in the [data/templates](data/templates) directory.
+On startup, the initial set of templates is loaded from the [data/templates](data/templates) directory.
+Further templates can be created from the messenger app by simply composing and sending messages.
 
-## Template directory syntax
+### Template directory syntax
 
 Template definitions can be provided in JSON or in the plaintext shorthand defined by [Bracery](https://github.com/ihh/bracery/blob/master/MESSAGES.md).
 
