@@ -663,6 +663,8 @@ module.exports = {
                            sender: { id: message.sender.id,
                                      name: message.sender.name,
                                      displayName: message.sender.displayName },
+			   tweeter: message.tweeter,
+                           avatar: message.avatar,
                            date: message.createdAt,
                            unread: !message.read }
         res.json (result)

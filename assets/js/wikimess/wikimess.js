@@ -3726,7 +3726,16 @@ var WikiMess = (function() {
                                evt.stopPropagation()
                              if (window.confirm ('Delete this message?'))
                                return wm[props.deleteMethod] (wm.playerID, message.id)
-                               .then (wm.reloadCurrentTab.bind(wm))
+                               .then (function() {
+                                 Object.keys (wm.mailboxCache).forEach (function (mailboxTab) {
+                                   var mailboxCache = wm.mailboxCache[mailboxTab]
+                                   mailboxCache.messages
+                                     = mailboxCache.messages.filter (function (mailboxMessage) {
+                                       return mailboxMessage.id !== message.id
+                                     })
+                                 })
+                                 wm.reloadCurrentTab()
+                               })
                              return $.Deferred().resolve()
                            }
                            : null)
@@ -3738,11 +3747,11 @@ var WikiMess = (function() {
           .append (avatarDiv,
                    $('<div class="mailboxheader">')
                    .append ($('<div class="title">').text (message.title || 'Untitled'),
-                            (deleteMessage
-                             ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
-                             : []),
                             $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
-                   .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)))
+                   .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)),
+                   (deleteMessage
+                    ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
+                    : []))
       div.addClass (message.unread ? 'unread' : 'read')
       return div
     },
