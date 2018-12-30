@@ -2154,6 +2154,12 @@ var WikiMess = (function() {
                 .then (wm.clearComposeHelpMode.bind (wm))
                 .then (wm.divAutosuggest)
             }
+            function toMailbox() {
+              wm.fadeCard (cardDiv, card)
+                .then (function() {
+                  
+                })
+            }
             card.on ('throwout', swipe)
             wm.stopDrag()
 	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
@@ -2212,7 +2218,12 @@ var WikiMess = (function() {
       // create the swing card object for the thread message card
       var card = wm.stack.createCard (cardDiv[0])
       cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
-      card.on ('throwout', wm.fadeInertCard.bind (wm, card, cardDiv))
+      var fadeInert = wm.fadeInertCard.bind (wm, card, cardDiv)
+      var toMailbox = wm.playerID ? wm.fadeInertToMailbox.bind (wm, card, cardDiv, message) : fadeInert
+      card.on ('throwoutleft', fadeInert)
+      card.on ('throwoutright', fadeInert)
+      card.on ('throwoutup', toMailbox)
+      card.on ('throwoutdown', toMailbox)
       card.on ('dragstart', function() {
         wm.startDrag (cardDiv)
       })
@@ -2695,6 +2706,28 @@ var WikiMess = (function() {
       return this.stackDiv.children('.card').length === 0
     },
 
+    // go from inert card to corresponding mailbox entry
+    fadeInertToMailbox: function (card, cardDiv, message) {
+      var wm = this
+      return wm.fadeInertCard (card, cardDiv)
+        .then (wm.goToMailbox.bind (wm, message))
+    },
+
+    goToMailbox: function (message) {
+      return wm.showMailboxPage ({ tab: (message.sender.id === wm.playerID
+                                         ? 'outbox'
+                                         : 'inbox') })
+        .then (function() {
+          var messageDiv = $('#'+wm.mailboxMessageID(message))
+          wm.mailboxContentsDiv.animate ({
+            // Scroll parent to the new element. This arcane formula can probably be simplified
+            scrollTop: wm.mailboxContentsDiv.scrollTop() + messageDiv.position().top - wm.mailboxContentsDiv.position().top
+          })
+          $('.selected').removeClass('selected')
+          messageDiv.addClass('selected')
+        })
+    },
+    
     // when an inert (i.e. thread) card fades, nothing happens unless it's the last one in the deck & there's no compose card under it
     // in which case a new card will be dealt (a later message in the thread, if available, otherwise a compose card for the reply)
     fadeInertCard: function (card, cardDiv) {
@@ -3553,7 +3586,7 @@ var WikiMess = (function() {
       var outboxPromise = (outbox
                            ? $.Deferred().resolve(outbox)
                            : wm.REST_getPlayerOutbox (wm.playerID))
-      outboxPromise.then (function (outbox) {
+      return outboxPromise.then (function (outbox) {
         wm.mailboxCache.outbox = outbox
         return outbox
       }).then (function (result) {
@@ -3596,7 +3629,7 @@ var WikiMess = (function() {
       var draftsPromise = (drafts
                            ? $.Deferred().resolve(drafts)
                            : wm.REST_getPlayerDrafts (wm.playerID))
-      draftsPromise.then (function (drafts) {
+      return draftsPromise.then (function (drafts) {
         wm.mailboxCache.drafts = drafts
         return drafts
       }).then (function (result) {
@@ -3717,6 +3750,10 @@ var WikiMess = (function() {
                           .map (wm.makeMailboxEntryDiv.bind (wm, props))))
     },
 
+    mailboxMessageID: function (message) {
+      return 'mailbox-message-' + message.id
+    },
+    
     makeMailboxEntryDiv: function (props, message) {
       var wm = this
       wm.messageHeaderCache[message.id] = message
@@ -3743,16 +3780,16 @@ var WikiMess = (function() {
       wm.addAvatarImage ({ div: avatarDiv,
                            tweeter: message.tweeter,
                            avatar: message.avatar })
-      var div = $('<div class="message">')
-          .append (avatarDiv,
-                   $('<div class="mailboxheader">')
-                   .append ($('<div class="title">').text (message.title || 'Untitled'),
-                            $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
-                   .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)),
-                   (deleteMessage
-                    ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
-                    : []))
-      div.addClass (message.unread ? 'unread' : 'read')
+      var div = $('<div class="message" id="' + wm.mailboxMessageID(message) + '">')
+      div.append (avatarDiv,
+                  $('<div class="mailboxheader">')
+                  .append ($('<div class="title">').text (message.title || 'Untitled'),
+                           $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
+                  .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)),
+                  (deleteMessage
+                   ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
+                   : []))
+        .addClass (message.unread ? 'unread' : 'read')
       return div
     },
 
@@ -3760,6 +3797,8 @@ var WikiMess = (function() {
       return function (evt) {
         if (evt)
           evt.preventDefault()
+        $('.selected').removeClass('selected')
+        div.addClass('selected')
         wm.messageCache[props.tab] = wm.messageCache[props.tab] || {}
         var cachedMessage = wm.messageCache[props.tab][message.id]
         var messagePromise = (cachedMessage

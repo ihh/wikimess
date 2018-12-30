@@ -333,6 +333,7 @@ input {
     margin: 0;
 }
 
+.wikimess .mailbox .message.selected,
 .wikimess .grammarbar .rule.selected {
     -webkit-animation: 500ms linear 0s 1 normal pulse_rule;
     -moz-animation: 500ms linear 0s 1 normal pulse_rule;
