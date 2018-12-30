@@ -517,8 +517,8 @@ input {
 .wikimess .message .buttons .button {
     padding: 2px;
     cursor: pointer;
-    width: 1em;
-    height: 1em;
+    width: 2vh;
+    height: 2vh;
 }
 
 .wikimess .other {

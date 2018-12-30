@@ -3787,7 +3787,7 @@ var WikiMess = (function() {
                            $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
                   .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)),
                   (deleteMessage
-                   ? $('<span class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
+                   ? $('<div class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
                    : []))
         .addClass (message.unread ? 'unread' : 'read')
       return div
@@ -4277,7 +4277,7 @@ var WikiMess = (function() {
           })
       }
       
-      var buttonsDiv = $('<span class="buttons">')
+      var buttonsDiv = $('<div class="buttons">')
       var contentHtmlDiv = renderHtml (props.content()).addClass ('content')
       div.empty().append (contentHtmlDiv, buttonsDiv)
       
