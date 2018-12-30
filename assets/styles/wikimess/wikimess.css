@@ -1540,6 +1540,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     cursor: pointer;
     display: flex;
     flex-direction: row;
+    min-height: 5vh;
 }
 
 .wikimess .mailbox .contents .message .avatar {
