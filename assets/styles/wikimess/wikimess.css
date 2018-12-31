@@ -886,6 +886,7 @@ input {
     overflow-wrap: break-word;
 }
 
+.wikimess .detailbar .mailbox,
 .wikimess .mailbox.pinned {
     overflow-y: hidden;
 }

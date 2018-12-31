@@ -3773,7 +3773,8 @@ var WikiMess = (function() {
 
     populateMailboxDiv: function (props) {
       var wm = this
-      wm.lastMailboxTab = props.tab
+      if (props.tab !== 'public')
+        wm.lastMailboxTab = props.tab
       wm.messageHeaderCache = {}
       wm.mailboxDiv
         .empty()
