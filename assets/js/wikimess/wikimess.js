@@ -1054,7 +1054,7 @@ var WikiMess = (function() {
     
     reloadCurrentTab: function() {
       delete this.lastSavePromise  // prevent stalling on error
-      this[this.currentTab.method] ()
+      return this[this.currentTab.method] ()
     },
 
     showNavBar: function (currentTab) {
@@ -3821,7 +3821,9 @@ var WikiMess = (function() {
             return wm.REST_postPlayerConfig (wm.playerID, { botMessage: newBotMessage })
               .then (function() {
                 wm.playerInfo.botMessage = newBotMessage
-                wm.reloadCurrentTab()
+                var reloadPromise = wm.reloadCurrentTab()
+                if (newBotMessage || wm.currentTab.name === 'settings')
+                  reloadPromise.then (wm.showBroadcastConfigPage.bind(wm))
               })
           }
         }
