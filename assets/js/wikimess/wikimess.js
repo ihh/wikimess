@@ -212,7 +212,7 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'quill-ink' },
+    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'card-hand' },
            { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
@@ -2033,16 +2033,16 @@ var WikiMess = (function() {
                                                                evt.stopPropagation()
                                                                wm.rejectCurrentCard()
                                                              } }),
-                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
-                                                                 callback: function (evt) {
-                                                                   evt.stopPropagation()
-                                                                   wm.discardInertCard()
-                                                                 } }).addClass('threadonly'),
                       wm.threadPrevButton = wm.makeSubNavIcon ({ iconName: 'previous',
                                                                  callback: function (evt) {
                                                                    evt.stopPropagation()
                                                                    wm.dealInertCard()
                                                                  } }).addClass('threadshow'),
+                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
+                                                                 callback: function (evt) {
+                                                                   evt.stopPropagation()
+                                                                   wm.discardInertCard()
+                                                                 } }).addClass('threadonly'),
                       wm.resetButton = wm.makeSubNavIcon ({ iconName: 'delete',
                                                             text: 'reset',
                                                             callback: function (evt) {
