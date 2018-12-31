@@ -7,6 +7,9 @@
 
 var bcrypt = require('bcrypt');
 
+var Promise = require('bluebird')
+var extend = require('extend')
+
 module.exports = {
 
   primaryKey: 'id',
@@ -43,13 +46,13 @@ module.exports = {
     publicBio: { type: 'string' },
     privateBio: { type: 'string' },
 
-    botTemplate: {
-      model: 'template'
+    botMessage: {
+      model: 'message'
     },
 
     botInterval: {
       type: 'string',
-      isIn: ['hourly', 'daily', 'weekly', 'never'],
+      isIn: ['hour', 'day', 'week', 'never'],
       defaultsTo: 'never'
     },
     
@@ -148,4 +151,57 @@ module.exports = {
       cb()
     })
   },
+
+  // broadcasts
+  broadcastTimerInterval: {
+    week: 1000*60*60*24*7,
+    day: 1000*60*60*24,
+    hour: 1000*60*60
+  },
+
+  setBroadcastTimers: function() {
+    if (!Player.broadcastTimer) {
+      Player.broadcastTimer = {}
+      var intervals = Player.broadcastTimerInterval
+      Object.keys(intervals).forEach (function (intervalName) {
+        var interval = Player.broadcastTimerInterval[intervalName]
+        function broadcast() { Player.broadcastMessages (intervalName) }
+        Player.broadcastTimer[intervalName] = setInterval (broadcast, interval)
+      })
+    }
+  },
+
+  broadcastMessages: function (botInterval) {
+    return Player.find ({ botInterval: botInterval,
+                          botMessage: { '!=': null } })
+      .populate ('botMessage')
+      .then (function (players) {
+        return Promise.each (players, function (player) {
+          var botMessage = player.botMessage
+          var prevMessagePromise = Message.findOne ({ id: botMessage.previous })
+          return Template.findOne ({ id: botMessage.template })
+            .then (function (botTemplate) {
+              return SymbolService.expandContent ({ rhs: botTemplate.content,
+                                                    vars: botMessage.initVarVal })
+                .then (function (expansion) {
+                  return prevMessagePromise.then (function (prevMessage) {
+                    return PlayerService.sendMessage ({
+                      playerID: player.id,
+                      recipientID: null,
+                      player: player,
+                      template: botTemplate,
+                      title: botMessage.title,
+                      body: { type: 'root',
+                              rhs: expansion.tree },
+                      previous: prevMessage,
+                      tags: botTemplate.tags,
+                      previousTags: botTemplate.previousTags,
+                      isPublic: true
+                    })
+                  })
+                })
+            })
+        })
+      })
+  }
 };

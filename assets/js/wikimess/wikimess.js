@@ -168,6 +168,8 @@ var WikiMess = (function() {
                     create: 'circle-plus',
                     'copy to clipboard': 'clipboard-copy',
                     'delete': 'trash-can',
+                    pin: 'pushpin',
+                    unpin: 'no-pushpin',
                     plus: 'circle-plus',
                     minus: 'circle-minus',
                     up: 'up-arrow-button',
@@ -196,8 +198,8 @@ var WikiMess = (function() {
                     forward: 'up-card',
                     reply: 'right-arrow',
                     back: 'left-arrow',
-                    next: 'card-draw',
-                    previous: 'card-fall',
+                    next: 'clock-forwards',
+                    previous: 'clock-backwards',
                     twitter: 'twitter',
                     reload: 'refresh',
                     dummy: 'dummy',
@@ -1194,7 +1196,7 @@ var WikiMess = (function() {
           if (wm.playerID)
             menuDiv.append (wm.makeListLink ('Name', wm.showPlayerConfigPage),
                             wm.makeListLink ('Bio', wm.showPlayerBioPage),
-                            wm.makeListLink ('Tweets', wm.showTwitterConfigPage))
+                            wm.makeListLink ('Broadcasts', wm.showBroadcastConfigPage))
           menuDiv.append (wm.makeListLink ('Colors', wm.showThemesPage),
                           wm.makeListLink ('Audio', wm.showAudioPage))
           wm.container
@@ -1283,13 +1285,18 @@ var WikiMess = (function() {
 
     
     // settings
-    showTwitterConfigPage: function() {
+    showBroadcastConfigPage: function() {
       var wm = this
       return this.pushView ('twitter')
         .then (function() {
           var backBar = wm.popBack()
 	  var twitterConfigDiv = $('<div class="menubar">')
-          wm.container.append (twitterConfigDiv, backBar)
+          var pinnedMessageDiv = $('<div class="contents">'), broadcastIntervalDiv = $('<div>')
+          wm.container.append ($('<div>')
+                               .append ($('<div class="mailbox pinned">').append (pinnedMessageDiv),
+                                       broadcastIntervalDiv),
+                               twitterConfigDiv,
+                               backBar)
 	  function buildPage() {
 	    var avatarDiv = $('<div class="avatar">'),
 		screenNameSpan = $('<span class="tweep">'),
@@ -1315,6 +1322,23 @@ var WikiMess = (function() {
 				    buildPage()
 				  }) })
 				: wm.makeListLink('Link Twitter account',wm.REST_loginTwitterAuth)))
+            var pinnedMessageID = wm.playerInfo.botMessage
+            if (pinnedMessageID)
+              wm.REST_getPlayerMessage (wm.playerID, pinnedMessageID)
+              .then (function (result) {
+                pinnedMessageDiv.append (wm.makeMailboxEntryDiv (wm.outboxProps(), result.message))
+                broadcastIntervalDiv.append (wm.makeConfigMenu ({ id: 'botInterval',
+                                                                  opts: [{ text: "Update hourly", value: 'hour' },
+                                                                         { text: "Update daily", value: 'day' },
+                                                                         { text: "Never update", value: 'never' }] }))
+                var oldBotInterval = wm.playerInfo.botInterval
+                function saveChanges() {
+                  if (oldBotInterval !== wm.playerInfo.botInterval)
+                    return wm.REST_postPlayerConfig (wm.playerID, { botInterval: wm.playerInfo.botInterval })
+                  return $.Deferred().resolve()
+                }
+                wm.pageExit = saveChanges
+              })
 	  }
 
 	  buildPage()
@@ -1354,8 +1378,8 @@ var WikiMess = (function() {
                                                                    { text: "I'm a 'he'", value: 'male' },
                                                                    { text: "I prefer not to say", value: 'secret' }] }),
                                        wm.makeConfigMenu ({ id: 'noMailUnlessFollowed',
-                                                            opts: [{ text: "Anyone can contact me", value: false },
-                                                                   { text: "Only people in my address book, please", value: true }] }),
+                                                            opts: [{ text: "Anyone can direct-message me", value: false },
+                                                                   { text: "Only people in my address book", value: true }] }),
                                        wm.makeConfigMenu ({ id: 'createsPublicTemplates',
                                                             opts: [{ text: "Others can post using my templates", value: true },
                                                                    { text: "Only I can re-use my templates", value: false }] })),
@@ -2219,7 +2243,7 @@ var WikiMess = (function() {
       var card = wm.stack.createCard (cardDiv[0])
       cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
       var fadeInert = wm.fadeInertCard.bind (wm, card, cardDiv)
-      var toMailbox = wm.playerID ? wm.fadeInertToMailbox.bind (wm, card, cardDiv, message) : fadeInert
+      var toMailbox = (wm.playerID && !wm.standalone) ? wm.fadeInertToMailbox.bind (wm, card, cardDiv, message) : fadeInert
       card.on ('throwoutleft', fadeInert)
       card.on ('throwoutright', fadeInert)
       card.on ('throwoutup', toMailbox)
@@ -3507,7 +3531,7 @@ var WikiMess = (function() {
         break
       case 'twitter':
 	promise = wm.showSettingsPage()
-	  .then (function() { return wm.showTwitterConfigPage() })
+	  .then (function() { return wm.showBroadcastConfigPage() })
 	break
       case 'home':
       default:
@@ -3591,32 +3615,8 @@ var WikiMess = (function() {
         return outbox
       }).then (function (result) {
         
-        wm.populateMailboxDiv ({ tab: 'outbox',
-                                 title: 'Sent messages',
-                                 messages: result.messages,
-                                 getMethod: 'REST_getPlayerMessage',
-                                 deleteMethod: 'REST_deletePlayerMessage',
-                                 object: 'recipient',
-                                 showMessage: function (props) {
-                                   var message = props.result.message
-                                   var nextVars = wm.nextVarVal ({ node: message.body,
-                                                                   initVarVal: message.vars,
-								   makeSymbolName: wm.makeSymbolName.bind(wm),
-                                                                   sender: message.sender })
-                                   wm.showComposePage ({ recipient: wm.playerInfo,
-                                                         defaultToPublic: false,
-                                                         thread: [message],
-                                                         threadTweeter: message.tweeter,
-                                                         threadTweet: message.tweet,
-                                                         vars: nextVars,
-                                                         tags: '',
-                                                         previousTags: (nextVars.prevtags
-                                                                        ? nextVars.prevtags
-                                                                        : (message.template ? (message.template.tags || '') : '')),
-                                                         getRandomTemplate: true
-                                                       })
-                                 }
-                               })
+        wm.populateMailboxDiv ($.extend ({ messages: result.messages },
+                                         wm.outboxProps()))
         return result
       })
     },
@@ -3716,6 +3716,36 @@ var WikiMess = (function() {
                }}
     },
 
+    outboxProps: function() {
+      var wm = this
+      
+      return { tab: 'outbox',
+               title: 'Sent messages',
+               getMethod: 'REST_getPlayerMessage',
+               deleteMethod: 'REST_deletePlayerMessage',
+               object: 'recipient',
+               showMessage: function (props) {
+                 var message = props.result.message
+                 var nextVars = wm.nextVarVal ({ node: message.body,
+                                                 initVarVal: message.vars,
+						 makeSymbolName: wm.makeSymbolName.bind(wm),
+                                                 sender: message.sender })
+                 wm.showComposePage ({ recipient: wm.playerInfo,
+                                       defaultToPublic: false,
+                                       thread: [message],
+                                       threadTweeter: message.tweeter,
+                                       threadTweet: message.tweet,
+                                       vars: nextVars,
+                                       tags: '',
+                                       previousTags: (nextVars.prevtags
+                                                      ? nextVars.prevtags
+                                                      : (message.template ? (message.template.tags || '') : '')),
+                                       getRandomTemplate: true
+                                     })
+               }
+             }
+    },
+    
     updateInbox: function (messageID) {
       var wm = this
       this.updateMessageCount()
@@ -3756,6 +3786,7 @@ var WikiMess = (function() {
     
     makeMailboxEntryDiv: function (props, message) {
       var wm = this
+      wm.messageHeaderCache = wm.messageHeaderCache || {}
       wm.messageHeaderCache[message.id] = message
       var deleteMessage = (props.deleteMethod
                            ? function (evt) {
@@ -3781,14 +3812,29 @@ var WikiMess = (function() {
                            tweeter: message.tweeter,
                            avatar: message.avatar })
       var div = $('<div class="message" id="' + wm.mailboxMessageID(message) + '">')
+      var buttonsDiv = $('<div class="buttons">')
+      if (deleteMessage)
+        buttonsDiv.append (wm.makeIconButton ('delete', deleteMessage))
+      if (!message.sender || !message.sender.id || message.sender.id === wm.playerID) {
+        function updateBotMessage (newBotMessage) {
+          return function() {
+            return wm.REST_postPlayerConfig (wm.playerID, { botMessage: newBotMessage })
+              .then (function() {
+                wm.playerInfo.botMessage = newBotMessage
+                wm.reloadCurrentTab()
+              })
+          }
+        }
+        buttonsDiv.append (message.id === wm.playerInfo.botMessage
+                           ? wm.makeIconButton ('unpin', updateBotMessage (null))
+                           : wm.makeIconButton ('pin', updateBotMessage (message.id)))
+      }
       div.append (avatarDiv,
                   $('<div class="mailboxheader">')
                   .append ($('<div class="title">').text (message.title || 'Untitled'),
                            $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
                   .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)),
-                  (deleteMessage
-                   ? $('<div class="buttons">').append (wm.makeIconButton ('delete', deleteMessage))
-                   : []))
+                  buttonsDiv)
         .addClass (message.unread ? 'unread' : 'read')
       return div
     },

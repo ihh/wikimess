@@ -20,6 +20,8 @@ module.exports.bootstrap = function (callback) {
       // initialize Adjacency cache
       return Adjacency.initCache()
     }).then (function() {
+      // start broadcast timers
+      Player.setBroadcastTimers()
       // any other startup here
       callback()
     }).catch (function (err) {

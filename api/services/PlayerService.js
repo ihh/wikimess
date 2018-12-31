@@ -44,6 +44,8 @@ module.exports = {
 		avatar: player.avatar,
 		twitterScreenName: player.twitterScreenName,
 		twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
+                botMessage: player.botMessage,
+                botInterval: player.botInterval,
                 gender: player.gender,
                 publicBio: player.publicBio,
                 searchable: player.searchable })
@@ -142,6 +144,8 @@ module.exports = {
                        avatar: player.avatar,
 		       twitterScreenName: player.twitterScreenName,
 		       twitterAuthorized: player.twitterAccessTokenSecret ? true : false,
+                       botMessage: player.botMessage,
+                       botInterval: player.botInterval,
                        hidePassword: (player.facebookId || player.twitterId) ? true : false,
                        createsPublicTemplates: player.createsPublicTemplates,
                        noMailUnlessFollowed: player.noMailUnlessFollowed,

@@ -204,7 +204,7 @@ module.exports = {
   // configure Player info
   configurePlayer: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed', 'createsPublicTemplates']
+    var updateKeys = ['name', 'displayName', 'gender', 'publicBio', 'privateBio', 'noMailUnlessFollowed', 'createsPublicTemplates', 'botMessage', 'botInterval']
     var name = req.body.name
     var nameClashPromise = (typeof(name) === 'undefined'
                             ? Promise.resolve (false)
@@ -1339,8 +1339,7 @@ module.exports = {
   expandContent: function (req, res) {
     SymbolService.expandContent ({ rhs: req.body.content,
                                    rhsText: req.body.text,
-                                   vars: req.body.vars,
-                                   evalTags: req.body.evalTags })
+                                   vars: req.body.vars })
       .then (function (expansion) {
         res.json ({ expansion: expansion })
       }).catch (function (err) {

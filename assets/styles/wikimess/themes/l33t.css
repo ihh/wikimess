@@ -150,11 +150,13 @@
 .wikimess.l33t .messageheader .privrow .privtab {
     background-color: black;
     opacity: .4;
+    color: green;
 }
 
 .wikimess.l33t .messageheader .privrow .privtab.active {
     background-color: rgba(0,0,0,0);
     opacity: 1;
+    color: green;
 }
 
 .wikimess.l33t .messageheader .input .results {

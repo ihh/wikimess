@@ -815,11 +815,15 @@ input {
     overflow-wrap: break-word;
 }
 
-.wikimess .mailbox,
+.mailbox,
 .wikimess .compose {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+}
+
+.wikimess .mailbox.pinned {
+    flex-grow: 0;
 }
 
 .wikimess .messageheader .input {

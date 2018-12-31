@@ -131,11 +131,13 @@
 
 .wikimess.plain .messageheader .privrow .privtab {
     background-color: #444;
+    color: #bbb;
 }
 
 .wikimess.plain .messageheader .privrow .privtab.active {
     background-color: rgba(0,0,0,0);
     opacity: 1;
+    color: black;
 }
 
 .wikimess.plain .messageheader .input .results {
