@@ -4989,12 +4989,12 @@ var WikiMess = (function() {
 	    if (sugaredName && tok.funcname !== 'quote')
               return (sugaredName[0] === symChar
                       ? wm.makeSymbolSpanWithName (tok.args[0],
-						   sugaredName.substr(1),
+						   sugaredName[1],
 						   function (evt) {
 						     evt.stopPropagation()
 						     wm.loadGrammarSymbol (tok.args[0])
 						   })
-                      : sugaredName)
+                      : sugaredName.join(''))
             var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
             return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
                                        wm.makeRhsSpan (tok.args),
@@ -5047,12 +5047,12 @@ var WikiMess = (function() {
 	    if (sugaredName && tok.funcname !== 'quote')
               return (sugaredName[0] === symChar
                       ? wm.makeSymbolSpanWithName (tok.args[0],
-						   sugaredName.substr(1),
+						   sugaredName[1],
 						   function (evt) {
 						     evt.stopPropagation()
 						     wm.showGrammarLoadSymbol (tok.args[0])
 						   })
-                      : sugaredName)
+                      : sugaredName.join(''))
             var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
             return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
                                        wm.makeRhsSpan (tok.args),
