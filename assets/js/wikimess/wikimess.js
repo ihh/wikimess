@@ -206,8 +206,8 @@ var WikiMess = (function() {
                     star: 'star-formation',
                     choice: 'uncertainty',
                     menu: 'menu',
-                    minimize: 'minimize',
-                    maximize: 'maximize' },
+                    minimize: 'up-arrow',
+                    maximize: 'down-arrow' },
     
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
