@@ -718,13 +718,11 @@ module.exports = {
                 ? Message.destroy ({ id: messageID })
                 : Message.update ({ id: messageID }, update))
           .then (function() {
-            if (message.template && message.template.author === playerID)
-              return Template.update ({ id: message.template.id },
-                                      { isPublic: false })
-              .then (function() {
-                return Player.update ({ botTemplate: message.template.id },
-                                      { botTemplate: null })
-              })
+            return Player.update ({ botMessage: message.id },
+                                  { botMessage: null })
+          }).then (function() {
+            return Template.update ({ id: message.template.id },
+                                    { isPublic: false })
           })
       }).then (function() {
         res.ok()

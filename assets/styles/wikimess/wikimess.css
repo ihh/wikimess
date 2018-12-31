@@ -514,8 +514,17 @@ input {
     padding-right: 4px;
 }
 
-.wikimess .follow .followcontrol,
 .wikimess .message .buttons .button {
+    padding: 2px;
+    cursor: pointer;
+    width: 3vh;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.wikimess .follow .followcontrol {
     padding: 2px;
     cursor: pointer;
     width: 2vh;
@@ -868,14 +877,17 @@ input {
     user-select: text;
 }
 
-/* .wikimess .mailbox .contents { */
-.wikimess .mailbox {
+.mailbox {
     flex-grow: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     overflow-wrap: break-word;
+}
+
+.wikimess .mailbox.pinned {
+    overflow-y: hidden;
 }
 
 .wikimess .messageborder {

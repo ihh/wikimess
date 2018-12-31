@@ -3806,6 +3806,8 @@ var WikiMess = (function() {
                                        return mailboxMessage.id !== message.id
                                      })
                                  })
+                                 if (wm.playerInfo && wm.playerInfo.botMessage === message.id)
+                                   wm.playerInfo.botMessage = null   // reflects automatic update on server
                                  wm.reloadCurrentTab()
                                })
                              return $.Deferred().resolve()
@@ -3839,13 +3841,13 @@ var WikiMess = (function() {
                   $('<div class="mailboxheader">')
                   .append ($('<div class="title">').text (message.title || 'Untitled'),
                            $('<div class="player">').html (message[props.object] ? message[props.object].displayName : $('<span class="placeholder">').text (wm.anonGuest)))
-                  .on ('click', wm.makeGetMessage (props, message, deleteMessage, true, div)),
+                  .on ('click', wm.makeGetMessage (props, message, true, div)),
                   buttonsDiv)
         .addClass (message.unread ? 'unread' : 'read')
       return div
     },
 
-    makeGetMessage: function (props, message, deleteMessage, pushView, div) {
+    makeGetMessage: function (props, message, pushView, div) {
       return function (evt) {
         if (evt)
           evt.preventDefault()
@@ -3877,7 +3879,6 @@ var WikiMess = (function() {
                              ({},
                               props,
                               { result: result,
-                                destroy: deleteMessage,
 				pushView: pushView || false }))
         })
       }
