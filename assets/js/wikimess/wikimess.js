@@ -1292,7 +1292,8 @@ var WikiMess = (function() {
           var backBar = wm.popBack()
 	  var twitterConfigDiv = $('<div class="menubar">')
           var pinnedMessageDiv = $('<div class="contents">'), broadcastIntervalDiv = $('<div>')
-          wm.container.append ($('<div>')
+          var broadcastDiv
+          wm.container.append (broadcastDiv = $('<div>')
                                .append ($('<div class="mailbox pinned">').append (pinnedMessageDiv),
                                        broadcastIntervalDiv),
                                twitterConfigDiv,
@@ -1326,6 +1327,7 @@ var WikiMess = (function() {
             if (pinnedMessageID)
               wm.REST_getPlayerMessage (wm.playerID, pinnedMessageID)
               .then (function (result) {
+                broadcastDiv.prepend ($('<span>').text ('Pinned message:'))
                 pinnedMessageDiv.append (wm.makeMailboxEntryDiv (wm.outboxProps(), result.message))
                 broadcastIntervalDiv.append (wm.makeConfigMenu ({ id: 'botInterval',
                                                                   opts: [{ text: "Update hourly", value: 'hour' },
