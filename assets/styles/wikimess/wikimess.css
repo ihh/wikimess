@@ -191,6 +191,7 @@ input {
 
 .wikimess .symbolsearch .results {
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .wikimess .endresults {
@@ -867,9 +868,11 @@ input {
     user-select: text;
 }
 
-.wikimess .mailbox .contents {
+/* .wikimess .mailbox .contents { */
+.wikimess .mailbox {
     flex-grow: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     overflow-wrap: break-word;
@@ -888,6 +891,10 @@ input {
     border-top-style: solid;
     border-width: 1px;
     margin: 2px;
+}
+
+.wikimess .pinned .contents {
+    border-style: solid;
 }
 
 .wikimess .bodysectiontitle {
@@ -923,6 +930,7 @@ input {
     height: 15vh;
     min-height: 15vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     overflow-wrap: break-word;
     border-style: none solid none solid;
     border-width: 1px;
@@ -1398,6 +1406,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     text-align: center;
     flex-grow: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 
     font-size: 3vh;
     line-height: 3.75vh;

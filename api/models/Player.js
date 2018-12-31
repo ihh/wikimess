@@ -52,7 +52,8 @@ module.exports = {
 
     botInterval: {
       type: 'string',
-      isIn: ['hour', 'day', 'week', 'never'],
+      isIn: [// 'second', 'minute',
+             'hour', 'day', 'week', 'never'],
       defaultsTo: 'never'
     },
     
@@ -156,7 +157,9 @@ module.exports = {
   broadcastTimerInterval: {
     week: 1000*60*60*24*7,
     day: 1000*60*60*24,
-    hour: 1000*60*60
+    hour: 1000*60*60,
+//    minute: 1000*60,
+//    second: 1000
   },
 
   setBroadcastTimers: function() {
@@ -197,6 +200,9 @@ module.exports = {
                       tags: botTemplate.tags,
                       previousTags: botTemplate.previousTags,
                       isPublic: true
+                    }).then (function (result) {
+                      return Player.update ({ id: player.id },
+                                            { botMessage: result.message.id })
                     })
                   })
                 })

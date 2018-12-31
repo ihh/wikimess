@@ -1330,7 +1330,9 @@ var WikiMess = (function() {
                 broadcastDiv.prepend ($('<span>').text ('Pinned message:'))
                 pinnedMessageDiv.append (wm.makeMailboxEntryDiv (wm.outboxProps(), result.message))
                 broadcastIntervalDiv.append (wm.makeConfigMenu ({ id: 'botInterval',
-                                                                  opts: [{ text: "Update hourly", value: 'hour' },
+                                                                  opts: [//{ text: "Update each second", value: 'second' },
+                                                                         //{ text: "Update each minute", value: 'minute' },
+                                                                         { text: "Update hourly", value: 'hour' },
                                                                          { text: "Update daily", value: 'day' },
                                                                          { text: "Never update", value: 'never' }] }))
                 var oldBotInterval = wm.playerInfo.botInterval
@@ -2745,9 +2747,9 @@ var WikiMess = (function() {
                                          : 'inbox') })
         .then (function() {
           var messageDiv = $('#'+wm.mailboxMessageID(message))
-          wm.mailboxContentsDiv.animate ({
+          wm.mailboxDiv.animate ({
             // Scroll parent to the new element. This arcane formula can probably be simplified
-            scrollTop: wm.mailboxContentsDiv.scrollTop() + messageDiv.position().top - wm.mailboxContentsDiv.position().top
+            scrollTop: wm.mailboxDiv.scrollTop() + messageDiv.position().top - wm.mailboxDiv.position().top
           })
           $('.selected').removeClass('selected')
           messageDiv.addClass('selected')
@@ -3775,8 +3777,8 @@ var WikiMess = (function() {
       wm.messageHeaderCache = {}
       wm.mailboxDiv
         .empty()
-        .append ($('<span class="mailboxname">').text (props.title),
-                 wm.mailboxContentsDiv = $('<span class="contents">')
+        .append ($('<div class="mailboxname">').text (props.title),
+                 wm.mailboxContentsDiv = $('<div class="contents">')
                  .append (props.messages
                           .sort (function (a, b) { return new Date(b.date) - new Date(a.date) })  // newest first
                           .map (wm.makeMailboxEntryDiv.bind (wm, props))))
