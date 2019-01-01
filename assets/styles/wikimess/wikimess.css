@@ -1616,23 +1616,11 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     pointer-events: none;
 }
 
-.wikimess .subnavbar.help .button {
-    opacity: .5;
-    pointer-events: none;
-}
-
-.wikimess .subnavbar.thread .button:not(.threadshow):not(.threadonly) {
-    opacity: .5;
-    pointer-events: none;
-}
-
-.wikimess .subnavbar:not(.thread) .button.threadonly {
-    opacity: .5;
-    pointer-events: none;
-}
-
+.wikimess .subnavbar.help .button,
+.wikimess .subnavbar.thread .button:not(.threadshow):not(.threadonly),
+.wikimess .subnavbar:not(.thread) .button.threadonly,
 .wikimess .subnavbar .button.disabled {
-    opacity: .5;
+    opacity: .2;
     pointer-events: none;
 }
 
