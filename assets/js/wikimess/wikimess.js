@@ -149,6 +149,7 @@ var WikiMess = (function() {
     anonGuest: 'Anonymous guest',
     maxPlayerLoginLength: 15,
     maxPlayerNameLength: 32,
+    bannerDelay: 2000,
     autosaveDelay: 5000,
     expansionAnimationDelay: 400,
     maxExpansionAnimationTime: 5000,
@@ -212,7 +213,7 @@ var WikiMess = (function() {
     themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
               {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
 
-    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'card-hand' },
+    tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'card-hand', showBanner: true },
            { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
            { name: 'mailbox', method: 'showMailboxPage', label: 'mail', icon: 'envelope' },
            { name: 'follows', method: 'showFollowsPage', label: 'people', icon: 'backup' },
@@ -1062,7 +1063,8 @@ var WikiMess = (function() {
       
       this.container
         .empty()
-        .append (this.navbar = $('<div class="navbar">'))
+        .append (this.navbar = $('<div class="navbar">')
+                 .append (this.banner = $('<div class="banner">')))
 
       this.drawNavBar (currentTab)
     },
@@ -1109,8 +1111,38 @@ var WikiMess = (function() {
         }))
         navbar.append (span)
       })
+
+      function hideBanner (evt) {
+        console.warn (evt)
+        evt.stopPropagation()
+        wm.banner.removeClass ('active')
+        wm.setBannerTimer (true)
+      }
+      if (this.currentTab.showBanner) {
+        this.setBannerTimer (true)
+        this.banner.on ('click', hideBanner)
+        if (!this.isTouchDevice())
+          this.banner.on ('mouseover', hideBanner)
+      } else {
+        this.setBannerTimer (false)
+        this.banner.off ('click')
+        this.banner.off ('mouseover')
+      }
     },
 
+    setBannerTimer: function (active) {
+      var wm = this
+      if (this.bannerTimer) {
+        clearTimeout (this.bannerTimer)
+        delete this.bannerTimer
+      }
+      if (active)
+        this.bannerTimer = setTimeout (function() {
+          delete wm.bannerTimer
+          wm.banner.addClass ('active')
+        }, wm.bannerDelay)
+    },
+    
     getIconPromise: function(icon) {
       if (!this.iconPromise[icon])
         this.iconPromise[icon] = this.svg[icon] ? $.Deferred().resolve(this.svg[icon]) : this.REST_getImagesIcons (icon)
