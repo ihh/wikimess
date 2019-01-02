@@ -159,6 +159,8 @@ var WikiMess = (function() {
     menuPopupDelay: 500,
     threadCardThrowDelay: 5,
     alwaysThrowInHelpCards: true,
+    throwOutConfidenceThreshold: .25,
+    previewConfidenceThreshold: .1,
     maxExpandCalls: 10,  // for recursive evaluations
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
@@ -1887,19 +1889,21 @@ var WikiMess = (function() {
                       recipient = wm.composition.isPrivate ? wm.composition.recipient.id : null
 
                       wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content)
-                      wm.choiceFooterPromise (wm.composition, sendConfig.reject)
-                        .then (function() {
-                          return wm.wrapREST_postPlayerMessage (wm.playerID,
-                                                                { recipient: recipient,
-                                                                  template: wm.composition.template,
-                                                                  title: wm.composition.title || '',
-                                                                  body: wm.composition.body,
-                                                                  previous: wm.composition.previousMessage,
-                                                                  tags: wm.composition.tags,
-                                                                  previousTags: wm.composition.previousTags,
-                                                                  draft: wm.composition.draft,
-                                                                  isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
-                        }).then (function (result) {
+
+                      var composition = sendConfig.reject ? wm.composition.preview.reject : wm.composition.preview.accept
+                      $.extend (wm.composition.template, composition.template)
+                      $.extend (wm.composition.body, composition.body)
+                      wm.wrapREST_postPlayerMessage (wm.playerID,
+                                                     { recipient: recipient,
+                                                       template: wm.composition.template,
+                                                       title: wm.composition.title || '',
+                                                       body: wm.composition.body,
+                                                       previous: wm.composition.previousMessage,
+                                                       tags: wm.composition.tags,
+                                                       previousTags: wm.composition.previousTags,
+                                                       draft: wm.composition.draft,
+                                                       isPublic: wm.playerID === null || (wm.playerInfo && wm.playerInfo.createsPublicTemplates) })
+                        .then (function (result) {
                           delete wm.composition.previousMessage
                           return fadePromise.then (function() {
                             if (shareCallback)
@@ -2234,7 +2238,9 @@ var WikiMess = (function() {
               .then (function() {
                 wm.divAutosuggest()
                 if (wm.composition.thread && wm.composition.thread.length) {
-                  var throwers = wm.composition.thread.map (function (msg) { return wm.makeInertCardPromiser ({ message: msg, noThrowIn: dealConfig.noThrowIn }) })
+                  var throwers = wm.composition.thread.map (function (msg) {
+                    return wm.makeInertCardPromiser ({ message: msg,
+                                                       noThrowIn: dealConfig.noThrowIn }) })
                   var allDealt = throwers.reduce (function (promise, thrower) {
                     return promise.then (function() {
                       var def = $.Deferred()
@@ -2281,7 +2287,7 @@ var WikiMess = (function() {
         wm.stopDrag (cardDiv)
         promise.resolve()
       })
-      card.on ('dragmove', wm.dragListener.bind (wm))
+      card.on ('dragmove', wm.dragListener.bind (wm, false))
       card.on ('dragend', function() {
         wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
         cardDiv.removeClass('dragging').addClass('throwing')
@@ -2359,7 +2365,7 @@ var WikiMess = (function() {
 
     isThrowOut: function (xOffset, yOffset, element, throwOutConfidence) {
       var wm = this
-      var throwOut = throwOutConfidence > .25
+      var throwOut = throwOutConfidence > wm.throwOutConfidenceThreshold
       return throwOut
     },
 
@@ -2512,10 +2518,11 @@ var WikiMess = (function() {
         wm.stopDrag()
         wm.modalExitDiv.hide()
       })
-      card.on ('dragmove', wm.dragListener.bind (wm))
+      card.on ('dragmove', wm.dragListener.bind (wm, true))
       card.on ('dragend', function() {
         wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
         cardDiv.removeClass('dragging').addClass('throwing')
+        wm.showMessageBody()
       })
 
       cardDiv.hide()
@@ -2661,7 +2668,7 @@ var WikiMess = (function() {
         cardDiv.removeClass('throwing').removeClass('dragging')
     },
 
-    dragListener: function (swingEvent) {
+    dragListener: function (showPreview, swingEvent) {
       var wm = this
       // swingEvent is a Hammer panmove event, decorated by swing
       wm.throwArrowContainer.removeClass('leftdrag').removeClass('rightdrag')
@@ -2671,6 +2678,21 @@ var WikiMess = (function() {
       } else if (swingEvent.throwDirection === swing.Direction.RIGHT) {
         wm.throwArrowContainer.addClass('rightdrag')
         wm.rightThrowArrow.css ('opacity', swingEvent.throwOutConfidence)
+      } else
+        previewComposition = wm.composition
+      if (showPreview) {
+        var previewDirection = (swingEvent.throwOutConfidence > wm.previewConfidenceThreshold
+                                ? swingEvent.throwDirection
+                                : undefined)
+        if (wm.lastPreviewDirection !== previewDirection) {
+          var previewComposition = (previewDirection
+                                    ? (previewDirection === swing.Direction.LEFT
+                                       ? wm.composition.preview.reject
+                                       : wm.composition.preview.accept)
+                                    : wm.composition)
+          wm.showMessageBody ({ composition: previewComposition })
+          wm.lastPreviewDirection = previewDirection
+        }
       }
     },
     
@@ -2866,18 +2888,36 @@ var WikiMess = (function() {
       return this.compositionFinalVarVal()[this.acceptVarName]
     },
 
+    gotChoiceHandler: function() {
+      return this.gotRejectHandler() || this.gotAcceptHandler()
+    },
+
     choiceFooterPromise: function (composition, reject) {
       var wm = this
-      var choiceFooter = (this.gotRejectHandler() || this.gotAcceptHandler()
-                          ? (reject ? this.rejectVarName : this.acceptVarName)
+      var choiceFooter = (this.gotChoiceHandler()
+                          ? (reject
+                             ? this.rejectVarName
+                             : this.acceptVarName)
                           : undefined)
       return (choiceFooter
-              ? (this.getContentExpansionLocal ([], this.compositionFinalVarVal(), choiceFooter)
+              ? (this.getContentExpansionLocal ([], this.compositionFinalVarVal (composition), choiceFooter)
                  .then (function (result) {
                    composition.body.rhs = composition.body.rhs.concat (result.expansion)
                    composition.template.content = wm.ParseTree.addFooter (composition.template.content, choiceFooter)
                  }))
               : $.Deferred().resolve())
+    },
+
+    cloneComposition: function() {
+      var composition = this.composition
+      return { template: { content: composition.template.content.slice(0) },
+               body: { type: 'root',
+                       rhs: composition.body.rhs.slice(0) },
+               vars: $.extend ({}, composition.vars),
+               tags: composition.tags,
+               previousTags: composition.previousTags,
+               tweeter: composition.tweeter,
+               avatar: composition.avatar }
     },
     
     rejectCurrentCard: function() {
@@ -3383,6 +3423,15 @@ var WikiMess = (function() {
               return wm.getContentExpansionLocal (template.content, wm.compositionVarVal())
                 .then (function (result) {
                   wm.composition.body = wm.ParseTree.makeRoot (result.expansion)
+                }).then (function() {
+                  if (wm.gotChoiceHandler()) {
+                    wm.composition.preview = {}
+                    return wm.choiceFooterPromise (wm.composition.preview.accept = wm.cloneComposition(), false)
+                      .then (wm.choiceFooterPromise.bind (wm, wm.composition.preview.reject = wm.cloneComposition(), true))
+                  } else
+                    wm.composition.preview = { accept: wm.composition,
+                                               reject: wm.composition }
+                }).then (function() {
                   wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
                 })
             })
@@ -3421,9 +3470,10 @@ var WikiMess = (function() {
       var wm = this
       config = config || {}
       var div = config.div || wm.messageBodyDiv
-      var expansion = config.expansion || wm.composition.body
-      var tweeter = config.tweeter || wm.composition.tweeter
-      var avatar = config.avatar || wm.composition.avatar
+      var composition = config.composition || wm.composition
+      var expansion = config.expansion || composition.body
+      var tweeter = config.tweeter || composition.tweeter
+      var avatar = config.avatar || composition.avatar
       var textDiv = $('<div class="text">')
       wm.avatarDiv = config.inEditor ? null : $('<div class="avatar">')
       div.empty()
@@ -3442,7 +3492,8 @@ var WikiMess = (function() {
 	if (wm.animationExpansion)
           wm.deleteAllSymbolNames (wm.animationExpansion)
         wm.animationSteps = 0
-	var rawExpansion = wm.makeExpansionText ({ node: expansion, vars: wm.compositionVarVal() })
+	var rawExpansion = wm.makeExpansionText ({ node: expansion,
+                                                   vars: wm.compositionVarVal (composition) })
 	var processedExpansion = rawExpansion.replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
 								 ? wm.emptyTemplateWarning
 								 : wm.emptyMessageWarning))
@@ -4019,23 +4070,25 @@ var WikiMess = (function() {
       return this.VarsHelper.populateVarVal (varVal, sender, recipient, tags)
     },
     
-    compositionVarVal: function() {
-      if (!this.composition)
+    compositionVarVal: function (composition) {
+      composition = composition || this.composition
+      if (!composition)
         return this.defaultVarVal()
       var sender = this.playerID ? this.playerInfo : null
       var recipient = this.composition.isPrivate ? this.composition.recipient : null
-      return (this.composition.vars
-	      ? this.populateVarVal ($.extend ({}, this.composition.vars), sender, recipient, this.composition.tags)
-	      : this.defaultVarVal (sender, recipient, this.composition.tags))
+      return (composition.vars
+	      ? this.populateVarVal ($.extend ({}, composition.vars), sender, recipient, composition.tags)
+	      : this.defaultVarVal (sender, recipient, composition.tags))
     },
 
-    compositionFinalVarVal: function() {
-      if (!this.composition)
+    compositionFinalVarVal: function (composition) {
+      composition = composition || this.composition
+      if (!composition)
         return this.defaultVarVal()
-      if (!this.composition.body)
-        return wm.compositionVarVal()
-      return this.ParseTree.finalVarVal ({ node: this.composition.body,
-                                           initVarVal: wm.compositionVarVal(),
+      if (!composition.body)
+        return wm.compositionVarVal (composition)
+      return this.ParseTree.finalVarVal ({ node: composition.body,
+                                           initVarVal: wm.compositionVarVal (composition),
 					   makeSymbolName: wm.makeSymbolName.bind(wm) })
     },
 
