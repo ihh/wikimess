@@ -16,6 +16,7 @@ function parseSymbolDefs (text, log) {
       .map (function (name) {
         var symbol = { rules: rules[name].map (bracery.ParseTree.parseRhs) }
         symbol.name = name
+        symbol.owned = true
         return symbol
       })
   if (symbols && symbols.length)

@@ -158,3 +158,13 @@
 .wikimess.plain .configmenu .option.checked {
     background-color: #ccc;
 }
+
+/* Syntax coloring */
+.syntax-brace { color: #044; }
+.syntax-var { color: #503; }
+.syntax-target { color: #060; }
+.syntax-alt { background-color: #acc; }
+.syntax-alt-char { background-color: #bbb; color: #006; }
+.syntax-cond-keyword { color: #410; }
+.syntax-func-name { color: #305; }
+

@@ -132,7 +132,7 @@ var WikiMess = (function() {
   // config, defaults
   var parseTree = window.bracery.ParseTree
   var symChar = '~', symCharHtml = '&#126;'
-  var playerChar = '@', varChar = '$', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', assignChar = '=', traceryChar = '#'
+  var playerChar = '@', varChar = '$', funcChar = '&', leftBraceChar = '{', rightBraceChar = '}', leftSquareBraceChar = '[', rightSquareBraceChar = ']', pipeChar = '|', assignChar = '=', traceryChar = '#'
   $.extend (proto.prototype, {
     // default constants
     containerID: 'wikimess',
@@ -5055,9 +5055,11 @@ var WikiMess = (function() {
     },
     
     firstNamedSymbol: function (node) {
-      var nodes = this.ParseTree.getSymbolNodes (node.rhs)
-	  .filter (function (node) { return node.name })
-      return nodes.length ? nodes[0] : null
+      var nodes
+      if (node && node.rhs)
+        nodes = this.ParseTree.getSymbolNodes (node.rhs)
+	.filter (function (node) { return node.name })
+      return nodes && nodes.length ? nodes[0] : null
     },
 
     deleteAllSymbolNames: function (node) {
@@ -5071,11 +5073,15 @@ var WikiMess = (function() {
       return this.ParseTree.makeRhsText (rhs, this.makeSymbolName.bind(this))
     },
 
-    makeRhsSpan: function (rhs, spanMaker) {
+    makeRhsSpan: function (rhs, makeRhsSpan, loadSymbol) {
       var wm = this
-      spanMaker = spanMaker || wm.makeRhsSpan.bind(wm)
+      loadSymbol = loadSymbol || wm.loadGrammarSymbol.bind(wm)
+      makeRhsSpan = makeRhsSpan || function (rhs) { return wm.makeRhsSpan (rhs, makeRhsSpan, loadSymbol) }
+      function leftBraceSpan() { return $('<span class="syntax-brace">').text (leftBraceChar) }
+      function rightBraceSpan() { return $('<span class="syntax-brace">').text (rightBraceChar) }
+      function funcSpan (name) { return $('<span class="syntax-func-name">').text (funcChar + name) }
       function argSpanMaker (arg) {
-        return $('<span>').append (leftBraceChar, spanMaker (arg), rightBraceChar)
+        return $('<span>').append (leftBraceSpan(), makeRhsSpan (arg), rightBraceSpan())
       }
       function wrapArgSpanMaker (arg) { return argSpanMaker ([arg]) }
       return $('<span>')
@@ -5083,31 +5089,55 @@ var WikiMess = (function() {
           if (typeof(tok) === 'string')
             return $('<span>').html (wm.renderMarkdown (tok))
           var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
+          var tokSpan = $('<span>').addClass ('syntax-' + tok.type)
           switch (tok.type) {
           case 'lookup':
-            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
-                                     : (varChar + tok.varname))
+            tokSpan.addClass ('syntax-var')
+            return tokSpan.html.apply (tokSpan,
+                                       [typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
+                                         ? [varChar, leftBraceSpan(), tok.varname, rightBraceSpan()]
+                                         : [varChar, tok.varname]])
           case 'assign':
-            return $('<span>').append ((tok.local ? '&let' : '') + varChar + tok.varname + assignChar + leftBraceChar,
-                                       spanMaker (tok.value),
-                                       rightBraceChar,
-                                       tok.local ? [leftBraceChar, spanMaker (tok.local), rightBraceChar] : undefined)
+            return tokSpan.append (tok.local ? funcSpan('let') : '',
+                                   $('<span class="syntax-var">').append (varChar, tok.varname),
+                                   assignChar,
+                                   $('<span class="syntax-target">')
+                                   .append (leftBraceSpan(),
+                                            makeRhsSpan (tok.value),
+                                            rightBraceSpan()),
+                                   tok.local ? [leftBraceSpan(), makeRhsSpan (tok.local), rightBraceSpan()] : [])
           case 'alt':
-            return $('<span>').append (leftSquareBraceChar,
-                                       tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', spanMaker(opt)) }),
-                                       rightSquareBraceChar)
+            return tokSpan.append ($('<span class="syntax-alt-char">').text(leftSquareBraceChar),
+                                   tok.opts.reduce (function (result, opt, n) {
+                                     return result
+                                       .concat (n ? [$('<span class="syntax-alt-char">').text(pipeChar)] : [])
+                                       .concat ([makeRhsSpan(opt)])
+                                   }, []),
+                                   $('<span class="syntax-alt-char">').text(rightSquareBraceChar))
           case 'rep':
-            return $('<span>').append (funcChar + 'rep' + leftBraceChar,
-                                       spanMaker(tok.unit),
-                                       rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
+            return tokSpan.append (funcSpan('rep'),
+                                   leftBraceSpan(),
+                                   makeRhsSpan(tok.unit),
+                                   rightBraceSpan(),
+                                   leftBraceSpan(),
+                                   tok.min,
+                                   (tok.max !== tok.min ? (',' + tok.max) : ''),
+                                   rightBraceSpan())
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
-            return $('<span>').append (funcChar,
-				       [['if',tok.test],
-					['then',tok.t],
-					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, spanMaker (keyword_arg[1]), rightBraceChar) }))
+            return tokSpan.append ($('<span class="syntax-if">').text(funcChar),
+				   [['if',tok.test],
+				    ['then',tok.t],
+				    ['else',tok.f]].map (function (keyword_arg) {
+                                      return $('<span>')
+                                        .append ($('<span>')
+                                                 .addClass ('syntax-cond-keyword')
+                                                 .addClass ('syntax-' + keyword_arg)
+                                                 .text (keyword_arg[0]),
+                                                 leftBraceSpan(),
+                                                 makeRhsSpan (keyword_arg[1]),
+                                                 rightBraceSpan()) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
@@ -5116,11 +5146,11 @@ var WikiMess = (function() {
 						   sugaredName[1],
 						   function (evt) {
 						     evt.stopPropagation()
-						     wm.loadGrammarSymbol (tok.args[0])
+						     loadSymbol (tok.args[0])
 						   })
                       : sugaredName.join(''))
             var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
-            var funcSpan = $('<span>').append (funcChar + tok.funcname)
+            var funcSpan = tokSpan.append ($('<span class="syntax-func-name">').append (funcChar, tok.funcname))
             switch (wm.ParseTree.funcType (tok.funcname)) {
             case 'link':
               return funcSpan.append ([[tok.args[0]],
@@ -5133,9 +5163,9 @@ var WikiMess = (function() {
             case 'push':
               return funcSpan.append (varChar, tok.args[0].args[0].varname, tok.args.length > 1 ? argSpanMaker(tok.args.slice(1)) : '')
             case 'match':
-              return funcSpan.append ('/', spanMaker ([tok.args[0]]), '/', tok.args[1])
+              return funcSpan.append ('/', makeRhsSpan ([tok.args[0]]), '/', tok.args[1])
                 .append (tok.args.slice(2).map (function (arg, n) {
-                  return spanMaker (n ? arg.args : [arg])
+                  return makeRhsSpan (n ? arg.args : [arg])
                 }))
             case 'map':
               if (tok.args[0].varname !== wm.ParseTree.defaultMapVar)
@@ -5166,14 +5196,16 @@ var WikiMess = (function() {
             return wm.makeSymbolSpan (tok,
                                       function (evt) {
                                         evt.stopPropagation()
-                                        wm.loadGrammarSymbol (tok)
+                                        loadSymbol (tok)
                                       })
           }
         }))
     },
 
     makeTemplateSpan: function (rhs) {
-      return this.makeRhsSpan (rhs, this.makeTemplateSpan.bind (this))
+      return this.makeRhsSpan (rhs,
+                               this.makeTemplateSpan.bind (this),
+                               this.showGrammarLoadSymbol.bind (this))
     },
       
     makePlayerSpan: function (name, displayName, callback) {

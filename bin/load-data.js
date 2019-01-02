@@ -178,13 +178,17 @@ if (!start) {
   promise = promise.then (processFilenameList ({ path: '/symbol',
                                                  schema: schemaPath('symbol'),
                                                  handler: genericHandler('Symbol'),
-                                                 parsers: [JSON.parse, eval, function (text) { return templateParser.parseSymbolDefs(text,log) }],
+                                                 parsers: [JSON.parse, eval, function (text) {
+                                                   return templateParser.parseSymbolDefs(text,log)
+                                                 }],
                                                  list: symbolFilenames.reverse() }))
   
   promise = promise.then (processFilenameList ({ path: '/template',
                                                  schema: schemaPath('template'),
                                                  handler: makeHandler('Template',hasID,getTitle),
-                                                 parsers: [JSON.parse, eval, function (text) { return templateParser.parseTemplateDefs(text,log) }],
+                                                 parsers: [JSON.parse, eval, function (text) {
+                                                   return templateParser.parseTemplateDefs(text,log)
+                                                 }],
                                                  list: templateFilenames.reverse() }))
 }
 

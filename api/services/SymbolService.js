@@ -124,7 +124,7 @@ module.exports = {
   },
 
   makeSymbolInfo: function (symbol, playerID) {
-    var ownerID = symbol.owner
+    var ownerID = symbol.owner, owned = symbol.owned
     var result = { symbol: { id: symbol.id } }
     if (!symbol.renamable)
       result.symbol.fixname = true
@@ -134,7 +134,7 @@ module.exports = {
       result.symbol.rules = []
       result.symbol.summary = symbol.summary
     }
-    var ownerPromise = (ownerID === null
+    var ownerPromise = (ownerID === null || !owned
                         ? Promise.resolve()
                         .then (function() {
                           result.symbol.owner = null
