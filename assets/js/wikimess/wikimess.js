@@ -1060,13 +1060,15 @@ var WikiMess = (function() {
 
     showNavBar: function (currentTab) {
       var wm = this
-      
-      this.container
-        .empty()
-        .append (this.navbar = $('<div class="navbar">')
-                 .append (this.banner = $('<div class="banner">')))
 
-      this.drawNavBar (currentTab)
+      if (!this.navbar)
+        this.navbar = $('<div class="navbar">')
+      this.container.html (this.navbar)
+
+      if (!(this.currentTab && this.currentTab.name === currentTab)) {
+        this.navbar.html (this.banner = $('<div class="banner">'))
+        this.drawNavBar (currentTab)
+      }
     },
 
     redrawNavBar: function() {
@@ -1113,12 +1115,11 @@ var WikiMess = (function() {
       })
 
       function hideBanner (evt) {
-        console.warn (evt)
         evt.stopPropagation()
         wm.banner.removeClass ('active')
         wm.setBannerTimer (true)
       }
-      if (this.currentTab.showBanner) {
+      if (this.currentTab.showBanner && !this.banner.hasClass('active')) {
         this.setBannerTimer (true)
         this.banner.on ('click', hideBanner)
         if (!this.isTouchDevice())
@@ -1886,18 +1887,7 @@ var WikiMess = (function() {
                       recipient = wm.composition.isPrivate ? wm.composition.recipient.id : null
 
                       wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content)
-                      var choiceFooter
-                      if (wm.gotRejectHandler() || wm.gotAcceptHandler())
-                        choiceFooter = sendConfig.reject ? wm.rejectVarName : wm.acceptVarName
-                      var expandChoiceFooter = (choiceFooter
-                                                ? (wm.getContentExpansionLocal ([], wm.compositionFinalVarVal(), choiceFooter)
-                                                   .then (function (result) {
-                                                     wm.composition.body.rhs = wm.composition.body.rhs.concat (result.expansion)
-                                                     wm.composition.template.content = wm.ParseTree.addFooter (wm.composition.template.content, choiceFooter)
-                                                   }))
-                                                : $.Deferred().resolve())
-                      
-                      expandChoiceFooter
+                      wm.choiceFooterPromise (wm.composition, sendConfig.reject)
                         .then (function() {
                           return wm.wrapREST_postPlayerMessage (wm.playerID,
                                                                 { recipient: recipient,
@@ -2074,11 +2064,6 @@ var WikiMess = (function() {
                                                                    evt.stopPropagation()
                                                                    wm.dealInertCard()
                                                                  } }).addClass('threadshow'),
-                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
-                                                                 callback: function (evt) {
-                                                                   evt.stopPropagation()
-                                                                   wm.discardInertCard()
-                                                                 } }).addClass('threadonly'),
                       wm.resetButton = wm.makeSubNavIcon ({ iconName: 'delete',
                                                             text: 'reset',
                                                             callback: function (evt) {
@@ -2093,6 +2078,11 @@ var WikiMess = (function() {
                                wm.shareButton = wm.makeSubNavIcon ({ iconName: 'share',
 								     text: 'share',
 								     callback: toggleSharePane }).addClass('sharepanebutton')),
+                      wm.threadNextButton = wm.makeSubNavIcon ({ iconName: 'next',
+                                                                 callback: function (evt) {
+                                                                   evt.stopPropagation()
+                                                                   wm.discardInertCard()
+                                                                 } }).addClass('threadonly'),
                       wm.acceptButton = wm.makeSubNavIcon ({ iconName: 'accept',
                                                              text: 'accept',
                                                                 callback: function (evt) {
@@ -2874,6 +2864,20 @@ var WikiMess = (function() {
 
     gotAcceptHandler: function() {
       return this.compositionFinalVarVal()[this.acceptVarName]
+    },
+
+    choiceFooterPromise: function (composition, reject) {
+      var wm = this
+      var choiceFooter = (this.gotRejectHandler() || this.gotAcceptHandler()
+                          ? (reject ? this.rejectVarName : this.acceptVarName)
+                          : undefined)
+      return (choiceFooter
+              ? (this.getContentExpansionLocal ([], this.compositionFinalVarVal(), choiceFooter)
+                 .then (function (result) {
+                   composition.body.rhs = composition.body.rhs.concat (result.expansion)
+                   composition.template.content = wm.ParseTree.addFooter (composition.template.content, choiceFooter)
+                 }))
+              : $.Deferred().resolve())
     },
     
     rejectCurrentCard: function() {
