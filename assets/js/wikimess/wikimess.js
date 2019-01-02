@@ -2685,11 +2685,14 @@ var WikiMess = (function() {
                                 ? swingEvent.throwDirection
                                 : undefined)
         if (wm.lastPreviewDirection !== previewDirection) {
-          var previewComposition = (previewDirection
-                                    ? (previewDirection === swing.Direction.LEFT
-                                       ? wm.composition.preview.reject
-                                       : wm.composition.preview.accept)
-                                    : wm.composition)
+          var previewComposition = (previewDirection === swing.Direction.LEFT
+                                    || (wm.standalone &&
+                                        (previewDirection === swing.Direction.DOWN
+                                         || previewDirection === swing.Direction.UP))
+                                    ? wm.composition.preview.reject
+                                    : (previewDirection === swing.Direction.RIGHT
+                                       ? wm.composition.preview.accept
+                                       : wm.composition))
           wm.showMessageBody ({ composition: previewComposition })
           wm.lastPreviewDirection = previewDirection
         }
