@@ -2208,12 +2208,6 @@ var WikiMess = (function() {
                 .then (wm.clearComposeHelpMode.bind (wm))
                 .then (wm.divAutosuggest)
             }
-            function toMailbox() {
-              wm.fadeCard (cardDiv, card)
-                .then (function() {
-                  
-                })
-            }
             card.on ('throwout', swipe)
             wm.stopDrag()
 	    if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
