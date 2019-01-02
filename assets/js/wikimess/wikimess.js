@@ -3393,6 +3393,19 @@ var WikiMess = (function() {
       })
     },
 
+    // getContentExpansionWithoutSymbols ignores any remote calls
+    getContentExpansionWithoutSymbols: function (expr, vars) {
+      var parsedExpr = this.parseRhs (expr),
+          sampledExpr = this.ParseTree.sampleParseTree (parsedExpr),
+          expandedExpr = this.ParseTree.makeRhsExpansionSync
+      ({ rhs: sampledExpr,
+         vars: $.extend ({}, vars),
+         disableParse: true,
+         expandSync: function() { return '' },
+         getSync: function() { return '' } })
+      return expandedExpr.text
+    },
+    
     // generateMessageBody fetches a random template and requests an expansion
     generateMessageBody: function (config) {
       var wm = this
@@ -3441,7 +3454,7 @@ var WikiMess = (function() {
       var wm = this
       var div = config.div, tweeter = config.tweeter, avatar = config.avatar, author = config.author, size = config.size, varVal = config.vars
       var safeRegex = /^#?[a-zA-Z0-9_\-]+$/
-      if (varVal && varVal.icon && varVal.icon.match(safeRegex))
+      if (varVal && varVal['icon'] && varVal.icon.match(safeRegex))
         div.append (wm.makeIconButton ({ iconFilename: varVal.icon,
                                          color: (varVal.icolor && varVal.icolor.match(safeRegex)) ? varVal.icolor : undefined }))
       else if (tweeter) {
@@ -3498,8 +3511,28 @@ var WikiMess = (function() {
         if (wm.showScrollButtons)
           wm.showScrollButtons()
       }
+      if (wm.banner && !config.inEditor)
+        wm.showMeters (composition)
     },
 
+    showMeters: function (composition) {
+      var wm = this
+      var vars = wm.compositionFinalVarVal (composition)
+      var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
+      wm.banner.html (meters.map (function (meter) {
+        var meterFields = meter.split(/\s+/)
+        var type = meterFields[0]
+        if (type === 'icon') {
+          var icon = meterFields[1],
+              caption = meterFields[2],
+              expr = meterFields.slice(3).join(' ')
+          var level = wm.getContentExpansionWithoutSymbols (expr, vars)
+        }
+        var meterDiv = $('<div class="meter">')
+        return meterDiv
+      }))
+    },
+    
     updateAvatarDiv: function (config) {
       var wm = this
       config = config || {}
@@ -5038,8 +5071,13 @@ var WikiMess = (function() {
       return this.ParseTree.makeRhsText (rhs, this.makeSymbolName.bind(this))
     },
 
-    makeRhsSpan: function (rhs) {
+    makeRhsSpan: function (rhs, spanMaker) {
       var wm = this
+      spanMaker = spanMaker || wm.makeRhsSpan.bind(wm)
+      function argSpanMaker (arg) {
+        return $('<span>').append (leftBraceChar, spanMaker (arg), rightBraceChar)
+      }
+      function wrapArgSpanMaker (arg) { return argSpanMaker ([arg]) }
       return $('<span>')
         .append (wm.ParseTree.stripFooter(rhs).map (function (tok, n) {
           if (typeof(tok) === 'string')
@@ -5052,16 +5090,16 @@ var WikiMess = (function() {
                                      : (varChar + tok.varname))
           case 'assign':
             return $('<span>').append ((tok.local ? '&let' : '') + varChar + tok.varname + assignChar + leftBraceChar,
-                                       wm.makeRhsSpan (tok.value),
+                                       spanMaker (tok.value),
                                        rightBraceChar,
-                                       tok.local ? [leftBraceChar, wm.makeRhsSpan (tok.local), rightBraceChar] : undefined)
+                                       tok.local ? [leftBraceChar, spanMaker (tok.local), rightBraceChar] : undefined)
           case 'alt':
             return $('<span>').append (leftSquareBraceChar,
-                                       tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeRhsSpan(opt)) }),
+                                       tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', spanMaker(opt)) }),
                                        rightSquareBraceChar)
           case 'rep':
             return $('<span>').append (funcChar + 'rep' + leftBraceChar,
-                                       wm.makeRhsSpan(tok.unit),
+                                       spanMaker(tok.unit),
                                        rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
@@ -5069,10 +5107,10 @@ var WikiMess = (function() {
             return $('<span>').append (funcChar,
 				       [['if',tok.test],
 					['then',tok.t],
-					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, wm.makeRhsSpan (keyword_arg[1]), rightBraceChar) }))
+					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, spanMaker (keyword_arg[1]), rightBraceChar) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
-	    if (sugaredName && tok.funcname !== 'quote')
+	    if (sugaredName)
               return (sugaredName[0] === symChar
                       ? wm.makeSymbolSpanWithName (tok.args[0],
 						   sugaredName[1],
@@ -5082,9 +5120,47 @@ var WikiMess = (function() {
 						   })
                       : sugaredName.join(''))
             var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
-            return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
-                                       wm.makeRhsSpan (tok.args),
-                                       noBraces ? '' : rightBraceChar)
+            var funcSpan = $('<span>').append (funcChar + tok.funcname)
+            switch (wm.ParseTree.funcType (tok.funcname)) {
+            case 'link':
+              return funcSpan.append ([[tok.args[0]],
+                                       [tok.args[1]],
+                                       tok.args[2].args].map (argSpanMaker))
+            case 'parse':
+              return funcSpan.append ([tok.args[0].args, [tok.args[1]]].map (argSpanMaker))
+            case 'apply':
+              return funcSpan.append (tok.args.map (wrapArgSpanMaker))
+            case 'push':
+              return funcSpan.append (varChar, tok.args[0].args[0].varname, tok.args.length > 1 ? argSpanMaker(tok.args.slice(1)) : '')
+            case 'match':
+              return funcSpan.append ('/', spanMaker ([tok.args[0]]), '/', tok.args[1])
+                .append (tok.args.slice(2).map (function (arg, n) {
+                  return spanMaker (n ? arg.args : [arg])
+                }))
+            case 'map':
+              if (tok.args[0].varname !== wm.ParseTree.defaultMapVar)
+                funcSpan.append (varChar, tok.args[0].varname, ':')
+              return funcSpan.append ([tok.args[0].value,
+                                       tok.args[0].local[0].args].map (argSpanMaker))
+            case 'reduce':
+              if (tok.args[0].varname !== wm.ParseTree.defaultMapVar)
+                funcSpan.append (varChar, tok.args[0].varname, ':')
+              return funcSpan.append (argSpanMaker (tok.args[0].value),
+                                      varChar, tok.args[0].local[0].varname, '=',
+                                      argSpanMaker (tok.args[0].local[0].value),
+                                      argSpanMaker (tok.args[0].local[0].local[0].args))
+            case 'vars':
+              return funcSpan
+            case 'call':
+              return funcSpan.append (argSpanMaker ([tok.args[0]]),
+                                      tok.args[1].args.map (wrapArgSpanMaker))
+            case 'quote':
+            case 'math':
+            default:
+              return funcSpan.append (argSpanMaker (tok.args))
+              break
+            }
+            break
           default:
           case 'sym':
             return wm.makeSymbolSpan (tok,
@@ -5097,65 +5173,9 @@ var WikiMess = (function() {
     },
 
     makeTemplateSpan: function (rhs) {
-      var wm = this
-      return $('<span>')
-        .append (wm.ParseTree.stripFooter(rhs).map (function (tok, n) {
-          if (typeof(tok) === 'string')
-            return $('<span>').html (wm.renderMarkdown (tok))
-          var nextTok = (n < rhs.length - 1) ? rhs[n+1] : undefined
-          switch (tok.type) {
-          case 'lookup':
-            return $('<span>').text (typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                     ? (varChar + leftBraceChar + tok.varname + rightBraceChar)
-                                     : (varChar + tok.varname))
-          case 'assign':
-            return $('<span>').append ((tok.local ? '&let' : '') + varChar + tok.varname + assignChar + leftBraceChar,
-                                       wm.makeTemplateSpan (tok.value),
-                                       rightBraceChar,
-                                       tok.local ? [leftBraceChar, wm.makeTemplateSpan (tok.local), rightBraceChar] : undefined)
-          case 'alt':
-            return $('<span>').append (leftSquareBraceChar,
-                                       tok.opts.map (function (opt, n) { return $('<span>').append (n ? '|' : '', wm.makeTemplateSpan(opt)) }),
-                                       rightSquareBraceChar)
-          case 'rep':
-            return $('<span>').append (funcChar + 'rep' + leftBraceChar,
-                                       wm.makeTemplateSpan (tok.unit),
-                                       rightBraceChar + leftBraceChar + tok.min + (tok.max !== tok.min ? (',' + tok.max) : '') + rightBraceChar)
-          case 'cond':
-            if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
-              return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
-            return $('<span>').append (funcChar,
-				       [['if',tok.test],
-					['then',tok.t],
-					['else',tok.f]].map (function (keyword_arg) { return $('<span>').append (keyword_arg[0], leftBraceChar, wm.makeTemplateSpan (keyword_arg[1]), rightBraceChar) }))
-          case 'func':
-	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
-	    if (sugaredName && tok.funcname !== 'quote')
-              return (sugaredName[0] === symChar
-                      ? wm.makeSymbolSpanWithName (tok.args[0],
-						   sugaredName[1],
-						   function (evt) {
-						     evt.stopPropagation()
-						     wm.showGrammarLoadSymbol (tok.args[0])
-						   })
-                      : sugaredName.join(''))
-            var noBraces = tok.args.length === 1 && (tok.args[0].type === 'func' || tok.args[0].type === 'lookup' || tok.args[0].type === 'alt')
-            return $('<span>').append (funcChar + tok.funcname + (noBraces ? '' : leftBraceChar),
-                                       wm.makeRhsSpan (tok.args),
-                                       noBraces ? '' : rightBraceChar)
-          default:
-          case 'sym':
-            return wm.makeSymbolSpan (tok,
-                                      function (evt) {
-                                         wm.saveCurrentEdit()
-                                           .then (function() {
-                                             return wm.showGrammarLoadSymbol (tok)
-                                           })
-                                      })
-          }
-        }))
+      return this.makeRhsSpan (rhs, this.makeTemplateSpan.bind (this))
     },
-
+      
     makePlayerSpan: function (name, displayName, callback) {
       var nameSpan = $('<span class="name">')
       var span = $('<span class="player">').addClass(callback ? 'playerlink' : 'playertag').append (playerChar, nameSpan)
