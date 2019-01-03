@@ -8,6 +8,14 @@
     color: black;
 }
 
+.wikimess.plain svg {
+    fill: black;
+}
+
+.wikimess.plain .navbar svg.navicon {
+    fill: white;
+}
+
 .wikimess.plain .banner,
 .wikimess.plain .subnavbar {
     background-color: white;

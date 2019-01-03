@@ -164,7 +164,6 @@ var WikiMess = (function() {
     maxExpandCalls: 10,  // for recursive evaluations
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
-    choiceBadgeColor: 'darkgoldenrod',
     iconFilename: { edit: 'quill',
                     backspace: 'backspace',
                     'new': 'copy',
@@ -212,8 +211,8 @@ var WikiMess = (function() {
                     minimize: 'up-arrow',
                     maximize: 'down-arrow' },
     
-    themes: [ {style: 'plain', text: 'Plain', iconColor: 'black', navbarIconColor: 'white', subnavbarIconColor: 'black' },
-              {style: 'l33t', text: 'L33t', iconColor: 'green', navbarIconColor: 'green', subnavbarIconColor: 'darkgreen' } ],
+    themes: [ {style: 'plain', text: 'Plain' },
+              {style: 'l33t', text: 'L33t' } ],
 
     tabs: [{ name: 'compose', method: 'showComposePage', label: 'composer', icon: 'card-hand', showBanner: true },
            { name: 'status', method: 'showStatusPage', label: 'news', icon: 'raven' },
@@ -1096,7 +1095,6 @@ var WikiMess = (function() {
           return
         wm.getIconPromise(tab.icon)
           .done (function (svg) {
-            svg = wm.colorizeIcon (svg, tab.iconColor || wm.themeInfo.navbarIconColor)
             span.append ($('<div>').addClass('navlabel').text(tab.label || tab.name),
                          $(svg).addClass('navicon'))
 	    if (isMailbox)
@@ -1158,19 +1156,6 @@ var WikiMess = (function() {
       })
     },
     
-    colorizeIcon: function(svg,fgColor,bgColor) {
-      if (fgColor)
-        svg = svg.replace(new RegExp("#fff", 'gi'), fgColor)
-      if (bgColor)
-        svg = svg.replace(new RegExp("#000", 'g'), bgColor)
-      return svg
-    },
-
-    decolorizeIcon: function(svg) {
-      svg = svg.replace(new RegExp('(fill|stroke)="#[0-9a-f]{3}"', 'gi'), '')
-      return svg
-    },
-
     updateMessageCount: function() {
       var wm = this
       if (this.playerID)
@@ -3524,7 +3509,6 @@ var WikiMess = (function() {
       var wm = this
       var vars = wm.compositionFinalVarVal (composition)
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
-      var emptyColor = 'white', fullColor = 'darkgreen'
       var bannerHeight = wm.banner.height()
       var meterDivPromises = meters.map (function (meter) {
         var meterFields = meter.split(/\s+/)
@@ -3533,11 +3517,9 @@ var WikiMess = (function() {
         var level = wm.getContentExpansionWithoutSymbols (expr, vars)
         var meterDiv = $('<div class="meter">')
         return wm.getIconPromise (iconName)
-            .then (function (svgStr) {
-              var cssSvgStr = wm.decolorizeIcon (svgStr)
-              var emptySvg = $(cssSvgStr), fullSvg = $(cssSvgStr)
-              meterDiv.append ($('<div class="icon empty">').append (emptySvg),
-                               $('<div class="icon full">').append (fullSvg)
+            .then (function (svg) {
+              meterDiv.append ($('<div class="icon empty">').append ($(svg)),
+                               $('<div class="icon full">').append ($(svg))
                                .css ('clip', 'rect(' + (1-level)*bannerHeight + 'px,100vw,100vh,0)'))
               return meterDiv
             })
@@ -4387,7 +4369,9 @@ var WikiMess = (function() {
       var button = $('<span>').addClass('button').html (iconNameSpan)
       this.getIconPromise (iconFilename)
         .done (function (svg) {
-          svg = wm.colorizeIcon (svg, config.color || wm.themeInfo.iconColor)
+          var elem = $(svg)
+          if (config.color)
+            elem.css ('fill', config.color)
           button.prepend ($(svg))
         })
       if (config.callback)
@@ -4396,7 +4380,7 @@ var WikiMess = (function() {
     },
 
     makeSubNavIcon: function (iconName, callback) {
-      return this.makeIconButton (iconName, callback, this.themeInfo.subnavbarIconColor)
+      return this.makeIconButton (iconName, callback)
     },
     
     makeEditableElement: function (props) {
@@ -5669,7 +5653,6 @@ var WikiMess = (function() {
         var iconSpan = icons.slice(n,n+1), iconName = iconSpan.attr('icon')
         wm.getIconPromise(wm.iconFilename[iconName])
           .done (function (svg) {
-            svg = wm.colorizeIcon (svg, wm.themeInfo.iconColor)
             iconSpan.append ($(svg))
           })
       })

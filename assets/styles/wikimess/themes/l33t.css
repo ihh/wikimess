@@ -14,6 +14,14 @@
     color: #0f0;
 }
 
+.wikimess.l33t svg {
+    fill: green;
+}
+
+.wikimess.l33t .navbar svg.navicon {
+    fill: darkgreen;
+}
+
 .wikimess.l33t .subnavbar,
 .wikimess.l33t .navlabelspace,
 .wikimess.l33t .navbar {

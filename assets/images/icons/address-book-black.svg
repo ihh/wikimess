@@ -1,8 +1,8 @@
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:#fff;}
-	.st1{clip-path:url(#SVGID_2_);fill:#fff;}
+	.st0{}
+	.st1{clip-path:url(#SVGID_2_);}
 </style>
 <g transform="translate(0,0)">
 	<path class="st0" d="M102.6,26l90.1,345.8L481.8,395L391.8,49.2L102.6,26z M83.7,27.6C53.2,39.4,28,80.7,33.9,102.9l3.2,11.8
