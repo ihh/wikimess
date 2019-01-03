@@ -3526,23 +3526,32 @@ var WikiMess = (function() {
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
       var emptyColor = 'white', fullColor = 'darkgreen'
       var bannerHeight = wm.banner.height()
-      wm.banner.empty()
-        .append (meters.map (function (meter, nMeter) {
-          var meterFields = meter.split(/\s+/)
-          var iconName = meterFields[0],
-              expr = meterFields.slice(1).join(' ')
-          var level = wm.getContentExpansionWithoutSymbols (expr, vars)
-          var meterDiv = $('<div class="meter">')
-          wm.getIconPromise (iconName)
+      var meterDivPromises = meters.map (function (meter) {
+        var meterFields = meter.split(/\s+/)
+        var iconName = meterFields[0],
+            expr = meterFields.slice(1).join(' ')
+        var level = wm.getContentExpansionWithoutSymbols (expr, vars)
+        var meterDiv = $('<div class="meter">')
+        return wm.getIconPromise (iconName)
             .then (function (svgStr) {
               var cssSvgStr = wm.decolorizeIcon (svgStr)
               var emptySvg = $(cssSvgStr), fullSvg = $(cssSvgStr)
               meterDiv.append ($('<div class="icon empty">').append (emptySvg),
                                $('<div class="icon full">').append (fullSvg)
                                .css ('clip', 'rect(' + (1-level)*bannerHeight + 'px,100vw,100vh,0)'))
+              return meterDiv
             })
-          return meterDiv
-        }))
+      })
+      meterDivPromises.reduce (function (done, meterReady) {
+        return done.then (function (meterDivs) {
+          return meterReady.then (function (meterDiv) {
+            return meterDivs.concat ([meterDiv])
+          })
+        })
+      }, $.Deferred().resolve ([]))
+        .then (function (meterDivs) {
+          wm.banner.empty().append (meterDivs)
+        })
     },
     
     updateAvatarDiv: function (config) {
