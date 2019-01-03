@@ -5182,7 +5182,8 @@ var WikiMess = (function() {
             case 'apply':
               return funcSpan.append (tok.args.map (wrapArgSpanMaker))
             case 'push':
-              return funcSpan.append (varChar, tok.args[0].args[0].varname, tok.args.length > 1 ? argSpanMaker(tok.args.slice(1)) : '')
+              return funcSpan.append ($('<span class="syntax-var">').append (varChar, tok.args[0].args[0].varname),
+                                      tok.args.length > 1 ? argSpanMaker(tok.args.slice(1)) : '')
             case 'match':
               return funcSpan.append ('/', makeRhsSpan ([tok.args[0]]), '/', tok.args[1])
                 .append (tok.args.slice(2).map (function (arg, n) {

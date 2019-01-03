@@ -91,7 +91,7 @@ input {
     text-align: center;
 }
 
-.wikimess .navbar .navtab .active .navicon {
+.wikimess .navbar .navtab.active .navicon {
     opacity: 1;
 }
 
