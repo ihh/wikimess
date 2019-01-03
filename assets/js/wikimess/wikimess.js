@@ -1146,7 +1146,7 @@ var WikiMess = (function() {
         }, wm.bannerDelay)
     },
     
-    getIconPromise: function(icon) {
+    getIconPromise: function (icon) {
       if (!this.iconPromise[icon])
         this.iconPromise[icon] = this.svg[icon] ? $.Deferred().resolve(this.svg[icon]) : this.REST_getImagesIcons (icon)
       return this.iconPromise[icon]
@@ -3519,18 +3519,32 @@ var WikiMess = (function() {
       var wm = this
       var vars = wm.compositionFinalVarVal (composition)
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
-      wm.banner.html (meters.map (function (meter) {
-        var meterFields = meter.split(/\s+/)
-        var type = meterFields[0]
-        if (type === 'icon') {
-          var icon = meterFields[1],
-              caption = meterFields[2],
-              expr = meterFields.slice(3).join(' ')
+      var emptyColor = 'white', fullColor = 'darkgreen'
+      wm.banner.empty()
+        .append (meters.map (function (meter) {
+          var meterFields = meter.split(/\s+/)
+          var iconName = meterFields[0],
+              expr = meterFields.slice(1).join(' ')
           var level = wm.getContentExpansionWithoutSymbols (expr, vars)
-        }
-        var meterDiv = $('<div class="meter">')
-        return meterDiv
-      }))
+          var meterDiv = $('<div class="meter">')
+          wm.getIconPromise (iconName)
+            .then (function (svgStr) {
+              var emptySvg = $(svgStr), fullSvg = $(svgStr)
+              var width = fullSvg[0].viewBox.baseVal.width
+              var height = fullSvg[0].viewBox.baseVal.height
+              var dy = Math.min (1, Math.max (0, 1 - (level || 0))) * height
+              var clipPathId = 'full-clip-' + iconName
+              fullSvg.children().attr ('clip-path', 'url(#' + clipPathId + ')')
+              fullSvg
+                .prepend ($('<defs>')
+                          .append ($('<clipPath id="' + clipPathId + '">')
+                                   .append ($('<rect x="0" y="' + dy
+                                              + '" width="' + width + '" height="' + (height - dy) + '">'))))
+              meterDiv.append ($('<div class="icon empty">').append (emptySvg),
+                               $('<div class="icon full">').append (fullSvg))
+            })
+          return meterDiv
+        }))
     },
     
     updateAvatarDiv: function (config) {
