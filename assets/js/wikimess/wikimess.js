@@ -3511,9 +3511,9 @@ var WikiMess = (function() {
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
       var bannerHeight = wm.banner.height()
       var meterDivPromises = meters.map (function (meter) {
-        var meterFields = meter.split(/\s+/)
+        var meterFields = wm.ParseTree.makeArray (meter)
         var iconName = meterFields[0],
-            expr = meterFields.slice(1).join(' ')
+            expr = meterFields[1]
         var level = wm.getContentExpansionWithoutSymbols (expr, vars)
         var meterDiv = $('<div class="meter">')
         return wm.getIconPromise (iconName)
