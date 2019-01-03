@@ -1160,9 +1160,14 @@ var WikiMess = (function() {
     
     colorizeIcon: function(svg,fgColor,bgColor) {
       if (fgColor)
-        svg = svg.replace(new RegExp("#fff", 'g'), fgColor)
+        svg = svg.replace(new RegExp("#fff", 'gi'), fgColor)
       if (bgColor)
         svg = svg.replace(new RegExp("#000", 'g'), bgColor)
+      return svg
+    },
+
+    decolorizeIcon: function(svg) {
+      svg = svg.replace(new RegExp('(fill|stroke)="#[0-9a-f]{3}"', 'gi'), '')
       return svg
     },
 
@@ -3520,8 +3525,9 @@ var WikiMess = (function() {
       var vars = wm.compositionFinalVarVal (composition)
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
       var emptyColor = 'white', fullColor = 'darkgreen'
+      var bannerHeight = wm.banner.height()
       wm.banner.empty()
-        .append (meters.map (function (meter) {
+        .append (meters.map (function (meter, nMeter) {
           var meterFields = meter.split(/\s+/)
           var iconName = meterFields[0],
               expr = meterFields.slice(1).join(' ')
@@ -3529,19 +3535,11 @@ var WikiMess = (function() {
           var meterDiv = $('<div class="meter">')
           wm.getIconPromise (iconName)
             .then (function (svgStr) {
-              var emptySvg = $(svgStr), fullSvg = $(svgStr)
-              var width = fullSvg[0].viewBox.baseVal.width
-              var height = fullSvg[0].viewBox.baseVal.height
-              var dy = Math.min (1, Math.max (0, 1 - (level || 0))) * height
-              var clipPathId = 'full-clip-' + iconName
-              fullSvg.children().attr ('clip-path', 'url(#' + clipPathId + ')')
-              fullSvg
-                .prepend ($('<defs>')
-                          .append ($('<clipPath id="' + clipPathId + '">')
-                                   .append ($('<rect x="0" y="' + dy
-                                              + '" width="' + width + '" height="' + (height - dy) + '">'))))
+              var cssSvgStr = wm.decolorizeIcon (svgStr)
+              var emptySvg = $(cssSvgStr), fullSvg = $(cssSvgStr)
               meterDiv.append ($('<div class="icon empty">').append (emptySvg),
-                               $('<div class="icon full">').append (fullSvg))
+                               $('<div class="icon full">').append (fullSvg)
+                               .css ('clip', 'rect(' + (1-level)*bannerHeight + 'px,100vw,100vh,0)'))
             })
           return meterDiv
         }))

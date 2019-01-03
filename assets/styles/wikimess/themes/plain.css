@@ -160,11 +160,20 @@
 }
 
 /* Syntax coloring */
-.syntax-brace { color: #044; }
-.syntax-var { color: #503; }
-.syntax-target { color: #060; }
-.syntax-alt { background-color: #aaa; }
-.syntax-alt-char { background-color: #bbb; color: #006; }
-.syntax-cond-keyword { color: #410; }
-.syntax-func-name { color: #305; }
+.wikimess.plain .syntax-brace { color: #044; }
+.wikimess.plain .syntax-var { color: #503; }
+.wikimess.plain .syntax-target { color: #060; }
+.wikimess.plain .syntax-alt { background-color: #aaa; }
+.wikimess.plain .syntax-alt-char { background-color: #bbb; color: #006; }
+.wikimess.plain .syntax-cond-keyword { color: #410; }
+.wikimess.plain .syntax-func-name { color: #305; }
 
+/* Meters */
+.wikimess .meter .icon.empty svg {
+    fill: black;
+    opacity: .2;
+}
+
+.wikimess .meter .icon.full svg {
+    fill: green;
+}

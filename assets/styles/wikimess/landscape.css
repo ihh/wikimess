@@ -13,6 +13,7 @@
 	min-height: 15vh;
     }
 
+    .wikimess .banner .meter,
     .wikimess .navbar .navicon {
 	width: 15vh;
 	height: 15vh;
