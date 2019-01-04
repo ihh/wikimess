@@ -2176,11 +2176,11 @@ var WikiMess = (function() {
                 .append ($('<p>')
                          .append ($('<strong>').text('Swipe cards left'),
                                   $('<br>'),
-                                  $('<em>').text('to get new text')),
+                                  $('<em>').text('to reject them')),
                          $('<p>')
                          .append ($('<strong>').text('Swipe cards right'),
                                   $('<br>'),
-                                  $('<em>').text('to share the text')),
+                                  $('<em>').text('to accept them')),
                          $('<p>')
                          .append ($('<a href="#">')
                                   .html ($('<strong>').text('Remove this card'))
@@ -2363,19 +2363,31 @@ var WikiMess = (function() {
 	.then (function (result) {
 	  var html = result.replace (/PHRASE/g, function() { return symCharHtml })
 	  wm.helpHtml = $.parseHTML(html).filter (function (elt) { return elt.tagName === 'DIV' })   // yuck
+            .map (function (elt) {
+              $(elt).append ($('<p>').append ($('<em>').text ('(Swipe left for more tips; swipe right to continue.)')))
+              return elt
+            })
 	  wm.addHelpIcons ($(wm.helpHtml))
 	})
       helpPromise.then (function() {
-	var cardDiv = $(wm.ParseTree.randomElement (wm.helpHtml))
+	var cardDiv = $(wm.helpHtml[0])
 	    .removeAttr('style').addClass('helpcard')
+        wm.helpHtml = wm.helpHtml.slice(1).concat (wm.helpHtml[0])  // rotate through help tips
 	wm.addToStack (cardDiv)
         // create the swing card object for the random help card
 	var card = wm.stack.createCard (cardDiv[0])
-	function swipe() {
+	function moreHelp() {
+          wm.fadeCard (cardDiv, card)
+            .then (wm.dealHelpCard.bind (wm))
+	}
+	function endHelp() {
           wm.fadeCard (cardDiv, card)
             .then (wm.clearComposeHelpMode.bind (wm))
 	}
-	card.on ('throwout', swipe)
+	card.on ('throwoutright', endHelp)
+	card.on ('throwoutleft', moreHelp)
+	card.on ('throwoutup', moreHelp)
+	card.on ('throwoutdown', moreHelp)
         wm.stopDrag()
 	if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
           wm.startThrow()
