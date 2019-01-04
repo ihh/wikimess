@@ -63,10 +63,10 @@ creeper
 zombie
 
 >dnd_attack
-~{dnd_init_enemy}I attack $dnd_the_enemy with my $dnd_weapon={~dnd_melee_weapon}$dnd_weapon.
+I attack ~dnd_the_enemy with my $dnd_weapon={~dnd_melee_weapon}$dnd_weapon.
 
->dnd_init_enemy
-$dnd_the_enemy=&if{$dnd_the_enemy}{$dnd_the_enemy}{the &plural$dnd_enemy}
+>dnd_the_enemy
+$dnd_the_enemy:=&if{$dnd_the_enemy}{$dnd_the_enemy}{the &plural$dnd_enemy}
 
 >dnd_melee_weapon
 axe
@@ -108,19 +108,14 @@ $tags=&replace/dnd_broken_weapon /$prevtags{}
 ~{dnd_remove_broken_weapon_tag}[GOD|GODS] [DAMMIT|[DAMN|BLIND|CURSE] [YOU|YOUR EYES]] I [LOVED|NEEDED] THAT $DND_WEAPON
 
 >dnd_cast_spell
-~{dnd_init_enemy}~{dnd_a_spell}I cast $dnd_a_spell at $dnd_the_enemy.
+I cast ~dnd_a_spell at ~dnd_the_enemy.
 
 >dnd_spell_fails
 Your $dnd_spell [fails|fizzles|flops|is &a{catastrophe|embarrassment|failure}].
 That spell is too [high level|advanced|difficult|dextrous] for you, [I'm [afraid|sorry to say]|fool|unfortunately|n00b|butterfingers|I [fear|very much fear|regret to say]|young [mage|trainee|padawan|acolyte|beginner|adventurer]].
 
 >dnd_a_spell
-$dnd_spell={~dnd_spell}$dnd_villain={~dnd_villain}$dnd_a_spell={~dnd_a_spell_syntax}
-
->dnd_a_spell_syntax
-&a{$dnd_spell}
-$dnd_villain's $dnd_spell
-the ~dnd_dread $dnd_spell
+$dnd_spell={~dnd_spell}$dnd_villain={~dnd_villain}$dnd_a_spell:=[&a{$dnd_spell}|$dnd_villain's $dnd_spell|the ~dnd_dread $dnd_spell]
 
 >dnd_dread
 dread
@@ -189,8 +184,8 @@ You can't cast $dnd_spell!
 Only $dnd_spellcaster can cast $dnd_a_spell.
 
 >dnd_treasure
-~{dnd_some_treasure}~dnd_you_found $dnd_some_treasure!
-~{dnd_some_treasure}~dnd_you_found $dnd_some_treasure! [~dnd_treasure_is_valuable|~dnd_treasure_is_useful]
+~dnd_you_found ~dnd_some_treasure!
+~dnd_you_found ~dnd_some_treasure! [~dnd_treasure_is_valuable|~dnd_treasure_is_useful]
 
 >dnd_you_found
 [||||[O|Oh][,|] ][Good|Wonderful|Fortuitous|Happy] [news|tidings|luck|Fate]! You ~dnd_found
@@ -204,7 +199,7 @@ uncovered
 [lucked|chanced|stumbled] [on|upon]
 
 >dnd_some_treasure
-$dnd_treasure_item={~dnd_treasure_item}$dnd_some_treasure=~{dnd_some_treasure_syntax}
+$dnd_treasure_item={~dnd_treasure_item}$dnd_some_treasure:=[&a{[|~common_adjective, ]$dnd_treasure_item}|some &plural{[|~common_adjective, ]$dnd_treasure_item}]
 
 >dnd_treasure_item
 [enchanted|blessed|sentient|talking|conscious|alien|elvish|dwarven-forged][|, [diamond|mithril|steel|carbon-fiber|titanium|plutonium]] ~dnd_melee_weapon
@@ -232,10 +227,6 @@ summoning
 divination
 transformation
 divination
-
->dnd_some_treasure_syntax
-&a{[|~common_adjective, ]$dnd_treasure_item}
-some &plural{[|~common_adjective, ]$dnd_treasure_item}
 
 >dnd_treasure_is_valuable
 [This [treasure|loot|haul]|&cap&plural$dnd_treasure_item] [may|can] be sold [at|for] [great|enormous|huge|immense] [value|profit].

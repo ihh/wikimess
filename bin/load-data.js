@@ -20,7 +20,7 @@ var defaultPlayerFilename = "$DATA/players"
 var defaultSymbolFilename = "$DATA/symbols"
 var defaultTemplateFilename = "$DATA/templates"
 var defaultVerbosity = 3
-var defaultMatchRegex = '\\.(json|txt)$'
+var defaultMatchRegex = '\\.(json|txt|bracery)$'
 var databasePath = '.tmp/localDiskDb.db'
 var symChar = '$'
 var maxUploadChunkCount = 100   // max number of records that will be uploaded in any single request
@@ -42,9 +42,9 @@ var opt = getopt.create([
   ['u' , 'username=STRING'  , 'admin player name (default="' + defaultUserName + '")'],
   ['w' , 'password=STRING'  , 'admin player password (default="' + defaultPassword + '")'],
   ['D' , 'data=PATH'        , 'path to data directory (default=' + defaultDataDir + ')'],
-  ['P' , 'players=PATH+'    , 'path to .js or .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
-  ['S' , 'symbols=PATH+'    , 'path to .js, .json or .txt grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
-  ['T' , 'templates=PATH+'  , 'path to .js, .json or .txt template file(s) or directories (default=' + defaultPath('Template') + ')'],
+  ['P' , 'players=PATH+'    , 'path to .json player file(s) or directories (default=' + defaultPath('Player') + ')'],
+  ['S' , 'symbols=PATH+'    , 'path to .json, .bracery, or .txt grammar symbol file(s) or directories (default=' + defaultPath('Symbol') + ')'],
+  ['T' , 'templates=PATH+'  , 'path to .json, .bracery, or .txt template file(s) or directories (default=' + defaultPath('Template') + ')'],
   ['M' , 'match=PATTERN'    , 'regex for matching filenames in directories (default=/' + defaultMatchRegex + '/)'],
   ['V' , 'validate'         , 'validate uploaded items against schemas before uploading'],
   ['E' , 'validate-each'    , 'validate each uploaded item against schema individually, even if many items in file'],
