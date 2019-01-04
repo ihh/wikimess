@@ -5105,7 +5105,7 @@ var WikiMess = (function() {
           case 'assign':
             return tokSpan.append (tok.local ? funcSpan('let') : '',
                                    $('<span class="syntax-var">').append (varChar, tok.varname),
-                                   assignChar,
+                                   (tok.visible ? ':' : '') + assignChar,
                                    $('<span class="syntax-target">')
                                    .append (leftBraceSpan(),
                                             makeRhsSpan (tok.value),

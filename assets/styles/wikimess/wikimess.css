@@ -118,6 +118,10 @@ input {
     pointer-events: all;
 }
 
+.wikimess .navbar .banner .meter {
+    pointer-events: all;
+}
+
 .wikimess .suggest .button {
     width: 1.5em;
     height: 1.5em;
