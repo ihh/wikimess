@@ -286,7 +286,8 @@ var WikiMess = (function() {
                            
     exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
     exampleSymbolDelay: 200,
-    
+
+    tipSwipeHint: "Swipe left for more tips; swipe right to continue.",
     deleteDraftPrompt: "Delete draft and start a new thread?",
     resetThreadPrompt: "Reset and start a new thread?",
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'.",
@@ -2353,7 +2354,20 @@ var WikiMess = (function() {
       return throwOut
     },
 
-    dealHelpCard: function() {
+    tipSwipeHintSpan: function() {
+      return $('<p>').append ($('<em>').text (this.tipSwipeHint))
+    },
+    
+    dealMeterCard: function() {
+      var wm = this
+      var vars = wm.compositionFinalVarVal()
+      if (!wm.ParseTree.isTruthy (vars['status']))
+        return wm.dealTipCard()
+      var statusText = wm.getContentExpansionWithoutSymbols (vars.status, vars)
+      return wm.dealHelpCard ($('<div>').text (statusText).append (wm.tipSwipeHintSpan()))
+    },
+
+    dealTipCard: function() {
       var wm = this
       var helpPromise
       if (wm.helpHtml)
@@ -2364,37 +2378,42 @@ var WikiMess = (function() {
 	  var html = result.replace (/PHRASE/g, function() { return symCharHtml })
 	  wm.helpHtml = $.parseHTML(html).filter (function (elt) { return elt.tagName === 'DIV' })   // yuck
             .map (function (elt) {
-              $(elt).append ($('<p>').append ($('<em>').text ('(Swipe left for more tips; swipe right to continue.)')))
+              $(elt).append (wm.tipSwipeHintSpan())
               return elt
             })
 	  wm.addHelpIcons ($(wm.helpHtml))
 	})
       helpPromise.then (function() {
-	var cardDiv = $(wm.helpHtml[0])
-	    .removeAttr('style').addClass('helpcard')
+        var cardDiv = $(wm.helpHtml[0]).removeAttr('style')
         wm.helpHtml = wm.helpHtml.slice(1).concat (wm.helpHtml[0])  // rotate through help tips
-	wm.addToStack (cardDiv)
-        // create the swing card object for the random help card
-	var card = wm.stack.createCard (cardDiv[0])
-	function moreHelp() {
-          wm.fadeCard (cardDiv, card)
-            .then (wm.dealHelpCard.bind (wm))
-	}
-	function endHelp() {
-          wm.fadeCard (cardDiv, card)
-            .then (wm.clearComposeHelpMode.bind (wm))
-	}
-	card.on ('throwoutright', endHelp)
-	card.on ('throwoutleft', moreHelp)
-	card.on ('throwoutup', moreHelp)
-	card.on ('throwoutdown', moreHelp)
-        wm.stopDrag()
-	if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
-          wm.startThrow()
-	  card.throwIn (0, -wm.throwYOffset())
-        }
-	wm.setComposeHelpMode()
+        wm.dealHelpCard (cardDiv)
       })
+    },
+  
+    dealHelpCard: function (cardDiv) {
+      var wm = this
+      cardDiv.removeClass('helpcard').addClass('helpcard')
+      wm.addToStack (cardDiv)
+      // create the swing card object for the random help card
+      var card = wm.stack.createCard (cardDiv[0])
+      function moreHelp() {
+        wm.fadeCard (cardDiv, card)
+          .then (wm.dealTipCard.bind (wm))
+      }
+      function endHelp() {
+        wm.fadeCard (cardDiv, card)
+          .then (wm.clearComposeHelpMode.bind (wm))
+      }
+      card.on ('throwoutright', endHelp)
+      card.on ('throwoutleft', moreHelp)
+      card.on ('throwoutup', moreHelp)
+      card.on ('throwoutdown', moreHelp)
+      wm.stopDrag()
+      if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
+        wm.startThrow()
+	card.throwIn (0, -wm.throwYOffset())
+      }
+      wm.setComposeHelpMode()
     },
 
     resizeListener: function() {
@@ -5487,7 +5506,7 @@ var WikiMess = (function() {
     makeTipButton: function() {
       var wm = this
       return wm.makeSubNavIcon ('help', function() {
-	wm.dealHelpCard()
+	wm.dealMeterCard()
       })
     },
 
