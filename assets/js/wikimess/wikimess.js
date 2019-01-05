@@ -164,6 +164,7 @@ var WikiMess = (function() {
     maxExpandCalls: 10,  // for recursive evaluations
     scrollButtonDelta: 2/3,  // proportion of visible page to scroll when scroll buttons pressed
     cardScrollTime: 2000,
+    iconFilenameRegex: /^[\w\d\-_]+$/,
     iconFilename: { edit: 'quill',
                     backspace: 'backspace',
                     'new': 'copy',
@@ -287,6 +288,8 @@ var WikiMess = (function() {
     exampleSymbolNames: ['alabaster', 'breach', 'cat', 'delicious', 'evanescent', 'fracas', 'ghost_story', 'hobgoblin', 'iridescent', 'jocular', 'keen', 'language', 'menace', 'numberless', 'osculate', 'pagan', 'quack', 'rhubarb', 'sausage', 'trumpet', 'unacceptable', 'vacillation', 'wacky', 'xenophobia', 'yellow', 'zeal'],
     exampleSymbolDelay: 200,
 
+    defaultStatusText: "Hang in there.",
+    tipTitle: "Handy Hints",
     tipSwipeHint: "Swipe left for more tips; swipe right to continue.",
     deleteDraftPrompt: "Delete draft and start a new thread?",
     resetThreadPrompt: "Reset and start a new thread?",
@@ -1060,34 +1063,32 @@ var WikiMess = (function() {
       return this[this.currentTab.method] ()
     },
 
-    showNavBar: function (currentTab) {
+    showNavBar: function (newTab) {
       var wm = this
 
       if (!this.navbar)
         this.navbar = $('<div class="navbar">')
       this.container.html (this.navbar)
 
-      if (!(this.currentTab && this.currentTab.name === currentTab)) {
-        this.navbar.html (this.banner = $('<div class="banner">'))
-        this.drawNavBar (currentTab)
-      }
+      this.drawNavBar (newTab)
     },
 
     redrawNavBar: function() {
-      this.navbar.empty()
-      this.drawNavBar (this.currentTab.name)
+      this.showNavBar (this.currentTab)
     },
 
-    drawNavBar: function (currentTab) {
+    drawNavBar: function (newTab) {
       var wm = this
       var navbar = this.navbar
+
+      navbar.empty().append (this.banner = $('<div class="banner">'))
 
       this.messageCountDiv = $('<div class="messagecount">').hide()
       if (typeof(this.messageCount) === 'undefined')
 	this.updateMessageCount()
       else
 	this.updateMessageCountDiv()
-	
+      
       this.tabs.forEach (function (tab) {
         var span = $('<span>').addClass('navtab').addClass('nav-'+tab.name)
 	var isMailbox = (tab.name === 'mailbox')
@@ -1104,7 +1105,7 @@ var WikiMess = (function() {
           .fail (function (err) {
             console.log(err)
           })
-        if (tab.name === currentTab) {
+        if (tab.name === newTab) {
           wm.currentTab = tab
           span.addClass('active')
         }
@@ -1985,11 +1986,11 @@ var WikiMess = (function() {
                                                hideIcon: 'edit',
 				               hideCallback: function() {
                                                  if (wm.messageBodyDiv)
-                                                   wm.stackDiv.removeClass('small').addClass('big')
+                                                   wm.messageBorderDiv.removeClass('small').addClass('big')
                                                },
 				               showCallback: function() {
                                                  if (wm.messageBodyDiv)
-                                                   wm.stackDiv.removeClass('big').addClass('small')
+                                                   wm.messageBorderDiv.removeClass('big').addClass('small')
                                                  // uncomment next line to automatically start editing template when 'edit' is pressed
                                                  // wm.messageComposeDiv.trigger ('click')
                                                } })
@@ -2042,8 +2043,9 @@ var WikiMess = (function() {
                                        suggestRow = $('<div class="sectiontitle suggestsectiontitle">')
                                        .text('Suggestions'),
                                        wm.suggestionDiv = $('<div class="suggest">')),
-                              $('<div class="messageborder">')
+                              wm.messageBorderDiv = $('<div class="messageborder">')
                               .append (wm.stackDiv = $('<div class="stack">'),
+                                       wm.meterSizeReference = $('<div class="meter meter-size-reference">'),
                                        wm.makeThrowArrowContainer ({ leftText: 'reject',
                                                                      rightText: 'accept' }))),
                      wm.infoPane,
@@ -2260,7 +2262,10 @@ var WikiMess = (function() {
       var card = wm.stack.createCard (cardDiv[0])
       cardDiv[0].swingCardObject = card  // HACK: allows us to retrieve the card object from the DOM, without messing around tracking all the cards
       var fadeInert = wm.fadeInertCard.bind (wm, card, cardDiv)
-      var toMailbox = (wm.playerID && !wm.standalone) ? wm.fadeInertToMailbox.bind (wm, card, cardDiv, message) : fadeInert
+      var toMailbox = (!wm.standalone && wm.playerID && ((message.sender && message.sender.id === wm.playerID)
+                                                         || (message.recipient && message.recipient.id === wm.playerID))
+                       ? wm.fadeInertToMailbox.bind (wm, card, cardDiv, message)
+                       : fadeInert)
       card.on ('throwoutleft', fadeInert)
       card.on ('throwoutright', fadeInert)
       card.on ('throwoutup', toMailbox)
@@ -2355,16 +2360,31 @@ var WikiMess = (function() {
     },
 
     tipSwipeHintSpan: function() {
-      return $('<p>').append ($('<em>').text (this.tipSwipeHint))
+      return $('<span class="tipswipehint">').text (this.tipSwipeHint)
     },
     
-    dealMeterCard: function() {
+    dealStatusCard: function() {
       var wm = this
       var vars = wm.compositionFinalVarVal()
-      if (!wm.ParseTree.isTruthy (vars['status']))
+      var meterDivPromises = wm.makeMeterDivPromises (vars, wm.meterSizeReference.height())
+      var gotMeters = !!meterDivPromises.length
+      var gotStatus = wm.ParseTree.isTruthy (vars['status'])
+      if (!gotStatus && !gotMeters)
         return wm.dealTipCard()
-      var statusText = wm.getContentExpansionWithoutSymbols (vars.status, vars)
-      return wm.dealHelpCard ($('<div>').text (statusText).append (wm.tipSwipeHintSpan()))
+      var metersDiv = $('<div class="meters">')
+      var statusDiv = $('<div>').append (metersDiv)
+      meterDivPromises.reduce (function (done, meterDivPromise) {
+        return done.then (function() {
+          return meterDivPromise.then (function (meterDiv) {
+            metersDiv.append (meterDiv)
+          })
+        })
+      }, $.Deferred().resolve())
+        .then (function() {
+          statusDiv.append ($('<span class="statustext">').text (gotStatus ? wm.getContentExpansionWithoutSymbols (vars.status, vars) : wm.defaultStatusText))
+          statusDiv.append (wm.tipSwipeHintSpan())
+          wm.dealHelpCard (statusDiv)
+        })
     },
 
     dealTipCard: function() {
@@ -2377,14 +2397,12 @@ var WikiMess = (function() {
 	.then (function (result) {
 	  var html = result.replace (/PHRASE/g, function() { return symCharHtml })
 	  wm.helpHtml = $.parseHTML(html).filter (function (elt) { return elt.tagName === 'DIV' })   // yuck
-            .map (function (elt) {
-              $(elt).append (wm.tipSwipeHintSpan())
-              return elt
-            })
 	  wm.addHelpIcons ($(wm.helpHtml))
 	})
       helpPromise.then (function() {
-        var cardDiv = $(wm.helpHtml[0]).removeAttr('style')
+        var cardDiv = $('<div>').append ($('<span class="tiptitle">').text(wm.tipTitle),
+                                         $(wm.helpHtml[0]).addClass('tiptext').removeAttr('style'),
+                                         wm.tipSwipeHintSpan())
         wm.helpHtml = wm.helpHtml.slice(1).concat (wm.helpHtml[0])  // rotate through help tips
         wm.dealHelpCard (cardDiv)
       })
@@ -2404,10 +2422,10 @@ var WikiMess = (function() {
         wm.fadeCard (cardDiv, card)
           .then (wm.clearComposeHelpMode.bind (wm))
       }
-      card.on ('throwoutright', endHelp)
       card.on ('throwoutleft', moreHelp)
-      card.on ('throwoutup', moreHelp)
-      card.on ('throwoutdown', moreHelp)
+      card.on ('throwoutright', endHelp)
+      card.on ('throwoutup', endHelp)
+      card.on ('throwoutdown', endHelp)
       wm.stopDrag()
       if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
         wm.startThrow()
@@ -2804,7 +2822,7 @@ var WikiMess = (function() {
     },
 
     goToMailbox: function (message) {
-      return wm.showMailboxPage ({ tab: (message.sender.id === wm.playerID
+      return wm.showMailboxPage ({ tab: (message.sender && message.sender.id === wm.playerID
                                          ? 'outbox'
                                          : 'inbox') })
         .then (function() {
@@ -3541,21 +3559,8 @@ var WikiMess = (function() {
       var vars = wm.compositionFinalVarVal (composition)
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
       var bannerHeight = wm.banner.height()
-      var meterDivPromises = meters.map (function (meter) {
-        var meterFields = wm.ParseTree.makeArray (meter)
-        var iconName = meterFields[0],
-            expr = meterFields[1]
-        var level = wm.getContentExpansionWithoutSymbols (expr, vars)
-        var meterDiv = $('<div class="meter">')
-        return wm.getIconPromise (iconName)
-            .then (function (svg) {
-              meterDiv.append ($('<div class="icon empty">').append ($(svg)),
-                               $('<div class="icon full">').append ($(svg))
-                               .css ('clip', 'rect(' + (1-level)*bannerHeight + 'px,100vw,100vh,0)'))
-              return meterDiv
-            })
-      })
-      meterDivPromises.reduce (function (done, meterReady) {
+      this.makeMeterDivPromises (vars, bannerHeight)
+        .reduce (function (done, meterReady) {
         return done.then (function (meterDivs) {
           return meterReady.then (function (meterDiv) {
             return meterDivs.concat ([meterDiv])
@@ -3566,7 +3571,34 @@ var WikiMess = (function() {
           wm.banner.empty().append (meterDivs)
         })
     },
-    
+
+    makeMeterDivPromises: function (vars, height) {
+      var wm = this
+      var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
+      return meters.map (function (meter) {
+        var meterFields = wm.ParseTree.makeArray (meter)
+        var iconName = meterFields[0],
+            levelExpr = meterFields[1] || 1,
+            labelExpr = meterFields[2]
+        var meterDiv = $('<div class="meter">')
+        if (!iconName.match (wm.iconFilenameRegex))
+          return meterDiv
+        var level = wm.getContentExpansionWithoutSymbols (levelExpr, vars)
+        var label = (labelExpr
+                     ? wm.getContentExpansionWithoutSymbols (labelExpr, vars)
+                     : (wm.ParseTree.capitalize (iconName.replace(/-/g,' ')) + ': ' + Math.round(100*level) + '%'))
+        return wm.getIconPromise (iconName)
+          .then (function (svg) {
+            meterDiv.append ($('<span class="label">').text (label),
+                             $('<div class="icons">')
+                             .append ($('<div class="icon empty">').append ($(svg)),
+                                      $('<div class="icon full">').append ($(svg))
+                                      .css ('clip', 'rect(' + (1-level)*height + 'px,100vw,100vh,0)')))
+            return meterDiv
+          })
+      })
+    },
+
     updateAvatarDiv: function (config) {
       var wm = this
       config = config || {}
@@ -5506,7 +5538,7 @@ var WikiMess = (function() {
     makeTipButton: function() {
       var wm = this
       return wm.makeSubNavIcon ('help', function() {
-	wm.dealMeterCard()
+	wm.dealStatusCard()
       })
     },
 

@@ -118,10 +118,6 @@ input {
     pointer-events: all;
 }
 
-.wikimess .navbar .banner .meter {
-    pointer-events: all;
-}
-
 .wikimess .suggest .button {
     width: 1.5em;
     height: 1.5em;
@@ -1529,8 +1525,30 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     height: 2.5vh;
 }
 
+.wikimess .messageborder .meter,
+.wikimess .messageborder .meter .icon,
+.wikimess .messageborder .meter .icons {
+    min-height: 3.75vh;
+    max-height: 3.75vh;
+}
+
+.wikimess .messageborder .meter .icons {
+    min-width: 3.75vh;
+}
+
 .wikimess .messagebody .avatar {
     min-height: 10vh;
+}
+
+.wikimess .messageborder.small .meter,
+.wikimess .messageborder.small .meter .icon,
+.wikimess .messageborder.small .meter .icons {
+    min-height: 2.5vh;
+    max-height: 2.5vh;
+}
+
+.wikimess .messageborder.small .meter .icons {
+    min-width: 2.5vh;
 }
 
 .wikimess .small .messagebody .avatar {
@@ -1715,6 +1733,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     opacity: .8;
     margin-left: 2px;
     margin-right: 2px;
+    margin-top: 2px;
 }
 
 .wikimess .lhslink.notfound,
@@ -1862,21 +1881,70 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     justify-content: space-around;
 }
 
-.wikimess .meter {
+.wikimess .banner .meter .label {
+    display: none;
+}
+
+.wikimess .messageborder .meter .label {
+    text-align: right;
+}
+
+.wikimess .meter-size-reference {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.wikimess .banner .meter {
     position: relative;
     display: flex;
     flex-direction: row;
     justify-content: space-around;
+    pointer-events: all;
+}
+
+.wikimess .messageborder .meters {
+    position: relative;
+    margin-left: 2vh;
+    margin-right: 2vh;
+    margin-top: 2vh;
+    flex-grow: 1;
+}
+
+.wikimess .messageborder .meter {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    overflow: hidden;
+}
+
+.wikimess .messageborder .meter .icons {
+    position: relative;
 }
 
 .wikimess .meter .icon {
     position: absolute;
     top: 0;
-    left: 0;
-    width: 100%;
+    right: 0;
     height: 100%;
 }
 
 .wikimess .meter .icon svg {
     height: 100%;
+}
+
+.wikimess .messageborder .tiptext,
+.wikimess .messageborder .statustext {
+    flex-grow: 1;
+}
+
+.wikimess .tiptitle {
+    font-weight: bold;
+    margin-top: 2vh;
+}
+
+.wikimess .tipswipehint {
+    font-style: italic;
+    margin-bottom: 1vh;
 }
