@@ -1063,18 +1063,20 @@ var WikiMess = (function() {
       return this[this.currentTab.method] ()
     },
 
-    showNavBar: function (newTab) {
+    showNavBar: function (newTab, redraw) {
       var wm = this
 
+      if (this.currentTab && this.currentTab.name === newTab) {
+        // avoid redrawing the navbar, which causes a flicker
+        this.container.children(':not(.navbar)').remove()
+        return
+      }
+        
       if (!this.navbar)
         this.navbar = $('<div class="navbar">')
       this.container.html (this.navbar)
 
       this.drawNavBar (newTab)
-    },
-
-    redrawNavBar: function() {
-      this.showNavBar (this.currentTab)
     },
 
     drawNavBar: function (newTab) {
@@ -1486,10 +1488,8 @@ var WikiMess = (function() {
         wm.theme = theme.style
         wm.themeInfo = theme
         wm.writeLocalStorage ('theme')
-        if (config.reload) {
+        if (config.reload)
           wm.redrawPopBack()
-          wm.redrawNavBar()
-        }
       }
     },
 
