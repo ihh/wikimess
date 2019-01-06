@@ -962,7 +962,6 @@ input {
     height: 15vh;
     min-height: 15vh;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     overflow-wrap: break-word;
     border-style: none solid none solid;
     border-width: 1px;
@@ -1438,7 +1437,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     text-align: center;
     flex-grow: 1;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 
     font-size: 3vh;
     line-height: 3.75vh;
@@ -1893,6 +1891,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     position: absolute;
     top: 0;
     left: 0;
+    pointer-events: none;
 }
 
 .wikimess .banner .meter {

@@ -2555,7 +2555,7 @@ var WikiMess = (function() {
       card.on ('dragend', function() {
         wm.throwArrowContainer.removeClass('dragging').addClass('throwing')
         cardDiv.removeClass('dragging').addClass('throwing')
-        wm.showMessageBody()
+        wm.showMessageBodyWithPreviews ({ animate: false })
       })
 
       cardDiv.hide()
@@ -2580,7 +2580,7 @@ var WikiMess = (function() {
       else
         contentPromise = cardReadyPromise
         .then (function() {
-          wm.showMessageBody ({ animate: config.alwaysAnimate })
+          wm.showMessageBodyWithPreviews ({ animate: config.alwaysAnimate })
         })
 
       return contentPromise
@@ -2718,15 +2718,23 @@ var WikiMess = (function() {
                                 ? swingEvent.throwDirection
                                 : undefined)
         if (wm.lastPreviewDirection !== previewDirection) {
-          var previewComposition = (previewDirection === swing.Direction.LEFT
-                                    || (wm.standalone &&
-                                        (previewDirection === swing.Direction.DOWN
-                                         || previewDirection === swing.Direction.UP))
-                                    ? wm.composition.preview.reject
-                                    : (previewDirection === swing.Direction.RIGHT
-                                       ? wm.composition.preview.accept
-                                       : wm.composition))
-          wm.showMessageBody ({ composition: previewComposition })
+          var previewComposition, previewClass
+              if (previewDirection === swing.Direction.LEFT
+                  || (wm.standalone &&
+                      (previewDirection === swing.Direction.DOWN
+                       || previewDirection === swing.Direction.UP))) {
+                previewComposition = wm.composition.preview.reject
+                previewClass = 'reject'
+              } else if (previewDirection === swing.Direction.RIGHT) {
+                previewComposition = wm.composition.preview.accept
+                previewClass = 'accept'
+              } else {
+                previewComposition = wm.composition
+                previewClass = 'unknown'
+              }
+          wm.messageBodyDiv.find('.preview').hide()
+          wm.messageBodyDiv.find('.preview-' + previewClass).show()
+          wm.showMeters (previewComposition)
           wm.lastPreviewDirection = previewDirection
         }
       }
@@ -2979,9 +2987,6 @@ var WikiMess = (function() {
       }
     },
     
-    sendRejected: function() {
-    },
-
     acceptCurrentCard: function() {
       var wm = this
       if (wm.useThrowAnimations())
@@ -3481,7 +3486,7 @@ var WikiMess = (function() {
                     wm.composition.preview = { accept: wm.composition,
                                                reject: wm.composition }
                 }).then (function() {
-                  wm.showMessageBody ({ animate: !wm.headerToggler.hidden })
+                  wm.showMessageBodyWithPreviews()
                 })
             })
         } else
@@ -3515,6 +3520,16 @@ var WikiMess = (function() {
       }
     },
     
+    showMessageBodyWithPreviews: function (config) {
+      var wm = this
+      config = config || {}
+      wm.showMessageBody ({ animate: typeof(config.animate) === 'undefined' ? !wm.headerToggler.hidden : config.animate })
+      wm.showMessageBody ({ composition: wm.composition.preview.accept,
+                            preview: 'accept' })
+      wm.showMessageBody ({ composition: wm.composition.preview.reject,
+                            preview: 'reject' })
+    },
+
     showMessageBody: function (config) {
       var wm = this
       config = config || {}
@@ -3523,24 +3538,33 @@ var WikiMess = (function() {
       var expansion = config.expansion || composition.body
       var tweeter = config.tweeter || composition.tweeter
       var avatar = config.avatar || composition.avatar
-      var textDiv = $('<div class="text">')
-      wm.avatarDiv = config.inEditor ? null : $('<div class="avatar">')
-      div.empty()
-      if (wm.avatarDiv) {
-        wm.updateAvatarDiv (config)
-        div.append (wm.avatarDiv)
+      var preview = config.preview || 'unknown'
+      var textDiv = $('<div class="text">').addClass('preview').addClass ('preview-' + preview)
+      if (!config.preview) {
+        div.empty()
+        wm.avatarDiv = config.inEditor ? null : $('<div class="avatar">')
+        if (wm.avatarDiv) {
+          wm.updateAvatarDiv (config)
+          div.append (wm.avatarDiv)
+        }
       }
       div.append (textDiv)
-      wm.animationExpansion = _.cloneDeep (expansion)
-      wm.animationDiv = textDiv
+      if (config.preview)
+        textDiv.hide()
+      else {
+        wm.animationExpansion = _.cloneDeep (expansion)
+        wm.animationDiv = textDiv
+      }
       wm.randomizeEmptyMessageWarning()
-      if (config.animate && wm.countSymbolNodes(expansion,true)) {
+      if (config.animate && wm.countSymbolNodes(wm.animationExpansion,true)) {
         delete wm.animationSteps
         this.startAnimatingExpansion()
       } else {
-	if (wm.animationExpansion)
-          wm.deleteAllSymbolNames (wm.animationExpansion)
-        wm.animationSteps = 0
+	if (!config.preview) {
+          if (wm.animationExpansion)
+            wm.deleteAllSymbolNames (wm.animationExpansion)
+          wm.animationSteps = 0
+        }
 	var rawExpansion = wm.makeExpansionText ({ node: expansion,
                                                    vars: wm.compositionVarVal (composition) })
 	var processedExpansion = rawExpansion.replace (/^\s*$/, (!config.inEditor && wm.templateIsEmpty()
@@ -3550,7 +3574,7 @@ var WikiMess = (function() {
         if (wm.showScrollButtons)
           wm.showScrollButtons()
       }
-      if (wm.banner && !config.inEditor)
+      if (wm.banner && !config.inEditor && !config.preview)
         wm.showMeters (composition)
     },
 
@@ -5114,6 +5138,8 @@ var WikiMess = (function() {
     },
 
     countSymbolNodes: function (node, includeLimitedNodes) {
+      if (!node.rhs)
+        return 0
       var nodes = this.ParseTree.getSymbolNodes (node.rhs)
       if (!includeLimitedNodes)
 	nodes = nodes.filter (function (node) {
@@ -5145,11 +5171,11 @@ var WikiMess = (function() {
       var wm = this
       loadSymbol = loadSymbol || wm.loadGrammarSymbol.bind(wm)
       makeRhsSpan = makeRhsSpan || function (rhs) { return wm.makeRhsSpan (rhs, makeRhsSpan, loadSymbol) }
-      function leftBraceSpan() { return $('<span class="syntax-brace">').text (leftBraceChar) }
-      function rightBraceSpan() { return $('<span class="syntax-brace">').text (rightBraceChar) }
-      function funcSpan (name) { return $('<span class="syntax-func-name">').text (funcChar + name) }
+      function makeLeftBraceSpan() { return $('<span class="syntax-brace">').text (leftBraceChar) }
+      function makeRightBraceSpan() { return $('<span class="syntax-brace">').text (rightBraceChar) }
+      function makeFuncSpan (name) { return $('<span class="syntax-func-name">').text (funcChar + name) }
       function argSpanMaker (arg) {
-        return $('<span>').append (leftBraceSpan(), makeRhsSpan (arg), rightBraceSpan())
+        return $('<span>').append (makeLeftBraceSpan(), makeRhsSpan (arg), makeRightBraceSpan())
       }
       function wrapArgSpanMaker (arg) { return argSpanMaker ([arg]) }
       return $('<span>')
@@ -5163,17 +5189,17 @@ var WikiMess = (function() {
             tokSpan.addClass ('syntax-var')
             return tokSpan.html.apply (tokSpan,
                                        [typeof(nextTok) === 'string' && nextTok.match(/^[A-Za-z0-9_]/)
-                                         ? [varChar, leftBraceSpan(), tok.varname, rightBraceSpan()]
+                                         ? [varChar, makeLeftBraceSpan(), tok.varname, makeRightBraceSpan()]
                                          : [varChar, tok.varname]])
           case 'assign':
-            return tokSpan.append (tok.local ? funcSpan('let') : '',
+            return tokSpan.append (tok.local ? makeFuncSpan('let') : '',
                                    $('<span class="syntax-var">').append (varChar, tok.varname),
                                    (tok.visible ? ':' : '') + assignChar,
                                    $('<span class="syntax-target">')
-                                   .append (leftBraceSpan(),
+                                   .append (makeLeftBraceSpan(),
                                             makeRhsSpan (tok.value),
-                                            rightBraceSpan()),
-                                   tok.local ? [leftBraceSpan(), makeRhsSpan (tok.local), rightBraceSpan()] : [])
+                                            makeRightBraceSpan()),
+                                   tok.local ? [makeLeftBraceSpan(), makeRhsSpan (tok.local), makeRightBraceSpan()] : [])
           case 'alt':
             return tokSpan.append ($('<span class="syntax-alt-char">').text(leftSquareBraceChar),
                                    tok.opts.reduce (function (result, opt, n) {
@@ -5183,14 +5209,14 @@ var WikiMess = (function() {
                                    }, []),
                                    $('<span class="syntax-alt-char">').text(rightSquareBraceChar))
           case 'rep':
-            return tokSpan.append (funcSpan('rep'),
-                                   leftBraceSpan(),
+            return tokSpan.append (makeFuncSpan('rep'),
+                                   makeLeftBraceSpan(),
                                    makeRhsSpan(tok.unit),
-                                   rightBraceSpan(),
-                                   leftBraceSpan(),
+                                   makeRightBraceSpan(),
+                                   makeLeftBraceSpan(),
                                    tok.min,
                                    (tok.max !== tok.min ? (',' + tok.max) : ''),
-                                   rightBraceSpan())
+                                   makeRightBraceSpan())
           case 'cond':
             if (wm.ParseTree.isTraceryExpr (tok, wm.makeSymbolName.bind(wm)))
               return $('<span>').append (traceryChar, tok.test[0].varname, traceryChar)
@@ -5203,9 +5229,9 @@ var WikiMess = (function() {
                                                  .addClass ('syntax-cond-keyword')
                                                  .addClass ('syntax-' + keyword_arg)
                                                  .text (keyword_arg[0]),
-                                                 leftBraceSpan(),
+                                                 makeLeftBraceSpan(),
                                                  makeRhsSpan (keyword_arg[1]),
-                                                 rightBraceSpan()) }))
+                                                 makeRightBraceSpan()) }))
           case 'func':
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
