@@ -1804,6 +1804,7 @@ var WikiMess = (function() {
                       wm.divAutosuggest()
                     }
                     wm.suggestionDiv.append (wm.makeIconButton ('backspace', backspace))
+                    wm.restoreScrolling (wm.suggestionDiv)
                   }
                 })
             }
@@ -3163,6 +3164,7 @@ a      })
              .empty()
              .off ('click')
              .on ('click', function() { input.focus() })
+           wm.restoreScrolling (wm.suggestionDiv)
            wm.textareaAutosuggest (input)
          },
          hideCallback: function() {
@@ -3202,6 +3204,7 @@ a      })
                      return $('<span>').html (wm.makeSymbolSpan (symbol, function (evt) {
                        evt.stopPropagation()
                        wm.suggestionDiv.empty()
+                       wm.restoreScrolling (wm.suggestionDiv)
                        symbolSelectCallback (symbol)
                      }, 'div', [[symChar + symbol.name, function() { symbolSelectCallback (symbol) }],
                                 [symChar + wm.ParseTree.capitalize(symbol.name), function() { symbolSelectCallback (symbol, ['cap']) }],
@@ -3211,6 +3214,7 @@ a      })
                                 ['Go to thesaurus definition', function() { wm.showGrammarLoadSymbol (symbol) }]
                                ]))
           }))
+        wm.restoreScrolling (wm.suggestionDiv)
       })
     },
     
