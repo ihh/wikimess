@@ -2431,7 +2431,7 @@ var WikiMess = (function() {
       })
       card.on ('throwinend', function() {
         wm.stopDrag (cardDiv)
-      })
+a      })
       wm.stopDrag (cardDiv)
       if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
         wm.startThrow()
@@ -4047,9 +4047,10 @@ var WikiMess = (function() {
               })
           }
         }
-        buttonsDiv.append (message.id === wm.playerInfo.botMessage
-                           ? wm.makeIconButton ('unpin', updateBotMessage (null))
-                           : wm.makeIconButton ('pin', updateBotMessage (message.id)))
+        if (wm.playerID)
+          buttonsDiv.append (message.id === wm.playerInfo.botMessage
+                             ? wm.makeIconButton ('unpin', updateBotMessage (null))
+                             : wm.makeIconButton ('pin', updateBotMessage (message.id)))
       }
       div.append (avatarDiv,
                   $('<div class="mailboxheader">')
