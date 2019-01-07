@@ -2426,7 +2426,13 @@ var WikiMess = (function() {
       card.on ('throwoutright', endHelp)
       card.on ('throwoutup', endHelp)
       card.on ('throwoutdown', endHelp)
-      wm.stopDrag()
+      card.on ('dragstart', function() {
+        wm.startDrag (cardDiv)
+      })
+      card.on ('throwinend', function() {
+        wm.stopDrag (cardDiv)
+      })
+      wm.stopDrag (cardDiv)
       if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
         wm.startThrow()
 	card.throwIn (0, -wm.throwYOffset())
