@@ -772,6 +772,7 @@ input {
     display: none;
 }
 
+.wikimess .tiptitle,
 .wikimess .bodysectiontitle,
 .wikimess .messageheader {
     font-size: 1.5vh;
@@ -824,16 +825,6 @@ input {
 .wikimess .messageheader .tagcol {
     flex-grow: 1;
 }
-
-/*
-.wikimess .compose .messageheader .row.direct .label {
-    display: block;
-}
-
-.wikimess .compose .messageheader .row.direct .input {
-    padding-right: 16px;
-}
-*/
 
 .wikimess .messageheader .label {
     float: left;
@@ -929,6 +920,7 @@ input {
     border-style: solid;
 }
 
+.wikimess .tiptitle,
 .wikimess .bodysectiontitle {
     text-align: center;
     border-style: none none dashed none;
@@ -1100,6 +1092,15 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     -webkit-box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
     -moz-box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
     box-shadow: 2px 2px 1px 1px rgba(64,0,0,0.3);
+}
+
+.wikimess .stack .tiptitle {
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#fce5fb+0,f25bf7+100 */
+background: #fce5fb; /* Old browsers */
+background: -moz-linear-gradient(-45deg, #fce5fb 0%, #f25bf7 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg, #fce5fb 0%,#f25bf7 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg, #fce5fb 0%,#f25bf7 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fce5fb', endColorstr='#f25bf7',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 }
 
 .wikimess .stack .composecard.dragging,
@@ -1453,6 +1454,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     margin: 2px;
 }
 
+.wikimess .tipswipehint,
 .wikimess .choicetext,
 .wikimess .inerttext {
     font-size: 1.5vh;
@@ -1462,10 +1464,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     margin-bottom: 4px;
 }
 
-.wikimess .choicetext {
-}
-
-.wikimess .small .choicetext {
+.wikimess .small .tipswipehint,
+.wikimess .small .choicetext,
+.wikimess .small .inerttext {
     font-size: 1vh;
     line-height: 1vh;
     margin-bottom: 3px;
@@ -1884,7 +1885,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
 }
 
 .wikimess .messageborder .meter .label {
-    text-align: right;
+    font-size: smaller;
+    text-align: center;
+    flex-grow: 1;
 }
 
 .wikimess .meter-size-reference {
@@ -1933,17 +1936,15 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fed6fd', end
     height: 100%;
 }
 
+.wikimess .messageborder .tiptext {
+    margin: 2vh;
+}
+
+.wikimess .messageborder.small .tiptext {
+    margin: 1.5vh;
+}
+
 .wikimess .messageborder .tiptext,
 .wikimess .messageborder .statustext {
     flex-grow: 1;
-}
-
-.wikimess .tiptitle {
-    font-weight: bold;
-    margin-top: 2vh;
-}
-
-.wikimess .tipswipehint {
-    font-style: italic;
-    margin-bottom: 1vh;
 }

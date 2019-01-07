@@ -289,6 +289,7 @@ var WikiMess = (function() {
     exampleSymbolDelay: 200,
 
     defaultStatusText: "Hang in there.",
+    statusTitle: "Stats",
     tipTitle: "Handy Hints",
     tipSwipeHint: "Swipe left for more tips; swipe right to continue.",
     deleteDraftPrompt: "Delete draft and start a new thread?",
@@ -2367,13 +2368,14 @@ var WikiMess = (function() {
     dealStatusCard: function() {
       var wm = this
       var vars = wm.compositionFinalVarVal()
-      var meterDivPromises = wm.makeMeterDivPromises (vars, wm.meterSizeReference.height())
+      var meterDivPromises = wm.makeMeterDivPromises (vars, wm.meterSizeReference.height(), true)
       var gotMeters = !!meterDivPromises.length
       var gotStatus = wm.ParseTree.isTruthy (vars['status'])
       if (!gotStatus && !gotMeters)
         return wm.dealTipCard()
       var metersDiv = $('<div class="meters">')
-      var statusDiv = $('<div>').append (metersDiv)
+      var statusDiv = $('<div>').append ($('<div class="sectiontitle tiptitle">').append ($('<span>').text (wm.statusTitle)),
+                                         metersDiv)
       meterDivPromises.reduce (function (done, meterDivPromise) {
         return done.then (function() {
           return meterDivPromise.then (function (meterDiv) {
@@ -2401,7 +2403,7 @@ var WikiMess = (function() {
 	  wm.addHelpIcons ($(wm.helpHtml))
 	})
       helpPromise.then (function() {
-        var cardDiv = $('<div>').append ($('<span class="tiptitle">').text(wm.tipTitle),
+        var cardDiv = $('<div>').append ($('<div class="sectiontitle tiptitle">').append ($('<span>').text (wm.tipTitle)),
                                          $(wm.helpHtml[0]).addClass('tiptext').removeAttr('style'),
                                          wm.tipSwipeHintSpan())
         wm.helpHtml = wm.helpHtml.slice(1).concat (wm.helpHtml[0])  // rotate through help tips
@@ -2432,7 +2434,7 @@ var WikiMess = (function() {
       })
       card.on ('throwinend', function() {
         wm.stopDrag (cardDiv)
-a      })
+      })
       wm.stopDrag (cardDiv)
       if (wm.useThrowAnimations() || wm.alwaysThrowInHelpCards) {
         wm.startThrow()
@@ -3593,7 +3595,7 @@ a      })
       var vars = wm.compositionFinalVarVal (composition)
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
       var bannerHeight = wm.banner.height()
-      this.makeMeterDivPromises (vars, bannerHeight)
+      this.makeMeterDivPromises (vars, bannerHeight, false)
         .reduce (function (done, meterReady) {
         return done.then (function (meterDivs) {
           return meterReady.then (function (meterDiv) {
@@ -3606,7 +3608,7 @@ a      })
         })
     },
 
-    makeMeterDivPromises: function (vars, height) {
+    makeMeterDivPromises: function (vars, height, showLabel) {
       var wm = this
       var meters = vars['meters'] ? wm.ParseTree.makeArray(vars.meters) : []
       return meters.map (function (meter) {
@@ -3618,16 +3620,21 @@ a      })
         if (!iconName.match (wm.iconFilenameRegex))
           return meterDiv
         var level = wm.getContentExpansionWithoutSymbols (levelExpr, vars)
-        var label = (labelExpr
+        var label = (showLabel && labelExpr
                      ? wm.getContentExpansionWithoutSymbols (labelExpr, vars)
                      : (wm.ParseTree.capitalize (iconName.replace(/-/g,' ')) + ': ' + Math.round(100*level) + '%'))
         return wm.getIconPromise (iconName)
           .then (function (svg) {
-            meterDiv.append ($('<span class="label">').text (label),
-                             $('<div class="icons">')
-                             .append ($('<div class="icon empty">').append ($(svg)),
-                                      $('<div class="icon full">').append ($(svg))
-                                      .css ('clip', 'rect(' + (1-level)*height + 'px,100vw,100vh,0)')))
+            function makeMeter() {
+              return $('<div class="icons">')
+                .append ($('<div class="icon empty">').append ($(svg)),
+                         $('<div class="icon full">').append ($(svg))
+                         .css ('clip', 'rect(' + (1-level)*height + 'px,100vw,100vh,0)'))
+            }
+            meterDiv.append (makeMeter())
+            if (showLabel)
+              meterDiv.append ($('<span class="label">').text (label),
+                               makeMeter())
             return meterDiv
           })
       })
