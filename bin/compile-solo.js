@@ -45,10 +45,20 @@ var dummyEndScript = "<end script disrupted by compile-solo.js>"
 minJs = minJs.replace (regex, dummyEndScript)
 minCss = minCss.replace (regex, dummyEndScript)
 
+var htmlFilenameRegex = /^(.*)\.html$/;
+var htmlDir = 'www/html'
+var preloadedHtml = fs.readdirSync (htmlDir).reduce (function (s, file) {
+  var match = htmlFilenameRegex.exec (file)
+  return s + (match
+              ? ('<div id="html-' + match[1] + '">' + fs.readFileSync(htmlDir + '/' + file).toString() + '</div>')
+              : '')
+}, '<div style="display:none;">') + '</div>'
+
 var title = 'wikimess'
 var data = '<!DOCTYPE html><html><head><title>' + title + '</title>'
     + '<script type="text/javascript">' + minJs + '</script>'
     + '<style>' + minCss + '</style>'
+    + preloadedHtml
     + '<body><div id="wikimess"></div></body>'
     + '<script type="text/javascript">var wm;$(function() {wm = new WikiMess('
     + '{standalone:true,templateDefs:' + quote(templates) + ',symbolDefs:' + quote(symbols) + '}'

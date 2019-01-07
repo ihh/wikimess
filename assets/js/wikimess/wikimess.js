@@ -478,15 +478,15 @@ var WikiMess = (function() {
     },
 
     REST_getWelcomeHtml: function() {
-      return this.logGet ('/html/welcome-guest.html')
+      return this.wrapREST_getHtml ('welcome-guest')
     },
 
     REST_getComposeTipsHtml: function() {
-      return this.logGet ('/html/message-compose-tips.html')
+      return this.wrapREST_getHtml ('message-compose-tips')
     },
 
     REST_getGrammarHelpHtml: function() {
-      return this.logGet ('/html/grammar-editor-help.html')
+      return this.wrapREST_getHtml ('grammar-editor-help')
     },
 
     REST_getPlayerSuggestTemplates: function (playerID) {
@@ -709,11 +709,17 @@ var WikiMess = (function() {
     },
 
     // wrappers for AJAX calls that intercept the call when in standalone mode
+    wrapREST_getHtml: function (stub) {
+      if (this.standalone)
+        return $.Deferred().resolve ($('#html-' + stub)).html()
+      return this.logGet ('html/' + stub + '.html')
+    },
+
     wrapREST_getPlayerSuggestTemplates: function (playerID) {
       if (this.standalone) {
         if (this.verbose.standalone)
-          console.warn ('SuggestTemplates', templates)
-        return $.Deferred().resolve ({ templates: templates })
+          console.warn ('SuggestTemplates', wm.templates)
+        return $.Deferred().resolve ({ templates: wm.templates })
       }
       return this.REST_getPlayerSuggestTemplates (playerID)
     },
