@@ -1,6 +1,7 @@
 // api/services/TemplateService.js
 var _ = require('lodash')
 var Promise = require('bluebird')
+var parseTree = require('bracery').ParseTree
 
 module.exports = {
 

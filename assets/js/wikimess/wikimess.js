@@ -5216,14 +5216,27 @@ var WikiMess = (function() {
                                          ? [varChar, makeLeftBraceSpan(), tok.varname, makeRightBraceSpan()]
                                          : [varChar, tok.varname]])
           case 'assign':
-            return tokSpan.append (tok.local ? makeFuncSpan('let') : '',
-                                   $('<span class="syntax-var">').append (varChar, tok.varname),
-                                   (tok.visible ? ':' : '') + assignChar,
-                                   $('<span class="syntax-target">')
-                                   .append (makeLeftBraceSpan(),
-                                            makeRhsSpan (tok.value),
-                                            makeRightBraceSpan()),
-                                   tok.local ? [makeLeftBraceSpan(), makeRhsSpan (tok.local), makeRightBraceSpan()] : [])
+            if (wm.ParseTree.isQuoteAssignExpr (tok))
+              return tokSpan.append (makeFuncSpan (tok.varname),
+                                     $('<span class="syntax-target">')
+                                     .append (makeLeftBraceSpan(),
+                                              makeRhsSpan (tok.value[0].args),
+                                              makeRightBraceSpan()))
+            else if (wm.ParseTree.isTagExpr (tok))
+              return tokSpan.append (makeFuncSpan ('tag'),
+                                     $('<span class="syntax-target">')
+                                     .append (makeLeftBraceSpan(),
+                                              makeRhsSpan (wm.ParseTree.getTagExprRhs (tok)),
+                                              makeRightBraceSpan()))
+            else
+              return tokSpan.append (tok.local ? makeFuncSpan('let') : '',
+                                     $('<span class="syntax-var">').append (varChar, tok.varname),
+                                     (tok.visible ? ':' : '') + assignChar,
+                                     $('<span class="syntax-target">')
+                                     .append (makeLeftBraceSpan(),
+                                              makeRhsSpan (tok.value),
+                                              makeRightBraceSpan()),
+                                     tok.local ? [makeLeftBraceSpan(), makeRhsSpan (tok.local), makeRightBraceSpan()] : [])
           case 'alt':
             return tokSpan.append ($('<span class="syntax-alt-char">').text(leftSquareBraceChar),
                                    tok.opts.reduce (function (result, opt, n) {
@@ -5257,6 +5270,13 @@ var WikiMess = (function() {
                                                  makeRhsSpan (keyword_arg[1]),
                                                  makeRightBraceSpan()) }))
           case 'func':
+            if (wm.ParseTree.isMeterExpr (tok)) {
+              var status = wm.ParseTree.getMeterStatus (tok)
+              return tokSpan.append (makeFuncSpan ('meter'),
+                                     argSpanMaker ([wm.ParseTree.getMeterIcon (tok)]),
+                                     argSpanMaker (wm.ParseTree.getMeterLevel (tok)),
+                                     status ? argSpanMaker (status) : ' ')
+            }
 	    var sugaredName = wm.ParseTree.makeSugaredName (tok, wm.makeSymbolName.bind(wm))
 	    if (sugaredName)
               return (sugaredName[0] === symChar
