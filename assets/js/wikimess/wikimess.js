@@ -4484,7 +4484,7 @@ var WikiMess = (function() {
           var elem = $(svg)
           if (config.color)
             elem.css ('fill', config.color)
-          button.prepend ($(svg))
+          button.prepend (elem)
         })
       if (config.callback)
         button.on ('click', config.callback)
