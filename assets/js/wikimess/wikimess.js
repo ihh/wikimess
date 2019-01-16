@@ -3518,7 +3518,8 @@ var WikiMess = (function() {
       var safeRegex = /^#?[a-zA-Z0-9_\-]+$/
       if (varVal && varVal['icon'] && varVal.icon.match(safeRegex))
         div.append (wm.makeIconButton ({ iconFilename: varVal.icon,
-                                         color: (varVal.icolor && varVal.icolor.match(safeRegex)) ? varVal.icolor : undefined }))
+                                         color: (varVal.icolor && varVal.icolor.match(safeRegex)) ? varVal.icolor : undefined }),
+                   $('<div class="avatarname">').text (varVal.caption || ''))
       else if (tweeter) {
 	div.append ($('<img>').attr ('src', this.REST_makeAvatarURL (tweeter, size || 'original')))
         .on ('click', function (evt) {
