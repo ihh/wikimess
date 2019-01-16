@@ -23,6 +23,7 @@ function nextVarVal (config, parseTree) {
   delete varVal.tags
   delete varVal.icon
   delete varVal.icolor
+  delete varVal.caption
   delete varVal.sender
   delete varVal.recipient
   this.populateVarVal (varVal, config.sender, config.recipient, config.tags)
