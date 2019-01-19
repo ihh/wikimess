@@ -10,6 +10,12 @@ The app runs in a mobile browser with a swipe-based interface for accepting/reje
 You will need to rename the file [config/local_example.js](config/local_example.js) to "config/local.js".
 If you want to set up Twitter and/or Facebook API keys, this is the place to put them.
 
+You will also need MySQL (for the database) and Redis (for the session store) running on localhost.
+
+In MySQL you will need to create a database called 'wikimess'.
+Currently the MySQL username is set to 'root' and the password is the empty string.
+This can be changed in [config/datastores.js](config/datastores.js).
+
 Then e.g. (on Mac)
 
     brew install node
@@ -20,24 +26,18 @@ Then e.g. (on Mac)
 
 Then point your browser to [localhost:1337](http://localhost:1337/).
 
-
-You will also need MySQL (for the database) and Redis (for the session store) running on localhost.
-
-In MySQL you will need to create a database called 'wikimess'.
-Currently the MySQL username is set to 'root' and the password is the empty string.
-This can be changed in [config/datastores.js](config/datastores.js).
-
 The final two steps of this initialization sequence (`sails lift` and `bin/load-data.js`) can be combined by specifying `-l` to the [load-data.js](bin/load-data.js) script
 
     bin/load-data.js -l
 
-The script has lots more options; it crawls the [data](data) directory to pre-load corpora into the wiki database.
+The script has lots more options; it crawls the [data](data) directory to pre-load corpora into the thesaurus (i.e. the database of symbol expansions constituting the context-free grammar).
 
 ## Configuration
 
-You can log in using Twitter or Facebook authentication (via [passport.js](http://passportjs.org/)).
+You can log in using Twitter authentication (via [passport.js](http://passportjs.org/)).
 However, currently this redirects back to `wikimess.me`, so it will not work on your local machine.
-Edit the Twitter/Facebook client ID & secret in [config/local_example.js](config/local_example.js) (and rename to config/local.js) to use a different Twitter/Facebook account and app credentials.
+Edit the Twitter client ID & secret in [config/local_example.js](config/local_example.js) (and rename to config/local.js) to use a different Twitter account and app credentials.
+(Facebook authentication is also implemented, but is currently disabled by default in the [client](assets/js/wikimess/wikimess.js) via the configuration setting `showFacebookLoginButton: false`.)
 
 To enable/disable direct inspection of the data model via Sails [blueprint methods](https://sailsjs.com/documentation/reference/blueprint-api),
 edit the REST policy in [config/policies.js](config/policies.js).
