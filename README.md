@@ -54,10 +54,15 @@ On startup, an initial set of symbols is loaded from the [data/symbols](data/sym
 Special Bracery variables interpreted by Wiki Messenger include
 
 - `$icon` and `$icolor` (name and color of icons displayed on cards)
+- `$caption` (optional caption text underneath the icon)
 - `$tags` (set by default to the message tags; if modified, will override the message tags)
 - `$prevtags` (tags for the previous message)
 - `$reject`, if defined, forces a card to be posted (with `&$reject` appended) even if the player rejects it
 - `$accept`, if defined, will cause `&$accept` to be appended to _accepted_ cards before posting
+- `$status`, if defined, will cause `&$status` to be displayed on help cards
+- `$meters` contains a list of tuples of the form (icon,level,status) which can be used to add meter icons to the navbar along with status text on help cards
+
+Bracery provides some functions to manipulate these variables (`&tag`, `&accept`, `&reject`, `&status`, `&meter`).
 
 ### Symbol directory syntax
 
