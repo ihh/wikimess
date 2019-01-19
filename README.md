@@ -7,7 +7,10 @@ The app runs in a mobile browser with a swipe-based interface for accepting/reje
 
 ## Installation
 
-e.g on Mac
+You will need to rename the file [config/local_example.js](config/local_example.js) to "config/local.js".
+If you want to set up Twitter and/or Facebook API keys, this is the place to put them.
+
+Then e.g. (on Mac)
 
     brew install node
     npm install -g sails
@@ -16,6 +19,7 @@ e.g on Mac
     bin/load-data.js
 
 Then point your browser to [localhost:1337](http://localhost:1337/).
+
 
 You will also need MySQL (for the database) and Redis (for the session store) running on localhost.
 
