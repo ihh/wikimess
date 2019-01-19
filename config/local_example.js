@@ -1,4 +1,5 @@
 // You need something like this for Facebook/Twitter integration
+// Rename this file to 'local.js'
 
 /*
 module.exports.local = {
