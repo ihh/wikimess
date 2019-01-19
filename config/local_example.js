@@ -19,4 +19,11 @@ module.exports.local = {
  baseURL: 'http://wikimess.me'
 
 };
+
+module.exports.sockets = {
+    // Array of hosts (beginning with http:// or https://) from which sockets will be allowed to connect.                                                           
+    // Required in production mode as of Sails v1.0                                                                                                                 
+    onlyAllowOrigins: [module.exports.local.baseURL]
+};
+
 */
