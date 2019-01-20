@@ -1906,7 +1906,6 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fce5fb', end
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    pointer-events: all;
 }
 
 .wikimess .messageborder .meters {

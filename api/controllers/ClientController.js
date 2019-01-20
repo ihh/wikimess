@@ -474,6 +474,7 @@ module.exports = {
     Message.find ({ recipient: playerID,
                     recipientDeleted: false })
       .populate ('sender')
+      .populate ('template')
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
@@ -481,6 +482,7 @@ module.exports = {
                    title: message.title || parseTree.summarizeExpansion (message.body),
                    sender: { id: message.sender.id,
                              displayName: message.sender.displayName },
+                   author: { id: message.template.author },
                    date: message.createdAt,
                    tweeter: message.tweeter,
                    avatar: message.avatar,
@@ -515,6 +517,7 @@ module.exports = {
     Message.find ({ sender: playerID,
                     senderDeleted: false })
       .populate ('recipient')
+      .populate ('template')
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
@@ -524,6 +527,7 @@ module.exports = {
                                ? { id: message.recipient.id,
                                    displayName: message.recipient.displayName }
                                : undefined),
+                   author: { id: message.template.author },
                    tweeter: message.tweeter,
                    avatar: message.avatar,
                    date: message.createdAt }
@@ -543,6 +547,7 @@ module.exports = {
       .sort ('id DESC')
       .limit (limit)
       .populate ('sender')
+      .populate ('template')
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
@@ -552,6 +557,7 @@ module.exports = {
                             ? { id: message.sender.id,
                                 displayName: message.sender.displayName }
                             : undefined),
+                   author: { id: message.template.author },
                    tweeter: message.tweeter,
                    avatar: message.avatar,
                    date: message.createdAt }

@@ -3850,7 +3850,9 @@ var WikiMess = (function() {
         wm.mailboxCache.outbox = outbox
         return outbox
       }).then (function (result) {
-        
+        result.messages.forEach (function (message) {
+          message.sender = { id: wm.playerID }
+        })
         wm.populateMailboxDiv ($.extend ({ messages: result.messages },
                                          wm.outboxProps()))
         return result
@@ -4076,7 +4078,7 @@ var WikiMess = (function() {
               })
           }
         }
-        if (wm.playerID && message.sender && message.sender.id === wm.playerID)
+        if (wm.playerID && message.sender && message.sender.id === wm.playerID && message.author && message.author.id === wm.playerID)
           buttonsDiv.append (message.id === wm.playerInfo.botMessage
                              ? wm.makeIconButton ('unpin', updateBotMessage (null))
                              : wm.makeIconButton ('pin', updateBotMessage (message.id)))
