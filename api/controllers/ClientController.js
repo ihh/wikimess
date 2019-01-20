@@ -628,7 +628,7 @@ module.exports = {
         var updatedPromise
         if (message && !message.read && message.recipient && message.recipient.id === playerID)
           updatedPromise = function() {
-	    return Message.update ({ id: messageID },
+	    return Message.update ({ id: message.id },
                                    { read: true })
 	  }
         else
