@@ -292,7 +292,7 @@ var WikiMess = (function() {
     statusTitle: "Stats",
     tipTitle: "Handy Hints",
     tipSwipeHint: "Swipe left for more tips; swipe right to continue.",
-    deleteDraftPrompt: "Delete draft and start a new thread?",
+    deleteDraftPrompt: "Delete this draft?",
     resetThreadPrompt: "Reset and start a new thread?",
     emptyContentWarning: "Enter text here, or pick from the suggestions below. Add '" + symChar + "' before a word to insert a random synonym for that word, e.g. '" + symChar + "cat' or '" + symChar + "osculate'.",
     emptyTemplateWarning: "_The message will appear here._",
@@ -1602,7 +1602,18 @@ var WikiMess = (function() {
                                   previousTags: wm.composition.previousTags,
                                   template: wm.composition.template,
                                   title: wm.composition.title,
-                                  body: wm.composition.body }
+                                  body: wm.composition.body,
+                                  preview: {
+                                    accept: {
+                                      body: wm.composition.preview.accept.body,
+                                      template: wm.composition.preview.accept.template
+                                    },
+                                    reject: {
+                                      body: wm.composition.preview.reject.body,
+                                      template: wm.composition.preview.reject.template
+                                    }
+                                  }
+                                }
                     if (wm.composition.draft)
                       wm.promiseSave (wm.REST_putPlayerDraft (wm.playerID, wm.composition.draft, draft))
                     else
@@ -1648,6 +1659,11 @@ var WikiMess = (function() {
               }).on ('change', markForSave)
           }
 
+          wm.messageComposeDiv = $('<div class="messagecompose">')
+          makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
+          makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
+          makeMessageHeaderInput ('tags', 'No future tags', 'tags', 'messageTagsInput', true)
+
           wm.composition.previousTemplate = config.previousTemplate || wm.composition.previousTemplate
           if (config.template) {
             wm.updateMessageHeader (config.template)
@@ -1673,10 +1689,6 @@ var WikiMess = (function() {
             wm.composition.threadTweeter = config.threadTweeter || wm.composition.threadTweeter
             wm.composition.threadTweet = config.threadTweet || wm.composition.threadTweet
           }
-          
-          makeMessageHeaderInput ('title', 'Untitled', 'title', 'messageTitleInput', false, wm.updateMessageTitle.bind(wm))
-          makeMessageHeaderInput ('prevtags', 'No past tags', 'previousTags', 'messagePrevTagsInput', true)
-          makeMessageHeaderInput ('tags', 'No future tags', 'tags', 'messageTagsInput', true)
           
           wm.clearTimer ('autosuggestTimer')
           function autosuggestKey (before, after) {
@@ -1819,7 +1831,6 @@ var WikiMess = (function() {
           wm.autosuggestStatus = { temperature: 0, refresh: wm.divAutosuggest }
 
           // build the editable element for the "Template text", i.e. wm.composition.template
-          wm.messageComposeDiv = $('<div class="messagecompose">')
           wm.updateComposeDiv()
           
           // tweet
@@ -2163,6 +2174,17 @@ var WikiMess = (function() {
             generateNewContent = true
           else if (config.getRandomTemplate || !(wm.composition.body && wm.composition.body.rhs && !wm.ParseTree.parseTreeEmpty (wm.composition.body.rhs)))
             getRandomTemplate = true
+
+          if (config.preview) {
+            wm.composition.preview = {
+              accept: $.extend (wm.cloneComposition(),
+                                { template: config.preview.accept.template,
+                                  body: config.preview.accept.body }),
+              reject: $.extend (wm.cloneComposition(),
+                                { template: config.preview.reject.template,
+                                  body: config.preview.reject.body })
+            }
+          }
 
           if (config.focus || config.click || config.showHeader)
             wm.headerToggler.show()
@@ -3735,7 +3757,7 @@ var WikiMess = (function() {
                  defaultToPublic: true,
                  title: wm.replyTitle (lastMessage.title),
                  previousMessage: lastMessage.id,
-                 previousTemplate: lastMessage.template.id,
+                 previousTemplate: { id: lastMessage.template.id },
                  thread: thread,
                  threadTweeter: lastMessage.tweeter,
                  threadTweet: lastMessage.tweet,
@@ -3757,6 +3779,9 @@ var WikiMess = (function() {
                                           author: config.author,
                                           clearThread: true,
                                           generateNewContent: !config.author })
+        break
+      case 'draft':
+        promise = this.showDraft (config.draft)
         break
       case 'grammar':
         wm.container.hide()
@@ -3879,24 +3904,43 @@ var WikiMess = (function() {
                                  deleteMethod: 'REST_deletePlayerDraft',
                                  object: 'recipient',
                                  showMessage: function (props) {
-                                   var draft = props.result.draft
-                                   wm.showComposePage ({ recipient: draft.recipient,
-                                                         title: draft.title,
-                                                         previousMessage: draft.previous,
-                                                         previousTemplate: draft.previousTemplate,
-                                                         tags: draft.tags,
-                                                         previousTags: draft.previousTags,
-                                                         template: draft.template,
-                                                         vars: draft.vars,
-                                                         clearThread: true,
-                                                         body: draft.body,
-                                                         draft: draft.id })
+                                   wm.showDraft (props.result.draft)
                                  }
                                })
         return result
       })
     },
 
+    showDraft: function (draft) {
+      var wm = this
+      var draftConfig = { recipient: draft.recipient,
+                          title: draft.title,
+                          previousMessage: draft.previous,
+                          previousTemplate: draft.previousTemplate,
+                          tags: draft.tags,
+                          previousTags: draft.previousTags,
+                          template: draft.template,
+                          vars: draft.vars,
+                          clearThread: true,
+                          body: draft.body,
+                          preview: draft.preview,
+                          draft: draft.id }
+      var threadPromise = (draft.previous
+                           ? wm.wrapREST_getPlayerMessageThread (wm.playerID, draft.previous)
+                           .then (function (result) {
+                             if (result && result.thread && result.thread.length) {
+                               draftConfig.thread = []
+                               draftConfig.threadDiscards = result.thread.reverse()
+                               delete draftConfig.clearThread
+                             }
+                           })
+                           : $.Deferred().resolve())
+      return threadPromise
+        .then (function() {
+          return wm.showComposePage (draftConfig)
+        })
+    },
+    
     broadcastProps: function() {
       var wm = this
       return { tab: 'public',

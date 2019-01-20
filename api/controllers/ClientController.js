@@ -314,12 +314,14 @@ module.exports = {
       })
   },
 
-  // get a broadcast Message thread, forward in time: the Message itself and all descendants
-  getBroadcastMessageForwardThread: function (req, res) {
+  // get a Message thread, forward in time: the Message itself and all descendants
+  getMessageForwardThread: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var messageID = Message.parseID (req.params.message)
     var result = {}
-    Message.findOne ({ isBroadcast: true,
+    Message.findOne ({ or: [{ isBroadcast: true },
+                            { sender: playerID },
+                            { recipient: playerID }],
                        id: messageID })
       .populate ('template')
       .populate ('sender')
@@ -773,25 +775,7 @@ module.exports = {
       .populate ('recipient')
       .populate ('previous')
       .then (function (draft) {
-        result.draft = { id: draft.id,
-                         recipient: draft.recipient && { id: draft.recipient.id,
-                                                         name: draft.recipient.name,
-                                                         displayName: draft.recipient.displayName },
-                         previous: draft.previous ? draft.previous.id : null,
-                         previousTemplate: draft.previousTemplate,
-                         tags: draft.tags,
-                         previousTags: draft.previousTags,
-                         template: draft.template,
-                         title: draft.title,
-                         vars: (draft.previous
-                                ? VarsHelper.nextVarVal ({ node: draft.previous.body,
-                                                           initVarVal: draft.previous.initVarVal,
-                                                           sender: player,
-                                                           recipient: draft.recipient },
-                                                        parseTree)
-                                : VarsHelper.defaultVarVal (player, draft.recipient, draft.tags)),
-                         body: draft.body,
-                         date: draft.updatedAt }
+        result.draft = PlayerService.makeDraft (player, draft)
         res.json (result)
       }).catch (function (err) {
         console.log(err)
@@ -813,7 +797,8 @@ module.exports = {
                            previousTags: draft.previousTags,
                            template: draft.template,
                            title: draft.title,
-                           body: draft.body })
+                           body: draft.body,
+                           preview: draft.preview })
       .then (function (created) {
         result.draft = { id: created.id }
         res.json (result)

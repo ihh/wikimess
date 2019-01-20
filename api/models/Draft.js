@@ -53,6 +53,10 @@ module.exports = {
       type: 'json'
     },
 
+    preview: {
+      type: 'json'
+    }
+    
   },
 
   parseID: function (text) { return parseInt(text) },

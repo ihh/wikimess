@@ -120,7 +120,7 @@ module.exports.routes = {
   // messages
   'GET /p/message/:message':         'ClientController.getMessage',
   'GET /p/message/:message/header':  'ClientController.getReceivedMessageHeader',
-  'GET /p/message/:message/thread':  'ClientController.getBroadcastMessageForwardThread',
+  'GET /p/message/:message/thread':  'ClientController.getMessageForwardThread',
   'POST /p/message':                 'ClientController.sendMessage',
   'DELETE /p/message/:message':      'ClientController.deleteMessage',
 

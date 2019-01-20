@@ -164,6 +164,29 @@ module.exports = {
           vars.init = true
           vars.initConfig = { player: PlayerService.makeLoginSummary (player) }
           result.player = player
+          // get most recent Draft, or most recent Message
+          return Draft.find ({ sender: playerID })
+            .sort('createdAt DESC')
+            .populate('recipient')
+            .populate('previous')
+            .limit(1)
+            .then (function (drafts) {
+              if (drafts.length) {
+                vars.initConfig.draft = PlayerService.makeDraft (player, drafts[0])
+                vars.initConfig.action = 'draft'
+                return result
+              } else
+                return Message.find ({ recipient: playerID })
+                .sort('createdAt DESC')
+                .limit(1)
+                .then (function (messages) {
+                  if (messages.length) {
+                    vars.initConfig.message = messages[0].id
+                    vars.initConfig.action = 'message'
+                  }
+                  return result
+                })
+            })
         }
         return result
       })
@@ -400,4 +423,28 @@ module.exports = {
       })
   },
 
+  makeDraft: function (player, draft) {
+    // Draft must have populated recipient & previous
+    return { id: draft.id,
+             recipient: draft.recipient && { id: draft.recipient.id,
+                                             name: draft.recipient.name,
+                                             displayName: draft.recipient.displayName },
+             previous: draft.previous ? draft.previous.id : null,
+             previousTemplate: draft.previousTemplate,
+             tags: draft.tags,
+             previousTags: draft.previousTags,
+             template: draft.template,
+             title: draft.title,
+             vars: (draft.previous
+                    ? VarsHelper.nextVarVal ({ node: draft.previous.body,
+                                               initVarVal: draft.previous.initVarVal,
+                                               sender: player,
+                                               recipient: draft.recipient },
+                                             parseTree)
+                    : VarsHelper.defaultVarVal (player, draft.recipient, draft.tags)),
+             body: draft.body,
+             preview: draft.preview,
+             date: draft.updatedAt }
+  }
+  
 }
