@@ -1603,11 +1603,15 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fce5fb', end
     overflow-wrap: break-word;
 }
 
-.wikimess .mailbox .contents .message {
+.wikimess .mailbox .message {
     cursor: pointer;
     display: flex;
     flex-direction: row;
     min-height: 5vh;
+}
+
+.wikimess .mailbox .contents .message.hidden {
+    display: none;
 }
 
 .wikimess .mailbox .contents .message .avatar {

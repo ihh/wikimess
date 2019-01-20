@@ -2850,6 +2850,7 @@ var WikiMess = (function() {
                                          : 'inbox') })
         .then (function() {
           var messageDiv = $('#'+wm.mailboxMessageID(message))
+          messageDiv.removeClass ('hidden')
           wm.mailboxDiv.animate ({
             // Scroll parent to the new element. This arcane formula can probably be simplified
             scrollTop: wm.mailboxDiv.scrollTop() + messageDiv.position().top - wm.mailboxDiv.position().top
@@ -4007,6 +4008,16 @@ var WikiMess = (function() {
       if (props.tab !== 'public')
         wm.lastMailboxTab = props.tab
       wm.messageHeaderCache = {}
+      props.messages.forEach (function (message) {
+        wm.messageHeaderCache[message.id] = message
+      })
+      props.messages.forEach (function (message) {
+        var prev
+        if (message.previous && (prev = wm.messageHeaderCache[message.previous])) {
+          prev.replies = prev.replies || []
+          prev.replies.push (message)
+        }
+      })
       wm.mailboxDiv
         .empty()
         .append ($('<div class="mailboxname">').text (props.title),
@@ -4065,7 +4076,7 @@ var WikiMess = (function() {
               })
           }
         }
-        if (wm.playerID)
+        if (wm.playerID && message.sender && message.sender.id === wm.playerID)
           buttonsDiv.append (message.id === wm.playerInfo.botMessage
                              ? wm.makeIconButton ('unpin', updateBotMessage (null))
                              : wm.makeIconButton ('pin', updateBotMessage (message.id)))
@@ -4077,6 +4088,8 @@ var WikiMess = (function() {
                   .on ('click', wm.makeGetMessage (props, message, true, div)),
                   buttonsDiv)
         .addClass (message.unread ? 'unread' : 'read')
+      if (message.replies)
+        div.addClass ('hidden')
       return div
     },
 

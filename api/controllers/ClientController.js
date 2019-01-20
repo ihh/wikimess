@@ -477,6 +477,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
+                   previous: message.previous,
                    title: message.title || parseTree.summarizeExpansion (message.body),
                    sender: { id: message.sender.id,
                              displayName: message.sender.displayName },
@@ -517,6 +518,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
+                   previous: message.previous,
                    title: message.title || parseTree.summarizeExpansion (message.body),
                    recipient: (message.recipient
                                ? { id: message.recipient.id,
@@ -544,6 +546,7 @@ module.exports = {
       .then (function (messages) {
         result.messages = messages.map (function (message) {
           return { id: message.id,
+                   previous: message.previous,
                    title: message.title || parseTree.summarizeExpansion (message.body),
                    sender: (message.sender
                             ? { id: message.sender.id,
