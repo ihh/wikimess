@@ -20,9 +20,16 @@ var WikiMess = (function() {
 
     // HTML
     this.container = $('<div class="wikimess">')
+    var containerBrowserWrap = $('<div class="wikimess-browser-wrap">')
     this.pageContainer = $('#'+this.containerID)
       .addClass("wikimess-page")
-      .html (this.container)
+      .append (containerBrowserWrap
+               .append (this.container,
+                        $('<div class="wikimess-browser-navbar-pad">')))
+
+    // Detect Twitter in-app browser
+    if (window.navigator.userAgent.match (/Twitter/))
+      containerBrowserWrap.addClass ('twitter')
 
     // localStorage
     this.localStorage = { playerLogin: undefined,

@@ -33,6 +33,15 @@ input {
     justify-content: center;
 }
 
+.wikimess-browser-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.twitter .wikimess-browser-navbar-pad {
+    height: 80px;
+}
+
 .pushed {
     display: none  !important;
     height: 0  !important;
@@ -41,6 +50,7 @@ input {
 
 .wikimess {
     position: relative;
+    flex-grow: 1;
 }
 
 .wikimess .navbar {
