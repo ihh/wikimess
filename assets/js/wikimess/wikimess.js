@@ -27,8 +27,9 @@ var WikiMess = (function() {
                .append (this.container,
                         $('<div class="wikimess-browser-navbar-pad">')))
 
-    // Detect Twitter in-app browser
-    if (window.navigator.userAgent.match (/Twitter/))
+    // Detect Twitter in-app browser on iOS
+    // This seems pretty fragile/kludgy
+    if (window.navigator.userAgent.match (/Safari/) && typeof(window.navigator.doNotTrack) === 'string')
       containerBrowserWrap.addClass ('twitter')
 
     // localStorage
