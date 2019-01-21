@@ -1,11 +1,15 @@
 /* Landscape view */
 @media all and (orientation:landscape) and (max-width:600px) {
     /* Game view */
+    .wikimess,
+    .wikimess-browser-wrap {
+	width: 100%;
+	height: 100%;
+    }
+    
     .wikimess {
 	display: flex;
 	flex-direction: column;
-	width: 100%;
-	height: 100%;
     }
 
     .wikimess .navbar {

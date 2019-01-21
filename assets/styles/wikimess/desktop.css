@@ -12,12 +12,16 @@
 }
 
 @media (min-width:600px) {
-    .wikimess {
-	display: flex;
-	flex-direction: column;
+    .wikimess,
+    .wikimess-browser-wrap {
 	width: 600px;
 	max-width: 600px;
 	height: 100%;
+    }
+
+    .wikimess {
+	display: flex;
+	flex-direction: column;
     }
 
     .wikimess .navbar {
