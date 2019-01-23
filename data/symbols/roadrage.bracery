@@ -1,0 +1,127 @@
+## PREFIX road_rage_
+
+>physiology
+My heart beats faster, pumping oxygen, adrenaline and sugar into my bloodstream. 
+My breathing quickens. 
+My blood pressure rises. 
+My muscles tense. 
+My testosterone levels increase. 
+The left side of my brain is stimulated. 
+
+
+>no_yield
+I [hold|stand] my ground.
+I [won't|will not|will never|refuse to|shall not|do not|refuse to] [back down|yield].
+
+>why_use_a_blinker
+Why should I let [you|other drivers|anyone] know what I'm doing?
+Why should I [advertise|reveal|announce|broadcast] my [plans|intentions]?
+What use is a meaningless signal?
+Why flash lights into the void?
+
+>innocent_bystanders
+the [[nurses|patients|paramedics] at the [children's|local] hospital
+&a{old|genteel|timid-looking} [lady|gentleman|pensioner|child|[mother|father] [and their [child|children]|[with|pushing] a stroller]]
+&a~common_animal
+the &plural~common_animal
+
+
+>provocation
+I overtake you on the wrong side of the road.
+I occupy the passing lane.
+Traffic builds up behind me. ~~no_yield
+The street is narrow, but I cruise along in the middle.
+I pause, blocking an intersection.
+I am inappropriately close to the car in front.
+I cut in close in front of you.
+It's [cloudy|raining|foggy|twilight], and my headlights are off.
+Pedestrians try to cross. ~~no_yield
+I roll past a [red light|stop light|stop sign].
+[Approaching the [intersection|crosswalk],|The traffic light is yellow.] I [accelerate|speed up|hit the gas|floor it].
+I take a turn at high speed.
+It's a four-way stop. [~~no_yield|My way is best.|I own the road.|I am [King|Queen].]
+The speed limit is a [beaten record|meaningless statistic|broken score], to me.
+Speed limits are a big government conspiracy.
+It's [rainy|wet|foggy|slippery on the road|dark]. I don't care.
+I'm soaring through a [construction|school|built-up|shopping] zone.
+I turn, without using a blinker. ~~why_use_a_blinker
+I [signal|reveal] nothing of my [intentions|plans]. ~~why_use_a_blinker
+I change lanes... spontaneously. ~~why_use_a_blinker
+I see your intentions, and ignore them. Willpower is all.
+I slam my fist on the horn, startling ~~innocent_bystanders.
+I [browse|check] [Reddit|Twitter|Facebook|YouTube|Instagram|Snapchat|my [email|messages|texts]], [just for a moment|briefly|imperceptibly].
+My headlights are on full beam.
+&cap&a{ambulance|fire engine|paramedic vehicle} wants to pass. No [dice|way|chance].
+
+
+>identity_threat
+You threaten my identity.
+You insult my [masculinity|femininity|competence|patience|tolerance].
+Your behavior is &a{insult|threat} to [civilization|life|sanity].
+You put my child's life at risk.
+I must assert my identity.
+I must stand up for who I am.
+You're invading my space.
+You dishonor me.
+You insult me as a driver.
+My needs mean nothing to you.
+
+>escalation
+I cut in front of you and slam my brakes.
+I tailgate you.
+I [clench|shake] my fist.
+I spit at you.
+I throw my drink at your car.
+I scream.
+I glare at you [in the mirror|through the glass].
+I snarl.
+I stare hard at you.
+I shout in rage.
+I flip you [the bird|off|my middle finger].
+I make an obscene gesture.
+I drive as close as I can to your car.
+I swerve towards you.
+I [scream|yell|shout] "[Great driving, [~famous_scientist|~personal_noun]|You drive like &a[~human_occupation|~common_vegetable|~personal_noun]|I hope you get ~cancer]!"
+I throw a bottle of ~bodily_fluid at you.
+I [pull out|brandish] my ~brand_of_gun.
+I flash my headlights.
+I put my foot [on the gas|to the floor].
+
+>distortion
+You're attacking me.
+You're determined to kill me.
+You're evil.
+You must be ~drunken_state.
+I am [blameless|innocent] here.
+This is unprecedented.
+I have done nothing wrong.
+I'm the victim here.
+
+>collusion
+This conflict is everything.
+I have to show you who I am.
+This is one of those defining moments.
+~~no_yield
+
+
+>deescalation
+I [calm|soothe] myself.
+I change the radio station.
+I take a deep breath.
+I think [happy|peaceful] thoughts.
+I [imagine|picture] my [husband|wife|child]'s face.
+
+>leave_car
+I [stop the car|screech to a halt] and [climb|jump|leap] out of the car.
+
+>confrontation
+I get up in your face.
+I start muttering [curses|patois|threats].
+I demand you get your wallet out.
+"CASH OUT, MOTHERFUCKER!" I [scream|yell].
+
+>climax
+I [stab|shoot|punch|knife] you in the ~body_part.
+
+>game_over
+GAME OVER.
