@@ -3782,11 +3782,11 @@ var WikiMess = (function() {
       case 'compose':
         promise = this.showComposePage ({ recipient: config.recipient,
                                           title: config.title,
-                                          template: (config.content || config.text) && { content: config.content || (config.text ? wm.parseRhs(config.text) : []) },
-                                          getRandomTemplate: !!config.author,
-                                          author: config.author,
+                                          template: (config.template
+                                                     || ((config.content || config.text) && { content: config.content || (config.text ? wm.parseRhs(config.text) : []) })),
+                                          getRandomTemplate: false,
                                           clearThread: true,
-                                          generateNewContent: !config.author })
+                                          generateNewContent: !!config.template || !config.author })
         break
       case 'draft':
         promise = this.showDraft (config.draft)

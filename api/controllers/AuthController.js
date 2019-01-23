@@ -79,7 +79,8 @@ module.exports = {
   composePage: function (req, res) {
     var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
     var symname = req.params.symname
-    var content, text = req.query.text
+    var authorName = req.params.author, tag = req.params.tag
+    var content, title, templateJson, text = req.query.text
     return PlayerService.makeHomepage (playerID)
       .then (function (homepage) {
         var contentPromise
@@ -92,9 +93,31 @@ module.exports = {
             else
               content = [{ name: symname.replace(/[^\w]/g,'') }]
           })
+        else if (authorName)
+          contentPromise = Player.findOne ({ name: authorName.toLowerCase() })
+          .then (function (author) {
+            if (!author)
+              throw new Error (authorName + ' not found')
+            var templateQuery = { author: author.id,
+                                  isPublic: true,
+                                  isRoot: true }
+            if (tag)
+              templateQuery.previousTags = { contains: ' ' + tag.toLowerCase() + ' ' }
+            return Template.find (templateQuery)
+              .populate ('author')
+              .then (function (templates) {
+                if (templates && templates.length) {
+                  var nTemplate = SortService.sampleByWeight (templates.map (function (template) {
+                    return template.weight
+                  }))
+                  templateJson = TemplateService.makeTemplateJson (templates[nTemplate], true)
+                } else
+                  throw new Error ('No templates found by ' + authorName + (tag ? (' with tag ' + tag) : ''))
+              })
+          })
         else
           contentPromise = Promise.resolve (true)
-        contentPromise
+        return contentPromise
           .then (function() {
             homepage.vars.init = true
             homepage.vars.initConfig =
@@ -102,33 +125,10 @@ module.exports = {
                       homepage.vars.initConfig,
                       { action: 'compose',
                         recipient: null,
-                        title: symname ? symname.replace(/_/g,' ') : (text ? text.substr(0,64) : undefined),  // default title length encoded here
+                        title: symname ? symname.replace(/_/g,' ') : (text ? text.substr(0,Message.defaultTitleLength) : undefined),
                         content: content,
-                        text: text })
-            res.view ('homepage', homepage.vars)
-          })
-      }).catch (function (err) {
-        console.log(err)
-        res.notFound()
-      })
-  },
-
-  authorPage: function (req, res) {
-    var playerID = (req.session && req.session.passport) ? (req.session.passport.user || null) : null
-    var authorName = req.params.name
-    return Player.findOne ({ name: authorName })
-      .then (function (author) {
-        if (!author)
-          throw new Error (authorName + ' not found')
-        return PlayerService.makeHomepage (playerID)
-          .then (function (homepage) {
-            homepage.vars.init = true
-            homepage.vars.initConfig =
-              extend ({},
-                      homepage.vars.initConfig,
-                      { action: 'compose',
-                        recipient: null,
-                        author: author.id })
+                        template: templateJson,
+                        text: !authorName && text })
             res.view ('homepage', homepage.vars)
           })
       }).catch (function (err) {

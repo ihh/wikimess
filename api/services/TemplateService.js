@@ -18,23 +18,26 @@ module.exports = {
       .then (function (templates) {
         return SortService.partialSort
         (templates, nSuggestions, function (a, b) { return b.weight - a.weight })
-          .map (function (template) {
-            return { id: template.id,
-                     author: (template.author
-                              ? { id: template.author.id,
-                                  name: template.author.name,
-                                  displayName: template.author.displayName }
-                              : undefined),
-                     title: template.title || parseTree.summarizeRhs (template.content,
-                                                                      function (sym) { return Symbol.cache.byId[sym.id].name }),
-		     tweeter: template.author ? template.author.twitterScreenName : null,
-		     avatar: template.author ? template.author.avatar : null,
-                     tags: template.tags,
-                     previousTags: template.previousTags }
-          })
+          .map (TemplateService.makeTemplateJson)
       })
   },
 
+  makeTemplateJson: function (template, includeContent) {
+    return { id: template.id,
+             author: (template.author
+                      ? { id: template.author.id,
+                          name: template.author.name,
+                          displayName: template.author.displayName }
+                      : undefined),
+             title: template.title || parseTree.summarizeRhs (template.content,
+                                                              function (sym) { return Symbol.cache.byId[sym.id].name }),
+             content: includeContent && template.content,
+	     tweeter: template.author ? template.author.twitterScreenName : null,
+	     avatar: template.author ? template.author.avatar : null,
+             tags: template.tags,
+             previousTags: template.previousTags }
+  },
+  
   createTemplates: function (config) {
     // validate against schema
     SchemaService.validateTemplate (config, function (err) {

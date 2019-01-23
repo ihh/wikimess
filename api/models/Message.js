@@ -71,6 +71,8 @@ module.exports = {
     recipientDeleted: { type: 'boolean' }
   },
 
+  defaultTitleLength: 64,
+  
   parseID: function (text) { return parseInt(text) },
 
   // lifecycle updates
