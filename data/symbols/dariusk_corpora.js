@@ -1,14 +1,15 @@
+var fs = require('fs')
 var rp = require('request-promise')
 var bb = require('bluebird')
 var _ = require('lodash')
 
-var baseUrl = 'https://raw.githubusercontent.com/dariusk/corpora/master/data/'
+var baseUrl = 'https://raw.githubusercontent.com/ihh/corpora/pulls/data/'
 
 var targets = [
   { name: 'common_animal',
     path: 'animals/common.json',
     key: 'animals' },
-
+  
   { name: 'common_flower',
     path: 'plants/flowers.json',
     key: 'flowers' },
@@ -125,10 +126,20 @@ var symbolPath = {
   name_prefix: 'humans/prefixes.json',
   name_suffix: 'humans/suffixes.json',
   famous_scientist: 'humans/scientists.json',
+  cat_breed: 'animals/cats.json',
+  rabbit_breed: 'animals/rabbits.json',
+  dinosaur_species: 'animals/dinosaurs.json',
+  dog_name: 'animals/dog_names.json',
+  dog_breed: 'animals/dogs.json',
+  donkey_breed: 'animals/donkeys.json',
+  horse_breed: 'animals/horses.json',
+  pony_breed: 'animals/ponies.json',
   music_genre: 'music/genres.json',
   musical_instrument: 'music/instruments.json',
   random_room: 'architecture/rooms.json',
   art_genre: 'art/isms.json',
+  movie_genre: 'film-tv/netflix-categories.json',
+  popular_movie: 'film-tv/popular-movies.json',
   car_manufacturer: 'corporations/cars.json',
   fortune500_company: 'corporations/fortune500.json',
   american_industry: 'corporations/industries.json',
@@ -153,6 +164,7 @@ var symbolPath = {
   sculpture_material: 'materials/sculpture-materials.json',
   pharma_drug: 'medicine/drugs.json',
   hospital_name: 'medicine/hospitals.json',
+  roman_god: 'mythology/roman_deities.json',
   greek_god: 'mythology/greek_gods.json',
   greek_monster: 'mythology/greek_monsters.json',
   greek_titan: 'mythology/greek_titans.json',
@@ -183,6 +195,18 @@ var symbolPath = {
 //  cute_kaomoji: 'words/emoji/cute_kaomoji.json',
 }
 
+var symbolFile = {
+  disease: 'obo/diseases.json',
+  infectious_disease: 'obo/infectious_diseases.json',
+  cancer: 'obo/cancer.json',
+  symptom: 'obo/symptoms.json',
+  environmental_hazard: 'obo/environmental_hazards.json',
+  anthropogenic_feature: 'obo/anthropogenic_features.json',
+  geographic_feature: 'obo/geographic_features.json',
+  cephalopod_part: 'obo/cephalopod_anatomy.json',
+  ant_part: 'obo/ant_anatomy.json'
+}
+
 Object.keys(symbolPath).forEach (function (symbol) {
   targets.push ({ name: symbol,
 		  path: symbolPath[symbol] })
@@ -191,34 +215,53 @@ Object.keys(symbolPath).forEach (function (symbol) {
 bb.Promise.map (targets, function (target) {
   return rp (baseUrl + target.path)
     .then (function (htmlString) {
-      var json = JSON.parse (htmlString)
-      var array
-      if (target.key)
-        array = json[target.key]
-      else if (_.isArray(json))
-        array = json
-      else {
-        var keys = Object.keys(json)
-	    .filter (function (key) {
-	      return _.isArray (json[key])
-	    })
-        if (keys.length === 1)
-          array = json[keys[0]]
-      }
-      if (!array)
-        throw new Error ('Error autodetecting key for ' + target.path)
-      console.warn ('$' + target.name + ' <-- ' + target.path)
-      var result = { name: target.name,
-                     summary: target.summary,
-                     rules: array.map (function (text) {
-                       return target.rhs ? target.rhs(text) : [text]
-                     })
-                   }
-      return result
+      return processFile (target, htmlString)
     }).catch (function (err) {
       console.warn ('Error fetching ' + target.path)
       throw err
     })
 }).then (function (results) {
+  results = results.concat (Object.keys(symbolFile).map (function (symbol) {
+    var filename = symbolFile[symbol]
+    return processFile ({ name: symbol,
+                          path: filename,
+                          rhs: function (entry) {
+                            return _.isArray(entry) ? entry.slice(entry.length-1) : [entry]
+                          } },
+                        fs.readFileSync(filename).toString())
+  }))
   console.log (JSON.stringify (results))
 })
+
+function processFile (target, text) {
+  var json
+  try {
+    json = JSON.parse (text)
+  } catch (e) {
+    console.warn(text)
+    throw e
+  }
+  var array
+  if (target.key)
+    array = json[target.key]
+  else if (_.isArray(json))
+    array = json
+  else {
+    var keys = Object.keys(json)
+	.filter (function (key) {
+	  return _.isArray (json[key])
+	})
+    if (keys.length === 1)
+      array = json[keys[0]]
+  }
+  if (!array)
+    throw new Error ('Error autodetecting key for ' + target.path)
+  console.warn ('~' + target.name + ' <-- ' + target.path)
+  var result = { name: target.name,
+                 summary: target.summary,
+                 rules: array.map (function (text) {
+                   return target.rhs ? target.rhs(text) : [text]
+                 })
+               }
+  return result
+}

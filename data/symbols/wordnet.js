@@ -42,8 +42,10 @@ bluebird.Promise.all
       })
      
       lineReader.on('close', resolve)
-    } else
+    } else {
+      console.error (path + ' not found')
       reject()
+    }
   })
 })).then (function() {
 
@@ -73,6 +75,8 @@ bluebird.Promise.all
   })
   
   console.log (JSON.stringify (result))
+}).catch (function() {
+  console.error ('Could not complete')
 })
 
 function indexify (word) {

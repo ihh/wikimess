@@ -1,7 +1,43 @@
 ## TITLE Road Rage!
-## PREFIX road_rage_
+## PREFIX roadrage_
 
-> # root # *provoke
+
+# Opening scene
+> # root *root # *provoke
 A beautiful day in [~english_city|~american_city].
+Driving past the [~anthropogenic_feature|~geographic_feature].
 
-> # *provoke # *react
+
+# Initial provocation
+> # *provoke # *provoke *react
+~~provocation
+
+
+# Aggressive reaction, or deescalation
+> # *react # *react *distort
+~~identity_threat ~~escalation
+
+> # *react # *react
+~~collusion ~~no_yield
+~~provocation
+
+> # *react # *root
+~~deescalation
+
+> # *distort # *exit
+~~collusion ~~exit_car
+
+
+# Final confrontation
+> # *exit # *confront
+~~collusion ~~no_yield
+~~collusion ~~exit_car
+
+> # *confront # *climax
+~~confrontation
+
+> # *climax # *game_over
+~~climax
+
+> # *game_over #
+~~game_over
