@@ -1,7 +1,7 @@
 @dm>Treasure ##dnd_treasure
 ~dnd_treasure
 
-@player1>Claim Treasure #dnd_treasure #dnd_take_treasure
+>Claim Treasure #dnd_treasure #dnd_take_treasure
 ~dnd_take_treasure
 
 @player2>Claim Treasure #dnd_treasure #dnd_take_treasure

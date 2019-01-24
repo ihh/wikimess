@@ -12,21 +12,31 @@ Driving past the [~anthropogenic_feature|~geographic_feature].
 > # *provoke # *provoke *react
 ~~provocation
 
+# Reaction
+> # *react # *provoke_again
+~~your_driving_sucks ~~i_am_angry
 
-# Aggressive reaction, or deescalation
-> # *react # *react *distort
-~~identity_threat ~~escalation
+> # *react # *provoke
+~~your_driving_sucks ~~i_am_angry
 
-> # *react # *react
-~~collusion ~~no_yield
+# Second provocation
+> # *provoke_again # *provoke_again *react *escalate
 ~~provocation
 
-> # *react # *root
-~~deescalation
+
+# Escalation, or deescalation
+> # *escalate # *escalate *distort
+~~identity_threat ~~escalation
+
+> # *escalate # *escalate
+~~collusion ~~no_yield
+~~provocation
 
 > # *distort # *exit
 ~~collusion ~~exit_car
 
+0.1> # *escalate # *root
+~~deescalation
 
 # Final confrontation
 > # *exit # *confront

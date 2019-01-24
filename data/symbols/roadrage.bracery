@@ -1,23 +1,222 @@
 ## PREFIX roadrage_
 
->physiology
-My heart beats faster, pumping oxygen, adrenaline and sugar into my bloodstream. 
-My breathing quickens. 
-My blood pressure rises. 
-My muscles tense. 
-My testosterone levels increase. 
-The left side of my brain is stimulated. 
+>i_am_angry
+My heart beats faster, pumping ~~chemical into my bloodstream. 
+My [breathing|pulse] [quickens|accelerates|races].
+My blood pressure [rises|soars|climbs|sirges].
+My [muscles|elbows] [tense up|stiffen].
+My body [tenses up|stiffens].
+My ~~chemical levels increase. 
+My left-brain takes control.
+&let$angry=~~angry{I'm $angry. [$ANGRY|~~Just $angry|I've never been more $angry].}
+My nostrils [flare|widen].
+~~Sweat drenches my [neck|shirt-sleeves|eyebrows|scalp].
+~~Sweat drips into my [eyes|mouth|eyes and mouth].
+I grip the [wheel|steering wheel|stick].
+I [grit|bare|grind] my teeth.
+I raise my chin.
+I [exhale|sigh], [loudly|noisily].
+I puff my cheeks and blow.
+My toes [curl|tense].
+I clench and unclench my [fist|butt|jaw].
+My eyes [bulge|pop].
+I [crack|pop|flex] my knuckles.
+I [pull|loosen] [my collar|my shirt collar|the neck of my shirt].
+My eyes [roll|glare|flash].
+My eyes are ~~eye_like.
+My face turns ~~red.
+My lip [curls|snarls].
+I pound the [dashboard|window] with my fist.
+My nails dig into [my palms|the wheel].
+A vein [pulses|beats|throbs|twitches|pounds] in my [forehead|neck].
+I let out a tiny, ~~angry laugh.
+I feel my heart [thud|pound|drum] in my chest.
 
+>sweat
+sweat
+perspiration
+
+>eye_like
+[cold|hard|flinty|tight|popping]
+
+>angry
+annoyed
+bitter
+enraged
+exasperated
+furious
+heated
+impassioned
+indignant
+irate
+irritable
+irritated
+offended
+outraged
+resentful
+sullen
+uptight
+affronted
+antagonized
+chafed
+choleric
+convulsed
+cross
+displeased
+exacerbated
+ferocious
+fierce
+fiery
+fuming
+galled
+hateful
+hot
+huffy
+ill-tempered
+incensed
+inflamed
+infuriated
+irascible
+ireful
+maddened
+nettled
+piqued
+provoked
+raging
+riled
+
+>red
+red
+coral
+crimson
+flaming
+glowing
+maroon
+rose-colored
+wine-colored
+blooming
+brick-colored
+burgundy
+carmine
+cherry
+chestnut
+claret
+pink
+puce
+ruby
+russet
+rust
+salmon
+sanguine
+scarlet
+titian
+vermilion
+bloodshot
+florid
+flushed
+inflamed
+roseate
+rosy
+rubicund
+ruddy
+rufescent
+
+>chemical
+oxygen
+adrenaline
+hate
+anger
+testosterone
+rage
+
+>i_dont_care
+Whatever.
+What. Ever.
+I shrug.
+I yawn.
+I laugh it off.
+I feel ~~relaxed.
+I'm ~~relaxed.
+Everything's ~~relaxed.
+No [stress|worries|hassle].
+I don't really care, do you?
+What's the [problem|hassle|rush]?
+So what?
+Who cares?
+Who cares, really?
+So the fuck what?
+Who gives a [shit|fuck]?
+Life's too short!
+[Sometimes|In life][|,] you have to look out for [yourself|number one].
+[That's|It's] [|just ][how|the way] I [roll|flow].
+
+>relaxed
+relaxed
+great
+fine
+insouciant
+breezy
+calm
+carefree
+casual
+composed
+easy
+flexible
+informal
+laid-back
+nonchalant
+placid
+serene
+spontaneous
+tolerant
+tranquil
+informal
+laid-back
+nonchalant
+placid
+serene
+spontaneous
+tolerant
+tranquil
+collected
+moderate
+poised
+amenable
+complacent
+devil-may-care
+free and easy
+hang-loose
+happy-go-lucky
+indolent
+indulgent
+lazy
+lenient
+liberal
+mild
+natural
+offhand
+outgiving
+self-possessed
+unceremonious
+unconcerned
+uncritical
+unhurried
+uninhibited
+unrestrained
+unrushed
+terrific
 
 >no_yield
 I [hold|stand] my ground.
 I [won't|will not|will never|refuse to|shall not|do not|refuse to] [back down|yield].
+Willpower is all.
+[Strength|Fixity|Sureness] of [will|purpose|mind] is ~~everything.
 
 >why_use_a_blinker
-Why should I let [you|other drivers|anyone] know what I'm doing?
+Why should I let [you|other drivers|anyone|people|losers] know what I'm doing?
 Why should I [advertise|reveal|announce|broadcast] my [plans|intentions]?
-What use is a meaningless signal?
-Why flash lights into the void?
+What use is a [meaningless|pointless] signal?
+Why [flash|beam] [lights|my [intentions|plans]] into [the void|space|empty air|the universe]?
 
 >innocent_bystanders
 the [[nurses|patients|paramedics] at the [children's|local] hospital
@@ -27,32 +226,119 @@ the &plural~common_animal
 
 
 >provocation
-I overtake you on the wrong side of the road.
-I occupy the passing lane.
-Traffic builds up behind me. ~~no_yield
-The street is narrow, but I cruise along in the middle.
-I pause, blocking an intersection.
-I am inappropriately close to the car in front.
-I cut in close in front of you.
-It's [cloudy|raining|foggy|twilight], and my headlights are off.
-Pedestrians try to cross. ~~no_yield
-I roll past a [red light|stop light|stop sign].
+I overtake you on the wrong side of the road. ~~i_dont_care
+I occupy the passing lane. ~~i_dont_care
+Traffic builds up behind me. ~~i_dont_care
+The street is narrow, but I cruise along in the middle. ~~i_dont_care
+I pause, blocking an intersection. ~~i_dont_care
+I am inappropriately close to the car in front. ~~i_dont_care
+I cut in close in front of you. ~~i_dont_care
+It's [cloudy|raining|foggy|twilight], and my headlights are off. ~~i_dont_care
+Pedestrians try to cross. ~~i_dont_care
+I roll past a [red light|stop light|stop sign]. ~~i_dont_care
 [Approaching the [intersection|crosswalk],|The traffic light is yellow.] I [accelerate|speed up|hit the gas|floor it].
-I take a turn at high speed.
-It's a four-way stop. [~~no_yield|My way is best.|I own the road.|I am [King|Queen].]
+I take a turn at high speed. ~~i_dont_care
+It's a four-way stop. ~~i_dont_care
 The speed limit is a [beaten record|meaningless statistic|broken score], to me.
 Speed limits are a big government conspiracy.
-It's [rainy|wet|foggy|slippery on the road|dark]. I don't care.
-I'm soaring through a [construction|school|built-up|shopping] zone.
+It's [rainy|wet|foggy|slippery on the road|dark]. ~~i_dont_care
+I'm soaring through a [construction|school|built-up|shopping] zone. ~~i_dont_care
 I turn, without using a blinker. ~~why_use_a_blinker
 I [signal|reveal] nothing of my [intentions|plans]. ~~why_use_a_blinker
 I change lanes... spontaneously. ~~why_use_a_blinker
-I see your intentions, and ignore them. Willpower is all.
+I see your intentions, and ignore them. ~~no_yield
 I slam my fist on the horn, startling ~~innocent_bystanders.
-I [browse|check] [~social_networking_website|~video_hosting_website|my [email|messages|texts|mentions|likes]], [[just|only] for a [moment|second|[nano|milli|micro]second]|briefly|imperceptibly].
+I [browse|check|[look|peek] at] [~social_networking_website|~video_hosting_website|my [email|messages|texts|mentions|likes]] on my [phone|cellphone], [[just|only] for a [moment|second|[nano|milli|micro]second]|briefly|imperceptibly].
 My headlights are on full beam.
 &cap&a{ambulance|fire engine|paramedic vehicle} wants to pass. No [dice|way|chance].
 
+>i_own_the_road
+My way is [best|the only way].
+I own the ~~road.
+I'm [King|Queen|Lord] of the ~~road.
+
+>road
+road
+tarmac
+pavement
+highway
+street
+
+>your_driving_sucks
+Your ~~driving [sucks|bites|blows].
+As a driver, you [suck|bite|blow].
+You can't drive.
+Your ~~driving is ~~just [~~awful|&a~~scandal].
+This is [~~awful|&a~~scandal].
+
+>just
+just
+simply
+truly
+purely
+really
+seriously
+honestly
+literally
+
+>driving
+driving
+use of a car
+ability to drive
+
+
+>scandal
+shame
+humiliation
+scandal
+abomination
+atrocity
+horror show
+blot on [civilization|humanity]
+degradation
+ignominy
+infamy
+odium
+
+>awful
+awful
+appalling
+atrocious
+depressing
+dire
+disgusting
+distressing
+dreadful
+frightful
+ghastly
+gruesome
+harrowing
+hideous
+horrendous
+horrible
+horrific
+horrifying
+nasty
+shocking
+tough
+ugly
+unpleasant
+abominable
+alarming
+deplorable
+fearful
+grody
+gross
+grungy
+offensive
+raunchy
+repulsive
+stinking
+synthetic
+unsightly
+terrible
+gross
+odious
 
 >identity_threat
 You threaten my identity.
@@ -74,7 +360,7 @@ I spit at you.
 I throw my drink at your car.
 I scream.
 I glare at you [in the mirror|through the glass].
-I snarl.
+I snarl at you.
 I stare hard at you.
 I shout in rage.
 I flip you [the bird|off|my middle finger].
@@ -98,10 +384,16 @@ I have done nothing wrong.
 I'm the victim here.
 
 >collusion
-This conflict is everything.
+This conflict is ~~everything.
 I have to show you who I am.
 This is one of those defining moments.
 
+>everything
+all-encompassing
+everything
+totalizing
+[what|[all|the only thing] that] matters
+the thing
 
 >deescalation
 I [calm|soothe] myself.
