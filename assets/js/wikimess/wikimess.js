@@ -720,7 +720,7 @@ var WikiMess = (function() {
     wrapREST_getHtml: function (stub) {
       if (this.standalone)
         return $.Deferred().resolve ($('#html-' + stub)).html()
-      return this.logGet ('html/' + stub + '.html')
+      return this.logGet ('/html/' + stub + '.html')
     },
 
     wrapREST_getPlayerSuggestTemplates: function (playerID) {

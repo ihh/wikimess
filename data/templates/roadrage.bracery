@@ -13,11 +13,8 @@ Driving past the [~anthropogenic_feature|~geographic_feature].
 ~~provocation
 
 # Reaction
-> # *react # *provoke_again
-~~your_driving_sucks ~~i_am_angry
-
-> # *react # *provoke
-~~your_driving_sucks ~~i_am_angry
+> # *react #
+~~your_driving_sucks &accept{~~i_am_angry&tag{##provoke_again}} &reject{~~deescalation&tag{##provoke}}
 
 # Second provocation
 > # *provoke_again # *provoke_again *react *escalate

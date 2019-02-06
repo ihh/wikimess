@@ -226,23 +226,29 @@ the &plural~common_animal
 
 
 >provocation
-I overtake you on the wrong side of the road. ~~i_dont_care
-I occupy the passing lane. ~~i_dont_care
-Traffic builds up behind me. ~~i_dont_care
-The street is narrow, but I cruise along in the middle. ~~i_dont_care
-I pause, blocking an intersection. ~~i_dont_care
-I am inappropriately close to the car in front. ~~i_dont_care
-I cut in close in front of you. ~~i_dont_care
-It's [cloudy|raining|foggy|twilight], and my headlights are off. ~~i_dont_care
-Pedestrians try to cross. ~~i_dont_care
-I roll past a [red light|stop light|stop sign]. ~~i_dont_care
+~~nonchalant_provocation ~~i_dont_care
+~~irritable_provocation
+
+>nonchalant_provocation
+I overtake you on the wrong side of the road.
+I occupy the passing lane.
+Traffic builds up behind me.
+The street is narrow, but I cruise along in the middle.
+I pause, blocking an intersection.
+I am inappropriately close to the car in front.
+I cut in close in front of you.
+It's [cloudy|raining|foggy|twilight], and my headlights are off.
+Pedestrians try to cross.
+I roll past a [red light|stop light|stop sign].
+I take a turn at high speed.
+It's a four-way stop.
+It's [rainy|wet|foggy|slippery on the road|dark].
+I'm soaring through a [construction|school|built-up|shopping] zone.
+
+>irritable_provocation
 [Approaching the [intersection|crosswalk],|The traffic light is yellow.] I [accelerate|speed up|hit the gas|floor it].
-I take a turn at high speed. ~~i_dont_care
-It's a four-way stop. ~~i_dont_care
 The speed limit is a [beaten record|meaningless statistic|broken score], to me.
 Speed limits are a big government conspiracy.
-It's [rainy|wet|foggy|slippery on the road|dark]. ~~i_dont_care
-I'm soaring through a [construction|school|built-up|shopping] zone. ~~i_dont_care
 I turn, without using a blinker. ~~why_use_a_blinker
 I [signal|reveal] nothing of my [intentions|plans]. ~~why_use_a_blinker
 I change lanes... spontaneously. ~~why_use_a_blinker
