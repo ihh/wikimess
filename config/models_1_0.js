@@ -24,6 +24,18 @@ module.exports.models = {
   // the `config/datastores.js` file) uses the built-in `sails-disk` adapter.
   datastore: 'mysqlServer',
 
+  
+  /***************************************************************************
+  *                                                                          *
+  * How and whether Sails will attempt to automatically rebuild the          *
+  * tables/collections/etc. in your schema.                                  *
+  *                                                                          *
+  * See http://sailsjs.org/#!/documentation/concepts/ORM/model-settings.html  *
+  *                                                                          *
+  ***************************************************************************/
+  migrate: 'alter',
+
+  
   // Because you can't have the old `connection` setting at the same time as the new
   // `datastore` setting, we'll set it to `null` here.  When you merge this file into your
   // existing `config/models.js` file, just remove any reference to `connection`.

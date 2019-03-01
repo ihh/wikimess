@@ -36,19 +36,19 @@ module.exports = {
     var password = req.body.password
     Player.find ({ name: name })
       .exec (function (err, players) {
-        if (err)
+        if (err) {
           res.status(500).send ({ message: err })
-        else if (players.length)
+        } else if (players.length)
           res.status(400).send ({error: "The name " + name + " is already in use"})
         else
-          Player.findOrCreate ({ name: name,
-                                 password: password })
+          Player.create ({ name: name,
+                           password: password })
           .exec (function (err, player) {
-            if (err)
+            if (err) {
               res.status(500).send ({ message: err })
-            else if (!player)
+            } else if (!player) {
               res.status(500).send ({ message: "Player " + name + " not created"})
-            else
+            } else
               res.json ({ name: player.name, id: player.id })
           })
       })

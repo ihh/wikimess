@@ -19,8 +19,7 @@ module.exports = {
     },
 
     name: {
-      type: 'string',
-      unique: true
+      type: 'string'
     },
 
     copied: {

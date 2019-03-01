@@ -15,18 +15,18 @@ module.exports = {
   primaryKey: 'id',
 
   attributes: {
+    // login info
     id: {
       type: 'number',
       autoIncrement: true,
       unique: true
     },
-
-    // login info
+    
     name: {
       type: 'string',
       unique: true
     },
-    
+
     password: {
       type: 'string',
       // minLength: 6,
