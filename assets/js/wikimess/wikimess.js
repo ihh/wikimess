@@ -5359,8 +5359,8 @@ var WikiMess = (function() {
             var funcSpan = tokSpan.append ($('<span class="syntax-func-name">').append (funcChar, tok.funcname))
             switch (wm.ParseTree.funcType (tok.funcname)) {
             case 'link':
-              return funcSpan.append ([[tok.args[1]],
-                                       tok.args[2].args].map (argSpanMaker))
+              return funcSpan.append ([[tok.args[0]],
+                                       tok.args[1].args].map (argSpanMaker))
             case 'parse':
               return funcSpan.append ([tok.args[0].args, [tok.args[1]]].map (argSpanMaker))
             case 'apply':
