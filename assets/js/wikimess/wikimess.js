@@ -5284,7 +5284,7 @@ var WikiMess = (function() {
                                          ? [varChar, makeLeftBraceSpan(), tok.varname, makeRightBraceSpan()]
                                          : [varChar, tok.varname]])
           case 'assign':
-            if (wm.ParseTree.isQuoteAssignExpr (tok))
+            if (wm.ParseTree.isQuoteAssignKeywordExpr (tok))
               return tokSpan.append (makeFuncSpan (tok.varname),
                                      $('<span class="syntax-target">')
                                      .append (makeLeftBraceSpan(),
